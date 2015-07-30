@@ -1,0 +1,47 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opadisablehosts X "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opadisablehosts
+
+.NL
+
+.PP
+
+\fB(Linux)\fR
+Searches for a set of hosts in the fabric and disables their corresponding switch port.
+.SH Syntax 
+.NL
+opadisablehosts [-h \fIhfi\fR] [-p \fIport\fR] \fIreason\fRhost ...
+.PP
+or
+.br
+opadisablehosts --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produce full help text.
+.TP 10
+-h \fIhfi\fR 
+.NL
+HFI to send through. The default is the first HFI.
+.TP 10
+-p \fIports\fR 
+.NL
+Port to send through. The default is the first active port.
+.TP 10
+ \fIreason\fR 
+.NL
+Text description of reason hosts are being disabled, will be saved at end of any new lines in disabled file. For ports already in disabled file, this is ignored.
+.SH Examples 
+.NL
+opadisablehosts \'bad DRAM\' compute001 compute045 opadisablehosts -h 1 -p 2 \'crashed\' compute001 compute045

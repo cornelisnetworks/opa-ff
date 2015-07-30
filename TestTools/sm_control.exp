@@ -1,0 +1,152 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid ib stack testing
+
+# manditory setup
+log_user 0;	# disable detailed logging to stdout
+
+package require tdom
+
+#########################################################################################                                         
+# Name        : stop_sm                                                                                                     
+# Input       : host                                                                                                              
+# Return      . none                                                                                                              
+# Description : stops the sm, opafm                                                                      
+#########################################################################################
+proc stop_sm { host } {
+    set ret {}
+    target_root_sh $host
+    	
+    set host_os_id [get_target_os_id $host]
+    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {	
+	send_unix_cmd "systemctl stop opafm"
+	    
+	send_unix_cmd "systemctl -n 0 status opafm"
+	catch {expect_any 60 {"dead"} {"running"} out} ret	    
+    } else {
+	send_unix_cmd "service opafm stop"
+	catch {expect_any 60 {"Stopping IFS Fabric Manager" "Shutting down IFS Fabric Manager" "shutting down all instances"} {} out} ret
+    }
+	
+    target_root_sh_exit
+
+    return $ret
+}
+
+#########################################################################################                                                                            
+# Name        : start_sm                                                                                                                                         
+# Input       : host                                                                                                                                                 
+# Return      . none                                                                                                                                                 
+# Description : starts the sm, opafm                                                                                                                               
+#########################################################################################
+proc start_sm { host } {
+    set ret {} 
+    target_root_sh $host
+    set host_os_id [get_target_os_id $host]
+    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {
+	send_unix_cmd "systemctl start opafm" 
+	    
+        send_unix_cmd "systemctl -n 0 status opafm"
+        catch {expect_any 60 {"running"} {"failed" "unknown"} out} ret	    
+    } else {
+	send_unix_cmd "service opafm start"
+        catch {expect_any 60 {"Starting IFS Fabric Manager"} {"unable to start" "not properly shutdown"} out } ret
+	sleep 30
+    }
+
+    target_root_sh_exit
+
+    return $ret     
+}
+
+#########################################################################################                                                                            
+# Name        : restart_sm                                                                                                                                          
+# Input       : host                                                                                                                                                 
+# Return      . none                                                                                                                                                 
+# Description : restarts the sm, opafm                                                                                                                              
+#########################################################################################
+proc restart_sm { host } {
+    set ret {}
+    target_root_sh $host
+    set host_os_id [get_target_os_id $host]
+    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {
+	send_unix_cmd "systemctl restart opafm"
+	check_exit_status 60 0
+    } else {
+	send_unix_cmd "service opafm restart"
+	catch {expect_any 60 {"Stopping IFS Fabric Manager" "Shutting down IFS Fabric Manager" "shutting down all instances"} {} out} ret
+	sleep 25
+    }
+    
+    target_root_sh_exit
+    return $ret
+}
+
+#########################################################################################                                                                            
+# Name        : save_xml_file                                                                                                                                    
+# Input       : host
+#               xml_file_loc - xml source
+#               xml_file_loc_saved - xml destination                                                                                                         
+# Return      . none                                                                                                                                                 
+# Description : Saves a backup of an xml file to be restored from later                                                                                       
+#########################################################################################
+proc save_xml_file { host xml_file_loc xml_file_loc_saved} {
+    set ret {}
+    set out {}
+    target_root_sh $host
+    send_unix_cmd "/bin/cp -pf $xml_file_loc $xml_file_loc_saved; echo DONE;"
+    catch {expect_any 60 {"DONE"} {"No such"} out } ret
+    debug_message "save_xml_file: out=$out"
+    target_root_sh_exit
+
+    return $ret
+}
+
+#########################################################################################                                                                            
+# Name        : restore_xml_file                                                                                                               
+# Input       : host                                                                                                                                                 
+#               xml_file_loc - xml to be overwritten                                                                                                               
+#               xml_file_loc_saved - xml source                                                                                                                 
+# Return      . none                                                                                                                                                 
+# Description : Restores xml from a saved backup (xml_file_loc_saved)                                                                                              
+#########################################################################################   
+proc restore_xml_file { host xml_file_loc_saved xml_file_loc} {
+    set ret {}
+    set out {}
+    target_root_sh $host
+    send_unix_cmd "/bin/cp -pf $xml_file_loc_saved $xml_file_loc; echo DONE;"
+    catch {expect_any 60 {"DONE"} {"No such"} out } ret
+    debug_message "restore_xml_file: out=$out"
+    target_root_sh_exit
+
+    return $ret
+}

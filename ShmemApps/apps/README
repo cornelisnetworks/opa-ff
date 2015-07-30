@@ -1,0 +1,92 @@
+This package contains SHMEM applications and packages for testing and 
+evaluation.
+
+
+MPICH_PREFIX ENVIRONMENT VARIABLE:
+----------------------------------
+
+By default, these applications will be run with the 1st MPI found to
+be installed on the system.  If multiple MPIs are found the 1st in the list
+below is used:
+   openmpi for PSM (eg. openmpi*qlc)
+   mvapich1 for PSM (eg. mvapich-1*qlc)
+   mvapich2 for PSM (eg. mvapich2-*qlc)
+
+If desired the MPICH_PREFIX may be exported to control the selection.
+Alternatively, a .prefix file can be created in this directory with the
+preferred selection.
+
+SHMEM_PREFIX ENVIRONMENT VARIABLE:
+----------------------------------
+
+By default, Make will build these programs with SHMEM installed in
+/usr/shmem/intel
+
+You can override this by setting SHMEM_PREFIX in your .bashrc file. For
+example:
+
+export SHMEM_PREFIX=/my/copy_of_intel_shmem
+
+
+
+USING THESE TOOLS WITH MPI-SELECTOR:
+------------------------------------
+
+SHMEM applications are started using the mpirun from an MPI
+implementation such as openmpi, mvapich or mvapich2.
+
+In OFED (and Intel IFS), the normal method of selecting an MPI is to
+use the mpi-selector commands (type "man mpi-selector-menu" and "man
+mpi-selector" for details on those commmands).
+
+To use mpi-selector with these scripts, add this line to your .bashrc
+file:
+
+source /opt/opa/src/mpi_apps/get_selected_mpi.sh
+
+
+
+COMPILING THE TEST PROGRAMS:
+----------------------------
+
+The top level Makefile will build all the applications and benchmarks,
+using the default (described above) or the value of SHMEM_PREFIX (also
+described above).
+
+Some useful make targets include:
+
+	clean	- remove all binaries.
+	all 	- will build everything
+	quick	- builds popular applications (same as all at this time)
+
+
+
+RUNNING THE TEST PROGRAMS:
+--------------------------
+
+A "run_*" script is provided for each application/benchmark.  These
+scripts assume the existence of a local "mpi_hosts" file [alternate name can be
+exported in MPI_HOSTS if desired] (in mpirun mode)
+and that mpd is already running (if you're using mvapich2 in mpd mode).
+For example, to run the barrier test, simply type:
+
+# ./run_barrier 2
+
+The scripts log the output of the SHMEM programs to the 
+/opt/opa/src/shmem_apps/logs directory.
+
+
+
+TUNING THE TEST PROGRAMS:
+-------------------------
+
+MVAPICH, MVAPICH2 and OpenMPI are all extremely tunable, and a complete
+discussion of all their settings is far beyond the scope of this document.
+However, these scripts provide examples of tuning the different MPIs
+as a way to get started.
+
+When using Intel IFS, you can tune any of the MPIs (and the underlying PSM
+layer). See the files shmem.mvapich.params, shmem.mvapich2.params and
+shmem.openmpi.params for details.
+Each file describes the syntax of the parameter file, provides a link to
+online documentation on how to tune that MPI and several sample parameters.

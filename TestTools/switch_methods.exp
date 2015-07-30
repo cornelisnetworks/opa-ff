@@ -1,0 +1,302 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+#########################################################################################
+# Name        : get_switch_lids_to_ports_map
+# Input       : cmd_host (where can opa commands be run to query SM)
+# Return      . A dict mapping LID to list of ports.
+# Description : Queries fabric return a dict with all lids of switches and ports that are enabled on them.  Only ports with LINK will be returned (no disconnected ports)
+#########################################################################################
+
+
+proc get_switch_lids_to_ports_map { cmd_host }  {
+
+    # Build DOM from XML
+    set lids_dom [ run_opareport $cmd_host "-o lids" ]
+    set links_dom [ run_opareport $cmd_host "-o links" ]
+
+    # Get all switches 
+    set lidsList [ $lids_dom selectNodes {/Report/LIDSummary/LIDs/Value[NodeType='SW']} ]
+    #puts "found [ llength $lidsList ] switch lids"
+
+
+    set lid_port_map [dict create]
+
+    # For each switch node
+    foreach item $lidsList {
+	set lid [ $item getAttribute "LID"]
+	set guid [ [ $item selectNodes NodeGUID/text() ] nodeValue ]
+	#puts "lid:$lid; guid:$guid"	
+
+	# Now, using guid as the key, poke into linksDOM to find the ports for this guid.
+	set portList [ $links_dom selectNodes /Report/LinkSummary/Link/Port\[NodeGUID='$guid'\]/PortNum/text() ]   
+	# Now you have a list of ports for specific LID/GUID.
+	#puts "found [ llength $portList ] ports"
+
+	# List of ports per lid
+	set ports {} 
+	foreach port $portList {
+	    set portNum [ $port nodeValue ]
+
+	    # If don't care about port 1 - skip it
+	    #` if { $portNum == 1 } {
+	    #    continue
+	    # }
+	    #puts "lid:$lid->port num:$portNum"
+
+	    lappend ports $portNum
+
+	    # I would have a data structure that is a map of lists, i.e.  
+	    #	LID1: port1, port2, port3
+	    #	LID2: port5,port6,port7
+	    #	…….                                        	    
+	}
+	#puts "Added [ llength $ports ] ports"
+
+	dict set lid_port_map $lid $ports
+	#puts "lid_port_map size: [dict size $lid_port_map]"
+    }
+    
+    # Free memory
+    $lids_dom delete 
+    $links_dom delete
+
+    return $lid_port_map
+}
+#########################################################################################
+# Name        : get_switch_lids_to_hfi_ports_map
+# Input       : cmd_host (where can opa commands be run to query SM)
+# Return      . A dict mapping LID to list of ports that are connect to HFIs.
+# Description : Queries fabric return a dict with all lids of switches and ports that are enabled and connected to HFIs on them.  Only ports with LINK will be returned (no disconnected ports)
+#########################################################################################
+
+
+proc get_switch_lids_to_hfi_ports_map { cmd_host }  {
+    # Build DOM from XML
+    set lids_dom [ run_opareport $cmd_host "-o lids" ]
+    set links_dom [ run_opareport $cmd_host "-o links" ]
+
+    set lidsList [ $lids_dom selectNodes {/Report/LIDSummary/LIDs/Value[NodeType='SW']} ]
+#    puts "found [ llength $lidsList ] switch lids"
+#    puts "[$lidsList selectNodes NodeGUID/text()]"
+
+    set lid_port_map [dict create]
+
+    # For each switch node
+    foreach item $lidsList {
+	set lid [ $item getAttribute "LID"]
+	set guid [ [ $item selectNodes NodeGUID/text() ] nodeValue ]
+	#puts "lid:$lid; guid:$guid"	
+
+	# Now, using guid as the key, poke into linksDOM to find the ports for this guid.
+        
+#	set portList [ $links_dom selectNodes /Report/LinkSummary/Link/Port\[NodeGUID='$guid'\]/PortNum/text() ]          
+	set linkList [ $links_dom selectNodes /Report/LinkSummary/Link ]
+        #puts "found [ llength $linkList ] links"
+        foreach link $linkList {
+          set portNodes [ $link getElementsByTagName Port ]
+          set port1 [lindex $portNodes 0]
+          set port2 [lindex $portNodes 1]
+          set port1_NodeType [[$port1 child all NodeType] asText]
+          set port2_NodeType [[$port2 child all NodeType] asText]
+          set port1_GUID [[$port1 child all NodeGUID] asText]
+          set port2_GUID [[$port2 child all NodeGUID] asText]
+          set port1_PortNum [[$port1 child all PortNum] asText]
+          set port2_PortNum [[$port2 child all PortNum] asText]
+          if { ([string compare $port1_GUID $guid]==0) || ([string compare $port2_GUID $guid]==0) } {
+            if { ([string compare $port1_NodeType SW]==0) && ([string compare $port2_NodeType FI]==0) } {
+	      lappend ports $port1_PortNum
+            } elseif {([string compare $port1_NodeType FI] == 0) && ([string compare $port2_NodeType SW] == 0)} {
+	      lappend ports $port2_PortNum
+            } 
+          } 
+           
+        }
+	#puts "Added [ llength $ports ] ports"
+
+	dict set lid_port_map $lid $ports
+	#puts "lid_port_map size: [dict size $lid_port_map]"
+    }
+    
+    # Free memory
+    $lids_dom delete 
+    $links_dom delete
+
+    return $lid_port_map
+}
+
+#########################################################################################
+# Name        : get_switchport_from_lid
+# Input       : cmd_host lid  *** LID must be in format 0x0001 (the same format as provided by opareport -o lids)
+# Return      . A list with element 1 being the SWITCH LID and element 2 being the SWITCH PORT where HFI with that LID is directly connected.  If not found the list [ none none ] will be returned
+# Description : For the lid of an HFI return the switch lid and port that that HFI is connected to
+#########################################################################################
+proc get_switchport_from_lid { cmd_host mylid }  {
+    set lids_dom [ run_opareport $cmd_host "-o lids" ]
+    set links_dom [ run_opareport $cmd_host "-o links" ]
+
+    #################################################
+    #debug/dev only
+    #set lids_file  "lids.xml"
+    #set links_file "links.xml"
+    #################################################
+    # Open lids XML files
+    #set size [file size $lids_file]
+    #set fp [open $lids_file r]
+    #set lidsXML [read $fp $size]
+    #################################################
+    # Open links XML files
+    #set size [file size $links_file]
+    #set fp [open $links_file r]
+    #set linksXML [read $fp $size]
+    ##################################################
+    #set lids_dom [dom parse $lidsXML]
+    #set links_dom [dom parse $linksXML]
+
+    set switchLidsList [ $lids_dom selectNodes {/Report/LIDSummary/LIDs/Value[NodeType='SW']} ]
+    set hfiLidsList [ $lids_dom selectNodes {/Report/LIDSummary/LIDs/Value[NodeType='FI']} ]
+
+    set myguid "none"
+    set return_lid "none"
+    set return_port "none"
+
+    foreach item $hfiLidsList {
+        set lid [ $item getAttribute "LID"]
+        set guid [ [ $item selectNodes NodeGUID/text() ] nodeValue ]
+        if { [string compare $lid $mylid] == 0 } {
+          set myguid $guid
+        }
+    }
+
+    if { [string compare $myguid "none"] == 0 } {
+       error "Lid $mylid not found"
+    }
+
+    # For each switch node
+    foreach item $switchLidsList {
+        set lid [ $item getAttribute "LID"]
+        set guid [ [ $item selectNodes NodeGUID/text() ] nodeValue ]
+
+        set linkList [ $links_dom selectNodes /Report/LinkSummary/Link ]
+        #puts "found [ llength $linkList ] links"
+        foreach link $linkList {
+#          puts "processing link [$link asXML] [$link asText]"
+          set portNodes [ $link getElementsByTagName Port ]
+          set port1 [lindex $portNodes 0]
+          set port2 [lindex $portNodes 1]
+          set port1_NodeType [[$port1 child all NodeType] asText]
+          set port2_NodeType [[$port2 child all NodeType] asText]
+          set port1_GUID [[$port1 child all NodeGUID] asText]
+          set port2_GUID [[$port2 child all NodeGUID] asText]
+          set port1_PortNum [[$port1 child all PortNum] asText]
+          set port2_PortNum [[$port2 child all PortNum] asText]
+          if { ([string compare $port1_GUID $myguid]==0) } {
+            set return_lid $lid
+            set return_port $port2_PortNum
+          } elseif { ([string compare $port2_GUID $myguid]==0) } {
+            set return_lid $lid
+            set return_port $port1_PortNum
+          }
+
+        }
+
+    }
+    $lids_dom delete
+    $links_dom delete
+    return [list $return_lid $return_port]
+}
+
+
+#########################################################################################
+# Name        : get_switchport_from_guid
+# Input       : cmd_host guid
+# Return      . A list with element 1 being the SWITCH LID and element 2 being the SWITCH PORT where HFI with that LID is directly connected.  If not found the list [ none none ] will be returned
+# Description : For the lid of an HFI return the switch lid and port that that HFI is connected to
+#########################################################################################
+proc get_switchport_from_guid { cmd_host myguid }  {
+    set lids_dom [ run_opareport $cmd_host "-o lids" ]
+    set links_dom [ run_opareport $cmd_host "-o links" ]
+
+    #################################################
+    #debug/dev only
+    #set lids_file  "lids.xml"
+    #set links_file "links.xml"
+    #################################################
+    # Open lids XML files
+    #set size [file size $lids_file]
+    #set fp [open $lids_file r]
+    #set lidsXML [read $fp $size]
+    #################################################
+    # Open links XML files
+    #set size [file size $links_file]
+    #set fp [open $links_file r]
+    #set linksXML [read $fp $size]
+    ##################################################
+    #set lids_dom [dom parse $lidsXML]
+    #set links_dom [dom parse $linksXML]
+
+    set switchLidsList [ $lids_dom selectNodes {/Report/LIDSummary/LIDs/Value[NodeType='SW']} ]
+    set hfiLidsList [ $lids_dom selectNodes {/Report/LIDSummary/LIDs/Value[NodeType='FI']} ]
+
+    set return_lid "none"
+    set return_port "none"
+
+    # For each switch node
+    foreach item $switchLidsList {
+        set lid [ $item getAttribute "LID"]
+        set guid [ [ $item selectNodes NodeGUID/text() ] nodeValue ]
+
+        set linkList [ $links_dom selectNodes /Report/LinkSummary/Link ]
+        #puts "found [ llength $linkList ] links"
+        foreach link $linkList {
+#          puts "processing link [$link asXML] [$link asText]"
+          set portNodes [ $link getElementsByTagName Port ]
+          set port1 [lindex $portNodes 0]
+          set port2 [lindex $portNodes 1]
+          set port1_NodeType [[$port1 child all NodeType] asText]
+          set port2_NodeType [[$port2 child all NodeType] asText]
+          set port1_GUID [[$port1 child all NodeGUID] asText]
+          set port2_GUID [[$port2 child all NodeGUID] asText]
+          set port1_PortNum [[$port1 child all PortNum] asText]
+          set port2_PortNum [[$port2 child all PortNum] asText]
+          if { ([string compare $port1_GUID $myguid]==0) } {
+            set return_lid $lid
+            set return_port $port2_PortNum
+          } elseif { ([string compare $port2_GUID $myguid]==0) } {
+            set return_lid $lid
+            set return_port $port1_PortNum
+          }
+        }
+    }
+    $lids_dom delete
+    $links_dom delete
+    return [list $return_lid $return_port]
+}
+

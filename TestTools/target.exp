@@ -1,0 +1,2377 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid testing
+# These functions provide support for remote login and command execution
+# against a test target host
+
+## tcl procedures to support testing:
+## =============================================
+
+# pattern to match for unix prompts (both local and on target)
+global target_unix_prompt
+set target_unix_prompt {[$#] }
+
+# pattern to match for chassis prompts
+# since it starts with a -, -gl must be passed to expect
+global target_chassis_prompt
+set target_chassis_prompt {-> }
+
+# prompt which comes after login when connect to support shell
+global target_chassis_shell_prompt
+set target_chassis_shell_prompt {shell-> }
+
+# limit on login retries
+global target_chassis_retry_limit
+set target_chassis_retry_limit 3
+
+# is the present chassis session a support shell session?
+global target_chassis_shell
+set target_chassis_shell 0
+# save area for main card when in a rlogin shell
+global target_chassis_shell_save
+set target_chassis_shell_save 0
+
+global os_type
+set os_type [ exec uname -s ]
+
+proc chassis_strip_slots { chassis } {
+##
+## chassis_strip_slots
+## -------------------
+## strip slot specifications from chassis
+##
+## Usage:
+##	chassis_strip_slots chassis
+## Arguments:
+##	chassis - chassis name of the form:   name[:slot,slot...]
+## Returns:
+##	resulting chassis name
+##	-code error on failure
+
+	if { [ regexp {.*\[(.*)\].*:.*} "$chassis" full ret] } {
+		# [chassis]:slot format
+		return "$ret"
+	} elseif { [ regexp {.*\[(.*)\].*} "$chassis" full ret] } {
+		# [chassis] format
+		return "$ret"
+	} elseif { [ regexp {.*:.*:.*} "$chassis" full ] } {
+		# ipv6 without [] nor slot
+		return "$chassis"
+	} elseif { [regexp {([^:]+):.*} "$chassis" full ret] } {
+		# chassis:slot format
+		return "$ret"
+	} else {
+		# chassis without [] nor slot
+		return "$chassis"
+	}
+}
+
+proc chassis_get_slots { chassis } {
+##
+## chassis_get_slots
+## -------------------
+## get slot specifications from chassis
+##
+## Usage:
+##	chassis_get_slots chassis
+## Arguments:
+##	chassis - chassis name of the form:   name[:slot,slot...]
+## Returns:
+##	resulting list of slots as a TCL list : slot nos after colon
+##	if no slots, returns "all"
+##	-code error on failure
+
+	if { [ regexp {.*\[.*\].*:(.*)} "$chassis" full slots] } {
+		# [chassis]:slot format
+		return [string map {, " "} "$slots"]
+	} elseif { [ regexp {.*\[.*\].*} "$chassis" full] } {
+		# [chassis] format
+		return "all"
+	} elseif { [ regexp {.*:.*:.*} "$chassis" full ] } {
+		# ipv6 without [] nor slot
+		return "all"
+	} elseif { [regexp {[^:]+:(.*)} "$chassis" full slots] } {
+		# chassis:slot format
+		return [string map {, " "} "$slots"]
+	} else {
+		# chassis without [] nor slot
+		return "all"
+	}	
+}
+
+proc local_sh { } {
+##
+## local_sh
+## -------------------
+## start a local shell
+##
+## Usage:
+##	local_sh
+## Arguments:
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	test_spawn "bash" bash
+
+	expect_unix_prompt 60
+	local_set_env
+	return 0
+}
+
+proc local_sh_exit { } {
+##
+## local_sh_exit
+## ----------------
+## exit from shell connection created by local_sh
+##
+## Usage:
+##	local_sh_exit
+##
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	send_unix_cmd "exit 0"
+	ignore_rest
+
+	return 0
+}
+
+proc local_set_env { } {
+##
+## local_set_env
+## -------------------
+## setup environment for shell session to allow testing
+##
+## Usage:
+##	local_set_env
+## Arguments:
+##	None
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	# set COLUMNS real large so the Posix shell doesn't enter
+	# command edit mode and confuse us
+	#unix_cmd 60 "" "export COLUMNS=500"
+	#unix_cmd 60 "" "unset EDITOR"
+	#unix_cmd 60 "" "unset VISUAL"
+	#unix_cmd 60 "" "umask 0"
+	#target_set_intr
+	# get rid of cr and control characters in logs for easier reading
+	#unix_cmd 60 0 {unset PROMPT_COMMAND; export PS1='[\u@\h]\$ '; stty -onlcr columns 500}
+	unix_cmd 60 0 {unset PROMPT_COMMAND; export PS1='[\u@\h]\$ '}
+}
+
+proc target_rlogin { target usercode password } {
+##
+## target_rlogin
+## -------------------
+## rlogin to the given target host
+##
+## Usage:
+##	target_rlogin target usercode password
+## Arguments:
+##	target - hostname to rlogin to
+##	usercode - usercode
+##	password - password
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+	global stty_init
+	global target_unix_prompt
+
+	test_spawn "rlogin" rlogin $target -l $usercode
+	set_timeout 120
+	set expecting "rlogin session ($target $usercode)"
+	expect {
+		"assword:"	{ exp_send "$password\r"
+				  exp_continue
+				}
+		"incorrect"		{ set info "Failed to rlogin to $target as $usercode, incorrect usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"failure"	{ set info "Failed to rlogin to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"refused"	{ set info "Failed to rlogin to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"nknown"	{ set info "Failed to rlogin to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"$target_unix_prompt"		noop
+	}
+
+	return 0
+}
+
+proc target_telnet { target usercode password } {
+##
+## target_telnet
+## -------------------
+## telnet to the given target host
+##
+## Usage:
+##	target_telnet target usercode password
+## Arguments:
+##	target - hostname to rlogin to
+##	usercode - usercode
+##	password - password
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+	global stty_init
+	global target_unix_prompt
+
+	test_spawn "telnet" telnet $target -l $usercode
+	set_timeout 120
+	set expecting "telnet session ($target $usercode)"
+	expect {
+		"assword:"	{ exp_send "$password\r"
+				  exp_continue
+				}
+		"incorrect"		{ set info "Failed to telnet to $target as $usercode, incorrect usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"failure"	{ set info "Failed to telnet to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"refused"	{ set info "Failed to telnet to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"nknown"	{ set info "Failed to telnet to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"$target_unix_prompt"		noop
+	}
+
+	return 0
+}
+
+proc target_chassis_telnet {target usercode password} {
+##
+## target_chassis_telnet
+## -------------------
+## telnet to the given target chassis
+##
+## Usage:
+##  target_chassis_telnet target usercode password
+## Arguments:
+##  target - chassis name to telnet to
+##  usercode - usercode
+##  password - password
+## Returns:
+##  0 - success
+##  -code error on failure
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+	global stty_init
+	global target_chassis_prompt
+	global target_chassis_shell target_chassis_shell_prompt
+	global target_chassis_retry_limit
+
+	set target_chassis_shell 0
+	test_spawn "telnet" telnet $target
+	set_timeout 120
+	set expecting "telnet session ($target $usercode)"
+	set retries 0
+	expect {
+        "ogin:" { exp_send "$usercode\r"
+					set retries [ expr $retries + 1 ]
+					if { $retries > $target_chassis_retry_limit } {
+						 set info "Failed to telnet to $target as $usercode"
+				  		return -code error -errorinfo $info $info
+					}
+                   exp_continue
+                 }
+        "sername:" { exp_send "$usercode\r"
+					set retries [ expr $retries + 1 ]
+					if { $retries > $target_chassis_retry_limit } {
+						 set info "Failed to telnet to $target as $usercode"
+				  		return -code error -errorinfo $info $info
+					}
+                   exp_continue
+                 }
+        "sername->" { exp_send "$usercode\r"
+					set retries [ expr $retries + 1 ]
+					if { $retries > $target_chassis_retry_limit } {
+						 set info "Failed to telnet to $target as $usercode"
+				  		return -code error -errorinfo $info $info
+					}
+                   exp_continue
+                 }
+        "assword:"  { exp_send "$password\r"
+                  exp_continue
+                }
+        "assword->"  { exp_send "$password\r"
+                  exp_continue
+                }
+		"incorrect"		{ set info "Failed to telnet to $target as $usercode, incorrect usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"failure"	{ set info "Failed to telnet to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"refused"	{ set info "Failed to telnet to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"nknown"	{ set info "Failed to telnet to $target as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		-gl "$target_chassis_shell_prompt"	{ set target_chassis_shell 1 }
+		-gl "$target_chassis_prompt"		noop
+	}
+
+    return 0
+}
+
+
+proc target_ssh { target usercode password } {
+##
+## target_ssh
+## -------------------
+## ssh to the given target host
+##
+## Usage:
+##	target_ssh target usercode password
+## Arguments:
+##	target - hostname to ssh to
+##	usercode - usercode
+##	password - password
+## Returns:
+##	0 - success
+##	-code error on failure
+
+    global spawn_id expect_out spawn_out timeout
+    global expecting
+    global stty_init
+	global target_unix_prompt
+
+    test_spawn "ssh" ssh -q $usercode@$target
+    set_timeout 30
+    set expecting "ssh session ($target $usercode)"
+    expect {
+		"assword:" { exp_send "$password\r"
+			    	exp_continue
+					}
+		"denied" { set info "Failed to ssh to $target as $usercode, incorrect password"
+	    			return -code error -errorinfo $info $info
+				}
+		"failure" { set info "Failed to ssh to $target as $usercode"
+	    			return -code error -errorinfo $info $info
+				}
+		"refused" { set info "Failed to ssh to $target as $usercode"
+	    			return -code error -errorinfo $info $info
+				}
+		"nknown" { set info "Failed to ssh to $target as $usercode"
+	    			return -code error -errorinfo $info $info
+				}
+		"ast login" {
+	    			noop
+				}
+		"$target_unix_prompt"		noop
+   	}
+
+    return 0
+}
+
+proc target_chassis_ssh { target usercode password } {
+##
+## target_chassis_ssh
+## -------------------
+## ssh to the given target chassis
+##
+## Usage:
+##	target_chassis_ssh target usercode password
+## Arguments:
+##	target - chassis to ssh to
+##	usercode - usercode
+##	password - password
+## Returns:
+##	0 - success
+##	-code error on failure
+
+    global spawn_id expect_out spawn_out timeout
+    global expecting
+    global stty_init
+	global target_chassis_prompt
+	global target_chassis_shell target_chassis_shell_prompt
+	global target_chassis_retry_limit
+
+	set target_chassis_shell 0
+    test_spawn "ssh" ssh -q $usercode@$target
+    set_timeout 60
+    set expecting "ssh session ($target $usercode)"
+	set retries 0
+    expect {
+		"ogin:" { exp_send "$usercode\r"
+					set retries [ expr $retries + 1 ]
+					if { $retries > $target_chassis_retry_limit } {
+						 set info "Failed to telnet to $target as $usercode"
+				  		return -code error -errorinfo $info $info
+					}
+					exp_continue
+					}
+		"sername:" { exp_send "$usercode\r"
+					set retries [ expr $retries + 1 ]
+					if { $retries > $target_chassis_retry_limit } {
+						 set info "Failed to telnet to $target as $usercode"
+				  		return -code error -errorinfo $info $info
+					}
+					exp_continue
+					}
+		"sername->" { exp_send "$usercode\r"
+					set retries [ expr $retries + 1 ]
+					if { $retries > $target_chassis_retry_limit } {
+						 set info "Failed to telnet to $target as $usercode"
+				  		return -code error -errorinfo $info $info
+					}
+					exp_continue
+					}
+        "assword:"  { exp_send "$password\r"
+                  	exp_continue
+                	}
+        "assword->"  { exp_send "$password\r"
+                  	exp_continue
+                	}
+		"denied" { set info "Failed to ssh to $target as $usercode, incorrect password"
+	    			return -code error -errorinfo $info $info
+				}
+		"failure" { set info "Failed to ssh to $target as $usercode"
+	    			return -code error -errorinfo $info $info
+				}
+		"refused" { set info "Failed to ssh to $target as $usercode"
+	    			return -code error -errorinfo $info $info
+				}
+		"nknown" { set info "Failed to ssh to $target as $usercode"
+	    			return -code error -errorinfo $info $info
+				}
+		"continue connecting" { exp_send "yes\n"
+				exp_continue
+				}
+		"ast login" {
+	    			noop
+				}
+		-gl "$target_chassis_shell_prompt"	{ set target_chassis_shell 1 }
+		-gl "$target_chassis_prompt"	noop
+    }
+
+    return 0
+}
+
+proc target_chassis_rlogin_slot {slot usercode password} {
+##
+## target_chassis_rlogin_slot
+## -------------------
+## rlogin to the given slot within the present chassis
+## This should only be called by target_chassis_admin_sh
+## otherwise tracking of shell vs cli prompt will be incorrect
+##
+## Usage:
+##  target_chassis_rlogin_slot slot usercode password
+## Arguments:
+##	slot - slot to login to
+##  usercode - usercode
+##  password - password
+## Returns:
+##  0 - success
+##  -code error on failure
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+	global stty_init
+	global target_chassis_prompt
+	global target_chassis_shell target_chassis_shell_prompt
+	global target_chassis_retry_limit
+	global target_chassis_shell_save
+
+	set target_chassis_shell_save $target_chassis_shell
+	send_chassis_cmd "rlogin $slot"
+	set_timeout 60
+	set expecting "rlogin session to slot $slot ($usercode)"
+	set retries 0
+	expect {
+        "sername:" { exp_send "$usercode\r"
+					set retries [ expr $retries + 1 ]
+					if { $retries > $target_chassis_retry_limit } {
+						 set info "Failed to rlogin to slot $slot as $usercode"
+				  		return -code error -errorinfo $info $info
+					}
+                   exp_continue
+                 }
+        "sername->" { exp_send "$usercode\r"
+					set retries [ expr $retries + 1 ]
+					if { $retries > $target_chassis_retry_limit } {
+						 set info "Failed to rlogin to slot $slot as $usercode"
+				  		return -code error -errorinfo $info $info
+					}
+                   exp_continue
+                 }
+        "assword:"  { exp_send "$password\r"
+                  exp_continue
+                }
+        "assword->"  { exp_send "$password\r"
+                  exp_continue
+                }
+		"incorrect"		{ set info "Failed to rlogin to slot $slot as $usercode, incorrect usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"failure"	{ set info "Failed to rlogin to slot $slot as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"refused"	{ set info "Failed to rlogin to slot $slot as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"nknown"	{ set info "Failed to rlogin to slot $slot as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"orry"	{ set info "Failed to rlogin to slot $slot as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		"not responding"	{ set info "Failed to rlogin to slot $slot as $usercode"
+				  return -code error -errorinfo $info $info
+				}
+		-gl "$target_chassis_shell_prompt"	{ set target_chassis_shell 1 }
+		-gl "$target_chassis_prompt"		{ set target_chassis_shell 0 }
+	}
+
+    return 0
+}
+
+proc send_unix { text } {
+##
+## send_unix
+## -------------------
+## send a interactive response to a unix command during a login session
+##
+## Usage:
+##	send_unix text
+## Arguments:
+##	text - text to send
+## Returns:
+##	nothing
+## Additional Information:
+##	Do NOT use this to send commands.
+##	send_unix_cmd or unix_cmd should be used for that purpose
+
+	global spawn_id expect_out spawn_out
+
+	exp_send "$text"
+}
+
+proc send_chassis { text } {
+##
+## send_chassis
+## -------------------
+## send a interactive response to a chassis command during a login session
+##
+## Usage:
+##	send_chassis text
+## Arguments:
+##	text - text to send
+## Returns:
+##	nothing
+## Additional Information:
+##	Do NOT use this to send commands.
+##	send_chassis_cmd or chassis_cmd should be used for that purpose
+	global spawn_id expect_out spawn_out
+
+	exp_send "$text"
+}
+
+proc target_set_intr {} {
+##
+## target_set_intr
+## ----------------
+## set the interrupt character to control-C
+##
+## Usage:
+##	target_set_intr
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	unix_cmd 60 0 "stty intr ^C"
+}
+
+proc target_send_intr {} {
+##
+## target_send_intr
+## ----------------
+## set the interrupt character (eg. control-C) to a host
+##
+## Usage:
+##	target_send_intr
+## Returns:
+##	0 - success
+##	-code error on failure
+
+    global spawn_id expect_out spawn_out timeout
+
+	exp_send "\003"
+}
+
+proc chassis_send_intr {} {
+##
+## chassis_send_intr
+## ----------------
+## set the interrupt character (eg. control-C) to a chassis
+##
+## Usage:
+##	chassis_send_intr
+## Returns:
+##	0 - success
+##	-code error on failure
+
+    global spawn_id expect_out spawn_out timeout
+
+	exp_send "\003"
+}
+
+proc target_set_noecho {} {
+##
+## target_set_noecho
+## ----------------
+## disable echo during a unix login session or sh
+##
+## Usage:
+##	target_set_noecho
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	unix_cmd 60 0 "stty -echo"
+}
+
+proc target_set_echo {} {
+##
+## target_set_echo
+## ----------------
+## enable echo during a unix login session or sh
+##
+## Usage:
+##	target_set_echo
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	unix_cmd 60 0 "stty echo"
+}
+
+proc target_su { usercode {password "" }} {
+##
+## target_su
+## -------------------
+## change usercode during a unix login session
+##
+## Usage:
+##	target_su usercode [password]
+## Arguments:
+##	usercode - usercode
+##	password - password, if omitted assumes no password needed
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting env
+	global target_unix_prompt
+
+	send_unix_cmd "su - $usercode"
+	set_timeout 120
+	set expecting "su session ($usercode)"
+	expect {
+		"assword:"	{ if { "$password" == "" } {
+					set info "Failed to su $usercode, password required"
+				  	return -code error -errorinfo $info $info
+				  } else {
+					exp_send "$password\n"
+				  	exp_continue
+				  }
+				}
+		"Sorry"		{ set info "Failed to su $usercode, incorrect password"
+				  return -code error -errorinfo $info $info
+				}
+		"$target_unix_prompt"		noop
+	}
+
+	#unix_cmd 60 0 "ksh"
+	target_set_env
+
+	return 0
+}
+
+proc target_su_exit { } {
+##
+## target_su_exit
+## -------------------
+## exit super user shell created by target_su
+##
+## Usage:
+##	target_su_exit
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	global env
+
+	# exit ksh
+	#unix_cmd 60 "" "exit 0"
+	# exit su
+	unix_cmd 60 "" "exit 0"
+}
+
+proc target_set_env { } {
+##
+## target_set_env
+## -------------------
+## setup environment for unix shell session to allow testing
+##
+## Usage:
+##	target_set_env
+## Arguments:
+##	None
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	# set COLUMNS real large so the Posix shell doesn't enter
+	# command edit mode and confuse us
+	#unix_cmd 60 "" "export COLUMNS=500"
+	#unix_cmd 60 "" "unset EDITOR"
+	#unix_cmd 60 "" "unset VISUAL"
+	#unix_cmd 60 "" "umask 0"
+	#target_set_intr
+	# get rid of cr and control characters in logs for easier reading
+	unix_cmd 60 0 {unset PROMPT_COMMAND; export PS1='[\u@\h]\$ '; stty -onlcr columns 500}
+}
+
+proc target_root_sh { target } {
+##
+## target_root_sh
+## ----------------
+## prepare for a test by login'ing to target host as user root
+##
+## Usage:
+##	target_root_sh target
+##
+## Arguments:
+##	target - hostname to login to
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	uses:
+##		env(CFG_LOGIN_METHOD) to select between rlogin or ssh
+##		env(CFG_USERNAME) as a non-root user name for rlogin (followed by su)
+##		env(CFG_PASSWORD) as password for CFG_USERNAME for rlogin
+##		env(CFG_ROOTPASS) as root password for ssh or su
+
+	global env
+
+	if { "$env(CFG_LOGIN_METHOD)" == "rlogin" } {
+		target_rlogin $target $env(CFG_USERNAME) $env(CFG_PASSWORD)
+		target_su root $env(CFG_ROOTPASS)
+	} elseif { "$env(CFG_LOGIN_METHOD)" == "telnet" } {
+		target_telnet $target $env(CFG_USERNAME) $env(CFG_PASSWORD)
+		target_su root $env(CFG_ROOTPASS)
+	} elseif { "$env(CFG_LOGIN_METHOD)" == "ssh" } {
+		target_ssh $target root $env(CFG_ROOTPASS)
+		target_set_env
+	} else {
+		set info "CFG_LOGIN_METHOD must be rlogin, telnet or ssh"
+		return -code error -errorinfo $info $info
+	}
+
+	return 0
+}
+
+proc target_root_sh_exit { } {
+##
+## target_root_sh_exit
+## ----------------
+## exit from shell connection created by target_root_sh
+##
+## Usage:
+##	target_root_sh_exit
+##
+## Returns:
+##	0 - success
+##	-code error on failure
+##	uses:
+##		env(CFG_LOGIN_METHOD) to select between rlogin or ssh
+
+	global env
+
+	if { "$env(CFG_LOGIN_METHOD)" == "rlogin" } {
+		target_su_exit
+	} elseif { "$env(CFG_LOGIN_METHOD)" == "telnet" } {
+		target_su_exit
+	} elseif { "$env(CFG_LOGIN_METHOD)" == "ssh" } {
+		#unix_cmd 60 "" "exit 0"
+		send_unix_cmd "exit 0"
+	} else {
+		set info "CFG_LOGIN_METHOD must be rlogin, telnet or ssh"
+		return -code error -errorinfo $info $info
+	}
+
+	ignore_rest
+
+	return 0
+}
+
+proc target_chassis_admin_sh { target {slot ""} {user "admin"}} {
+##
+## target_chassis_admin_sh
+## ----------------
+## prepare for a test by login'ing to chassis as user admin
+##
+## Usage:
+##	target_chassis_admin_sh target [slot] [user]
+##
+## Arguments:
+##	target - chassis to login to
+##	slot - slot to login to, default is ""
+##	user - user code to login as, default is admin
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	uses:
+##		env(CFG_CHASSIS_LOGIN_METHOD) to select between telnet or ssh
+##		env(CFG_CHASSIS_ADMIN_PASSWORD) as password for admin (if no password-less ssh)
+
+	global env
+
+	if { "$env(CFG_CHASSIS_LOGIN_METHOD)" == "ssh" } {
+		target_chassis_ssh $target $user $env(CFG_CHASSIS_ADMIN_PASSWORD)
+	} elseif { "$env(CFG_CHASSIS_LOGIN_METHOD)" == "telnet" } {
+		target_chassis_telnet $target $user $env(CFG_CHASSIS_ADMIN_PASSWORD)
+	} else {
+		set info "CFG_CHASSIS_LOGIN_METHOD must be ssh or telnet"
+		return -code error -errorinfo $info $info
+	}
+	if { "$slot" != "" } {
+		target_chassis_rlogin_slot $slot $user $env(CFG_CHASSIS_ADMIN_PASSWORD)
+	}
+
+	return 0
+}
+
+proc target_chassis_admin_sh_exit { {rlogin 0} } {
+##
+## target_chassis_admin_sh_exit
+## ----------------
+## exit from shell connection created by target_chassis_admin_sh
+##
+## Usage:
+##	target_chassis_admin_sh_exit [rlogin]
+## Arguments:
+##	rlogin - are we in an rlogin subshell
+##
+## Returns:
+##	0 - success
+##	-code error on failure
+##	uses:
+
+	global target_chassis_shell
+	global target_chassis_shell_save
+
+	if { $rlogin } {
+		send_chassis "logout\n"
+		expect_list 60 "connection closed"
+		set target_chassis_shell $target_chassis_shell_save
+	}
+	send_chassis "logout\n"
+	set target_chassis_shell 0
+
+	ignore_rest
+
+	return 0
+}
+
+proc expect_prompt { timelimit prompt {out_var ""}} {
+##
+## expect_prompt
+## -------------------------
+## wait for prompt during a session
+##
+## Usage:
+##	expect_prompt timelimit prompt [out_var]
+## Arguments:
+##	timelimit - maximum wait for shell prompt
+##	prompt - regular expression for prompt
+##	out_var - variable in callers context to receive all text which was
+##		received during during this expect
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+
+	global spawn_id expect_out spawn_out timeout
+	
+	if { "$out_var" != "" } {
+		upvar $out_var $out_var
+	}
+
+	expect_list $timelimit "{$prompt}" {} $out_var
+
+	return 0
+}
+
+proc expect_unix_prompt { timelimit {out_var ""}} {
+##
+## expect_unix_prompt
+## -------------------------
+## wait for a unix/darwin prompt during a session
+##
+## Usage:
+##	expect_unix_prompt timelimit [out_var]
+## Arguments:
+##	timelimit - maximum wait for shell prompt
+##	out_var - variable in callers context to receive all text which was
+##		received during during this expect
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+	global target_unix_prompt
+
+	if { "$out_var" != "" } {
+		upvar $out_var $out_var
+	}
+	return [ expect_prompt $timelimit "$target_unix_prompt" $out_var ]
+}
+
+proc expect_chassis_prompt { timelimit {out_var ""}} {
+##
+## expect_chassis_prompt
+## -------------------------
+## wait for a chassis prompt during a session
+##
+## Usage:
+##	expect_chassis_prompt timelimit [out_var]
+## Arguments:
+##	timelimit - maximum wait for shell prompt
+##	out_var - variable in callers context to receive all text which was
+##		received during during this expect
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+	global target_chassis_prompt
+	global target_chassis_shell target_chassis_shell_prompt
+
+	if { "$out_var" != "" } {
+		upvar $out_var $out_var
+	}
+	if { $target_chassis_shell } {
+		set prompt "$target_chassis_shell_prompt"
+	} else {
+		set prompt "$target_chassis_prompt"
+	}
+	return [ expect_prompt $timelimit "$prompt" $out_var ]
+}
+
+proc target_get_config_stack_type { { host "" } } {
+##
+## target_get_config_stack_type
+## -------------------------
+## get the configured stack type of the specified system.
+##
+## Usage:
+##	target_get_config_stack_type host
+## Arguments:
+##	host - host to look for in CFG_OFED_HOSTS
+## Returns:
+##	"OPENIB" or "IBACCESS"
+##	-code error on failure (eg. unable to identify stack type)
+## Additional Information:
+##		checks for host CFG_OFED_HOSTS and stack type is reported based solely
+##		on CFG_OFED_HOSTS.  If not specified or CFG_OFED_HOSTS is not exported
+##		then returns an error
+	global env
+
+	if { "$host" == "" || ! [ info exists env(CFG_OFED_HOSTS) ] } {
+		set info "Unable to Determine IB Stack Type"
+		return -code error -errorinfo $info $info
+	}
+	set index [ lsearch -exact $env(CFG_OFED_HOSTS) $host ]
+	if { $index != -1 } {
+		return "OPENIB"
+	} else {
+		return "IBACCESS"
+	}
+}
+
+proc target_get_stack_type { { checkrun "y"} { host "" } } {
+##
+## target_get_stack_type
+## -------------------------
+## get the stack type of the current target Linux/Unix system.
+##
+## Usage:
+##	target_get_stack_type [checkrun [host]]
+## Arguments:
+##	checkrun - if y, the running stack is checked first, otherwise
+##		just installed stack is checked.  Note that during reinstall
+##		an old stack could be left running until the next reboot
+##		default is y.  Beware, due to newer distros including openib, if it
+##		appears both are installed and 'n' is used, this reports IBACCESS.
+##		It is safest to invoke this with 'y'.
+##	host - if specified and CFG_OFED_HOSTS is exported, then host is looked
+##		for in CFG_OFED_HOSTS and stack type is reported based solely on
+##		CFG_OFED_HOSTS.  If not specified or CFG_OFED_HOSTS is not exported
+##		then actual running or installed stack is checked
+## Returns:
+##	"OPENIB" or "IBACCESS"
+##	-code error on failure (eg. unable to identify stack type)
+## Additional Information:
+##	The global timeout is changed by this routine
+##	If no IB stack is found running, then checks which stack is installed
+
+	global spawn_id expect_out spawn_out
+	global env
+
+	# try static lookup first
+	if { [ catch { target_get_config_stack_type "$host" } res ] == 0 } {
+		return "$res";
+	}
+
+	set target_os_type [target_get_os_type]
+
+	if { "$checkrun" == "y" } {
+		# ib_umad is a required module for OPEN IB stack
+		send_unix_cmd {lsmod|egrep '^ib_umad[[:space:]]'}
+		if { 0 == [ get_exit_status 60 ] } {
+			return "OPENIB"
+		}
+		# ibt is a required module for IbAccess stack
+		send_unix_cmd {lsmod|egrep '^ibt[[:space:]]'}
+		if { 0 == [ get_exit_status 60 ] } {
+			return "IBACCESS"
+		}
+	}
+
+	# see if IbAccess installed, 0 -> yes
+	send_unix_cmd {test -e /etc/init.d/iba -o -e /lib/modules/`uname -r`/iba/ibt.ko}
+	set iba_not_installed [ get_exit_status 60 ]
+
+	# see if Open IB installed, 0 -> yes
+	send_unix_cmd {test -e /etc/init.d/openibd -o -e /lib/modules/`uname -r`/kernel/drivers/infiniband/core/ib_umad.ko}
+	set openib_not_installed [ get_exit_status 60 ]
+
+	# newer distros include openib, so if both appear installed also assume iba
+	# presently this is only called with checkrun=n for automated tests configio
+	if { ! $iba_not_installed } {
+		return "IBACCESS"
+	}
+	if { $iba_not_installed && ! $openib_not_installed } {
+		return "OPENIB"
+	}
+	set info "Unable to Determine IB Stack Type"
+	return -code error -errorinfo $info $info
+}
+
+proc target_get_os_type { } {
+##
+## target_get_os_type
+## -------------------------
+## get the os_type of the current target Linux/Darwin/Unix system.
+##
+## Usage:
+##	target_get_os_type
+## Arguments:
+## Returns:
+##	"Linux" or "Darwin" (eg. uname -s output of target system)
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	set_timeout 60
+	# we use SSS around output so we don't mistake other text in output
+	# (such as in hostname in prompt) for the os_type
+	send_unix_cmd "echo SSS`uname -s`SSS"
+	set expecting "target os_type"
+	expect {
+		-re {SSS[A-Za-z0-9]+SSS}	noop
+	}
+
+	regexp {SSS([A-Za-z0-9]+)SSS} $expect_out(0,string) line ret
+	expect_unix_prompt 60
+
+	return $ret
+}
+
+# TBD - could be moved to TestTools/mpi.exp
+# Note: not used by FF, only by Int Tests
+proc target_get_registered_mpi_version {mpi_type} {
+    global spawn_id expect_out spawn_out timeout
+    global expecting
+    
+    send_unix_cmd "echo SSS`mpi-selector --list`EEE"
+    set out ""
+    expect_list 60 { "mpi-selector" "EEE" "EEE" } "" out
+    
+    regexp "EEE.*SSS+(.*)EEE$" $out full_out mpi_list
+
+    check_exit_status 60 0    
+    
+    if {![regexp "($mpi_type)-(\[^ ]+)" $mpi_list line mpi_type_match mpi_version]} {
+        set info "Did not find mpi_type($mpi_type) in mpi_list($mpi_list)"
+        return -code error -errorinfo $info $info
+    }
+    
+    return $mpi_version
+}
+
+proc get_exit_status { timelimit { wait_prompt 1 } } {
+##
+## get_exit_status
+## -------------------------
+## wait for shell prompt and return the exit status of the last command executed
+## during a login session, then wait for shell prompt
+##
+## Usage:
+##	get_exit_status timelimit [wait_prompt]
+## Arguments:
+##	timelimit - maximum wait for shell prompt
+##	wait_prompt - should we wait for prompt before issuing echo of status
+## Returns:
+##	exit code - success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	if { $wait_prompt } {
+		expect_unix_prompt $timelimit
+	}
+
+	set_timeout 60
+	# we use SSS around number so we don't mistake other numbers in output
+	# (such as in hostname in prompt) for the exit code
+	send_unix_cmd "echo SSS$?SSS"
+	set expecting "exit code"
+	expect {
+		-re {SSS[0-9]+SSS}	noop
+	}
+
+	regexp {[0-9]+} $expect_out(0,string) ret
+	expect_unix_prompt 60
+
+	return $ret
+}
+
+proc check_exit_status { timelimit exit_code { wait_prompt 1 } } {
+##
+## check_exit_status
+## -------------------------
+## wait for shell prompt and check the exit status of the last command executed
+## during a login session, then wait for shell prompt
+##
+## Usage:
+##	check_exit_status timelimit exit_code [wait_prompt]
+## Arguments:
+##	timelimit - maximum wait for shell prompt
+##	exit_code - expected exit code ([0-9] if don't care)
+##	wait_prompt - should we wait for prompt before issuing echo of status
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	if { $wait_prompt } {
+		expect_unix_prompt $timelimit
+	}
+
+	set_timeout 60
+	# we use SSS around number so we don't mistake other numbers in output
+	# (such as in hostname in prompt) for the exit code
+	send_unix_cmd "echo SSS$?SSS"
+	set expecting "exit code: $exit_code"
+	expect {
+		"SSS${exit_code}SSS"	noop
+		-re {SSS[0-9]+SSS}	{ set info "Incorrect exit code: Expected $exit_code, Got: $expect_out(0,string)"
+				  return -code error -errorinfo $info $info
+				}
+	}
+
+	expect_unix_prompt 60
+
+	return 0
+}
+
+proc get_chassis_exit_status { timelimit { wait_prompt 1 } } {
+##
+## get_chassis_exit_status
+## -------------------------
+## wait for shell prompt and return the exit status of the last command executed
+## during an chassis session, then wait for shell prompt
+##
+## Usage:
+##	get_exit_status timelimit [wait_prompt]
+## Arguments:
+##	timelimit - maximum wait for shell prompt
+##	wait_prompt - should we wait for prompt before issuing echo of status
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	if { $wait_prompt } {
+		expect_chassis_prompt $timelimit
+	}
+
+	set_timeout 60
+	send_chassis_cmd "showLastRetCode"
+	set expecting "exit code"
+	expect {
+		-re {Code: [0-9]+:}	noop
+	}
+
+	regexp {[0-9]+} $expect_out(0,string) ret
+	expect_chassis_prompt 60
+
+	return $ret
+}
+
+proc check_chassis_exit_status { timelimit exit_code { wait_prompt 1 } } {
+##
+## check_chassis_exit_status
+## -------------------------
+## wait for shell prompt and check the exit status of the last command executed
+## during an chassis session, then wait for shell prompt
+##
+## Usage:
+##	check_exit_status timelimit exit_code [wait_prompt]
+## Arguments:
+##	timelimit - maximum wait for shell prompt
+##	exit_code - expected exit code ([0-9] if don't care)
+##	wait_prompt - should we wait for prompt before issuing echo of status
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	if { $wait_prompt } {
+		expect_chassis_prompt $timelimit
+	}
+
+	set_timeout 60
+	send_chassis_cmd "showLastRetCode"
+	set expecting "exit code: $exit_code"
+	expect {
+		"Code: ${exit_code}:"	noop
+		-re {Code: [0-9]+:}	{ set info "Incorrect exit code: Expected $exit_code, Got: $expect_out(0,string)"
+				  return -code error -errorinfo $info $info
+				}
+	}
+	expect_chassis_prompt 60
+
+	return 0
+}
+
+proc longcmd { cmd } {
+##
+## longcmd
+## --------
+## Add newlines and backslashes to a command to avoid command line editor
+##
+## Usage:
+##	longcmd cmd
+## Arguments:
+##	cmd - a shell command to break up into multiple lines
+## Returns:
+##	A command to execute
+##
+## Additional Information:
+##	On some platforms the command line editor cannot be turned off.  On other
+##	platforms setting COLUMNS=500, unset EDITOR and unset VISUAL would
+##	cause the command line editor to not affect entry of long command lines
+##	Unfortunately, the entry of such long
+##	lines causes the command line editor to re-display the line
+##	including the # or $ prompt.  This makes the expect scripts think the
+##	command has completed before it has even started.
+##
+	if { [ string length $cmd ] < 70 } {
+		return $cmd
+	}
+	# break up every 70th character
+	set result {}
+	while { [ string length $cmd ] > 0 } {
+		append result [string range $cmd 0 69 ]
+		append result "\\\n"
+		set cmd [ string range $cmd 70 end ]
+	}
+	return $result
+}
+		
+proc send_unix_cmd { cmd { separator "\n"} } {
+##
+## send_unix_cmd
+## -------------------
+## issue a unix command to the target system during a login session
+##
+## Usage:
+##	send_unix_cmd cmd [separator]
+## Arguments:
+##	cmd - unix command to issue
+##	separator - separator at end of command, default is newline
+## Returns:
+##	nothing
+## Additional Information:
+##	This must be used to send any command which could be larger than
+##	70 characters and for which the first expect is for a shell prompt
+##	If there are other expect's before the wait for the shell prompt,
+##	a simple send can also be used
+##
+##	Do NOT use this to send responses to interactive commands.
+##	exp_send should be used for that purpose
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+
+	exp_send "$cmd$separator"
+	# possible workaround if command line editor gets involved
+	#exp_send [ longcmd "$cmd$separator" ]
+}
+
+proc send_chassis_cmd { cmd } {
+##
+## send_chassis_cmd
+## -------------------
+## issue a command to the target chassis during a login session
+##
+## Usage:
+##	send_chassis_cmd cmd
+## Arguments:
+##	cmd - chassis command to issue
+## Returns:
+##	nothing
+## Additional Information:
+##	This should be used to send all chassis commands.  It handles
+##	the support shell vs cli interface as needed.  The decision as to
+##	type of shell inteface is made per chassis during login.
+##
+##	Do NOT use this to send responses to interactive commands.
+##	exp_send should be used for that purpose
+##
+##	unlike send_unix_cmd, there is no "separator" argument.  This is for a
+##	few reasons:
+##		- implementation with target_chassis_shell could be tricky
+##		- older versions of chassis FW only allowed newline as the separator
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+	global target_chassis_shell
+
+	if { $target_chassis_shell } {
+		exp_send "cli \"$cmd\"\n"
+	} else {
+		exp_send "$cmd\n"
+	}
+}
+
+proc unix_cmd { timelimit exit_code cmd } {
+##
+## unix_cmd
+## -------------------
+## issue a unix command to the target system during a login session
+##
+## Usage:
+##	unix_cmd timelimit exit_code cmd
+## Arguments:
+##	timelimit - maximum wait for command to complete (shell prompt)
+##	exit_code - expected exit code ("" if don't care)
+##	cmd - unix command to issue
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+
+
+	if { "$exit_code" != "" } {
+		send_unix_cmd $cmd ";"
+		check_exit_status $timelimit $exit_code 0
+	} else {
+		send_unix_cmd $cmd
+		expect_unix_prompt $timelimit
+	}
+
+	return 0
+}
+
+proc chassis_cmd { timelimit exit_code cmd } {
+##
+## chassis_cmd
+## -------------------
+## issue a chassis command to the target system during a login session
+##
+## Usage:
+##	chassis_cmd timelimit exit_code cmd
+## Arguments:
+##	timelimit - maximum wait for command to complete (shell prompt)
+##	exit_code - expected exit code ("" if don't care)
+##	cmd - chassis command to issue
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+
+	if { "$exit_code" != "" } {
+		send_chassis_cmd $cmd
+		check_chassis_exit_status $timelimit $exit_code
+	} else {
+		send_chassis_cmd $cmd
+		expect_chassis_prompt $timelimit
+	}
+
+	return 0
+}
+
+proc host_send_unix_cmd { host cmd { separator "\n"} } {
+##
+## host_send_unix_cmd
+## -------------------
+## issue a unix command to host via the target system during a login session
+##
+## Usage:
+##	host_send_unix_cmd host cmd [separator]
+## Arguments:
+##	host - host to issue command to
+##	cmd - unix command to issue
+##	separator - separator at end of command, default is newline
+## Returns:
+##	nothing
+## Additional Information:
+##	This must be used to send any command which could be larger than
+##	70 characters and for which the first expect is for a shell prompt
+##	If there are other expect's before the wait for the shell prompt,
+##	a simple send can be used
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+
+	exp_send "ssh -q -o ForwardX11=no -P root@$host $cmd$separator"
+	# possible workaround if command line editor gets involved
+	#exp_send [ longcmd "ssh -q -o ForwardX11=no -P root@$host $cmd$separator" ]
+}
+
+proc opacmdall_stop_child { spawn_id } {
+##
+## opacmdall_stop_child
+## ----------
+## stop the given child process
+## provided for use by opacmdall only
+## This avoids use of the test infrastructure
+##
+## Usage:
+##	opacmdall_stop_child spawn_id
+## Arguments:
+##	spawn_id - spawn id's from spawn
+## Returns:
+##	exit status of process
+##	or -code error if unable to wait for process
+
+	global errorCode
+
+	# see if child still running
+	if { [catch {set pid [exp_pid -i $spawn_id]}] == 1 } {
+	    # child must already be dead
+	    #puts "Child exited"
+	} else {
+	    #puts "Stopping $pid"
+	    # terminate child
+	    catch {exp_close -i $spawn_id }
+		catch {exec kill -s INT $pid }
+		#catch {exec kill -s TERM $pid }
+	}
+	set status {}
+	catch {set status [exp_wait -i $spawn_id] }
+	# return the exit status of the process
+	# exp_wait returns a list:
+	# { pid spawn_id OS_ret exit_status }
+	# if OS_ret is 0, status is process exit status
+	# if OS_ret is -1, status is OS errno and errorCode also set
+	# if child was killed, there can be 3 more elements in list:
+	# { pid spawn_id 0 0 CHILDKILLED signal desc}
+	if { [ llength $status ] < 4 } {
+		set info "wait for child failed"
+		return -code error -errorinfo $info $info
+	} elseif { [ lindex $status 4] == "CHILDKILLED" } {
+		set info "child killed: [lrange $status 5 end]"
+		return -code error -errorinfo $info $info
+	} elseif { [ lindex $status 2 ] == 0 } {
+		# process exited
+		set exit_status [ lindex $status 3]
+		return $exit_status
+	} else {
+		# OS error running wait
+		set info "wait for child failed: $errorCode"
+		return -code error -errorinfo $info $info
+	}
+}
+
+proc host_run_cmd { host user cmd {quiet 0} {timelimit -1} {prefix ""} } {
+##
+## host_run_cmd
+## -------------------
+## issue a unix command to host directly via ssh
+## provided for use by opacmdall only
+## This avoids use of the test infrastructure
+##
+## Usage:
+##	host_run_cmd host user cmd [[[quiet] timelimit] prefix]
+## Arguments:
+##	host - host to issue command to
+##	user - user code to connect to host as
+##	cmd - unix command to issue
+##	quiet - if 1 command is not shown
+##	timelimit - maximum time to allow for command to complete, -1-> unlimited
+##	prefix - prefix to output at start of every line output by host
+## Returns:
+##	nothing
+## Additional Information:
+##	errors are caught and output to stderr
+
+	global spawn_id expect_out spawn_out timeout errorCode
+	global env
+
+	if { ! $quiet } {
+		puts "$prefix\[$user@$host\]# $cmd"
+	}
+	if { $timelimit <= 0 } {
+		set timelimit -1
+	}
+
+	if { $timelimit == -1 &&  [string equal "$prefix" "" ] } {
+		if { [ catch { exec ssh -q -o ForwardX11=no -P "$user@$host" "$cmd" >@ stdout 2>@ stderr } res ] != 0 } {
+			set exit_status [concat $errorCode]
+			if { [ lindex $exit_status 0 ] == "CHILDSTATUS" } {
+				set res "child exit code: [lindex $exit_status 2]"
+			} elseif { [ lindex $exit_status 0 ] == "CHILDKILLED" } {
+				set res "child killed: [lrange $exit_status 2 end]"
+			} else {
+				set res "$res: $errorCode"
+			}
+			puts stderr "$prefix$user@$host: $cmd: Command execution FAILED: $res"
+		}
+	} else {
+    	global spawn_id user_spawn_id expect_out spawn_out timeout
+		# disable normal output so we can insert prefix
+		set save_log_user [log_user -info]
+		if { [ catch { 
+				log_user 0
+    			spawn -noecho ssh -q -o ForwardX11=no -P "$user@$host" "$cmd"
+				# do not use TEST_TIMEOUT_MULT
+    			set timeout $timelimit
+    			expect {
+					\n		{puts -nonewline "$prefix$expect_out(buffer)"; exp_continue -continue_timer}
+					\r		{puts -nonewline "$prefix$expect_out(buffer)"; exp_continue -continue_timer}
+					eof		{
+								# handle output without newline at end
+								if { ! [ string equal "$expect_out(buffer)" "" ] } {
+									puts "$prefix$expect_out(buffer)"
+
+								}
+							}
+					timeout {return -code error -errorinfo "Timeout" "Timeout" }
+				}
+ 				#interact {
+				#	-input $user_spawn_id
+				#		timeout [ calc_timeout $timelimit ] {
+				#			#puts "Timeout"
+				#			 return -code error -errorinfo "Timeout" "Timeout"
+				#			}
+				#		\003	{
+				#			#puts "Interrupted"
+				#			 return -code error -errorinfo "Interrupted" "Interrupted"
+				#			}
+				#	-output $spawn_id
+				#		eof	return
+ 				#}
+				set ret [opacmdall_stop_child $spawn_id]
+				if { $ret != 0 } {
+					set info "child exit code: $ret"
+				  	return -code error -errorinfo $info $info
+				}
+			} res ] != 0 } {
+				catch { opacmdall_stop_child $spawn_id }
+				puts stderr "$prefix$user@$host: $cmd: Command execution FAILED: $res"
+		}
+		log_user $save_log_user
+	}
+}
+
+proc chassis_run_cmd { chassis user cmd {quiet 0} {slot ""} {marker ""} {prefix ""}} {
+##
+## chassis_run_cmd
+## -------------------
+## issue a chassis command to chassis
+## provided for use by opacmdall only
+##
+## Usage:
+##	chassis_run_cmd host user cmd [quiet [slot [marker]]]
+## Arguments:
+##	chassis - chassis to issue command to
+##	user - user code to connect to chassis as
+##	cmd - chassis CLI command to issue
+##	quiet - if 1 command is not shown
+##	slot - slot to login to, default is ""
+##	marker - marker for end of command output, otherwise first instance of
+##			prompt marks end of data.  When marker is supplied, prompts which
+##			preceed marker are ignored, but a final prompt is still waited for
+##			after the marker
+##	prefix - prefix to output at start of every line output by host
+## Returns:
+##	nothing
+## Additional Information:
+##	errors are caught and output to stderr
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+	global target_chassis_prompt
+	global target_chassis_shell target_chassis_shell_prompt
+	global log_disable
+
+	# disable detailed logging to stdout
+	log_user 0
+	set log_disable 1
+	setup_expect_after
+	if { ! $quiet } {
+		if { "$slot" != "" } {
+			puts "$prefix\[$user@$chassis:$slot\]# $cmd"
+		} else {
+			puts "$prefix\[$user@$chassis\]# $cmd"
+		}
+	}
+	if { [ catch { target_chassis_admin_sh "$chassis" "$slot" "$user" } res ] != 0 } {
+		puts stderr "$prefix$user@$chassis: $cmd: Command execution FAILED (Login): $res"
+		return
+	}
+	if { $target_chassis_shell } {
+		set prompt "$target_chassis_shell_prompt"
+	} else {
+		set prompt "$target_chassis_prompt"
+	}
+	if { [ catch {
+				send_chassis_cmd "$cmd"
+				set out ""
+				if { "$marker" == "" } {
+					expect_progress 120 {[\r\n\b]} "{$prompt}" {} out
+				} else {
+					expect_progress 120 {[\r\n\b]} "{$marker} {$prompt}" {} out
+				}
+ 				} res ] != 0 } {
+		puts stderr "$prefix$user@$chassis: $cmd: Command execution FAILED: $res"
+	} elseif { [ catch {
+				# filter out $cmd at start
+				set match [string first "$cmd" "$out"]
+				set length [string length "$cmd" ]
+				if { $match != -1 } {
+					set out [string range "$out" [expr $match + $length] end]
+				}
+				# filter out prompt
+				if { "$marker" == "" } {
+					regexp "\[\\\r\\\n\]+(.*)${prompt}" "$out" full_out output
+				} else {
+					regexp "\[\\\r\\\n\]+(.*$marker.*)${prompt}" "$out" full_out output
+				}
+				if { ! [string equal "$prefix" "" ] } {
+					# insert prefix
+					regsub -all -line {^.*$} "$output" "$prefix\\0" new_output
+					# if last character is not newline add one
+					set lastchar [string index $new_output end ] 
+					if { "$lastchar" != {\n} && "$lastchar" != {\r} } {
+						puts stdout $new_output
+					} else {
+						puts -nonewline stdout $new_output
+					}
+				} else {
+					puts -nonewline stdout $output
+				}
+				check_chassis_exit_status 60 0 0
+ 				} res ] != 0 } {
+		puts stderr "$prefix$user@$chassis: $cmd: Command execution FAILED: $res"
+	}
+	catch { target_chassis_admin_sh_exit [expr {"$slot" != ""} ] }
+}
+
+proc hosts_run_cmd { hosts user cmd {quiet 0} {timelimit -1} {output_prefix 0} } {
+##
+## hosts_run_cmd
+## -------------------
+## issue a unix command to hosts directly via ssh
+## provided for use by opacmdall only
+## This avoids use of the test infrastructure
+##
+## Usage:
+##	hosts_run_cmd hosts user cmd [[[quiet] timelimit] output_prefix]
+## Arguments:
+##	hosts - hosts to issue command to, if "" uses $env(CFG_HOSTS)
+##	user - user code to connect to host as
+##	cmd - unix command to issue
+##	quiet - if 1 command is not shown
+##	timelimit - maximum time to allow for command to complete, -1-> unlimited
+##	output_prefix - should host: be output as a prefix to each line
+## Returns:
+##	nothing
+## Additional Information:
+##	errors are caught and output to stderr
+
+	global env
+	if { "$hosts" == "" } {
+		set hosts $env(CFG_HOSTS)
+	}
+	foreach host $hosts {
+		if { $output_prefix } {
+			set prefix "$host: "
+		} else {
+			set prefix ""
+		}
+		host_run_cmd $host $user "$cmd" $quiet $timelimit "$prefix"
+	}
+}
+
+# pardon my spelling but I need a plural version of chassis
+# which has a different spelling so function names are unique
+proc chassises_run_cmd { chassises user cmd {quiet 0} {marker ""} {output_prefix 0}} {
+##
+## chassises_run_cmd
+## -------------------
+## issue a chassis command to chassises directly via ssh
+## provided for use by opacmdall only
+##
+## Usage:
+##	chassises_run_cmd hosts user cmd [[quiet [marker]] output_prefix]
+## Arguments:
+##	chassises - chassises to issue command to, if "" uses $env(CFG_CHASSIS)
+##			can have slot specifier per chassis entry
+##	user - user code to connect to host as
+##	cmd - unix command to issue
+##	quiet - if 1 command is not shown
+##	marker - marker for end of command output, otherwise first instance of
+##			prompt marks end of data.  When marker is supplied, prompts which
+##			preceed marker are ignored, but a final prompt is still waited for
+##			after the marker
+##	output_prefix - should host: be output as a prefix to each line
+## Returns:
+##	nothing
+## Additional Information:
+##	errors are caught and output to stderr
+
+	global env
+	if { "$chassises" == "" } {
+		set chassises $env(CFG_CHASSIS)
+	}
+	foreach chassis $chassises {
+		set slots [chassis_get_slots "$chassis"]
+		set chassis [chassis_strip_slots "$chassis"]
+		foreach slot $slots {
+			if { "$slot" == "all" } {
+				set slot ""
+			}
+			if { $output_prefix } {
+				if { "$slot" != "" } {
+					set prefix "$chassis:$slot: "
+				} else {
+					set prefix "$chassis: "
+				}
+			} else {
+				set prefix ""
+			}
+			chassis_run_cmd $chassis $user "$cmd" $quiet $slot "$marker" "$prefix"
+		}
+	}
+}
+
+proc hosts_parallel_run_cmd { hosts user cmd {quiet 0} {timelimit -1} {output_prefix 0}} {
+##
+## hosts_parallel_run_cmd
+## -------------------
+## issue a unix command to hosts directly via ssh, in parallel on all hosts
+## provided for use by opacmdall only
+## This avoids use of the test infrastructure
+##
+## Usage:
+##	hosts_parallel_run_cmd hosts user cmd [[[quiet] timelimit] output_prefix]
+## Arguments:
+##	hosts - hosts to issue command to, if "" uses $env(CFG_HOSTS)
+##	user - user code to connect to host as
+##	cmd - unix command to issue
+##	quiet - if 1 command is not shown
+##	timelimit - maximum time to allow for command to complete, -1-> unlimited
+##	output_prefix - should host: be output as a prefix to each line
+## Returns:
+##	nothing
+## Additional Information:
+##	errors are caught and output to stderr
+
+	global env
+	global os_type
+	if { "$hosts" == "" } {
+		set hosts $env(CFG_HOSTS)
+	}
+	parallel host $hosts {
+		if { $output_prefix } {
+			set prefix "$host: "
+		} else {
+			set prefix ""
+		}
+		 host_run_cmd "$host" $user "$cmd" $quiet $timelimit "$prefix"
+	}
+}
+
+# pardon my spelling but I need a plural version of chassis
+# which has a different spelling so function names are unique
+proc chassises_parallel_run_cmd { chassises user cmd {quiet 0} {marker ""} {output_prefix 0}} {
+##
+## chassises_parallel_run_cmd
+## -------------------
+## issue a chassis command to chassises, in parallel on all chassises
+## provided for use by opacmdall only
+##
+## Usage:
+##	chassises_parallel_run_cmd chassises user cmd [[quiet [marker]] output_prefix]
+## Arguments:
+##	chassises - chassises to issue command to, if "" uses $env(CFG_HOSTS)
+##			can have slot specifier per chassis entry
+##	user - user code to connect to chassis as
+##	cmd - chassis command to issue
+##	quiet - if 1 command is not shown
+##	marker - marker for end of command output, otherwise first instance of
+##			prompt marks end of data.  When marker is supplied, prompts which
+##			preceed marker are ignored, but a final prompt is still waited for
+##			after the marker
+##	output_prefix - should host: be output as a prefix to each line
+## Returns:
+##	nothing
+## Additional Information:
+##	errors are caught and output to stderr
+
+	global env
+	if { "$chassises" == "" } {
+		set chassises $env(CFG_CHASSIS)
+	}
+	parallel chassis $chassises {
+		set slots [chassis_get_slots "$chassis"]
+		set chassis [chassis_strip_slots "$chassis"]
+		foreach slot $slots {
+			if { "$slot" == "all" } {
+				set slot ""
+			}
+			if { $output_prefix } {
+				if { "$slot" != "" } {
+					set prefix "$chassis:$slot: "
+				} else {
+					set prefix "$chassis: "
+				}
+			} else {
+				set prefix ""
+			}
+			chassis_run_cmd "$chassis" $user "$cmd" $quiet $slot "$marker" "$prefix"
+		}
+	}
+}
+
+proc chassis_scp_cmd { scp_cmd } {
+##
+## chassis_scp_cmd
+## -------------------
+## perform an scp to a chassis
+## provided for use by opascpall, opauploadall, opadownloadall only
+##
+## Usage:
+##	chassis_scp_cmd scp_cmd
+## Arguments:
+##	scp_cmd - scp unix command to issue
+## Returns:
+##	nothing
+## Additional Information:
+##	errors are caught and output to stderr
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+	global log_disable
+	global expecting
+
+	# disable detailed logging to stdout
+	log_user 0
+	set log_disable 1
+
+	local_sh
+	send_unix_cmd "$scp_cmd; echo 'SCP IS DONE'"
+	# handle password prompts, once we start to see progress indicators
+	# we can do a normal wait progress
+	set_timeout 120
+	set expecting "scp session ($scp_cmd)"
+	expect {
+        "assword:"  { exp_send "$env(CFG_CHASSIS_ADMIN_PASSWORD)\r"
+                  exp_continue
+                }
+        "assword->"  { exp_send "$env(CFG_CHASSIS_ADMIN_PASSWORD)\r"
+                  exp_continue
+                }
+		"refused"	{ set info "Failed to $scp_cmd"
+				  return -code error -errorinfo $info $info
+				}
+		"denied"	{ set info "Failed to $scp_cmd"
+				  return -code error -errorinfo $info $info
+				}
+		"Error"	{ set info "Failed to $scp_cmd"
+				  return -code error -errorinfo $info $info
+				}
+		"continue connecting" { exp_send "yes\r"
+				exp_continue
+				}
+		{\*}	noop
+		"%"		noop
+		"No such" { set info "Failed to $scp_cmd"
+				  return -code error -errorinfo $info $info
+				}
+	}
+	expect_progress 200 { "\\\*" "\\\." "=" "-" "%" } { "SCP IS DONE" } {"No such" "Error" "Invalid" "lost" }
+	check_exit_status 60 0 
+	local_sh_exit
+
+    return 0
+}
+
+proc chassis_sftp_cmd { sftp_cmd sftp_action } {
+##
+## chassis_sftp_cmd
+## -------------------
+## perform an sftp to a chassis
+## provided for use by opachassisadmin
+##
+## Usage:
+##	chassis_sftp_cmd sftp_cmd sftp_action
+## Arguments:
+##	sftp_cmd - sftp unix command to issue
+##  sftp_action - sftp command to issue once sftp connection has
+##                been established
+## Returns:
+##	nothing
+## Additional Information:
+##	errors are caught and output to stderr
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+	global log_disable
+	global expecting
+
+	# disable detailed logging to stdout
+	log_user 0
+	set log_disable 1
+
+	local_sh
+	send_unix_cmd "$sftp_cmd; echo 'SFTP IS DONE'"
+	
+	# handle password prompts, once we start to see progress indicators
+	# we can do a normal wait progress
+	set_timeout 120
+	set expecting "sftp session ($sftp_cmd)"
+	expect {
+        "assword:"  { exp_send "$env(CFG_CHASSIS_ADMIN_PASSWORD)\r"
+                  exp_continue
+                }
+        "assword->"  { exp_send "$env(CFG_CHASSIS_ADMIN_PASSWORD)\r"
+                  exp_continue
+                }
+		"refused"	{ set info "Failed to $sftp_cmd"
+				  return -code error -errorinfo $info $info
+				}
+		"denied"	{ set info "Failed to $sftp_cmd"
+				  return -code error -errorinfo $info $info
+				}
+		"Error"	{ set info "Failed to $sftp_cmd"
+				  return -code error -errorinfo $info $info
+				}
+		"continue connecting" { exp_send "yes\r"
+				exp_continue
+				}
+		"sftp>" 	{ exp_send "$sftp_action\r" 
+					exp_send "bye\r"
+					}
+		{\*}	noop
+		"%"		noop
+		"No such" { set info "Failed to $sftp_cmd"
+				  return -code error -errorinfo $info $info
+				}
+	}
+	expect_progress 200 { "\\\*" "\\\." "=" "-" "%" } { "SFTP IS DONE" } {"No such" "Error" "Invalid" "lost" "not found"}
+	check_exit_status 60 0 
+	local_sh_exit
+
+    return 0
+}
+
+proc host_unix_cmd { timelimit exit_code host cmd } {
+##
+## host_unix_cmd
+## -------------------
+## issue a unix command to host via the target system during a login session
+##
+## Usage:
+##	host_unix_cmd timelimit exit_code host cmd
+## Arguments:
+##	timelimit - maximum wait for command to complete (shell prompt)
+##	exit_code - expected exit code ("" if don't care)
+##	host - host to issue command to
+##	cmd - unix command to issue
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global env
+
+	if { "$exit_code" != "" } {
+		host_send_unix_cmd $host $cmd ";"
+		check_exit_status $timelimit $exit_code 0
+	} else {
+		host_send_unix_cmd $host $cmd
+		expect_unix_prompt $timelimit
+	}
+
+	return 0
+}
+
+proc host_save_log { hostname } {
+##
+## host_save_log
+## -------------------
+## Save OS log file for hostname for later use by check_log
+##
+## Usage:
+##	host_save_log hostname
+## Arguments:
+##	hostname - host to save log on, saved to /tmp/log
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+
+	global tests_dir
+
+	exec "ssh -q root@$hostname '$tests_dir/bin/save_log /tmp/log'"
+}
+
+proc host_check_log { hostname testname } {
+##
+## host_check_log
+## -------------------
+## Check OS log file for hostname relative to last host_save_log
+##
+## Usage:
+##	host_check_log hostname testname
+## Arguments:
+##	hostname - host to check log on
+##	testname - name of test to be used in log filenames
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##	assumes already logged into hostname
+
+	global tests_dir
+
+	send_unix_cmd "cd /root/$tests_dir; ./bin/check_log /tmp/log ./logs/$test/$test. ./logs/$test"
+
+	expect_list 120 "DONE" { "ERROR" "WARN" "kernel" }
+}
+
+proc host_basename { hostname } {
+##
+## host_basename
+## -------------------
+## return hostname with any $env(CFG_IPOIB_SUFFIX) or $env(CFG_INIC_SUFFIX)
+## suffix removed
+##
+## Usage:
+##	host_basename hostname
+## Arguments:
+##	hostname - host name used by test driver (could be an $env(CFG_IPOIB_SUFFIX)
+##				or $env(CFG_INIC_SUFFIX) name)
+## Returns:
+##	base of hostname, suitable for an $env(CFG_IPOIB_SUFFIX),
+##	or $env(CFG_INIC_SUFFIX) suffix to be added
+## Additional Information:
+##	When called by FastFabric, CFG_IPOIB_SUFFIX is "", so this is a noop
+	global env
+
+	set result $hostname
+	if { "$env(CFG_IPOIB_SUFFIX)" != "" } {
+		regsub -- "$env(CFG_IPOIB_SUFFIX)\$" $hostname "" result
+	}
+	if { "$env(CFG_INIC_SUFFIX)" != "" } {
+		regsub -- "$env(CFG_INIC_SUFFIX)\$" $hostname "" result
+	}
+	return "$result"
+}
+
+proc get_hostname { number } {
+##
+## get_hostname
+## -------------------
+## return hostname for number'th host in CFG_HOSTS
+##
+## Usage:
+##	get_hostname number
+## Arguments:
+##	number - host number, 1 is 1st host
+## Returns:
+##	hostname from CFG_HOSTS, might not be the host_basename
+
+	global env
+
+	return [ lindex $env(CFG_HOSTS) [ expr $number - 1] ]
+}
+
+proc same_host { hostname1 hostname2 } {
+##
+## same_host
+## -------------------
+## determine if hostnames are equivalent basenames
+##
+## Usage:
+##	same_host hostname1 hostname2
+## Arguments:
+##	hostname1 - host name used by test driver (could be an
+##			 $env(CFG_IPOIB_SUFFIX) or $env(CFG_IPOIB_SUFFIX) name)
+##	hostname2 - host name used by test driver (could be an
+##			 $env(CFG_IPOIB_SUFFIX) or $env(CFG_IPOIB_SUFFIX) name)
+## Returns:
+##	1 - names are same
+##	0 - names are different
+
+	return [ expr {"[ host_basename $hostname1 ]" == "[ host_basename $hostname2 ]"} ]
+}
+
+proc get_hostnumber { name } {
+##
+## get_hostnumber
+## -------------------
+## return host number for host in CFG_HOSTS
+##
+## Usage:
+##	get_hostnumber name
+## Arguments:
+##	name - host name
+## Returns:
+##	host number in CFG_HOSTS, 1 is 1st host
+##	0 - if name not in CFG_HOSTS
+
+	global env
+
+	set number 1
+	foreach host $env(CFG_HOSTS) {
+		if { [same_host $name $host ] } {
+			return $number
+		}
+		incr number
+	}
+
+	return 0
+}
+
+proc have_other_hosts { hostname desthosts } {
+##
+## have_other_hosts
+## -------------------
+## determine if desthosts includes any others other than hostname
+##
+## Usage:
+##	have_other_hosts hostname desthosts
+## Arguments:
+##	hostname - host name used by test driver (could be an $env(CFG_IPOIB_SUFFIX) or $env(CFG_IPOIB_SUFFIX) name)
+##	desthosts - list of hosts to check
+## Returns:
+##	1 - there is at least 1 host other than hostname in desthosts
+##	0 - desthosts has no hosts other than hostname
+
+	foreach host $desthosts {
+		if { ! [ same_host $hostname $host ] } {
+			return 1
+		}
+	}
+	return 0
+}
+
+proc get_local_stack_type { {checkrun "y"}} {
+##
+## get_local_stack_type
+## --------------------
+## get IB stack type on this host
+##
+## Arguments:
+##	checkrun - if y, the running stack is checked first, otherwise
+##		just installed stack is checked.  Note that during reinstall
+##		an old stack could be left running until the next reboot
+##		default is y.  Beware, due to newer distros including openib, if it
+##		appears both are installed and 'n' is used, this reports IBACCESS.
+##		It is safest to invoke this with 'y'.
+##  
+	global spawn_id expect_out spawn_out timeout
+	global env
+	global log_disable
+	global expecting
+
+	# disable detailed logging to stdout
+	log_user 0
+	set log_disable 1
+
+	set hostname [ host_basename [exec hostname | cut -f1 -d.]]
+	local_sh
+	set target_stack [target_get_stack_type "$checkrun" "$hostname"]
+	local_sh_exit
+	return "$target_stack"
+}
+
+proc add_module_parameter { module_name module_parameter value {conffile ""} } {
+##
+## add_module_parameter
+## --------------------
+## edit modules.conf to add the specified parameter
+##
+## Arguments:
+##  module_name - (i.e ics_sdp)
+##  module_parameter - parameter (i.e. NoTcpFilter)
+##  value - literal value
+##  conffile - existing file within /etc/modprobe.d on RHEL6 and newer distros
+##  
+	# determine correct file name
+	if { ! [string equal "$conffile" "" ] && [ catch { unix_cmd 60 0 "[ -e /etc/modprobe.d/$conffile ]" } res ] == 0 } {
+		set mconf "/etc/modprobe.d/$conffile"
+	} else {
+		set mconf "/etc/modprobe.conf"
+	}
+   	send_unix_cmd "cat > /tmp/add.txt <<!
+/^#.*options $module_name/ \{
+        s/#.*options $module_name/options $module_name $module_parameter=$value/;
+        ba;
+\}
+/^options $module_name/s/ $module_parameter=\[^ \]//;s/options $module_name/options $module_name $module_parameter=$value/
+:a
+!
+"
+	check_exit_status 60 0
+	unix_cmd 60 0 "sed -f /tmp/add.txt $mconf > $mconf-new && mv -f $mconf-new $mconf && rm -f /tmp/add.txt"
+}
+
+proc remove_module_parameter { module_name module_parameter {conffile ""}} {
+##
+## remove_module_parameter
+## --------------------
+## edit modules.conf to remove the specified parameter
+## Arguments:
+##  module_name - (i.e ics_sdp)
+##  module_parameter - parameter (i.e. NoTcpFilter)
+##  parameter - literal value
+##  conffile - existing file within /etc/modprobe.d on RHEL6 and newer distros
+##  
+	# determine correct file name
+	if { ! [string equal "$conffile" "" ] && [ catch { unix_cmd 60 0 "[ -e /etc/modprobe.d/$conffile ]" } res ] == 0 } {
+		set mconf "/etc/modprobe.d/$conffile"
+	} elseif { [ catch { unix_cmd 60 0 {[ -e /etc/modprobe.conf ]} } res ] == 0 } {
+		set mconf "/etc/modprobe.conf"
+	} else {
+		# parameter is not in a place we added it, do nothing
+		return
+	}
+   	send_unix_cmd "cat > /tmp/remove.txt <<!
+/^options $module_name/s/ $module_parameter=\[^ \]//;s/^options $module_name$/# options $module_name/
+!
+"
+	check_exit_status 60 0
+	unix_cmd 60 0 "sed -f /tmp/remove.txt $mconf > $mconf-new && mv -f $mconf-new $mconf && rm -f /tmp/add.txt"
+}
+
+proc scp_local_file { file_name host {directory "."} } {
+##
+## scp_local_file
+## -------------------
+## scp a file from local_sh to remote host/directory
+## Arguments:
+##  file_name - local file name to scp to remote host
+##  host - remote host to scp file to
+##  optional: directory - the remote directory to scp to (should end in '/.')
+    global spawn_id
+
+    set save_spawn_id $spawn_id
+    local_sh
+    send_unix_cmd "scp $file_name root@$host:$directory"
+#    catch {expect_list 10 {"password:"} {"command not found"}  out}
+#    send_unix_cmd "qlogic"
+    expect_unix_prompt 20
+    local_sh_exit
+    set spawn_id $save_spawn_id
+}

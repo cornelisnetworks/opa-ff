@@ -1,0 +1,17 @@
+A sample use of opaxmlgenerate is provided in the script opagentopology,
+which is in /sbin.  The script invokes opaxmlgenerate, directing it to
+read the following CSV input files which are in /opt/opa/samples:
+
+opatopology_links.txt contains the text CSV values for LinkSummary information.
+opatopology_FIs.txt contains the text CSV values for HFI Nodes information.
+opatopology_SWs.txt contains the text CSV values for SW Nodes information.
+opatopology_SMs.txt contains the text CSV values for SM information.
+
+opagentopology invokes opaxmlgenerate, with command line options specifying
+the XML element names for the CSV text data it will read.  These names include
+Link Rate, MTU Size, Cable Length, Cable Label, Port NodeGUID, Port Number,
+Node Description, Port GUID, and Node Type among others.
+
+Note that opagentopology (not opaxmlgenerate) generates the XML version
+string as well as the outermost enclosing element tags (LinkSummary, Nodes,
+etc).

@@ -1,0 +1,349 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opasaquery 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opasaquery
+
+.NL
+
+.PP
+
+\fB(All)\fR
+opasaquery can perform various queries of the subnet manager/subnet agent and provide detailed fabric information.
+.PP
+In many cases opareport and opareports provide a more powerful tool, however in some cases opasaquery is preferred, especially when dealing with virtual fabrics, service records and multicast.
+.PP
+The command opasaquery is installed on all hosts as part of the Intel(R) Omni-Path Fabric Host Software , but it is also included in Intel(R) Omni-Path Fabric Suite FastFabric Toolset.
+.PP
+By default opasaquery uses the first active port on the local system. However, if the Fabric Management Node is connected to more than one fabric (for example, a subnet), the Intel(R) Omni-Path Host Fabric Interface (HFI) and port may be specified to select the fabric whose SA is to be queried.
+.SH Syntax
+.NL
+opasaquery [-v [-v] [-v]] [-I] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-l \fIlid\fR] [-t \fItype\fR] [-s \fIguid\fR] [-n \fIguid\fR] [-g \fIguid\fR] [-k \fIpkey\fR] [-i \fIvfIndex\fR] [-S \fIserviceId\fR] [-L \fIsl\fR] [-u \fIgid\fR] [-m \fIgid\fR] [-d \fIname\fR] [-P \' \fIguid guid\fR\'] [-G \' \fIgid gid\fR\'] [-a \' \fIsguid\fR...; \fIdguid\fR...\'] [-A \' \fIsgid\fR...; \fIdgid\fR...\']
+.PP
+or
+.br
+opasaquery --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produce full help text
+.TP 10
+-v/--verbose 
+.NL
+Verbose output. A second invocation will activate openib debugging, a third will activate libibumad debugging.
+.TP 10
+-I/--IB 
+.NL
+Issue query in legacy InfiniBand* format.
+.TP 10
+-h/--hfi \fIhfi\fR 
+.NL
+HFI , numbered 1..n. Using 0 specifies that the -p \fIport\fR port will be a system wide port number (default is 0).
+.TP 10
+-p/--port \fIport\fR 
+.NL
+Port, numbered 1..n. If -h \fIhfi\fR is 0 then  \fIport\fR will be a system wide port number (default is 1).
+.TP 10
+-o/--output \fItype\fR 
+.NL
+Output type for query (default is node ). See
+\fIOutput Types\fR
+.
+.TP 10
+-l/--lid \fIlid\fR 
+.NL
+Query a specific LID.
+.TP 10
+-t/--type \fInode\(ultype\fR 
+.NL
+Query by node type. See
+\fINode Type\fR
+.
+.TP 10
+-s/--sysguid \fIsystem\(ulimage\(ulguid\fR 
+.NL
+Query by system image guid.
+.TP 10
+-n/--nodeguid \fInode\(ulguid\fR 
+.NL
+Query by node guid.
+.TP 10
+-g/--portguid \fIport\(ulguid\fR 
+.NL
+Query by port guid.
+.TP 10
+-k/--pkey \fIpkey\fR 
+.NL
+Query a specific PKey.
+.TP 10
+-i/--vfindex \fIvfIndex\fR 
+.NL
+Query a specific vfindex.
+.TP 10
+-S/--serviceId \fIserviceId\fR 
+.NL
+Query a specific service id.
+.TP 10
+-L/--SL \fISL\fR 
+.NL
+Query by service level.
+.TP 10
+-u/--portgid \fIport\(ulgid\fR 
+.NL
+Query by port GID. See
+\fIGIDs\fR
+.
+.TP 10
+-m/--mcgid \fImulticast\(ulgid\fR 
+.NL
+Query by multicast GID. See
+\fIGIDs\fR
+.
+.TP 10
+-d/--desc \fInode\(uldescription\fR 
+.NL
+Query by node name/description.
+.TP 10
+-P/--guidpair \fIguid guid\fR 
+.NL
+Query by a pair of port GUIIDs.
+.TP 10
+-G/--gidpair \fIgid gid\fR 
+.NL
+Query by a pair of GIDs. See
+\fIGIDs\fR
+.
+.TP 10
+-a/--guidlist \fIsguid ...;dguid ...\fR 
+.NL
+Query by a list of port GUIDs.
+.TP 10
+-A/--gidlist \fIsgid ...;dgid ...\fR 
+.NL
+Query by a list of GIDs. See
+\fIGIDs\fR
+.
+.SH  -h and -p options permit a variety of selections:-->
+.NL
+
+.TP 10
+-h 0 
+.NL
+First active port in system (this is the default).
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
+.TP 10
+-h \fIx\fR 
+.NL
+First active port on HFI \fIx\fR.
+.TP 10
+-h \fIx\fR-p 0 
+.NL
+First active port on HFI \fIx\fR.
+.TP 10
+-h 0 -p \fIy\fR 
+.NL
+Port \fIy\fRwithin system (irrespective of which ports are active).
+.TP 10
+-h \fIx\fR-p \fIy\fR 
+.NL
+HFI \fIx\fR, port \fIy\fR
+.SH Node Types
+.NL
+
+.TP 10
+ca 
+.NL
+Channel adapter.
+.TP 10
+sw 
+.NL
+Switch.
+.TP 10
+rtr 
+.NL
+Router.
+.SH GIDs
+.NL
+
+.PP
+Specify a 64 bit subnet and 64 bit interface ID as:
+.PP
+ \fIsubnet\fR: \fIinterface\fR .
+.PP
+For example: 0xfe80000000000000:0x00066a00a0000380 
+.SH Output Types
+.NL
+
+.TP 10
+classportinfo 
+.NL
+classportinfo of the SA.
+.TP 10
+systemguid 
+.NL
+List of system image GUIDs.
+.TP 10
+nodeguid 
+.NL
+List of node GUIDs.
+.TP 10
+portguid 
+.NL
+List of port GUIDs.
+.TP 10
+lid 
+.NL
+List of LIDs.
+.TP 10
+desc 
+.NL
+List of node descriptions/names.
+.TP 10
+path 
+.NL
+List of path records.
+.TP 10
+node 
+.NL
+List of node records.
+.TP 10
+portinfo 
+.NL
+List of port info records.
+.TP 10
+sminfo 
+.NL
+List of SM info records.
+.TP 10
+swinfo 
+.NL
+List of switch info records.
+.TP 10
+link 
+.NL
+List of link records.
+.TP 10
+scsc 
+.NL
+List of SC to SC mapping table records.
+.TP 10
+slsc 
+.NL
+List of SL to SC mapping table records.
+.TP 10
+scsl 
+.NL
+List of SC to SL mapping table records.
+.TP 10
+scvlt 
+.NL
+List of SC to VLt table records.
+.TP 10
+scvlnt 
+.NL
+List of SC to VLnt table records.
+.TP 10
+vlarb 
+.NL
+List of VL arbitration table records.
+.TP 10
+pkey 
+.NL
+List of PKey table records.
+.TP 10
+service 
+.NL
+List of service records.
+.TP 10
+mcmember 
+.NL
+List of multicast member records.
+.TP 10
+inform 
+.NL
+List of inform info records.
+.TP 10
+linfdb 
+.NL
+List of switch linear FDB records.
+.TP 10
+ranfdb 
+.NL
+List of switch random FDB records.
+.TP 10
+mcfdb 
+.NL
+List of switch multicast FDB records.
+.TP 10
+trace 
+.NL
+List of trace records.
+.TP 10
+vfinfo 
+.NL
+List of vFabrics.
+.TP 10
+vfinfocsv 
+.NL
+List of vFabrics in CSV format.
+.TP 10
+vfinfocsv2 
+.NL
+List of vFabrics in CSV format with enums.
+.TP 10
+quarantine 
+.NL
+List of quarantined nodes.
+.TP 10
+conginfo 
+.NL
+List of Congestion Info Records.
+.TP 10
+swcongset 
+.NL
+List of Switch Congestion Settings.
+.TP 10
+hficongset 
+.NL
+List of HFI Congestion Settings.
+.TP 10
+hficongcon 
+.NL
+List of HFI Congesting Control Settings.
+.TP 10
+bfrctrl 
+.NL
+List of buffer control tables.
+.TP 10
+cableinfo 
+.NL
+List of Cable Info records.
+.TP 10
+portgroup 
+.NL
+List of AR Port Group records.
+.TP 10
+portgroupfdb 
+.NL
+Llist of AR Port Group FWD records.
+.PP
+The vfinfocsv and vfinfocsv2 output formats are designed to make it easier to script vfinfo queries. One line is output per vFabric of the form: name:index:pkey:sl:mtu:rate 
+.PP
+The only difference between these two formats is how the mtu and rate are output. vfinfocsv outputs them in human/text format such as 2048 and 40g. vfinfocsv2 outputs them as the IBTA enumerations defined for the SMA protocol such as 4 and 7. The opagetvf command can be a useful tool which is based on this capability of opasaquery .
+.SH Input Options vs. Output Permitted
+.NL
+
+.PP
+The following list shows the input (assorted query by options) and outputs ( -o ) that are permitted.

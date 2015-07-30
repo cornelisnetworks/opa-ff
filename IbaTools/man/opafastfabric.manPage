@@ -1,0 +1,29 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opafastfabric 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opafastfabric
+
+.NL
+
+.PP
+
+\fB(Switch and Host)\fR
+Takes the user to the top-level Intel(R) Omni-Path Fabric Suite FastFabric Text User Interface (TUI) menu for setup and configuration.
+.SH Syntax
+.NL
+opafastfabric
+.SH Options
+.NL
+
+.PP
+None.
+.SH Example 
+.NL
+#opafastfabric Intel FastFabric OPA Tools Version: \fIX.X.X.X.X\fR1) Chassis Setup/Admin 2) Externally Managed Switch Setup/Admin 3) Host Setup 4) Host Verification/Admin 5) Fabric Monitoring X) Exit

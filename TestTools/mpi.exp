@@ -1,0 +1,768 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid mpi testing
+
+## tcl procedures to support testing:
+## =============================================
+
+proc build_mpi_hosts { file host_list } {
+# create the mpi_hosts file on the present host
+# Usage:
+#	build_mpi_hosts file host_list
+# Arguments:
+#	file - file to build
+#	host_list - list of hosts to put in file
+	global env
+
+	send_unix_cmd "cat > $file <<!"
+	foreach h $host_list {
+		# use IPoIB names
+		# When called by FastFabric, CFG_IPOIB_SUFFIX is set to ""
+		# and host_list is already translated as needed
+		send_unix "[host_basename $h]$env(CFG_IPOIB_SUFFIX)\n"
+	}
+	send_unix "!\n"
+	expect_unix_prompt 60
+}
+
+proc build_mpd_hosts { file host host_list } {
+# create the mpd_hosts file on the present host
+# Usage:
+#	build_mpd_hosts file host_list
+# Arguments:
+#	file - file to build
+#	host_list - list of hosts to put in file
+#
+# Return:
+#	The length of the mpd file, in lines.
+	global env
+    
+	foreach h $host_list {
+		set hn [host_basename $h]
+		if { [info exists mpd($hn)] } {
+            set mpd($hn) [expr $mpd($hn) + 1]
+		} else {
+			set mpd($hn) 1
+		}
+	}
+	# unwind the mpd array
+	unix_cmd 10 0 "> $file"
+	foreach hn [array names mpd] {
+		if { $hn == "$host" } {
+			continue
+		}
+		unix_cmd 10 0 "echo $hn:$mpd($hn) >> $file"
+	}
+	unix_cmd 10 0 "echo $host:$mpd($host) >> $file"
+	return [array size mpd]
+}
+
+proc running_mpi_int_tests { } {
+# Determine if running MPI Integration tests, in which case
+# caller will need to get_mpi_info using $env(MPITYPE)
+#
+# Returns:
+#	0 - in Fastfabric, no need to get_mpi_info, MPICH_PREFIX defined
+#	1 - in integration tests, get_mpi_info using $env(MPITYPE)
+	global env
+
+	if { ! [ info exists env(MPICH_PREFIX) ]
+			|| [ string equal "$env(MPICH_PREFIX)" "" ]
+		|| ( [ info exists env(QLOGIC_INT_TESTS) ]
+			&& [ string equal "$env(QLOGIC_INT_TESTS)" "y" ] ) } {
+		# only occurs for int tests
+		# this is a little ugly, MPITYPE is passed in env
+		if { ! [ info exists env(MPITYPE) ]
+			|| [ string equal "$env(MPITYPE)" "" ] } {
+			set info "MPITYPE not set"
+			return -code error -errorinfo $info $info
+		}
+		return 1
+	} else {
+		return 0
+	}
+}
+
+proc determine_mpitype { appdir } {
+# Determine based on MPICH_PREFIX in $appdir/.prefix which MPI type is selected
+# Only used in FastFabric since integration tests get this fron MPITYPE env
+# must match algorithm used in prepare_run to select MPD_MODE
+#
+# Usage:
+#	determine_mpitype appdir
+# Arguments:
+#	appdir - directory where mpi_apps built, .prefix in here will be used
+# Returns:
+#	mpirunner name
+#	error if unable to determine or unsupported MPI selected
+	global env
+
+	if { [ catch {set env(MPICH_PREFIX) [exec cat "$appdir/.prefix" 2>/dev/null] } ] != 0 || "$env(MPICH_PREFIX)" == "" } {
+		return -code error -errorinfo "mpi_apps not built" "mpi_apps not built"
+	}
+	set mpitype "mvapich1"
+	if { [file exists $env(MPICH_PREFIX)/bin/mpdtrace] } {
+		if { [ catch { exec $env(MPICH_PREFIX)/bin/mpdtrace >/dev/null 2>&1 } ] == 0 } {
+			return -code error -errorinfo "MPIs using MPD not suppported by this operation" "MPIs using MPD not supported by this operation"
+		} elseif { [file exists $env(MPICH_PREFIX)/bin/mpirun_rsh] } {
+			if { [file exists $env(MPICH_PREFIX)/bin/mpirun.py]
+				|| [file exists $env(MPICH_PREFIX)/bin/mpiexec] } {
+				set mpitype "mvapich2_mpirun"
+			} else {
+				set mpitype "mvapich1"
+			}
+		}
+	} elseif { [file exists "$env(MPICH_PREFIX)/bin/ompi_info"] } {
+		set mpitype "openmpi"
+	} elseif { ! [file exists "$env(MPICH_PREFIX)/bin/mpirun_rsh"] } {
+		# MPI over sockets or unknown MPI
+		return -code error -errorinfo "MPI selected is not suppported by this operation: $env(MPICH_PREFIX)" "MPI selected is not suppported by this operation: $env(MPICH_PREFIX)"
+	} elseif { [file exists "$env(MPICH_PREFIX)/bin/mpirun_rsh"] } {
+		if { [file exists $env(MPICH_PREFIX)/bin/mpirun.py]
+			|| [file exists $env(MPICH_PREFIX)/bin/mpiexec] } {
+			set mpitype "mvapich2_mpirun"
+		} else {
+			set mpitype "mvapich1"
+		}
+	}
+	
+	return "$mpitype"
+}
+
+proc test_case_run_mvapich1_mpi_app { transport host host_list timelimit dir mpi_cmd mpi_args show_perf case_tag} {
+##
+## test_case_run_mvapich1_mpi_app
+## -------------------------
+## run an mpi application initiated by host with host_list processes
+##
+## Usage:
+##	test_case_run_mvapich1_mpi_app transport host host_list timelimit dir mpi_cmd mpi_args show_perf case_tag
+## Arguments:
+##	transport - not used for OFED mpich
+##	host - host initiate mpi run
+##	host_list - hosts/processes to run
+##	dir - directory (if not absolute assumed relative to tests_dir) with command
+##	timelimit - time to allow between output by command
+##	mpi_cmd - MPI appl command
+##	mpi_args - application args
+##	show_perf - should results be shown as performance
+##	case_tag - suffix for test case name
+##  $env(MPICH_PREFIX) - path to mpi installation
+## Returns:
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+	global tools_case_status
+
+	upvar mpitype mpitype
+	test_case "$host.$case_tag" "$host starts $mpitype $mpi_cmd" "$host starts $mpitype mpi command $mpi_cmd with args: $mpi_args
+against hosts: $host_list
+File: TestTools/mpi.exp" case_setup case_cleanup {
+		upvar host host
+		upvar host_list host_list
+		upvar dir dir
+		upvar timelimit timelimit
+		upvar mpi_cmd mpi_cmd
+		upvar mpi_args mpi_args
+		upvar show_perf show_perf
+		upvar perf perf
+		upvar transport transport
+		global env
+		set paramfile ""
+
+		target_root_sh $host
+		set target_stack [ target_get_stack_type "y" "$host"]
+
+		if { "$target_stack" != "OPENIB" } {
+			target_root_sh_exit
+			skip_case "OFED MVAPICH1 tests not supported for this IB stack"
+		}
+		set target_os_type [target_get_os_type]
+
+		if { [ string range $dir 0 0 ] != "/" } {
+			unix_cmd 60 0 "cd [get_tests_dir]"
+		}
+		unix_cmd 60 0 "cd $dir"
+
+		# build it in place, allows other mpi runs to occur for other apps
+		# at same time as this, provided not same app with same initiator
+		build_mpi_hosts "mpi_hosts" $host_list
+		set np [llength $host_list]
+
+		# for now we have one setting which applies to all MPIs
+		# it typically adds env variables to the command so any not
+		# applicable to the given MPI will be ignored
+		if { [ info exists env(CFG_MPI_ENV) ] } {
+			set add_mpi_env "$env(CFG_MPI_ENV)"
+		} else {
+			set add_mpi_env ""
+		}
+
+		if { [ running_mpi_int_tests ] } {
+			# this is a little ugly, MPITYPE is passed in env
+			set mpi_info [get_mpi_info "$env(MPITYPE)"]
+			set env(MPICH_PREFIX) [lindex "$mpi_info" 1 ]
+			append add_mpi_env " " [lindex "$mpi_info" 5 ]
+		}
+
+		if { ! [ info exists env(FF_MPI_APPS_DIR) ]
+			|| [ string equal "$env(FF_MPI_APPS_DIR)" "" ] } {
+			set env(FF_MPI_APPS_DIR) "/opt/opa/src/mpi_apps"
+		}
+
+		if { [ catch {unix_cmd 20 0 "test -e $env(FF_MPI_APPS_DIR)/mvapich.params"} res ] == 0 } {
+			set paramfile "-paramfile $env(FF_MPI_APPS_DIR)/mvapich.params"
+			unix_cmd 20 0 ". $env(FF_MPI_APPS_DIR)/mvapich.params"
+			unix_cmd 20 "" {echo MPI_CMD_ARGS="$MPI_CMD_ARGS"}
+		} else {
+			unix_cmd 20 0 "export MPI_CMD_ARGS="
+		}
+		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun_rsh $paramfile -np $np -hostfile mpi_hosts \$MPI_CMD_ARGS $add_mpi_env ./$mpi_cmd $mpi_args; echo DONE"
+		if { $show_perf } {
+			set perf_var perf
+		} else {
+			set perf_var ""
+		}
+		expect_progress $timelimit {[0-9]} { "echo DONE" {[0-9]} "DONE" } { "FAIL" "DISCONNECT" "[tT]imeout" "VAPI" "ERROR" "usage:" "Usage:" "THH" "No such" "rejected" "Assertion" "Fatal" "Abort:" "No route to host" "Killing" "Abort signal" "egmentation fault" "died unexpectedly" } $perf_var
+		expect_unix_prompt 60
+	}
+	test_execute {} {
+		if { "$tools_case_status" == "okay" } {
+			if { $show_perf } {
+				show_performance "$mpitype $mpi_cmd for $host_list:\n$perf"
+			}
+		} elseif { "$tools_case_status" != "skip" } {
+			sleep 10
+		}
+	}
+}
+
+proc test_case_run_mvapich2_mpirun_mpi_app { transport host host_list timelimit dir mpi_cmd mpi_args show_perf case_tag} {
+##
+## test_case_run_mvapich2_mpirun_mpi_app
+## -------------------------
+## run an mpi application initiated by host with host_list processes
+## used OFED mvapich2 with mpirun (instead of MPD)
+##
+## Usage:
+##	test_case_run_mvapich2_mpirun_mpi_app transport host host_list timelimit dir mpi_cmd mpi_args show_perf case_tag
+## Arguments:
+##	transport - not used for OFED mpich2
+##	host - host initiate mpi run
+##	host_list - hosts/processes to run
+##	dir - directory (if not absolute assumed relative to tests_dir) with command
+##	timelimit - time to allow between output by command
+##	mpi_cmd - MPI appl command
+##	mpi_args - application args
+##	show_perf - should results be shown as performance
+##	case_tag - suffix for test case name
+##  $env(MPICH_PREFIX) - path to mpi installation
+## Returns:
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+	global tools_case_status
+
+	upvar mpitype mpitype
+	test_case "$host.$case_tag" "$host starts $mpitype $mpi_cmd" "$host starts $mpitype mpi command $mpi_cmd with args: $mpi_args
+against hosts: $host_list
+File: TestTools/mpi.exp" case_setup case_cleanup {
+		upvar host host
+		upvar host_list host_list
+		upvar dir dir
+		upvar timelimit timelimit
+		upvar mpi_cmd mpi_cmd
+		upvar mpi_args mpi_args
+		upvar show_perf show_perf
+		upvar perf perf
+		upvar transport transport
+		global env
+		set paramfile ""
+
+		target_root_sh $host
+		set target_stack [ target_get_stack_type "y" "$host"]
+
+		if { "$target_stack" != "OPENIB" } {
+			target_root_sh_exit
+			skip_case "OFED MVAPICH2 tests not supported for this IB stack"
+		}
+		set target_os_type [target_get_os_type]
+
+		#set param_file "/etc/sysconfig/mpi.param"
+
+		if { [ string range $dir 0 0 ] != "/" } {
+			unix_cmd 60 0 "cd [get_tests_dir]"
+		}
+		unix_cmd 60 0 "cd $dir"
+
+		# build it in place, allows other mpi runs to occur for other apps
+		# at same time as this, provided not same app with same initiator
+		build_mpi_hosts "mpi_hosts" $host_list
+		set np [llength $host_list]
+
+		# for now we have one setting which applies to all MPIs
+		# it typically adds env variables to the command so any not
+		# applicable to the given MPI will be ignored
+		if { [ info exists env(CFG_MPI_ENV) ] } {
+			set add_mpi_env "$env(CFG_MPI_ENV)"
+		} else {
+			set add_mpi_env ""
+		}
+
+		if { [ running_mpi_int_tests ] } {
+			# this is a little ugly, MPITYPE is passed in env
+			set mpi_info [get_mpi_info "$env(MPITYPE)"]
+			set env(MPICH_PREFIX) [lindex "$mpi_info" 1 ]
+			append add_mpi_env " " [lindex "$mpi_info" 5 ]
+		}
+
+		if { ! [ info exists env(FF_MPI_APPS_DIR) ]
+			|| [ string equal "$env(FF_MPI_APPS_DIR)" "" ] } {
+			set env(FF_MPI_APPS_DIR) "/opt/opa/src/mpi_apps"
+		}
+
+		if { [ catch {unix_cmd 20 0 "test -e $env(FF_MPI_APPS_DIR)/mvapich2.params"} res ] == 0 } {
+			# mvapich2 1.6 no longer supports the -paramfile option
+			# we handle it by exporting MPI_CMD_ARGS in our param script
+			#set paramfile "-paramfile $env(FF_MPI_APPS_DIR)/mvapich2.params"
+			unix_cmd 20 0 ". $env(FF_MPI_APPS_DIR)/mvapich2.params"
+			unix_cmd 20 "" {echo MPI_CMD_ARGS="$MPI_CMD_ARGS"}
+		} else {
+			unix_cmd 20 0 "export MPI_CMD_ARGS="
+		}
+		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun_rsh $paramfile -np $np -hostfile mpi_hosts \$MPI_CMD_ARGS $add_mpi_env ./$mpi_cmd $mpi_args; echo DONE"
+		if { $show_perf } {
+			set perf_var perf
+		} else {
+			set perf_var ""
+		}
+		expect_progress $timelimit {[0-9]} { "echo DONE" {[0-9]} "DONE" } { "FAIL" "DISCONNECT" "[tT]imeout" "VAPI" "ERROR" "usage:" "Usage:" "THH" "No such" "rejected" "Assertion" "Fatal" "Abort:" "No route to host" "Killing" "Abort signal" "egmentation fault" "died unexpectedly"  "Error"} $perf_var
+		expect_unix_prompt 60
+	}
+	test_execute {} {
+		if { "$tools_case_status" == "okay" } {
+			if { $show_perf } {
+				show_performance "$mpitype $mpi_cmd for $host_list:\n$perf"
+			}
+		} elseif { "$tools_case_status" != "skip" } {
+			sleep 10
+		}
+	}
+}
+
+proc test_case_run_mvapich2_mpi_app { transport host host_list timelimit dir mpi_cmd mpi_args show_perf case_tag} {
+##
+## test_case_run_mvapich2_mpi_app
+## -------------------------
+## run an mpi application initiated by host with host_list processes
+##
+## Usage:
+##	test_case_run_mvapich2_mpi_app transport host host_list timelimit dir mpi_cmd mpi_args show_perf case_tag
+## Arguments:
+##	transport - not used for OFED mpich
+##	host - host initiate mpi run
+##	host_list - hosts/processes to run
+##	dir - directory (if not absolute assumed relative to tests_dir) with command
+##	timelimit - time to allow between output by command
+##	mpi_cmd - MPI appl command
+##	mpi_args - application args
+##	show_perf - should results be shown as performance
+##	case_tag - suffix for test case name
+##  $env(MPICH_PREFIX) - path to mpi installation
+## Returns:
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+	global tools_case_status
+    
+	upvar mpitype mpitype
+	test_case "$host.$case_tag" "$host starts $mpitype $mpi_cmd" "$host starts $mpitype mpi command $mpi_cmd with args: $mpi_args \nagainst hosts: $host_list \nFile: TestTools/mpi.exp" case_setup case_cleanup {
+        upvar host host
+        upvar host_list host_list
+        upvar dir dir
+        upvar timelimit timelimit
+        upvar mpi_cmd mpi_cmd
+        upvar mpi_args mpi_args
+        upvar show_perf show_perf
+        upvar perf perf
+        upvar transport transport
+        global env
+        
+        target_root_sh $host
+        set target_stack [ target_get_stack_type "y" "$host"]
+        
+        if { "$target_stack" != "OPENIB" } {
+            target_root_sh_exit
+            skip_case "OFED MVAPICH2 tests not supported for this IB stack"
+        }
+        set target_os_type [target_get_os_type]
+        
+		# for now we have one setting which applies to all MPIs
+		# it typically adds env variables to the command so any not
+		# applicable to the given MPI will be ignored
+		if { [ info exists env(CFG_MPI_ENV) ] } {
+			set add_mpi_env "$env(CFG_MPI_ENV)"
+		} else {
+			set add_mpi_env ""
+		}
+
+		if { [ running_mpi_int_tests ] } {
+			# this is a little ugly, MPITYPE is passed in env
+			set mpi_info [get_mpi_info "$env(MPITYPE)"]
+			set env(MPICH_PREFIX) [lindex "$mpi_info" 1 ]
+			append add_mpi_env " " [lindex "$mpi_info" 5 ]
+        }
+        
+
+        #set param_file "/etc/sysconfig/mpi.param"
+        
+        if { [ string range $dir 0 0 ] != "/" } {
+            unix_cmd 60 0 "cd [get_tests_dir]"
+        }
+        unix_cmd 60 0 "cd $dir"
+
+
+		# stop mpd is if was running
+		stop_all_mpds 
+        
+		foreach h $host_list {
+			host_unix_cmd 30 0 $h "'rm -f /etc/mpd.conf && echo MPD_SECRETWORD=password > /etc/mpd.conf && chown root:root /etc/mpd.conf && chmod 600 /etc/mpd.conf && cp /etc/mpd.conf /root/.mpd.conf'"
+		}
+        
+		# use mpd hosts toggle the mpd
+		build_mpd_hosts "/etc/mpd.hosts" $host $host_list
+		
+		set np [llength $host_list]
+		# start mpd
+		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpdboot -n \`cat /etc/mpd.hosts | wc -l\` -r ssh -f /etc/mpd.hosts; echo DONE"
+		expect_list 60 { "echo DONE" "DONE" } { "failed" "error" "fault" }
+		check_exit_status 20 0
+        
+		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun -n $np $add_mpi_env ./$mpi_cmd $mpi_args;echo DONE"
+		if { $show_perf } {
+			set perf_var perf
+		} else {
+			set perf_var ""
+		}
+		expect_progress $timelimit {[0-9]} { "echo DONE" {[0-9]} "DONE" } { "FAIL" "DISCONNECT" "timeout" "abort" "VAPI" "ERROR" "usage:" "Usage:" "THH" "No such" "rejected" "Assertion" "Fatal" "Abort:" "No route to host" "Killing" "Abort signal" "forked process failed" "open failed for" "egmentation fault" "died unexpectedly" "aborting" } $perf_var
+		expect_unix_prompt 60
+		unix_cmd 20 0 "$env(MPICH_PREFIX)/bin/mpdallexit"
+    }
+	test_execute {} {
+		if { "$tools_case_status" == "okay" } {
+			if { $show_perf } {
+				show_performance "$mpitype $mpi_cmd for $host_list:\n$perf"
+			}
+		} elseif { "$tools_case_status" != "skip" } {
+			sleep 10
+		}
+	}
+}
+
+proc test_case_run_openmpi_mpi_app { transport host host_list timelimit dir mpi_cmd mpi_args show_perf case_tag { mpi_env_args "" } } {
+##
+## test_case_run_openmpi_mpi_app
+## -------------------------
+## run an mpi application initiated by host with host_list processes
+##
+## Usage:
+##	test_case_run_openmpi_mpi_app transport host host_list timelimit dir mpi_cmd mpi_args show_perf case_tag
+## Arguments:
+##	transport - not used for openmpi
+##	host - host initiate mpi run
+##	host_list - hosts/processes to run
+##	dir - directory (if not absolute assumed relative to tests_dir) with command
+##	timelimit - time to allow between output by command
+##	mpi_cmd - MPI appl command
+##	mpi_args - application args
+##	show_perf - should results be shown as performance
+##	case_tag - suffix for test case name
+##  $env(MPICH_PREFIX) - path to mpi installation
+## Returns:
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+	global tools_case_status
+
+	upvar mpitype mpitype
+	test_case "$host.$case_tag" "$host starts $mpitype $mpi_cmd" "$host starts $mpitype mpi command $mpi_cmd with args: $mpi_args
+against hosts: $host_list
+File: TestTools/mpi.exp" case_setup case_cleanup {
+		upvar host host
+		upvar host_list host_list
+		upvar dir dir
+		upvar timelimit timelimit
+		upvar mpi_cmd mpi_cmd
+		upvar mpi_args mpi_args
+		upvar show_perf show_perf
+		upvar perf perf
+		upvar transport transport
+	        upvar mpi_env_args mpi_env_args
+		global env
+
+		target_root_sh $host
+		set target_stack [ target_get_stack_type "y" "$host"]
+
+        if { "$target_stack" != "OPENIB" } {
+			target_root_sh_exit
+			skip_case "OpenMPI tests not supported for this IB stack"
+		}
+		set target_os_type [target_get_os_type]
+
+		if { [ string range $dir 0 0 ] != "/" } {
+			unix_cmd 60 0 "cd [get_tests_dir]"
+		}
+		unix_cmd 60 0 "cd $dir"
+
+		# build it in place, allows other mpi runs to occur for other apps
+		# at same time as this, provided not same app with same initiator
+		build_mpi_hosts "mpi_hosts" $host_list
+		set np [llength $host_list]
+	
+		# for now we have one setting which applies to all MPIs
+		# it typically adds env variables to the command so any not
+		# applicable to the given MPI will be ignored
+		if { [ info exists env(CFG_MPI_ENV) ] } {
+			set add_mpi_env "$env(CFG_MPI_ENV)"
+		} else {
+			set add_mpi_env ""
+		}
+		
+		if { [ running_mpi_int_tests ] } {
+			# this is a little ugly, MPITYPE is passed in env
+			set mpi_info [get_mpi_info "$env(MPITYPE)"]
+			set env(MPICH_PREFIX) [lindex "$mpi_info" 1 ]
+			append add_mpi_env " " [lindex "$mpi_info" 5 ]
+			set api [lindex "$mpi_info" 4 ]
+			
+			if { [string match "$api" "PSM"] } {
+                            if { ! [ info exists env(CFG_PSM_ENV) ]
+                        	|| [ string equal "$env(CFG_PSM_ENV)" "" ] } {
+				set mpiapi_env ""
+                            } else {
+				set mpiapi_env "$env(CFG_PSM_ENV)"    
+                            }			    
+			} elseif {[string match "$api" "verbs"] } {
+			    if { ! [ info exists env(CFG_VERBS_ENV) ]
+				|| [ string equal "$env(CFG_VERBS_ENV)" "" ] } {
+				set mpiapi_env ""
+			    } else {
+				set mpiapi_env "$env(CFG_VERBS_ENV)"				    
+			    }					
+			} else {
+			    set mpiapi_env "" 	
+			}
+			append add_mpi_env " " $mpi_env_args
+		} else {
+			set mpiapi_env ""
+		}
+		# change env from var=value to -x var=value
+		regsub -all {([A-Za-z0-9_]+=[^[:space:]])} "$add_mpi_env" {-x \0} openmpi_env
+	
+		if { ! [ info exists env(FF_MPI_APPS_DIR) ]
+			|| [ string equal "$env(FF_MPI_APPS_DIR)" "" ] } {
+			set env(FF_MPI_APPS_DIR) "/opt/opa/src/mpi_apps"
+		}
+
+		if { [ catch {unix_cmd 20 0 "test -e $env(FF_MPI_APPS_DIR)/openmpi.params"} res ] == 0 } {
+			unix_cmd 60 0 ". $env(FF_MPI_APPS_DIR)/openmpi.params"
+			unix_cmd 20 "" {echo MPI_CMD_ARGS="$MPI_CMD_ARGS"}
+		} else {
+			unix_cmd 20 0 "export MPI_CMD_ARGS="
+		}
+	
+		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun $mpiapi_env -mca plm_rsh_no_tree_spawn 1 -np $np -allow-run-as-root --map-by node -machinefile mpi_hosts \$MPI_CMD_ARGS $openmpi_env ./$mpi_cmd $mpi_args; echo DONE"
+	
+		if { $show_perf } {
+		    set perf_var perf
+		} else {
+		    set perf_var ""
+		}
+		expect_progress $timelimit {[0-9]} { "echo DONE" {[0-9]} "DONE" } { "FAIL" "DISCONNECT" "[tT]imeout" "VAPI" "ERROR" "usage:" "Usage:" "THH" "No such" "rejected" "Assertion" "Fatal" "Abort:" "No route to host" "Killing" "Abort signal" "Failed to find or execute" "exiting without calling" "egmentation fault" "died unexpectedly" "more processes than the ppr" "revise the conflict and try again" } $perf_var
+		expect_unix_prompt 60
+	}
+	test_execute {} {
+		if { "$tools_case_status" == "okay" } {
+			if { $show_perf } {
+				show_performance "$mpitype $mpi_cmd for $host_list:\n$perf"
+			}
+		} elseif { "$tools_case_status" != "skip" } {
+			sleep 10
+		}
+	}
+}
+
+# stop all mpds of any flavor that might be running.
+proc stop_all_mpds { } {
+
+	global env 
+	set mpi2dir "/usr/local/mpich2/bin"
+	set impidir "$env(CFG_INTEL_INSTALL_DIR)/bin"
+    set mpichdir "$env(MPICH_PREFIX)/bin"
+    
+	if { [ catch { unix_cmd 20 0 "$mpi2dir/mpdtrace >/dev/null 2>&1" } res ] == 0 } {
+        unix_cmd 20 0 "$mpi2dir/mpdallexit"
+	}
+    
+	if { [ catch { unix_cmd 20 0 "$impidir/mpdtrace >/dev/null 2>&1" } res ] == 0 } {
+        unix_cmd 20 0 "$impidir/mpdallexit"
+	}
+    
+	if { [ catch { unix_cmd 20 0 "$mpichdir/mpdtrace >/dev/null 2>&1" } res ] == 0 } {
+        unix_cmd 20 0 "$mpichdir/mpdallexit"
+	}
+}
+
+# Note: not used by FastFabric, only automated tests use
+# extract info from an OFED mpitype string
+# returns a list: { mpirunner MPICH_PREFIX testdir_prefix compiler API {add_mpi_env}}
+# must be logged in to target host to get_mpich_prefix
+proc get_mpi_info { mpitype {get_mpich_prefix 1}} {
+	# mpitype is MPIRUNNER_COMPILER_SUFFIX
+	# _SUFFIX is optional (_hfi or nothing)
+
+	# first look for _opp suffix
+	if { [ string match "*_opp" "$mpitype" ] } {
+		set mpitype [string range $mpitype 0 [ expr [ string length $mpitype ] - 5]]
+		set add_mpi_env "PSM_PATH_REC=opp"
+		set api_suffix "_opp"
+	} else {
+		set add_mpi_env ""
+		set api_suffix ""
+	}
+	# look for _hfi suffix
+	if { [ string match "*_hfi" "$mpitype" ] } {
+		set mpiname_suffix "_hfi"
+		set mpipath_suffix "-hfi"
+		set mpitype [string range $mpitype 0 [ expr [ string length $mpitype ] - 5]]
+		set api "PSM$api_suffix"
+	} else {
+		set mpiname_suffix ""
+		set mpipath_suffix ""
+		# Path Record query and api_suffix N/A
+		set api "verbs"
+	}
+	# next pull off compiler
+	if {![regexp "(.*)_(\[^_]+)" "$mpitype" line mpirunner mpicompiler]} {
+		set info "Cannot parse $mpitype into mpirunner_mpicompiler"
+		return -code error -errorinfo $info $info
+	}
+
+	# special: mvapich2_mpirun has same testdir and mpich_prefix as mvapich2
+	if { [ string equal "$mpirunner" "mvapich2_mpirun" ] } {
+		set mpiname "mvapich2"
+	} else {
+		set mpiname "$mpirunner"
+	}
+
+	# mvapich mpirunner is called mvapich1
+	if { [ string equal "$mpirunner" "mvapich" ] } {
+		set mpirunner "mvapich1"
+	}
+
+	set mpifullname "${mpiname}_${mpicompiler}${mpiname_suffix}"
+	if { $get_mpich_prefix } {
+		# determine mpich_prefix
+		set mpi_version [target_get_registered_mpi_version "$mpifullname" ]
+		set mpich_prefix "/usr/mpi/$mpicompiler/$mpiname-$mpi_version$mpipath_suffix"
+	} else {
+		set mpich_prefix "unknown"
+	}
+
+	set testdir_prefix "$mpifullname"
+
+	return "$mpirunner $mpich_prefix $testdir_prefix $mpicompiler $api {$add_mpi_env}"
+}
+
+proc test_case_run_mpi_app { mpitype transport host host_list timelimit dir mpi_cmd { mpi_args "" } {show_perf 0 } {case_tag ""} { mpi_env_args "" } } {
+##
+## test_case_run_mpi_app
+## ---------------------
+## run an mpi application initiated by host with host_list processes
+##
+## Usage:
+##	test_case_run_mpi_app host host_list timelimit dir mpi_cmd [mpi_args] [show_perf] [case_tag]
+## Arguments:
+##	mpitype - mvapich1, mvapich2, openmpi, intel, or variations
+##	transport - transport layer for MPI, choices are:
+##					For intel_mpi: sock or rdma
+##					For others: default
+##	host - host to initiate mpi run
+##	host_list - hosts/processes to run
+##	dir - directory (if not absolute assumed relative to tests_dir) with command
+##	timelimit - time to allow between output by command
+##	mpi_cmd - MPI appl command
+##	mpi_args - application args
+##	show_perf - should results be shown as performance
+##	case_tag - suffix for test case name, default is mpi_cmd argument value
+## Returns:
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+	global env
+
+	if { [ string range $dir 0 0 ] != "/" } {
+		# Automated Integration tests
+		set mpi_info [get_mpi_info "$mpitype" 0]
+		set mpirunner_type [lindex "$mpi_info" 0 ]
+		set testdir_prefix [lindex "$mpi_info" 2 ]
+		set compiler [lindex "$mpi_info" 3 ]
+		set api [lindex "$mpi_info" 4 ]
+		set case_prefix "${api}_${compiler}_"
+
+		set newdir "${testdir_prefix}_$dir"
+		set mpirunner "test_case_run_${mpirunner_type}_mpi_app"
+		# to avoid large changes to existing code, we pass MPITYPE in env
+		# so test cases can use it to determine MPICH_PREFIX while logged into
+		# target host
+		set env(MPITYPE) "$mpitype"
+	} else {
+		# Fast Fabric
+		set newdir "$dir"
+		set mpirunner "test_case_run_${mpitype}_mpi_app"
+		set case_prefix ""
+	}
+	if { [string equal "$case_tag" "" ] } {
+		set case_tag "$mpi_cmd"
+	}
+	set case_tag "$case_prefix$case_tag"
+	eval $mpirunner $transport $host [list $host_list] $timelimit "{$newdir}" $mpi_cmd [list $mpi_args] $show_perf $case_tag $mpi_env_args
+}

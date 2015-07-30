@@ -1,0 +1,41 @@
+# Filter file for opapacketcapture
+# [ICS VERSION STRING: unknown]
+
+# Filter is keyword followed by whitespace then filter value
+
+# Available filters and values:
+
+#DLID		<destination lid number - decimal>
+#SLID		<source lid number - decimal>
+#MCLASS		<management class number - decimal>
+#PKEY		<partition key - hex format with leading "0x">
+#PTYPE		<packet type mnemonic - one of RC/UC/RD/UD>
+#SVCLEV		<service level - decimal>
+#ATTRID		<MAD attribute ID - decimal or hex-with-leading-0x>
+#QP			<Destination queue pair number - decimal>
+
+# Additionally, condition may be given to handle relationship between multiple
+# filters - AND or OR. Default is AND
+
+# Any filter may be negated with first character '!' or '~'
+
+#COND		<AND/OR>
+
+# Examples: (edit as appropriate)
+ 
+SLID		2			# filter on source lid of 2
+
+PKEY		0xffff		# filter on pkey of 0xffff
+
+PTYPE		UD			# filter on packet type of UD
+
+!DLID		4			# filter on all dest lids except 4
+
+~SVCLEV		1			# filter on all service levels except 1
+
+#!ATTRID	18			# filter on all MAD attribute IDs except 18
+!ATTRID		0x12		# filter on all MAD attribute IDs except 0x12
+
+QP			1			# filter on dest QP of 1
+
+COND		AND			# AND all these conditions together - all must be true

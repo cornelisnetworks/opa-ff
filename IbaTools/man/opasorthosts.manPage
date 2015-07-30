@@ -1,0 +1,47 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opasorthosts 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opasorthosts
+
+.NL
+
+.PP
+Sorts its standard input in a typical host name order. Hosts are stored alphabetically by any alpha numeric prefix and then sorted numerically by any numeric suffix. Leading zeros in the numeric suffix are optional. This command does not remove duplicates, any duplicates are listed in adjacent lines. This sorts to standard output.
+.PP
+This command can be useful to build mpi\(ulhosts input files for applications or cable test which places hosts in order by name.
+.SH Syntax
+.NL
+opasorthosts < \fIhostlist\fR> \fIoutput\(ulfile\fR
+.PP
+or
+.br
+opasorthosts --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produce full help text
+.PP
+Sort the  \fIhostlist\fR alphabetically (case insensitively) then numerically, hostnames may end in a numeric field which may optionally have leading zeros.
+.SH Examples 
+.NL
+opasorthosts < host.xml > Sorted\(ulhost
+.SH Standard Input-->
+.NL
+
+.br
+opasorthosts osd04 osd1 compute20 compute3 mgmt1 mgmt2 login 
+.SH Standard Output-->
+.NL
+
+.br
+compute3 compute20 login mgmt1 mgmt2 osd1 osd04 

@@ -1,0 +1,9 @@
+HELP: VF INFO SELECT SCREEN
+The VF Info Select screen allows the user to select the type of VF
+information to display for the group selected in the summary screen.  The
+following input commands are accepted and lead to the corresponding screen.
+
+  W: Performance (Bandwidth Utilization) statistics
+  E: Error statistics
+  C: Group configuration (port list)
+

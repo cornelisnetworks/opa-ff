@@ -1,0 +1,15 @@
+This directory contains all the shell and tcl coded scripts which
+add tcl commands to support the test environment and fastfabric.
+
+The following files are included:
+proc_mgr.exp - process management library for expect
+tools.exp - generic test tools
+extmng.exp - operations on 9024FC
+network.exp - network ULP test support library
+basic.exp - test basic support
+target.exp - login and commands to target host/chassis
+chassis.exp - switch chassis support functions
+ib.exp - IB basic tools and test cases
+ibtools.exp - manual inclusion for MAC (does not support TCL_LIB_PATH)
+install.exp - install support functions
+mpi.exp - MPI test support

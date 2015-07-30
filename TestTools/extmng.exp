@@ -1,0 +1,1533 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: @(#) ./fastfabric/tools/extmng.exp 10_0_0_0_404 [04/24/15 03:43]
+
+# This is an expect (tcl) library of procedures to aid OPASW operations
+
+## tcl procedures to support testing:
+## =============================================
+
+proc expect_list_with_punchlist { ibnode issue timelimit list { error_list "" } { out_var "" } } {
+	if { ! [ string equal "$out_var" "" ] } {
+		upvar $out_var out
+		set var "out"
+	} else {
+		set var ""
+	}
+
+	if { [ catch { set res [ expect_list $timelimit $list $error_list $var ] } err_str ] != 0 } {
+		append_punchlist "$ibnode" "$issue"
+		error "$err_str"
+	}
+	return $res
+}
+
+proc trim_opaswitch_distance { opaswitch } {
+##
+## trim_opaswitch_distance
+## ---------------------------
+## remove the ,distance from the opaswitch
+##
+## Usage:
+##	trim_opaswitch_distance opaswitch
+## Arguments:
+##	opaswitch - node to resolve, syntax as found in opaswitchs file
+## Returns:
+##	opaswitch with any ,distance field removed
+##	-code error on failure
+## Additional Information:
+##	Syntax allowed for opaswitch:
+##		nodeguid
+##		nodeguid,,distance
+##		nodeguid:hfi:port
+##		nodeguid:hfi:port,,distance
+##		nodeguid,nodename
+##		nodeguid,nodename,distance
+##		nodeguid:hfi:port,nodename
+##		nodeguid:hfi:port,nodename,distance
+##
+	global env
+
+	set index [string first "," "$opaswitch" ]
+	if { $index != -1 } {
+		set index [string first "," "$opaswitch" [ expr $index + 1]]
+		if { $index != -1 } {
+			# remove ,distance
+			set opaswitch [string range "$opaswitch" 0 [ expr $index - 1] ]
+		}
+	}
+	return "$opaswitch"
+}
+
+proc get_opaswitch_distance { opaswitch } {
+##
+## gettrim_opaswitch_distance
+## ---------------------------
+## get the distance from the opaswitch
+##
+## Usage:
+##	get_opaswitch_distance opaswitch
+## Arguments:
+##	opaswitch - node to process, syntax as found in switches file
+## Returns:
+##	distance field from opaswitch or ""
+##	-code error on failure
+## Additional Information:
+##	Syntax allowed for opaswitch:
+##		nodeguid
+##		nodeguid,,distance
+##		nodeguid:hfi:port
+##		nodeguid:hfi:port,,distance
+##		nodeguid,nodename
+##		nodeguid,nodename,distance
+##		nodeguid:hfi:port,nodename
+##		nodeguid:hfi:port,nodename,distance
+##
+	global env
+
+	set index [string first "," "$opaswitch" ]
+	if { $index != -1 } {
+		set index [string first "," "$opaswitch" [ expr $index + 1]]
+		if { $index != -1 } {
+			# return distance
+			return [string range "$opaswitch" [expr $index + 1 ] end ]
+		}
+	}
+	return ""
+}
+
+proc trim_opaswitch_hfi_port { opaswitch } {
+##
+## trim_opaswitch_hfi_port
+## ---------------------------
+## remove the hfi:port from the opaswitch
+##
+## Usage:
+##	trim_opaswitch_hfi_port opaswitch
+## Arguments:
+##	opaswitch - node to resolve, syntax as found in opaswitchs file
+## Returns:
+##	opaswitch with any hfi:port field removed
+##	-code error on failure
+## Additional Information:
+##	Assumes ,distance was already removed from opaswitch
+##	Syntax allowed for opaswitch:
+##		nodeguid
+##		nodeguid:hfi:port
+##		nodeguid,nodename
+##		nodeguid:hfi:port,nodename
+##
+	global env
+
+	# first parse off any nodename
+	set index [string first "," "$opaswitch" ]
+	if { $index != -1 } {
+		# includes ,
+		set nodename [string range "$opaswitch" $index end ]
+		# excludes ,
+		set nodeguid_hfi_port [string range "$opaswitch" 0 [ expr $index - 1] ]
+	} else {
+		set nodename ""
+		set nodeguid_hfi_port "$opaswitch"
+	}
+	# now parse off any hfi_port
+	set index [string first ":" "$nodeguid_hfi_port" ]
+	if { $index != -1 } {
+		# excludes :
+		set hfi_port [string range "$nodeguid_hfi_port" [expr $index + 1] end ]
+		# excludes :
+		set nodeguid [string range "$nodeguid_hfi_port" 0 [ expr $index - 1] ]
+	} else {
+		set hfi_port ""
+		set nodeguid "$nodeguid_hfi_port"
+	}
+	return "$nodeguid$nodename"
+}
+
+proc strip_nodename_from_guid { opaswitch } {
+##
+## strip_nodename_from_guid
+## ---------------------------
+## remove the nodename from the opaswitch
+##
+## Usage:
+##	strip_nodename_from_guid opaswitch
+## Arguments:
+##	opaswitch - node representation guid followed optionally
+##     by comma and nodename
+## Returns:
+##	opaswitch with comma and nodename removed
+## Additional Information:
+##	Assumes ,distance was already removed from opaswitch
+##
+	global env
+
+	set index [string first "," "$opaswitch" ]
+	if { $index != -1 } {
+		set node_guid [string range "$opaswitch" 0 [ expr $index - 1 ] ]
+	} else {
+		set node_guid "$opaswitch"
+	}
+	return "$node_guid"
+}
+
+proc strip_nodeguid_from_desc { ibnode } {
+##
+## strip_nodeguid_from_desc
+## ---------------------------
+## remove the node GUID from the ibnode
+##
+## Usage:
+##	strip_nodeguid_from_desc ibnode
+## Arguments:
+##	ibnode - node representation guid followed optionally
+##     by comma and nodename
+## Returns:
+##	ibnode with node guid and comma removed
+## Additional Information:
+##	Assumes ,distance was already removed from ibnode
+##
+	global env
+
+	set index [string first "," "$ibnode" ]
+	if { $index != -1 } {
+		set node_desc [string range "$ibnode" [ expr $index + 1  ] [expr [string length "$ibnode"]] ]
+	} else {
+		set node_desc ""
+	}
+	return "$node_desc"
+}
+
+proc resolve_ibnode { ibnode } {
+##
+## resolve_ibnode
+## ---------------------------
+## resolve the hfi:port by which the given ibnode should be accessed
+##
+## Usage:
+##	resolve_ibnode ibnode
+## Arguments:
+##	ibnode - node to resolve, syntax as found in ibnodes file
+## Returns:
+##	hfi:port to access ibnode via -> success
+##	-code error on failure
+## Additional Information:
+##	Assumes ,distance was already removed from ibnode
+##	Must be called with a local_sh established
+##	env(CFG_PORTS) is used to specify local hfi:port(s) to check to
+##	locate ibnode if ibnode does not have an explicit hfi_port.
+##	Syntax allowed for ibnode:
+##		nodeguid
+##		nodeguid:hfi:port
+##		nodeguid,nodename
+##		nodeguid:hfi:port,nodename
+##
+	global env
+
+	set bindir /usr/sbin
+
+	# first parse off any nodename
+	set index [string first "," "$ibnode" ]
+	if { $index != -1 } {
+		# excludes ,
+		set nodeguid_hfi_port [string range "$ibnode" 0 [ expr $index - 1] ]
+
+	} else {
+		set nodeguid_hfi_port "$ibnode"
+	}
+	# now parse off any hfi_port
+	set index [string first ":" "$nodeguid_hfi_port" ]
+	if { $index != -1 } {
+		# excludes :
+		set hfi_port [string range "$nodeguid_hfi_port" [expr $index + 1] end ]
+		# excludes :
+		set nodeguid [string range "$nodeguid_hfi_port" 0 [ expr $index - 1] ]
+	} else {
+		set hfi_port ""
+		set nodeguid "$nodeguid_hfi_port"
+	}
+
+	if { [ string equal "$hfi_port" "" ] } {
+		# no hfi_port specified
+		set found 0
+		set llen [ llength $env(CFG_PORTS) ]
+		if { $llen == 0 } {
+			# default should have been set in opatest.sh, just be safe
+			set hfi_port "0:0"
+		} elseif { $llen == 1 } {
+			# no use iterating saquery, only 1 choice
+			set hfi_port [ lindex $env(CFG_PORTS) 0 ]
+		} else {
+			# iterate all specified ports, find first with given ibnode
+			foreach hfi_port $env(CFG_PORTS) {
+				set hfi_port_args [ get_hfi_port_args "$hfi_port" "-p" ]
+				# if saquery outputs a Node Record (which includes PortGuid heading)
+				# the nodeguid was found.  Otherwise it will output an error message
+				if { ! [ string equal "$hfi_port" [ lindex $env(CFG_PORTS) 0] ] } {
+					log_message("Retrying with HFI port $hfi_port");
+				}
+				if { [ catch { unix_cmd 90 0 "$bindir/opasaquery $hfi_port_args -n $nodeguid 2>&1|grep -i PortGuid > /dev/null 2>&1" } res ] == 0 } {
+					set found 1
+					break
+				} else {
+					# kill any stuck saquery command
+					target_send_intr
+					expect_unix_prompt 60
+				}
+			}
+			if { ! $found } {
+				append_punchlist "$ibnode" "Unable to find via hfi:port(s) $env(CFG_PORTS)"
+				fail_test "Unable to find $ibnode via hfi:port(s) $env(CFG_PORTS)"
+			}
+		}
+	}
+	return "$hfi_port"
+}
+
+proc get_hfi_port_args { hfi_port { port_arg "-o" }} {
+##
+## get_hfi_port_args
+## -------------------
+## parse the hfi_port and return proper -h and -o options for commands
+##
+## Usage:
+##	get_hfi_port_args hfi_port [port_arg]
+## Arguments:
+##	hfi_port - hfi:port on local system to use to access the switch
+##				if "", defaults to 1st local port
+##	port_arg - argument name to specify port (default is p)
+## Returns:
+##	nothing
+## Additional Information:
+##	
+
+	if { [ string equal "$hfi_port" "" ] } {
+		set hfi_port "0:0"
+	}
+	set hfi ""
+	set port ""
+	regexp {([0-9]+):([0-9]+)} $hfi_port p1 hfi port
+	if { [ string equal "$hfi" ""] || [ string equal "$port" ""] } {
+		fail_test "Invalid hfi:port ($hfi_port)"
+	}
+	set hfi_port_args "-h $hfi"
+	if { ! [ string equal "$port" "0"] } {
+		set hfi_port_args "$hfi_port_args $port_arg $port"
+	}
+	return "$hfi_port_args"
+}
+
+proc get_switch_type { ibnode sa_hfi_port_args node_guid } {
+##
+## get_switch_type
+## -------------------
+## find out if the switch is externally managed or internally managed 
+##
+## Usage:
+##	ibnode sa_hfi_port_args node_guid	
+## Arguments:
+##		ibnode : to verify if it's a switch or not 
+##		sa_hfi_port_args :  port on the local system to access switch 
+##		node_guid : to query records and find details about switch
+## Returns:
+##	nothing
+## Additional Information:
+
+	global env
+
+	set bindir /usr/sbin
+
+	local_sh
+
+	set type ""
+	set out ""
+	set lid ""
+	set systemimageguid ""
+
+	send_unix_cmd "$bindir/opasaquery $sa_hfi_port_args -n $node_guid"
+	set out [expect_list_with_punchlist "$ibnode" "Switch not found in SA DB"  120 { "Type: [A-Za-z]+" } { "Error" "No Records Returned"}]
+	regexp {([Type:]+) ([A-Za-z]+)} $out type2 type1 type
+	check_exit_status 60 0
+	send_unix_cmd "opasaquery $sa_hfi_port_args -n $node_guid -o node"
+	set out [expect_list_with_punchlist "$ibnode" "Switch not found in SA DB"  120 { "SystemImageGuid: [0x[A-Fa-f0-9]+" } { "Error" "No Records Returned"}]
+	regexp {(0x[A-Fa-f0-9]+)} $out systemimageguid 
+	check_exit_status 60 0
+	send_unix_cmd "opasaquery $sa_hfi_port_args -n $node_guid -o node"
+	set out [expect_list_with_punchlist "$ibnode" "Switch not found in SA DB"  120 { "LID: [0x[A-Fa-f0-9]+" } { "Error" "No Records Returned"}]
+	regexp {([LID:]+) ([0x[A-Fa-f0-9]+)} $out lid2 lid1 lid
+	if { ! [ string equal "$type" "SW"] } {
+		set type "SW"
+		log_message "$ibnode: Not a Switch device"
+		append_punchlist "$ibnode" "Not a Switch device"
+		fail_test "$ibnode: Not a Switch device"
+	} else {
+		check_exit_status 60 0
+		# TODO: does this need to be updated, and how so
+		if { [ catch { unix_cmd 90 0 "echo $node_guid 2>&1 | grep 0x001175 /dev/null 2>&1" } res ] != 0 } {
+			log_message "It's a Intel switch $node_guid"
+		} else {
+			log_message "It's not a Intel switch $node_guid"
+		}
+		check_exit_status 60 0
+		if { [ catch { unix_cmd 90 0 "$bindir/opasaquery -l $lid -o portinfo 2>&1 | sed -n '/PortNum: *0x00/,/-------/p' 2>&1 | grep Capability: 2>&1 | grep -v VDR > /dev/null 2>&1 " } res ] == 0 } {
+			log_message "$node_guid is an Internally Managed Switch"
+			show_message "$node_guid is an Internally Managed Switch"
+			append_punchlist "$ibnode" "Internally Managed Switch"
+			fail_test "Not supported: This is not an externally managed switch"
+		}	
+	}
+}
+
+proc get_switch_brand { ibnode } {
+##
+## get_switch_brand
+## -------------------
+## determine if the switch identified by ibnode is OPA
+##
+## Usage:
+##	get_switch_brand hfi_port [port_arg]
+## Arguments:
+##	hfi_port - hfi:port on local system to use to access the switch
+##				if "", defaults to 1st local port
+##	port_arg - argument name to specify port (default is p)
+## Returns:
+##	switch brand - "OPA" or "unknown"
+## Additional Information:
+##	
+		global env
+
+		local_sh
+
+		set out ""
+		set node_guid ""
+		set deviceid ""
+		set brand ""
+		set type "" 
+		set bypass ""
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+        # use verbose option so we have a predictable output to expect
+		set node_guid [ strip_nodename_from_guid "$trimmed_ibnode" ]
+		set sa_hfi_port_args [ regsub -- "-o" "$hfi_port_args" "-p" ]
+		set bypass $env(CFG_SWITCH_BYPASS_SWITCH_CHECK)
+		if { [ string equal "$bypass" "n"] } {
+			set type [ get_switch_type "$ibnode" "$sa_hfi_port_args" "$node_guid" ]
+		} else {
+			log_message ""
+			log_message "Bypassing check for externally managed switch for -B option"
+		}
+		send_unix_cmd "opasaquery $sa_hfi_port_args -n $node_guid"
+		set out [expect_list_with_punchlist "$ibnode" "Switch not found in SA DB"  120 { "DeviceId: [A-Fa-fx0-9]+" } { "Error" "No Records Returned" }]
+		regexp {(0x[A-Fa-f0-9]+)} $out deviceid
+		# TODO: place holder value will need to be updated when we find out the real one
+		if { [ string equal "$deviceid" "0x7320"] } {
+			set brand "OPA"
+			log_message "$ibnode: detected Intel OPA device"
+		} else {
+			set brand "unknown"
+			log_message "$ibnode: detected unknown device"
+		}
+
+		return "$brand"
+}
+
+proc get_switch_getportconfig { ibnode } {
+##
+## get_switch_getportconfig
+## -------------------
+## execute a test case gathering port info of switch  $ibnode
+##
+## Usage:
+##	get_switch_getportconfig ibnode
+## Arguments:
+##	ibnode - ib node to get switch port config
+## Returns:
+##	config description
+## Additional Information:
+##	
+
+		global env
+
+		set toolsdir /opt/opa/tools
+
+		set out_msg ""
+
+		local_sh
+		set out ""
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+        # use verbose option so we have a predictable output to expect
+
+		set brand [get_switch_brand "$ibnode"]
+		if { [ string equal "$brand" "OPA"] } {
+		check_exit_status 60 0
+		send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 11 "
+			set all [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "Switch.+opaswquery completed" } { "Error"}]
+			regexp {(Switch configuration values)(.+)(opaswquery completed)} $all a b out_msg
+			show_message "$out_msg"
+		} else {
+			append_punchlist "$ibnode" "Not an Intel Device"
+			fail_test "$ibnode: Not an Intel Device"
+		}
+
+		local_sh_exit
+
+		return "$out_msg"
+}
+
+
+
+proc get_switch_info { ibnode } {
+##
+## get_switch_info
+## -------------------
+## execute a test case gathering switch info from $ibnode
+##
+## Usage:
+##	get_switch_info ibnode
+## Arguments:
+##	ibnode - ib node to get switch info
+## Returns:
+##	info description
+## Additional Information:
+##	
+
+		global env
+
+		set toolsdir /opt/opa/tools
+
+		set out_msg ""
+
+		local_sh
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+        # use verbose option so we have a predictable output to expect
+
+		set brand [get_switch_brand "$ibnode"]
+		if { [ string equal "$brand" "OPA"] } {
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 3"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "FW Version is [0-9.]+" } { "Error"}]
+			regexp {([0-9.]+)} $out fwversion
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+
+        # use verbose option so we have a predictable output to expect
+		if { [ string equal "$brand" "OPA"] } {
+			# set capability to QDR for now
+			set capability "QDR"
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+
+        # use verbose option so we have a predictable output to expect
+		if { [ string equal "$brand" "OPA"] } {
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 4"
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD [A-Za-z0-9]+,[A-Za-z0-9 -]+,[A-Za-z0-9/-]+,[A-Za-z0-9.-]+" } { "Error"}]
+		regexp {([VPD]+) ([A-Za-z0-9]+),([A-Za-z0-9 -]+),([A-Za-z0-9/-]+),([A-Za-z0-9.-]+)} $out p1 p2 p3 partnumber p4 hwversion
+
+        # use verbose option so we have a predictable output to expect
+		if { [ string equal "$brand" "OPA"] } {
+			set index1 [expr [string first "-" $partnumber ] + 1]
+			set index2 [expr [string last "-" $partnumber ] - 1]
+			set midNum [string range $partnumber $index1 $index2]
+			set psIndicator [string range $midNum 1 1]
+
+			if { [ string equal "$psIndicator" "0"] } {
+				set numPS 1
+			} elseif { [ string equal "$psIndicator" "1"] } {
+				set numPS 2
+			} else {
+#				fail_test "$ibnode: invalid part number"
+				set numPS 1
+			}
+
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 12"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "BoardID: 0x[0-9a-fA-F]+" } { "Error" }]
+			regexp {BoardID: 0x([0-9a-fA-F]+)} $out f1 boardID
+			if { ! [ string equal "$boardID" "13"] } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 7"
+				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "FAN 0:[A-Z]" "FAN 1:[A-Z]" "FAN 2:[A-Z]" "FAN 3:[A-Z]" "FAN 4:[A-Z]" "FAN 5:[A-Z]"} { "Error" }]
+				regexp {0:([A-Z]+)} $out f1 f2
+				if { [ string equal "$f2" "NORMAL"] } {
+					set fanaStatus "Normal"
+				} elseif { [ string equal "$f2" "FAST"] } {
+					set fanaStatus "TooFast"
+				} elseif { [ string equal "$f2" "SLOW"] } {
+					set fanaStatus "TooSlow"
+				} else {
+					set fanaStatus "Unknown"
+				}
+				regexp {1:([A-Z]+)} $out f1 f2
+				if { [ string equal "$f2" "NORMAL"] } {
+					set fanbStatus "Normal"
+				} elseif { [ string equal "$f2" "FAST"] } {
+					set fanbStatus "TooFast"
+				} elseif { [ string equal "$f2" "SLOW"] } {
+					set fanbStatus "TooSlow"
+				} else {
+					set fanbStatus "Unknown"
+				}
+				regexp {2:([A-Z]+)} $out f1 f2
+				if { [ string equal "$f2" "NORMAL"] } {
+					set fancStatus "Normal"
+				} elseif { [ string equal "$f2" "FAST"] } {
+					set fancStatus "TooFast"
+				} elseif { [ string equal "$f2" "SLOW"] } {
+					set fancStatus "TooSlow"
+				} else {
+					set fancStatus "Unknown"
+				}
+				regexp {3:([A-Z]+)} $out f1 f2
+				if { [ string equal "$f2" "NORMAL"] } {
+					set fandStatus "Normal"
+				} elseif { [ string equal "$f2" "FAST"] } {
+					set fandStatus "TooFast"
+				} elseif { [ string equal "$f2" "SLOW"] } {
+					set fandStatus "TooSlow"
+				} else {
+					set fandStatus "Unknown"
+				}
+				regexp {4:([A-Z]+)} $out f1 f2
+				if { [ string equal "$f2" "NORMAL"] } {
+					set faneStatus "Normal"
+				} elseif { [ string equal "$f2" "FAST"] } {
+					set faneStatus "TooFast"
+				} elseif { [ string equal "$f2" "SLOW"] } {
+					set faneStatus "TooSlow"
+				} else {
+					set faneStatus "Unknown"
+				}
+				regexp {5:([A-Z]+)} $out f1 f2
+				if { [ string equal "$f2" "NORMAL"] } {
+					set fanfStatus "Normal"
+				} elseif { [ string equal "$f2" "FAST"] } {
+					set fanfStatus "TooFast"
+				} elseif { [ string equal "$f2" "SLOW"] } {
+					set fanfStatus "TooSlow"
+				} else {
+					set fanfStatus "Unknown"
+				}
+				if { ! [ string equal "$fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus" "Normal/Normal/Normal/Normal/Normal/Normal" ] } {
+					append_punchlist "$ibnode" "Fan: $fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus"
+				}
+				set fanStatus "$fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus"
+			} else {
+				set fanStatus "N/A"
+			}
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+
+        # use verbose option so we have a predictable output to expect
+		if { [ string equal "$brand" "OPA"] } {
+			if { "$numPS" == "2" } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 8 -i 1"
+				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 1: [A-Z ]+" } { "Error" }]
+				regexp {([PS 1:]+) ([A-Z]+)} $out p1 p2 p3
+				if { ! [ string equal "$p3" "ENGAGED" ] } {
+					if { [ string equal "$p3" "FAILED" ] } {
+						append_punchlist "$ibnode" "PS 1: NOT PRESENT"
+					} else {
+						append_punchlist "$ibnode" "PS 1: $p3"
+					}
+				}
+				set p1Status "$p3"
+			} else {
+				set p1Status "N/A"
+			}
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+        # use verbose option so we have a predictable output to expect
+		if { [ string equal "$brand" "OPA"] } {
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 8 -i 2"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 2: [A-Z ]+" } { "Error" }]
+			regexp {([PS 2:]+) ([A-Z]+)} $out p1 p2 p3
+			if { ! [ string equal "$p3" "ENGAGED" ] } {
+				if { [ string equal "$p3" "FAILED" ] } {
+					append_punchlist "$ibnode" "PS 2: NOT PRESENT"
+				} else {
+					append_punchlist "$ibnode" "PS 2: $p3"
+				}
+			}
+			set p2Status "$p3"
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+		if { [ string equal "$p1Status" "FAILED" ] } {
+			set ps1Status "NOT PRESENT"
+		} else {
+			set ps1Status "$p1Status"
+		}
+		if { [ string equal "$p2Status" "FAILED" ] } {
+			set ps2Status "NOT PRESENT"
+		} else {
+			set ps2Status "$p2Status"
+		}
+
+		# report the results
+		show_message ""
+		if { [ string equal "$brand" "OPA"] } {
+			show_message "$ibnode:
+    F/W ver:$fwversion  H/W ver:$hwversion  H/W pt num:$partnumber  Capability:$capability  Fan status:$fanStatus  PS1 Status:$ps1Status  PS2 Status:$ps2Status"
+			set out_msg "F/W ver:$fwversion
+H/W ver:$hwversion
+H/W pt num:$partnumber
+Capability:$capability
+Fan status:$fanStatus
+PS1 Status:$ps1Status
+PS2 Status:$ps2Status"
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+		local_sh_exit
+
+		return "$out_msg"
+}
+
+proc get_switch_hwvpd { ibnode } {
+##
+## get_switch_hwvpd
+## -------------------
+## execute a test case gathering switch hwvpd from $ibnode
+##
+## Usage:
+##	get_switch_hwvpd ibnode
+## Arguments:
+##	ibnode - ib node to get switch hwvpd
+## Returns:
+##	nothing
+## Additional Information:
+##	
+		global env
+
+		set toolsdir /opt/opa/tools
+
+		local_sh
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+		set brand [get_switch_brand "$ibnode"]
+        # use verbose option so we have a predictable output to expect
+		if { [ string equal "$brand" "OPA"] } {
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 4"
+		} else {
+			append_punchlist "$ibnode" "Not an OPA series device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD [A-Za-z0-9]+,[A-Za-z0-9 -]+,[A-Za-z0-9/-]+,[A-Za-z0-9.-]+,[A-Za-z0-9 ._-]+,[A-Za-z0-9 /._-]+,[A-Za-z0-9 ]+,[0-9-]+,[0-9:]+" } { "Error" }]
+		regexp {([VPD]+) ([A-Za-z0-9]+),([A-Za-z0-9 -]+),([A-Za-z0-9/-]+),([A-Za-z0-9.-]+),([A-Za-z0-9 ._-]+),([A-Za-z0-9 /._-]+),([A-Za-z0-9 ]+),([0-9-]+),([0-9:]+)} $out p1 p2 serialnumber partnumber model hwversion mfgname proddesc mfgid date time
+		local_sh_exit
+
+		# report the results
+                show_message " \n
+    $ibnode: H/W VPD serial number: $serialnumber
+    $ibnode: H/W VPD part number  : $partnumber
+    $ibnode: H/W VPD model        : $model
+    $ibnode: H/W VPD h/w version  : $hwversion
+    $ibnode: H/W VPD manufacturer : $mfgname
+    $ibnode: H/W VPD prod desc    : $proddesc
+    $ibnode: H/W VPD mfg id       : $mfgid
+    $ibnode: H/W VPD mfg date     : $date
+    $ibnode: H/W VPD mfg time     : $time"
+
+}
+
+proc get_switch_ping { ibnode { hfi_port ""} { report "1" } { ignore_pass "0" } } {
+##
+## get_switch_ping
+## -------------------
+## execute a test case gathering switch ping from $ibnode
+##
+## Usage:
+##	get_switch_ping ibnode [hfi_port] [report]
+## Arguments:
+##	ibnode - ib node to ping
+##	hfi_port - hfi:port on local system to use to access the ibnode
+##	report - if "1", output presence, otherwise be silent
+## Returns:
+##	presence string - "is" or "not"
+## Additional Information:
+##	
+		global env
+
+		set toolsdir /opt/opa/tools
+
+		local_sh
+
+		set out ""
+		set node_guid ""
+		set presence "not"
+
+		if { [ string equal "$hfi_port" "" ] } {
+			set hfi_port [ resolve_ibnode $ibnode ]
+		}
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+        # use verbose option so we have a predictable output to expect
+		set node_guid [ strip_nodename_from_guid "$trimmed_ibnode" ]
+		set sa_hfi_port_args [ regsub -- "-o" "$hfi_port_args" "-p" ]
+		send_unix_cmd "opasaquery $sa_hfi_port_args -n $node_guid"
+		if { [ catch { expect_progress 60 {[\r\n]} { "LID" "SystemImageGuid" } { "No Records Returned" "Failed:" } } res ] != 0 } {
+			set presence "not"
+			log_message "$ibnode: unit is not present"
+		} else {
+			set brand [get_switch_brand "$ibnode"]
+			if { [ string equal "$brand" "OPA"] } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswping -t $trimmed_ibnode $hfi_port_args"
+			} else {
+				append_punchlist "$ibnode" "Not an Intel OPA device"
+				fail_test "$ibnode: Not an Intel OPA device"
+			}
+			if { [ catch { expect_progress 60 {[\r\n]} { "is present" } { "No Path Records Returned" "Error" } } res ] != 0 } {
+				set present not
+			} else {
+				set present is
+			}
+			if { [ string equal "$present" "is"] } {
+				set presence "is"
+				if { [ string equal "$report" "1"] } {
+					log_message "$ibnode: unit is present"
+					show_message ""
+					show_message "$ibnode: unit is present"
+				}
+			}
+		}
+		local_sh_exit
+
+		return "$presence"
+}
+
+proc get_switch_fwverify { ibnode } {
+##
+## get_switch_fwverify
+## -------------------
+## execute a test case verifying f/w on $ibnode
+##
+## Usage:
+##	get_switch_fwverify ibnode
+## Arguments:
+##	ibnode - ib node to verify f/w
+## Returns:
+##	nothing
+## Additional Information:
+##	
+		global env
+
+		set toolsdir /opt/opa/tools
+
+		local_sh
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+		set brand [get_switch_brand "$ibnode"]
+		if { [ string equal "$brand" "OPA"] } {
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswfwverify -t $trimmed_ibnode $hfi_port_args -q"
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+		set out [expect_list_with_punchlist "$ibnode" "Unable to verify FW" 120 { "[A-Za-z]+ primary image" } { "Error" }]
+		regexp {([A-Za-z]+)} $out pValidity
+
+		set present "is"
+
+		if { [ string equal "$present" "not"] } {
+		#	log_message "$ibnode - no failsafe eeproms"
+			set fValidity "N/A"
+		} else {
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswfwverify -t $trimmed_ibnode $hfi_port_args -q -F"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to verify FW" 120 { "[A-Za-z]+ secondary image" } { "Error" }]
+			regexp {([A-Za-z]+)} $out fValidity
+
+			if { [ string equal "$brand" "OPA"] } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 2"
+				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 120 { "from [A-Za-z]+" } { "Error" }]
+				regexp {(from) ([A-Za-z]+)} $out from f which
+				log_message "$ibnode - switch has booted from $which image"
+			}
+		}
+		show_message ""
+		
+		show_message "$ibnode - bootable image: $pValidity   failsafe image: $fValidity   booted from: $which"
+		local_sh_exit
+
+		if { ! ( [ string equal "$pValidity" "valid" ] || [ string equal "$fValidity" "N/A" ] ) ||
+			! ( [ string equal "$pValidity" "valid" ] || [ string equal "$fValidity" "N/A" ] ) } {
+			append_punchlist "$ibnode" "Corrupted FW Image: primary: $pValidity failsafe: $fValidity"
+			fail_test "$ibnode: Corrupted FW Image: primary: $pValidity failsafe: $fValidity"
+		}
+}
+
+proc get_switch_capture { ibnode upload_file } {
+##
+## get_switch_capture
+## -------------------
+## execute a test case gathering switch capture from $ibnode to $upload_file
+##
+## Usage:
+##	get_switch_capture ibnode upload_file
+## Arguments:
+##	ibnode - ib node to get switch capture
+##	upload_file - file to save capture to
+## Returns:
+##	nothing
+## Additional Information:
+##	
+		global env
+
+		set toolsdir /opt/opa/tools
+
+		local_sh
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+		set node_guid [ strip_nodename_from_guid "$trimmed_ibnode" ]
+		set brand [get_switch_brand "$ibnode"]
+        # use verbose option so we have a predictable output to expect
+		if { [ string equal "$brand" "OPA"] } {
+			unix_cmd 60 0 "mkdir -p [ exec dirname $upload_file ]"
+			# use -v so log is easier to analyze and debug failures
+			# TODO: This needs to be updated with whatever the new capture file is
+			send_unix_cmd "$toolsdir/xedge_capture -v -t $node_guid $hfi_port_args $upload_file"
+			check_exit_status 60 0
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+		local_sh_exit
+}
+
+proc test_case_i2c_extmgd_eeprom { operation ibnode fwspeed hwversion { args {}} {norecords 0} } {
+##
+## test_case_i2c_extmgd_eeprom
+## ---------------------------
+## test case to dump or upgrade the firmware image of externally managed switch
+## nodes.
+##
+## Usage:
+##	test_case_i2c_extmgd_eeprom operation ibnode [args]
+## Arguments:
+##	operation - dump or upgrade operation
+##	ibnode - IB switch node
+##	args - parameters specific to the operation
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+
+	global env
+
+	# TBD - should separate dump and upgrade into different functions
+	# fwfile, file version and action should be args of this function instead
+	# of using globals, that way caller can do looping in TCL later
+	if { [ string equal "$operation" "upgrade"] } {
+		set info "
+Firmware package File: $env(CFG_FWFILE)
+Speed: $fwspeed
+Firmware Version: $env(CFG_FWRELEASEVERSIONINFO)
+Action: $env(CFG_FWACTION)"
+	} else {
+		set info ""
+	}
+    test_case "$ibnode.i2c.extmgd.eeprom" "$operation firmware of switch $ibnode" "Access EEPROM of switch node $ibnode$info
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar operation operation
+        upvar ibnode ibnode
+        upvar fwspeed fwspeed
+        upvar hwversion hwversion
+        upvar args args
+        upvar norecords norecords
+
+
+		set fw_override $env(CFG_FWOVERRIDE)
+
+		local_sh
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+		local_sh_exit
+
+		set toolsdir /opt/opa/tools
+
+		set brand [get_switch_brand "$ibnode"]
+		if { [ string equal "$brand" "OPA"] } {
+			# TODO: does this need to be changed?
+			if { ! [ string equal "$env(CFG_SWITCH_DEVICE)" "12000"] } {
+				show_message ""
+				skip_case "Device type of firmware -$env(CFG_SWITCH_DEVICE)- does not match switch\n"
+			}
+			if { [ string equal "$operation" "upgrade"] } {
+				# retrieve version and asic version of target
+				local_sh
+				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 3"
+				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "FW Version is [0-9.]+" } { "Error" }]
+				regexp {([0-9.]+)} $out fwversion
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 9"
+				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "ASIC Version: [V0-9]+" } { "Error" }]
+				regexp {([ASIC Version:]+) ([V0-9]+)} $out p1 p2 asicversion
+				if { $hwversion != $asicversion } {
+					show_message ""
+					skip_case "ASIC Version of firmware -$hwversion- does not match capability of switch -$asicversion-\n"
+					# aborts via skip_case
+				} elseif { $env(CFG_FWRELEASEVERSIONINFO) == $fwversion && $fw_override == "n" } {
+					# if the password is not being changed, we will skip below
+					#skip_case "Switch already has version $fwversion loaded"
+					check_exit_status 60 0
+					send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 2"
+					set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 120 { "from [A-Za-z]+" } { "Error" }]
+					regexp {(from) ([A-Za-z]+)} $out from f which
+					if { [ string equal "$which" "primary"] } {
+						set proceed 0
+					} else {
+						set proceed 1
+					}
+				} else { 
+					set proceed 1
+				}
+				local_sh_exit
+			} else {
+				set proceed 1
+			}
+		}
+
+		if { ! $proceed } {
+			show_message ""
+			skip_case "Switch already has version $fwversion loaded"
+		}
+
+        # use verbose option so we have a predictable output to expect
+		local_sh
+		set brand [get_switch_brand "$ibnode"]
+		if { [ string equal "$brand" "OPA"] } {
+			set modifyParam "-z 60 -u 10"
+			set node_desc [ strip_nodeguid_from_desc "$trimmed_ibnode" ]
+			set length [string length $node_desc]
+			if { $length > 0 } {
+				local_sh
+				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -S -C 1 -s $node_desc"
+				if { $norecords } {
+					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 60 { "opaswconfigure completed"} { "Error" } 
+				} else {
+					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 300 { "opaswconfigure completed"} { "Error"} 
+				}
+			}
+			if { [ file exists $env(CFG_FWTEMPDIR)/iniXedge.ini.comp ] } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswfwconfigure -t $trimmed_ibnode $hfi_port_args -d $env(CFG_FWTEMPDIR)"
+				if { $norecords } {
+					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 60 { "opaswfwconfigure completed"} { "Error" } 
+				} else {
+					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 300 { "opaswfwconfigure completed"} { "Error" } 
+				}
+			}
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 10"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 120 { "Session ID: [0-9]+" } { "Error" }]
+			regexp {(Session ID:) ([0-9]+)} $out p1 p2 oldSessID
+			scan $oldSessID "%d" oldsessionid 
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswfwupdate $hfi_port_args -q $modifyParam $args; echo DONE"
+			if { $norecords } {
+				expect_list_with_punchlist "$ibnode" "Unable to update FW" 60 { "opaswfwupdate completed"} { "Error" } 
+			} else {
+				expect_list_with_punchlist "$ibnode" "Unable to update FW" 300 { "opaswfwupdate completed"} { "Error" } 
+			}
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+		local_sh_exit
+
+
+		if { [ string equal "$operation" "upgrade"]
+			 &&  [ string equal "$env(CFG_FWACTION)" "run"]  } {
+			log_message "$ibnode has been reset ... waiting for return"
+			# wait 30 secs first, then try up to 7.5 minutes at 10 sec intervals
+			if { [ string equal "$brand" "OPA"] } {
+				set sleeptime 18
+			} else {
+				set sleeptime 30
+			}
+			for {set i 0} {$i < 51} {incr i} {
+				# wait for switch to reboot
+				if { $i!=0 } {
+				    log_message "Retrying: $ibnode not yet back online ... waiting for return"
+				}
+				sleep $sleeptime
+				set presence [get_switch_ping "$ibnode" "$hfi_port" 0 "0"]
+				if { [ string equal "$presence" "is"] } {
+					break
+				}
+				set sleeptime 10
+			}
+			if { [ string equal "$presence" "not"] } {
+				append_punchlist "$ibnode" "Failed to come back online after reboot"
+				fail_test "$ibnode Failed to come back online after reboot"
+			} elseif { [ string equal "$brand" "OPA"] } {
+				local_sh
+				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 10"
+				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 120 { "Session ID: [0-9]+" } { "Error" }]
+				regexp {(Session ID:) ([0-9]+)} $out p1 p2 sessID
+				scan $sessID "%d" sessionid
+				if { $sessionid > $oldsessionid } {
+					append_punchlist "$ibnode" "Did not reboot properly"
+					fail_test "$ibnode did not reboot properly"
+				}
+				if { $clear_password } {
+					set save_password "\r"
+				} elseif { $new_password_set } {
+					set save_password "$switch_newPassword\r"
+				} elseif { $password_set } {
+					set save_password "$switch_password\r"
+				} else {
+					set save_password "\r"
+				}
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -C 2"
+				if { $norecords } {
+					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 60 { "opaswconfigure completed"} { "Error" } 
+				} else {
+					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 300 { "opaswconfigure completed"} { "Error" } 
+				}
+				local_sh_exit
+			}
+		}
+    }
+}
+
+proc test_case_i2c_extmgd_reset { ibnode { args {}} {norecords 0} } {
+##
+## test_case_i2c_extmgd_reset
+## ---------------------------
+## test_case to reset externally managed switch
+##
+## Usage:
+##	test_case_i2c_extmgd_reset ibnode
+## Arguments:
+##	ibnode - IB switch node
+##	args - parameters specific to the operation
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+    test_case "$ibnode.i2c.extmgd.reset" "reset switch $ibnode" "Reset switch node $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+        upvar args args
+        upvar norecords norecords
+
+		global env
+
+		set toolsdir /opt/opa/tools
+
+		local_sh
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+		set brand [get_switch_brand "$ibnode"]
+        # use verbose option so we have a predictable output to expect
+		if { [ string equal "$brand" "OPA"] } {
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 10"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 120 { "Session ID: [0-9]+" } { "Error" }]
+			regexp {(Session ID:) ([0-9]+)} $out p1 p2 oldSessID
+			scan $oldSessID "%d" oldsessionid 
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswreset $hfi_port_args $args; echo DONE"
+			if { $norecords } {
+				expect_list_with_punchlist "$ibnode" "Unable to reboot switch" 60 { "opaswreset completed"} { "Error" } 
+			} else {
+				expect_list_with_punchlist "$ibnode" "Unable to reboot switch" 300 { "opaswreset completed"} { "Error" } 
+			}
+		} else {
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+
+
+		local_sh_exit
+
+		log_message "$ibnode has been reset ... waiting for return"
+		# wait 30 secs first, then try up to 7.5 minutes at 10 sec intervals
+		if { [ string equal "$brand" "OPA"] } {
+			set sleeptime 18
+		} else {
+			set sleeptime 30
+		}
+		for {set i 0} {$i < 51} {incr i} {
+			# wait for switch to reboot
+			if { $i!= 0 } {
+			    log_message "Retrying: $ibnode not yet back online ... waiting for return"
+			}
+			sleep $sleeptime
+			set presence [get_switch_ping "$ibnode" "$hfi_port" 0 "1"]
+			if { [ string equal "$presence" "is"] } {
+				break
+			}
+			set sleeptime 10
+		}
+
+		if { [ string equal "$presence" "not"] } {
+			fail_test "$ibnode Failed to come back online after reboot"
+		} elseif { [ string equal "$brand" "OPA"] } {
+			local_sh
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 10"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 120 { "Session ID: [0-9]+" } { "Error" }]
+			regexp {(Session ID:) ([0-9]+)} $out p1 p2 sessID
+			scan $sessID "%d" sessionid
+			if { $sessionid > $oldsessionid } {
+				fail_test "$ibnode did not reboot properly"
+			}
+			local_sh_exit
+		}
+    }
+}
+proc test_case_i2c_extmgd_switchgetportconfig { ibnode {fd ""}} {
+##
+## test_case_i2c_extmgd_switchgetportconfig
+## ---------------------------
+## test_case to retrieve info about port configurations of externally managed switches 
+##
+## Usage:
+##	test_case_i2c_extmgd_switchgetportconfig ibnode [fd]
+## Arguments:
+##	ibnode - IB switch node
+##	fd - file to write config info to
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+    test_case "$ibnode.i2c.extmgd.switchgetportconfig" "retrieve switch $ibnode" "Retrieve port config info  $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+        upvar fd fd
+
+        # use verbose option so we have a predictable output to expect
+		set out [ get_switch_getportconfig "$ibnode" ]
+		if { ! [ string equal "$fd" "" ] } {
+			puts $fd "\n$out"
+		}
+    }
+}
+
+
+proc test_case_i2c_extmgd_switchinfo { ibnode {fd ""}} {
+##
+## test_case_i2c_extmgd_switchinfo
+## ---------------------------
+## test_case to retrieve info from externally managed switch
+##
+## Usage:
+##	test_case_i2c_extmgd_info ibnode [fd]
+## Arguments:
+##	ibnode - IB switch node
+##	fd - file to write config info to
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+    test_case "$ibnode.i2c.extmgd.switchinfo" "retrieve switch $ibnode" "Retrieve switch info node $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+        upvar fd fd
+
+        # use verbose option so we have a predictable output to expect
+		set out [get_switch_info "$ibnode"]
+		if { ! [ string equal "$fd" "" ] } {
+			puts $fd "\n$out"
+		}
+    }
+}
+
+proc test_case_i2c_extmgd_switchhwinfo { ibnode } {
+##
+## test_case_i2c_extmgd_switchhwinfo
+## ---------------------------
+## test_case to retrieve hw info from externally managed switch
+##
+## Usage:
+##	test_case_i2c_extmgd_hwinfo ibnode
+## Arguments:
+##	ibnode - IB switch node
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+    test_case "$ibnode.i2c.extmgd.switchhwinfo" "retrieve switch $ibnode" "Retrieve switch hwinfo node $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+
+        # use verbose option so we have a predictable output to expect
+		set brand [get_switch_brand "$ibnode"]
+		if { [ string equal "$brand" "OPA"] } {
+			# are we going to implement this?
+			puts "Function not yet implemented for Intel OPA"
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+    }
+}
+
+proc test_case_i2c_extmgd_switchhwvpd { ibnode } {
+##
+## test_case_i2c_extmgd_switchhwvpd
+## ---------------------------
+## test_case to retrieve hw vpd from externally managed switch
+##
+## Usage:
+##	test_case_i2c_extmgd_hwvpd ibnode
+## Arguments:
+##	ibnode - IB switch node
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+    test_case "$ibnode.i2c.extmgd.switchhwvpd" "retrieve switch $ibnode" "Retrieve switch hwvpd node $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+
+        # use verbose option so we have a predictable output to expect
+		get_switch_hwvpd "$ibnode"
+    }
+}
+
+proc test_case_i2c_extmgd_switchping { ibnode } {
+##
+## test_case_i2c_extmgd_switchping
+## ---------------------------
+## test_case to retrieve hw vpd from externally managed switch
+##
+## Usage:
+##	test_case_i2c_extmgd_ping ibnode
+## Arguments:
+##	ibnode - IB switch node
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+    test_case "$ibnode.i2c.extmgd.switchping" "ping switch $ibnode" "Ping switch node $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+
+		set presence [ get_switch_ping "$ibnode" "" 0 ]
+		if { [ string equal "$presence" "not"] } {
+			append_punchlist "$ibnode" "Not responding"
+			fail_test "$ibnode Not Responding"
+		} else {
+			log_message "$ibnode: unit is present"
+			show_message ""
+			show_message "$ibnode: unit is present"
+		}
+    }
+}
+
+proc test_case_i2c_extmgd_switchfwverify { ibnode } {
+##
+## test_case_i2c_extmgd_switchfwverify
+## ---------------------------
+## test_case to verify firmware in externally managed switch
+##
+## Usage:
+##	test_case_i2c_extmgd_fwverify ibnode
+## Arguments:
+##	ibnode - IB switch node
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+    test_case "$ibnode.i2c.extmgd.switchfwverify" "retrieve switch $ibnode" "Verify firmware node $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+        upvar args args
+        upvar norecords norecords
+
+        # use verbose option so we have a predictable output to expect
+		get_switch_fwverify "$ibnode"
+    }
+}
+
+proc test_case_ext_mgmt_sw_config { ibnode } {
+
+	global tools_case_status
+	global env
+
+    test_case "$ibnode.i2c.extmgd.switchconfigure" "configure switch $ibnode" "Configure node $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+        upvar args args
+        upvar norecords norecords
+
+		set toolsdir /opt/opa/tools
+
+		local_sh
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
+        # use verbose option so we have a predictable output to expect
+
+		set brand [get_switch_brand "$ibnode"]
+		if { [ string equal "$brand" "OPA"] } { 
+			set linkWidthSelection $env(LINKWIDTH_SETTING)
+
+			if { [string equal "$linkWidthSelection" "0"] == 0 } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -S -C 5 -i $linkWidthSelection"
+				expect_list_with_punchlist "$ibnode" "Unable to configure switch link width" 60 { "opaswconfigure completed"} { "Error" } 
+			}
+
+			set linkSpeedSelection $env(LINKSPEED_SETTING)
+
+			if { [string equal "$linkSpeedSelection" "0"] == 0 } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -S -C 7 -i $linkSpeedSelection"
+				expect_list_with_punchlist "$ibnode" "Unable to configure switch link speed" 60 { "opaswconfigure completed" } { "Error" }
+			}
+
+			set nodeDescSelection $env(NODEDESC_SETTING)
+
+			if { [string equal "$nodeDescSelection" "0"] == 0 } {
+				set node_desc [ strip_nodeguid_from_desc "$trimmed_ibnode" ]
+				set length [string length $node_desc]
+				if { $length > 0 } {
+					local_sh
+					send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -S -C 1 -s $node_desc"
+					expect_list_with_punchlist "$ibnode" "Unable to configure switch node description" 60 { "opaswconfigure completed"} { "Error" } 
+				}
+			}
+
+			set FMEnabledSelection $env(FMENABLED_SETTING)
+
+			if { [string equal "$FMEnabledSelection" "-1"] == 0 } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -S -C 8 -i $FMEnabledSelection"
+				expect_list_with_punchlist "$ibnode" "Unable to configure switch FM Enabled" 60 { "opaswconfigure completed" } { "Error" }
+			}
+
+			set linkCRCModeSelection $env(LINKCRCMODE_SETTING)
+
+			if { [string equal "$linkCRCModeSelection" "-1"] == 0 } {
+				check_exit_status 60 0
+				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -S -C 9 -i $linkCRCModeSelection"
+				expect_list_with_punchlist "$ibnode" "Unable to configure switch link CRC mode" 60 { "opaswconfigure completed" } { "Error" }
+			}
+
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+
+		local_sh_exit
+
+	}
+}
+
+proc test_case_i2c_extmgd_switchcapture { ibnode upload_file } {
+##
+## test_case_i2c_extmgd_switchcapture
+## ---------------------------
+## test_case to retrieve capture from externally managed switch
+##
+## Usage:
+##	test_case_i2c_extmgd_switchcapture ibnode upload_file
+## Arguments:
+##	ibnode - IB switch node
+##	upload_file - file to upload too
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+    test_case "$ibnode.i2c.extmgd.switchcapture" "capture switch $ibnode" "Capture switch state node $ibnode
+File: TestTools/extmng.exp" case_setup case_cleanup {
+        upvar ibnode ibnode
+        upvar upload_file upload_file
+
+        # use verbose option so we have a predictable output to expect
+		get_switch_capture "$ibnode" "$upload_file"
+    }
+}

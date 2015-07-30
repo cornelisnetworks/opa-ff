@@ -1,0 +1,11 @@
+MPI_HOME     =
+MPI_INCLUDE  = $(MPI_INCLUDE_DIR)
+ARCH         = linux
+COMM         =
+LIB_PATH     = -L$(MPI_LIB_DIR)
+#LIBS         = -lmpich
+CC           = $(MPICC)
+CLINKER      = $(MPICC)
+OPTFLAGS     =
+CPPFLAGS     = -DnoCHECK
+

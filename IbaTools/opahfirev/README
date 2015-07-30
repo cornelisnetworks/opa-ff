@@ -1,0 +1,13 @@
+The script has been updated to only report STL devices.
+At present, that includes wfr_lite, which utilizes an InfiniPath device.
+This will be updated when real hardware comes available.
+
+######################
+phgppriv04.ph.intel.com  - HFI 83:00.0
+Board: ChipABI 2.0, InfiniPath_QLE7342, InfiniPath1 6.2, SW Compat 2
+SN:    RIB1024C26610
+Bus:   PCIe,5000MHz,x8
+GUID:  0011:7500:0079:159a
+######################
+
+

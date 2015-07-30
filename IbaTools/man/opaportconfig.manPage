@@ -1,0 +1,209 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaportconfig 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaportconfig
+
+.NL
+
+.PP
+
+\fB(Host or Switch)\fR
+Controls the configuration and state of a specified Intel(R) Omni-Path Host Fabric Interface (HFI) port on the local host or a remote switch.
+.SH Syntax
+.NL
+opaportconfig [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-r \fIsecs\fR] [-z] [-S \fIstate\fR] [-P \fIphysstate\fR] [-s \fIspeed\fR] [-w \fIwidth\fR] [-c \fILTPCRC\fR] [-K \fImkey\fR] [-v] [-x] [-L \fIlid\fR] [< \fIsub command\fR>]
+.SH Options
+.NL
+
+.TP 10
+-l \fIlid\fR 
+.NL
+Destination lid, default is local port.
+.TP 10
+-m \fIdest\(ulport\fR 
+.NL
+Destination port, default is port with given lid, useful to access switch ports.
+.TP 10
+-h \fIhfi\fR 
+.NL
+HFI to send through/to, default is first HFI.
+.TP 10
+-p \fIport\fR 
+.NL
+Port to send through/to, default is first port.
+.TP 10
+-K \fImkey\fR 
+.NL
+SM management key to access remote ports .
+.TP 10
+ \fIsub command\fR 
+.NL
+One of the following choices:
+.sp
+enable 
+Enable port.
+.sp
+disable 
+Disable port.
+.sp
+bounce 
+Bounce port.
+.SH Configuration options-->
+.NL
+
+.TP 10
+-r \fIsecs\fR 
+.NL
+Repeat to keep the port down for designated amount of seconds.
+.TP 10
+-S \fIstate\fR 
+.NL
+New State (default is 0).
+.sp
+0 
+No-op.
+.sp
+1 
+Down.
+.sp
+2 
+Initiate.
+.sp
+3 
+Armed.
+.sp
+4 
+Active.
+.TP 10
+-P \fIphysstate\fR 
+.NL
+New physical State (default is 0).
+.sp
+0 
+no-op.
+.sp
+2 
+Polling.
+.sp
+3 
+Disabled.
+.sp
+11 
+Phy-Test (OP only).
+.TP 10
+-s \fIspeed\fR 
+.NL
+New link speeds enabled (default is 0). To enable multiple speeds, use the sum of the desired speeds.
+.sp
+0 
+No-op.
+.sp
+1 
+0x0001 - 12.5 Gb/s.
+.sp
+2 
+0x0002 - 25 Gb/s.
+.TP 10
+-w \fIwidth\fR 
+.NL
+New link widths enabled (default is 0). To enable multiple widths, use sum of desired widths.
+.sp
+0 
+No-op.
+.sp
+1 
+0x01 - 1x.
+.sp
+2 
+0x02 - 2x.
+.sp
+4 
+0x04 - 3x.
+.sp
+8 
+0x08 - 4x.
+.TP 10
+-c \fILTPCRC\fR 
+.NL
+New LPT CRCs enabled (default is 0). To enable multiple LPT CRCs, use sum of desired LPT CRCs
+.sp
+0 
+No-op
+.sp
+1 
+0x1 - 14-bit LTP CRC mode.
+.sp
+2 
+0x2 - 16-bit LTP CRC mode.
+.sp
+4 
+0x4 - 48-bit LTP CRC mode.
+.sp
+8 
+0x8 - 12/16 bits per lane LTP CRC mode
+.sp
+ 
+0xF - Enable all supported.
+.PP
+The -h and -p options permit a variety of selections:
+.TP 10
+-h 0 
+.NL
+First port in system (this is the default).
+.TP 10
+-h \fIx\fR 
+.NL
+First port on HFI  \fIx\fR .
+.TP 10
+-h 0 -p  \fIy\fR  
+.NL
+Port  \fIy\fR within system.
+.TP 10
+-h \fIx\fR-p \fIy\fR 
+.NL
+HFI  \fIx\fR , port  \fIy\fR .
+.SH Debug Options-->
+.NL
+
+.TP 10
+-v 
+.NL
+Verbose output. Additional invocations will turn on debugging, openib debugging and libibumad debugging.
+.TP 10
+-z 
+.NL
+Do not get port info first, clear most port attributes
+.TP 10
+-L \fIlid\fR 
+.NL
+Set PortInfo.LID = lid.
+.SH Examples 
+.NL
+opaportconfig -w 1
+.br
+opaportconfig -p 2 -h 2 -w 3
+.SH Description
+.NL
+
+.PP
+The port configuration is transient in nature. If the given host is rebooted or its Intel(R) Omni-Path Fabric Stack is restarted, the port will revert to its default configuration and state. Typically, the default state is to have the port enabled with all speeds and widths supported by the given HFI port enabled.
+.PP
+To access switch ports using this command, the -l and -m options must be given. The -l option will specify the lid of switch port 0 (the logical management port for the switch) and -m will specify the actual switch port to access. if SMA mkeys are being used, the -K option will also be needed. By default the Intel(R) Omni-Path Fabric Suite Fabric Manager does not use SMA mkeys, in which case this option does not need to be used.
+.PP
+
+.B NOTE:
+The /etc/init.d/opaportconfig script is provided as an example of changing port speed every time the server boots. This script can be edited then scheduled using chkconfig to control link settings on any set of HFI ports
+
+
+.PP
+
+.B CAUTION:
+When using this command to disable or reconfigure switch ports, if the final port in the path between the Fabric Management Node and the switch is disabled or fails to come online, then opaenableports will not be able to reenable it. In which case the switch CLI and/or a switch reboot may be needed to correct the situation.
+

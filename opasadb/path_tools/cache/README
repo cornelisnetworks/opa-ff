@@ -1,0 +1,18 @@
+This program is meant to aid in developing and debugging the shared memory
+interface between the QLogic Distributed SA (Discovery) and the opasadb user
+library. It has 3 modes.
+
+In server mode, the tool exercises the creation portion of the interface,
+by reading a formatted table of fabric information (see buildtable.pl) and
+creating a set of tables to match. If the number of passes is greater than
+1, server mode will do this repeatedly, with a one second delay between
+passes, to simulate a changing fabric.
+
+In dump mode, the tool reads the current shared memory interface and dumps the 
+contents to the specified file. Note that the resulting file could be huge if
+the hash tables are "full sized". (See HASH_TABLE_SIZE in opasadb_path_private.h)
+
+In client mode, the tool reads the same formatted file the server mode does,
+but then randomly picks records from the file and queries for them. It will
+return an error if the record that was returned does not match the record
+loaded from the file.

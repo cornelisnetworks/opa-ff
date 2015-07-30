@@ -1,0 +1,240 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+#! /bin/bash
+
+# initialize
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location,
+# either edit this line or set MPICH_PREFIX in your environment.
+# see iba_select_mpi for the set of default MPI selections
+# default to MPI used for build
+MPICH_PREFIX=
+
+mpirunfile=
+vfselectmethod=sid_qlc
+vfname=
+vfsid=
+dsprtg=
+qname=
+numprocs=2
+wrkdir=$HOME
+mrailmap=
+
+MPI_CMD_ARGS=
+
+MOAB_DJOB_QUEUE_ARGS=""
+MOAB_DJOB_WRK_DIR_ARGS=""
+
+
+
+# Usage - display usage syntax and exit
+
+Usage()
+{
+	echo "Usage: submit.mvapich.job [-V vf_select_method] [-s vf_sid] [-n vf_name]"
+	echo "       [-d dsp_rtg] [-q queue_name] [-p num_processes] [-w wrk_dir]"
+	echo "       [-m <unit:port>[,<unit:port>]]"
+	echo "       mpi_run_file [mpi_run_file args]"
+	echo -e "\n  where vf_select_method is one of:"
+	echo "    vf_name: Name of virtual fabric - use -n to define vf name"
+	echo "    sid    : ServiceId of virtual fabric - use -s option to define service id"
+	echo "    sid_qlc: ServiceId of virtual fabric - use -s option to define service id,"
+	echo "             uses dist_sa (default)"
+	echo "  where dsp_rtg is: 1-adaptive, 2-static_src, 3-static_dest, or 4-static_base"
+	echo "  where queue_name is a valid Moab queue name (default queue is batch)"
+	echo "  where num_processes is the number of processors to run MPI on"
+	echo "  where wrk_dir is the directory the job should execute in (default $""HOME)"
+	echo "  where unit:port is the unit/port pair is used to setup a rail"  
+	exit 2
+}
+
+
+
+
+# process opts and args
+
+while getopts r:h:V:s:n:d:p:q:w:m: param
+do
+	case $param in
+	r)
+		export mpirunfile=$OPTARG;;
+	V)
+		export vfselectmethod=$OPTARG;;
+	s)
+		export vfsid=$OPTARG;;
+	n)
+		export vfname=$OPTARG;;
+	d)
+		export dsprtg=$OPTARG;;
+	p)
+		export numprocs=$OPTARG;;
+	q)
+		export qname=$OPTARG;;
+	w)
+		export wrkdir=$OPTARG;;
+	m)
+		export mrailmap=$OPTARG;;
+	?)
+		Usage
+	esac
+done
+shift $(($OPTIND -1))
+
+mpirunfile=$1
+
+# validate args
+
+if [ "$mpirunfile" = "" ]
+then
+	echo "Must provide an mpi_run_file"
+	Usage
+fi
+
+if [ ! -f $mpirunfile ]
+then
+	echo "mpi_run_file \"$mpirunfile\" does not exist"
+	Usage
+fi
+
+if [ "$dsprtg" != "" ]
+then
+	if [ $dsprtg -lt 1 -o $dsprtg -gt 4 ]
+	then
+		echo dispersive routing value must be between 1 and 4
+		Usage
+	fi
+fi
+
+# get opagetvf_func definition
+. /usr/bin/opagetvf_env
+
+case $vfselectmethod in
+	vf_name)
+		opagetvf_func "-d '$vfname'" VIADEV_DEFAULT_PKEY VIADEV_DEFAULT_SERVICE_LEVEL MTU
+		if [ $? -ne 0 ]
+		then
+			echo "Failed to get environment variables for VF with Name \"$vfname\""
+			Usage
+		fi
+		export MPI_CMD_ARGS="VIADEV_DEFAULT_PKEY=$VIADEV_DEFAULT_PKEY VIADEV_DEFAULT_SERVICE_LEVEL=$VIADEV_DEFAULT_SERVICE_LEVEL VIADEV_DEFAULT_MTU=MTU$MTU MV_MTU=$MTU PSM_PKEY=$VIADEV_DEFAULT_PKEY IPATH_SL=$VIADEV_DEFAULT_SERVICE_LEVEL PSM_MTU=$MTU";;
+	sid)
+		opagetvf_func "-S '$vfsid'" VIADEV_DEFAULT_PKEY VIADEV_DEFAULT_SERVICE_LEVEL MTU
+		if [ $? -ne 0 ]
+		then
+			echo "Failed to get environment variables for VF with SID \"$vfsid\""
+			Usage
+		fi
+		export MPI_CMD_ARGS="VIADEV_DEFAULT_PKEY=$VIADEV_DEFAULT_PKEY VIADEV_DEFAULT_SERVICE_LEVEL=$VIADEV_DEFAULT_SERVICE_LEVEL VIADEV_DEFAULT_MTU=MTU$MTU MV_MTU=$MTU PSM_PKEY=$VIADEV_DEFAULT_PKEY IPATH_SL=$VIADEV_DEFAULT_SERVICE_LEVEL PSM_MTU=$MTU";;
+	sid_qlc)
+		export MPI_CMD_ARGS="PSM_PATH_REC=opp PSM_IB_SERVICE_ID=$vfsid";;
+	*)
+		echo Unknown vfselectmethod $vfselectmethod
+		Usage;;
+esac
+
+if [ "$dsprtg" != "" ]
+then
+	case $dsprtg in
+		1)
+			export routing=adaptive;;
+		2)
+			export routing=static_src;;
+		3)
+			export routing=static_dest;;
+		4)
+			export routing=static_base;;
+	esac
+	export MPI_CMD_ARGS="$MPI_CMD_ARGS PSM_PATH_SELECTION=$routing"
+fi
+
+if [ "$MPICH_PREFIX" = "" ]
+then
+	. /usr/bin/iba_select_mpi
+	if ! valid_mpich_prefix
+	then
+		find_mpi $prefix/mpi/gcc/mvapich-1*qlc
+	fi
+	if ! valid_mpich_prefix
+	then
+		find_mpi $prefix/mpi/gcc/mvapich-1*
+	fi
+fi
+
+if [ "$qname" != "" ]
+then
+	export MOAB_DJOB_QUEUE_ARGS="-q $qname"
+fi
+
+if [ ! -d $wrkdir ]
+then
+    echo "wrk_dir \"$wrkdir\" does not exist"
+    Usage
+fi
+
+if [ "$wrkdir" != "" ]
+then
+	export MOAB_DJOB_WRK_DIR_ARGS="-d $wrkdir"
+fi
+
+if [ "$mrailmap" != "" ]
+then
+	. /usr/bin/opagetvf_env
+	
+	iba_getpsm_func $mrailmap
+	if [ $? -ne 0 ]
+	then
+		echo "Failed to get environment variable for PSM with value \"$mrailmap\""
+		Usage
+	else
+		export MPI_CMD_ARGS="$MPI_CMD_ARGS PSM_MULTIRAIL=1 PSM_MULTIRAIL_MAP=$mrailmap"
+	fi
+fi
+
+#
+# submit the job from stdin
+#
+# parameters:
+# -E:	Moab adds standard Moab environment variables to the job's environment.
+# -l:	Defines the resources that are required by the job and establishes a
+#	limit to the amount of resource that can be consumed.
+#	   + tpn:    Tasks per node allowed on allocated hosts,
+#	   + procs:  Requests a specific amount of processors for the job.
+# -q:	Specifies the destination queue (Class) the job should execute in.
+# -d:	Specifies which directory the job should execute in.
+# -V:	Declares that all environment variables in the msub environment are
+#	exported to the batch job.
+
+cat moab.mpi.job.wrapper > .run.mvapich
+echo $MPICH_PREFIX/bin/mpirun_rsh -np $numprocs -hostfile '.mpi_hosts_file.$$' $MPI_CMD_ARGS $* >> .run.mvapich
+msub -E -l procs=$numprocs $MOAB_DJOB_WRK_DIR_ARGS $MOAB_DJOB_QUEUE_ARGS -V .run.mvapich
+rm .run.mvapich
+
+exit 0

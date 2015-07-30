@@ -1,0 +1,141 @@
+Copyright (c) 2015, Intel Corporation
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met: 
+- Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+- Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution. 
+- Neither the name of Intel Corporation nor the names of its contributors may
+  be used to endorse or promote products derived from this software without
+  specific prior written permission. 
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL INTEL, THE COPYRIGHT OWNER OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+EXPORT LAWS: THIS LICENSE ADDS NO RESTRICTIONS TO THE EXPORT LAWS OF YOUR
+JURISDICTION. It is licensee's responsibility to comply with any export
+regulations applicable in licensee's jurisdiction. Under CURRENT (May 2000)
+U.S. export regulations this software is eligible for export from the U.S.
+and can be downloaded by or otherwise exported or reexported worldwide EXCEPT
+to U.S. embargoed destinations which include Cuba, Iraq, Libya, North Korea,
+Iran, Syria, Sudan, Afghanistan and any other country to which the U.S. has
+embargoed goods and services.
+
+[ICS VERSION STRING: unknown]
+
+README for Moab scripts directory
+---------------------------------
+
+This directory contains:
+
+* Three scripts for submitting Moab jobs, one each for OpenMPI, mvapich, and mvapich2
+* A helper script that is used by the three previously mentioned scripts 
+* This file
+
+
+
+Virtual Fabric integration with Moab
+------------------------------------
+
+The sole intent of the Moab scripts is to act as templates for the administrator, on how to enable
+Moab to take advantage of Virtual Fabric (vFabric) functionality.  In order to make these scripts
+accessible to common users, the administrator must do the following:
+
+   1. (Optional) If necessary, edit the scripts to meet the configuration and usage criteria
+      requirements specific to your Moab environment.
+   2. Copy the scripts to a shared file system service that provides the appropriate access rights
+      for common users.
+
+In order for Moab to take advantage of vFabric functionality, vFabric must be integrated with Moab.
+There are several integration methods that could be used, these scripts use the method of Moab based
+queues.  This method requires that the administrator perform the following steps (for detailed
+information on vFabric, reference "Fabric Manager Users Guide"):
+
+   1. For both Moab and the Resource Manager(s), create a queue for each vFabric defined within the
+      FM configuration file (/etc/sysconfig/ifs_fm.xml).
+   2. Configure each vFabric queue defined within Moab with the compute nodes assigned to it within
+      the FM configuration file. 
+   3. (Optional) Configure each vFabric queue defined within Moab with the priorities, policies, QoS,
+      and attributes that are specific to the needs of the organization and fabric environment.
+
+Note, depending on the queue support requirements of a Resource Manager, steps 2 and 3 may also have
+      to be performed upon that Resource Manager (TORQUE does not require these two steps).
+
+
+
+Moab Submit Scripts
+-------------------
+
+Moab submit scripts utilize the Moab primitive "msub", encapsulating the arguments and call structure
+for ease-of-use. They query the SA for information regarding virtual fabrics, or in the case of PSM
+with dist_sa, pass the appropriate arguments to PSM for SA lookup.
+
+The submit scripts default the MPICH_PREFIX if it is not set in the environment. The openmpi, mvapich
+and mvapich2 scripts default to the -qlc versions of MPI.
+
+The submit scripts utilize a helper script called "moab.mpi.job.wrapper".  This helper script is used
+to dynamically generate a hosts file required for MPI.  This host file is a list of hosts to run MPI
+on.  The host file created is called ".mpi_hosts_file.<PID>" and is created in the work directory
+on the primary node executing the job.  Note, the Moab scripts DO NOT delete the host file; therefore,
+clean up of these temporary host files is the responsibility of the user.
+
+   
+Here are some examples of how to call the scripts and pass vFabric parameters (Note, these examples
+utilize the proprietary MPI applications, which are located in the /opt/opa/src/mpi_apps/
+directory.  These MPI applications were provided specifically for administrative use only):
+
+
+Example 1:
+
+	moab.submit.openmpi.job -p 2 -V vf_name -n Compute -d 3 osu2/osu_bibw
+
+This submits a job with the openmpi-qlc subsystem, i.e. the run file osu_bibw is expected to have been
+compiled with the openmpi-qlc compiler under gcc. The number of processes is given as 2, and the virtual
+fabric to use is identified by name, and that name is "Compute".  Option 3 is given to denote a
+dispersive routing option of static_dest.  
+
+Example 2:
+
+	moab.submit.openmpi.job -p 2 -V sid -s 0x0000000000000022 -d 1 osu2/osu_bibw
+
+This submits a job with the openmpi-qlc subsystem, i.e. the run file osu_bibw is expected to have been
+compiled with the openmpi-qlc compiler under gcc. The number of processes is given as 2, and the virtual
+fabric to use is identified by service id, and that id is "0x0000000000000022".  Option 3 is given
+to denote a dispersive routing option of adaptive.
+
+Example 3:
+
+        moab.submit.openmpi.job -p 2 -V sid_qlc -s 0x1000117500000000 -q night osu2/osu_bibw
+
+This submits a job with the openmpi-qlc subsystem, i.e. the run file osu_bibw is expected to have been
+compiled with the openmpi-qlc compiler under gcc. The number of processes is given as 2. The virtual fabric
+to use is identified by service id, and that id is "0x1000117500000000"; it will be passed to the QIB driver
+which will perform the vFabric lookup on behalf of the job.  No dispersive routing instructions are given.
+The job is being requested for submission via the "night" Moab queue.
+
+
+
+Moab Script Administration
+--------------------------
+
+The scripts are intended to be tailored by the Moab administrator in order to structure the msub
+parameters appropriately. Any parameters, such as queue name, application profile, work directory, etc. may
+be inserted into the script either using script options, accessing environment variables, or by hardcoding.
+
+Additionally, the scripts use mpirun_rsh or mpirun to start MPI jobs. This method enables the vFabric
+parameters to be passed to the MPI jobs so that the appropriate lower level actions can be taken based on
+those settings (e.g. inserting Service Level information into data messages). Any MPI job command parameters
+should be used on the script command line, and will be passed to the MPI run job.
+

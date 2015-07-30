@@ -1,0 +1,142 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid ib stack testing
+
+global g_debug
+
+#########################################################################################
+# Name        : value_cmp_eq
+# Input       : value1, value2
+# Return      . None.
+# Description : Return an error if $value1 != $value2
+#########################################################################################
+
+proc value_cmp_eq { leftval rightval } {
+	if {  $leftval ne $rightval } {
+		return -code error "ERROR : $leftval does not equal $rightval."
+	}
+
+}
+
+#########################################################################################
+# Name        : hextodec
+# Input       : hex value in the form 0x1234ABCD....
+# Return      . decimal value.
+# Description : Convert a 16 bit hex value to a decimal value.
+#########################################################################################
+
+proc hextodec { number } {
+
+	set result 0
+	foreach hexvalue [split $number {}] {
+
+		# check if hex value is a number
+		if { [ regexp {^([0-9]+)$} $hexvalue ] || [ regexp {^([a-fA-F]+)$} $hexvalue ]  } {
+			set newhex 0x$hexvalue
+			set result [expr {16*$result + $newhex}]
+		}
+	}
+
+	return $result
+}
+
+#########################################################################################
+# Name        : dectohex
+# Input       : decimal value
+# Return      . hex value in the form 0x0000.
+# Description : Convert a decimal value to a 16 bit hex value.
+#########################################################################################
+
+proc dectohex { number } {
+
+	set result [ format 0x%4.4x $number ]
+	return $result
+
+}
+
+#########################################################################################
+# Name        : normalizedec
+# Input       : decimal value
+# Return      . dec value in the form 1234.
+# Description : Removes leading zeros in a decimal number
+#########################################################################################
+
+proc normalizedec { number } {
+
+    set result [string trimleft "$number" "0"]
+    if { $result == "" } {
+	set result 0
+    }
+    
+    return $result
+}
+
+#########################################################################################
+# Name        : dumpvar
+# Input       : var, fail, isXML
+# Return      : Failure with var value; if fail = 1, halt proc else dump var contents.
+#             : if isXML = true, dump var asXML
+# Description : Useful for setting breakpoints in tcl test framework.
+#########################################################################################
+
+proc dumpvar { var fail isXML} {
+	if { $fail == 0 } {
+		if { $isXML eq "true" } {
+			puts [$var asXML]
+		} else {
+			puts "DEBUG :: |$var|"
+			puts [ string length $var ]
+		}
+	} elseif { $fail == 1 } {
+		if { $isXML eq "true" } {
+			return -code error "DEBUG : |$var asXML|."
+		} else {
+			return -code error "DEBUG : |$var|."
+		}
+	}
+}
+
+#########################################################################################
+# Name        : debug_message
+# Input       : msg
+# Return      : None
+# Description : Outputs debug message msg to console
+#########################################################################################
+
+proc debug_message { msg } {  
+    global g_debug
+
+    if { $g_debug == 1 } {  
+        puts "DEBUG: $msg: [clock seconds]"
+    }    
+}
+

@@ -1,0 +1,282 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+#! /bin/bash
+# chkconfig: 2345 16 84
+# description: Start/Stop script for Distributed SA
+#
+### BEGIN INIT INFO
+# Provides:       dist_sa
+# Required-Start: rdma
+# Required-Stop:  
+# Default-Start:  2 3 5
+# Default-Stop:	  0 1 2 6
+### END INIT INFO
+#
+# Start, Stop, Restart the Distributed SA service
+#
+# Handles loading, unloading of the Distributed SA Service
+
+IBA_SA_PATH=$PATH:/sbin:/usr/bin
+if [ -e /etc/profile.d/ofed.sh ]; then
+        . /etc/profile.d/ofed.sh
+fi
+
+CONFIG_FILE=/etc/sysconfig/iba/dist_sa.conf
+
+# If RunDir has been set, make sure the run directory exists.
+RUN_DIR=`grep -ve "^#" $CONFIG_FILE | grep RunDir | cut -d= -f2`
+if [ ! -z "$RUN_DIR" ]; then
+	DAEMON_COREFILE_LIMIT="unlimited"
+	mkdir -p $RUN_DIR
+fi
+
+if [ -f /etc/init.d/functions ]; then
+    . /etc/init.d/functions
+elif [ -f /etc/rc.d/init.d/functions ] ; then
+    . /etc/rc.d/init.d/functions
+elif [[ -e /sbin/start_daemon && -e /sbin/killproc ]]; then
+#This case is for SLES systems where we implement the functions
+#available in RHEL systems using the commands available on SLES.
+	daemon()
+    {
+       path=`which $1`;
+       dir=`dirname $path`;
+	   dir=$dir"/";
+	   cmd=$dir${1+"$@"};
+
+	   if [ ! -z "$DAEMON_COREFILE_LIMIT" ]; then 
+            ulimit -S -c $DAEMON_COREFILE_LIMIT;
+       fi
+
+       /sbin/start_daemon $cmd
+	   ret=$?
+	   if [ $ret -eq 0 ]; then
+			echo_success
+       else
+			echo_failure
+	   fi
+	   return $ret
+	}
+
+	killproc()
+	{
+	   path=`which $1`;
+	   dir=`dirname $path`;
+	   dir=$dir"/";
+	   cmd=$dir${1+"$@"};
+	   /sbin/killproc $cmd 
+	   ret=$?
+	   if [ $ret -eq 0 ]; then
+			echo_success
+       else
+			echo_failure
+	   fi
+	   return $ret
+	}
+
+#Implementing the subsys file part of RHEL status function
+	status()
+	{
+		echo $1
+		if [ -f /var/lock/subsys/$1 ]; then
+	        return 2
+    	fi
+	}
+else
+	echo "Supporting tools for starting daemon not present. Distributed SA daemon will not be started"
+fi
+
+# /etc/init.d/functions which has been sourced in previous step modifies the
+# shell's PATH variable, which is why the Distributed SA binary placed at a 
+# location other than /sbin:/usr/sbin/ are not found.  Hence, the Distributed SA
+# retains the PATH variable set by openibd script.  We cannot do away with 
+# /etc/init.d/functions because "daemon" and "killproc" are obtained from that file.
+
+PATH=$IBA_SA_PATH
+
+if [ -z "${BOOTUP:-}" ]; then
+  if [ -f /etc/sysconfig/init ]; then
+      . /etc/sysconfig/init
+  else
+    # This all seem confusing? Look in /etc/sysconfig/init,
+    # or in /usr/doc/initscripts-*/sysconfig.txt
+    BOOTUP=color
+    RES_COL=60
+    MOVE_TO_COL="echo -en \\033[${RES_COL}G"
+    SETCOLOR_SUCCESS="echo -en \\033[1;32m"
+    SETCOLOR_FAILURE="echo -en \\033[1;31m"
+    SETCOLOR_WARNING="echo -en \\033[1;33m"
+    SETCOLOR_NORMAL="echo -en \\033[0;39m"
+    LOGLEVEL=1
+  fi
+  if [ "$CONSOLETYPE" = "serial" ]; then
+      BOOTUP=serial
+      MOVE_TO_COL=
+      SETCOLOR_SUCCESS=
+      SETCOLOR_FAILURE=
+      SETCOLOR_WARNING=
+      SETCOLOR_NORMAL=
+  fi
+fi
+
+if [ "${BOOTUP:-}" != "verbose" ]; then
+   INITLOG_ARGS="-q"
+else
+   INITLOG_ARGS=
+fi
+
+
+test -f  || exit 0
+
+echo_success() {
+  echo -n $@
+  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
+  echo -n "[  "
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_SUCCESS
+  echo -n $"OK"
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
+  echo -n "  ]"
+  echo -e "\r"
+  return 0
+}
+
+echo_failure() {
+  echo -n $@
+  [ "$BOOTUP" = "color" ] && $MOVE_TO_COL
+  echo -n "["
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_FAILURE
+  echo -n $"FAILED"
+  [ "$BOOTUP" = "color" ] && $SETCOLOR_NORMAL
+  echo -n "]"
+  echo -e "\r"
+  return 1
+}
+
+echo_log() {
+	logger "$@" -p user.err
+	echo "Please refer to /var/log/messages"	
+}
+
+print_status()
+{
+	if [ $1 -eq 0 ]
+	then
+		echo_log "Success"
+	else
+		echo_log "Failure"
+	fi
+	echo_log ""
+}
+
+function start()
+{
+    echo -n "Starting Distributed SA Service"
+	touch /var/lock/subsys/iba_dsc
+	
+	if [  -f $CONFIG_FILE  ]
+	then
+		daemon iba_dsc -f $CONFIG_FILE Daemon=yes
+	else
+		daemon iba_dsc Daemon=yes
+	fi
+	res=$?
+
+	if [ $res != 0 ]; then
+	        echo "Could not start Distributed SA Service"
+	        echo_log "Try starting service manually by running command"
+	else
+	        touch /var/lock/subsys/iba_dsc
+	fi
+}
+
+function stop()
+{
+    echo -n "Stopping Distributed SA Service"
+    killproc iba_dsc
+    res=$?
+    status iba_dsc >/dev/null 2>&1 || rm -f /var/lock/subsys/iba_dsc
+}
+
+function restart()
+{
+	stop
+	start
+}
+
+iba_dsc_running()
+{
+	echo "Distributed SA (pid $1) is running"
+}
+
+iba_dsc_not_running()
+{
+	echo "Distributed SA is not running"
+}
+
+running_status() {
+    pid=`cat "/var/run/ib_iba_dsc.pid" 2>/dev/null`
+    if [ "$pid" = '' ]
+    then
+        iba_dsc_not_running
+        return
+    fi
+
+    ps -p $pid | grep $pid > /dev/null 2>&1
+    ret=$?
+    if [ $ret -eq 0 ]
+    then
+        iba_dsc_running $pid
+        return
+    fi
+
+    iba_dsc_not_running
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        restart
+        ;;
+    status)
+        running_status
+        ;;
+    *)
+       echo $"Usage: $0 {start|stop|restart|status}"
+       exit 1
+esac
+
+exit 0

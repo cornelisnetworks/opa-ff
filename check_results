@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ -d IbAccess ]
+then
+./MakeTools/check_results "$@"
+else
+../MakeTools/check_results "$@"
+fi

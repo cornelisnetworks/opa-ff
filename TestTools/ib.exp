@@ -1,0 +1,148 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid ib testing
+
+## tcl procedures to support testing:
+## =============================================
+
+proc test_case_discovered_hosts { host hosts } {
+##
+## test_case_discovered_hosts
+## -------------------
+## execute a test case to determine if hosts can be seen from discovery on
+## given host
+##
+## Usage:
+##	test_case_discovered_hosts host hosts
+## Arguments:
+##	host - host to test
+##	hosts - list of hosts expected to be discovered
+## Returns:
+##	 0 - success
+##	 1 - failure
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+	return [ test_case "$host.dsc" "$host can see $hosts" "Verify host can discover $hosts
+via /proc/driver/ics_dsc/gids
+File: TestTools/ib.exp" case_setup case_cleanup {
+		upvar host host
+		upvar hosts hosts
+
+		target_root_sh $host
+
+		set target_stack [ target_get_stack_type "y" "$host"]
+
+		if { "$target_stack" == "OPENIB" } {
+			send_unix_cmd {type opasaquery}
+			if { 0 == [ get_exit_status 60 ] } {
+				#send_unix_cmd "opasaquery -h 0 -p 0 -t fi -o desc 2>&1 |tr 'A-Z' 'a-z' | sed -e 's/^/Node: /'"
+				send_unix_cmd {opasaquery t ca -o desc 2>&1 |tr 'A-Z' 'a-z' | sed -e 's/^/Node: /'}
+			} else {
+				#send_unix_cmd {saquery |egrep '^[[:space:]]*NodeDescription\.*'|tr 'A-Z' 'a-z' | sed -e 's/^[[:space:]]*nodedescription\.*/Node: /'}
+				send_unix_cmd {opasaquery |egrep '^[[:space:]]*NodeDescription\.*'|tr 'A-Z' 'a-z' | sed -e 's/^[[:space:]]*nodedescription\.*/Node: /'}
+			}
+			# wait for echo of command so we don't mistake command for any
+			# similarly named hosts
+			expect_list 90 {"sed -e" "Node: /'"} {"not found" "unknown" "Error" "cannot" }
+			set expected_host_list {}
+			# for each host we expect to see a line with $h
+			# To support OFED hosts, we need to handle names with HCA-# appended to them.
+			# Ensure that hostnames in the case insensitive manners are supported.
+			set hosts [ string tolower $hosts ]
+            
+# todo : uncommend later
+			#foreach h "$hosts" {
+		#		lappend expected_host_list "Node: $h\n|Node: $h hfi-\[1-9\]+\n"
+		#	}
+		#	expect_list_orderless 60 0 "$expected_host_list" { "not found" "unknown" "Error" "cannot" }
+		#	check_exit_status 60 0
+			target_root_sh_exit
+		}  else {
+			target_root_sh_exit
+			skip_case "This IB stack is not supported"
+		}
+
+	} ]
+}
+
+
+proc test_case_verify_topology { host local_topology_file remote_topology_dir} {
+##
+## test_case_verify_topology
+## -------------------
+## execute a test case to determine if the topology of the cluster has changed
+##
+## See README file in dsc directory for more information
+##
+## Usage:
+##	test_case_verify_topology
+## Arguments:
+##	host - sm host
+##      local_topolgy_file - path and name of the saved topology file
+##      remote_topology_dir - where to scp file on the SM host
+## Returns:
+##	 0 - success, no change in topology
+##	 1 - failure, topology has changed
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+	return [ test_case "verifytopology.dsc" "Verify topology of SM $host" "Verify topology of sm $host with $local_topology_file
+File: TestTools/ib.exp" case_setup case_cleanup {
+		upvar host host
+		upvar local_topology_file local_topology_file
+		upvar remote_topology_dir remote_topology_dir
+
+                set path [split "$local_topology_file" /]
+                set topology_file_name [lindex $path [llength $path]-1]
+                set remote_topology_file [join "$remote_topology_dir $topology_file_name" "/"]      
+
+                if { [file exists $local_topology_file] == 0 } {
+		    error "Error: topology file $local_topology_file could not be found"
+                } 
+
+                if { [ catch { exec scp $local_topology_file root@$host:$remote_topology_dir } msg ] } {
+		    error "Failed to scp $local_topology_file to $host:$remote_topology_dir: $msg"
+		}
+
+		target_root_sh $host
+
+                send_unix_cmd "opareport -o verifynodes -T $remote_topology_file; echo DONE"            
+                expect_list 60 { "Getting" "DONE" } { "[1-9][0-9]* Missing" "[1-9][0-9]* Unexpected" "[1-9][0-9]* Duplicate" "[1-9][0-9]* Different" }
+                check_exit_status 60 0
+                send_unix_cmd "rm -f $remote_topology_file"
+
+                target_root_sh_exit
+        } ]
+}

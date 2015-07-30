@@ -1,0 +1,650 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# low level process management routines
+
+# This is the default stty settings for the pty used by expect
+# to have it take effect callers of spawn or test_spawn must
+# declare global stty_init in their function
+# alternately they could declare a local variable with their own settings
+# or take the default settings
+global stty_init
+# avoid surprise carriages returns in pty due to column wrap
+set stty_init "columns 500"
+
+global os_type
+set os_type [ exec uname -s ]
+
+proc stop_child { spawn_id_list { signal TERM }} {
+##
+## stop_child
+## ----------
+## stop the given set of child processes
+##
+## Usage:
+##	stop_child spawn_id_list [signal]
+## Arguments:
+##	spawn_id_list - list of spawn id's from test_spawn
+##	signal - signal to send to kill child if not already dead.
+##		default is TERM
+
+    global test_spawn_id_list test_spawn_program
+    upvar #0 spawn_id global_spawn_id
+
+    foreach spawn_id $spawn_id_list {
+	# see if child still running
+	if { [catch {set pid [exp_pid -i $spawn_id]}] == 1 } {
+	    # child must already be dead
+	    log_message "Child exited: $test_spawn_program($spawn_id)"
+	} else {
+
+	    log_message "Stopping $test_spawn_program($spawn_id)"
+	    # terminate child
+	    catch {exp_close -i $spawn_id }
+	    if { "$signal" != "" } {
+		catch {exec kill -s TERM $pid }
+	    }
+	}
+	catch {exp_wait -i $spawn_id }
+	set index [lsearch -exact $test_spawn_id_list $spawn_id]
+	if { $index != -1 } {
+	    set test_spawn_id_list [ lreplace $test_spawn_id_list $index $index ]
+	}
+	if { $spawn_id == $global_spawn_id } {
+	    # so expect_after in test_suite looks at a valid
+	    # value for spawn_id
+	    set global_spawn_id {}
+	}
+    }
+}
+
+proc kill_child { spawn_id_list signal } {
+##
+## kill_child
+## ----------
+## send a signal to the given children
+##
+## Usage:
+##	kill_child spawn_id_list [signal]
+## Arguments:
+##	spawn_id_list - list of spawn id's from test_spawn
+##	signal - signal to send to child
+
+    global test_spawn_program
+
+    foreach spawn_id $spawn_id_list {
+	if { [catch {set pid [exp_pid -i $spawn_id]}] == 1 } {
+	    # child must already be dead
+	    continue
+	}
+	log_message "Sending SIG$signal to $test_spawn_program($spawn_id)"
+	catch {exec kill -s $signal $pid}
+    }
+}
+
+proc wait_child { spawn_id_list } {
+##
+## wait_child
+## ----------
+## Wait for child to die, do not send any signals
+##
+## Usage:
+##	wait_child spawn_id_list
+## Arguments:
+##	spawn_id_list - list of spawn id's from test_spawn
+
+    stop_child $spawn_id_list ""
+}
+
+proc wait_child_eof { spawn_id_list timelimit { err_msg "timeout: waiting for data or EOF"} } {
+##
+## wait_child_eof
+## --------------
+## Wait for an eof from the given set of children and log all output
+##
+## Usage:
+##	wait_child_eof spawn_id_list timelimit [ err_msg ]
+## Arguments:
+##	spawn_id_list - list of spawn ids to operate on
+##	timelimit - maximum time to wait for eof per child
+##		This timelimit is restarted each time the child provides output
+##	err_msg - error to provide if timeout waiting for eof
+##		default is "timeout: waiting for data or EOF"
+## Additional Information:
+##	The child is unconditionally stopped after the wait, even if
+##	the wait fails.
+##	The children are waited for sequentially, not in unison
+
+    global expect_out
+
+    # since our local spawn_id will not match the global one
+    # expect_after will not get involved
+    set_timeout $timelimit
+    foreach spawn_id $spawn_id_list {
+	set retcode [ catch { expect {
+	    "?*"	{ exp_continue }
+	    eof	noop
+	    timeout	{ log_message "wait_child_eof: $err_msg"; error "wait_child_eof: $err_msg" }
+	    default { log_message "wait_child_eof: default unexpected"
+		error "wait_child_eof: default unexpected"
+	    }
+	}
+	} res ]
+	# make sure child terminates
+	stop_child $spawn_id
+	if { $retcode != 0 } {
+	    error $res $res
+	}
+    }
+}
+
+proc wait_eof { timelimit } \
+{
+##
+## wait_eof
+## --------
+## utility procedure to wait for eof
+##
+## Usage:
+##	wait_eof timelimit
+## Arguments:
+##	timelimit - maximum time to wait
+## Returns:
+##	nothing
+##	timeout - error exception
+## Additional Information:
+##	This is designed for use within test_case's $code
+##	It is similar to expect_eof/ignore_rest except that it
+##	waits for eof from the spawned task and logs all messages
+##	received until eof.  The only way it fails is if the child
+##	does no output for $timeout and does not eof either.
+##
+##	The child is specified by the global variable spawn_id
+##	The global timeout is changed
+
+    global timeout
+    global spawn_id
+    global expect_out
+
+    set_timeout $timelimit
+
+    wait_child_eof $spawn_id $timeout
+    return
+}
+
+proc child_cleanup { { show_output 1 } { id "" } } \
+{
+#
+# child_cleanup
+# -------------
+# cleanup after child after test completion
+#
+# Usage:
+#	child_cleanup [show_output] [id]
+# Arguments:
+#	show_output - should additional lines of child output be shown first
+#	id - spawn_id of child to cleanup, default is global spawn_id
+# Returns:
+#	nothing
+# Additional Information:
+#	This makes sure that the child has exited or been killed
+#	This routine is for internal use and is not documented for user use
+#
+#	The child is specified by the global variable spawn_id
+
+    global lines_to_show
+    global expecting
+
+    if { "$id" == "" } {
+	global spawn_id
+	set id $spawn_id
+	# so expect_after in test_suite looks at a valid
+	# value for spawn_id
+	set spawn_id {}
+    } else {
+	# use a local, expect_after isn't involved anyway
+	# since we cover eof and default cases in show_more_lines
+	set spawn_id $id
+    }
+    if { $show_output } {
+	# show the next few lines
+	if { [info exists lines_to_show] } {
+	    set line_cnt $lines_to_show
+	} else {
+	    set line_cnt 10;	# default value
+	}
+	catch { show_more_lines $line_cnt $id }
+    }
+
+    set expecting ""
+
+    stop_child $id
+    return
+}
+
+global test_spawn_id_list
+set test_spawn_id_list {}
+
+proc test_spawn { program_name args } {
+##
+## test_spawn
+## ----------
+## spawn a child process for monitoring with send/expect
+##
+## Usage:
+##	test_spawn program_name args
+## Arguments:
+##	program_name - name for child in log messages
+##	args - expect spawn args for child creation, includes command name
+## Additional Information:
+##  spawn in run in callers context and $spawn_id will reflect new task
+##	global stty_init can be used to accept the default global settings
+##	if not declared the defaults are used, if local - overrides global default
+
+    global test_spawn_id_list test_spawn_program
+    global stty_init
+
+    log_message "spawn $args"
+    uplevel spawn $args
+    upvar spawn_id new_spawn_id
+
+    lappend test_spawn_id_list $new_spawn_id
+    set test_spawn_program($new_spawn_id) $program_name
+}
+
+
+proc stop_all_children {} {
+##
+## stop_all_children
+## -----------------
+## stop all currently running children
+##
+## Usage:
+##	stop_all_children
+## Additional Information:
+##	stop_child is run against all children started with test_spawn
+
+    stop_child $test_spawn_id_list
+}
+
+proc cleanup_all_children { { show_output 1 } } {
+##
+## cleanup_all_children
+## -------------
+## cleanup after all children after test completion
+##
+## Usage:
+##	cleanup_all_children [show_output]
+## Arguments:
+##	show_output - should next few lines of child output be logged
+## Returns:
+##	nothing
+## Additional Information:
+##	All children started with test_spawn are sequentially processed
+
+    global test_spawn_id_list
+
+    foreach id $test_spawn_id_list {
+	child_cleanup $show_output $id
+    }
+}
+
+#proc command_name { arg_list } {
+#	# return first non-dash argument, used to parse spawn arg list
+#	# to get name for program to operate on
+#	foreach arg $arg_list {
+#		if { [ string match "-*" $arg ] == 0 } {
+#			return $arg
+#		}
+#	}
+#	return "unknown_program"
+#}
+
+# later, if test_spawn_id_list has more than 1 element, show the corresponding
+# element in the list when operate on it via send/expect
+
+# fix all other tests to use test_spawn and cleanup_all_children
+# instead of spawn and child_cleanup
+
+# used to be needed for parallel below
+# now fork/wait is exp_fork/exp_wait, kill is exec shell's kill
+# we ignore errors, FastFabric on opteron sometimes finds 64 bit expect and
+# 32 bit tclx library loaded, however on those systems expect seems to
+# be able to run the desired fast fabric commands
+#catch {
+#	if { [ file exists /usr/lib/libtclx.so ] } {
+#    	load /usr/lib/libtclx.so
+#	} elseif { [ file exists /usr/lib64/tclx8.4/libtclx8.4.so ] } {
+#    	load /usr/lib64/tclx8.4/libtclx8.4.so
+#	}
+#}
+
+set qlgc_fork exp_fork
+set qlgc_wait exp_wait
+if { ! [ catch { set thread_tcl $tcl_platform(threaded) } result] } {
+	# Our own TCL extension to work around fork issues
+	#load /opt/opa/tools/libqlgc_fork.so
+	package require qlgc_fork
+	set qlgc_fork qlgc_fork
+	set qlgc_wait qlgc_wait
+}
+
+proc dump_file_to_output { fd } {
+##
+## dump_file_to_output
+## -------------------
+## Dumps output of file to stdout
+##
+## Usage:
+##  dump_file_to_output $fd
+## Arguments:
+##  fd - File discriptor to be use for reading
+## Returns:
+##  nothing
+##
+	if { $fd == 0 } {
+		return
+	}
+	while {1} {
+		set line [gets $fd]
+		if {[eof $fd]} {
+			close $fd
+			break
+		}
+		puts "$line"
+	}
+}
+
+proc parallel { var list code } {
+##
+## parallel
+## -------------
+## execute code in parallel (one process per entry in list) with var
+## set to each item in list
+##
+## Usage:
+##	parallel var list code
+## Arguments:
+##	var - name of variable to be assigned a value from list
+##	list - values for $var, one process per entry
+##	code - code to execute, will be executed in stack frame of caller
+## Returns:
+##	nothing
+## Additional Information:
+##	Used TclX version of fork/wait, expect version can't wait for non-spawned
+##	processes
+##
+##	This is intended for use within parallel execution of
+##	test suites/cases/items
+##	beware the sub-processes will have the same files/expect sessions open
+##	generally it is a bad a item to have parallel processes sharing the
+##	same expect session (reads from session could go to either process)
+##	hooks with tools_ functions allow counters for run to be maintained
+##	across the process boundaries and allow failures in sub-processes
+##	to appropriately propigate up
+
+    global env
+    upvar $var $var
+    global os_type
+	global qlgc_fork
+	global qlgc_wait
+
+    if {  [ test_parallel ] } {
+	tools_clear_tmp_counters
+	set max_parallel [test_get_env TEST_MAX_PARALLEL]
+	set first 0
+	set last [expr $max_parallel - 1]
+	set ff_pid [pid]
+	set test_serialize_output [test_check_yn [test_get_env TEST_SERIALIZE_OUTPUT]]
+
+	while { $first < [llength $list] } {
+	    set processes {}
+		if { $test_serialize_output } {
+			set child_counter 1
+			array unset fd_list
+		}
+	    foreach $var [ lrange $list $first $last] {
+		if { $test_serialize_output } {
+			set fname "/tmp/qlgc_tmp_${ff_pid}_${child_counter}"
+			set fd [open $fname w+]
+		}
+		set pid [ eval $qlgc_fork ]
+		if { $pid == 0 } {
+			# child process
+			if { $test_serialize_output } {
+				close stdout
+				set fd [open $fname {WRONLY APPEND TRUNC} ]
+				package require qlgc_fork
+				close stderr
+				set fd1 [qlgc_dup stdout ]
+				fconfigure $fd -buffering line
+				fconfigure $fd1 -buffering line
+				file delete $fname
+			}
+		    tools_clear_saved_counters
+		    set errorcode [ catch { uplevel eval "{" "$code" "}" } errorinfo ]
+		    tools_save_counters $errorcode $errorinfo
+			if { $test_serialize_output } {
+				close $fd
+				close $fd1
+			}
+		    exit 0
+		} elseif { $pid == -1 } {
+			if { $test_serialize_output } {
+				close $fd
+				file delete $fname
+			}
+		    fail_test "Unable to fork"
+		} else {
+			# parent process
+		    lappend processes $pid
+			if { $test_serialize_output } {
+				set fd_list($pid) $fd
+				incr child_counter
+			}
+		}
+	    }
+		if { $test_serialize_output } {
+			wait_process_list $processes [array get fd_list]
+		} else {
+			wait_process_list $processes
+		}
+	    set first [expr $last + 1]
+	    incr last $max_parallel
+	}
+	tools_propigate_process_results
+    } else {
+	foreach $var $list {
+	    uplevel eval "{" "$code" "}"
+	}
+    }
+}
+
+proc wait_process_list { pid_list {fd_arr "" }} {
+##
+## wait_process_list
+## -------------
+## Internal helper function, waits for a set of processes to exit
+## for each the tmp_counters are updated
+## intended for use internal to parallel and wait_subprocesses
+
+    global env
+	global qlgc_fork
+	global qlgc_wait
+
+    set killed 0
+	set test_serialize_output [test_check_yn [test_get_env TEST_SERIALIZE_OUTPUT]]
+
+	if { $fd_arr != "" } {
+		array set fd_list $fd_arr
+	}
+
+    foreach pid $pid_list {
+	while { 1 } {
+	    # wait on x86_64 is broken, does not actually wait
+	    if { [ catch { set wait_status [ eval $qlgc_wait -i -1 ] } errorinfo ] } {
+		sleep 1
+		continue
+	    }
+	    # first element of wait_status list is PID
+	    set pid [lindex $wait_status 0]
+	    # check pid against list, could be a CHILDKILLED status
+	    if { [ lsearch -exact $pid_list $pid ] == -1 } {
+		# not found
+		continue
+	    }
+	    # a process in pid_list has exited
+	    break
+	}
+	# once we kill processes, we ignore the counters, they will have exited
+	if { ! $killed } {
+		tools_update_tmp_counters $pid
+	} else {
+		tools_remove_tmp_counters $pid
+	}
+	if { $test_serialize_output == 1 &&
+		 $fd_arr != ""
+		} {
+
+			dump_file_to_output $fd_list($pid)
+			set fd_list($pid) "0"
+		}
+
+	if { ! [ tools_check_process_results ] } {
+		# we had a failure which will propigate up
+		# stop other processes
+	    	log_message "Child failure detected: killing $pid_list"
+		log_message "exec: kill -s TERM $pid_list"
+		if { $test_serialize_output == 1 &&
+			$fd_arr != ""
+			} {
+			foreach {pid fd} [array get fd_list] {
+				#This check ensures that we don't perform any output for
+				#already completed children.
+				if { $fd != 0 } {
+					dump_file_to_output $fd
+					set fd_list($pid) "0"
+				}
+			}
+		}
+
+		catch {exec kill -s TERM $pid_list }
+		sleep 2
+		log_message "exec: kill -s KILL $pid_list"
+		catch {exec kill -s KILL $pid_list }
+		set killed 1
+	}
+    }
+}
+
+global sub_process_list
+set sub_process_list {}
+
+proc init_subprocesses { } {
+##
+## init_subprocesses
+## -------------
+## prepare to start subprocesses
+##
+## Usage:
+##	init_subprocesses
+## Returns:
+##	None
+##
+    global sub_process_list
+
+    tools_clear_tmp_counters
+}
+
+proc subprocess { code } {
+##
+## subprocess
+## -------------
+## start a subprocess
+##
+## Usage:
+##	subprocess code
+## Arguments:
+##	code - code to execute, will be executed in stack frame of caller
+## Returns:
+##	nothing
+## Additional Information:
+##	Used TclX version of fork/wait, expect version can't wait for non-spawned
+##	processes
+##
+##	This is intended for use within tests where 2 or more processes will
+##  be talking to eachother, such as a client/server application within
+##	test suites/cases/items
+##	beware the sub-processes will have the same files/expect sessions open
+##	generally it is a bad a idea to have parallel processes sharing the
+##	same expect session (reads from session could go to either process)
+##
+##	hooks with tools_ functions allow counters for run to be maintained
+##	across the process boundaries and allow failures in sub-processes
+##	to appropriately propigate up
+##
+##  After starting all subprocesses, parent process must call
+##  wait_subprocesses (or fail_test)
+
+    global sub_process_list
+	global os_type
+	global qlgc_fork
+	global qlgc_wait
+
+    set pid [ eval $qlgc_fork ]
+    if { $pid == 0 } {
+	tools_clear_saved_counters
+	set errorcode [ catch { uplevel eval "{" "$code" "}" } errorinfo ]
+	tools_save_counters $errorcode $errorinfo
+	exit 0
+    } elseif { $pid == -1 } {
+	fail_test "Unable to fork"
+    } else {
+	lappend sub_process_list $pid
+    }
+}
+
+proc wait_subprocesses { } {
+##
+## wait_subprocesses
+## -------------
+## wait for all the subprocesses started since last init_subprocesses
+##
+## Usage:
+##	wait_subprocesses
+
+    global sub_process_list
+
+    set list $sub_process_list
+    set sub_process_list {}
+    wait_process_list $list
+    tools_propigate_process_results
+}

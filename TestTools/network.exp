@@ -1,0 +1,107 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid network testing
+# These functions provide support for pre-built test cases which can be
+# provided arguments to indicate the network to be tested
+
+## tcl procedures to support testing:
+## =============================================
+
+proc test_case_ping1 { host desthosts ulp suffix mtu } {
+##
+## test_case_ping1
+## -------------------
+## execute a test case to perform basic 1 packet pings
+## from host to each of desthosts
+##
+## Usage:
+##	test_cases_ping1 host desthosts ulp suffix mtu
+## Arguments:
+##	host - host to initiate ping from
+##	desthosts - list of hosts to send to
+##	ulp - protocol being used
+##	suffix - hostname suffix for network ($env(CFG_IPOIB_SUFFIX),
+##			or $env(CFG_INIC_SUFFIX) or "")
+##			Only used for integration tests, when used by FastFabric, set to ""
+##	mtu - MTU for network
+## Returns:
+##	nothing
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+	global env
+
+	#Substract 28 from the mtu, 20 Byte IP header and 8 Byte ICMP header
+	# because we dont want to fragment icmp packet.See PR 111259
+	set ping_size [ expr $mtu - 28 ]
+
+	test_case "$host\_ping1" "simple ping from $host" "perform simple 1 packet $ping_size byte pings from $host using $ulp
+to $desthosts
+File: TestTools/network.exp" case_setup case_cleanup {
+		upvar host host
+		upvar suffix suffix
+		upvar ping_size ping_size
+		upvar desthosts desthosts
+
+		target_root_sh $host
+		set target_os_type [target_get_os_type]
+
+		foreach desthost $desthosts {
+			# allow ping of self
+			test_item "$desthost" "$host to $desthost" "simple ping from $host to $desthost" noop noop {
+				set netdest "[ host_basename $desthost ]$suffix"
+				send_unix_cmd "/opt/opa/tools/opagetipaddrtype $netdest"
+				set out [expect_any 60 {"ipv6" "ipv4" } {"Error:" "Usage:"}]
+				regexp {([ip]+)([A-Za-z0-9]+)} $out iptype
+				if { $iptype == "ipv4" } {
+					set PING "ping"
+				} else {
+					set PING "ping6"
+				}
+
+				send_unix_cmd "$PING -w 5 -c 1 -s $ping_size $netdest"
+
+				# AS2.1 ping has slightly different output than 7.3 ping
+				expect_any 60 { "1 packets transmitted" "1 transmitted" } { "unknown" "refused" "error" "timeout" " 0 packets received" " 0 received" "nreachable" "duplicates" }
+				expect_any 60 { " 1 received" " 1 packets received" } { "unknown" "refused" "error" "timeout" " 0 packets received" " 0 received" "nreachable" "duplicates" }
+				expect_any 60 { " 0% loss" "0% packet loss" } { "unknown" "refused" "error" "timeout" " 0 packets received" " 0 received" "nreachable" "duplicates" }
+				expect_any 60 { "time " "round-trip" } { "unknown" "refused" "error" "timeout" " 0 packets received" " 0 received" "nreachable" "duplicates" }
+
+				check_exit_status 60 0
+			}
+		}
+
+		target_root_sh_exit
+	}
+}

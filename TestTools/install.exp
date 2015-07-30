@@ -1,0 +1,483 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid install testing
+
+## tcl procedures to support testing of install:
+## =============================================
+
+proc install_cleanup { } {
+##
+## install_cleanup
+## -------------------
+## cleanup temp files and logs in preparation for a new install scenario
+## during an rlogin session
+##
+## Usage:
+##	install_cleanup
+## Additional Information:
+##	Must have run target_rlogin and target_su before this
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	unix_cmd 60 0 "rm -f /var/log/ics_ib.log"
+	unix_cmd 60 0 "rm -f /var/log/opa.log"
+	unix_cmd 60 0 "rm -f /var/log/opamon"
+	unix_cmd 200 0 "rm -rf IntelOPA-Basic.*"
+	unix_cmd 200 0 "rm -rf IntelOPA-IFS.*"
+	unix_cmd 200 0 "rm -rf IntelOPA-Tools*"
+	unix_cmd 200 0 "rm -rf IntelOPA-Tests.*"
+	unix_cmd 60 0 "rm -rf /tmp/opa.log.len /tmp/ics_ib.log.len"
+
+	return 0
+}
+
+proc install_saveloglen { } {
+##
+## install_saveloglen
+## -------------------
+## save log length for use to verify install results
+##
+## Usage:
+##	install_saveloglen
+## Additional Information:
+##	Must have run target_rlogin and target_su before this
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	foreach log {/var/log/opa.log /var/log/ics_ib.log} {
+		set log_len "/tmp/[exec basename $log].len"
+		# use sed to get rid of white space
+		unix_cmd 60 0 "cat $log 2>/dev/null|wc -l | sed -e 's/\[ \\t]//g' > $log_len"
+	}
+
+	return 0
+}
+
+proc install_rmloglen { } {
+##
+## install_rmloglen
+## -------------------
+## remove log length files created by install_saveloglen
+##
+## Usage:
+##	install_rmloglen
+## Additional Information:
+##	Must have run target_rlogin and target_su before this
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	unix_cmd 60 0 "rm -f /tmp/opa.log.len"
+	unix_cmd 60 0 "rm -f /tmp/ics_ib.log.len"
+
+	return 0
+}
+
+proc install_expect_drivers { driver_list { skip_done 0 }} {
+##
+## install_expect_drivers
+## ----------------------
+## Check the proper drivers are loaded during an rlogin session
+##
+## Usage:
+##	install_expect_drivers driver_list [skip_done]
+## Arguments:
+##	driver_list - list of drivers/ULP names
+##	skip_done - skip wait for 'Done Installing IB' message
+##		0=wait for message
+##		1=don't wait for message, default is 0
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	Does not care what order the drivers are loaded in
+
+	expect_progress 600 { "Preparing" "Building" } { "Installing" {OPA Software} } {
+	"Unable"
+	"Error"
+	"Failure"
+	"invalid"
+	"Usage"
+    }
+    set list {}
+    foreach driver $driver_list {
+	lappend list "Installing $driver"
+    }
+    if { "$list" != "" } {
+	# allow 5 minutes per Driver
+	expect_progress_orderless 300 { "Preparing" "Building" "installing" "Updating" "Copying" } 0 $list {
+	    "Unable"
+	    "Error"
+	    "Failure"
+	    "invalid"
+	}
+    }
+    if { ! $skip_done } {
+	# "Unable" message could occur if A0 HCA being installed
+	# allow some extra time for depmod and firmware update
+	# firmware update can be slow on MAC or if pciconf1 device is used
+	expect_progress 300 { {[0-9]} "---" "Updating" "Copying" "installing" } { {Done Installing OPA} } {
+	    "Error"
+	    "Failure"
+	    "invalid"
+	}
+    }
+
+    return 0
+}
+
+proc install_uninstall { {uninstall 1} {remove_config 0} { dir "" } } {
+##
+## install_uninstall
+## -----------------
+## uninstall any existing version of IB software on the system during an rlogin session
+##
+## Usage:
+##	install_uninstall [ uninstall [remove_config [dir]] ]
+## Arguments:
+##	uninstall - should existing installation be uninstalled, default is yes
+##	remove_config - should existing config files be removed, default is no
+##	dir - directory to find uninstall in (default is to only use
+##	opaconfig/ics_ib)
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	set toolsdir /opt/opa/tools
+
+	if { $uninstall } {
+		# use ics_ib to remove if possible
+		unix_cmd 240 "" {if [ -f /sbin/opaconfig ]; then /sbin/opaconfig -u; elif [ -f /sbin/ics_ib ]; then /sbin/ics_ib -u; fi }
+	}
+
+	if { $uninstall && "$dir" != "" } {
+		unix_cmd 240 "" "test -d $dir && (cd $dir; ./INSTALL -u )"
+	}
+	if { $remove_config } {
+		set target_os_type [target_get_os_type]
+
+		unix_cmd 60 "" {rm -rf /etc/sysconfig/opa /etc/sysconfig/ipoib.cfg /etc/sysconfig/ics_srp.cfg /etc/sysconfig/ics_inic.cfg /etc/sysconfig/mpi.param /etc/sysconfig/mpi.param.safe /etc/sysconfig/mpi.param.microbench $toolsdir/opafastfabric.conf /etc/dat.conf}
+		unix_cmd 60 "" {rm -rf /etc/sysconfig/opafm.xml /etc/infiniband/openib.conf /etc/sysconfig/opamon.conf}
+		unix_cmd 60 "" {rm -rf /etc/sysconfig/network-scripts/ifcfg-eioc[0-9]* /etc/sysconfig/network-scripts/ifcfg-ib[0-9]*}
+		unix_cmd 60 "" {rm -rf /etc/sysconfig/network/ifcfg-eioc[0-9]* /etc/sysconfig/network/ifcfg-ib[0-9]*}
+		unix_cmd 60 "" {rm -rf /etc/dapl}
+	}
+
+	return 0
+}
+
+proc install_getready { target {uninstall 1} { remove_config 0 } { cleanup 1 } { dir "" }} {
+##
+## install_getready
+## ----------------
+## prepare for an install test by login'ing
+## cleaning up from any prior install, uninstalling any prior software
+##
+## Usage:
+##	install_getready target [uninstall [remove_config [cleanup [dir] ]]]
+##
+## Arguments:
+##	target - hostname to rlogin to
+##	uninstall - should existing installation be uninstalled, default is yes
+##	remove_config - should existing config files be removed, default is no
+##	cleanup - should existing installation files and install logs be removed, default is yes
+##	dir - directory to find uninstall in (default is to only use
+##	opaconfig/ics_ib)
+## Returns:
+##	0 - success
+##	-code error om failure
+## Additional Information:
+##	setup file is sent to /tmp/mysetup.stp
+
+	global env
+
+	# become root user on target system
+	target_root_sh $target
+
+	install_uninstall $uninstall $remove_config $dir
+
+	if { $cleanup } {
+		install_cleanup
+	} else {
+		install_saveloglen
+	}
+
+	return 0
+}
+
+proc install_all { target drivers {uninstall 1} {remove_config 0 } {cleanup 1} {cd_device ""} {release ""} { install_opt "-a" } { from_dir "." } {product "IntelOPA-Basic"}} {
+##
+## install_all
+## -----------------
+## perform a basic installation of all drivers
+##
+## Usage:
+##	install_all target drivers [uninstall [remove_config [cleanup [cd_device [release [install_opt [from_dir]]]]]]]
+## Arguments:
+##	target - hostname to rlogin to
+##	drivers - list of driver names expected to be installed
+##	uninstall - should existing installation be uninstalled, default is yes
+##	remove_config - should existing config files be removed, default is no
+##	cleanup - should existing installation files and install logs be removed, default is yes
+##	cd_device - CD device to load from, default is ftp from get_ftp_dir
+##	release - if ! "", scp $product.$release.tgz to target and install
+##	install_opt - install options, default is "-a"
+##	from_dir - where to get $product.*.tgz for scp install
+## Returns:
+##	0 - success
+##	-code error on failure
+## Additional Information:
+##	This establishes and closes an rlogin session
+
+	global env
+
+	if { "$cd_device" == "" && "$release" == "" } {
+		# will untar below into this directory
+		set dir [get_install_dir "$product"]
+	} elseif { "$cd_device" != "" } {
+		set dir $cd_device
+	} else {
+		log_message "scp $from_dir/$product.$release.tgz root@\[$target\]:"
+		if { [ catch { exec scp $from_dir/$product.$release.tgz root@\[$target\]: } err_str2 ] != 0 } {
+			error "scp $from_dir/$product.$release.tgz root@\[$target\]: failed: $err_str2"
+		}
+		set dir $product.$release
+		# can't cleanup, will remove the file we just copied
+		set cleanup 0
+	}
+
+	install_getready $target $uninstall $remove_config $cleanup $dir
+
+	if { "$cd_device" == "" && "$release" == "" } {
+		if { ! [ info exists env(CFG_FTP_SERVER) ] 
+ 			|| "$env(CFG_FTP_SERVER)" == ""} {
+			fail_test "Release version not specified"
+		}
+		# Fast Fabric always sets release and sets CFG_FTP_SERVER=""
+		# hence for fast fabric we never use ftp
+		set release [get_release]
+		scp_get_file "$env(CFG_SCP_SERVER)" "$env(CFG_SCP_USERID)" "[get_ftp_dir $target]/$product.$release.tgz" "$product.$release.tgz"
+		send_unix_cmd "tar xvfz $product.$release.tgz; echo DONE"
+		expect_progress 120 { "doc" "include" "config" "bin" "lib" } { "echo DONE" "DONE" } { "Error " "No such" }
+		check_exit_status 360 0
+	} elseif { "$cd_device" == "" && "$release" != "" } {
+		unix_cmd 200 0 "rm -rf $product.$release"
+		send_unix_cmd "tar xvfz $product.$release.tgz; echo DONE"
+		expect_progress 120 { "doc" "include" "config" "bin" "lib" } { "echo DONE" "DONE" } { "Error " "No such" }
+		check_exit_status 360 0
+	}
+
+	unix_cmd 60 0 "cd $dir"
+	send_unix_cmd "./INSTALL $install_opt"
+
+	set_timeout 60
+
+	install_expect_drivers "$drivers"
+
+	check_exit_status 60 0
+
+	install_check_logs
+
+	install_rmloglen
+
+	child_cleanup
+
+	return 0
+}
+
+proc install_check_logs { { log_list { /var/log/ics_ib.log /var/log/opa.log } } { retcode "1" } } {
+##
+## install_check_logs
+## -----------------
+## check there are no errors or warnings in the installation log
+## during an rlogin session
+##
+## Usage:
+##	install_check_logs [log_list] [retcode]
+## Arguments:
+##	log_list - list of log filenames to get, default is opa.log ics_ib.log
+##	retcode - expected return code from egrep, 0=errors/warnings in log
+##		1=no errors/warnings in log, defaults to 1
+## Returns:
+##	0 - success
+##	-code error on failure
+
+	foreach log $log_list {
+		send_unix_cmd "\[ -f $log \];"
+		if { [ get_exit_status 60 ] == 0 } {
+			set log_len "/tmp/[exec basename $log].len"
+			send_unix_cmd "\[ -s $log_len \];"
+			if { [ get_exit_status 60 ] == 0 } {
+				# allow Unable due to message for A0 HCA
+				unix_cmd 60 $retcode "tail -n +`cat $log_len` $log|egrep 'Abort|corrupted|Can not'"
+			} else {
+				unix_cmd 60 $retcode "egrep 'Abort|corrupted|Can not' $log"
+			}
+		}
+	}
+
+	return 0
+}
+
+proc install_getready2 { target } {
+##
+## install_getready2
+## ----------------
+## prepare for an install test by login'ing
+## cleaning up from any prior install
+##
+## Usage:
+##	install_getready2 target
+##
+## Arguments:
+##	target - hostname to rlogin to
+## Returns:
+##	0 - success
+##	-code error om failure
+
+	# become root user on target system
+	target_root_sh $target $usercode $password $root_password
+
+	install_cleanup
+
+	return 0
+}
+
+proc install_get_logs { target { log_list { ics_ib.log opa.log } } { log_dir /var/log } } {
+##
+## install_get_logs
+## ------------------------
+## Get the various installation log file
+##
+## Usage:
+##	install_get_logs target [log_list] [log_dir]
+## Arguments:
+##	target - hostname to rlogin to
+##	log_list - list of log filenames to get, default is opa.log ics_ib.log
+##	log_dir - directory to get log files from, default is /var/log
+## Additional Information:
+##	The login session to the target system is terminated to allow an
+##	ftp to occur to transfer the file
+##	This is intended for use as a failure_code handler for test cases
+##	Errors in getting the log files are ignored (in case the logs don't
+##	exist)
+##	The log files gotten are of the form:
+##		$log_dir/$log
+##	where $log is an individual entry in log_list
+##	They are transfered to:
+##		$test_tmp/$log
+
+	global env
+	global test_tmp
+
+	# ignore errors in case the log doesn't exist
+	foreach log $log_list {
+		# cleanup any previous sessions
+		catch { child_cleanup }
+		#catch { ftp_mget_files $target $env(CFG_USERNAME) $env(CFG_PASSWORD) $log_dir $log $test_tmp ascii }
+		catch { exec scp root@\[$target\]:$log_dir/$log $test_tmp/ }
+	}
+	# cleanup any previous sessions
+	catch { child_cleanup }
+}
+
+proc install_wireshark { target } {
+##
+## install_wireshark
+## --------------
+##
+## Usage:
+## install_wireshark target 
+## Arguments:
+##  target - hostname to rlogin to
+## Returns:
+##  0 - success
+##  -code error on failure
+    puts "Installing Wireshark"
+    global env
+
+    target_root_sh $target
+
+    set release [get_release]
+    
+    set ws_version "1.8.5-2.x86_64"
+    #install_fabsim_cleanup
+
+
+    # grab necessary rpms
+    send_unix_cmd "wget http://10.228.211.254/cobbler/ks_mirror/rhel6ud5-x86_64/Packages/gnutls-2.8.5-10.el6_4.2.x86_64.rpm; echo DONE"
+    expect_any 60 { "DONE" } { }
+    send_unix_cmd "wget http://10.228.211.254/cobbler/ks_mirror/rhel6ud5-x86_64/Packages/libtasn1-2.3-3.el6_2.1.x86_64.rpm; echo DONE"
+    expect_any 60 { "DONE" } { }
+    
+    # install dependencies
+    send_unix_cmd "sudo rpm -ivh --force ./libtasn1-2.3-3.el6_2.1.x86_64.rpm; echo DONE"
+    expect_progress 120 { "libtasn1" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "100%" } { "echo DONE" "DONE" } { "Error" "No such" }
+    check_exit_status 360 0
+    # remove rpm file
+    send_unix_cmd "rm -f ./libtasn1-2.3-3.el6_2.1.x86_64.rpm; echo DONE"
+    expect_any 60 { "DONE" } { }
+
+    send_unix_cmd "sudo rpm -ivh --force --excludepath /usr/share/locale/ ./gnutls-2.8.5-10.el6_4.2.x86_64.rpm; echo DONE"
+    expect_progress 120 { "gnutls" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "100%" } { "echo DONE" "DONE" } { "Error" "No such" }
+    check_exit_status 360 0
+    # remove rpm file
+    send_unix_cmd "rm -f ./gnutls-2.8.5-10.el6_4.2.x86_64.rpm; echo DONE"
+    expect_any 60 { "DONE" } { }
+
+    scp_get_file "$env(CFG_SCP_SERVER)" "$env(CFG_SCP_USERID)" "$env(CFG_INTDIR_WIRESHARK)/wireshark-$ws_version.rpm" "wireshark-$ws_version.rpm"
+    
+    #remove existing wireshark installation
+    send_unix_cmd "rpm -e -v wireshark ; echo DONE"
+    expect_any 60 { "DONE" "not installed" } { }
+    
+    #install new copy of wireshark now
+    send_unix_cmd "rpm -i -v -h wireshark-$ws_version.rpm; echo DONE"
+    expect_progress 120 { "wireshark" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "#" "100%" } { "echo DONE" "DONE" } { "Error" "No such" }
+    check_exit_status 360 0
+
+    send_unix_cmd "ldconfig ; echo DONE"
+    expect_any 10 { "DONE" } { }
+    send_unix_cmd "tshark -h ; echo DONE"
+    expect_list 60 { "Usage: tshark" "DONE" } { "error" "cannot open" "No such" } tmp
+    
+    regexp {TShark ([0-9]+\.[0-9]+\.[0-9]+)} $tmp trash tshark_ver
+    
+    puts "Successfully installed wireshark version $tshark_ver on $target"
+    
+    target_root_sh_exit
+
+    return 0
+} 
+

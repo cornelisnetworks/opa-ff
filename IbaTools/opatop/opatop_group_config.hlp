@@ -1,0 +1,12 @@
+HELP: GROUP CONFIG SCREEN
+The Group Configuration screen displays a list of the ports in a group,
+including the LID, port number, node GUID and NodeDesc of each.  The second
+line of the screen displays the group name and the number of ports returned in
+the group config query.  If more ports exist than will fit on a screen, the
+list can be scrolled forward and backward.  An index value, shown with each
+port, can be used to select the port and show the port's counters in a Port
+Stats screen.  The Group Config screen accepts the following input commands.
+
+  S: Scroll forward (s*) or backward (S*) through port list
+  Pn: Select port index value n
+

@@ -1,0 +1,121 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opasmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opasmaquery
+
+.NL
+
+.PP
+(All) This tool can perform the majority of Intel(R) Omni-Path Architecture defined SMA queries and display the resulting response. It should be noted that each query is issued directly to the SMA and does not involve SM interaction.
+.SH Syntax
+.NL
+opasmaquery [-v] [-g] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR] [-o \fIotype\fR] [-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR] [hop hop ...]
+.PP
+or
+.br
+opasmaquery --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produce full help text
+.SH Standard Options-->
+.NL
+
+.TP 10
+-v 
+.NL
+Verbose output. Can be specified more than once for additional openib debugging and libibumad debugging.
+.TP 10
+-g 
+.NL
+Display in line-by-line format (default is summary format).
+.TP 10
+-l \fIlid\fR 
+.NL
+Destination lid, default is local port.
+.TP 10
+-h \fIhfi\fR 
+.NL
+HFI , numbered 1..n. Using 0 specifies that the -p \fIport\fR port will be a system wide port number (default is 0).
+.TP 10
+-p \fIport\fR 
+.NL
+Port, numbered 1..n. If -h \fIhfi\fR is 0 then  \fIport\fR will be a system wide port number (default is 1).
+.TP 10
+-K \fImkey\fR 
+.NL
+SM management key to access remote ports.
+.TP 10
+-o \fIotype\fR 
+.NL
+Output type. Default is nodeinfo .Valid output types are:
+
+.SH  -h and -p options permit a variety of selections:-->
+.NL
+
+.TP 10
+-h 0 
+.NL
+First active port in system (this is the default).
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
+.TP 10
+-h \fIx\fR 
+.NL
+First active port on HFI \fIx\fR.
+.TP 10
+-h \fIx\fR-p 0 
+.NL
+First active port on HFI \fIx\fR.
+.TP 10
+-h 0 -p \fIy\fR 
+.NL
+Port \fIy\fRwithin system (irrespective of which ports are active).
+.TP 10
+-h \fIx\fR-p \fIy\fR 
+.NL
+HFI \fIx\fR, port \fIy\fR
+.SH otype options vary by report-->
+.NL
+
+.TP 10
+-m \fIport\fR 
+.NL
+Port in destination device to query.
+.TP 10
+-m \fIport1,port2\fR 
+.NL
+For some reports, a range of ports between  \fIport1\fR and  \fIport2\fR . For others, this describes an inport/outport pair.
+.TP 10
+-f \fIflid\fR 
+.NL
+LID to lookup in forwarding table to select which LFT or MFT block to display. Default is to show entire table.
+.TP 10
+-b \fIblock[,count]\fR 
+.NL
+Block number of either guids, pkey, or ranfdb and the number of blocks to display. Default is to show entire table.For example:
+
+.sp
+-b \fIblock\fR 
+Display all of block "  \fIblock\fR " of a larger table.
+.sp
+-b \fIblock,count\fR 
+Display "  \fIcount\fR " blocks of data starting with block "  \fIblock\fR ".
+.sp
+-b , \fIcount\fR 
+Display "  \fIcount\fR " blocks of data starting with block 0.
+.SH Examples
+.NL
+opasmaquery -o nodedesc -l 6 # get nodedesc via lid routed opasmaquery -o nodedesc 1 3 # get nodedesc via directed route # (2 dr hops) opasmaquery -o nodeinfo -l 2 3 # get nodeinfo via a combination of # lid routed and directed route # (1 dr hop) opasmaquery -o portinfo # get local port info opasmaquery -o portinfo -l 6 -m 1 # get port info of port 1 of lid 6 opasmaquery -o pkey -l 2 3 # get pkey table entries starting # (lid routed to lid 2, # then 1 dr hop to port 3)opasmaquery -o slvl -l 6 # get slvl of CA at lid 6 opasmaquery -o vlarb -l 6 # get vlarb table entries from lid 6 opasmaquery -o swinfo -l 2 # get switch info opasmaquery -o sminfo -l 1 # get SM info opasmaquery -o slsc -l 3 # get sl2sc table entries from lid 3 opasmaquery -o scsl -l 3 # get sc2sl table entries from lid 3

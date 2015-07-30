@@ -1,0 +1,264 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid integration testing
+# These functions provide support for pre-built test cases which can be
+# provided arguments to indicate the ulp to be tested
+
+## tcl procedures to support testing:
+## =============================================
+
+global os_type
+set os_type [ exec uname -s ]
+
+proc get_num_hosts {} {
+	global env
+
+	set num_hosts [ llength $env(CFG_HOSTS) ]
+}
+
+proc reboot_host { host } {
+##
+## reboot_host
+## -------------------
+## reboot a host
+##
+## Usage:
+##      reboot_host host
+## Arguments:
+##      host - host to reboot
+## Returns:
+##      None
+## Additional Information:
+##      None
+
+        global env
+        global os_type
+        global ibtools_dir
+
+        local_sh
+
+        if { [ auto_execok /opt/opa/tools/opagetipaddrtype ] !=  "" } {
+                send_unix_cmd "/opt/opa/tools/opagetipaddrtype $host"
+	    set out [expect_any 60 {"ipv6" "ipv4" } {"Error:" "Usage:"}]
+	    regexp {([ip]+)([A-Za-z0-9]+)} $out iptype
+        } else {
+                set iptype "ipv4"
+        }
+        host_unix_cmd 60 "" $host reboot
+        # bsd_ping reports all failures, linux requires a few failures                                                                      
+        # before it reports Unreachable                                                                                                     
+        # newer servers can reboot faster than linux ping will detect                                                                      
+        if { $iptype == "ipv4" } {
+            if { [file exists $ibtools_dir/bsd_ping] } {
+                send_unix_cmd "$ibtools_dir/bsd_ping -i 5 $host"
+                # allow 4 minutes for host shutdown                                                                                         
+                expect_any 240 { "Unreachable" "unreachable" }
+            } else {
+                # sleep 120 because initially ping will be successful                                                                       
+                sleep 120
+                send_unix_cmd "ping -i 5 $host"
+            }
+        } else {
+                send_unix_cmd "ping6 -i 5 $host"
+        }
+
+        # allow 8 minutes for host to complete reboot                                                                                       
+        expect_list 480 { "ttl=" "time=" }
+        sleep 40
+        local_sh_exit
+        # network can be up before rest of host, allow a little more time                     
+        sleep 20
+}
+
+proc test_case_reboot { host {iterations 1}} {
+##
+## test_case_reboot
+## -------------------
+## test_case to reboot host
+##
+## Usage:
+##	test_case_reboot host [iterations]
+## Arguments:
+##	host - host to reboot
+##	iterations - number of reboot iterations, default is 1
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+	global env
+
+	test_case "$host.reboot" "$host reboot" "test reboot of $host
+use ping to confirm host goes down and comes back up
+File: TestTools/basic.exp" case_setup case_cleanup {
+		upvar host host
+		upvar iterations iterations
+
+		for { set i 0 } { $i < $iterations } { incr i } {
+			reboot_host $host
+		}
+	}
+}
+
+proc chassis_cmd_reboot_all { } {
+##
+## chassis_cmd_reboot_all
+## -------------------
+## issue reboot command to chassis, support older models which don't support
+## "reboot now all" command, in which case "reboot now" is used
+## Arguments:
+##	None
+## Returns:
+##	None
+## Additional Information:
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	set_timeout 60
+	set expecting "reboot command response"
+	send_chassis_cmd "reboot now all"
+	# if we get a usage message indicating the command is not supported
+	# we will try "reboot now" command instead
+	expect {
+		"Goodbye"	return
+		"sage"		noop
+		"upported"	noop
+	}
+	expect_chassis_prompt 60
+	send_chassis_cmd "reboot now"
+	expect_list 60 { "Goodbye" }
+}
+
+proc chassis_wait_reboot_done { chassis } {
+##
+## chassis_wait_reboot_done
+## -------------------
+## wait for the reboot command which was just issued to the chassis to complete
+## and for the chassis to come back online
+## Arguments:
+##	chassis - chassis being rebooted
+## Returns:
+##	None
+## Additional Information:
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+	global env
+
+	# make sure chassis has time to go down (its usually immediate)
+	sleep 10
+
+	# use a local shell for ping to verify chassis comes back
+	# it reboots too fast for us to observe it go away
+	local_sh
+	if { [ auto_execok /opt/opa/tools/opagetipaddrtype ] != "" } {
+		send_unix_cmd "/opt/opa/tools/opagetipaddrtype $chassis"
+		set out [expect_any 60 {"ipv6" "ipv4" } {"Error:" "Usage:"}]
+		regexp {([ip]+)([A-Za-z0-9]+)} $out iptype 
+	} else {
+		set iptype "ipv4"
+	}
+	if { $iptype == "ipv4" } { 
+		send_unix_cmd "ping -i 1 $chassis"
+	} else {
+		send_unix_cmd "ping6 -i 1 $chassis"
+	}
+	# allow 3 minutes for chassis to complete reboot
+	expect_list 180 {bytes from}
+	local_sh_exit
+	# give it a few seconds to boot
+	sleep 5
+
+	# now wait for CLI to come online
+	# 12800 can take 650 seconds = 130 * 5
+	log_message "Waiting for Chassis $chassis CLI to come online"
+	set online 0
+	for { set i 0 } { $i < 130 } { incr i } {
+		if { $i != 0 }  {
+			log_message "Retrying: Chassis $chassis CLI is not yet up"
+		}
+		if { [ catch { target_chassis_admin_sh $chassis } res ] != 0 } {
+			# send escape sequence to close timed out ssh sessions
+			catch { exp_send "~.\n" }
+			# wait before we try again
+			sleep [ calc_timeout 5 ]
+		} else {
+			# we got in
+			target_chassis_admin_sh_exit
+			set online 1
+			break
+		}
+	}
+	if { ! $online } {
+		set info "Chassis CLI did not come online within timeout limit"
+		return -code error -errorinfo $info $info
+	}
+}
+
+proc test_case_chassis_reboot { chassis {iterations 1}} {
+##
+## test_case_chassis_reboot
+## -------------------
+## test_case to reboot chassis
+##
+## Usage:
+##	test_case_chassis_reboot chassis [iterations]
+## Arguments:
+##	chassis - chassis to reboot
+##	iterations - number of reboot iterations, default is 1
+## Returns:
+##	None
+## Additional Information:
+##	must be used within a test_suite's body, performs test_case calls
+##	uses case_setup and case_cleanup provided by caller
+##	no item_setup nor item_cleanup used
+
+	global env
+
+	test_case "$chassis.reboot" "$chassis reboot" "test reboot of $chassis
+use ping to confirm comes back up
+File: TestTools/basic.exp" case_setup case_cleanup {
+		upvar chassis chassis
+		upvar iterations iterations
+
+		for { set i 0 } { $i < $iterations } { incr i } {
+			# chassis CLI shell for reboot command
+			target_chassis_admin_sh $chassis
+			chassis_cmd_reboot_all
+			# may not be able to send logout command, so just get out of dodge
+			ignore_rest
+
+			chassis_wait_reboot_done $chassis
+		}
+	}
+}

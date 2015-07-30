@@ -1,0 +1,122 @@
+Simple hacks to aid testing of PMA redirection code in opareport without
+requiring Galaxy HFIs
+*** IbaTools/opareport/opareport.c	Wed Aug 29 19:02:10 2007
+--- IbaTools/opareport/opareport.c	Wed Aug 29 17:40:16 2007
+***************
+*** 1171,1176 ****
+--- 1163,1170 ----
+  		/* initialize path */
+  		(*redirectp)->path = *orig_pathp;
+  	}
++ DBGPRINT("Version = 0x%x:0x%x LID=0x%x\n", classp->BaseVersion, classp->ClassVersion, classp->RedirectLID);
++ PrintDump(classp, sizeof(*classp), _DBG_DUMP_FORMAT_BYTES);
+  	/* update redirect info from ClassPortInfo */
+  	pathp = &(*redirectp)->path;
+  	pathp->DLID = classp->RedirectLID;
+***************
+*** 1194,1199 ****
+--- 1196,1202 ----
+  {
+  	FSTATUS fstatus;
+  
++ DBGPRINT("Sending PM attr 0x%x QP 0x%x QKey 0x%x to LID %u\n", attr, qpn, qkey, pathp->DLID);
+  	mad->common.BaseVersion = IB_BASE_VERSION;
+  	mad->common.MgmtClass = MCLASS_PERF;
+  	mad->common.ClassVersion = IB_PERF_CLASS_VERSION;
+***************
+*** 1239,1249 ****
+  		}
+  
+  		fstatus = pm_send_recv_mad(pathp, qpn, qkey,
+! 									method, attr, modifier, portNum, mad);
+  		if (FSUCCESS != fstatus)
+  			goto fail;
+! 		if (mad->common.u.NS.Status.AsReg16 == MAD_STATUS_REDIRECT_REQD) {
+ 			fstatus = UpdateRedirectInfo(&portp->pma_redirect, (IB_CLASS_PORT_INFO*)mad->PerfData, pathp);
+  			if (FSUCCESS != fstatus)
+  				goto fail;
+  			fstatus = FERROR;	// force retry
+--- 1242,1252 ----
+  		}
+  
+  		fstatus = pm_send_recv_mad(pathp, qpn, qkey,
+! 									method, attempts==2?MCLASS_ATTRIB_ID_CLASS_PORT_INFO:attr, modifier, portNum, mad);
+  		if (FSUCCESS != fstatus)
+  			goto fail;
+! 		if (attempts == 2 || mad->common.u.NS.Status.AsReg16 == MAD_STATUS_REDIRECT_REQD) {
+ 			fstatus = UpdateRedirectInfo(&portp->pma_redirect, (IB_CLASS_PORT_INFO*)mad->PerfData, pathp);
+  			if (FSUCCESS != fstatus)
+  				goto fail;
+  			fstatus = FERROR;	// force retry
+Index: IbAccess/Common/Ibt/Pma/pmacallb.c
+===================================================================
+RCS file: /cvs/vendor/linux/Iba/Common/Ibt/Pma/pmacallb.c,v
+retrieving revision 1.20
+diff -c -r1.20 pmacallb.c
+*** IbAccess/Common/Ibt/Pma/pmacallb.c	18 Feb 2007 20:26:06 -0000	1.20
+--- IbAccess/Common/Ibt/Pma/pmacallb.c	29 Aug 2007 21:17:33 -0000
+***************
+*** 253,258 ****
+--- 253,259 ----
+  			{
+  			case PM_ATTRIB_ID_CLASS_PORTINFO:
+  				// post process
++ //_DBG_DUMP_MEMORY(_DBG_LVL_ERROR, ("ClassPortInfo final response"), pPmGmp, sizeof(*pPmGmp));
+  				PmaClassPortInfo(pPmGmp);
+  				BSWAP_IB_CLASS_PORT_INFO((IB_CLASS_PORT_INFO*)&pPmGmp->PerfData);
+  				break;
+***************
+*** 313,319 ****
+  {
+  	IB_CLASS_PORT_INFO* pClassPortInfo = (IB_CLASS_PORT_INFO*)&pMad->PerfData;
+  	uint16 capMask = pClassPortInfo->CapMask;
+! 	MemoryClear(pClassPortInfo, sizeof(*pClassPortInfo));
+  	pClassPortInfo->BaseVersion = IB_BASE_VERSION;
+  	pClassPortInfo->ClassVersion = IB_PERF_CLASS_VERSION;
+  	pClassPortInfo->CapMask = (capMask & PM_CLASS_PORT_CAPMASK_ALL_PORT_SELECT);
+--- 314,320 ----
+  {
+  	IB_CLASS_PORT_INFO* pClassPortInfo = (IB_CLASS_PORT_INFO*)&pMad->PerfData;
+  	uint16 capMask = pClassPortInfo->CapMask;
+! //	MemoryClear(pClassPortInfo, sizeof(*pClassPortInfo));
+  	pClassPortInfo->BaseVersion = IB_BASE_VERSION;
+  	pClassPortInfo->ClassVersion = IB_PERF_CLASS_VERSION;
+  	pClassPortInfo->CapMask = (capMask & PM_CLASS_PORT_CAPMASK_ALL_PORT_SELECT);
+Index: IbAccess/Common/Ibt/Pma/vpdpma.c
+===================================================================
+RCS file: /cvs/vendor/linux/Iba/Common/Ibt/Pma/vpdpma.c,v
+retrieving revision 1.1.4.1
+diff -c -r1.1.4.1 vpdpma.c
+*** IbAccess/Common/Ibt/Pma/vpdpma.c	29 Mar 2007 18:51:15 -0000	1.1.4.1
+--- IbAccess/Common/Ibt/Pma/vpdpma.c	29 Aug 2007 21:28:19 -0000
+***************
+*** 60,65 ****
+--- 60,77 ----
+  		MemoryCopy(Pmp, mad, sizeof(*Pmp));
+  		BSWAP_IB_CLASS_PORT_INFO((IB_CLASS_PORT_INFO*)&Pmp->PerfData);
+  		BSWAP_MAD_HEADER((MAD*)Pmp);
++ // hack to simulate redirection
++ {
++ IB_CLASS_PORT_INFO *classp = (IB_CLASS_PORT_INFO*)&Pmp->PerfData;
++ classp->RedirectLID = DevInfop->dev_port_info_list[PortNum-1].PortAttributes->Address.BaseLID;
++ classp->u3.s.RedirectQP = 1;
++ classp->Redirect_Q_Key = QP1_WELL_KNOWN_Q_KEY;
++ classp->Redirect_P_Key = 0xffff;
++ classp->RedirectGID.AsReg64s.H=0x1234;
++ classp->RedirectGID.AsReg64s.L=0;
++ // leave rest 0
++ MsgOut("similate direction to %d:%d LID 0x%x rc=%d\n", classp->BaseVersion, classp->ClassVersion, classp->RedirectLID, rc);
++ }
+  		if (rc == FSUCCESS)
+  		{
+  			// Nothing to do
+***************
+*** 289,294 ****
+--- 301,307 ----
+  			status = VpdPmaClassPortInfo(DevInfop, PortNum, SLID,
+  								MadInOut->common.mr.s.Method,
+  								MadInOut);
++ //_DBG_DUMP_MEMORY(_DBG_LVL_ERROR, ("ClassPortInfo response"), MadInOut, sizeof(*MadInOut));
+  			break;
+  		case PM_ATTRIB_ID_PORT_SAMPLES_CONTROL:
+  			_DBG_INFO(("PerfGetSet(PortSamplesControl)\n"));

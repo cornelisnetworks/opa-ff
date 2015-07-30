@@ -1,0 +1,32 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH oparesolvehfiport 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+oparesolvehfiport
+
+.NL
+
+.PP
+
+\fB(Host)\fR
+Permits the Intel(R) Omni-Path Fabric Host Software style Intel(R) Omni-Path Host Fabric Interface ( HFI ) number and port number arguments to be converted to an Host Software style HFI name and physical port number. This can be useful when writing scripts that can accept FastFabric -style arguments, and interact directly with OFED commands.
+.SH Syntax
+.NL
+oparesolvehfiport \fIhfi\fR \fIport\fR
+.SH Options
+.NL
+
+.TP 10
+ \fIhfi\fR 
+.NL
+HFI to send by , default is first HFI 
+.TP 10
+ \fIport\fR 
+.NL
+Port to send by, default is first active port[START-DRAFT-COMMENT][gdr] Does there need to be an Examples section?[END-DRAFT-COMMENT]

@@ -1,0 +1,66 @@
+getdate.c:28: warning: `%c' yields only last 2 digits of year in some locales
+/usr/include/linux/byteorder/swab.h:132: warning: no previous prototype for `__fswab16'
+/usr/include/linux/byteorder/swab.h:136: warning: no previous prototype for `__swab16p'
+/usr/include/linux/byteorder/swab.h:140: warning: no previous prototype for `__swab16s'
+/usr/include/linux/byteorder/swab.h:145: warning: no previous prototype for `__fswab32'
+/usr/include/linux/byteorder/swab.h:149: warning: no previous prototype for `__swab32p'
+/usr/include/linux/byteorder/swab.h:153: warning: no previous prototype for `__swab32s'
+/usr/include/linux/byteorder/swab.h:159: warning: no previous prototype for `__fswab64'
+/usr/include/linux/byteorder/swab.h:169: warning: no previous prototype for `__swab64p'
+/usr/include/linux/byteorder/swab.h:173: warning: no previous prototype for `__swab64s'
+Warning: creating filesystem that does not conform to ISO-9660.
+warning: No version string in file: ./bin/opaipcalc
+warning: No version string in file: ./arch
+warning: No version string in file: ./distro
+warning: No version string in file: ./distro_version
+warning: No version string in file: ./os_id
+warning: No version string in file: ./config/ibhosts
+warning: No version string in file: ./include/ics_discovery.h
+warning: No version string in file: ./include/ics_portinfo.h
+warning: No version string in file: ./include/mtcr.h
+warning: No version string in file: ./include/zconf.h
+warning: No version string in file: ./include/zlib.h
+warning: No version string in file: ./Tests/bin/snapshot_script
+warning: No version string in file: ./Tests/bin/tcp_range_script
+warning: No version string in file: ./Tests/bin/tcp_rr_script
+warning: No version string in file: ./Tests/bin/tcp_stream_script
+warning: No version string in file: ./Tests/bin/udp_rr_script
+warning: No version string in file: ./Tests/bin/udp_stream_script
+warning: No version string in file: ./version
+Warning: using transparent compression. This is a nonstandard Rock Ridge
+warning: No version string in file: ./fastfabric/samples/iba_topology_1.txt
+warning: No version string in file: ./fastfabric/samples/iba_topology_2.txt
+warning: No version string in file: ./fastfabric/samples/README.topology
+warning: No version string in file: ./fastfabric/samples/iba_topology_CAs.txt
+warning: No version string in file: ./fastfabric/samples/iba_topology_SWs.txt
+warning: No version string in file: ./fastfabric/samples/iba_topology_links.txt
+warning: No version string in file: ./fastfabric/samples/iba_topology_SMs.txt
+warning: No version string in file: ./fastfabric/samples/linksum_180.csv
+warning: No version string in file: ./fastfabric/samples/linksum_360.csv
+warning: No version string in file: ./fastfabric/opatop_group_bw.hlp
+warning: No version string in file: ./fastfabric/opatop_group_config.hlp
+warning: No version string in file: ./fastfabric/opatop_group_err.hlp
+warning: No version string in file: ./fastfabric/opatop_group_focus.hlp
+warning: No version string in file: ./fastfabric/opatop_group_info_sel.hlp
+warning: No version string in file: ./fastfabric/opatop_img_config.hlp
+warning: No version string in file: ./fastfabric/opatop_pm_config.hlp
+warning: No version string in file: ./fastfabric/opatop_port_stats.hlp
+warning: No version string in file: ./fastfabric/opatop_summary.hlp
+config.status: WARNING:  'MCONFIG.in' seems to ignore the --datarootdir setting
+bsd_ping.c:753: warning: ignoring return value of 'write', declared with attribute warn_unused_result
+bsd_ping.c:830: warning: ignoring return value of 'write', declared with attribute warn_unused_result
+bsd_ping.c:907: warning: ignoring return value of 'write', declared with attribute warn_unused_result
+bsd_ping.c:918: warning: ignoring return value of 'write', declared with attribute warn_unused_result
+opapacketcapture.c:870: warning: ignoring return value of 'write', declared with attribute warn_unused_result
+opapacketcapture.c:871: warning: ignoring return value of 'write', declared with attribute warn_unused_result
+opapacketcapture.c:873: warning: ignoring return value of 'write', declared with attribute warn_unused_result
+opapacketcapture.c:876: warning: ignoring return value of 'write', declared with attribute warn_unused_result
+opaswfwconfigure.c:1141: warning: ignoring return value of 'chdir', declared with attribute warn_unused_result
+opaswfwupdate.c:77: warning: ignoring return value of 'chdir', declared with attribute warn_unused_result
+opatop.c:589: warning: ignoring return value of 'system', declared with attribute warn_unused_result
+switch_setup.c:135: warning: ignoring return value of 'fgets', declared with attribute warn_unused_result
+switch_setup.c:58: warning: ignoring return value of 'fgets', declared with attribute warn_unused_result
+switch_setup.c:95: warning: ignoring return value of 'fgets', declared with attribute warn_unused_result
+WARNING: `aclocal-1.11' is missing on your system.  You should only need it
+WARNING: `automake-1.11' is missing on your system.  You should only need it
+aclocal.m4:16: warning: this file was generated for autoconf 2.67.

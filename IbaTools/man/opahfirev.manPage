@@ -1,0 +1,31 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opahfirev 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opahfirev
+
+.NL
+
+.PP
+
+\fB(Linux)\fR
+Displays information about the Intel(R) Omni-Path Host Fabric Interface (HFI)s in the system including model numbers, serial numbers, board revisions, and other HFI model-specific information.
+.SH Syntax
+.NL
+opahfirev [-v] 
+.SH Options
+.NL
+
+.TP 10
+-v 
+.NL
+Reports additional information about Mellanox adapter firmware, including detailed output of the configuration options and verification of the firmware image.
+.SH Example 
+.NL
+[START-DRAFT-COMMENT]Update with Omni-Path HFI information[END-DRAFT-COMMENT]# opahfirev ###################### phifs006.ph.intel.com - HFI 01:00.0 Board: ChipABI 2.0, InfiniPath\(ulQLE7342, InfiniPath1 6.2, SW Compat 2 SN: RIB1024C26567 Bus: PCIe,5000MHz,x8 GUID: 0011:7501:0079:15f0 ######################

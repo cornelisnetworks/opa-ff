@@ -1,0 +1,639 @@
+### =====================================================================
+### This is a sample parameter file for MVAPICH which has been tuned for HPL
+### [ICS VERSION STRING: unknown]
+###
+### MVAPICH contains a set of tuning parameters that are initialized
+### to default values when the processes which comprise an application
+### are executed.  These values may be modified at run-time by
+### un-commenting the appropriate line(s) below and adjusting the
+### values.  To have the new values take effect, use the "-paramfile"
+### argument to mpirun as in:
+###
+###   mpirun -paramfile thisfile -np 4 -hostfile hfile ./mpi_prog args
+### 
+### when used with the RSH/SSH process manager and:
+###
+###   mpirun -use_mpd -paramfile thisfile -np 4 ./mpi_prog args
+###
+### when use with MPD.
+###
+### If the -paramfile argument is not used /etc/sysconfig/mpi.param will
+### be used by default.
+###
+### In this file, blank lines and lines beginning with '#' are ignored
+### by the paramfile parser.  The parameter definitions are of the 
+### form:
+###        VIADEV_PARAM = VALUE
+###
+### If parameters need to be tuned on a per node basis, this file can also
+### be run as an inline shell script within a .bashrc file as:
+###        . /etc/sysconfig/mpi.param
+### The export statements provide visibility to the application for
+### these settings when used in that manner
+###
+
+### To understand the parameters below, it is important to understand how
+### MPI moves data.  There are a number of protocols used:
+### 1. Control/Eager - data is sent in vbuf chunks (approx 2000 bytes)
+###        This can be used for multi-buffer messages.  Also used for
+###        control messages (NOOPs for credits, RPUT address,
+###        R3 negotiation, etc)
+###        A copy of the data into the VBUF occurs
+### 2. RPUT - an address exchange occurs then sender RDMA's directly to receiver
+###        Even though there is some overhead in the address exchange
+###        for larger messages this mechanism can be very efficient
+###        However the send buffer must be locked in memory.
+###        no copy of the data occurs.
+###        If message is > MAX_RDMA_SIZE (1M), muliple RDMA writes will
+###        be done, but only one address exchange occurs.
+### 3. R3 - negotiation occurs for the start of a transfer which allows receiver
+###        to post extra buffers then data is sent in vbuf chunks
+###        A copy of the data into the VBUFs occurs
+### For Infiniband, there are a number of mechanisms used:
+### 1. SMP - Shared Memory Protocol, if 2 processes are on same node
+###        data can be transfered via copies to shared memory regions
+###        This is used for up to SMP_EAGERSIZE transfers, but not
+###        for control protocols 
+### 2. RDMA Fast Path - A pool of RDMA buffers is maintained per connection
+###        sender RDMA's into next buffer, receiver polls buffers
+###        This is used for Eager and R3 transfers
+### 3. Send/Recv - IB RC Send/Recv transfers used in vbuf chunks.  Receiver
+###        keeps buffers posted to RQ.  Credit exchanges indicate
+###        now many vbufs sender can have inflight.
+### For Infiniband, RPUT will use the Control protocol to exchange addresses
+### then use RDMA Write to send application data.
+
+### Tuning MPI performance involves an understanding of the strengths and
+### weaknesses of each approach:
+### SMP - this is the lowest latency mechanism, since it avoids the PCI bus
+###        and the IB fabric.  However for some applications it can be less
+###        efficient than other approachs:
+###           - cache line ownership exchange between CPUs can be expensive
+###           - serializes data transfer using CPU instead of HCA DMA hardware
+###           - if application has a computational neighborhood >2,
+###             overall performance is driven by slowest path/neighbor
+### RDMA Fast Path - this is the next lowest latency mechanism.  It is faster
+###        than Send/Recv since it avoids the RQ/CQ processing.  However for larger
+###        clusters the cost of polling a buffer per connection and the
+###        memory needed to allocate buffers per connection can add up and
+###        actually reduce performance.  Hence this approach is recommended for
+###        smaller clusters.  If no RDMA buffers are available, Send/Recv will
+###        be used.  For messages > 1 vbuf, this mechanism will not be used.
+### Send/Recv - is the highest latency mechanism, however for larger clusters
+###        it actually works the best.
+
+### **************************************************************************
+### Basic Infiniband settings
+### **************************************************************************
+
+### ====================================================================
+### The is the name of the HCA device to be used.
+# VIADEV_DEVICE = InfiniHost0
+export VIADEV_DEVICE
+
+### ====================================================================
+### This is the size of the IB QP Send Q (per connection).  The value supplied
+### will be limited by what the corresponding HCA allows.
+### A software queue is maintained above the send Queue such that larger
+### outstanding send counts can be maintained.  Each send Queue entry
+### consumes about 128 bytes per connection.
+# VIADEV_SQ_SIZE = 200
+export VIADEV_SQ_SIZE
+
+### ====================================================================
+### This is the number of scatter/gather entries allocated per WQE on the
+### send Q.  Only 1 is required.  Growing this value will increase space
+### available for inline data in Mellanox HCAs and will improve performance
+### for very small messages.  However this will also increase the memory
+### needed for send Q WQEs.
+# VIADEV_SQ_MAX_SG_LIST = 1
+export VIADEV_SQ_MAX_SG_LIST
+
+### ====================================================================
+### This is the number of scatter/gather entries allocated per WQE on the
+### recv Q.  Only 1 is required.
+# VIADEV_RQ_MAX_SG_LIST = 1
+export VIADEV_RQ_MAX_SG_LIST
+
+### ====================================================================
+### This is the size of the IB Completion Queue.  The value supplied
+### will be limited by what the corresponding HCA allows.
+### A single CQ is shared among all IB QPs for a given process.
+# VIADEV_CQ_SIZE = 40000
+export VIADEV_CQ_SIZE
+
+### ====================================================================
+### This is the number of times MPI will poll for completion events
+### on the completion queue before blocking in CQWait.
+### if -1, CQWait will not be used
+### CQWait will only be used if VIADEV_SMP=0 and VIADEV_NUM_RDMA_BUFFER=0
+# VIADEV_SPIN_COUNT = -1
+export VIADEV_SPIN_COUNT
+
+### ***************************************************************************
+### Buffer Pool
+###
+### MPI maintains a pool of like sizes buffers (called VBUFs) which are used for
+### RDMA Fast Path/Eager/Control/R3 sends and receives.  The buffer pool can
+### grow as the application runs, but never shrinks.  Memory for the buffer
+### pool is locked down.  Each VBUF is VIADEV_VBUF_TOTAL_SIZE.
+### ***************************************************************************
+
+### ====================================================================
+### The total buffer size (includes data buffers and 100 bytes of control
+### structures)
+### The size selected for this parameter will trade off memory use vs latency.
+### Values between 512-16384 are reasonable.  The ideal is to get the majority
+### of application small messages to fit in a single VBUF (note there are
+### 36 bytes of MPI header overhead per eager send).
+### It is recommended this be a multiple of cache line size for the given CPU
+# VIADEV_VBUF_TOTAL_SIZE = 2048
+export VIADEV_VBUF_TOTAL_SIZE
+
+### ====================================================================
+### This is the number additional VBUFs that get allocated
+### in the event the initial set of VBUFs are not sufficient.
+### Not presently used
+# VIADEV_VBUF_EXTRA = 10
+export VIADEV_VBUF_EXTRA
+
+### ====================================================================
+### This is the initial number of VBUFs that get allocated.
+# VIADEV_VBUF_POOL_SIZE = 5000
+export VIADEV_VBUF_POOL_SIZE
+
+### ====================================================================
+### This is the number additional VBUFs that get allocated
+### in the event the initial set of VBUFs are not sufficient.
+# VIADEV_VBUF_SECONDARY_POOL_SIZE = 500
+export VIADEV_VBUF_SECONDARY_POOL_SIZE
+
+### ====================================================================
+### This is the maximum number of VBUFs that MPI is allowed to allocate
+### during the lifetime of each process.  A value of -1 indicates an
+### unlimited number.
+# VIADEV_VBUF_MAX = -1
+export VIADEV_VBUF_MAX
+
+### ***************************************************************************
+### RPUT protocol controls
+### ***************************************************************************
+
+### ====================================================================
+### Enable memory registration caching by not unregistering RPUT buffers
+### until we hit the registration limit.  This can improve performance
+### by reducing the time spent re-registering memory, especially if an
+### application continually re-uses the same send buffers.  However it will
+### result in more memory being locked down and could cause pre-mature
+### swapping if VIADEV_MEM_REG_MAX is too large
+# VIADEV_LAZY_MEM_UNREGISTER = 1
+export VIADEV_LAZY_MEM_UNREGISTER
+
+### ====================================================================
+### This is limit on memory registration for RPUT buffers per process.
+### All registered memory is locked down, so this setting must not exceed
+### physical memory available on the node.
+### Values between 1-100 are treated as a % of total physical memory
+### (allowing for different memory sizes on each node).
+### The percent given is divided by number of cpus (assuming 1 process per cpu)
+### values above 100 are treated as absolute memory limits in K bytes
+### and are not adjusted by number of cpus.
+### default of 10%/num_cpus should work well for up to 1 process per cpu
+### When percentages are used, a single cpu system will not allow more than
+### 45% to be specified (due to linux limit on locked down memory per process)
+### so values >45 will be downgraded to 45 on a single CPU system
+### If you have changed this limit in the kernel, use absolute values in K bytes
+### for this parameter
+### If you are experiencing swapping or memory registration failures, try
+### decreasing this value.
+# VIADEV_MEM_REG_MAX = 5
+export VIADEV_MEM_REG_MAX
+
+### ====================================================================
+### The total number of RPUT buffers that can be
+### stored in the registration cache. It has no effect if 
+### LAZY_MEM_UNREGISTER is disabled. A larger value will
+### lead to more infrequent lazy de-registration. However,
+### VIADEV_MEM_REG_MAX will limit the total amount of memory a process can
+### register. 
+# VIADEV_NDREG_ENTRIES = 1000
+export VIADEV_NDREG_ENTRIES
+ 
+### ====================================================================
+### When lazy memory registration is enabled, these control how malloc/free
+### is handled.  For lazy to work reliably, when memory is freed the MPI
+### library must intercept the free and deregister any cached memory regions.
+### To optimize performance, the MPI library can be configured to maintain its
+### own heap.  This is generally useful to improve the runtime performance
+### by limiting the need to search the registration cache for small frees.
+###
+### The maximum amount of free memory held in this heap is limited by
+### VIADEV_MEM_HELD_MAX. This allows the libc malloc/free library to coallese
+### and release memory if the MPI library's heap has too many free entries.
+### The VIADEV_HEAP_HELD_MAX parameter is interpreted as a % of total memory
+### for values from <=100, for values > 100, it is interpeted as memory in
+### K bytes.  See VIADEV_MEM_REG_MAX for more details on the interpretation of
+### this type of value.
+###
+### By setting these values, the allocation strategy can have any combination
+### of 3 strategies enabled.
+###
+### Fixed Block Allocation Strategy:
+### For allocations <= VIADEV_HEAP_MAX_FIXED (after some minor overhead)
+### a fixed block size freelist is maintained.
+### Each block is rounded up to be exactly a power of 2 and blocks are allocated
+### via malloc when the freelist is empty.  This approach makes the freelist
+### management high performance at the sacrifice of a little memory.
+### Since these blocks will never be free'ed back to the OS, there is no need
+### for searching the registration cache on free of these size blocks.
+###
+### Variable Block Allocation Strategy:
+### For allocations > VIADEV_HEAP_MAX_FIXED and < VIADEV_HEAP_MAX_VARIABLE
+### (after some minor overhead) a variable block size freelist is maintained.
+### Blocks here are not rounded up in size when allocated and are put back on
+### this freelist when freed. Allocations check this pool looking for a
+### semi-best fit.  For medium sized blocks, this represents less wasted memory
+### than a fixed block size strategy.
+### Since these blocks will never be free'ed back to the OS, there is no need
+### for searching the registration cache on free of these size blocks.
+###
+### Malloc Allocation Strategy:
+### For allocations > VIADEV_HEAP_MAX_FIXED and > VIADEV_HEAP_MAX_VARIABLE
+### malloc/free are used.  On free the registration cache is
+### searched for memory regions in the block being freed and the memory
+### regions are deregistered and removed from the cache.  This approach
+### performs exactly as good as malloc/free for space usage (adding only a small
+### header), however speed can suffer due to registration cache searches per
+### free and the subsequence deregistration of memory.
+### For larger blocks, the speed sacrifice should be minor compared to other
+### aspects of the application use of the block (filling it, sending it,
+### analyzing it, etc)
+###
+### The config parameters (VIADEV_HEAP_MAX_FIXED and VIADEV_HEAP_MAX_VARIABLE)
+### can be used to configure the allocator to use any combination of these
+### strategies as follows:
+### MAX_FIXED  MAX_VARIABLE     behaviour
+### >0           >FIXED      use fixed, variable, malloc
+### 0            >0          use variable for small blocks, malloc for large
+### 0            0           use malloc for all blocks
+### >0           0           use fixed for small blocks, malloc for large
+### -1           N/A         use fixed for all blocks
+### 0            -1          use held for all blocks
+### >0           -1          use fixed for small blocks, variable for large
+### In above table using -1 causes a value to be the maximum unsigned long on
+### the platform.  Hence it will capture all allocates.
+### N/A means the value is ignored.
+### >0 means a non-zero value less than the largest allocation anticipated.
+###
+# VIADEV_HEAP_HELD_MAX=2
+# VIADEV_HEAP_MAX_FIXED=2048
+# VIADEV_HEAP_MAX_VARIABLE=65536
+export VIADEV_HEAP_HELD_MAX
+export VIADEV_HEAP_MAX_FIXED
+export VIADEV_HEAP_MAX_VARIABLE
+
+### ====================================================================
+### Maximum size of a single RDMA write
+# VIADEV_MAX_RDMA_SIZE = 1048576
+export VIADEV_MAX_RDMA_SIZE
+### ***************************************************************************
+### Shared Memory Protocol
+### ***************************************************************************
+
+### ====================================================================
+### Use a shared memory segment for communications between processes on
+### same node. Set to 0 to disable use of Shared Memory Protocol.
+# VIADEV_SMP = 0
+export VIADEV_SMP
+
+### ====================================================================
+### size of individual message buffer for Shared Memory Protocol in KBytes.
+# VIADEV_SMP_EAGERSIZE = 256
+export VIADEV_SMP_EAGERSIZE
+
+### ====================================================================
+### size of message queue for Shared Memory Protocol in MBytes.
+### must be at least 3x SMP_EAGERSIZE
+# VIADEV_SMP_LENGTH_QUEUE = 4
+export VIADEV_SMP_LENGTH_QUEUE
+
+### ***************************************************************************
+### RDMA Fast Path
+### ***************************************************************************
+
+### ====================================================================
+### This is the number of VBUFs that will be used for the RDMA FAST Path
+### queue of each connection.  Setting this to 0 disables the use of the
+### RDMA Fast Path.
+### For more than 32 processes, the default is 0.
+# VIADEV_NUM_RDMA_BUFFER = 32
+VIADEV_NUM_RDMA_BUFFER = 0
+export VIADEV_NUM_RDMA_BUFFER
+
+### ====================================================================
+### When RDMA Fast Path is enabled, MPI eager heading caching may be used to
+### further improve performance for small messages.  Setting this to 0 disables
+### header caching.  In applications which send message with the same
+### header values (tag, context, etc) this can slightly improve latency
+### for messages smaller than this value.  However if the application does not
+### have such characteristics the overhead of checking the cache can slightly
+### hurt latency.  To determine if this will help, build MPI with -DSIZE_STATS
+### and -UDISABLE_HEADER_CACHING.
+### Then run with this enabled and VIADEV_DEBUG=0x2000.
+### Then review the results in the MVICH-DBG.* files and see how the "hdr hit"
+### rate looks per connection.
+### acceptable values for this field are 0-255
+# VIADEV_MAX_FAST_EAGER_SIZE = 255
+export VIADEV_MAX_FAST_EAGER_SIZE
+
+### ***************************************************************************
+### Recv Queue Management
+###
+### Initially VIADEV_INITIAL_PREPOST_DEPTH buffers are posted to each Recieve
+### Queue, many MPI applications use a very small subset of the available
+### connections, so to conserve memory, this value should be small.
+###
+### When the first data is received on the connection, the Receive queue will
+### have buffers added to reach a nominal size of
+### VIADEV_PREPOST_DEPTH+VIADEV_PREPOST_NOOP_EXTRA VBUFs
+### however during operation it could have as few as
+### (VIADEV_PREPOST_DEPTH+VIADEV_PREPOST_NOOP_EXTRA) - VIADEV_PREPOST_THRESHOLD
+### VBUFs on it
+###
+### When an R3 transfer is in progress, the receiver could put up to
+### VIADEV_PREPOST_RENDEZVOUS_EXTRA more VBUFs on the queue for the duration
+### of the transfer.  After which it will go back down to the nominal size
+### discussed above.
+###
+### NOOPs do not consume credits. Hence credits are issued to the sender
+### for all but VIADEV_PREPOST_NOOP_EXTRA transfers.
+###
+### The IB Receive Queue will be sized to
+### VIADEV_PREPOST_DEPTH+VIADEV_PREPOST_NOOP_EXTRA VBUFs+
+###     VIADEV_PREPOST_RENDEZVOUS_EXTRA
+### Each Receive Queue Entry consumes about 128 bytes of memory.  When VBUFS
+### are posted to the receive Queue, they cannot be used to other purposes
+### and each consume an additional VBUF_TOTAL_SIZE (2K) bytes.
+### An independent Receive Queue exists per connection.
+### ***************************************************************************
+
+### ====================================================================
+### This is the number of VBUFs that will be pre-posted on the receive
+### queue of each connection at initialization time.
+### A small value here can reduce memory usage for applications which
+### only use a small subset of the available connections.
+# VIADEV_INITIAL_PREPOST_DEPTH = 1
+export VIADEV_INITIAL_PREPOST_DEPTH
+
+### ====================================================================
+### This is the number of VBUFs that will be pre-posted on the receive
+### queue of each connection during operation for active connections.
+### MPI attempts to maintain this number of pre-posted receives.
+# VIADEV_PREPOST_DEPTH = 40
+export VIADEV_PREPOST_DEPTH
+
+### ====================================================================
+### Only post receives when we have at least this many to post
+### This improves CPU cache hit rates.
+# VIADEV_PREPOST_THRESHOLD = 10
+export VIADEV_PREPOST_THRESHOLD
+
+### ====================================================================
+### During a R3/Rendezvous transfer, the receiving side will pre-post
+### extra VBUFs to accommodate the data transfer.  This number specifies
+### the maximum number of additional VBUFs that will be allocated
+### on a connection participating in such a transfer.
+# VIADEV_PREPOST_RENDEZVOUS_EXTRA = 20
+export VIADEV_PREPOST_RENDEZVOUS_EXTRA
+
+### ====================================================================
+### Number of extra buffers to repost to Recv Q to allow for NOOPs
+### This is in addition to buffers posted for data/control transfers
+### Noops do not count as credits, so some extra buffers are needed to
+### ensure credit exchanges can occur.
+# VIADEV_PREPOST_NOOP_EXTRA = 10
+export VIADEV_PREPOST_NOOP_EXTRA
+
+### ***************************************************************************
+### Protocol Selection
+###
+### When SMP is enabled, transfers less than SMP_EAGERSIZE will use SMP
+###
+### Transfers less than VIADEV_RENDEZVOUS_THRESHOLD will use EAGER
+###    (via RDMA Fast Path or Send/Recv)
+### However if there are less than VIADEV_CREDIT_PRESERVE credits available
+### RPUT or R3 will be used.
+###
+### Given the above rules, when a RENDEZVOUS protocol is selected, if memory
+### can be locked down (per the RPUT controls parameters), the RPUT protocol
+### will be used.  If not, the R3 protocol will be used.
+### ***************************************************************************
+
+### ====================================================================
+### This is the message size (in bytes) at which MPI switches from
+### an EAGER messaging protocol to the RPUT or R3 protocol.
+### appl messages >= VIADEV_RENDEZVOUS_THRESHOLD will use RPUT or R3
+### appl messages < VIADEV_RENDEZVOUS_THRESHOLD will attempt to use EAGER.
+### default is messages > 2 buffers (based on VBUF_TOTAL_SIZE)
+### default = 2*(VBUF_TOTAL_SIZE-96)+1-(36+20)
+###           (96=control overhead in vbuf structure,
+###            36=eager 1st packet header, 20=eager continuation packet header)
+### For VBUF_TOTAL_SIZE=2048 -> threshold of 3849
+# VIADEV_RENDEZVOUS_THRESHOLD = 3849
+export VIADEV_RENDEZVOUS_THRESHOLD
+
+### ====================================================================
+### If the flow control credit value on a connection falls below this
+### value, then no EAGER sends are allowed and no R3 data
+### packets can be sent.  Only control packets will be sent.
+### This avoids deadlock situations.
+# VIADEV_CREDIT_PRESERVE = 10
+export VIADEV_CREDIT_PRESERVE
+
+### ***************************************************************************
+### Credit Management
+###
+### With the exception of NOOPs, all messages sent via Send/Recv require
+### credits.  Normally credits are piggybacked on some data or control
+### message going in the opposite direction, however if data movement is
+### uni-directional, NOOP messages may be needed to refresh the senders credits
+### ***************************************************************************
+
+### ====================================================================
+### As a process pre-posts additional VBUFs on a IB receive queue, these
+### "credits" must be communicated to the process on the other end of
+### the connection.  Normally, these credit updates are piggybacked on
+### (other) messages being sent back on the connection.  If no messages
+### are being sent back and the credit update exceeds this parameter value
+### and we think the remote side has less than VIADEV_CREDIT_PRESERVE credits
+### available to send to us,
+### a NOOP message will be sent for the purpose of communicating the update.
+# VIADEV_CREDIT_NOTIFY_THRESHOLD = 5
+export VIADEV_CREDIT_NOTIFY_THRESHOLD
+
+### ====================================================================
+### As a process pre-posts additional VBUFs on a IB receive queue, these
+### "credits" must be communicated to the process on the other end of
+### the connection.  Normally, these credit updates are piggybacked on
+### (other) messages being sent back on the connection.  If no messages
+### are being sent back and the credit update exceeds this parameter value,
+### a NOOP message will be sent for the purpose of communicating the update.
+### In this case the NOOP occurs regardless of how many credits we think the
+### remote side has
+# VIADEV_DYNAMIC_CREDIT_THRESHOLD = 10
+export VIADEV_DYNAMIC_CREDIT_THRESHOLD
+
+### ***************************************************************************
+### Debug Tools
+### ***************************************************************************
+
+### ====================================================================
+### This is a hex number defining the debug options.  The options
+### can be ORed together.
+###     0x0002 connection establishment
+###     0x0004 packets sent/received
+###     0x0008 dynamic memory registration
+###     0x0010 more details of Dynamic memory registration
+###     0x0020 buffer handling
+###     0x0040 credit exchange
+###     0x0080 message send
+###     0x0100 message receive
+###     0x0400 memory registration for buffers
+###     0x0800 device check/polling
+###     0x1000 barriers
+###     0x2000 statistics
+###     0x4000 malloc override debugging
+###     0x8000 malloc override statistics
+###     0x20000000 include node id in debug output filename
+###     0x40000000 include global id in debug output filename
+# VIADEV_DEBUG_LEVEL = 0x0
+export VIADEV_DEBUG_LEVEL
+
+### ====================================================================
+### This options turns on verbose mode in each process.
+### which will cause configured parameter values to be output at start
+### of run
+# VIADEV_VERBOSE = 0
+export VIADEV_VERBOSE
+
+### ***************************************************************************
+### Connection Establishment
+### ***************************************************************************
+
+### ====================================================================
+### Method to use for path resolution
+### 0 - IPoIB path if available, otherwise SA query by NodeGuid
+### 1 - IPoIB path (all host names must be IPoIB addresses/names)
+### 2 - SA query by NodeGuid
+### 3 - balance use of local CAs and SA query by NodeGuid
+### 4 - Select method 0 if 1 HCA, method 3 if > 1 HCA in system
+### Use of IPoIB paths allows for a faster startup time for the run
+### Options 0-2 will only use the 1st HCA in a multi HCA system
+### Option 4 will cause job to fail to start if some systems in run have 1 HCA
+### and others have multiple HCAs.
+### Option 3 will work for all configurations, but will not take advantage of
+### faster IPoIB based startup times.
+# VIADEV_PATH_METHOD = 4
+export VIADEV_PATH_METHOD
+
+### ====================================================================
+### Maximum MTU to use for connection
+### Valid values are 256, 512, 1024, 2048, 4096
+### other values will be rounded up to the next valid value
+### In addition, when MT23108 HCAs are used, MTU will be adjusted to be <= 1024
+### which provides maximum performance for this HCA.
+### In some environments it can be useful to tune this value down to 1024
+### for other HCAs.  For example this can improve handling of congestion
+### or may have better performance for selected benchmarks
+# VIADEV_MAX_MTU = 4096
+export VIADEV_MAX_MTU
+
+### ====================================================================
+### Maximum Rate to use for connection (in Megabits/sec)
+### Valid values are 2500, 5000, 10000, 20000, 30000, 40000, 60000, 80000,
+### 120000
+### other values will be rounded up to the next valid value
+### In some environments it can be useful to tune this value down.
+### For example this can improve handling of congestion
+### or may have better performance for selected benchmarks
+# VIADEV_MAX_RATE = 120000
+export VIADEV_MAX_RATE
+
+### ====================================================================
+### Timeout multiplier for alternate timeout
+### The primary QP timeouts are obtained from the SA
+### However to improve MPI resiliency in the face of fabric disruptions
+### or congestion, an alternate timeout can be provided.  The alternate
+### timeout is the primary * VIADEV_ALT_TIMEOUT_MULT.  VIADEV_ALT_TIMEOUT_MULT
+### is rounded up to the nearest power of 2.
+### The primary timeout will be used until such time as a failure would
+### occur, at which time the alternate timeout will be used for the rest of
+### the run.
+### A value of 0 will disable the use of alternate timeouts.
+# VIADEV_ALT_TIMEOUT_MULT = 8
+export VIADEV_ALT_TIMEOUT_MULT
+
+### ====================================================================
+### Time to wait after CM reject before retry connection in milliseconds
+# VIADEV_REJECT_WAIT = 300
+export VIADEV_REJECT_WAIT
+
+### ====================================================================
+### Maximum time to allow for establishment of connections to all processes
+### in seconds.  Default is 7*number_of_processes with a minimum of 120.
+# VIADEV_CONNECT_TIMEOUT = 120
+export VIADEV_CONNECT_TIMEOUT
+
+### ====================================================================
+### Maximum number of outbound connections to have outstanding at a time
+# VIADEV_CONNECT_PARALLEL = 20
+export VIADEV_CONNECT_PARALLEL
+
+### ***************************************************************************
+### Heartbeat
+###
+### In order to detect hung or failed nodes, a heartbeat mechanism can be
+### enabled.
+### ***************************************************************************
+
+### ====================================================================
+### The interval between heartbeat operations, in milliseconds.
+### Set to zero (0) to disable heartbeats.
+# VIADEV_HEARTBEAT_INTERVAL = 0
+export VIADEV_HEARTBEAT_INTERVAL
+
+### ====================================================================
+### Heartbeat style
+### 0 - heartbeat all other processes
+### 1 - heartbeat just the next process (wraps at top)
+### 2 - heartbeat just the next and prev processes (with wrap at top/bottom)
+# VIADEV_HEARTBEAT_STYLE = 2
+export VIADEV_HEARTBEAT_STYLE
+
+### ====================================================================
+### Specifies the size of heartbeat data.  Valid values are 0 and 1 only.
+### If 0, only fabric integrity verification is performed.  If 1, performs
+### additional verification to check that remote applications are still
+### alive.
+# VIADEV_HEARTBEAT_SIZE = 1
+export VIADEV_HEARTBEAT_SIZE
+
+### ====================================================================
+### Specifies the number of retries to attempt before flagging a node
+### as dead.  This parameter only has meaning when VIADEV_HEARTBEAT_SIZE=1
+# VIADEV_HEARTBEAT_RETRY = 5
+export VIADEV_HEARTBEAT_RETRY
+
+### ====================================================================
+### Macintosh Only:
+###
+### This parameter controls how much RAM can be "wired" for RDMA. The 
+### current generation of Macintoshes use a special algorithm for wiring
+### memory which overallocates memory by quite a lot - and can cause
+### kernel panics if the hardware limit is exceeded.
+###
+### Adjust this limit upward to improve performance, but if you begin
+### seeing kernel panics, that reference "AppleU3ART" reduce it.
+### This parameter is measured in megabytes.
+# VIADEV_DART_BOUND = 512
+export VIADEV_DART_BOUND

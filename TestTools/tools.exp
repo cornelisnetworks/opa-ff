@@ -1,0 +1,3773 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+## The tools.exp expect script file contains various utility routines which can
+## be used in the generation of test scripts
+## It is auto sourced into expect
+
+## Future enhancement - provide a spawn_id argument to the expect_ procedures?
+## Current handling assumes a single spawned process or the manipulation of
+## spawn_id prior to calling them.
+##
+
+## User Controlled Global variables:
+## ---------------------------------
+## These variables are available to the user for read/write access
+## They are used (read only) internally by the tools procedures.
+##
+## env(TEST_STOP_FAILED)
+##	none - do not stop on any failure
+##	suite - abort test suite only on the failure of a test suite
+##	case - abort test suite on the failure of any test case
+##	any - abort test suite on the failure of any test item
+##	default is none
+## env(TEST_SAVE_FAILED)
+##	no - do not save any temporary files in the case of a failure
+##	yes - save all temporary files in the case of a failure
+##	default is yes
+## env(TEST_SAVE_TEMP)
+##	no - do not save any temporary files between test cases
+##	yes - save all temporary files for each test case
+##	default is no
+## env(TEST_SAVE_FIRST)
+##	when saving temp files for TEST_SAVE_FAILED or TEST_SAVE_TEMP should
+##	an existing save_tmp be retained in preference to the newer files
+##	yes - keep existing files, reflecting 1st run or failure of test
+##	no - replace existing files, reflecting last run or failure of test
+##	default yes
+## env(TEST_PARALLEL)
+##	no - serialize all tests
+##	yes - when supported by a test_suite, parallelize test cases
+##	default is yes
+## env(TEST_MAX_PARALLEL)
+##	maximum processes to concurrently execute in parallel blocks
+##	default is 20
+## env(TEST_TIMEOUT_MULT)
+##	multiplier for all timeouts during a test (used to account for slower hosts)
+##	default is 1
+## env(TEST_SHOW_CONFIG)
+##	show configuration at start of test suite
+##	default is yes
+## env(TEST_SHOW_START)
+##	output a message at start of each test case
+##	default is no
+## env(TEST_RESULT_DIR)
+##	directory to put test.log, test.res, identify.log, save_tmp, and test_tmp
+##	default is .
+## env(CFG_*)
+##	assorted test target/driver configuration information from config file
+## env(TEST_SUITES)
+## env(TEST_SKIP_SUITES)
+##	A space separated list of test suite tags for test suites to run/not run.
+##	If not exported all the test suites are run
+##	For example:
+##		export TEST_SUITES="suite1 suite2"
+##	will cause only tests within suite1 and suite2 to be executed. All
+##	other test suites will be completely skipped including their
+##	initialization and cleanup code.
+##	The test cases run within the selected test suites can be further
+##	limited by using the TEST_CASES variable (see below).
+##	Shell style "glob" patterns can be used
+##	If a test suite matches both TEST_SUITES and TEST_SKIP_SUITES it is skipped
+## env(TEST_CASES)
+## env(TEST_SKIP_CASES)
+##	A space separated list of tags for the test cases to run/not run.  The tags
+##	can be either the tag for a test case or a test_suite_tag.test_case_tag.
+##	If not exported all the test cases in the selected test suites are
+##	run.
+##	For example:
+##		export TEST_CASES="tag1 tag2"
+##	will cause test cases tag1 and tag2 to be executed within all the
+##	selected test suites.
+##		export TEST_CASES="suite1.tag1 suite2.tag2"
+##	Will cause test case tag1 within suite1 to be executed and tag2
+##	within suite2 to be executed.  Note that this will not prevent the
+##	execution of initialization and cleanup code from any other test suites 
+##	hence it is usually desirable when multiple test suites are potentially
+##	being run, to limit the test suites by using the TEST_SUITES variable
+##	(see above).  So in the case above:
+##		export TEST_SUITES="suite1 suite2"
+##		export TEST_CASES="suite1.tag1 suite2.tag2"
+##	will make sure that any test suites other than suite1 or suite2
+##	are totally skipped.
+##	Shell style "glob" patterns can be used
+##	If a test case matches both TEST_CASES and TEST_SKIP_CASES it is skipped
+## env(TEST_ITEMS)
+## env(TEST_SKIP_ITEMS)
+##	A space separated list of tags for the test items to run/not run.  The tags
+##	can be either the tag for a test item or a
+##	test_suite_tag.test_case_tag.test_item_tag.
+##	If not exported all the test items in the selected test
+##	cases in the selected test suites are run.
+##	For example:
+##		export TEST_ITEMS="tag1 tag2"
+##	will cause test items tag1 and tag2 to be executed within all the
+##	selected test cases.
+##		export TEST_ITEMS="suite1.tag1.item1 suite2.tag2.item2"
+##	Will cause test item item1 within test case tag1 within suite1 to be
+##	executed and item2 in test case tag2 within suite2 to be executed.
+##	Note that this will not prevent the execution of initialization and
+##	cleanup code from any other test suites hence it is usually desirable
+##	when multiple test suites are potentially being run, to limit the test
+##	cases and suites by using the TEST_SUITES and TEST_CASES variables
+##	(see above).  So in the case above:
+##		export TEST_SUITES="suite1 suite2"
+##		export TEST_CASES="suite1.tag1 suite2.tag2"
+##		export TEST_ITEMS="suite1.tag1.item1 suite2.tag2.item2"
+##	will make sure that any test suites other than suite1 or suite2
+##	and any cases other than suite1.tag1 and suite2.tag2
+##	are totally skipped.
+##	Shell style "glob" patterns can be used
+##	If a test item matches both TEST_ITEMS and TEST_SKIP_ITEMS it is skipped
+## env(TEST_NOEXECUTE)
+##	list of test operations/initializations to skip execution of
+##	the valid set of entries is defined by the test suite itself.
+##	This can be used to selectively disable test_execute operations
+##	within the test suite, typically within the initialization routines.
+## env(TEST_IDENTIFY)
+##	disable test execution, simply identify the tests within the suite
+##	this is not completely implemented yet.
+## env(TEST_DEBUG_LEVEL)
+##	Enable additional test debug output to the log
+##
+## Additional global variables (read only in this file,
+##	 but internally set by test scripts):
+## spawn_id - expect's spawn id, made global for ease of use
+## spawn_out - expect's spawn output information, made global for ease of use
+## interact_out - expect's interact output, made global for ease of use
+## expect_out - expect's expect output, made global for ease of use
+## timeout - expect's timeout value, made global for ease of use
+## lines_to_show - number of lines to show from stdout of a child
+##	when it exits.  Default is 10.
+## expecting - current message or item being expected.  This is output in
+##	the timeout handler for expect_after to aid debug of failed tests.
+##	defaults to "" at start of each test case/suite.
+## features(au,feature) - feature status for each AU
+##
+## Files Generated:
+## ----------------
+## Any test suite which uses these tools and the associated test automation
+## makefiles (to run the tests) will automatically generate
+## various files as follows:
+##	test.res - summary of tests run and brief results
+##	test.log - detailed summary of test
+##	save_tmp/test_suite_tag/test_case_tag/*
+##		- log and data files from running the given test suite and
+##			test case, the test_suite_tag component will be
+##			the actual test suite tag as specified in the
+##			test_suite procedure call, similar for test_case_tag
+##			The selection as to which cases generate such files
+##			depends on the env(TEST_SAVE_FAILED) and
+##			env(TEST_SAVE_TEMP) variables.  The default is to
+##			only save results for failed test cases, but this can
+##			be altered by the user through these variables.
+##			The special test_case_tags of "suite_setup" and
+##			suite_cleanup are used to save log files from the
+##			suite_setup and suite_cleanup routines
+##	test_tmp$$ - temporary files, renamed as save_tmp/... or removed
+##			when test completes
+##	identify.res - summary of test suites automated within the directory
+##			This is generated when env(TEST_IDENTIFY)=yes
+##			as opposed to actually running the test suites
+## File Formats:
+## -------------
+## Some of these files can be machine parsed or easily greped for various
+## patterns.  In the messages below, fields bracketed in '' are replaced with
+## variables from execution time.  Hence ['DATE'] in a message may be
+## emitted as [10:05:39 Jul 20, 1996]
+##
+##   test.res
+##   --------
+##	The test.res file contains the following types of messages:
+##	Executing 'NAME' Test Suite ('TAG') ['DATE'] ...
+##		- the given test suite is being started
+##	Executing 'NAME' Test Suite ('TAG') ['DATE'] ...
+##	SKIPPED
+##		- the given test suite is being skipped
+##	Test Configuration File: 'FILENAME'
+##		- the given configuration file will guide the test suite
+##		of course the environment may override config file values
+##	FAILURE during test suite: 'MULTI_LINE_DESCRIPTION'
+##		- the given error occured during the test suite and caused
+##		it to prematurely abort.  No further messages will be provided
+##		for the suite other than a multi-line description of the error
+##	TEST SUITE FAILURE: 'MULTI_LINE_DESCRIPTION'
+##	TEST SUITE 'NAME' TESTS ABORTED
+##		- fatal test suite error
+##	TEST SUITE 'NAME': 'CNT' Cases; 'CNT' PASSED; 'CNT' FAILED; 'CNT' SKIPPED
+##	TEST SUITE 'NAME': 'CNT' Cases; 'CNT' PASSED; 'CNT' FAILED
+##	TEST SUITE 'NAME': 'CNT' Cases; 'CNT' PASSED; 'CNT' SKIPPED
+##	TEST SUITE 'NAME': 'CNT' Cases; 'CNT' PASSED
+##		- cummulative results for test suite
+##		- cummulative results for test suite
+##	TEST SUITE 'NAME' PASSED
+##	TEST SUITE 'NAME' FAILED
+##		- overall results of suite (only passes if all cases passed
+##		excluding those skipped)
+##	Done 'NAME' Test Suite ['DATE']
+##		- test suite completed
+##	TEST SUITE 'NAME' CASE ('FULL_TAG') 'CASE_NAME': PASSED
+##	TEST SUITE 'NAME' CASE ('FULL_TAG') 'CASE_NAME': FAILED
+##	TEST SUITE 'NAME' CASE ('FULL_TAG') 'CASE_NAME': SKIPPED
+##		- test case results, Note in some cases the PASSED/FAILED
+##		may not appear on the same line as the TEST CASE name.
+##		This can be due to configuration errors causing setup errors
+##		or because the test case includes test items.  For the 
+##		passing case, an additional line will be logged.
+##	TEST CASE FAILURE='MULTI_LINE_ERROR'
+##		test case failed for given reason
+##	TEST CASE 'NAME': 'CNT' Items; 'CNT' STARTED; 'CNT' PASSED; 'CNT' FAILED
+##	TEST CASE 'NAME': 'CNT' Items; 'CNT' STARTED; 'CNT' PASSED
+##	TEST CASE 'NAME': 'CNT' Items; 'CNT' STARTED; 'CNT' FAILED
+##	TEST CASE 'NAME': 'CNT' Items; 'CNT' STARTED
+##	TEST CASE 'NAME': 'CNT' Items; 'CNT' STARTED; 'CNT' PASSED; 'CNT' FAILED; 'CNT' SKIPPED
+##	TEST CASE 'NAME': 'CNT' Items; 'CNT' STARTED; 'CNT' PASSED; 'CNT' SKIPPED
+##	TEST CASE 'NAME': 'CNT' Items; 'CNT' STARTED; 'CNT' FAILED; 'CNT' SKIPPED
+##	TEST CASE 'NAME': 'CNT' Items; 'CNT' STARTED; 'CNT' SKIPPED
+##		- cummulative results for test case which had test_items
+##	TEST SUITE 'NAME' ITEM ('FULL_TAG') 'ITEM_NAME': PASSED
+##	TEST SUITE 'NAME' ITEM ('FULL_TAG') 'ITEM_NAME' PASSED
+##	TEST SUITE 'NAME' ITEM ('FULL_TAG') 'ITEM_NAME': FAILED
+##	TEST SUITE 'NAME' ITEM ('FULL_TAG') 'ITEM_NAME' FAILED
+##	TEST SUITE 'NAME' ITEM ('FULL_TAG') 'ITEM_NAME': SKIPPED
+##	TEST SUITE 'NAME' ITEM ('FULL_TAG') 'ITEM_NAME': STARTED
+##		- test case item results, Note in some cases the PASSED/FAILED
+##		may not appear on the same line as the TEST CASE name.
+##		This can be due to configuration errors causing setup errors
+##		or because the test case includes test items.
+##		For the STARTED case, a subsequent PASSED or FAILED line will
+##		also be logged.
+##	PERF performance data
+##		Performance data reported by test which should be part of performance
+##		section of final report
+##	additional messages could appear in the log
+
+##
+##   identify.res
+##   ------------
+##
+##  ***************************
+##	Directory: 'DIRECTORY_NAME'
+##		- the given subdirectory exists which contains additional
+##		test suites (and an identify.res file)
+##		the details of those test suites follows this marker
+##	==============
+##		- preceeds data for a new test suite
+##	Test Suite: 'NAME' ('TAG')
+##	'MULTI_LINE_INFORMATION'
+##		- test suite name, tag and detailed (multi-line) description
+##
+##		configuration variable settings from configuration file
+##		any messages from test suite setup routines, possibly
+##		failures
+##	--------------
+##		- preceeds data for a new test case
+##	Test Case: 'NAME' ('FULL_TAG')
+##	'MULTI_LINE_INFORMATION'
+##		- test suite and test case name, tag and detailed
+##			(multi-line) description.  Description is for the test
+##			case only, description from test suite (above) may
+##			provide additional information
+##
+##
+## Internal Global variables:
+## --------------------------
+## These variables are used internally by the tools procedures.
+## they may be read by the user, but not modified.
+##
+## tools_suite_name - name of current test suite (user should not change)
+## tools_suite_tag - tag of current test suite (user should not change)
+## tools_suite_result - PASSED/FAILED overall result for test suite
+## tools_suite_status - status of most recent (current if still in progess)
+##		test_suite: "okay" if normal, "skip" if test cases should be
+##		skipped, "fail" if failed, and "abort" if the suite was programmatically aborted.
+## tools_suite_count - on going count of the number of test suites run
+## tools_case_name - name of current test case (user should not change)
+## tools_case_tag - tag of current test case (user should not change)
+## tools_case_count - on going count of the number of test cases run
+## tools_case_passed - on going count of the number of test cases that passed
+## tools_case_failed - on going count of the number of test cases that failed
+## tools_case_skipped - on going count of the number of test cases skipped
+## tools_case_async - flag if test case involves asynchronous test items
+## tools_case_status - status of most recent (current if still in progess)
+##		test_case: "okay" if normal, "skip" if test items should be
+##		skipped, "fail" if failed, and "abort" if the case was programmatically aborted.
+## tools_item_name - name of current test case (user should not change)
+## tools_item_tag - tag of current test case (user should not change)
+## tools_item_count - on going count of the number of test items run
+## tools_item_passed - on going count of the number of test items that passed
+## tools_item_started - on going count of the number of test items that started
+## tools_item_failed - on going count of the number of test items that failed
+## tools_item_skipped - on going count of the number of test items skipped
+## tools_item_*_list - lists of test item information for async test cases
+## test_tmp - directory for temporary files, renamed as save_tmp/... or removed
+##			when test completes
+##
+## Tcl Library Paths
+## -----------------
+##	When test_expect is run, the Tcl library search path automatically
+##	is appended to to include $BUILD_DIR/tcl_libs, $RELEASE_DIR/tcl_libs
+##	and the current working directory.  As needed you can create libraries
+##	of routines for use by you various test suites and build the
+##	corresponding tclIndex to allow those libraries to be run without
+##	needing to explicity source the files.
+
+# defaults
+set default_TEST_STOP_FAILED none
+set default_TEST_SAVE_FAILED yes
+set default_TEST_SAVE_TEMP no
+set default_TEST_SAVE_FIRST yes
+set default_TEST_PARALLEL yes
+set default_TEST_MAX_PARALLEL 20
+set default_TEST_TIMEOUT_MULT 1
+set default_TEST_IDENTIFY no
+set default_TEST_SHOW_CONFIG yes
+set default_TEST_SHOW_START no
+set default_TEST_RESULT_DIR "."
+set default_TEST_SERIALIZE_OUTPUT no
+
+set tools_suite_count 0
+set tools_suite_failed 0
+set log_disable 0
+
+# seed the random generator to generate predictable randomness
+
+global env
+if { [ info exists env(CFG_SEED) ] } {
+	srand $env(CFG_SEED)
+}
+
+proc test_suite { tag name information startup cleanup code } {
+##
+## test_suite
+## -----------
+## utility procedure to execute a test suite
+##
+## Usage:
+##	test_suite tag name information startup cleanup {
+##		code for test suite (typically calls to test_case)
+##	}
+## Arguments:
+##	tag - short tag for test suite, no spaces or special characters allowed
+##		used to name directory to save results
+##	name - name of test suite
+##	information - brief description of test suite
+##	startup - procedure to execute at start of the test suite
+##	cleanup - procedure to execute at the end of the test suite
+##	code = Tcl commands for test suite (typically a list with 1 or
+##		more invocations of test_case)
+## Returns:
+##	none
+## Additional Information:
+##	Any test_case calls must be made within the code of this
+##	control structure
+##
+
+	global tools_suite_name
+	global tools_suite_tag
+	global tools_suite_result
+	global tools_suite_status
+	global tools_suite_count
+	global tools_case_count
+	global tools_case_passed
+	global tools_case_failed
+	global tools_case_skipped
+	global env
+	global spawn_id
+	global spawn_out
+	global interact_out
+	global expect_out
+	global timeout
+	global expecting
+	global features
+
+	global no_random
+	set no_random 0
+	if { [regexp {xmlsuite} $name ] } { set no_random 1 }
+	global suite_priority	;#	2 = med, 3 = high , 1 = low, >= 4 highest(default, always on)
+
+	if {  ![info exists suite_priority] } {  set suite_priority 4 }
+
+	set tools_suite_name $name
+	set tools_suite_tag $tag
+
+
+	if { ! [ identify_mode ] } {
+		# create test_tmp for use by startup code
+		make_test_tmp
+		log_redirect
+		log_message "Start $name Test Suite ($tag) [date_stamp]"
+		log_message "=============================================================================="
+		puts "Executing $name Test Suite ($tag) [date_stamp] ..."
+
+		log_message "$information\n"
+		log_message "[date_stamp]"
+		log_message ""
+	}
+
+	set tools_suite_result "PASSED"
+	set tools_suite_status "okay"
+
+	clear_case_counters
+
+	incr tools_suite_count
+
+	set spawn_id "";	# create variable
+	set expecting "";	# create variable
+	set_timeout 60;		# create and initialize variable
+
+	# test for test_suite_tag in TEST_SUITES/TEST_SKIP_SUITES
+	if { [ check_skip_test TEST_SUITES TEST_SKIP_SUITES "{$tag}" ] } {
+		show_message "SKIPPED"
+		log_message ""
+		remove_test_tmp
+		return
+	}
+
+	if { [ info exists env(TEST_CONFIG_FILE) ] != 1 } {
+		remove_test_tmp
+		fail_suite "FAILURE during test suite: Environment variable TEST_CONFIG_FILE not set" 1
+	}
+	if { [ catch { read_config $env(TEST_CONFIG_FILE) } res ] != 0 } {
+		remove_test_tmp
+		fail_suite "FAILURE during test suite: failed to read $env(TEST_CONFIG_FILE) $res" 1
+	}
+
+	# test for test_suite_tag in TEST_SUITES/TEST_SKIP_SUITES
+	if { [ check_skip_test TEST_SUITES TEST_SKIP_SUITES "{$tag}" ] } {
+		show_message "TEST SUITE $tools_suite_name ($tag) TESTS SKIPPED"
+		log_message ""
+		remove_test_tmp
+		return
+	}
+
+	# only identify suites which are not skipped
+	if { [ identify_mode ] } {
+		log_file -a [test_get_env TEST_RESULT_DIR]/identify.log
+		puts "=============================================================================="
+		puts "Test Suite: $name ($tag)"
+		puts "$information\n"
+	}
+
+	test_execute {} {
+		setup_expect_after
+	}
+	set res [ catch {
+		set expecting ""
+		set_timeout 60
+		if { [ catch { eval $startup } err_str2 ] != 0 } {
+			cleanup_all_children
+			test_execute {} {
+				log_restore
+				save_test_tmp $tools_suite_tag suite_setup TEST_SAVE_FAILED
+			}
+			error "suite_setup failed: $err_str2"
+                } elseif { "$err_str2" == -1} {
+                        # skip test_suite and do not run cleanup proc
+                        show_message "TEST SUITE $tools_suite_name ($tag) TESTS SKIPPED"
+                        set tools_suite_status "skipped"
+                        log_message ""
+                        set cleanup "noop"
+                        set tools_suite_result "SKIPPED"
+                        test_execute {} {
+                            log_restore
+                            save_test_tmp $tools_suite_tag suite_setup TEST_SAVE_TEMP
+			}
+                        remove_test_tmp
+                } else {
+			test_execute {} {
+				log_restore
+				save_test_tmp $tools_suite_tag suite_setup TEST_SAVE_TEMP
+			}
+
+                        set expecting ""
+                        set_timeout 60
+                        # code is run even in identify mode so that test cases
+	    	        # can identify themselves
+                        eval $code
+                }
+	} err_str ] 
+	if { $res != 0 } {
+		if { $tools_suite_status == "okay" } {
+			fail_suite "FAILURE during test suite: $err_str" 0
+		}
+	}
+
+	set expecting ""
+	set_timeout 60
+	if { "$cleanup" != "" && "$cleanup" != "noop" } {
+		test_execute {} {
+			make_test_tmp
+			log_redirect
+		}
+		if { [ catch { eval $cleanup [expr { "$tools_suite_result" == "FAILED" }] } err_str2 ] != 0 } {
+			cleanup_all_children
+			test_execute {} {
+				log_restore
+				save_test_tmp $tools_suite_tag suite_cleanup TEST_SAVE_FAILED
+			}
+			if { $tools_suite_status == "okay" } {
+				fail_suite "FAILURE during test suite $cleanup function: $err_str2" 0
+			}
+		} else {
+			test_execute {} {
+				log_restore
+				save_test_tmp $tools_suite_tag suite_cleanup TEST_SAVE_TEMP
+			}
+		}
+	}
+	cleanup_all_children
+	set message "TEST SUITE $tools_suite_name: $tools_case_count Cases; $tools_case_passed PASSED"
+	if { $tools_case_failed != 0 } {
+		append message "; $tools_case_failed FAILED"
+	}
+	if { $tools_case_skipped != 0 } {
+		append message "; $tools_case_skipped SKIPPED"
+	}
+	show_message "$message"
+	show_message "TEST SUITE $tools_suite_name $tools_suite_result"
+	show_message "Done $tools_suite_name Test Suite [date_stamp]\n"
+	if { [ identify_mode ] } {
+		puts ""
+	}
+	remove_test_tmp
+	clear_case_counters
+
+	#restore to default after every test suite so that each (test-suite) file 
+	#is compelled to specify separately for changing it
+	set suite_priority 4
+
+	return
+}
+
+proc log_redirect {} {
+	global test_tmp
+
+	# redirect the log for a test case
+	log_file
+	log_file -a $test_tmp/test.log
+}
+
+proc log_restore {} {
+	# restore the logging and append the test case's log to the
+	# main log
+	global test_tmp
+	set test_log "[test_get_env TEST_RESULT_DIR]/test.log"
+
+	log_file
+	# RHEL5, SLES10 and newer distros have flock which can correct a race here
+	# on older distros we could use tclX's flock command, but not worth the
+	# trouble to fix for RHEL4 at this time
+	if { [catch { exec which flock > /dev/null 2>/dev/null } ] == 0 } {
+		exec flock $test_log tee -a $test_log < $test_tmp/test.log > /dev/null
+	} else {
+		exec cat $test_tmp/test.log >> $test_log
+	}
+	log_file -a $test_log
+}
+
+set punchlist_fd ""
+set start_time ""
+
+proc open_punchlist { fname } {
+	global start_time punchlist_fd
+
+	if { "$start_time" == "" } {
+		set start_time [ timestamp -format "%Y/%m/%d %H:%M:%S" ]
+	}
+	if { "$punchlist_fd" == "" } {
+		set punchlist_fd [open "$fname" {WRONLY APPEND CREAT} ]
+		fconfigure $punchlist_fd -buffering line
+	}
+}
+
+proc close_punchlist {} {
+	global start_time punchlist_fd
+
+	if { "$punchlist_fd" != "" } {
+		close $punchlist_fd
+		set punchlist_fd ""
+	}
+}
+
+# open, append and close punchlist
+# any errors are logged but will not cause exceptions
+proc append_punchlist { device issue } {
+	global start_time punchlist_fd
+
+	set fname "[test_get_env TEST_RESULT_DIR]/punchlist.csv"
+	if { [ catch { open_punchlist "$fname" } err_str ] != 0 } {
+		log_message "\nERROR: Unable to open punchlist: $fname: $err_str"
+	} else {
+		if { [ catch { puts $punchlist_fd "$start_time;$device;$issue" } err_str ] != 0 } {
+			log_message "\nERROR: Unable to write punchlist: $fname: $err_str"
+		}
+	}
+	catch { close_punchlist }
+}
+
+proc setup_expect_after {} {
+	global spawn_id
+
+	# set up so all subsequent expects fail on unexpected conditions
+	# Note that since expect_after is used, eof or timeout within
+	# specific
+	# test invocations (such as expect_eof) will be evaluated before
+	# those here
+	# spawn_id is global and indirect so that as a process is
+	# spawned, the expect_after will apply to it automatically
+	expect_after {
+        	-i spawn_id eof		{ 
+					global expecting
+					if { "$expecting" != "" } {
+						log_message "\nERROR: EOF waiting for: $expecting"
+					}
+					ignore_rest
+					fail_test "eof"
+					}
+			-i spawn_id timeout	{ 
+					global spawn_id expecting
+
+					if { "$expecting" != "" } {
+						log_message "\nERROR: timeout ($timeout) waiting for: $expecting"
+					}
+					# get buffered data
+					expect *
+					if { "$expect_out(buffer)" != "" } {
+						log_message "\nERROR: Received data: $expect_out(buffer)"
+						fail_test "timeout: with data"
+					} else {
+						fail_test "timeout: No data"
+					}
+				}
+	}
+}
+
+proc disable_expect_after {} {
+	expect_after
+}
+
+## This function returns true or false depending upon the probability set in 
+## the global variable: $suite_priority (1, 2 , or 3 ), 3 being heighest
+## So in case of 1, it returns about 10% false and 90% true, whereas in
+## 3 case, it returns about 90% false and 10% true (so that 90% of time
+## test cases would continue executing); if cases_priority is set > 0,
+## then it would be used to generate return value instead of suite_priority
+
+proc random_exit {} {
+
+	global suite_priority
+	global cases_priority
+
+	if { [expr {$cases_priority > 0}] } {
+		set retval [expr { floor(rand() < 0.5 + 0.4 * ($cases_priority - 2 ) ) }]
+	} else {
+		set retval [expr { floor(rand() < 0.5 + 0.4 * ( $suite_priority - 2 ) ) }]
+	}
+	#TBD; Currently make all tests to run, later restore
+	set retval 1
+
+	if { [expr {1 == $retval}] } {
+	 	return false
+	} else {
+	 	return true
+	}
+}
+
+proc test_case { tag name information startup cleanup code { failure_code "" }} {
+##
+## test_case
+## ---------
+## This executes the given test case
+##
+## Usage:
+##	test_case tag "test name" "test description" startup cleanup {
+##		code for test
+##	}
+## Arguments:
+##	tag - short tag for test case, no spaces or special characters allowed
+##		used to name directory to save results
+##	name = test case name
+##	information = brief description of test
+##	code = Tcl commands for test case (typically a list)
+##	startup - procedure to execute at start of the test case
+##	cleanup - procedure to execute at the end of the test case
+## Returns:
+##	0 - test success or explicitly skipped or identify mode
+##	1 - test failure or skipped due to earlier fail_suite
+## Additional Information:
+##	In general the code should avoid doing output such that the
+##	output will simply include test cases and PASS/FAIL status
+##	Any error returns within $code will indicate a test failure.
+##	In general, fail_test should be invoked to indicate such failures.
+##	Any detailed logging of test progress should be done using log_message
+##
+##	This routine always removes/mkdir's test_tmp at the start of each
+##	test case and removes it at the end of each test case.
+##
+##	The failure_code is run before saving test_tmp (if TEST_SAVE_FAILED exported)
+##	and prior to running any cleanup code (defined for test_suite)
+##	Its typical use to to extract additional information into test_tmp
+##	to aid the debug of why the test case failed
+##	The log during the test case is kept in test_tmp/test.log (and
+##	saved based on TEST_SAVE_FAILED) and at the end of the test case it is
+##	appended to the main test.log
+
+	#if no-random is 1, then don't check random-decison logic 
+
+	global no_random
+	global cases_priority	;#	0 = don't override suite-priority (default), 3 = high , 1 = low, 2 = medium
+
+	if {  ![info exists cases_priority] } {  set cases_priority 0 }
+
+	#decide to continue further randomly
+	if { 1 != $no_random } {
+		if { [ random_exit ] == true } { return }
+	}
+
+
+
+	global tools_suite_name
+	global tools_suite_tag
+	global tools_suite_result
+	global tools_suite_count
+	global tools_suite_status
+	global tools_case_name
+	global tools_case_tag
+	global tools_case_count
+	global tools_case_passed
+	global tools_case_failed
+	global tools_case_skipped
+	global tools_case_status
+	global tools_item_name
+	global tools_item_tag
+	global tools_item_count
+	global tools_item_passed
+	global tools_item_started
+	global tools_item_failed
+	global tools_item_skipped
+	global tools_item_status
+	global tools_case_async
+	global tools_item_tag_list
+	global tools_item_full_tag_list
+	global tools_item_name_list
+	global tools_item_status_list
+
+	global env
+	# force spawn_id returned by any spawn's within $code to be global
+	global spawn_id
+	global spawn_out
+	global interact_out
+	global expect_out
+	global timeout
+	global expecting
+	global features
+
+	set tools_case_status "okay"
+	incr tools_case_count
+
+	clear_item_counters
+	set tools_case_async 0
+	set tools_item_tag_list {}
+	set tools_item_full_tag_list {}
+	set tools_item_name_list {}
+	set tools_item_status_list {}
+
+	set full_tag "$tools_suite_tag\.$tag"
+	set tools_case_name "$name"
+	set tools_case_tag "$full_tag"
+
+	if { ! [ identify_mode ] } {
+		make_test_tmp
+
+		log_redirect
+		if { [ show_start ] } {
+			puts "Executing TEST SUITE $tools_suite_name CASE ($full_tag) $name ... "
+		}
+		puts -nonewline "TEST SUITE $tools_suite_name CASE ($full_tag) $name "
+		log_message "TEST SUITE $tools_suite_name CASE ($full_tag) $name:"
+		log_message "$information\n"
+		log_message "[date_stamp]"
+		log_message ""
+	}
+
+	# test for tag or test_suite_tag.test_case_tag in TEST_CASES/TEST_SKIP_CASES
+	if { $tools_suite_status == "skip"
+	     || [ check_skip_test TEST_CASES TEST_SKIP_CASES "{$tag} {$full_tag}" ] } {
+		test_execute {} {
+			show_message "SKIPPED"
+			log_message ""
+			log_restore
+		}
+		set tools_case_status "skip"
+		incr tools_case_skipped
+		remove_test_tmp
+		if { $tools_suite_status == "skip" } {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
+	# only identify cases which are not skipped
+	if { [ identify_mode ] } {
+		puts "------------------------------------------------------------------------------"
+		# puts "Test Suite: $tools_suite_name ($tools_suite_tag)"
+		puts "Test Case: $name ($full_tag)"
+		puts "$information\n"
+	}
+
+	set res [ catch {
+		set expecting ""
+		set_timeout 60
+		if { [ catch { eval $startup } err_str2 ] != 0 } {
+			error "case_setup failed: $err_str2"
+		} elseif { "$err_str2" == -1} {
+                        # skip test_case and do not run cleanup proc
+                        set tools_case_status "skip"
+                        set res 1
+                    } else {
+                        set expecting ""
+                        set_timeout 60
+                        # the handling of TEST_IDENTIFY for test_items within
+	            	# a test_case is TBD, at this time, they are ignored.
+         		test_execute {} { eval $code }
+                }
+	} err_str ] 
+
+	set did_cleanup 0
+	if { $res != 0 && $tools_case_status == "skip" } {
+		# clear result, we will run cleanup for skipped
+		set res 0
+	}
+	if { $res == 0 } {
+		set expecting ""
+		set_timeout 60
+		if { "$cleanup" != "" && "$cleanup" != "noop"
+		     && [ catch { eval $cleanup 0 } err_str2 ] != 0 } {
+			set err_str "$cleanup function FAILED: $err_str2"
+			set res 1
+		}
+		set did_cleanup 1
+	}
+	if { $res == 0 && $tools_item_failed != 0 } {
+		set err_str "$tools_item_failed test items FAILED"
+		set res 1
+	}
+	if { $res != 0 && ! [ identify_mode ] } {
+		# output message immediately after failure to make reading
+		# log easier, also output immediately before FAILED message
+		log_message "\nTEST CASE FAILURE=$err_str"
+		if { ! $did_cleanup && "$failure_code" != "" } {
+			set expecting ""
+			set_timeout 60
+			if { [ catch { eval $failure_code } err_str2 ] != 0 } {
+				log_message "failure handling code FAILED: $err_str2"
+			}
+		}
+		set expecting ""
+		set_timeout 60
+		if { ! $did_cleanup && "$cleanup" != "" && "$cleanup" != "noop"
+		     && [ catch { eval $cleanup 1 } err_str2 ] != 0 } {
+			log_message "$cleanup function FAILED: $err_str2"
+		}
+		cleanup_all_children
+		log_message "\nFAILURE=$err_str"
+		test_item_totals
+		clear_item_counters
+		puts "FAILED"
+		log_message "\n[date_stamp]\n"
+		log_message "\nTEST SUITE $tools_suite_name CASE ($full_tag) $name: FAILED\n"
+		set tools_suite_result "FAILED"
+		incr tools_case_failed
+		set tools_case_status "fail"
+		log_restore
+		save_test_tmp $tools_suite_tag $tag TEST_SAVE_FAILED
+		set stop_failed [test_get_env TEST_STOP_FAILED]
+		if { "$stop_failed" == "case" || "$stop_failed" == "any" } {
+			fail_suite "test failed with TEST_STOP_FAILED set" $stop_failed
+		} else {
+			return 1
+		}
+	} else {
+		cleanup_all_children
+		test_execute {} {
+			test_item_totals
+			if { $tools_case_status == "skip" } {
+				incr tools_case_skipped
+				set status "SKIPPED: $err_str"
+			} elseif {$tools_item_count && $tools_item_skipped == $tools_item_count } {
+				# all items were skipped, report case as skipped
+				incr tools_case_skipped
+				set status "SKIPPED"
+			} else {
+				incr tools_case_passed
+				set status "PASSED"
+			}
+			puts "$status"
+			log_message "\n[date_stamp]\n"
+			log_message "\nTEST SUITE $tools_suite_name CASE ($full_tag) $name: $status\n"
+			log_restore
+			save_test_tmp $tools_suite_tag $tag TEST_SAVE_TEMP
+		}
+		clear_item_counters
+		return 0
+	}
+}
+
+proc test_item_totals { } {
+# if there were test_items in this test_case, report the test item
+# statuses and the totals
+# and re-output the test_case details for the PASSED/FAILED message to come
+	global tools_item_count
+	global tools_item_passed
+	global tools_item_started
+	global tools_item_failed
+	global tools_item_skipped
+	global tools_case_async
+	global tools_case_name
+	global tools_case_tag
+	global tools_suite_name
+	global tools_item_status_list
+
+	if { $tools_item_count > 0 } {
+		foreach message $tools_item_status_list {
+			show_message $message
+		}
+		if { $tools_case_async } {
+			set message "TEST CASE $tools_case_name: $tools_item_count Items; $tools_item_started STARTED"
+			if { $tools_item_passed != 0 } {
+				append message "; $tools_item_passed PASSED"
+			}
+			if { $tools_item_failed != 0 } {
+				append message "; $tools_item_failed FAILED"
+			}
+		} else {
+			set message "TEST CASE $tools_case_name: $tools_item_count Items; $tools_item_passed PASSED"
+			if { $tools_item_failed != 0 } {
+				append message "; $tools_item_failed FAILED"
+			}
+		}
+		if { $tools_item_skipped != 0 } {
+			append message "; $tools_item_skipped SKIPPED"
+		}
+		show_message "$message"
+		puts -nonewline "TEST SUITE $tools_suite_name CASE ($tools_case_tag) $tools_case_name "
+	}
+}
+
+# initialize when first load this module
+set test_tmp "test_tmp[pid]"
+
+proc make_test_tmp { } {
+# create the test_tmp directory
+
+	global test_tmp
+
+	# set here in case sub-process in a parallel execution set of tests
+	set test_tmp "[test_get_env TEST_RESULT_DIR]/test_tmp[pid]"
+	catch { exec rm -rf $test_tmp }
+	exec mkdir $test_tmp
+}
+
+proc test_get_env { envvar } {
+##
+## test_get_env
+## --------------
+## get given env var value, if not exported, returns value of default_$envvar
+##
+## Arguments:
+##	envvar - variable name to get value for
+## Returns:
+##	value to use for variable
+
+	global env
+	global default_$envvar
+
+	if { [ info exists env($envvar)] } {
+		return $env($envvar)
+	} else {
+		return [ set default_$envvar ]
+	}
+}
+
+proc test_check_yn { value } {
+##
+## test_check_yn
+## --------------
+## determine if value is yes (or y) or no
+##
+## Arguments:
+##	value - value to check
+## Returns:
+##	1 - yes
+##	0 - no (or invalid value)
+
+	return [ string match {[yY]*} $value ]
+}
+
+
+proc test_save_temp { } {
+##
+## test_save_temp
+## --------------
+## return if TEST_SAVE_TEMP behaviour should be performed
+##
+## Returns:
+##	1 - yes
+##	0 - no
+
+	return [ test_check_yn [ test_get_env TEST_SAVE_TEMP] ]
+}
+
+proc save_test_tmp { suite_tag case_tag envvar } {
+# save the test_tmp directory to save_tmp/$suite_tag/$case_tag
+# if $env(envvar) is yes
+
+	global env
+	global test_tmp
+
+	set save_tmp [test_get_env TEST_RESULT_DIR]/save_tmp
+
+	if { [ test_check_yn [ test_get_env TEST_SAVE_FIRST ] ] 
+		 && [ file exists $save_tmp/$suite_tag/$case_tag ] } {
+		log_message "$test_tmp not saved due to existing $save_tmp/$suite_tag/$case_tag with TEST_SAVE_FIRST enabled"
+		catch { exec rm -rf $test_tmp }
+		return
+	}
+	catch { exec rm -fr $save_tmp/$suite_tag/$case_tag }
+	if { [ test_check_yn [ test_get_env $envvar ] ] } {
+		log_message "$test_tmp saved to $save_tmp/$suite_tag/$case_tag"
+		if { [ file exists $save_tmp ] != 1 } {
+			exec mkdir -p $save_tmp
+		}
+		if { [ file exists $save_tmp/$suite_tag ] != 1 } {
+			exec mkdir -p $save_tmp/$suite_tag
+		}
+		exec mv $test_tmp $save_tmp/$suite_tag/$case_tag
+	} else {
+		catch { exec rm -rf $test_tmp }
+		# rmdir can fail if directory not empty, thats ok
+		catch { exec rmdir $save_tmp/$suite_tag }
+	}
+}
+
+proc remove_test_tmp { } {
+# remove the test_tmp directory
+
+	global test_tmp
+
+	catch { exec rm -rf $test_tmp }
+}
+
+proc check_skip_test { envvar skipenvvar match_list } {
+#
+# check_skip_test
+# -------------------
+# determine if the current test should be skipped
+#
+# Usage:
+#	check_skip_test
+#
+# Arguments:
+#	envvar - environment variable to base tests on (TEST_SUITES, TEST_CASES
+#		or TEST_ITEMS)
+#	skipenvvar - environment variable to base skipping tests on
+#		(TEST_SKIP_SUITES, TEST_SKIP_CASES or TEST_SKIP_ITEMS)
+#	match_list - list of tags to attempt to match against each entry in
+#		the environment variable
+# Returns:
+#	1 - this test should be skipped
+#	0 - this test should be executed
+# Additional Information:
+#	If a tag in match_list matches both envvar and skipenvvar, 1 is returned
+
+	global env
+
+	set result 0
+
+	if { [ info exists env($envvar) ] } {
+		# limit to those we find in envvar
+		set result 1
+		foreach item $env($envvar) {
+			foreach tag $match_list {
+				if { [ string match $item $tag ] } {
+					set result 0
+				}
+			}
+		}
+	}
+	if { $result == 1 } {
+		# already decided to skip, no need to test skipenvvar
+		return $result
+	}
+	if { [ info exists env($skipenvvar) ] } {
+		# skip those we find in skipenvvar
+		foreach item $env($skipenvvar) {
+			foreach tag $match_list {
+				if { [ string match $item $tag ] } {
+					set result 1
+				}
+			}
+		}
+	}
+	return $result
+}
+
+proc test_parallel { } {
+##
+## test_parallel
+## --------------
+## determine if parallel tests should be run based on TEST_PARALLEL and
+## TEST_IDENTIFY
+##
+## Returns:
+##	1 - yes
+##	0 - no
+
+#
+# If this version of TCL has thread support enabled, disable
+# parallel operations, because thread support causes hangs
+# in TCL fork processing.
+#
+
+	global tcl_platform
+	#if { [ catch { set thread_tcl $tcl_platform(threaded) } result] } {
+		set thread_tcl 0
+	#}
+
+	return [ expr ! [identify_mode] \
+			&& [ test_check_yn [ test_get_env TEST_PARALLEL] ] \
+			&& [ test_get_env TEST_MAX_PARALLEL ] > 1 \
+			&& {$thread_tcl == 0 } ]
+}
+
+proc test_item { tag name information startup cleanup code { failure_code "" }} {
+##
+## test_item
+## ---------
+## This executes the given test item
+##
+## Usage:
+##	test_item tag "test name" "test description" startup cleanup {
+##		code for test
+##	}
+## Arguments:
+##	tag - short tag for test case, no spaces or special characters allowed
+##		used to name directory to save results
+##	name = test case name
+##	information = brief description of test
+##	code = Tcl commands for test item (typically a list)
+##	startup - procedure to execute at start of the test item
+##	cleanup - procedure to execute at the end of the test item
+## Returns:
+##	0 - test success or explicitly skipped
+##	1 - test failure or skipped due to earlier fail_suite
+## Additional Information:
+##	In general the code should avoid doing output such that the
+##	output will simply include test items and PASS/FAIL status
+##	Any error returns within $code will indicate a test failure.
+##	In general, fail_test should be invoked to indicate such failures.
+##	Any detailed logging of test progress should be done using log_message
+##
+##	Its typical use is to extract additional information into test_tmp
+##	to aid the debug of why the test item failed
+##	The log during the test item is kept in test_tmp/test.log (and
+##	saved based on TEST_SAVE_FAILED) and at the end of the test item it is
+##	appended to the main test.log
+
+	global tools_suite_name
+	global tools_suite_tag
+	global tools_suite_result
+	global tools_suite_count
+	global tools_suite_status
+	global tools_case_name
+	global tools_case_tag
+	global tools_name_name
+	global tools_name_tag
+	global tools_item_count
+	global tools_item_passed
+	global tools_item_started
+	global tools_item_failed
+	global tools_item_skipped
+	global tools_item_status
+	global tools_case_async
+	global tools_case_status
+	global tools_item_tag_list
+	global tools_item_full_tag_list
+	global tools_item_name_list
+
+	global env
+	# force spawn_id returned by any spawn's within $code to be global
+	global spawn_id
+	global spawn_out
+	global interact_out
+	global expect_out
+	global timeout
+	global expecting
+	global features
+
+	if { $tools_item_count == 0 } {
+		# newline after TEST CASE name line
+		puts "..."
+	}
+
+	incr tools_item_count
+
+	set tools_item_result "PASSED"
+	set tools_item_status "okay"
+
+	set full_tag "$tools_case_tag\.$tag"
+	set tools_item_name "$name"
+	set tools_item_tag "$full_tag"
+
+	puts -nonewline "TEST SUITE $tools_suite_name ITEM ($full_tag) $name "
+	log_message "TEST SUITE $tools_suite_name ITEM ($full_tag) $name:"
+	log_message "$information\n"
+	log_message "[date_stamp]"
+	log_message ""
+
+	# test for tag or test_suite_tag.test_case_tag.test_item_tag
+	# in TEST_ITEMS
+	if { $tools_suite_status == "skip"
+	     || [ check_skip_test TEST_ITEMS TEST_SKIP_ITEMS "{$tag} {$full_tag}" ] } {
+		show_message "SKIPPED"
+		log_message ""
+		incr tools_item_skipped
+		set tools_item_status "skip"
+		if { $tools_suite_status == "skip" } {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
+	set res [ catch {
+		set expecting ""
+		set_timeout 60
+		if { [ catch { uplevel $startup } err_str2 ] != 0 } {
+			error "item_setup failed: $err_str2"
+		} elseif { "$err_str2" == -1} {
+                        # skip test_item and do not run cleanup proc
+                        set tools_item_status "skip"
+                        set res 1
+                } else {
+                        set expecting ""
+                        set_timeout 60
+                        uplevel $code
+                }
+	} err_str ]
+	if { $res != 0 && ( $tools_item_status == "skip" || $tools_case_status == "skip" ) } {
+		# clear result, we will run cleanup for skipped
+		set res 0
+	}
+	set did_cleanup 0
+	if { $res == 0 } {
+		set expecting ""
+		set_timeout 60
+		if { "$cleanup" != "" && "$cleanup" != "noop"
+		     && [ catch { eval $cleanup 0 } err_str2 ] != 0 } {
+			set err_str "$cleanup function FAILED: $err_str2"
+			set res 1
+		}
+		set did_cleanup 1
+	}
+	if { $res != 0 } {
+		# output message immediately after failure to make reading
+		# log easier, also output immediately before FAILED message
+		log_message "\nFAILURE=$err_str"
+		if { ! $did_cleanup && "$failure_code" != "" } {
+			set expecting ""
+			set_timeout 60
+			if { [ catch { uplevel $failure_code } err_str2 ] != 0 } {
+				log_message "failure handling code FAILED: $err_str2"
+			}
+		}
+		set expecting ""
+		set_timeout 60
+		if { ! $did_cleanup && "$cleanup" != "" && "$cleanup" != "noop"
+		     && [ catch { uplevel $cleanup 1 } err_str2 ] != 0 } {
+			log_message "$cleanup function FAILED: $err_str2"
+		}
+		log_message "\nFAILURE=$err_str"
+		puts "FAILED"
+		log_message "\n[date_stamp]\n"
+		log_message "\nTEST SUITE $tools_suite_name ITEM ($full_tag) $name: FAILED\n"
+		set tools_suite_result "FAILED"
+		incr tools_item_failed
+		set tools_item_status "fail"
+		set stop_failed [test_get_env TEST_STOP_FAILED]
+		if { "$stop_failed" == "any" } {
+			fail_suite "test failed with TEST_STOP_FAILED set" $stop_failed
+		} else {
+			return 1
+		}
+	} else {
+		if { $tools_case_async } {
+			set status "STARTED"
+			incr tools_item_started
+			lappend tools_item_tag_list "$tag"
+			lappend tools_item_name_list "$name"
+			lappend tools_item_full_tag_list "$full_tag"
+		} else {
+			if { $tools_item_status == "skip" || $tools_case_status == "skip" } {
+				set status "SKIPPED: $err_str"
+				incr tools_item_skipped
+			} else {
+				set status "PASSED"
+				incr tools_item_passed
+			}
+		}
+		puts "$status"
+		log_message "\n[date_stamp]\n"
+		log_message "\nTEST SUITE $tools_suite_name ITEM ($full_tag) $name: $status\n"
+		if { $tools_case_status == "skip" } {
+			# pass exception up so rest of test case is skipped
+			error "$err_str" "$err_str"
+		}
+		return 0
+	}
+}
+
+proc async_case {} {
+##
+## async_case
+## ----------
+## Indicate that the test_items in the current test case run asynchronously
+##
+## Usage:
+##	async_case
+## Additional Information:
+##	This causes the test_item to report FAILED (and but counts) or
+##	Started.  If it expected that later code in the test_case
+##	(typically the cleanup routine) will invoke the test_item_status
+##	routine to indicate the pass/fail status for each test item
+##	for inclusion in the test.res report.
+	global tools_case_async
+
+	set tools_case_async 1
+	log_message "Asynchronously run test items for this test case"
+}
+
+# initialize value when source is first autosourced in
+global tools_case_async
+set tools_case_async 0
+
+proc get_async_case {} {
+##
+## get_async_case
+## ----------
+## return current value for async_case as set via async_case call
+##
+## Usage:
+##	get_async_case
+
+	global tools_case_async
+
+	return $tools_case_async 
+}
+
+proc test_item_status { item_info } {
+##
+## test_item_status
+## ----------------
+## Report the status for a test item in an asynchronously executed test case
+##
+## Usage:
+##	test_item_status item_info
+## Arguments:
+##	info_info:
+##		test_item_tag status
+##			test_item_tag - tag provided to test_item call
+##			status - status of test item (PASSED/FAILED/SKIPPED)
+## Additional Information:
+##	test_item_tags not found in the tools_item_tag_list are assumed to
+##		have already been reported on.  This is maintains the
+##		list of test_items which have been successfully started
+##		but not yet reported status for
+##
+
+	global tools_item_passed tools_item_failed tools_item_skipped
+	global tools_item_tag_list
+	global tools_item_full_tag_list
+	global tools_item_name_list tools_suite_name
+	global tools_item_status_list
+
+	set test_item_tag [ lindex $item_info 0 ]
+	set status [ lindex $item_info 1 ]
+
+	set index [ lsearch -exact $tools_item_tag_list $test_item_tag ]
+	if { $index == -1 } {
+		return
+	}
+	set name [ lindex $tools_item_name_list $index ]
+	set full_tag [ lindex $tools_item_full_tag_list $index ]
+	set tools_item_tag_list [ lreplace $tools_item_tag_list $index $index ]
+	set tools_item_name_list [ lreplace $tools_item_name_list $index $index ]
+	set tools_item_full_tag_list [ lreplace $tools_item_full_tag_list $index $index ]
+	if { "$status" == "PASSED" } {
+		incr tools_item_passed
+	} elseif { "$status" == "SKIPPED" } {
+		incr tools_item_skipped
+	} else {
+		incr tools_item_failed
+	}
+	lappend tools_item_status_list "TEST SUITE $tools_suite_name ITEM ($full_tag) $name $status"
+}
+
+proc fail_test { info } {
+##
+## fail_test
+## ---------
+## abort the current test and indicate a failure to test_case
+##
+## Usage:
+##	fail_test info
+## Arguments:
+##	info - a brief comment as to why the test failed, typically what
+##		was received by expect that wasn't expected ( ie. "eof")
+## Returns:
+##	error exception
+## Additional Information:
+##	This procedure should be called anytime a test case detects a failure
+##	The error return will cause the stack to unwrap all the way up to
+##	test_case (which should be the only error trap in the stack)
+##	Note that an alternative to using this routine is to simply have an
+##	error return (return -code error or a failed tcl command) within the
+##	test case code block.
+##	However this has the advantage of logging "$info" to the test.log
+
+	log_message "\nERROR: $info"
+	error "$info" "$info"
+}
+
+proc fail_suite { info { abort_now 1 } } {
+##
+## fail_suite
+## ---------
+## abort the current test suite and indicate a failure
+##
+## Usage:
+##	fail_suite info [abort_now]
+## Arguments:
+##	info - a brief comment as to why the test suite failed
+##	abort_now - 0/1 should the suite abort immediately or
+##		simply ignore all test_cases calls until end_suite
+##		default is 1
+## Returns:
+##	abort_now = 0 -> nothing
+##	abort_now = 1 -> error exception
+## Additional Information:
+##	Typically used when global environment requirements are not met
+##	or when subsequent test cases depend on the success of a prior test case
+##
+##	This routine can only be called within a test_suite code block.
+##
+##	If abort_now is 1, the code block aborts immediately.
+##
+##	However if it is 0, the test_suite code block will continue to be
+##	executed, however all test_case invocations within the code block will
+##	be ignored.
+##
+##	In general abort_now should be 1.
+##
+##	Only if there is special cleanup code between tests (which really
+##	should be done by the cleanup code supplied to test_suite) should
+##	abort_now be 0.
+
+	global tools_suite_name
+	global tools_suite_result
+	global tools_suite_status
+	global tools_suite_failed
+
+	show_message "\nTEST SUITE FAILURE: $info"
+	show_message "TEST SUITE $tools_suite_name TESTS ABORTED"
+	log_message ""
+	set tools_suite_result "FAILED"
+	incr tools_suite_failed
+	if { $abort_now == 1 } {
+		set tools_suite_status "abort"
+		error "$info" "$info"
+	} else {
+		set tools_suite_status "skip"
+		return
+	}
+}
+
+proc skip_case { info } {
+##
+## skip_case
+## ---------
+## stop the current test case and indicate it was skipped
+##
+## Usage:
+##	skip_case info
+## Arguments:
+##	info - a brief comment as to why the test case was skipped
+## Returns:
+##	does not return, throws and exception
+## Additional Information:
+##	Typically used when global environment requirements are not met
+##	or when subsequent test cases depend on the success of a prior test case
+##
+##	This routine can only be called within a test_case code block.
+##	If called within a test_item, the rest of the test case will be skipped
+##	Of course if the item is within a parallel block, the skip will only
+##	affect other items within the same subprocess. For example:
+##		test_case {
+##			parallel x { a b c } {
+##				test_item 1$x
+##				test_item 2$x
+##			}
+##		}
+##	A skip_case within item 1a will only affect item 2a, it will not affect
+##	1b, 1c, 2b, 2c. However the final results for the case will be tabulated
+##	as 2 skipped, 4 passed (or failed)
+##
+
+	global tools_case_status
+
+	# test_case (or test_item) will catch exception and report to log and stdout
+	log_message ""
+	set tools_case_status "skip"
+	error "$info" "$info"
+}
+
+proc skip_item { info } {
+##
+## skip_item
+## ---------
+## stop the current test item and indicate it was skipped
+##
+## Usage:
+##	skip_item info
+## Arguments:
+##	info - a brief comment as to why the test item was skipped
+## Returns:
+##	does not return, throws and exception
+## Additional Information:
+##	Typically used when global environment requirements are not met
+##	or when subsequent test items depend on the success of a prior test item
+##
+##	This routine can only be called within a test_item code block.
+##
+
+	global tools_item_status
+
+	# test_item will catch exception and report to log and stdout
+	log_message ""
+	set tools_item_status "skip"
+	error "$info" "$info"
+}
+
+proc clear_case_counters {} {
+# clear counters for cases and items completed within a test suite
+	global tools_case_count 0
+	global tools_case_passed 0
+	global tools_case_failed 0
+	global tools_case_skipped 0
+
+	set tools_case_count 0
+	set tools_case_passed 0
+	set tools_case_failed 0
+	set tools_case_skipped 0
+	clear_item_counters
+}
+
+proc clear_item_counters {} {
+# clear counters for items completed within a test case
+	global tools_item_count 0
+	global tools_item_started 0
+	global tools_item_passed 0
+	global tools_item_failed 0
+	global tools_item_skipped 0
+
+	set tools_item_count 0
+	set tools_item_started 0
+	set tools_item_passed 0
+	set tools_item_failed 0
+	set tools_item_skipped 0
+}
+
+# set of counters which are saved and passed across process boundary
+# during parallel execution on completion of a sub-process
+set saved_counters { suite_count suite_failed
+			 case_count case_passed case_failed case_skipped
+			 item_count item_started item_passed item_failed item_skipped}
+
+proc tools_clear_saved_counters {} {
+# clear all counters, utility function to aid counter management during
+# parallel execution, by clearing counters we can identify the changes
+# which occurred in a sub-process for ultimate tabulations back into
+# the parent processes counters
+#
+# case_status and item_status are text values, not counters
+
+	global saved_counters
+	global tools_case_status
+	global tools_item_status
+
+	foreach counter $saved_counters {
+		global tools_$counter
+		set tools_$counter 0
+	}
+	set tools_case_status "okay"
+	set tools_item_status "okay"
+}
+
+proc tools_save_counters { {errorcode 0} {errorinfo ""} } {
+#
+# output all counters to a [pid] based file
+# Used for parallel test execution in sub-processes
+#
+# Arguments:
+#	errorcode - 0/1, should an error be propigated back to parent process
+#	errorinfo - info to pass back to parent in thrown error, only used if
+#		errorcode is 1
+
+	global saved_counters
+	global tools_case_status
+	global tools_item_status
+
+	set filename "/tmp/testcount.[pid]"
+	catch { eval exec rm -f $filename }
+	set fileid [ open $filename "w" ]
+	if { [ catch {
+		foreach counter $saved_counters {
+			global tools_$counter
+			puts $fileid "$counter [set tools_$counter]"
+		}
+		puts $fileid "case_status $tools_case_status"
+		puts $fileid "item_status $tools_item_status"
+		puts $fileid "errorcode $errorcode"
+		# errorinfo must be the last counter, $errorinfo could be multi-line string
+		puts $fileid "errorinfo $errorinfo"
+	} res ] != 0 } {
+		show_message "save_counters failed: $res"
+		catch { close $fileid }
+		# remove file so parent recognizes a critical failure in child
+		catch { eval exec rm -f $filename }
+	} else {
+		catch { close $fileid }
+	}
+}
+
+proc tools_clear_tmp_counters {} {
+#
+# clear the counters into which tools_update_tmp_counters adds its totals
+
+	global tools_tmp_exit
+	global saved_counters
+	global tools_tmp_case_status
+	global tools_tmp_item_status
+	global tools_tmp_errorcode
+	global tools_tmp_errorinfo
+
+	set tools_tmp_exit 0
+	foreach counter $saved_counters {
+		global tools_tmp_$counter
+		set tools_tmp_$counter 0
+	}
+	set tools_tmp_case_status "okay"
+	set tools_tmp_item_status "okay"
+	set tools_tmp_errorcode 0
+	set tools_tmp_errorinfo ""
+}
+
+proc tools_update_tmp_counters { pid } {
+#
+# fetch counters created by tools_save_counters and update tools_tmp_*
+	global env
+	global tools_tmp_case_status
+	global tools_tmp_item_status
+	global tools_tmp_errorcode
+	global tools_tmp_errorinfo
+	global tools_tmp_exit
+
+	set filename "/tmp/testcount.$pid"
+	if { ! [ file exists "$filename" ] } {
+		set tools_tmp_exit 1
+		return
+	}
+	set fileid [ open $filename "r" ]
+	if { [ catch {
+		while { [ gets $fileid line ] != -1 } {
+			set counter [ lindex $line 0 ]
+			set value [ lreplace $line 0 0 ]
+			if { "$counter" == "case_status" } {
+				if { "$value" == "skip"} {
+					set tools_tmp_case_status $value
+				}
+			} elseif { "$counter" == "item_status" } {
+				if { "$value" == "skip"} {
+					set tools_tmp_item_status $value
+				}
+			} elseif { "$counter" == "errorcode" } {
+				if { $value } {
+					set tools_tmp_errorcode $value
+				}
+			} elseif { "$counter" == "errorinfo" } {
+				if { "$value" != "" } {
+					set tools_tmp_errorinfo "$value"
+				}
+				# rest of file could be part of a long error message
+				while { [ gets $fileid line ] != -1 } {
+					append tools_tmp_errorinfo "\n$line"
+				}
+			} else {
+				global tools_tmp_$counter
+				incr tools_tmp_$counter $value
+			}
+		}
+		close $fileid
+	} res ] != 0 } {
+		catch { close $fileid }
+		set tools_tmp_exit 1
+	}
+	catch { eval exec rm -f $filename }
+}
+
+proc tools_remove_tmp_counters { pid } {
+#
+# remove counters file created by tools_save_counters
+	set filename "/tmp/testcount.$pid"
+	catch { eval exec rm -f $filename }
+}
+
+proc add_item_counters { } {
+# add tools_tmp_item_* to tools_item_*
+	global tools_suite_result
+	global tools_item_count
+	global tools_item_started
+	global tools_item_passed
+	global tools_item_failed
+	global tools_item_skipped
+	global tools_tmp_item_count
+	global tools_tmp_item_started
+	global tools_tmp_item_passed
+	global tools_tmp_item_failed
+	global tools_tmp_item_skipped
+
+	incr tools_item_count $tools_tmp_item_count
+	incr tools_item_started $tools_tmp_item_started
+	incr tools_item_passed $tools_tmp_item_passed
+	incr tools_item_failed $tools_tmp_item_failed
+	incr tools_item_skipped $tools_tmp_item_skipped
+	if { $tools_tmp_item_failed > 0 } {
+		set tools_suite_result "FAILED"
+	}
+}
+
+proc add_case_counters { } {
+# add tools_tmp_case_* to tools_case_* and add_item_counters
+	global tools_suite_result
+	global tools_case_count
+	global tools_case_passed
+	global tools_case_failed
+	global tools_case_skipped
+	global tools_tmp_case_count
+	global tools_tmp_case_started
+	global tools_tmp_case_passed
+	global tools_tmp_case_failed
+	global tools_tmp_case_skipped
+
+	incr tools_case_count $tools_tmp_case_count
+	incr tools_case_passed $tools_tmp_case_passed
+	incr tools_case_failed $tools_tmp_case_failed
+	incr tools_case_skipped $tools_tmp_case_skipped
+	add_item_counters
+	if { $tools_tmp_case_failed > 0 } {
+		set tools_suite_result "FAILED"
+	}
+}
+
+proc add_suite_counters { } {
+# add tools_tmp_* to tools_*
+	global tools_suite_count
+	global tools_suite_failed
+
+	incr tools_suite_count $tools_tmp_suite_count
+	incr tools_suite_failed $tools_tmp_suite_failed
+	add_case_counters
+}
+
+proc tools_check_process_results {} {
+# check sub process results
+# Returns:
+#	1 - no failures which would justify a failure of parent
+#	0 - failures which will result in failure of parent
+
+	global tools_tmp_exit
+	global tools_tmp_suite_count
+	global tools_tmp_suite_failed
+	global tools_tmp_case_count
+	global tools_tmp_case_failed
+	global tools_tmp_item_count
+	global tools_tmp_item_failed
+	global tools_tmp_case_status
+	global tools_tmp_item_status
+	global tools_tmp_errorcode
+	global tools_tmp_errorinfo
+
+	# beyond just adding counters, we simulate the effect of failures
+	# by looking at the _count counters to determine what was started
+	# within the parallel (to determine our context) and check
+
+	if { $tools_tmp_exit } {
+		return 0
+	}
+	if { $tools_tmp_suite_count > 0 } {
+		# must have started test_suites within parallel block
+	} elseif { $tools_tmp_case_count > 0 } {
+		# must have started test_case's within an existing test_suite
+		if { $tools_tmp_suite_failed } {
+			return 0
+		}
+	} elseif { $tools_tmp_item_count > 0 } {
+		# must have started test_item's within an existing test_case
+		if { $tools_tmp_suite_failed || $tools_tmp_case_failed } {
+			return 0
+		}
+	} else {
+		# parallel code within an existing item or in a general script
+		if { $tools_tmp_suite_failed || $tools_tmp_case_failed
+			 || $tools_tmp_item_failed } {
+			return 0
+		}
+	}
+	# if we didn't find a failure above, but there was an error from
+	# the sub-process
+	if { $tools_tmp_errorcode } {
+		return 0
+	}
+	return 1
+}
+
+proc tools_propigate_process_results {} {
+#
+# Used for parallel test execution, takes tools_tmp_* counters and updates
+# tools_* counters and performs fail_test, fail_suite, or error as needed
+
+	global tools_suite_count
+	global tools_suite_failed
+	global tools_case_count
+	global tools_case_failed
+	global tools_item_count
+	global tools_item_failed
+	global tools_tmp_exit
+	global tools_tmp_suite_count
+	global tools_tmp_suite_failed
+	global tools_tmp_case_count
+	global tools_tmp_case_failed
+	global tools_tmp_item_count
+	global tools_tmp_item_failed
+	global tools_tmp_case_status
+	global tools_tmp_item_status
+	global tools_tmp_errorcode
+	global tools_tmp_errorinfo
+
+	# beyond just adding counters, we simulate the effect of failures
+	# by looking at the _count counters to determine what was started
+	# within the parallel (to determine our context) and check
+	# failures to invoke the proper failure mechanism to cause the
+	# appropriate global effect in the calling process
+	if { $tools_tmp_exit } {
+		# one of the count files was missing, process must have exited
+		# we should do the same
+		exit 1
+	}
+	if { $tools_tmp_suite_count > 0 } {
+		# must have started test_suites within parallel block
+		add_suite_counters
+	} elseif { $tools_tmp_case_count > 0 } {
+		# must have started test_case's within an existing test_suite
+		add_case_counters
+		if { $tools_tmp_suite_failed } {
+			fail_suite "suite failure during parallel execution"
+		}
+	} elseif { $tools_tmp_item_count > 0 } {
+		# must have started test_item's within an existing test_case
+		add_item_counters
+		if { $tools_tmp_suite_failed } {
+			fail_suite "suite failure during parallel execution"
+		}
+		if { $tools_tmp_case_failed } {
+			fail_test "case failure during parallel execution"
+		}
+		if { $tools_tmp_case_status == "skip" } {
+			# case skipped within parallel execution
+			skip_case "$tools_tmp_errorinfo"
+		}
+	} else {
+		# parallel code within an existing item or in a general script
+		if { $tools_tmp_suite_failed } {
+			fail_suite "suite failure during parallel execution"
+		}
+		if { $tools_tmp_case_failed } {
+			fail_test "case failure during parallel execution"
+		}
+		if { $tools_tmp_item_failed } {
+			fail_test "item failure during parallel execution"
+		}
+		if { $tools_tmp_case_status == "skip" } {
+			# case skipped within parallel execution
+			skip_case "$tools_tmp_errorinfo"
+		}
+		if { $tools_tmp_item_status == "skip" } {
+			# item skipped within parallel execution
+			skip_item "$tools_tmp_errorinfo"
+		}
+	}
+	# if we didn't find a failure above, but there was an error from
+	# the sub-process, invoke the general error mechanism
+	if { $tools_tmp_errorcode } {
+		error "$tools_tmp_errorinfo" "$tools_tmp_errorinfo"
+	}
+}
+
+proc show_more_lines { linecnt { id "" } } {
+##
+## show_more_lines
+## ---------------
+## show the next few lines from the spawned program's output
+##
+## Usage:
+##	show_more_lines line_cnt [id]
+## Arguments:
+##	line_cnt - number of lines to attempt to show
+##	id - spawn_id of child, default is global spawn_id
+## Returns:
+##	nothing
+## Additional Information:
+##	If a timeout or eof occurs before line_cnt lines are shown, this
+##	procedure returns without an error
+
+	global expect_out
+
+	if { "$id" == "" } {
+		global spawn_id
+	} else {
+		# use a local, expect_after isn't involved anyway
+		# since we cover eof and default cases here
+		set spawn_id $id
+	}
+
+	# local timeout variable is purposely used so that
+	# any test_suite global settings are not altered
+	set timeout 1
+	for { set i 0 } { $i < $linecnt } { incr i } {
+		expect {
+			"\n"	noop
+			eof	return
+			default	break
+		}
+	}
+	log_message ""
+	return
+}
+
+proc log_message { string } {
+##
+## log_message
+## -----------
+## output an informative message
+##
+## Usage:
+##	log_message string
+## Arguments:
+##	string - string to put to log, a newline will be appended
+## Returns:
+##	nothing
+## Additional Information:
+##	This will log the given string to the log_file, if there is
+##	no current log_file, it is output to stdout
+##	This should be used for all detailed output routines within
+##	test scripts or utility procedures.  The case were it sends output
+##	to stdout, allows for interactive execution of commands which use this
+##	Otherwise, within a typical expect test script, the log_file will get
+##	the detailed output and stdout will only get brief messages
+##
+##	This adds a newline at the end of string
+##
+##	No output nor logging is generated for identify_mode
+
+	global log_disable
+
+	if { [ identify_mode ] } {
+		return
+	}
+	if { [log_file -info] == "" } {
+		if { ! $log_disable } {
+			puts "$string"
+		}
+	} else {
+		send_log "$string\n"
+	}
+	return
+}
+
+proc show_message { string } {
+##
+## show_message
+## -----------
+## output an informative message to stdout and the log
+##
+## Usage:
+##	show_message string
+## Arguments:
+##	string - string to put to log and stdout, a newline will be appended
+## Returns:
+##	nothing
+## Additional Information:
+##	This will log the given string to the log_file, if there is one,
+##	and stdout
+##
+##	This adds a newline at the end of string
+##
+##	No output nor logging is generated for identify_mode
+
+	if { [ identify_mode ] } {
+		return
+	}
+	if { [log_file -info] != "" } {
+		send_log "$string\n"
+	}
+	puts "$string"
+	return
+}
+
+proc show_performance { string } {
+##
+## show_performance
+## -----------
+## output performance results to stdout and the log
+##
+## Usage:
+##	show_performance string
+## Arguments:
+##	string - string to put to log and stdout, a newline will be appended
+##			and each newline will be preceeded with "PERF "
+## Returns:
+##	nothing
+## Additional Information:
+##	This will log the given string to the log_file, if there is one,
+##	and stdout
+##
+##	This adds a newline at the end of string
+##
+##	No output nor logging is generated for identify_mode
+
+	if { [ identify_mode ] } {
+		return
+	}
+	regsub -all "\n" $string "\nPERF " message
+	if { [log_file -info] != "" } {
+		send_log "PERF $message\n"
+		send_log "PERF ---------------------------------------------------------------------------\n"
+	}
+	puts "PERF $message"
+	puts "PERF ---------------------------------------------------------------------------\n"
+	return
+}
+
+proc noop {} {
+##
+## noop
+## ----
+## do nothing procedure
+##
+## Usage:
+##	noop
+## Returns:
+##	nothing
+## Additional Information:
+##	useful as the body for expect commands when the pattern needs no special
+##	execution
+
+	return
+}
+
+proc expect_eof { timelimit } {
+##
+## expect_eof
+## ----------
+## utility procedure to check for eof
+##
+## Usage:
+##	expect_eof timelimit
+## Arguments:
+##	timelimit - maximum time to wait
+## Returns:
+##	eof found - nothing
+##	eof not found - error exception
+## Additional Information:
+##	This is designed for use within test_case's $code
+##	After getting eof, it makes sure the child is terminated
+##	by waiting and/or killing child as needed
+##	The global timeout is saved, changed and restored by this routine
+
+	global spawn_id
+	global expect_out
+	global timeout
+	global expecting
+	global env
+
+	set save_timeout $timeout
+
+	set_timeout $timelimit
+
+	set expecting "EOF"
+	if { [ info exists env(TESTDEBUG) ] } {
+		log_message "DEBUG: expecting EOF"
+	}
+
+	expect {
+		eof	noop
+		"?*"	{ log_message "\nERROR: expected: EOF"
+			  log_message "\nERROR: Unexpected data: $expect_out(buffer)"
+			  fail_test "Unexpected data"
+			}
+		timeout	{ 
+				log_message "\nERROR: timeout ($timeout) waiting for: EOF"
+				# get buffered data
+				expect *
+				if { "$expect_out(buffer)" != "" } {
+					log_message "\nERROR: timeout: Received data: $expect_out(buffer)"
+					fail_test "timeout: with data"
+				} else {
+					fail_test "timeout: No data"
+				}
+			}
+		default	{ log_message "\nERROR: expected: EOF"
+			  fail_test "default"
+			}
+	}
+	# make sure child terminates
+	stop_child $spawn_id
+
+	set timeout $save_timeout
+
+	return
+}
+
+proc ignore_rest {} {
+##
+## ignore_rest
+## -----------
+## utility procedure to ignore the rest of the output
+## by waiting and/or killing child as needed
+##
+## Usage:
+##	ignore_rest
+## Returns:
+##	nothing
+## Additional Information:
+##	This is designed for use within test_case's $code
+
+	# make sure child terminates
+	child_cleanup
+	return
+}
+
+proc run_cmd { cmd } {
+##
+## run_cmd
+## -------
+## utility procedure to run a command with error logging
+##
+## Usage:
+##	run_cmd cmd
+## Typical Usage:
+##	run_cmd {exec some_shell_command}
+## Returns:
+##	output from command on success
+## Additional Information:
+##	If the given command fails, it is logged along with the output
+##	from the command and an error is generated
+##	This is designed for use within test_case's $code
+
+	global spawn_id
+	global spawn_out
+	global interact_out
+	global expect_out
+	global timeout
+	global expecting
+	global env
+
+	if { [ info exists env(TESTDEBUG) ] } {
+		log_message "DEBUG: run_cmd $cmd"
+	}
+	if { [catch { eval $cmd } string] == 1 } {
+		set info "Command failed: $cmd"
+		log_message "$info"
+		log_message "$string"
+		error "$info" "$info"
+	} else {
+		return "$string"
+	}
+}
+
+proc compare_files { file1 file2 } {
+##
+## compare_files
+## -------------
+## utility procedure to compare 2 ascii files
+##
+## Usage:
+##	compare_files file1 file2
+## Returns:
+##	match - nothing
+##	mismatch - error exception
+## Additional Information:
+##	This is designed for use within test_case's $code
+##	It causes an error exception if the files do not match
+
+	log_message "Comparing $file1 to $file2"
+	run_cmd "exec diff $file1 $file2"
+	return
+}
+
+proc compare_tdiff_files { file1 file2 } {
+##
+## compare_tdiff_files
+## ---------------------
+## utility procedure to compare a file against a pattern/template using tdiff
+##
+## Usage:
+##	compare_tdiff_files file1 file2
+## Returns:
+##	match - nothing
+##	mismatch - error exception
+## Additional Information:
+##	This is designed for use within test_case's $code
+##	It causes an error exception if the files do not match
+
+	log_message "Comparing template $file1 to $file2"
+	run_cmd "exec tdiff $file1 $file2"
+	return
+}
+
+proc compare_binary_files { file1 file2 } {
+##
+## compare_binary_files
+## --------------------
+## utility procedure to compare 2 binary files
+##
+## Usage:
+##	compare_files file1 file2
+## Returns:
+##	match - nothing
+##	mismatch - error exception
+## Additional Information:
+##	This is designed for use within test_case's $code
+##	It causes an error exception if the files do not match
+
+	log_message "Comparing Binary $file1 to $file2"
+	run_cmd "exec cmp $file1 $file2"
+	return
+}
+
+proc match_files { range_list template_list file_list } {
+##
+## match_files
+## -----------
+## allow a set of templates and data_files to be matched in any combination
+##
+## Usage:
+##	match_files range_list template_list datafile_list
+## Arguments:
+##	range_list - a list of ranges.  Each indicates the number of times
+##		each template must be matched.
+##		The number of range_list elements can't exceed
+##		the number of template_list elements.  If ranges are not
+##		provided for all template_list elements, the additional
+##		template_list elementswill all have the last range provided.
+##		If the range_list is empty, the default is "1"
+##		A given range list element cannot include any spaces or tabs.
+##		Format (X and Y are positive integers):
+##			X	expect exactly this many matches of command
+##			X-Y	Allow up to Y matches, require X matches.
+##			X- 	Similar to X-Y, but Y is infinite.
+##		The special range "m" may be included at the start of the
+##		list to indicate that every template_list entry which has
+##		not yet reached its maximum match count should be applied
+##		against the data_file.
+##	template_list - a list of tdiff template files to be matched.
+##	datafile_list - a list of tdiff data files to be matched against the
+##		templates.
+## Returns:
+##	match - "matched"
+##	mismatch - error exception
+##	invalid args - error exception
+## Additional Information:
+##	If the template_files are not each matched the required minimum
+##	times, this routine returns with an error exception.
+##
+##	For each data file, the template files are processed in the
+##	order provided.  Once a given template file has matched its maximum
+##	number of occurances (Y), it is no longer executed against
+##	subsequent data files.
+##
+##	If some of the ranges are not 1, it is valid to have the number of
+##	elements in the file_list differ from the number of elements in
+##	the template_list.
+##
+##	The special m range parallels the tdiff %orderless -m option.
+##	This allows every unmaxed template to be applied against each data_file
+##	This can be especially useful for protocols such as SMTP which may
+##	handle multiple recipient distributions by sending 1 distribution with
+##	all the recipients or multiple distributions with various subsets of
+##	the recipient list.
+##	In which case, a template file should exist to match a distribution
+##	with the given recipient (and possibly others) and that list could
+##	be applied against the distributions received to verify that
+##	all the recipients got mail.
+#
+#	local variables:
+#		scoreboard(#) - count that template_list element # has matched
+#		range_min(#), range_max(#) - range values for template_list
+#				element #
+
+	log_message "Matching files { $range_list } { $template_list } { $file_list }"
+
+	set num_data_files [llength $file_list]
+	set num_template_files [llength $template_list]
+	set num_ranges [llength $range_list]
+	set match_many 0
+
+	if { $num_template_files == 0 } {
+		set info "match_files: empty template_list"
+		error "$info" "$info"
+	}
+
+	if { $num_ranges >= 1 && [lindex $range_list 0] == "m" } {
+		set match_many 1
+		incr num_ranges -1
+		if { $num_ranges > 0 } {
+			set range_list [lrange $range_list 1 $num_ranges]
+		} else {
+			set range_list {}
+		}
+	}
+
+	if { $num_template_files < $num_ranges } {
+		set info "match_files: range_list larger than template_list"
+		error "$info" "$info"
+	}
+
+	set last_range_min 1
+	set last_range_max 1
+
+	for { set i 0 } { $i < $num_template_files } { incr i } {
+		if { $i >= $num_ranges } {
+			set range_min($i) $last_range_min
+			set range_max($i) $last_range_max
+		} else {
+			parse_range [lindex $range_list $i] range_min($i) range_max($i)
+			set last_range_min $range_min($i)
+			set last_range_max $range_max($i)
+		}
+		set scoreboard($i) 0
+	}
+	foreach data_file $file_list {
+		set match 0;	# has this data_file been matched yet
+		set allmin 1;	# assume all matched at minimum
+		set allmax 1;	# assume all matched at maximum
+
+		for { set i 0 } { $i < $num_template_files } { incr i } {
+			set template_file [lindex $template_list $i]
+			if { $range_max($i) != -1
+			     && $scoreboard($i) >= $range_max($i) } {
+				# debug output
+				# puts "match_files: template $template_file reached max ($range_max($i))"
+				continue
+			}
+			if { ! $match || $match_many } {
+				if { [ catch { exec tdiff $template_file $data_file } ] == 0 } {
+					# file match
+					incr scoreboard($i)
+					set match 1
+					log_message "$data_file matched by $template_file"
+				}
+			}
+			if { $allmin && $scoreboard($i) < $range_min($i) } {
+				set allmin 0
+				# values for error message
+				set not_min $template_file
+				set not_min_cnt $range_min($i)
+			}
+			if { $range_max($i) == -1
+			     || $scoreboard($i) < $range_max($i) } {
+				set allmax 0
+			}
+		}
+		# debug print
+		# puts "allmin=$allmin allmax=$allmax match=$match"
+
+		if { ! $match } {
+			# no match found for any template
+			if { $allmax } {
+				set info "match_files: unable to match $data_file, all templates at maximum matches"
+				error "$info" "$info"
+			} else {
+				set info "match_files: unable to match $data_file"
+				error "$info" "$info"
+			}
+		}
+	}
+
+	if { ! $allmin } {
+		# some template_files not matched minimum number of times
+		set info "match_files: unable to match $not_min $not_min_cnt times"
+		error "$info" "$info"
+	}
+	return matched
+}
+
+proc parse_range { range min_ref max_ref } {
+# parse a range 
+# Arguments:
+#	range - range to parse
+#	min_ref - name of variable to hold min
+#	max_ref - name of variable to hold max
+# Returns:
+#	nothing
+# Additional Information:
+#	Fatal error on invalid range
+#
+	upvar $min_ref min
+	upvar $max_ref max
+
+	if { [regexp {[0-9]+-[0-9]+} $range] == 1 } {
+		scan $range "%d-%d" min max
+	} elseif { [regexp {[0-9]+-} $range] == 1 } {
+		scan $range "%d-" min
+		set max -1
+	} elseif { [regexp {[0-9]+} $range] == 1 } {
+		set min $range
+		set max $min
+		if { $min > $max } { 
+			set info "Invalid range: $range"
+			error "$info" "$info"
+		}
+	} else {
+		set info "Invalid range: $range"
+		error "$info" "$info"
+	}
+	return
+}
+
+proc build_file_list { filename_list } {
+##
+## build_file_list
+## ---------------
+## Build a list of filenames from a list of files/directories
+##
+## Arguments:
+##	filename_list - list of file/directory names
+## Returns:
+##	list of non-directory files
+##
+## Additional Information:
+##	All directory entries within filename_list are recursively searched
+##	and replaced in the list with a list of all the non-directory files
+##	found within them.
+##
+##	Note that the entire list is kept in memory.
+
+	set file_list {}
+	foreach filename $filename_list {
+		if { [file isdirectory $filename] } {
+			foreach filen [glob $filename/*] {
+				set file_list [concat $file_list [build_file_list $filen]]
+			}
+		} else {
+			set file_list [concat $file_list $filename]
+		}
+	}
+	return $file_list
+}
+
+proc clean_file_list { filename_list } {
+##
+## clean_file_list
+## ---------------
+## delete the files in the file name list.  Used by
+## tests that are long running enough
+##
+## Arguments:
+##	filename_list - list of file/directory names
+##
+## Addtional Information:
+##	Intended for use by tests that are long running enough to build
+##	up an extreme number of send files.   Large directories cause
+##      performance problems for stress tests that run for a long
+##	time.
+##
+	set hit_list [ build_file_list $filename_list ]
+	foreach file $hit_list {
+		catch { eval exec rm -f $file [ glob -nocomplain $file.* ] }
+	}
+}
+
+proc repeat_command { command file_list cnt_list } {
+##
+## repeat_command
+## --------------
+## execute a command repeatedly against a set of files
+##
+## Usage:
+##	repeat_command command file_list cnt_list
+## Arguments:
+##	command - tcl command to execute (can include arguments if passed as
+##		a list
+##	file_list - list of files to supply to each execution of command
+##			- note this really does not have to be a filelist
+##			however that is the typical case
+##	cnt_list - list of counts to apply to command
+##		if the cnt_list has fewer elements than the file_list, the
+##		last cnt_list entry is applied to the remaining file_list
+##		entries.  An empty cnt_list is equivalent to { 1 } 
+## Returns:
+##	nothing
+## Sample:
+##	repeat_command { /etc/init.d/ics_srp} { restart } { 10}
+##
+##	This does the followingi 10 times:
+##		/etc/init.d/ics_srp restart
+##
+##	repeat_command { fsck} { /dev/sdb /dev/sdc /dev/sdd } { 2 2 1}
+##		fsck /dev/sdb /dev/sdc /dev/sdd
+##		fsck /dev/sdb /dev/sdc
+##	Note that per the count, /dev/sdd was omitted from the 2nd call
+##
+##	This command is very useful when counts are very large
+
+	log_message "performing repeated operation: $command\n\ton { $file_list }\n\tfor { $cnt_list }"
+
+	set num_files [llength $file_list]
+	set num_cnt [llength $cnt_list]
+
+	if { $num_files == 0 } {
+		set info "repeat_command: empty file_list"
+		error "$info" "$info"
+	}
+
+	if { $num_files < $num_cnt } {
+		set info "repeat_command: cnt_list larger than file_list"
+		error "$info" "$info"
+	}
+
+	set last_cnt 1
+	set max_cnt 1
+
+	# set up cnt(x) for each file_list entry
+	for { set i 0 } { $i < $num_files } { incr i } {
+		if { $i >= $num_cnt } {
+			set cnt($i) $last_cnt
+		} else {
+			set cnt($i) [lindex $cnt_list $i]
+			set last_cnt $cnt($i)
+		}
+		if { $last_cnt > $max_cnt } {
+			set max_cnt $last_cnt
+		}
+	}
+
+	# do the command max_cnt times
+	for { set i 0 } { $i < $max_cnt } { incr i } {
+
+		# build f_list with list of file_list elements to use
+		set f_list {}
+		for { set j 0 } { $j < $num_files } { incr j } {
+			if { $i < $cnt($j) } {
+				# [list ...] allows a file_list element to
+				# be a list, in which case it is kept as
+				# a list
+				set f_list [concat $f_list [list [lindex $file_list $j]]]
+			}
+		}
+
+		# execute command
+		log_message "$command [list $f_list]\n"
+		uplevel 1 $command [list $f_list]
+	}
+	return
+}
+
+proc scp_get_file { host usercode target_filename local_filename } {
+##
+## scp_get_file
+## --------
+## scp a file from the target system to the local system
+##
+## Usage:
+##	scp_get_file host usercode target_filename local_filename
+## Arguments:
+##	host - host to connect to
+##	usercode - usercode on that host
+##	target_filename - file to get
+##	local_filename - destination file on local system
+
+	unix_cmd 400 0 "scp $usercode@$host:/nfs/site/proj/stlbuilds/$target_filename $local_filename"
+}
+
+proc ftp_connect { host usercode password { do_spawn 1 } } {
+##
+## ftp_connect
+## --------
+## establish an ftp connection
+##
+## Usage:
+##	ftp_connect host usercode password [do_spawn]
+## Arguments:
+##	host - host to connect to
+##	usercode - usercode on that host
+##	password - password on that host
+##	do_spawn - should we spawn a expect session (eg. one not in progress already)
+## Additional Information:
+
+	global spawn_id
+	global expect_out
+	global spawn_out
+	global timeout
+	global expecting
+	global env
+	global stty_init
+
+	# -i option will avoid y/n prompts in mget
+	if { $do_spawn } {
+		test_spawn "ftp -i" ftp -i $host
+	} else {
+		send_unix_cmd "ftp -i $host"
+	}
+	set timeout 120
+	set expecting "ftp login sequence"
+	expect {
+		"Name*:"	{ exp_send "$usercode\n"
+				  exp_continue
+				}
+		"assword:"	{ exp_send "$password\n"
+				  exp_continue
+				}
+		"ftp: *
+" {
+				fail_test "ftp login failed"
+				}
+		"ftp> "		noop
+	}
+}
+
+proc ftp_send_file { host usercode password local_filename target_filename {type "binary" } {do_spawn 1}} {
+##
+## ftp_send_file
+## --------
+## ftp a file from the local system to the specified target system
+##
+## Usage:
+##	ftp_send_file host usercode password local_filename target_filename [type] [do_spawn]
+## Arguments:
+##	host - host to connect to
+##	usercode - usercode on that host
+##	password - password on that host
+##	local_filename - file to send
+##	target_filename - destination on host for file
+##	type - type of file (ascii or binary).  Default is binary
+##	do_spawn - should we spawn a expect session (eg. one not in progress already)
+
+	global spawn_id
+	global expect_out
+	global spawn_out
+	global timeout
+	global expecting
+
+	set save_timeout $timeout
+	ftp_connect $host $usercode $password $do_spawn
+
+	exp_send "$type\n"
+	expect_list 60 { "ftp> " } { "Not connected" }
+
+	# allow for large files
+	exp_send "exp_send $local_filename $target_filename\n"
+	expect_list 600 { "bytes sent" } { "Error" "Not connected" "No such" }
+	expect_list 60 { "ftp> " } { "Not connected" "No such" }
+	exp_send "quit\n"
+	expect_any 60 { "221" "Goodbye" "So long" } { "ftp> " }
+	if { $do_spawn } {
+		wait_eof 60
+	}
+	set timeout $save_timeout
+}
+
+proc ftp_get_file { host usercode password target_filename local_filename {type "binary" } {do_spawn 1} } {
+##
+## ftp_get_file
+## --------
+## ftp a file from the target system to the local system
+##
+## Usage:
+##	ftp_get_file host usercode password target_filename local_filename [type] [do_spawn]
+## Arguments:
+##	host - host to connect to
+##	usercode - usercode on that host
+##	password - password on that host
+##	target_filename - file to get
+##	local_filename - destination file on local system
+##	type - type of file (ascii or binary).  Default is binary
+##	do_spawn - should we spawn a expect session (eg. one not in progress already)
+
+	global spawn_id
+	global expect_out
+	global spawn_out
+	global timeout
+
+	set save_timeout $timeout
+	ftp_connect $host $usercode $password $do_spawn
+
+	exp_send "$type\n"
+	expect_list 60 { "ftp> " } { "Not connected" }
+
+	exp_send "get $target_filename $local_filename\n"
+	# allow for large files
+	expect_list 600 { "bytes received" } { "Error" "Not connected" "No such" }
+	expect_list 60 { "ftp> " } { "Not connected" "No such" }
+	exp_send "quit\n"
+	expect_any 60 { "221" "Goodbye" "So long" } { "ftp> " }
+	if { $do_spawn } {
+		wait_eof 60
+	}
+	set timeout $save_timeout
+}
+
+proc ftp_mget_files { host usercode password target_directory target_pattern local_directory {type "binary" } {do_spawn 1}} {
+##
+## ftp_mget_files
+## --------
+## ftp a set of files from the target system to the local system
+##
+## Usage:
+##	ftp_mget_files host usercode password target_directory target_filename
+##		local_directory [type] [do_spawn]
+## Arguments:
+##	host - host to connect to
+##	usercode - usercode on that host
+##	password - password on that host
+##	target_directory - directory to get files from
+##	target_pattern - files to get (can be wildcarded for target system)
+##	local_directory - destination directory on local system
+##	type - type of files (ascii or binary).  Default is binary
+##	do_spawn - should we spawn a expect session (eg. one not in progress already)
+
+	global spawn_id
+	global expect_out
+	global spawn_out
+	global timeout
+
+	set save_timeout $timeout
+	ftp_connect $host $usercode $password $do_spawn
+
+	exp_send "$type\n"
+	expect_list 60 { "ftp> " } { "Not connected" }
+
+	exp_send "cd $target_directory\n"
+	expect_list 60 { "ftp> " } { "Not connected" }
+	exp_send "lcd $local_directory\n"
+	expect_list 60 { "ftp> " } { "Not connected" }
+	exp_send "mget $target_pattern\n"
+	# allow for large files
+	expect_list 600 { "bytes received" } { "Error" "Not connected" "No such" }
+	expect_list 60 { "ftp> " } { "Not connected" "No such" }
+	exp_send "quit\n"
+	expect_any 60 { "221" "Goodbye" "So long" } { "ftp> " }
+	if { $do_spawn } {
+		wait_eof 60
+	}
+	set timeout $save_timeout
+}
+
+proc date_stamp {} {
+##
+## datestamp
+## ---------
+##
+## Usage:
+## 	date_stamp
+## Returns:
+##	date in an identical format to the date command
+## Additional Information:
+##	should be used in preference to [exec date].  The performance
+##      difference is 30 vs 175000 microseconds.
+##
+	return [timestamp -format "%a %b %d %X %Z %Y"]
+}
+
+proc tools_mult_timeout { mult } {
+##
+## tools_mult_timeout
+## ------------
+## adjust timeout multiplier by a factor of mult
+##
+## Usage:
+##	tools_mult_timeout mult
+## Arguments:
+##	mult - multiply timeout multiplier by mult
+## Returns:
+##	None
+## Additional Information:
+##	updates the environment variable TEST_TIMEOUT_MULT
+
+	global env
+	set env(TEST_TIMEOUT_MULT) [ expr $mult * [ test_get_env TEST_TIMEOUT_MULT] ]
+}
+
+proc calc_timeout { timelimit } {
+##
+## calc_timeout
+## ------------
+## calculate the timeout value to use by adjusting by TEST_TIMEOUT_MULT
+##
+## Usage:
+##	calc_timeout timelimit
+## Arguments:
+##	timelimit - a timeout value in seconds
+## Returns:
+##	timelimit adjusted by TEST_TIMEOUT_MULT
+## Additional Information:
+##	The environment variable TEST_TIMEOUT_MULT is used as an optional
+##	multiplier for all timeout values.  This can be exported by the user
+##	to adjust all the timeouts in a test to account for slow systems or
+##	the use of debug tools such as printf or purify which significantly
+##	affect the performance of the system.
+
+	return [ expr $timelimit * [ test_get_env TEST_TIMEOUT_MULT] ]
+}
+
+proc set_timeout { timelimit } {
+##
+## set_timeout
+## -----------
+## set the expect timeout variable accounting for TEST_TIMEOUT_MULT
+##
+## Usage:
+##	set_timeout timelimit
+## Arguments:
+##	timelimit - a timeout value in seconds
+## Returns:
+##	The timeout value set
+## Additional Information:
+##	The timeout variable in the callers stack frame is set.  It is up
+##	to the caller to determine if this is the global or local version
+##	of timeout.
+
+	# sets the expect timeout variable in the stack frame of the caller
+	return [ uplevel set timeout [ calc_timeout $timelimit ] ]
+}
+
+proc expect_list { timelimit list { error_list "" } { out_var "" } } {
+##
+## expect_list
+## -----------
+## apply expect sequencially against a list of messages
+##
+## Usage:
+##	expect_list timelimit list [error_list [out_var]]
+## Arguments:
+##	timelimit - maximum wait for each message
+##	list - list of messages to expect, they are regular expressions
+##	error_list - optional list of messages, fails if any gotten,
+##		regular expressions
+##	out_var - variable in callers context to receive all text which was
+##		received during during this expect
+## Returns:
+##	string in output which matched last regular expression in list
+##	(this is also held in $expect_out(0,string) )
+## Additional Information:
+##	the expecting global is set as each item is expect'ed for such that
+##	any errors are appropriately reported
+##	an error is automatically reported if any of the error_list messages
+##	are gotten at any point.  Avoid having an error_list message be
+##	a subset or part of a valid list message
+##	The global timeout is saved, changed and restored by this routine
+
+    global spawn_id
+    global expect_out
+    global spawn_out
+    global timeout
+    global expecting
+    global env
+
+    set save_timeout $timeout
+
+    set_timeout $timelimit
+
+    if { "$out_var" != "" } {
+	upvar $out_var out
+	set out ""
+    }
+    # match against a 10 screen buffer
+    match_max 19200 
+    # expect is real picky about the quoting and braces here
+    set fail_cmd {
+	log_message "\nERROR: while waiting for: $expecting"
+	log_message "\nERROR: Received data: $expect_out(buffer)"
+	fail_test "Invalid data"
+    }
+    foreach item $list {
+	set arg_list {}
+	foreach err_item $error_list {
+	    append arg_list " -re {$err_item} {
+				log_message {\nERROR: invalid data: $err_item}
+				$fail_cmd
+				}"
+	}
+	append arg_list " -re {$item} noop"
+	set expecting "$item"
+	if { [ info exists env(TESTDEBUG) ] } {
+	    log_message "DEBUG: spawn_id: $spawn_id expecting: $expecting"
+	}
+	eval expect "{
+			$arg_list
+		}"
+	if { "$out_var" != "" } {
+	    append out $expect_out(buffer)
+	}
+    }
+
+    set timeout $save_timeout
+    return $expect_out(0,string)
+}
+
+proc expect_any { timelimit list { error_list "" } { out_var ""} } {
+##
+## expect_any
+## -----------
+## apply expect once against a list of messages, succeed if matches any one
+## message in list
+##
+## Usage:
+##	expect_any timelimit list [error_list [out_var]]
+## Arguments:
+##	timelimit - maximum wait for each message
+##	list - list of messages to expect, they are regular expressions
+##	error_list - optional list of messages, fails if any gotten,
+##		regular expressions
+##	out_var - variable in callers context to receive all text which was
+##		received during during this expect
+## Returns:
+##	string in output which matched a regular expression in list
+##	(this is also held in $expect_out(0,string) )
+## Additional Information:
+##	accept 1st of list (eg. expects any 1 of list)
+##	the expecting global is set such that
+##	any errors are appropriately reported
+##	an error is reported if any of the error_list messages
+##	are gotten.  Avoid having an error_list message be
+##	a subset or part of a valid list message
+##	The global timeout is saved, changed and restored by this routine
+
+	global spawn_id
+	global expect_out
+	global spawn_out
+	global timeout
+	global expecting
+	global env
+
+	set save_timeout $timeout
+
+	set_timeout $timelimit
+
+	if { "$out_var" != "" } {
+		upvar $out_var out
+		set out ""
+	}
+	# expect is real picky about the quoting and braces here
+	set fail_cmd {
+		log_message "\nERROR: while waiting for: $expecting"
+		log_message "\nERROR: Received data: $expect_out(buffer)"
+		fail_test "Invalid data"
+	}
+	set expecting ""
+	set arg_list {}
+	foreach err_item $error_list {
+		append arg_list " -re {$err_item} {
+			log_message {\nERROR: invalid data: $err_item}
+			$fail_cmd
+			}"
+	}
+	foreach item $list {
+		append arg_list " -re {$item} noop"
+		if { "$expecting" == "" } {
+			set expecting "$item"
+		} else {
+			set expecting "$expecting OR $item"
+		}
+	}
+	if { [ info exists env(TESTDEBUG) ] } {
+		log_message "DEBUG: spawn_id: $spawn_id expecting: $expecting"
+	}
+	eval expect "{
+		 $arg_list
+	}"
+	if { "$out_var" != "" } {
+		append out $expect_out(buffer)
+	}
+
+	set timeout $save_timeout
+	return $expect_out(0,string)
+}
+
+proc expect_progress { timelimit progress_list done_list { error_list "" } { out_var "" } } {
+##
+## expect_progress
+## -----------
+## apply expect against a long running operation which reflects progress
+##
+## Usage:
+##	expect_progress timelimit progress_list done_list [error_list [out_var]]
+## Arguments:
+##	timelimit - maximum wait for each message
+##	progress_list - list of progress messages to expect,
+##		they are regular expressions
+##	done_list - list of completion messages to expect,
+##		they are regular expressions
+##	error_list - optional list of messages, fails if any gotten,
+##		regular expressions
+##	out_var - variable in callers context to receive all text which was
+##		received during during this expect
+## Returns:
+##	string in output which matched a regular expression in done_list
+##	(this is also held in $expect_out(0,string) )
+## Additional Information:
+##	expects to see at least one progress_list or done_list message
+##	within each timelimit interval.
+##	progress_list messages reset timelimit and expect is run again
+##	progress_list messages can be repeated or seen in any order.
+##	There is no requirement for any nor all of them to occur.
+##	done_list messages indicate completion and all must appear in the order
+##	given.
+##	the expecting global is set as each done item is expect'ed for such that
+##	any errors are appropriately reported
+##	an error is automatically reported if any of the error_list messages
+##	are gotten at any point.  Avoid having an error_list message be
+##	a subset or part of a valid list message
+##	The global timeout is saved, changed and restored by this routine
+
+    global spawn_id
+    global expect_out
+    global spawn_out
+    global timeout
+    global expecting
+    global env
+
+    set save_timeout $timeout
+
+    set_timeout $timelimit
+
+    if { "$out_var" != "" } {
+	upvar $out_var out
+	set out ""
+    }
+    # expect is real picky about the quoting and braces here
+    set fail_cmd {
+	log_message "\nERROR: while waiting for: $expecting"
+	log_message "\nERROR: Received data: $expect_out(buffer)"
+	fail_test "Invalid data"
+    }
+    foreach item $done_list {
+	set arg_list {}
+	foreach err_item $error_list {
+	    append arg_list " -re {$err_item} {
+				log_message {\nERROR: invalid data: $err_item}
+				$fail_cmd
+				}"
+	}
+	append arg_list " -re {$item} noop"
+	set expecting "$item"
+	foreach prog_item $progress_list {
+	    append arg_list " -re {$prog_item}"
+	    append arg_list { {
+		if { "$out_var" != "" } {
+		    append out $expect_out(buffer)
+		}
+		exp_continue } }
+	    append expecting " OR $prog_item"
+	}
+	if { [ info exists env(TESTDEBUG) ] } {
+	    log_message "DEBUG: spawn_id: $spawn_id expecting: $expecting"
+	}
+	eval expect "{
+			 $arg_list
+		}"
+	if { "$out_var" != "" } {
+	    append out $expect_out(buffer)
+	}
+    }
+
+    set timeout $save_timeout
+    return $expect_out(0,string)
+}
+
+proc _got_orderless_item { got once listname error_listname indexname } {
+#
+# _got_orderless_item
+# -------------------
+# Process a matched item
+#
+# Usage:
+# _got_orderless_item got once listname error_listname indexname
+#
+# Arguments:
+#	got - pattern matched within the list
+#	once - should got be added to error_list (1=yes, 0=no)
+#	listname - name of list variable which contains $got
+#	error_listname - name of error_list variable to update
+#	indexname - name of variable to hold index of got within list
+# Additional Information:
+#	list is updated to remove got from it
+#	if once, got is appended to error_list
+#	fatal error if got not found in list
+#	list is a list of string match, expect style patterns
+
+	upvar $listname list
+	upvar $error_listname error_list
+	upvar $indexname index
+
+	set index [ lsearch -exact $list $got ]
+	if { $index == -1 } {
+		fail_test "Bug in expect_list_orderless: got={$got}, list={$list}"
+	}
+	set list [ lreplace $list $index $index ]
+	if { $once } {
+		lappend error_list "$got"
+	}
+}
+
+proc expect_list_orderless { timelimit once list { error_list "" } { out_var ""} } {
+##
+## expect_list_orderless
+## -----------
+## apply expect against a list of messages, order independently
+##
+## Usage:
+##	expect_list_orderless timelimit once list [error_list [out_var]]
+## Arguments:
+##	timelimit - maximum time to wait for next message
+##	once - if 1, it is an error for any of the messages in list to
+##		occur more than once, if 0 they can occur any number of
+##		times
+##	list - list of messages to expect, regular expressions
+##	error_list - optional list of messages, fails if any gotten,
+##		regular expressions
+##	out_var - variable in callers context to receive all text which was
+##		received during during this expect
+## Returns:
+##	string in output which last matched a regular expression in list
+##	(this is also held in $expect_out(0,string) )
+## Additional Information:
+##	the expecting global is set as each item set is expect'ed for such that
+##	any errors are appropriately reported
+##	an error is automatically reported if any of the error_list messages
+##	are gotten at any point.  Avoid having an error_list message be
+##	a subset or part of a valid list message
+##	list messages should not be subsets of eachother
+##	The messages in list are permitted to occur in any order.
+##	If you want to permit a given message to occur more than once,
+##	set once=0
+##	The global timeout is saved, changed and restored by this routine
+
+	global spawn_id
+	global expect_out
+	global spawn_out
+	global timeout
+	global expecting
+	global env
+
+	set save_timeout $timeout
+
+	set_timeout $timelimit
+
+	if { "$out_var" != "" } {
+		upvar $out_var out
+		set out ""
+	}
+	# expect is real picky about the quoting and braces here
+	set fail_cmd {
+		log_message "\nERROR: while waiting for: $expecting"
+		log_message "\nERROR: Received data: $expect_out(buffer)"
+		fail_test "Invalid data"
+	}
+	while { [ llength $list ] != 0 } {
+		# build arg_list with the list of valid items
+		# expecting indicates all the items remaining
+		set expecting ""
+		set arg_list {}
+		foreach err_item $error_list {
+			append arg_list " -re {$err_item} {
+				log_message {\nERROR: invalid data: $err_item}
+				$fail_cmd
+				}"
+		}
+		foreach item $list {
+			append arg_list " -re {$item} { set got {$item} }"
+			if { "$expecting" == "" } {
+				set expecting "$item"
+			} else {
+				set expecting "$expecting OR $item"
+			}
+		}
+		set got ""
+		if { [ info exists env(TESTDEBUG) ] } {
+			log_message "DEBUG: expecting $expecting"
+		}
+		eval expect "{
+		 	$arg_list
+		}"
+		if { "$out_var" != "" } {
+			append out $expect_out(buffer)
+		}
+		# if we did not fail_test by getting an invalid item,
+		# got will indicate what we did get
+		# Remove that item from the list of valid messages and
+		# if once, add it to the list of invalid message
+		if { "$got" != "" } {
+			_got_orderless_item $got $once list error_list index
+			# expect will take a single output buffer and
+			# apply the patterns in the order given, in the event
+			# of a large output or multiple patterns which should
+			# be matched by a single line, expect may match fewer
+			# patterns than are possible to be matched
+			# now see if other patterns in the remainder of
+			# the list are also matched
+			foreach item [ lrange $list $index end ] {
+				if { [ regexp ".*$item.*" $expect_out(buffer) ] == 1 } {
+					_got_orderless_item $item $once list error_list index
+				}
+			}
+		} else {
+			fail_test "Bug in expect_list_orderless, got={}"
+		}
+	}
+
+	set timeout $save_timeout
+	return $expect_out(0,string)
+}
+
+proc expect_progress_orderless { timelimit progress_list once done_list { error_list "" } { out_var ""} } {
+##
+## expect_progress_orderless
+## -----------
+## apply expect against a long running operation which reflects progress
+## and expect a list of messages, order independently
+##
+## Usage:
+##	expect_progress_orderless timelimit progress_list once done_list [error_list [out_var]]
+## Arguments:
+##	timelimit - maximum time to wait for next message
+##	progress_list - list of progress messages to expect,
+##		they are regular expressions
+##	once - if 1, it is an error for any of the messages in list to
+##		occur more than once, if 0 they can occur any number of
+##		times
+##	done_list - list of completion messages to expect, regular expressions
+##	error_list - optional list of messages, fails if any gotten,
+##		regular expressions
+##	out_var - variable in callers context to receive all text which was
+##		received during during this expect
+## Returns:
+##	string in output which last matched a regular expression in done_list
+##	(this is also held in $expect_out(0,string) )
+## Additional Information:
+##	expects to see at least one progress_list or done_list message
+##	within each timelimit interval.
+##	progress_list messages reset timelimit and expect is run again
+##	progress_list messages can be repeated or seen in any order.
+##	There is no requirement for any nor all of them to occur.
+##	the expecting global is set as each item set is expect'ed for such that
+##	any errors are appropriately reported
+##	an error is automatically reported if any of the error_list messages
+##	are gotten at any point.  Avoid having an error_list message be
+##	a subset or part of a valid list message
+##	done_list messages should not be subsets of eachother
+##	The messages in done_list are permitted to occur in any order.
+##	If you want to permit a given message to occur more than once,
+##	set once=0
+##	The global timeout is saved, changed and restored by this routine
+
+	global spawn_id
+	global expect_out
+	global spawn_out
+	global timeout
+	global expecting
+	global env
+
+	set save_timeout $timeout
+
+	set_timeout $timelimit
+
+	if { "$out_var" != "" } {
+		upvar $out_var out
+		set out ""
+	}
+	# expect is real picky about the quoting and braces here
+	set fail_cmd {
+		log_message "\nERROR: while waiting for: $expecting"
+		log_message "\nERROR: Received data: $expect_out(buffer)"
+		fail_test "Invalid data"
+	}
+	while { [ llength $done_list ] != 0 } {
+		# build arg_list with the list of valid items
+		# expecting indicates all the items remaining
+		set expecting ""
+		set arg_list {}
+		foreach err_item $error_list {
+			append arg_list " -re {$err_item} {
+				log_message {\nERROR: invalid data: $err_item}
+				$fail_cmd
+				}"
+		}
+		foreach item $done_list {
+			append arg_list " -re {$item} { set got {$item} }"
+			if { "$expecting" == "" } {
+				set expecting "$item"
+			} else {
+				set expecting "$expecting OR $item"
+			}
+		}
+		foreach prog_item $progress_list {
+	    	append arg_list " -re {$prog_item}"
+	    	append arg_list { {
+			if { "$out_var" != "" } {
+		    	append out $expect_out(buffer)
+			}
+			exp_continue } }
+	    	append expecting " OR $prog_item"
+		}
+		set got ""
+		if { [ info exists env(TESTDEBUG) ] } {
+	    	log_message "DEBUG: spawn_id: $spawn_id expecting: $expecting"
+		}
+		eval expect "{
+		 	$arg_list
+		}"
+		if { "$out_var" != "" } {
+			append out $expect_out(buffer)
+		}
+		# if we did not fail_test by getting an invalid item,
+		# got will indicate what we did get
+		# Remove that item from the list of valid messages and
+		# if once, add it to the list of invalid message
+		if { "$got" != "" } {
+			_got_orderless_item $got $once done_list error_list index
+			# expect will take a single output buffer and
+			# apply the patterns in the order given, in the event
+			# of a large output or multiple patterns which should
+			# be matched by a single line, expect may match fewer
+			# patterns than are possible to be matched
+			# now see if other patterns in the remainder of
+			# the list are also matched
+			foreach item [ lrange $done_list $index end ] {
+				if { [ regexp ".*$item.*" $expect_out(buffer) ] == 1 } {
+					_got_orderless_item $item $once done_list error_list index
+				}
+			}
+		} else {
+			fail_test "Bug in expect_list_orderless, got={}"
+		}
+	}
+
+	set timeout $save_timeout
+	return $expect_out(0,string)
+}
+
+proc test_execute {list code} {
+##
+## test_execute
+## ------------
+## Conditionally execute the block of code specified
+##
+## Usage:
+##	test_execute { list } {
+##		conditional code
+##	}
+## Arguments:
+##	list - a list of conditions under which the code should not be run.  The
+##		items specified in the list are searched for in the
+##		TEST_NOEXECUTE environment variable and if found, the code is
+##		not executed.
+##	code = Tcl commands for execution (typically a list)
+## Returns:
+##	None
+## Additional Information:
+##	This routine will not execute any code if any of the items in the list
+##	are located in the TEST_NOEXECUTE environment variable list.
+##	Further, the code is not executed if the TEST_IDENTIFY environment
+##	variable is defined.
+##
+    global env
+
+    if { ! [ identify_mode ] } {
+	set skip 0
+	if { [ info exists env(TEST_NOEXECUTE) ] } {
+	    foreach item $list {
+		if { [lsearch -exact "$env(TEST_NOEXECUTE)" $item ] != -1 } {
+		    set skip 1;
+		    break;
+		}
+	    }
+	}
+	if { $skip == 0 } {
+	    uplevel $code
+	}
+    }
+}
+
+proc show_config {} {
+##
+## show_config
+## -------------
+## determine if tests are being run with show config enabled
+##
+## Usage:
+##	show_config
+## Returns:
+##	0 - no
+##	1 - yes
+
+	return [ test_check_yn [ test_get_env TEST_SHOW_CONFIG ] ]
+}
+
+proc show_start {} {
+##
+## show_start
+## -------------
+## determine if tests are being run with show start enabled
+##
+## Usage:
+##	show_start
+## Returns:
+##	0 - no
+##	1 - yes
+
+	return [ test_check_yn [ test_get_env TEST_SHOW_START ] ]
+}
+
+proc identify_mode {} {
+##
+## identify_mode
+## -------------
+## determine if tests are being run in identify mode
+##
+## Usage:
+##	identify_mode
+## Returns:
+##	0 - no
+##	1 - yes
+
+	return [ test_check_yn [ test_get_env TEST_IDENTIFY ] ]
+}
+
+proc get_config_path { filename } {
+##
+## get_config_path
+## -----------
+## Return the path to the configuration file specified
+##
+## Arguments:
+##	filename - name of a configuration file
+## Additional Information:
+
+	global env
+
+	if { ( ! [ file exists $filename ] || [ file isdirectory $filename ] )
+		 && [ info exists env(TL_DIR) ] } {
+		set dir1 "$env(TL_DIR)/configs"
+		set dir2 "$env(TL_DIR)/HostTestCases/configs"
+		if { [ file isdirectory "$dir1" ]
+			&& [ file exists "$dir1/$filename" ] } {
+			return "$dir1/$filename"
+		} elseif { [ file isdirectory "$dir2" ]
+			&& [ file exists "$dir2/$filename" ] } {
+			return "$dir2/$filename"
+		} else {
+			set res "get_config_path: unable to find $filename in ., $dir1 nor $dir2"
+			log_message "$res"
+			error "$res"
+		}
+	} elseif { [ file exists $filename ] } {
+		return "$filename"
+	}
+}
+
+proc read_config { filename } {
+##
+## read_config
+## -----------
+## Read the configuration file specified
+##
+## Arguments:
+##	filename - name of a configuration file
+## Additional Information:
+##	The configuration file consists of lines of the form:
+##		parameter_name	value
+##				OR
+##		include filename
+##	If the "parameter_name" is # or the line is blank,
+##	the given line is ignored
+##	Otherwise the parameter is set to the supplied value unless
+##	it is already exported.  This allows the configuration to
+##	be partially overridden by the environment.  It also permits the
+##	setting of any environment variables (such as TEST_FAIL_SAVE)
+##	An omitted "value" field results in the parameter being set to the
+##	null string
+##	If parameter_name is already exported, it overrides the value in the
+##	config file.  Due to use of eval, value for a parameter can include
+##	references to other parameters and environment variables as $env(name)
+
+	global env
+
+	if { [ show_config ] } {
+		show_message "Test Configuration File: $filename"
+	}
+	set filename [get_config_path $filename ]
+	set fileid [ open $filename "r" ]
+	if { [ catch {
+		while { [ gets $fileid line ] != -1 } {
+			set parameter [ lindex $line 0 ]
+			if { "$parameter" == ""
+			     || "[ string index $parameter 0 ]" == "#" } {
+				# comment or blank line
+				continue
+			}
+			eval set value \[ lreplace \"$line\" 0 0 \]
+			#set value [ lreplace $line 0 0 ]
+			if { "$parameter" == "include" } {
+				read_config "$value"
+			} else {
+				if { ! [ info exists env($parameter) ] } {
+					set env($parameter) "$value"
+					#eval set env($parameter) \"$value\"
+				}
+				# show the parameter values
+				set message [ format "%-25s %s" $parameter $env($parameter) ]
+				if { [ show_config ] } {
+					show_message "$message"
+				}
+			}
+		}
+		if { [ show_config ] } {
+			show_message ""
+		}
+		close $fileid
+	} res ] != 0 } {
+		catch { close $fileid }
+		if { [ show_config ] } {
+			show_message ""
+		}
+		log_message "read_config: $res in variable \"$parameter\""
+		error "read_config: $res in variable \"$parameter\""
+	}
+
+	# fixup suffixes, this is a hack, should be put elsewhere
+	if { [ info exists env(CFG_IPOIB_SUFFX) ]
+		 && [ string equal "$env(CFG_IPOIB_SUFFIX)" "NONE" ] } {
+		set env(CFG_IPOIB_SUFFIX) ""
+	}
+	if { [ info exists env(CFG_IPOIB_PREFIX) ]
+		 && [ string equal "$env(CFG_IPOIB_PREFIX)" "NONE" ] } {
+		set env(CFG_IPOIB_PREFIX) ""
+	}
+	if { [ info exists env(CFG_INIC_SUFFX) ]
+		 && [ string equal "$env(CFG_INIC_SUFFIX)" "NONE" ] } {
+		set env(CFG_INIC_SUFFIX) ""
+	}
+}
+
+proc get_config { var } {
+##
+## get_config
+## -------------
+## support function for use by front.sh to get config file values
+## out to a calling bash shell
+
+	#global env
+
+	#puts "$env($var)"
+	puts [test_get_env "$var"]
+}
+
+proc sum_list { list } {
+##
+## sum_list
+## -------------
+## compute the sum of a list of numbers
+##
+## Usage:
+##	sum_list list
+## Arguments:
+##	list - a list of numbers
+## Returns:
+##	sum
+## Additional Information:
+##	non-numeric entries in the list are quietly ignored
+
+	set sum 0
+	foreach entry $list {
+		if { [ string is double $entry ] } {
+			incr sum $entry
+		}
+	}
+	return $sum
+}
+
+proc tools_get_platform {} {
+    global tcl_platform
+    return $tcl_platform(machine)
+}
+
+# IPtoHex assumes IP has already been validated
+proc IPtoHex { IP } {
+    binary scan [binary format c4 [split $IP .]] H8 Hex
+    return $Hex
+}
+
+proc hexToIP { Hex } {
+    binary scan [binary format H8 $Hex] c4 IPtmp
+    foreach num $IPtmp {
+    # binary scan "c" format gives signed int - the following
+    # [expr]-ology converts to unsigned (from [binary] manpage)
+        lappend IP [expr ($num + 0x100) % 0x100]
+    }
+    set IP [join $IP .]
+    return $IP
+}
+
+# IP and netmask in Hex, returns hex
+proc broadcastAddress { hexIP hexNetmask } {
+    set tmpBrdAddr [expr 0x$hexIP | ( 0x$hexNetmask ^ 0xffffffff )]
+    binary scan [binary format I $tmpBrdAddr] H8 broadcastAddress
+    return $broadcastAddress
+}
+
+# IP and netmask in Hex, returns hex
+proc networkAddress { hexIP hexNetmask } {
+    set compNetmask [expr 0x$hexNetmask ^ 0xffffffff]
+    set tmpNetAddr [expr ( 0x$hexIP | $compNetmask ) ^ $compNetmask]
+    binary scan [binary format I $tmpNetAddr] H8 networkAddress
+    return $networkAddress
+}
+
+proc IPisValid { IP } {
+    # must contain only dots and digits
+    # this originally read:-
+    #if { [regsub -all {[.0-9]} $IP {}] != "" } {
+    #  return 0
+    #}
+    regsub -all {[.0-9]} $IP {} tmpStr
+    if { $tmpStr != "" } {
+        return 0
+    }
+    # however this appears to be a 8.4.1-ism which doesn't work with
+    # earlier versions (e.g. the 8.4a2 version that the PocketPC tcltk
+    # version is based on.
+    #
+    # exactly three dots
+    regsub -all {[0-9]} $IP {} tmpStr
+    if { $tmpStr != "..." } {
+        return 0
+    }
+    # each numerical component is between 0 and 255
+    foreach b [split $IP .] {
+        if { [string length $b] == 0 } {
+            return 0
+        }
+        set ob $b
+        scan $b %d b ;# allow for leading zeros which tcl thinks are octal
+        if { $b < 0 | $b > 255 } {
+           return 0
+        }
+    }
+    return 1
+}
+
+
+proc getBroadCast { ip netmask } {
+##
+## getBroadCast
+## -----------
+## Return the broadcast address given IP and netmask
+##
+## Usage:
+##  getBroadCast ip netmask
+## Arguments:
+##  ip - valid IP address. can be a network address.
+##  netmask - the netmask for this IP.
+## Returns
+##  netmask in the form nnn.nnn.nnn.nnn
+##
+    if { ! [IPisValid $ip] } {
+        error "IP is not valid"
+    }
+    if { ! [IPisValid $netmask] } {
+        error "Netmask is not valid"
+    }
+    set hexIP [IPtoHex $ip]
+    set hexNM [IPtoHex $netmask]
+    set hexBC [broadcastAddress $hexIP $hexNM]
+    set broadcastAddress [hexToIP $hexBC]
+    return $broadcastAddress
+}
+
+proc getNetWork { ip netmask } {
+##
+## getNetWork
+## -----------
+## Return the netowkr address given IP and netmask
+##
+## Usage:
+##  getNwtWork ip netmask
+## Arguments:
+##  ip - valid IP address. can be a network address.
+##  netmask - the netmask for this IP.
+## Returns
+##  network in the form nnn.nnn.nnn.nnn
+##
+    if { ! [IPisValid $ip] } {
+        error "IP is not valid"
+    }
+    if { ! [IPisValid $netmask] } {
+        error "Netmask is not valid"
+    }
+    set hexIP [IPtoHex $ip]
+    set hexNM [IPtoHex $netmask]
+    set hexNW [networkAddress $hexIP $hexNM]
+    set networkAddress [hexToIP $hexNW]
+    return $networkAddress
+}

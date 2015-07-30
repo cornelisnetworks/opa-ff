@@ -1,0 +1,123 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaconfig
+
+.NL
+
+.PP
+
+\fB(Switch and Host)\fR
+Allows the user to configure Intel(R) Omni-Path Fabric Suite FastFabric .
+.SH Syntax
+.NL
+opaconfig [-r \fIroot\fR] [-v|-vv] [-F|-u|-s|-e \fIcomp\fR] [-E \fIcomp\fR] [-D \fIcomp\fR] [--fwupdate asneeded|always] [--user\(ulqueries|--no\(uluser\(ulqueries] [--answer \fIkeyword=value\fR]
+.PP
+or
+.br
+opaconfig -C
+.PP
+or
+.br
+opaconfig -V 
+.SH Options
+.NL
+
+.TP 10
+No option
+.NL
+Starts the Intel OPA Software TUI.
+.TP 10
+--help 
+.NL
+Produce full help text.
+.TP 10
+-F 
+.NL
+Upgrade Intel(R) Omni-Path Host Fabric Interface ( HFI ) Firmware with default options.
+.TP 10
+--fwupdate asneeded|always 
+.NL
+Select firmware update auto update mode:
+.sp
+asneeded 
+Update or downgrade to match version in this release.
+.sp
+always 
+Rewrite with this release version even if it matches. The default is to upgrade as needed but do not downgrade. This option is ignored for interactive installs.
+.TP 10
+-u 
+.NL
+Uninstall all ULPs and drivers with default options.
+.TP 10
+-s 
+.NL
+Enable autostart for all installed drivers.
+.TP 10
+-r 
+.NL
+Specify alternate root directory, default is / .
+.TP 10
+-e \fIcomp\fR 
+.NL
+Uninstall the given component with default options. This can appear more than once on command line.
+.TP 10
+-E \fIcomp\fR 
+.NL
+Enable autostart of a given component. This can appear with -D or more than once on the command line.
+.TP 10
+-D \fIcomp\fR 
+.NL
+Disable autostart of given component. This can appear with -E or more than once on command line.
+.TP 10
+-v 
+.NL
+Verbose logging.
+.TP 10
+-vv 
+.NL
+Very verbose debug logging.
+.TP 10
+-C 
+.NL
+Output list of supported components.
+.TP 10
+-V 
+.NL
+Output Version.
+.TP 10
+--user\(ulqueries 
+.NL
+Permit non-root users to query the fabric (default).
+.TP 10
+--no\(uluser\(ulqueries 
+.NL
+Non-root users cannot query the fabric.
+.TP 10
+--answer \fIkeyword=value\fR 
+.NL
+Provides an answer to a question that may occur during the operation. Answers to questions not asked are ignored. Invalid answers result in prompting for interactive installs, or use of the default for non-interactive.Possible Questions (  \fIkeyword=value\fR ):
+
+.sp
+UserQueries 
+Would you like the umadX device files?
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+Allowing access to umadX device files may present a security risk. However, this allows tools such as opasaquery , opaportinfo , etc. to be used by non-root users.)
+
+Default options retain existing configuration files
+
+.SH Example 
+.NL
+# opaconfig Intel OPA 10.0.0.0.364 Software 1) Show Installed Software 2) Reconfigure OFED IP over IB 3) Reconfigure Driver Autostart 4) Update HCA Firmware 5) Generate Supporting Information for Problem Report 6) FastFabric (Host/Chassis/Switch Setup/Admin) 7) Uninstall Software X) Exit

@@ -1,0 +1,6 @@
+HELP: IMAGE INFO SCREEN
+The Image Info screen displays image information as provided by
+the PM.  Sweep start and duration, numbers of ports in each group, node
+and port information for the sweep, and SM information is shown.  The
+Image Info screen has no screen-specific input commands.
+

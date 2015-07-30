@@ -1,0 +1,2 @@
+Distributed SA provider for ibacm, which provides name resolution through data
+file and path record resolution by caching SA data.

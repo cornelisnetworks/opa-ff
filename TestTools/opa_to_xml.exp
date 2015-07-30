@@ -1,0 +1,1340 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is an expect (tcl) library of procedures to aid opa stack testing
+
+#########################################################################################
+# Name        : createTextElement
+# Input       : document tagName tagValue
+# Return      . Text node
+# Description : Creates a text node in the form <tagName>text</tagName>
+#########################################################################################
+proc createTextElement { doc tagName text } {
+
+    set textNode [ $doc createTextNode $text ]
+    set elem [ $doc createElement $tagName ]
+    $elem appendChild $textNode
+
+    return $elem
+}
+
+#########################################################################################
+# Name        : createAttributesElement
+# Input       : document tagName attributeName1 attributeValue1 ...
+# Return      . Element with attributes
+# Description : Creates an element with attributes, i.e. <Tag attr1='val1' attr2='val2'>
+# Note        : If number of values doesn't match the number of tags an error tag will be
+#               set in the resulting XML.
+#########################################################################################
+proc createAttributesElement { doc tagName args } {
+
+    set elem [ $doc createElement $tagName ]
+    set argsCounter 0
+
+    foreach arg $args {
+	incr argsCounter
+	if { [ expr $argsCounter % 2 ] != 0 } {
+	    set attrName $arg
+	} else {	    
+	    $elem setAttribute $attrName $arg
+	}
+    }
+
+    if { [ expr $argsCounter % 2 ] != 0 } {
+	set elem [ createTextElement $doc ERROR "Incorrect number of attributes: $args" ]
+    }
+
+    return $elem
+}
+
+
+#########################################################################################
+# Name        : open_xml_doc
+# Input       : xml file
+# Return      . DOM tree.
+# Description : Load a well-formed xml file into memory.
+#########################################################################################
+
+proc open_xml_doc { xmldoc }  {
+
+	if { ! [ file exists $xmldoc ] } {
+		return -code error "ERROR : $xmldoc does not exist in the current location."
+	}
+
+	set doc [dom parse [tDOM::xmlReadFile $xmldoc] ]
+	set root [$doc documentElement]
+
+	return $root
+}
+
+#########################################################################################
+# Name        : run_opareport
+# Input       : host, output_type = { brnodes, vfinfo }
+# Return      . results from the opareport command as a DOM tree.
+# Description : runs opareport and stores results in result.
+#########################################################################################
+
+proc run_opareport { host arguments } {
+
+    set xmldoc [ run_cmd "exec ssh root@$host opareport $arguments -x" ]
+    set doc [dom parse $xmldoc]
+    set result [$doc documentElement]
+
+    return $result
+}
+
+#########################################################################################
+# Name        : run_opasmaquery
+# Input       : host, lid, output_type = { slsc, scvlt }
+# Return      . results from the opasmaquery command for a given HFI.
+# Description : runs opasmaquery and stores results in result.
+#########################################################################################
+
+proc run_opasmaquery { host arguments } {
+    
+    set result [ run_cmd "exec ssh root@$host opasmaquery $arguments" ]
+    return $result
+}
+
+#########################################################################################
+# Name        : run_opasaquery
+# Input       : output_type = { pkey }
+# Return      . results from the opasmaquery command for a given HFI.
+# Description : runs opasmaquery and stores results in result.
+#########################################################################################
+
+proc run_opasaquery { host arguments } {
+
+    set result [ run_cmd "exec ssh root@$host opasaquery $arguments" ]
+    return $result
+}
+
+#########################################################################################
+# Name        : run_opasaquery
+# Input       : output_type = { pkey }
+# Return      . results from the opasmaquery command for a given HFI.
+# Description : runs opasmaquery and stores results in result.
+#########################################################################################
+
+proc run_opapaquery { host arguments } {
+
+    set result [ run_cmd "exec ssh root@$host opapaquery $arguments 2> /dev/null" ]
+    return $result
+}
+
+#########################################################################################
+# Name        : ibaSAQuerySwitchltvToXml
+# Input       : txt generated from opasmaquery -o switchltv
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted text.
+#########################################################################################
+
+proc ibaSAQuerySwitchltvToXml { switchltv_content } {
+
+    set lines [ split $switchltv_content "\n"]
+
+    set doc [ dom createDocument SwitchLTV ]
+    $doc encoding {iso8859-1}    
+    set root [$doc documentElement]
+    
+    set doOnce 0
+    
+    foreach line $lines {
+	# Look for LID 
+	set rc [ regexp {(LID) +([0-9]+)} $line matched text lid ]
+	if { $rc == 1 } {
+	    if { $doOnce == 0 } {
+		set lidNode [ $doc createElement LID ]
+		$lidNode setAttribute id $lid
+		$root appendChild $lidNode
+		set portsNode [ $doc createElement Ports ]
+		$root appendChild $portsNode
+		
+		set doOnce 1
+	    }
+	}
+	
+	# Look for port
+	set rc [ regexp {(Port) +([0-9]+)} $line matched text port ]
+	if { $rc == 1 } {
+	    set portNode [ $doc createElement Port ]
+	    $portNode setAttribute id $port
+	    $portsNode appendChild $portNode
+	    set virtualLanesNode [ $doc createElement VirtualLanes ]
+	}
+	
+	# Look for VL and LTV
+	set rc [ regexp -nocase {(VL) +([0-9]+) +-> +(0x[0-9a-f]+) +(VL) +([0-9]+) +-> +(0x[0-9a-f]+) +(VL) +([0-9]+) +-> +(0x[0-9a-f]+) +(VL) +([0-9]+) +-> +(0x[0-9a-f]+)} $line matched text vl1 ltv1 matched vl2 ltv2 matched vl3 ltv3 matched vl4 ltv4 ]
+	if { $rc == 1 } {
+	    
+	    # Four VLs per line, do this 4 times
+	    set vlNode [ $doc createElement VL ]
+	    $vlNode setAttribute id $vl1 ltv $ltv1
+	    $virtualLanesNode appendChild $vlNode
+	    
+	    set vlNode [ $doc createElement VL ]
+	    $vlNode setAttribute id $vl2 ltv $ltv2
+	    $virtualLanesNode appendChild $vlNode
+	    
+	    set vlNode [ $doc createElement VL ]
+	    $vlNode setAttribute id $vl3 ltv $ltv3
+	    $virtualLanesNode appendChild $vlNode
+	    
+	    set vlNode [ $doc createElement VL ]
+	    $vlNode setAttribute id $vl4 ltv $ltv4
+	    $virtualLanesNode appendChild $vlNode
+	    
+	    if { $vl4 == 31 } {
+		$portNode appendChild $virtualLanesNode
+	    }
+	}
+    }
+    
+    #    puts "[$root asXML]"   
+
+    return $root
+}
+
+#########################################################################################
+# Name        : ibaSAQuerySwitchltvToXml
+# Input       : txt generated from opasmaquery -o switchltv
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted text.
+#########################################################################################
+
+proc ibaPAQueryVFConfigToXml { output } {
+
+    set lines [ split $output "\n"]
+
+    set doc [ dom createDocument VFConfig ]
+    $doc encoding {iso8859-1}
+    
+    set root [$doc documentElement]
+    
+    foreach line $lines {
+	# Look for VF Name      
+	set rc [ regexp -nocase {(VF name:) +([a-zA-Z0-9_-]+)} $line matched text name ]
+	if { $rc == 1 } {
+	    set node [ $doc createElement VFname ]
+	    $node appendChild [$doc createTextNode $name ]
+	    $root appendChild $node
+	}
+	
+	# Look for VF SID
+	set rc [ regexp -nocase {(VF SID:) +(0x[a-fA-F0-9]+)} $line matched text sid ]
+	if { $rc == 1 } {
+	    set node [ $doc createElement VFsid ]
+	    $node appendChild [$doc createTextNode $sid ]
+	    $root appendChild $node
+	}
+
+	# Look for number of ports
+	set rc [ regexp -nocase {(Number ports:) +([0-9]+)} $line matched text numports ]
+	if { $rc == 1 } {
+	    set node [ $doc createElement NumberOfPorts ]
+	    $node appendChild [$doc createTextNode $numports ]
+	    $root appendChild $node
+	}
+	
+	# Look for ports
+	set rc [ regexp -nocase {([0-9]+):LID:(0x[0-9A-F]+) +Port:([0-9]+) +GUID:(0x[0-9A-F]+) +NodeDesc: +(.+)} $line matched num lid port guid nodeDesc ]
+	if { $rc == 1 } {
+	    # Create Ports element only once
+	    if { $num == 1 } {
+		set portsNode [ $doc createElement Ports ]
+	    }
+	    set node [ $doc createElement Port ]
+	    $node setAttribute id $num LID $lid PortNum $port GUID $guid NodeDesc $nodeDesc
+	    $portsNode appendChild $node
+	    
+	    set numPorts [ $root selectNodes /VFConfig/NumberOfPorts/text() ]
+	    set numPorts [ $numPorts nodeValue ]
+	    
+	    # At the last port, attach it to the root
+	    if { $numPorts == $num } {
+		$root appendChild $portsNode
+	    }
+	}
+	
+	# Look for Image Number
+	set rc [ regexp {(Image Number:) +(0x[a-fA-F0-9]+) +Offset: +([0-9]+)} $line matched text imageNum offset ]
+	if { $rc == 1 } {
+	    set node [ $doc createElement ImageNumber ]
+	    $node setAttribute id $imageNum Offset $offset
+	    $root appendChild $node
+	}
+    }
+
+    #    puts "[$root asXML]"   
+
+    return $root
+}
+
+
+#########################################################################################
+# Name        : ibaSAQueryPkeyToXml
+# Input       : txt file generated from opasmaquery -o pkey
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted txt file.
+#########################################################################################
+
+proc ibaSAQueryPkeyToXml { pkey_content } {
+
+	set delimeter "\n-------------------------------------------------------------------------------\n"
+	set output [ regsub -all "$delimeter" "$pkey_content" "|" ]
+	set lids [ split $output "|"]
+
+	# determine lid ids.
+
+	set lidIdList {}
+	set portIdList {}
+	array set lidToPortMap {}
+	set lididcount 0
+
+	set lididlist {}
+	set portidlist {}
+	set pkeylist {}
+	set result "<lids>"
+
+	# break down scraped output.
+	foreach lid $lids {
+		set lidid [string trim [ getCmdOutputParameter $lid "LID:" "PortNum:" "true" ] ]
+		set portid [string trim [ getCmdOutputParameter $lid "PortNum:" "BlockNum:" "true" ] ]
+		set ports0to7 [string trim [ getCmdOutputParameter $lid "0-   7:" "\n" "false" ] ]
+		set ports8to15 [string trim [ getCmdOutputParameter $lid "8-  15:" "\n" "false" ] ]
+		set ports16to23 [string trim [ getCmdOutputParameter $lid "16-  23:" "\n" "false" ] ]
+		set ports24to31 [string trim [ getCmdOutputParameter $lid "24-  31:" "\n" "false" ] ]
+		set pkey [ concat $ports0to7 $ports8to15 $ports16to23 $ports24to31]
+
+		lappend lididlist $lidid
+		lappend portidlist $portid
+		lappend pkeylist $pkey
+	}
+	#create unique lid list
+	set lididlistunique [ lsort -unique $lididlist ]
+
+	#iterate through lists
+	foreach innerlid $lididlistunique {
+
+		set result "$result<lid id='$innerlid'>"
+
+		foreach innerinnerlid $lididlist innerport $portidlist innerpkey $pkeylist {
+
+			if {$innerinnerlid == $innerlid} {
+				set result "$result<port id='$innerport'>"
+				set count 0
+				foreach pk $innerpkey  {
+					set result "$result<pkey id='$count' value='$pk'/>"
+					set count [expr $count + 1]
+				}
+				#close port tag
+				set result "$result</port>"
+			}
+		}
+		# set currLid $innerlid
+		set result "$result</lid>"
+
+	}
+
+	set result "$result</lids>"
+
+	# build DOM tree.
+	set XML "<?xml version=\"1.0\" encoding=\"utf-8\" ?>$result"
+	set doc [dom parse $XML]
+	set root [$doc documentElement]
+
+	return $root
+}
+
+#########################################################################################
+# Name        : getCmdOutputParameter
+# Input       : paramlabel,nextparamlabel, trim { false/true }, content
+# Return      . param
+# Description : Given a paramlabel and the subsequent label, parse and return the param.
+#########################################################################################
+
+proc getCmdOutputParameter { content paramlabel nextparamlabel trim } {
+
+	set param [ regsub -all "^.*$paramlabel" "$content" "" ]
+	set param [ regsub -all "$nextparamlabel.*" "$param" "" ]
+
+	if { $trim == "true"} {     
+	        set param [ regsub -all "\n|^\s+|\;|,|^:| " "$param" "" ]
+		return $param
+	} elseif { $trim == "false"} {
+		return $param
+	} else {
+		return -code error "getCmdOutputParameter :: Invalid trim option."
+	}
+
+}
+
+
+#########################################################################################
+# Name        : ibaSAQueryVfInfoToXml
+# Input       : txt file generated from opasmaquery -o vfinfo
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted txt file.
+#########################################################################################
+
+proc ibaSAQueryVfInfoToXml { vfinfo_content } {
+
+	# build DOM tree.
+	set XML "<?xml version=\"1.0\" encoding=\"utf-8\" ?><vfabrics></vfabrics>"
+	set doc [dom parse $XML]
+	set root [$doc documentElement]
+
+	set delimeter "\n-------------------------------------------------------------------------------\n"
+	set output [ regsub -all "$delimeter" "$vfinfo_content" "|" ]
+	set vfabrics [ split $output "|"]
+
+	foreach vfabric $vfabrics {
+
+		#determine vfabricids
+		set vfabricindex [ regsub -all "Name.*" "$vfabric" "" ]
+		set vfabricindex [ regsub -all "^.*:" "$vfabricindex" "" ]
+		set vfabricindex [ regsub -all " " "$vfabricindex" "" ]
+
+		#determine Name
+		set vfabricName [ getCmdOutputParameter $vfabric "Name:" "ServiceId:" "true"]
+		set result "<vfabric name='$vfabricName' index='$vfabricindex'>"
+
+		#for each vfabric, collect the child elements.
+		foreach innervfabric $vfabrics {
+
+			#determine vfabricids
+			set innervfabricindex [ regsub -all "Name.*" "$innervfabric" "" ]
+			set innervfabricindex [ regsub -all "^.*:" "$innervfabricindex" "" ]
+			set innervfabricindex [ regsub -all " " "$innervfabricindex" "" ]
+
+			if {$vfabricindex == $innervfabricindex} {
+
+				#determine SerivceId
+				set vfabricServiceId [ getCmdOutputParameter $innervfabric "ServiceId:" "MGID:" "true" ]
+
+				# determine MGID
+				set vfabricmgid [ getCmdOutputParameter $innervfabric "MGID:" "PKey:"  "true" ]
+
+				# determine PKey
+				set vfabricpkey [ getCmdOutputParameter $innervfabric "PKey:" "SL:" "true" ]
+
+				# determine SL
+				set vfabricsl [ getCmdOutputParameter $innervfabric "SL:" "Select:" "true" ]
+
+				# determine Select
+				set vfabricsselect [ getCmdOutputParameter $innervfabric "Select:" "PktLifeTimeMult:"  "true" ]
+
+				# determine MaxMtu
+				set vfabricsmaxmtu [ getCmdOutputParameter $innervfabric "MaxMtu:" "MaxRate:"  "true" ]
+
+				# determine MaxRate
+				set vfabricsmaxrate [ getCmdOutputParameter $innervfabric "MaxRate:" "Options:"  "true" ]
+
+				# determine options
+				set vfabricsoptions [ getCmdOutputParameter $innervfabric "Options:" "QOS:"  "true" ]
+
+				# determine QOS
+				set vfabricsqos [ getCmdOutputParameter $innervfabric "QOS:" "\n"  "true" ]
+
+				# build xml.
+				set result "$result<serviceid>$vfabricServiceId</serviceid>"
+				set result "$result<mgid>$vfabricmgid</mgid>"
+				set result "$result<pkey>$vfabricpkey</pkey>"
+				set result "$result<sl>$vfabricsl</sl>"
+				set result "$result<select>$vfabricsselect</select>"
+				set result "$result<maxmtu>$vfabricsmaxmtu</maxmtu>"
+				set result "$result<maxrate>$vfabricsmaxrate</maxrate>"
+				set result "$result<options>$vfabricsoptions</options>"
+				set result "$result<qos>$vfabricsqos</qos>"
+
+			}
+
+		}
+		set result "$result</vfabric>"
+
+		$root appendXML $result
+
+	}
+
+	return $root
+
+}
+
+#########################################################################################
+# Name        : ibaSAQueryNodeToXml
+# Input       : txt generated from opasmaquery -o node
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted txt file.
+#########################################################################################
+
+proc ibaSAQueryNodeToXml { lid_content } {
+
+	# build DOM tree.
+	set XML "<?xml version=\"1.0\" encoding=\"utf-8\" ?><lids></lids>"
+	set doc [dom parse $XML]
+	set root [$doc documentElement]
+
+	set delimeter "\n-------------------------------------------------------------------------------\n"
+	set output [ regsub -all "$delimeter" "$lid_content" "|" ]
+	set lids [ split $output "|"]
+
+	foreach lid $lids {
+
+		#determine lid
+		set lidId [ getCmdOutputParameter $lid "LID:" "Type:" "true" ]
+
+		#determine Type
+		set lidType [ getCmdOutputParameter $lid "Type:" "Name:"  "true" ]
+
+		#determine Name
+		set lidName [ getCmdOutputParameter $lid "Name:" "\n"  "true" ]
+
+		# determine Lid:
+
+		set result "<lid id='$lidId' type='$lidType' name='$lidName'>"
+
+		#for each vfabric, collect the child elements.
+		foreach innerlid $lids {
+
+			#determine lid
+			set innerlidId [ getCmdOutputParameter $innerlid "LID:" "Type:"  "true" ]
+
+			if {$lidId == $innerlidId} {
+
+				#determine Ports
+				set lidPort [ getCmdOutputParameter $innerlid "Ports:" "PortNum:"  "true" ]
+
+				# determine PortNum
+				set lidPortNum [ getCmdOutputParameter $innerlid "PortNum:" "PartitionCap:"  "true" ]
+
+				# determine PartitionCap
+				set lidPartitionCap [ getCmdOutputParameter $innerlid "PartitionCap:" "\n"  "true" ]
+
+				# determine NodeGuid
+				set lidNodeGuid [ getCmdOutputParameter $innerlid "NodeGuid:" "PortGuid:"  "true" ]
+
+				# determine PortGuid
+				set lidPortGuid [ getCmdOutputParameter $innerlid "PortGuid:" "\n"  "true" ]
+
+				# determine BaseVersion
+				set lidBaseVersion [ getCmdOutputParameter $innerlid "BaseVersion:" "SmaVersion"  "true" ]
+
+				# determine SmaVersion
+				set lidSmaVersion [ getCmdOutputParameter $innerlid "SmaVersion:" "VendorID:"  "true" ]
+
+				# determine VendorID
+				set lidVendorID [ getCmdOutputParameter $innerlid "VendorID:" "DeviceId:"  "true" ]
+
+				# determine Revision
+				set lidRevision [ getCmdOutputParameter $innerlid "Revision:" "\n"  "true" ]
+
+				# build xml.
+				set result "$result<port>$lidPort</port>"
+				set result "$result<portnum>$lidPortNum</portnum>"
+				set result "$result<partitioncap>$lidPartitionCap</partitioncap>"
+				set result "$result<nodeguid>$lidNodeGuid</nodeguid>"
+				set result "$result<portguid>$lidPortGuid</portguid>"
+				set result "$result<baseversion>$lidBaseVersion</baseversion>"
+				set result "$result<smaversion>$lidSmaVersion</smaversion>"
+				set result "$result<vendorid>$lidVendorID</vendorid>"
+				set result "$result<revision>$lidRevision</revision>"
+
+			}
+
+		}
+		set result "$result</lid>"
+
+		$root appendXML $result
+
+	}
+
+	return $root
+
+}
+
+#########################################################################################
+# Name        : ibaSAQueryLinkToXml
+# Input       : txt generated from opasmaquery -o link
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted txt file.
+#########################################################################################
+
+proc ibaSAQueryLinkToXml { link_content } {
+	# build DOM tree.
+	set XML "<?xml version=\"1.0\" encoding=\"utf-8\" ?><links></links>"
+	set doc [dom parse $XML]
+	set root [$doc documentElement]
+
+	set delimeter "\n"
+	set output [ regsub -all "$delimeter" "$link_content" "|" ]
+	set links [ split $output "|"]
+    
+	foreach link $links {
+
+		#srclid
+		set srcLid [ getCmdOutputParameter $link "LID:" " -" "true" ]
+		#dstlid
+		set dstLid [ getCmdOutputParameter $link "$srcLid ->" "Port:"  "true" ]
+		#srcport
+		set srcPort [ getCmdOutputParameter $link "Port:" " ->"  "true" ]
+		#dstport
+		set dstPort [ getCmdOutputParameter $link "$srcPort ->" "\n"  "true" ]
+
+		#dumpvar $dstLid 0 false
+
+		set result "<link srcLid='$srcLid' srcPort='$srcPort' dstLid='$dstLid' dstPort='$dstPort'/>"
+
+		$root appendXML $result
+
+	}
+
+	return $root
+}
+
+#########################################################################################
+# Name        : ibaSAQuerySwinfoToXml
+# Input       : txt generated from opasaquery -o swinfo
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted txt file.
+#########################################################################################
+
+proc ibaSAQuerySwinfoToXml { swinfo_content } {
+
+        # build DOM tree.
+        set XML "<?xml version=\"1.0\" encoding=\"utf-8\" ?><Swinfo></Swinfo>"
+        set doc [dom parse $XML]
+        set root [$doc documentElement]
+
+        set delimeter "\n-------------------------------------------------------------------------------\n"
+        set output [ regsub -all "$delimeter" "$swinfo_content" "|" ]
+        set swinfo [ split $output "|"]
+
+        foreach sw $swinfo {
+
+                # Determine Switch LID
+                set lid [ getCmdOutputParameter $swinfo "LID:" "\n" "true"]
+
+                # Determing LinearFDBCap
+                set linearfdbcap [ getCmdOutputParameter $swinfo "LinearFDBCap:" "LinearFDBTop:" "true"]
+                # Determing LinearFDBTop
+                set linearfdbtop [ getCmdOutputParameter $swinfo "LinearFDBTop:" "MCFDBCap:" "true"]
+                # Determing MCFDBCap
+                set mcfdbcap [ getCmdOutputParameter $swinfo "MCFDBCap:" "MCFDBTop:" "true"]
+                # Determing MCFDBTop
+                set mcfdbtop [ getCmdOutputParameter $swinfo "MCFDBTop:" "\n" "true"]
+                # Determing Capability
+                set capability [ getCmdOutputParameter $swinfo "Capability:" ": " "true"]
+                # Determing PartEnfCap
+                set partenfcap [ getCmdOutputParameter $swinfo "PartEnfCap:" "PortStateChange:" "true"]
+                # Determing PortStateChange
+                set portstatechange [ getCmdOutputParameter $swinfo "PortStateChange:" "SwitchLifeTime:" "true"]
+                # Determing SwitchLifeTime
+                set switchlifetime [ getCmdOutputParameter $swinfo "SwitchLifeTime:" "\n" "true"]
+                # Determing PortGroupCap
+                set portgroupcap [ getCmdOutputParameter $swinfo "PortGroupCap:" "PortGroupTop:" "true"]
+                # Determing PortGroupTop
+                set portgrouptop [ getCmdOutputParameter $swinfo "PortGroupTop:" "\n" "true"]
+                # Determing IPAddrIPV6
+                set ipaddripv6 [ getCmdOutputParameter $swinfo "IPAddrIPV6:" "\n" "true"]
+                # Determing IPAddrIPV4
+                set ipaddripv4 [ getCmdOutputParameter $swinfo "IPAddrIPV4:" "\n" "true"]
+                # Determing Supported RoutingMode
+                set routingmode_supported [ getCmdOutputParameter $swinfo "RoutingMode.Supported:" "RoutingMode.Enabled:" "true"]
+                # Determing RoutingMode Enable
+                set routingmode_enabled [ getCmdOutputParameter $swinfo "RoutingMode.Enabled:" "\n" "true"]
+                # Determing AdaptiveRouting Enable
+                set adaptiverouting_enabled [ getCmdOutputParameter $swinfo "AdaptiveRouting: Enable:" "Pause:" "true"]
+                # Determing AR Pause
+                set adaptiverouting_pause [ getCmdOutputParameter $swinfo "Pause:" "Algorithm:" "true"]
+                # Determing AR Algorithm 
+                set adaptiverouting_algorithm [ getCmdOutputParameter $swinfo "Algorithm:" "Frequency:" "true"]
+                # Determing AR Frequency
+                set adaptiverouting_frequency [ getCmdOutputParameter $swinfo "Frequency:" "LostRoutesOnly:" "true"]
+                # Determing AR LostRoutesOnly
+                set adaptiverouting_lostroutesonly [ getCmdOutputParameter $swinfo "LostRoutesOnly:" "\n" "true"]
+                # Determing CapabilityMask
+                set capabilitymask_addrrangeconfig [ getCmdOutputParameter $swinfo "CapabilityMask: IsAddrRangeConfigSupported:" "IsAdaptiveRoutingSupported:" "true"]
+                # Determing AR Support
+                set capabilitymask_adaptiverouting [ getCmdOutputParameter $swinfo "IsAdaptiveRoutingSupported:" "\n" "true"]
+
+                # Build XML
+                set result "<Switch LID='$lid'>"
+
+                set result "$result<LinearFDBCap>$linearfdbcap</LinearFDBCap>"
+                set result "$result<LinearFDBTop>$linearfdbtop</LinearFDBTop>"
+                set result "$result<MCFDBCap>$mcfdbcap</MCFDBCap>"
+                set result "$result<MCFDBTop>$mcfdbtop</MCFDBTop>"
+                set result "$result<Capability>$capability</Capability>"
+                set result "$result<PartEnfCap>$partenfcap</PartEnfCap>"
+                set result "$result<PortStateChange>$portstatechange</PortStateChange>"
+                set result "$result<SwitchLifeTime>$switchlifetime</SwitchLifeTime>"
+                set result "$result<PortGroupCap>$portgroupcap</PortGroupCap>"
+                set result "$result<PortGroupTop>$portgrouptop</PortGroupTop>"
+                set result "$result<IPAddrIPV6>$ipaddripv6</IPAddrIPV6>"
+                set result "$result<IPAddrIPV4>$ipaddripv4</IPAddrIPV4>"
+
+                set result "$result<RoutingMode>"
+                set result "$result<Supported>$routingmode_supported</Supported>"
+                set result "$result<Enabled>$routingmode_enabled</Enabled>"
+                set result "$result</RoutingMode>"
+
+                set result "$result<AdaptiveRouting>"
+                set result "$result<Enable>$adaptiverouting_enabled</Enable>"
+                set result "$result<Pause>$adaptiverouting_pause</Pause>"
+                set result "$result<Algorithm>$adaptiverouting_algorithm</Algorithm>"
+                set result "$result<Frequency>$adaptiverouting_frequency</Frequency>"
+                set result "$result<LostRoutesOnly>$adaptiverouting_lostroutesonly</LostRoutesOnly>"
+                set result "$result</AdaptiveRouting>"
+
+                set result "$result<CapabilityMask>"
+                set result "$result<IsAddrRangeConfigSupported>$capabilitymask_addrrangeconfig</IsAddrRangeConfigSupported>"
+                set result "$result<IsAdaptiveRoutingSupported>$capabilitymask_adaptiverouting</IsAdaptiveRoutingSupported>"
+                set result "$result</CapabilityMask>"
+
+                set result "$result</Switch>"
+
+                $root appendXML $result
+        }
+
+        #puts "[$root asXML]"
+        return $root
+
+}
+
+#########################################################################################
+# Name        : ibaSAQueryPathRecordToXml
+# Input       : txt generated from opasaquery -o portinfo
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted txt file.
+#########################################################################################
+
+proc ibaSAQueryPathRecordToXml { path_content } {
+
+    # build DOM tree.
+    set XML "<?xml version=\"1.0\" encoding=\"utf-8\" ?><PathRecord></PathRecord>"
+    set doc [dom parse $XML]
+    set root [$doc documentElement]
+
+    set delimeter "\n-------------------------------------------------------------------------------\n"
+    set output [ regsub -all "$delimeter" "$path_content" "|" ]
+    set pathrecord [ split $output "|"]
+    set numPaths 0
+
+    foreach path $pathrecord {
+        incr numPaths
+
+        #determine source to destination pair
+        set slid [ getCmdOutputParameter $path "SLID:" "DLID:" "true"]
+        set dlid [ getCmdOutputParameter $path "DLID:" "Reversible:" "true"]
+        set pkey [ getCmdOutputParameter $path "PKey:" "\n" "true"]
+        set result "<Path SLID='$slid' DLID='$dlid' PKey='$pkey'>"
+
+
+        # Determine SGID
+        set sgid [ getCmdOutputParameter $path "SGID:" "\n" "true"]
+
+        # Determine DGID
+        set dgid [ getCmdOutputParameter $path "DGID:" "\n" "true"]
+
+        # Determine Reversible ("Y" or "N")
+        set reversible [ getCmdOutputParameter $path "Reversible:" "PKey" "true"]
+
+        # Determine SL
+        set sl [ getCmdOutputParameter $path "SL:" "Mtu:" "true"]
+
+        # Determine Mtu
+        set mtu [ getCmdOutputParameter $path "Mtu:" "Rate:" "true"]
+
+        # Determine Rate
+        set rate [ getCmdOutputParameter $path "Rate:" "PktLifeTime:" "true"]
+
+        # Determine PktLifeTime
+        set pktlifetime [ getCmdOutputParameter $path "PktLifeTime" "Pref:" "true"]
+
+        # Determine Pref
+        set pref [ getCmdOutputParameter $path "Pref:" "\n" "true"]
+
+        # build xml.
+        set result "$result<SGID>$sgid</SGID>"
+        set result "$result<DGID>$dgid</DGID>"
+        set result "$result<Reversible>$reversible</Reversible>"
+        set result "$result<PKey>$pkey</PKey>"
+        set result "$result<SL>$sl</SL>"
+        set result "$result<Mtu>$mtu</Mtu>"
+        set result "$result<Rate>$rate</Rate>"
+        set result "$result<PktLifeTime>$pktlifetime</PktLifeTime>"
+        set result "$result<Pref>$pref</Pref>"
+
+        set result "$result</Path>"
+
+        $root appendXML $result
+
+    }
+
+    $root appendXML "<NumPaths>$numPaths</NumPaths>"
+
+    return $root
+}
+
+
+
+#########################################################################################
+# Name        : ibaSAQueryPortInfoToXml
+# Input       : txt generated from opasaquery -o portinfo
+# Return      . DOM object.
+# Description : Produce a DOM object (xml) from a formatted txt file.
+#########################################################################################
+
+proc ibaSAQueryPortInfoToXml { port_content } {
+    set lines [ split $port_content "\n"]
+    
+    set doc [ dom createDocument PortInfo ]
+    $doc encoding {iso8859-1}
+    
+    set root [$doc documentElement]
+    
+    set generateNewPort 1
+    set portNum_dec {}
+
+    foreach line $lines {
+	# Skip empty lines
+	set rc [ regexp {^$} $line matched ]
+	if { $rc == 1 } {
+	    continue
+	}
+	
+	if { $generateNewPort == 1 } {
+	    set portNode [ $doc createElement Port ]
+	    $root appendChild $portNode
+	    set generateNewPort 0
+	}
+	
+	set rc [ regexp {PortLID: +(0x[0-9a-fA-F]+) +PortNum: +(0x[0-9a-fA-F]+) +\((\s*[0-9]+\s*)\)} $line matched plid portNum portNum_dec]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc PortLID $plid ]
+	    $portNode appendChild [ createTextElement $doc PortNum $portNum_dec ]
+	}
+
+	set rc [ regexp {^Subnet: +([0-9a-fA-F]+$)} $line matched subnet ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc Subnet $subnet ]
+	}
+
+	set rc [ regexp {LocalPort: +([0-9]+) +PortState: +(.+)} $line matched locPort portState ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc LocalPort $locPort   ]
+	    $portNode appendChild [ createTextElement $doc PortState $portState ]
+	}
+
+	set rc [ regexp {PhysicalState: +(.+)} $line matched physState ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc PhysicalState $physState   ]
+	}
+
+	set rc [ regexp {IsSMConfigurationStarted: +(.+[^ ]) +NeighborNormal: +(.+)} $line matched smStarted neighbor ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc IsSMConfigurationStarted $smStarted ]
+	    $portNode appendChild [ createTextElement $doc NeighborNormal $neighbor  ]
+	}
+
+	set rc [ regexp {BaseLID: +([0-9a-zA-Z]+) +SMLID: +(0x[0-9a-fA-F]+)} $line matched baseLid smLid ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc BaseLID $baseLid ]
+	    $portNode appendChild [ createTextElement $doc SMLID   $smLid   ]
+	}
+
+	set rc [ regexp {LMC: +([0-9]+) +SMSL: +([0-9]+)} $line matched lmc smsl ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc LMC  $lmc  ]
+	    $portNode appendChild [ createTextElement $doc SMSL $smsl ]
+	}
+
+	set rc [ regexp {PortType: +(.+)[^ ] +LimtRsp/Subnet: +([0-9]+) +([a-zA-Z]+), +([0-9]+) +([a-zA-Z]+)} $line matched portType lmtRsp lmtRspUom subnet subnetUom ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc PortType $portType ]
+	    $portNode appendChild [ createTextElement $doc LimtRsp_Subnet "$lmtRsp$lmtRspUom,$subnet$subnetUom" ]
+	}
+
+	set rc [ regexp {M_KEY: +(0x[0-9a-fA-F]+) +Lease: +([0-9]+) +([a-zA-Z]+) +Protect: +(.+)} $line matched mkey lease leaseUOM protect ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc M_KEY $mkey  ]
+	    $portNode appendChild [ createTextElement $doc Lease $lease$leaseUOM ]
+	    $portNode appendChild [ createTextElement $doc Protect $protect ]
+	}
+
+	set rc [ regexp {LinkWidth +Act: +([0-9a-zA-Z_-]+) +Sup: +(.+) +En: (.+)} $line matched act sup en ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc LinkWidth Act $act Sup [ string trim $sup ] En $en ]
+	}
+
+	set rc [ regexp {LinkWidthDnGrd +Act: +([0-9a-zA-Z_-]+) +Sup: +(.+) +En: (.+)} $line matched act sup en ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc LinkWidthDnGrd Act $act Sup [ string trim $sup ] En $en ]
+	}
+
+	set rc [ regexp {LinkSpeed +Act: +([0-9a-zA-Z_-]+) +Sup: +(.+) +En: (.+)} $line matched act sup en ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc LinkSpeed Act $act Sup [ string trim $sup ] En $en ]
+	}
+	
+	set rc [ regexp {PortLinkMode +Act: +([0-9a-zA-Z_-]+) +Sup: +(.+) +En: (.+)} $line matched act sup en ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc PortLinkMode Act $act Sup [ string trim $sup ] En $en ]
+	}
+	
+	set rc [ regexp {PortLTPCRCMode +Act: +([0-9a-zA-Z_-]+) +Sup: +(.+) +En: (.+)} $line matched act sup en ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc PortLTPCRCMode Act $act Sup [ string trim $sup ] En $en ]
+	}
+	
+	set rc [ regexp {NeighborMode +MgmtAllowed: +([0-9a-zA-Z_-]+) +FWAuthBypass: +([0-9a-zA-Z_-]+) +NeighborNodeType: +([0-9a-zA-Z_-]+)} $line matched mgmtAllowd authBypass neighborType ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc NeighborMode MgmtAllowed $mgmtAllowd FWAuthBypass $authBypass NeighborNodeType $neighborType ]
+	}
+
+	set rc [ regexp {NeighborNodeGuid: +(0x[0-9a-fA-F]+)} $line matched guid ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc NeighborNodeGuid $guid  ]
+	}
+
+	set rc [ regexp {Capability: +(0x[0-9a-fA-F]+): *(.*)} $line matched number tag ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc Capability $number:$tag  ]
+	}
+
+	set rc [ regexp {Capability3: +(0x[0-9a-fA-F]+): *(.*)} $line matched number tag ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc Capability3 $number:$tag  ]
+	}
+
+	set rc [ regexp {VLs Active: +(0x[0-9a-fA-F]+)} $line matched number ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc VLs_Active $number  ]
+	}
+
+	set rc [ regexp {VL: +Cap +(0x[0-9a-fA-F]+) +HighLimit +(0x[0-9a-fA-F]+) +PreemptLimit +(0x[0-9a-fA-F]+)} $line matched cap highLimit preemptLimit ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc VL Cap $cap HighLimit $highLimit PreemptLimit $preemptLimit ]
+	}
+
+	set rc [ regexp {VLs Active: +(0x[0-9a-fA-F]+)} $line matched number ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc VLs_Active $number  ]
+	}
+
+	set rc [ regexp {MulticastMask: +(0x[0-9a-fA-F]+) +CollectiveMask: +(0x[0-9a-fA-F]+)} $line matched mmask cmask ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc MulticastMask  $mmask ]
+	    $portNode appendChild [ createTextElement $doc CollectiveMask $cmask ]
+	}
+
+	set rc [ regexp {P_Key Enforcement +In: +([a-zA-Z]+) +Out: +([a-zA-Z]+)} $line matched inVal outVal ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc P_Key_Enforcement In $inVal Out $outVal ]
+	}
+
+	set rc [ regexp {MulticastPKeyTrapSuppressionEnabled: +([0-9]+) +ClientReregister +([0-9]+)} $line matched val1 val2 ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc MulticastPKeyTrapSuppressionEnabled  $val1 ]
+	    $portNode appendChild [ createTextElement $doc ClientReregister $val2 ]
+	}
+
+	set rc [ regexp {PortMode +ActiveOptimize: +([a-zA-Z]+) +PassThru: +([a-zA-Z]+) +VLMarker: +([a-zA-Z]+)\s*} $line matched val1 val2 val3 ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc PortMode ActiveOptimize $val1 PassThru $val2 VLMarker $val3 ]
+	}
+
+	# This belongs to the previous element
+	set rc [ regexp {\s+16BTrapQuery:\s+([a-zA-Z]+)\s*} $line matched val1 ]
+	if { $rc == 1 } {
+	    set portModeNode [ $doc selectNodes {//PortInfo/Port[PortNum=$portNum_dec and PortLID=$plid]/PortMode }]
+	    $portModeNode setAttribute TrapQuery16BT $val1
+	}
+
+	set rc [ regexp {FlitCtrlInterleave +Distance Max: +([0-9]+) +Enabled: +([0-9]+)} $line matched val1 val2 ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc FlitCtrlInterleave Distance_Max $val1 Enabled $val2 ]
+	}
+
+	# This belongs to the previous element
+	set rc [ regexp {MaxNestLevelTxEnabled: +([0-9]+) +MaxNestLevelRxSupported: +([0-9]+)} $line matched val1 val2 ]
+	if { $rc == 1 } {
+	    set portModeNode [ $doc selectNodes {//PortInfo/Port[PortNum=$portNum_dec and PortLID=$plid]/FlitCtrlInterleave } ]
+	    $portModeNode setAttribute MaxNestLevelTxEnabled $val1 MaxNestLevelRxSupported $val2
+	}
+
+	set rc [ regexp {FlitCtrlPreemption +MinInitial: +(0x[0-9a-fA-F]+) +MinTail: +(0x[0-9a-fA-F]+) +LargePktLim: +(0x[0-9a-fA-F]+)} $line matched val1 val2 val3 ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc FlitCtrlPreemption MinInitial $val1 MinTail $val2 LargePktLim $val3 ]
+	}
+
+	# This belongs to the previous element
+	set rc [ regexp {SmallPktLimit: +(0x[0-9a-fA-F]+) +MaxSmallPktLimit +(0x[0-9a-fA-F]+) +PreemptionLimit: +(0x[0-9a-fA-F]+)} $line matched val1 val2 val3 ]
+	if { $rc == 1 } {	
+	    set portModeNode [ $doc selectNodes {//PortInfo/Port[PortNum=$portNum_dec and PortLID=$plid]/FlitCtrlPreemption } ]
+
+	    $portModeNode setAttribute SmallPktLimit $val1 MaxSmallPktLimit $val2 PreemptionLimit $val3
+	}
+
+	set rc [ regexp {PortErrorActions: +(0x[0-9a-fA-F]+): +(.+)} $line matched val1 val2 ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc PortErrorActions Value $val1 Fields $val2 ]
+	}
+
+	set rc [ regexp {BufferUnits:VL15Init +(0x[0-9a-fA-F]+) +VL15CreditRate +(0x[0-9a-fA-F]+) +CreditAck +(0x[0-9a-fA-F]+) +BufferAlloc +(0x[0-9a-fA-F]+)} $line matched val1 val2 val3 val4 ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc BufferUnits VL15Init $val1 VL15CreditRate $val2 CreditAck $val3 BufferAlloc $val4 ]
+	}
+
+	set rc [ regexp {MTU +Supported: +(.+)} $line matched val1 ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc MTU Cap $val1 ]
+	}
+
+	set rc [ regexp {MTU +Active By VL:} $line matched ]
+	if { $rc == 1 } {	
+	    set mtuNode [ $doc createElement NeighborMTUByVL ]
+	    $portNode appendChild $mtuNode
+	}
+
+	# Build VLtoMTU Map
+	set rc [ regexp {^00: |^08: |^16: |^24: } $line matched ]
+	if { $rc == 1 } {
+	    #the regex ": +" eliminates the error for MTU values that are less than 4 characters
+	    #sample line 00>8192 01>4096 02>8192 03>8192 04>256 05>512 06>1024 07>2048
+	    set VLMTUPair_line [regsub -all ": +" $line >]
+	    
+	    foreach vlMTUPair [split $VLMTUPair_line " "] {
+		#00>8192
+    	        set vlValue [lindex [split $vlMTUPair ">"] 0]
+    	        set value [lindex [split $vlMTUPair ">"] 1]
+		
+		set mtuNode [ $doc selectNodes {//PortInfo/Port[PortNum=$portNum_dec and PortLID=$plid]/NeighborMTUByVL } ]
+		    
+		$mtuNode appendChild [ createAttributesElement $doc VL id $vlValue MTU  $value ]    
+	    }
+	}
+
+	set rc [ regexp {StallCnt/VL: } $line matched ]
+	if { $rc == 1 } {	
+	    set values [ split $line ]
+	    set values [ lreplace $values 0 0 ]
+	    set valueCounter 0
+	    set stallCountsNode [ $doc createElement StallCounts ]
+
+	    foreach value $values {
+		set value [ string trim $value ]
+		
+		# Skip empty fields
+		if { [ string length $value ] != 0 } {
+		    $stallCountsNode appendChild [ createAttributesElement $doc VL id $valueCounter Count $value ]
+		    
+		    incr valueCounter
+		}
+	    }
+
+	    $portNode appendChild $stallCountsNode
+	}
+	
+	set rc [ regexp {^HOQLife VL\[([0-9]+),([0-9])+\]: } $line matched startVL endVL ]
+	if { $rc == 1 } {	
+	    set values [ split $line " "]
+
+	    # Getting rid of the first two fields, so two identical calls
+	    set values [ lreplace $values 0 0 ]
+	    set values [ lreplace $values 0 0 ]
+
+	    set vlValue [ string trim $startVL "0" ]
+	    if { $vlValue == "" } {
+		set vlValue 0
+	    }
+
+	    if { $startVL == 0 } {
+		# Create HOQLife to VL element
+		set hoqNode [ $doc createElement HOQ ]
+		$portNode appendChild $hoqNode
+	    }
+
+	    foreach value $values {
+		set Node [ $doc selectNodes {//PortInfo/Port[PortNum=$portNum_dec and PortLID=$plid]/HOQ } ]
+
+		$Node appendChild [ createAttributesElement $doc VL id $vlValue Life  $value ]
+		incr vlValue
+	    }	
+	}    
+
+	set rc [ regexp {ReplayDepth Buffer +(0x[0-9a-fA-F]+). +Wire +(0x[0-9a-fA-F]+)} $line matched val1 val2 ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc ReplayDepth Buffer $val1 Wire $val2 ]
+	}
+
+	set rc [ regexp {DiagCode: +(0x[0-9a-fA-F]+) +LinkDownReason: +(.+)} $line matched val1 val2 ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc DiagCode $val1 ]
+	    $portNode appendChild [ createTextElement $doc LinkDownReason $val2 ]
+	}
+
+	set rc [ regexp {OverallBufferSpace: +(0x[0-9a-fA-F]+)} $line matched val1 ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc OverallBufferSpace $val1 ]
+	}
+
+	set rc [ regexp {Violations +M_Key: +([0-9]+) +P_Key: +([0-9]+) +Q_Key: +([0-9]+)} $line matched val1 val2 val3 ]
+	if { $rc == 1 } {	
+	    $portNode appendChild [ createAttributesElement $doc Violations M_Key $val1 P_Key $val2 Q_Key $val3 ]
+	}
+
+	# Last element of a port
+	set rc [ regexp {LinkDownErrorLog: +(.+$)} $line matched linkDown ]
+	if { $rc == 1 } {
+	    $portNode appendChild [ createTextElement $doc LinkDownErrorLog $linkDown ]
+
+	    # Generate new port tag
+	    set generateNewPort 1
+	}
+    }
+
+    #puts [$root asXML]
+    return $root
+}
+
+
+#########################################################################################
+# Name        : smaquerytoxml
+# Input       : txt file generated from opasmaquery,top row label, bottom row label
+# Return      . DOM tree.
+# Description : Produce a DOM object (xml) from a formatted txt file.
+#########################################################################################
+
+proc smaquerytoxml { content toplabel bottomlabel } {
+
+	# determine parsing method based on content size.
+	# There are 206 characters in a single port output.
+
+	#dumpvar $content 0 false
+	set singlePortCommandSize 206
+
+	if { [ string length $content ] < $singlePortCommandSize  } {
+		# Single Port Ouput.
+
+		# Parse
+		set toprow [ regsub -all "$bottomlabel:.*" "$content" "" ]
+		set bottomrow [ regsub -all ".+?(?=$bottomlabel)" "$content" "" ]
+		set toprow_values [ regsub -all "$toplabel:" "$toprow" "" ]
+		set bottomrow_values [ regsub -all "$bottomlabel:" "$bottomrow" "" ]
+
+		set i 0
+		set result "<ports>"
+		set result "$result<port id='1'>"
+		foreach sl_xml $toprow_values	{
+			set sc_xml [ lindex $bottomrow_values $i]
+			set result "$result<$toplabel id='$sl_xml'><$bottomlabel>$sc_xml</$bottomlabel></$toplabel>"
+			set i [expr $i + 1]
+		}
+		set result "$result</port>"
+		set result "$result</ports>"
+
+	} else {
+		# Multi Port Ouput:
+		# puts "this is the multiport ouput."
+
+		# Parse
+		set rowTop [ getCmdOutputParameter $content $toplabel "Port" "true" ]
+
+		# define port array
+		array set portArr {}
+
+		# determine size of multiport output
+		set portcount [ regexp -all {(Port)} $content ]
+
+               # define spacing between Port and #                                                                                                                                                                                          
+                set singlespace " "
+                set doublespace "  "
+
+                #Build port array.                                                                                                                                                                                                        
+                for {set i 0} {$i < $portcount} {incr i} {
+
+		    if {$i < 9 } {
+			set portArr($i) [ getCmdOutputParameter $content "Port$doublespace$i" "Port$doublespace[expr $i + 1]" "true" ]
+			set portArr($i) [ getCmdOutputParameter $portArr($i) "$bottomlabel:"  "\n" "true" ]
+		    } elseif {$i == 9} {
+			set portArr($i) [ getCmdOutputParameter $content "Port$doublespace$i" "Port$singlespace[expr $i + 1]" "true" ]
+			set portArr($i) [ getCmdOutputParameter $portArr($i) "$bottomlabel:"  "\n" "true" ]
+		    } else {
+			set portArr($i) [ getCmdOutputParameter $content "Port$singlespace$i" "Port$singlespace[expr $i + 1]" "true" ]
+			set portArr($i) [ getCmdOutputParameter $portArr($i) "$bottomlabel:"  "\n" "true" ]
+		    }
+                }
+
+		set result "<ports>"
+		# for each port, determine the toplabel-bottom label mapping
+
+		for {set j 0} {$j < $portcount} {incr j} {
+
+			set result "$result<port id='$j'>"
+
+			foreach row $portArr($j) column $rowTop  {
+				set result "$result<$toplabel id='$column'><$bottomlabel>$row</$bottomlabel></$toplabel>"
+			}
+			set result "$result</port>"
+		}
+		set result "$result</ports>"
+
+	}
+
+	# build DOM tree.
+	set XML "<?xml version=\"1.0\" encoding=\"utf-8\" ?>$result"
+	set doc [dom parse $XML]
+	set root [$doc documentElement]
+#	puts "[$root asXML]"
+	return $root
+}
+
+
+#########################################################################################
+# Name        : build_node_list
+# Input       : DOM node list.
+# Return      . TCL list of strings.
+# Description : dereference xpath node values.
+#########################################################################################
+
+proc build_node_list { list } {
+
+	set nodeList {}
+
+	foreach node $list {
+		set idx_val [ lindex [$node nodeValue] 0 ]
+		lappend nodeList $idx_val
+	}
+
+	return $nodeList
+}
+
+#########################################################################################
+# Name        : node_lists_cmp_eq
+# Input       : list1, list2, list1Desc, list2Desc
+# Return      . None.
+# Description : Checks if all values of list1 exist in list2.
+#########################################################################################
+
+proc node_lists_cmp_eq { list1 list2 list1Desc list2Desc} {
+
+	foreach element $list1 {
+		if {$element ni $list2} {
+			return -code error "ERROR : $list1Desc $element does not exist in $list2Desc"
+		}
+	}
+}
+
+#########################################################################################
+# Name        : node_lists_cmp_ne
+# Input       : list1, list2, list1Desc, list2Desc, testState
+# Return      . None.
+# Description : Checks if all values of list1 do not exist in list2.
+#########################################################################################
+
+proc node_lists_cmp_ne { list1 list2 list1Desc list2Desc testState } {
+
+	foreach element $list1 {
+		if {$element in $list2} {
+			return -code error "ERROR : $list1Desc $element exists in $list2Desc. \nTest Execution State : $testState"
+		}
+	}
+}
+
+#########################################################################################
+# Name        : node_list_cmp_eq
+# Input       : list1, list1Desc
+# Return      . None.
+# Description : Compare every element in the list with every other element in the list.
+#########################################################################################
+
+proc node_list_cmp_eq { list1 list1Desc} {
+
+	foreach element1 $list1 {
+		foreach element2 $list1 {
+			if {$element1 ne $element2} {
+				return -code error "ERROR : $element1 does not exist in $list1Desc."
+			}
+		}
+	}
+}
+
+#########################################################################################
+# Name        : node_list_cmp_ne
+# Input       : list1, list1Desc
+# Return      . Return a failure if an element exists in a list more than once.
+# Description : Compare every element in the list with every other element in the list.
+#########################################################################################
+
+proc node_list_cmp_ne { list1 list1Desc} {
+
+	foreach element1 $list1 {
+		set match 0
+		foreach element2 $list1 {
+			if {$element1 eq $element2} {
+				set count [expr $match + 1]
+				if {$match > 1} {
+					return -code error "ERROR : $element1 exists in $list1Desc."
+				}
+			}
+		}
+	}
+}
+
+#########################################################################################
+# Name        : arginfoToXml
+# Input       : None
+# Return      . outputXml, string containing xml elements and values
+# Description : Converts input arguments of any calling proc to xml. Call arginfoToXml 
+#		from a proc with input arguments that need to be converted to Xml
+#########################################################################################
+
+proc arginfoToXml {} {
+	
+	#get calling proc name
+	set proc [lindex [info level -1] 0]   
+	set proc_name [uplevel [list namespace which -command $proc]]
+	set outputXml {}
+	#Take each input argument argName and argValue of the calling function and convert
+	#to a xml line in the form <argName>$argValue</argName>
+	    foreach arg [info args $proc_name] {
+	    set value [uplevel [list set $arg]]
+	    
+	     if { [info default $proc_name $arg def] && [ string length  $value ] ==0 } { 
+		 lappend outputXml "<$arg>$def</$arg>"
+	     } elseif { [ string length  $value ] != 0 } { 
+		 lappend outputXml "<$arg>$value</$arg>"
+	     }    
+	}   
+	return $outputXml
+}
+

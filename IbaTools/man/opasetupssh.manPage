@@ -1,0 +1,183 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opasetupssh 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opasetupssh
+
+.NL
+
+.PP
+
+\fB(Linux or Switch)\fR
+Creates ssh keys and configures them on all hosts or chassis so the system can use ssh and scp into all other hosts or chassis without a password prompt. Typically, during cluster setup this tool enables the root user on the Management Node to login to the other hosts (as root) or chassis (as admin) using password-less ssh.
+.SH Syntax
+.NL
+opasetupssh [-C] [-p] [-U] [-s] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \' \fIHOSTS\fR\'] [-H \' \fIchassis\fR\'] [-i \fIipoib\(ulsuffix\fR] [-u \fIuser\fR] [-S] [-R] [-P]
+.PP
+or
+.br
+opasetupssh --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produce full help text
+.TP 10
+-C 
+.NL
+Perform operation against chassis, default is hosts.
+.TP 10
+-p 
+.NL
+Perform operation against all chassis or hosts in parallel
+.TP 10
+-U 
+.NL
+Only perform connect (to enter in local hosts, known hosts). When run in this mode, -S option are ignored).
+.TP 10
+-s 
+.NL
+Use ssh/scp to transfer files, default is rsh/rcp.
+.TP 10
+-f \fIhostfile\fR 
+.NL
+File with hosts in cluster, default is /etc/sysconfig/opa/hosts .
+.TP 10
+-F \fIchassisfile\fR 
+.NL
+File with chassis in cluster default is /etc/sysconfig/opa/chassis .
+.TP 10
+-h \fIHOSTS\fR 
+.NL
+List of hosts to setup.
+.TP 10
+-H \fIchassis\fR 
+.NL
+List of chassis to setup.
+.TP 10
+-i \fIipoib\(ulsuffix\fR 
+.NL
+Suffix to apply to host names to create IPoIB host names. The default is -ib 
+.TP 10
+-u \fIuser\fR 
+.NL
+User on remote system to allow this user to ssh to, default is current user code for host(s) and admin for chassis.
+.TP 10
+-S 
+.NL
+Securely prompt for password for user on remote system
+.TP 10
+-R 
+.NL
+Skip setup of ssh to localhost
+.TP 10
+-P 
+.NL
+Skip ping of host (for ssh to devices on internet with ping firewalled)
+.SH Examples 
+.NL
+
+.SH Operations on hosts-->
+.NL
+opasetupssh -S -i \(ga\' opasetupssh -U opasetupssh -h \'arwen elrond\' -U HOSTS=\'arwen elrond\' opasetupssh -U
+.SH Operations on chassis-->
+.NL
+
+.br
+opasetupssh -C opasetupssh -C -H \'chassis1 chassis2\' CHASSIS=\'chassis1 chassis2\' opasetupssh -C
+.SH Environment Variables
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+HOSTS\(ulFILE
+.NL
+File containing list of hosts, used in absence of -f and -h .
+.TP 10
+CHASSIS\(ulFILE
+.NL
+File containing list of chassis, used in absence of -F and -H .
+.TP 10
+HOSTS
+.NL
+List of hosts, used if -h option not supplied.
+.TP 10
+CHASSIS
+.NL
+List of chassis, used if -C is used and -H and -F options not supplied.
+.TP 10
+FF\(ulMAX\(ulPARALLEL
+.NL
+When -p option is used, maximum concurrent operations.
+.TP 10
+FF\(ulIPOIB\(ulSUFFIX
+.NL
+Suffix to append to hostname to create IPoIB hostname. Used in absence of -i .
+.TP 10
+FF\(ulCHASSIS\(ulLOGIN\(ulMETHOD
+.NL
+How to login to chassis. Can be telnet or ssh.
+.TP 10
+FF\(ulCHASSIS\(ulADMIN\(ulPASSWORD
+.NL
+Password for admin on all chassis. Used in absence of -S option
+.SH Description
+.NL
+
+.PP
+Intel(R) Omni-Path Fabric Suite FastFabric Toolset provides additional flexibility in the translation between IPoIB and management network hostnames. Refer to "Configuration of IPoIB Name Mapping" section in the 
+\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
+
+for more information.
+.PP
+opasetupssh provides an easy way to create ssh keys and distribute them to the hosts or chassis in the cluster. Many of the FastFabric tools (as well as many versions of MPI) require ssh be set up for password-less operation. Therefore, opasetupssh is an important setup step.
+.PP
+This tool also sets up ssh to the local host and the local hosts IPoIB name. This capability is required by selected FastFabric Toolset commands and may be used by some applications (such as MPI).
+.PP
+opasetupssh has two modes of operation. The mode is selected by the presence or absence of the -U option. Typically, opasetupssh will first be run without the -U option, then it may later be run with the -U option.
+.SH Host Initial Key Exchange
+.NL
+
+.PP
+When run without the -U option, opasetupssh will perform the initial key exchange and enable password-less ssh and scp. The key exchange can be accomplished for hosts using ssh and scp (in a password prompting manner) using the -s option or using password-less rsh and rcp (omitting the -s option).
+.PP
+The preferred way to use opasetupssh for initial key exchange is with the -s and -S options. This requires all hosts have been configured with the same password for the specified ``user'' (typically root). In this mode the password will be prompted for once and then ssh and scp are used in conjunction with that password to complete the setup for the hosts. Use in this manner also avoids the need to setup rsh/rcp/rlogin (which can be a security risk).
+.PP
+If -s is used without the -S option, the user will be prompted by ssh and scp for each host as they are setup. There will be multiple prompts per host. For a handful of hosts this is manageable, however for a significant number of hosts this can become cumbersome. Therefore, the -S option is recommended in this case.
+.PP
+If the -s option is not specified, rsh and rcp will be used to perform the ssh key exchange. This requires password-less rcp and rlogin be enabled on each host ( check\(ulrsh can perform verification ).[START-DRAFT-COMMENT][gdr] check\(ulrsh is deprecated, what do we use now?
+[END-DRAFT-COMMENT]
+.PP
+opasetupssh will configure password-less ssh/scp for both the management network and IPoIB. Typically, the management network will be used for FastFabric Toolset operations while IPoIB will be used for MPI and other applications. If IPoIB is not yet running (for example, during initial cluster installation Intel(R) Omni-Path Fabric software will not yet be installed on all the hosts), the -i option can be specified with an empty string:opasetupssh -i \'\'
+.PP
+This will cause the last part of the setup of ssh for IPoIB to be skipped.
+.SH Refreshing Local Systems Known Hosts
+.NL
+
+.PP
+If hosts have IP addresses added (for example, by installing Intel(R) Omni-Path Fabric software and enabling IPoIB), IP addresses changed, MAC addresses changed or other aspects have changed (such as server OS reinstallation), the local hosts ssh known\(ulhosts file can be refreshed by running opasetupssh with the -U option. This option will not transfer the keys, but rather will connect to each host (management network and IPoIB) in order to refresh the ssh keys. Existing entries for the specified hosts are replaced within the local known\(ulhosts file. When run in this mode the -S and -s options are ignored. This mode assumes ssh has previously been setup for the hosts, as such no files are transferred to the specified hosts and no passwords should be required.
+.PP
+Typically after completing the installation and booting of Intel(R) Omni-Path Fabric software, opasetupssh will need to be rerun with the -U option to update the known\(ulhosts file
+.SH Chassis Initial Key Exchange
+.NL
+
+.PP
+When run without the -U option, opasetupssh will perform the initial key exchange and enable password-less ssh and scp. For chassis, the key exchange uses scp and the chassis CLI. Login to the chassis during this command will be through the configured mechanism for chassis login. Typically the -S option should be used when doing initial setup of ssh keys for a chassis. For chassis the -s option is ignored
+.PP
+The preferred way to use opasetupssh for initial key exchange is with the -S option. This requires all chassis have been configured with the same password for admin. In this mode the password will be prompted for once and then the \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR and scp are used in conjunction with that password to complete the setup for the chassis. Use in this manner also avoids the need to setup the chassis password in fastfabric.conf (which can be a security risk).
+.PP
+For chassis the -i option is ignored.
+.SH Chassis Refreshing Local Systems Known Hosts
+.NL
+
+.PP
+If chassis have IP addresses changed, MAC addresses changed or other aspects have changed, the local hosts ssh known\(ulhosts file can be refreshed by running opasetupssh with the -U option. This option will not transfer the keys, but rather will connect to each chassis in order to refresh the ssh keys. Existing entries for the specified chassis are replaced within the local known\(ulhosts file. When run in this mode the -S options is ignored. This mode assumes ssh has previously been setup for the chassis, as such no files are transferred to the specified hosts and no passwords should be required.

@@ -1,0 +1,26 @@
+OPA tools and Fast Fabric
+-------------------------
+
+* To build the RPM and SRPM:
+
+  1. mkdir -p $HOME/rpmbuild/{SOURCES,RPMS,SRPMS}
+  2. tar czf $HOME/rpmbuild/SOURCES/opa.tgz --exclude-vcs .
+  3. rpmbuild -ba ./fast-fabric.spec
+
+  This will build the opa-basic-tools, opa-fastfabric, and opa-address-resolution
+  RPMs in $HOME/rpmbuild/RPMS/(architecture)/
+
+  This will also create a opa-debuginfo RPM, which by default contains basic symbol
+  information - see below on how to build with full debugging information.
+
+* To build in this directory:
+
+ 1. ./ff_build.sh .
+
+
+
+* How to include debugging symbols:
+
+  export BUILD_CONFIG=debug
+
+  prior to either of the aforementioned build procedures.

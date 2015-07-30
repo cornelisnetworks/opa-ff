@@ -1,0 +1,126 @@
+HELP: SUMMARY SCREEN
+opatop is a command line tool which displays performance analysis
+information about a fabric.  Performance analysis information is divided
+into two areas - utilization and error statistics, which are main starting
+points for analyzing fabric traffic.  Utilization can identify over-utilized
+areas (bottle necks) and under-utilized areas (potentially misconfigured);
+errors can identify problems in fabric hardware or configuration.
+
+On the help screens you may use these commands:
+  u: Up to previous screen (done help)
+  S: Scroll forward (s) or backward (S) by 1 screen through help
+  <sp>: Scroll forward 1 line (space key)
+	
+The top level (summary) screen of opatop shows basic fabric configuration
+information as well as utilization and error information.  Fabric
+configuration information includes numbers of links, switches, SMs, and
+ports, as well as details about the master and secondary (if present) SMs.
+Fabric utilization and error statistics are presented based on PM port
+groups, which include the predefined PM groups: All (all ports in the fabric),
+HFIs, and SWs.  These groups provide a natural subdivision of the ports in
+a fabric for performance analysis.  The summary screen also will include any
+sysadmin defined PmPortGroups.
+
+The user may toggle between a PM group based summary display and a Virtual
+Fabric (VF) based summary display.  The VF display will show all presently
+enabled Virtual Fabrics.
+
+After looking at the summary screen a user can decide
+which area of performance (utilization or error) and which group of ports
+most warrants investigation, and can then "drill down" into that area.
+
+If the message "Unexpected Clear" (or "Unexp Clear") is reported, this means
+one or more devices have had their PMA counters unexpectedly cleared by
+something other than the PM.  For Intel switches, make sure ismAutoClearConf
+is disabled.  For HFIs make that other tools such as opareport or
+OFED diagnostics are not being run in a manner which would directly clear
+PMA counters.  The Image Info Screen will indicate how many such ports
+were affected.
+
+For each port group or VF, average, minimum and maximum MBps (megabytes
+per second), and KPps (kilo-packets per second) are shown, as well
+as a status indicator for each of five error categories.
+(Note: mega=1,000,000; kilo=1000)
+
+Performance statistics for each port group are further divided into up to
+three subgroups - Internal, Send and Receive - based on whether a port's
+neighbor port is in its group.  If a port's neighbor port is in its group,
+all performance statistics are contained in the Internal subgroup.  If a port's
+neighbor is not in its group, statistics for data leaving the port (group) are
+contained in the Send subgroup and statistics for data entering the port are
+contained in the Receive subgroup.
+
+In the All group all ports are Internal since, by definition, the neighbor port
+must be in the All group.  In the HFIs group all neighbor ports are outside the
+group so statistics are contained in the Send and Receive subgroups.  In the
+SWs group neighbor ports are either outside the group (HFI) or inside the
+group (another switch) so statistics are contained in all three subgroups.
+
+For VF summary display, all information is reported ad Internal.
+
+The five error categories are: Integrity, Congestion, SMA Congestion,
+Security and Routing, and are based on mapping each port (error) counter
+into one of the five categories. Each error status indicator is shown at
+one of five values/colors: minimum/green, Low/blue, Moderate/cyan,
+Warning/yellow or OVER/red based on the error value as compared to a
+threshold value.
+
+opatop allows the user to access statistics from sequential PM sweeps
+(the PM keeps a history of previous sweep images) and queries the PM at a
+user-specified interval (10 seconds by default).
+
+When opatop queries for statistics for the most recent PM sweep it is in
+'Live' mode.  In Live mode data will change, at the opatop interval rate,
+as opatop queries new PM sweeps.  At each screen (summary or detail) the data
+being displayed is refreshed for the current PM sweep.
+
+A PM sweep can be 'frozen'; the data in a frozen sweep will not change,
+allowing the statistics to be examined in summary and detail screens.
+Two user actions result in a sweep being frozen.  The first is when the user
+'Bookmarks' a sweep.  A Bookmarked sweep will remain frozen until the user
+explicitly 'Unbookmarks' it; one sweep at a time can be Bookmarked.
+The second action is when the user moves (navigates) opatop's focus to another
+sweep within the history of sweeps maintained by the PM.  For the duration
+of opatop's focus on such a sweep it will remain frozen.  Navigation can occur
+from Live mode or when displaying a Bookmarked image; during navigation opatop
+is in 'Historic' mode.  Navigation can be performed backward or forward,
+moving 1 or 5 sweeps at a time.
+
+opatop is designed to fit within an 80x24 terminal screen.  It is recommended
+to use a fixed width font, such as Courier.  While STL supports up to 63
+character names for many things (PM port groups, Virtual Fabrics, node
+descriptions, etc), in order to fit on the screen opatop may truncate these
+and show only the beginning characters.  When opatop truncates a name, it will
+show a * as the last character.  For example, MyStoragePmPortGroup will be
+truncated to MyStorageP* when displayed in the Port group summary screen.
+
+The first display line of opatop shows the timestamp for the PM
+sweep (image) being displayed and the type of image (Live, Hist, Bkmk).
+If a Live image is not being displayed, the current time ('Now:') is also
+shown.  The last display line of opatop is a prompt showing available
+input commands.  The left section of commands are available in every
+screen and perform the same action.  The right section are screen-specific.
+Commands are case insensitive except as noted by '*'; the ENTER key must
+be pressed after a command.  Note that a help command '?' is available
+at every screen and provides information about the screen contents and input
+commands.
+
+The following input commands are available in every screen:
+  Q: Quit program
+  u*: Up to previous screen 
+  L: Select Live image
+  R: Navigate reverse 1 (r*) or 5 (R*) sweeps
+  F: Navigate forward 1 (f*) or 5 (F*) sweeps
+  b*: Select (previously) Bookmarked image
+  B*: Bookmark currently selected image
+  U*: Unbookmark Bookmarked image
+  ?: Help
+
+The summary screen accepts the following input commands:  
+
+  S: Scroll forward (s*) or backward (S*) through list
+  P: PM Configuration screen
+  I: Image Info screen
+  0-n: Select item from list
+  V: Change between Virtual Fabrics and Port Group based views.
+

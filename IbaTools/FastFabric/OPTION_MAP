@@ -1,0 +1,135 @@
+List of command line options used in various Fast Fabric tools
+--help			provide full help text, otherwise brief help of common options
+-a action		Action for specified chassis firmware upgrade (push, select, run)
+-b				Take a baseline without a health check
+-c				clobber previous result files before run
+-c file			config file for Fabric error analysis (opamon.conf default)
+-c				copy files before run (opaverifyhosts)
+-d dir			upload or download directory (or UPLOADS_DIR or DOWNLOADS_DIR)
+				or analysis directory tree (FF_ANALYSIS_DIR)
+-d detail		detail level for iba_report
+-e				evaluate health
+-f hostfile		hosts to act on (or HOSTS_FILE)
+-h hosts		hosts to act on (or HOSTS)
+-h hfi			FI to use
+-i ipoib_suffix	suffix to convert ethernet to IPoIB
+-k				kill any previous jobs (opaverifyhosts)
+-m netmask		netmask for configuring IPoIB
+-m marker		marker for end of cmd output in opacmdall
+-n				operate against ib nodes (default is hosts)
+				(only used by depricated opatest command)
+-n numprocs		number of processes per node for cabletests
+-p 				parallel
+-p port			CA port to use
+-p ports		list of ca:port to use (or PORTS)
+-q 				quiet mode
+-r				recursive download/upload of directories
+-r release		release to load on servers
+-s				save history of analysis failures
+-t portsfile	list of ca_port to use (or PORTS_FILE)
+-u user			user code for host operation (default is root)
+-u upload_file	destination filename to upload to (opaverifyhosts)
+-v				verbose mode
+-x snapshot_suffix  suffix for snapshot file created (opalinkanalysis)
+
+-A				skip "active" test (opafindgood)
+-A				force clear of hw error counters (opacabletest)
+-C				perform operation on chassis (default is hosts)
+-D detail		detail level for opacapture
+-E esmchassis	eSM chassis to act on (or ESM_CHASSIS)
+-F chassisfile	chassis to act on (or CHASSIS_FILE)
+-F focus		focus option for iba_report
+-G esmchassisfile	eSM chassis to act on (or ESM_CHASSIS_FILE)
+-H chassis		chassis to act on (or CHASSIS)
+-I install_opts	install options for server install
+-I				operate against ib nodes (default is hosts)
+-K				SM M-Key (used in selected commands)
+-L opaswitches	node list file for inband operations on switches (or OPASWITCHES_FILE)
+-M host			Ib connected mgmt host from which IB queries can be initiated
+-N opaswitches	node list for inband operations on switches (or OPASWITCHES)
+-P packages		packages to load for server or chassis upgrade
+-P 				skip ping (for opasetupssh)
+-P				output hostname/chassis name as line prefix for opacmdall
+-R				configure remote hosts only (skips localhost in opasetupssh)
+-R				skip "running/ssh" test (opafindgood)
+-Q 				skip "quarantine" test (opafindgood)
+-S				securely prompt for chassis admin password
+-T product
+-T timelimit	timelimit for opacmdall operations and tools using opacmdall
+-T topology_input
+-U upgrade_opts	upgrade options for server upgrade
+					[should update opatest ipoibping to use similar capability]
+-U				only perform connect (for opasetupssh)
+-U				omit unexpected devices (opalinkanalysis)
+-X snapshot_input  snapshot file to use instead of live fabric
+
+
+Output Type Descriptions used by Fast Fabric tools - note that individual tools
+may not support all output types.
+    bfrctrl           - list of buffer control tables
+    cableinfo         - list of Cable Info records
+    classportinfo     - list of port info records
+    clearerrorinfo    - clears the error info
+    clearportstatus   - clears the port status
+    conginfo          - list of Congestion Info Records
+    desc              - list of node descriptions/names
+    getdatacounters   - list of data counters
+    geterrorcounters  - list of error counters
+    geterrorinfo      - list of error info
+    getportstatus     - list of port status records
+    hficongcon        - list of HFI Congesting Control Settings
+    hficongset        - list of HFI Congestion Settings
+    ibguids           - list of IB assigned GIDs records
+    iblidmask         - list of IB LID mask for adaptive routing records
+    iblinfdb          - list IB Port Linear forwarding table records
+    ibmcfdb           - list of IB multicast forwarding database information records
+    ibnodedesc        - list of IB list of node descriptions/names records
+    ibnodeinfo        - list of IB generic node data records
+    ibpkey            - list of IB partition table records
+    ibportgroup       - list of vendor port group info records
+    ibportinfo        - list of IB port info records
+    ibranfdb          - list of IB switch random FDB records
+    ibslvl            - list of IB SL to VL mapping table records
+    ibsminfo          - list of IB SM info records
+    ibswinfo          - list of IB switch info records
+    ibvlarb           - list of IB VL arbitration table records
+    ibvswinfo         - list of IB vendor switch info records
+    inform            - list of inform info records
+    lid               - list of lids
+    linfdb            - list of switch linear FDB records
+    link              - list of link records
+    mcfdb             - list of switch multicast FDB records
+    mcmember          - list of multicast member records
+    node              - list of node records
+    nodeaggr          - aggregate query returning list of node info and description records
+    nodedesc          - list of node description records
+    nodeguid          - list of node guids
+    nodeinfo          - list of node info records
+    path              - list of path records
+    pkey              - list of P-Key table records
+    portgroup         - list of AR Port Group records
+    portgroupfdb      - list of AR Port Group FWD records
+    portguid          - list of port guids
+    portinfo          - list of port info records
+    pstateinfo        - list of switch port state info records
+    quarantine        - list of quarantined nodes
+    ranfdb            - list of switch random FDB records
+    scsl              - list of SC to SL mapping table records
+    scvlnt            - list of SC to VLnt table records
+    scvlr             - list of SC to VL receiving mapping table records
+    scvlt             - list of SC to VLt table records
+    service           - list of service records
+    slsc              - list of SL to SC and SC to SC mapping table records
+    sminfo            - list of SM info records
+    swaggr            - aggregate query returning list of node info and switch info records
+    swconglog         - list of switch congestion log records
+    swcongset         - list of Switch Congestion Settings
+    swinfo            - list of switch info records
+    switchltv         - list of Switch Lifetime records
+    swportcong        - list of switch congestion settings
+    systemguid        - list of system image guids
+    trace             - list of trace records
+    vfinfo            - list of vFabrics
+    vfinfocsv         - list of vFabrics in CSV format
+    vfinfocsv2        - list of vFabrics in CSV format with enums
+    vlarb             - list of VL arbitration table records

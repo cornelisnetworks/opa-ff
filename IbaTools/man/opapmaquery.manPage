@@ -1,0 +1,248 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opapmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opapmaquery
+
+.NL
+
+.PP
+(All) This is a low level tool which can perform individual PMA queries against a specific LID. It is very useful in displaying port runtime information.
+.SH Syntax 
+.NL
+opapmaquery [-v] [-s \fIsl\fR] [-l \fIlid\fR] [-h
+\fIhfi\fR
+
+] [-p \fIport\fR][-o \fIotype\fR] [-m \fIport\fR] [-n \fImask\fR] [-e \fImask\fR] [-w \fImask\fR] [-c \fImode\fR]
+.SH Options 
+.NL
+
+.TP 10
+-v 
+.NL
+Verbose output. Can be specified more than once for additional openib debugging and libibumad debugging.
+.TP 10
+-s \fIsl\fR 
+.NL
+Specify different Service Level (default is 0)
+.TP 10
+-l \fIlid\fR 
+.NL
+Destination lid, default is local port .
+.TP 10
+-h \fIhfi\fR 
+.NL
+HFI , numbered 1..n. Using 0 specifies that the -p \fIport\fR port will be a system wide port number (default is 0).
+.TP 10
+-p \fIport\fR 
+.NL
+Port, numbered 1..n. If -h \fIhfi\fR is 0 then  \fIport\fR will be a system wide port number (default is 1).
+.TP 10
+-o \fIotype\fR 
+.NL
+Output type. Default is getportstatus .Valid output types are: :
+
+.sp
+classportinfo 
+List of port info records.
+.sp
+getportstatus 
+List of port status records. [-m port] [-w vl mask] 
+
+.sp
+clearportstats 
+Clears the port status. [-n port mask] [-e counter mask] [-w vl mask] 
+
+.sp
+getdatacounters 
+List of data counters. [-n port mask] [-w vl mask] 
+
+.sp
+geterrorcounters 
+List of error counters. [-n port mask] [-w vl mask] 
+
+.sp
+geterrorinfo 
+List of error info. [-n port mask] 
+
+.sp
+clearerrorinfo 
+Clears the error info. [-n port mask] [-e counter mask] 
+
+.SH  -h and -p options permit a variety of selections:-->
+.NL
+
+.TP 10
+-h 0 
+.NL
+First active port in system (this is the default).
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
+.TP 10
+-h \fIx\fR 
+.NL
+First active port on HFI \fIx\fR.
+.TP 10
+-h \fIx\fR-p 0 
+.NL
+First active port on HFI \fIx\fR.
+.TP 10
+-h 0 -p \fIy\fR 
+.NL
+Port \fIy\fRwithin system (irrespective of which ports are active).
+.TP 10
+-h \fIx\fR-p \fIy\fR 
+.NL
+HFI \fIx\fR, port \fIy\fR
+.SH otype options vary by report-->
+.NL
+
+.TP 10
+-m \fIport\fR 
+.NL
+Port in destination device to query/clear required when using -l option for all but -o classportinfo .
+.TP 10
+-n \fImask\fR 
+.NL
+Port Mask, in hex, bits represent ports 31-0 (For example: 0x2 for port 1, 0x6 for ports 1,2)
+
+.TP 10
+-e \fImask\fR 
+.NL
+Counter/error Select Mask, in hex, bit positions as shown below. Default is all bits set (e.g. 0xffffffe0).
+
+.sp
+0x80000000
+For Counters - Xmit DataFor Error Info - Rcv Error Info
+
+.sp
+0x40000000
+For Counters - Rcv DataFor Error Info - Excessive Buffer Overrun
+
+.sp
+0x20000000
+For Counters - Xmit PktsFor Error Info - Xmit Const Error Info
+
+.sp
+0x10000000
+For Counters - Rcv PktsFor Error Info - Rcv Const Error Info
+
+.sp
+0x08000000
+For Counters - Multicast Xmit PktsFor Error Info - Rcv Switch Relay Error Info
+
+.sp
+0x04000000
+For Counters - Multicast Rcv PktsFor Error Info - Uncorrectable Error Info
+
+.sp
+0x02000000
+For Counters - Xmit WaitFor Error Info - FM Config Error Info
+
+.sp
+0x01000000
+For Counters - Congestion Discards
+.sp
+0x00800000
+For Counters - Rcv FECN
+.sp
+0x00400000
+For Counters - Rcv BECN
+.sp
+0x00200000
+For Counters - Xmit Time Cong.
+.sp
+0x00100000
+For Counters - Xmit Time Wasted BW
+.sp
+0x00080000
+For Counters - Xmit Time Wait Data
+.sp
+0x00040000
+For Counters - Rcv Bubble
+.sp
+0x00020000
+For Counters - Mark FECN
+.sp
+0x00010000
+For Counters - Rcv Constraint Errors
+.sp
+0x00008000
+For Counters - Rcv Switch Relay
+.sp
+0x00004000
+For Counters - Xmit Discards
+.sp
+0x00002000
+For Counters - Xmt Constraint Errors
+.sp
+0x00001000
+For Counters - Rcv Rmt Phys. Errors
+.sp
+0x00000800
+For Counters - Local Link Integrity
+.sp
+0x00000400
+For Counters - Rcv Errors
+.sp
+0x00000200
+For Counters - Exc. Buffer Overrun
+.sp
+0x00000100
+For Counters - FM Config Errors
+.sp
+0x00000080
+For Counters - Link Error Recovery
+.sp
+0x00000040
+For Counters - Link Error Downed
+.sp
+0x00000020
+For Counters - Uncorrectable Errors
+.TP 10
+-w \fImask\fR 
+.NL
+Virtual Lane Select Mask, in hex, bits represent VL number 31-0 (e.g. 0x1 for VL 0, 0x3 for VL 0,1). Default is none.
+
+.TP 10
+-c \fImode\fR 
+.NL
+Counter Size Mode for get/display. 0= 64bit (default), 1= 32 bit.
+.SH Examples 
+.NL
+opapmaquery -o classportinfo # get PMA classportinfo opapmaquery -o getportstatus # get data and error counts, local port opapmaquery -o getdatacounters -n 0x2 # get data counts, local port 1 opapmaquery -o geterrorcounters -n 0x2 # get error counts, local port 1 opapmaquery -o clearportstatus -n 0x2 # clear all counters local port 1 opapmaquery -o geterrorinfo -n 0x2 # get error info for local port 1 opapmaquery -o clearerrorinfo -n 0x2 # clear all error info, local port 1
+.SH Additional examples-->
+.NL
+
+.PP
+For device at lid 6, get data counters on ports 1-6, inclusive of VL 0 data:
+.br
+opapmaquery -o getdatacounters -l 6 -n 0x7e -w 0x1
+
+.br
+
+.PP
+For device at lid 6, on port 1, clear only error counters:
+.br
+opapmaquery -o clearportstatus -l 6 -n 0x2 -e 0x1ffff
+
+.br
+
+.PP
+For device at lid 6, on ports 1, clear Uncorrectable Error Info:
+.br
+opapmaquery -o clearerrorinfo -l 6 -n 0x2 -e 0x04000000
+
+.br
+
+.SH Sample Output 
+.NL
+[root@luanne ~]# opapmaquery Performance: Transmit Xmit Data 0 MiB (72 Quads) Xmit Pkts 1 Performance: Receive Rcv Data 0 MiB (0 Quads) Rcv Pkts 0 Errors: Symbol Errors 0 Link Error Recovery 0 Link Downed 0 Port Rcv Errors 0 Port Rcv Rmt Phys Err 0 Port Rcv Sw Relay Err 0 Port Xmit Discards 2 Port Xmit Constraint 0 Port Rcv Constraint 0 Local Link Integrity 0 Exc. Buffer Overrun 0 VL15 Dropped 2

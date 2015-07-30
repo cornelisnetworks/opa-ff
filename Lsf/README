@@ -1,0 +1,156 @@
+[ICS VERSION STRING: unknown]
+
+
+
+README for Lsf scripts directory
+--------------------------------
+
+This directory contains:
+
+* Four scripts for submitting LSF jobs, one each for OpenMPI, mvapich, and mvapich2, plus a fourth
+  for using standard OpenMPI (verbs), which is tightly integrated with LSF
+* A substitute script for ssh that is required for using MPI with LSF, as per LSF documentation
+* A sample of the edited openmpi_wrapper from LSF code
+* A vi input script to modify openmpi_wrapper to work with IntelOPA OFED OpenMPI verbs
+* This file
+
+
+Virtual Fabric integration with LSF
+-----------------------------------
+
+The sole intent of the LSF scripts is to act as templates for the administrator, on how to enable
+LSF to take advantage of Virtual Fabric (vFabric) functionality.  In order to make these scripts
+accessible to common users, the administrator must do the following:
+
+   1. (Optional) If necessary, edit the scripts to meet the configuration and usage criteria
+      requirements specific to your LSF environment.
+   2. Copy the scripts to a shared file system service that provides the appropriate access rights
+      for common users.
+
+In order for LSF to take advantage of vFabric functionality, vFabric must be integrated with LSF.
+There are several integration methods that could be used, these scripts use the method of LSF based
+queues.  This method requires that the administrator perform the following steps (for detailed
+information on vFabric, reference "Fabric Manager Users Guide"):
+
+   1. For LSF, create a queue for each vFabric defined within the FM configuration file
+      (/etc/sysconfig/ifs_fm.xml).
+   2. Configure each vFabric queue defined within LSF with the compute nodes assigned to it within
+      the FM configuration file. 
+   3. (Optional) Configure each vFabric queue defined within LSF with the priorities, policies, QoS,
+      and attributes that are specific to the needs of the organization and fabric environment.
+
+
+Configuring Nodes for LSF
+-------------------------
+
+It is recommended that the changes described in this README be performed on or propogated to
+all nodes in the fabric. This will ensure proper job submission and operation.
+
+Fast Fabric may be used to set up password-less ssh. Once that is set up, it can be used to copy
+the changed files to all nodes in the fabric.
+
+
+LSF Submit Scripts
+------------------
+
+LSF submit scripts utilize the LSF primitive "bsub", encapsulating the arguments and call structure
+for ease-of-use. They query the SA for information regarding virtual fabrics, or in the case of PSM
+with dist_sa, pass the appropriate arguments to PSM for SA lookup.
+
+The submit scripts default the MPICH_PREFIX if it is not set in the environment, although it is
+recommended to be set explicitly in the environment to avoid any confusion. The mvapich and
+mvapich2 script default to the -qlc versions of MPI. There are two openmpi scripts; one for standard
+mpi and one for the -qlc version. The bsub is different for standard openmpi, so it is in its own
+script.
+
+Here are some examples of how to call the scripts and pass vFabric parameters:
+
+Example 1:
+
+	lsf.submit.openmpi-q.job -p 2 -V vf_name -n Compute -d 3 osu2/osu_bibw
+
+This submits a job with the openmpi-qlc subsystem, i.e. the run file osu_bibw is expected to have been
+compiled with the openmpi-qlc compiler under gcc. The number of processes is given as 2, and the virtual
+fabric to use is identified by name, and that name is "Compute". Lastly, option 3 is given to denote
+a dispersive routing option of static_dest.
+
+Example 2:
+
+	lsf.submit.openmpi-q.job -p 2 -V sid -s 0x0000000000000022 -d 1 osu2/osu_bibw
+
+This submits a job with the openmpi-qlc subsystem, i.e. the run file osu_bibw is expected to have been
+compiled with the openmpi-qlc compiler under gcc. The number of processes is given as 2, and the virtual
+fabric to use is identified by service id, and that id is "0x0000000000000022". Lastly, option 1 is given
+to denote a dispersive routing option of adaptive.
+
+Example 3:
+
+	lsf.submit.openmpi-q.job -p 2 -V sid_qlc -s 0x1000117500000000 -q night osu2/osu_bibw
+
+This submits a job with the openmpi-qlc subsystem, i.e. the run file osu_bibw is expected to have been
+compiled with the openmpi-qlc compiler under gcc. The number of processes is given as 2. The virtual fabric
+to use is identified by service id, and that service id is "0x1000117500000000". The job will be passed to the
+QIB driver which will perform the vFabric lookup on behalf of the job. No dispersive routing instructions are
+given. The job is being requested for submission via the "night" LSF queue.
+
+To view the vFabric parameters associated with the job, use the "bjobs -l <job number>" command in LSF for
+the long format of output.
+
+
+
+LSF Script Administration
+-------------------------
+
+The scripts are intended to be tailored by the LSF administrator in order to structure the bsub
+parameters appropriately. Any parameters, such as queue name, application profile, etc. may be inserted
+into the script either using script options, accessing environment variables, or by hardcoding.
+
+Additionally, the scripts use mpirun_rsh to start MPI jobs. This method enables the vFabric parameters
+to be passed to the MPI jobs so that the appropriate lower level actions can be taken based on those
+settings (e.g. inserting Service Level information into data messages). Any MPI job command parameters
+should be used on the script command line, and will be passed to the MPI run job.
+
+
+
+SSH Script
+----------
+
+In accordance with instructions in the Platform document "Integrating LSF's blaunch with MPI Applications",
+a script for ssh is provided, so that LSF may intercept MPI jobs and convey them to the blaunch facility.
+The script is constucted in such a way so that normal users of ssh are not affected, while LSF usage is
+bypassed to blaunch.
+
+Instuctions to install the ssh script:
+
+	1. Log in as root
+	2. cd /usr/bin
+	3. mv ssh ssh.bin
+	4. copy ssh.script as /usr/bin/ssh
+
+
+Modifying openmpi_wrapper
+-------------------------
+
+The openmpi_wrapper script provided with LSF, located in LSF_BINDIR, contains a hard-coded path to
+the OpenMPI directory as installed by Platform's HPC kit. Since this installation supercedes that
+one with the Intel kit, the location of the OpenMPI files is different. Therefore, the openmpi_wrapper
+script needs to be modified.
+
+The ex script, edit.openmpi.wrapper, may be used to modify the openmpi_wrapper. It uses an ex editor
+session to change the path from $MPIHOME to $MPICH_PREFIX. The file may be modified by using the script
+while logged in as root, as follows:
+
+ex /opt/lsf/7.0/linux2.6-glibc2.3-x86_64/bin/openmpi_wrapper < edit.openmpi.wrapper
+
+If editing with the script fails, openmpi_wrapper may be edited manually to ensure that the path to
+the MPIRUN_CMD is correct.
+
+
+Configuration changes in lsf.conf
+---------------------------------
+
+The following change should be made to the lsf.conf file in order to ensure proper operation:
+
+- add "LSF_ROOT_REX=all"
+
+The LSF daemons need to be restarted for the configuration change to take effect.

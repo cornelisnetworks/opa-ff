@@ -1,0 +1,297 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+
+#------------------------------------------------------------------
+# Initialization:
+# - specify the absolute paths mpirun if is is not in $PATH 
+# - EXIT_VALUE should not be set to 0
+#------------------------------------------------------------------
+cleanup_openmpi()
+{
+    trap "" 1 2 3 15
+
+    for afile in $APP_FILE $HOST_FILE
+    do
+        if [ -f "$afile" ]; then
+            rm -f $afile >/dev/null 1>&2
+        fi
+    done
+}
+
+sig_handler_opempi()
+{
+    trap "" 1 2 3 15
+    echo "Signal received. Exiting ..." | tee -a $LOGFILE
+    cleanup_openmpi
+    exit 1
+}
+
+# -----------------------------------------------------
+# Source the LSF environment. Optional.
+# -----------------------------------------------------
+. ${LSF_ENVDIR}/lsf.conf
+
+# -----------------------------------------------------
+# Set up the variable LSF_TS representing the TaskStarter.
+# -----------------------------------------------------
+LSF_TS="$LSF_BINDIR/TaskStarter"
+USR_APP_FILE=""
+
+# This script assumes mpirun of OPENMPI can be found in PATH 
+# environment variable.
+MPIHOME=/opt/openmpi/gnu
+#MPIRUN_CMD="$MPIHOME/bin/mpirun"
+MPIRUN_CMD="$MPICH_PREFIX/bin/mpirun"
+
+LOGFILE="/dev/null"
+EXIT_VALUE="66"
+TASK_GEOM_OK="0"
+JOB_SHAREDIR="$HOME"
+OPENMPI_OPTS=" "
+if [ "$JOB_SHAREDIR" = "" ]; then
+    JOB_SHAREDIR=`pwd`
+fi
+
+#
+# If task geometry is not used 
+# Reverse order of the host list to gain better performance
+#
+if [ -n "$LSB_PJL_TASK_GEOMETRY" ]; then
+    REVERSE_ORDER="n"
+else
+    REVERSE_ORDER="y"
+fi
+
+#------------------------------------------------------------------
+# Create files with a unique name based on the LSF job ID:
+# - log file 
+# - machine file 
+# - temp file 
+#------------------------------------------------------------------
+if [ "$LSB_BATCH_JID" != "" ]; then
+    UNIQUE_ID="$LSB_BATCH_JID"
+else
+    UNIQUE_ID=`hostname`_"$$"
+fi
+
+APP_FILE="$JOB_SHAREDIR/.openmpi_appfile_${UNIQUE_ID}"
+HOST_FILE="$JOB_SHAREDIR/.host_file_${UNIQUE_ID}"
+
+trap "sig_handler_opempi" 1 2 3 15
+
+#
+# Reverse LSB_MCPU_HOSTS
+#
+if [ "$REVERSE_ORDER" = "y" ]; then
+    HOST=""
+    NEW_LSB_MCPU_HOSTS=""
+    for i in $LSB_MCPU_HOSTS
+    do
+        if [ -z "$HOST" ]
+        then
+            HOST="$i"
+        else
+            NEW_LSB_MCPU_HOSTS="$HOST $i $NEW_LSB_MCPU_HOSTS"
+            HOST=""
+        fi
+    done
+    LSB_MCPU_HOSTS=$NEW_LSB_MCPU_HOSTS
+fi
+
+#  -----------------------------------------------------
+#  Process the command line: 
+# - extract [mpiopts] from the command line
+# - extract jobname [jobopts] from the command line
+#  -----------------------------------------------------
+while [ $# -gt 0 ]
+do
+    case "$1" in
+       -aborted|--aborted|-path|--path|--tmpdir|--universe|-x|-wdir|--wdir|--prefix|-debugger|--debugger)
+           OPENMPI_OPTS="$OPENMPI_OPTS $1 $2 "
+           shift
+           shift
+           ;;
+        -app|--app) 
+            # --app <arg0>  Provide an appfile; ignore all other command line options
+            echo "User defined -app option found" >> $LOGFILE
+            USR_APP_FILE="$2"
+            shift
+            shift
+            ;;
+        -bynode|--bynode|-byslot|--byslot)
+            if [ -z "$LSB_PJL_TASK_GEOMETRY" ]; then
+                OPENMPI_OPTS="$OPENMPI_OPTS $1 "
+            else
+                echo "LSB_PJL_TASK_GEOMETRY is defined, mpirun option $1 will be ignored" >> $LOGFILE
+            fi
+            shift
+            ;;
+        -c|-np|--np|-n|--n|-tv|--tv)
+            echo "mpirun option $1 $2 will be ignored" >> $LOGFILE
+            # <arg0>       Number of processes to run
+            shift
+            shift
+            ;;
+        -d|-debug|--debug|--debug-daemons|--debug-daemons-file|--no-daemonize|--debug-devel|-q|--quiet|-V|--version|-nooversubscribe|--nooversubscribe )  
+            OPENMPI_OPTS="$OPENMPI_OPTS $1 "
+            shift
+            ;;
+        -gmca|--gmca|-mca|--mca) 
+            #<arg0> <arg1>
+            OPENMPI_OPTS="$OPENMPI_OPTS $1 $2 $3 "
+            shift
+            shift
+            shift
+            ;;
+        -h|--help|-nw|--nw|-v|--verbose)
+            OPENMPI_OPTS="$OPENMPI_OPTS $1 "
+            shift
+            ;;
+        -H|-host|--host|-hostfile|--hostfile|-machinefile|--machinefile)
+            echo "mpirun option $1 $2 will be ignored" >> $LOGFILE
+            # <arg0>   List of hosts to invoke processes on
+            shift
+            shift
+            ;;
+        -nolocal|--nolocal)
+            echo "mpirun option $1 will be ignored" >> $LOGFILE
+            shift
+            ;;
+	*)
+            break
+            ;;
+    esac
+done
+
+JOB_CMDLN="$*"
+
+# -----------------------------------------------------
+#  Set up the CMD_LINE variable representing the integrated section of the command line:
+# - LSF_TS, script variable representing the TaskStarter binary. 
+#   TaskStarter must start each and every job task process.
+# - LSF_TS_OPTIONS, LSF environment variable containing all necessary information 
+#   for TaskStarter to callback to LSF's Parallel Application Manager.
+# - JOB_CMDLN, script variable containing the job and job options
+#--------------------------------------------------------------------------------
+if [ -z "$LSF_TS_OPTIONS" ]
+then
+    echo CMD_LINE="$JOB_CMDLN" >> $LOGFILE
+    CMD_LINE="$JOB_CMDLN "
+else
+    echo CMD_LINE="$LSF_TS $LSF_TS_OPTIONS $JOB_CMDLN" >> $LOGFILE
+    CMD_LINE="$LSF_TS $LSF_TS_OPTIONS $JOB_CMDLN "
+fi
+
+#------------------------------------------------------------------
+# Construct LSF Job -app file
+#------------------------------------------------------------------
+if [ "$USR_APP_FILE" != "" ]; then
+    # User defined --app <appfile>
+    echo "User defined -app $USR_APP_FILE is not allowed. Exiting..." | tee -a $LOGFILE
+    cleanup_openmpi
+    exit 1
+elif [ "$LSB_PJL_TASK_GEOMETRY" != "" ]; then
+    #------------------------------------------------------------------
+    # handle $LSB_PJL_TASK_GEOMETRY
+    # It will shuffle the order the appfile
+    # based on the order of task geometry
+    #------------------------------------------------------------------
+    . $LSF_BINDIR/pjllib.sh
+    TOTAL_CPUS=`echo $LSB_MCPU_HOSTS | /bin/awk '
+BEGIN {counter=0}
+{
+    size = split($0, a, " ");
+    for (i = 1; i <= size; i += 2) {
+        counter = counter + a[i + 1];
+        for (j = 0; j < a[i + 1]; ++j) {
+            print a[i] > hfile;
+        }
+    }
+}
+END { print counter}' hfile=$HOST_FILE`
+
+    if [ -f "${LSF_BINDIR}/pjllib.sh" ]; then
+        # get a host list each host per line that satisfies the task geometry
+        # then construct the appfile based on new host list
+        . ${LSF_BINDIR}/pjllib.sh
+        reorder_file_based_on_task_geom "$HOST_FILE" "sort"
+        EXIT_VALUE=$?
+        if [ "$EXIT_VALUE" != "0" ]; then
+            echo "Error in reorder_file_based_on_task_geom \"$HOST_FILE\" \"sort\", Exit ..." 1>&2
+            cleanup_openmpi
+            exit ${EXIT_VALUE}
+
+        fi
+        _new_host_list=`cat $HOST_FILE`
+        echo $_new_host_list | /bin/awk ' {
+            size = split($0, a, " ");
+            for (i = 1; i <= size; i++) {
+                newln = sprintf("-host %s -n 1 %s %s",a[i], (openmpi_opt)?openmpi_opt:" ", (cmdln)?cmdln:" ");
+                print newln > appfile
+            }
+        }' appfile="$APP_FILE" cmdln="$CMD_LINE" openmpi_opt="$OPENMPI_OPTS"
+    else
+        echo "Cannot find pjllib.sh in $LSF_BINDIR. Exiting..." 1>&2
+        cleanup_openmpi
+        exit 1
+        
+    fi
+else
+    echo $LSB_MCPU_HOSTS | /bin/awk ' {
+        size = split($0, a, " ");
+        for (i = 1; i < size; i++) {
+            newln = "";
+            newln = sprintf("-host %s -n %s %s %s",a[i], a[++i], (openmpi_opt)?openmpi_opt:" ", (cmdln)?cmdln:" ");
+            print newln > appfile
+        }
+    }' appfile="$APP_FILE" cmdln="$CMD_LINE" openmpi_opt="$OPENMPI_OPTS"
+fi
+
+echo "appfile $APP_FILE reads" >> $LOGFILE
+cat $APP_FILE >> $LOGFILE
+echo "command used to launch the job : " >> $LOGFILE
+echo "   $MPIRUN_CMD -app $APP_FILE " >> $LOGFILE
+$MPIRUN_CMD --app $APP_FILE 
+EXIT_VALUE=$?
+
+#------------------------------------------------------------------
+# Clean up:
+# - remove temporary files 
+# - exit with the exit value of the mpirun command 
+#------------------------------------------------------------------
+cleanup_openmpi
+exit $EXIT_VALUE
+
+#-------------------------------------------------------------------------
+# End the script.
+#-------------------------------------------------------------------------

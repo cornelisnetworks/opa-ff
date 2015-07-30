@@ -1,0 +1,188 @@
+#! /bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+
+# initialize
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location,
+# either edit this line or set MPICH_PREFIX in your environment.
+# see iba_select_mpi for the set of default MPI selections
+# default to MPI used for build
+MPICH_PREFIX=
+
+mpirunfile=
+vfselectmethod=sid
+vfname=
+vfsid=
+qname=
+
+MPI_CMD_ARGS=
+
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MPICH_PREFIX/lib64/
+LSB_DJOB_NUMPROC=3
+
+# Usage - display usage syntax and exit
+
+Usage()
+{
+	echo "Usage: submit.openmpi.job [-p num_processes] [-V vf_select_method] [-s vf_sid] [-n vf_name] [-q queue_name] mpi_run_file [mpi_run_file args]"
+	echo "  where vf_select_method is one of:"
+	echo "    vf_name: Name of virtual fabric - use -n to define vf name"
+	echo "    sid    : ServiceId of virtual fabric - use -s option to define service id"
+	echo "  where queue_name is a valid LSF queue name (use bqueues for a list)"
+	exit 2
+}
+
+
+
+
+# process opts and args
+
+while getopts V:s:n:p:q: param
+do
+	case $param in
+	V)
+		export vfselectmethod=$OPTARG;;
+	s)
+		export vfsid=$OPTARG;;
+	n)
+		export vfname=$OPTARG;;
+	p)
+		export LSB_DJOB_NUMPROC=$OPTARG;;
+	q)
+		export qname=$OPTARG;;
+	?)
+		Usage
+	esac
+done
+shift $(($OPTIND -1))
+
+mpirunfile=$1
+
+# validate args
+
+if [ "$mpirunfile" = "" ]
+then
+	echo "Must provide an mpi_run_file"
+	Usage
+fi
+
+if [ ! -f $mpirunfile ]
+then
+	echo "mpi_run_file \"$mpirunfile\" does not exist"
+	Usage
+fi
+
+# get opagetvf_func definition
+. /usr/bin/opagetvf_env
+
+case $vfselectmethod in
+	vf_name)
+		opagetvf2_func "-d '$vfname'" OMPI_MCA_btl_openib_pkey OMPI_MCA_btl_openib_ib_service_level OMPI_MCA_btl_openib_mtu
+		if [ $? -ne 0 ]
+		then
+			echo "Failed to get environment variables for VF with Name \"$vfname\""
+			Usage
+		fi
+		export OMPI_MCA_mtl_psm_ib_pkey=$OMPI_MCA_btl_openib_pkey
+		export OMPI_MCA_mtl_psm_ib_service_level=$OMPI_MCA_btl_openib_ib_service_level
+		export PSM_MTU=$OMPI_MCA_btl_openib_mtu;;
+	sid)
+		opagetvf2_func "-S '$vfsid'" OMPI_MCA_btl_openib_pkey OMPI_MCA_btl_openib_ib_service_level OMPI_MCA_btl_openib_mtu
+		if [ $? -ne 0 ]
+		then
+			echo "Failed to get environment variables for VF with SID \"$vfsid\""
+			Usage
+		fi
+		export OMPI_MCA_mtl_psm_ib_pkey=$OMPI_MCA_btl_openib_pkey
+		export OMPI_MCA_mtl_psm_ib_service_level=$OMPI_MCA_btl_openib_ib_service_level
+		export PSM_MTU=$OMPI_MCA_btl_openib_mtu;;
+	*)
+		echo Unknown vfselectmethod $vfselectmethod
+		Usage;;
+esac
+
+if [ "$MPICH_PREFIX" = "" ]
+then
+	. /usr/bin/iba_select_mpi
+	if ! valid_mpich_prefix
+	then
+		find_mpi $prefix/mpi/gcc/openmpi*
+	fi
+fi
+
+lsid -V 2>&1 | tee lsid.out  > /dev/null
+version=`cat lsid.out | grep LSF | awk -F" " '{print $4}' | cut -d"." -f 1`
+if [ "$version" = "9" ] || [ "$version" = "8" ]
+then
+
+	temp=
+	for arg in $MPI_CMD_ARGS
+	do
+       		temp="$temp -x '$arg'"
+	done
+	MPI_CMD_ARGS="$temp"
+
+	# submit the job
+	echo "#! /bin/sh" > .run.openmpi
+	echo "#BSUB -n $LSB_DJOB_NUMPROC" >> .run.openmpi
+	echo "#BSUB -o %J.out" >> .run.openmpi
+	echo "#BSUB -e %J.err" >> .run.openmpi
+	if [ "$qname" != "" ]
+	then
+		echo "#BSUB -q $qname" >> .run.openmpi
+	fi
+	echo $MPICH_PREFIX/bin/mpirun -np $LSB_DJOB_NUMPROC -hostfile \$LSB_DJOB_HOSTFILE $MPI_CMD_ARGS $* >> .run.openmpi
+
+	bsub < .run.openmpi
+	rm .run.openmpi
+else
+	# submit the job from stdin - user mpirun.lsf
+
+	if [ "$qname" != "" ]
+	then
+		qparam="#BSUB -q $qname"
+	else
+		qparam=""
+	fi
+
+	bsub -a openmpi << EOF
+	#BSUB -n $LSB_DJOB_NUMPROC
+	#BSUB -o %J.out
+	#BSUB -e %J.err
+	$qparam
+	mpirun.lsf $MPI_CMD_ARGS $*
+EOF
+fi
+
+rm lsid.out
+exit 0

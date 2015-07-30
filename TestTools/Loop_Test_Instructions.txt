@@ -1,0 +1,180 @@
+A) Introduction
+B) Basic Loop Test Operation
+C) Information in the Logs
+D) Advanced Loop Test Options
+E) Debug Options
+
+======================
+A) Introduction
+======================
+1. SM must be started manually.
+
+2. run_hsm_loop_test_fast.sh is a simple wrapper script to start and stop loop test.
+   (and also for controlling the loop test parameters)
+
+3. run_hsm_loop_test_fast.sh starts loop test in fast mode. In fast mode, loop test,
+   by default starts with max loop path length of 4 and is able to
+   finish setting up the loops faster. At the end the script sets fast mode
+   back to 0.
+
+============================
+B) Basic Loop Test Operation
+============================
+1. Start SM manually. (Configure QLogic FM threshold for Integrity errors to 1 for a strict check. Default is 100.)
+
+2. Wait till SM reaches a stable state i.e. finishes all initial sweeps.
+
+3. Start loop test
+
+       ./run_hsm_loop_test_fast.sh -s   (By default injects 4 packets into each
+								    loop. See -i option for changing number of packets injected)
+
+Note:
+   Side effect of starting loop test is that periodic SM sweeps will stop.
+   But fabric events can still trigger a sweep. Since loop test is started in
+   Fast Mode, subsequent sweeps will not inject packets by default. (this
+   behavior can be controlled by fm_cmd smLoopTestInjectEachSweep option)
+
+4. Check SM logs to see if loop test is covering all ISLs (see point (C) below for more info on the SM logs)
+
+5. Use iba_top to monitor SWs group (group 3) for utilization to see if ISLs are getting stressed.
+  
+6. Let loop test run for a few hours.
+
+7. Use iba_top and/or SM logs to check for integrity errors on ISLs.
+
+8. Stop loop test
+  
+      ./run_hsm_loop_test_fast.sh -e
+
+     This also turns off Loop test Fast mode.
+
+9. Optional: Reboot all switches.
+       Stopping loop test will reprogram the fabric without loops, so the loop packets will stop.
+       If desired, switches can be rebooted to make doubly sure everything returns to a clean state.
+
+---------
+Example:
+---------
+
+[root@george ~]# ./run_hsm_loop_test_fast.sh -s
+Turning on Loop test Fast Mode...
+Connecting to LOCAL FM instance 0
+Successfully sent Loop Test Fast Mode 1 control to local SM instance
+Starting Loop test with 4 packets...
+Connecting to LOCAL FM instance 0
+Successfully sent Loop Test START control (4 inject packets)to local SM instance
+
+<This will trigger a new SM sweep that will program the loops. Packets will be injected at the end of the sweep.>
+
+[root@george ~]# ./run_hsm_loop_test_fast.sh -e
+Stopping Loop test...
+Connecting to LOCAL FM instance 0
+Successfully sent Loop Test STOP control to local SM instance
+Turning OFF Loop test Fast Mode...
+Connecting to LOCAL FM instance 0
+Successfully sent Loop Test Fast Mode 0 control to local SM instance
+
+<This will trigger a new SM sweep that will re-program fabric without the loops.>
+
+==================================
+C) Information in the Logs
+=================================
+Whenever loop test runs, following useful info is logged in the log file which looks like:
+
+
+fm0_sm[20334]: PROGR[topology]: SM: print_LoopCoverage: Total 828 ISL ports (hence 414 ISLs) are in loop paths                        
+fm0_sm[20334]: PROGR[topology]: SM: print_LoopCoverage: Loop Coverage: Full - all ISL ports covered                                   
+fm0_sm[20334]: PROGR[topology]: SM: print_LoopCoverage: Total 414 Loop paths of length <= 4 links. MinISLRedundancy is 4.             
+fm0_sm[20334]: PROGR[topology]: SM: print_LoopCoverage: Total LIDs required for loop paths is 828.                                    
+fm0_sm[20334]: PROGR[topology]: SM: topology_loopTest: Packets injected since start of loop test = 4                                  
+fm0_sm[20334]: PROGR[topology]: SM: topology_loopTest: END topology_loopTest             
+
+
+If loop coverage is partial - information about all switch ports not covered in the test is logged.
+
+================================
+D) Advanced Loop Test Options
+===============================
+
+1. Injecting more packets
+
+	./run_hsm_loop_test_fast.sh -i <num> will inject num packets in all the loops.
+
+   Steps:
+
+    a) Can be used along with -s to determine how many packets will be injected at start.
+
+		./run_hsm_loop_test_fast.sh -s -i 2
+
+    b) Can be used separately after starting the test to inject more packets in the loops.
+
+		./run_hsm_loop_test_fast.sh -i 1
+
+
+2. Changing minimum number of loops in which each ISL is included (smLooptestMinISLRedundancy)
+
+	IMPORTANT NOTES:
+
+     a) After changes, parameter value DOES NOT reset to default value automatically after stopping loop test. 
+        Changes are persistent through out the SM run even after stopping the loop test.
+
+ 	 b) This needs updated fm_cmd which is in the build. You can use -d option of
+		run_hsm_loop_test to run fm_cmd present at a different location.
+
+
+   Default value of smLooptestMinISLRedundancy is 4.
+
+   Steps:
+
+	a) Stop loop test (if its running) 
+		./run_hsm_loop_test_fast.sh -e
+
+           WAIT TILL THE SM SWEEP FINISHES.
+
+	b) Set MinISLRedundancy
+		
+		./run_hsm_loop_test_fast.sh -r <num> -d <path_to_fm_cmd> [if updated fm_cmd is NOT at standard location]
+
+		  OR
+
+		./run_hsm_loop_test_fast.sh -r <num> [if updated fm_cmd is at standard location]
+
+	c) Start loop test
+		./run_hsm_loop_test_fast.sh -s
+
+
+3. Changing loop path length (smLooptestPathLength)
+
+    IMPORTANT NOTE:
+		   After changes, parameter value DOES NOT reset to default value automatically after stopping loop test. 
+           Changes are persistent through out the SM run even after stopping the loop test.
+
+   Default value of smLooptestPathLength is 4.
+
+   Steps:
+
+	a) Stop loop test (if its running)
+		./run_hsm_loop_test_fast.sh -e
+
+           WAIT TILL THE SM SWEEP FINISHES.
+
+	b) Set path length
+		./run_hsm_loop_test_fast.sh -l <len>
+
+	c) Start loop test
+		./run_hsm_loop_test_fast.sh -s
+
+===========================
+E) Debug options
+===========================
+To see a list of all loop paths:
+
+1) Set SmPerfDebug parameter to 1.
+
+2) Start SM binary directly in the foreground on the terminal.
+
+3) Start loop test.
+
+4) SM prints out all the loop paths on the terminal.
+

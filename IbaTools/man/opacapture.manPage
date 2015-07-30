@@ -1,0 +1,74 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opacapture 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opacapture
+
+.NL
+
+.PP
+
+\fB(Host)\fR
+Captures critical system information into a zipped tar file. The resulting tar file should be sent to Customer Support along with any Intel(R) Omni-Path Fabric problem report regarding this system.
+.SH Syntax
+.NL
+opacapture [-d \fIdetail\fR] \fIoutput\(ultar\(ulfile\fR
+.PP
+or
+.br
+opacapture --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Show full help text
+
+.TP 10
+-d \fIdetail\fR 
+.NL
+Capture level of detail:
+.sp
+1 (Local)
+Obtains local information from host.
+.sp
+2 (Fabric)
+In addition to ``Local'', also obtains basic fabric information by queries to the SM and fabric error analysis using iba\(ulreport.
+.sp
+3 (Fabric+FDB)
+[START-DRAFT-COMMENT]What does FDB stand for?[END-DRAFT-COMMENT]In addition to ``Fabric'', also obtains all the switch forwarding tables from the SM and the server multicast membership.
+.sp
+4 (Analysis)
+In addition to ``Fabric+FDB'', also obtains opaallanalysis results. If opaallanalysis has not yet been run, it is run as part of the capture.
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+Detail levels 2 - 4 can be used when fabric operational problems occur. If the problem is most likely node specific, detail level 1 should be sufficient. Detail levels 2 - 4 require an operational Fabric Manager. Typically your support representative will request a given detail level. If a given detail level takes excessively long or fails to be gathered, try a lower detail level.
+
+.PP
+For detail levels 2 - 4, the additional information is only available on a node with Intel(R) Omni-Path Fabric Suite FastFabric Toolset installed. The information is gathered for every fabric specified in the /etc/sysconfig/opa/ports file.
+
+.TP 10
+ \fIoutput\(ultar\(ulfile\fR 
+.NL
+The name of a file to be created by opacapture . The file name specified will be overwritten if it already exists. It is recommended to use the .tgz suffix in the filename supplied. If the filename given does not have a .tgz suffix, the .tgz suffix will be added.
+.SH Examples 
+.NL
+opacapture mycapture.tgz[START-DRAFT-COMMENT]Does the system answer the command?[END-DRAFT-COMMENT]
+.br
+opacapture -d 3 030127capture.tgz[START-DRAFT-COMMENT]Does the system answer the command?[END-DRAFT-COMMENT]
+.PP
+
+.B NOTE:
+The resulting host capture file can require significant amounts of space on the host. The actual size will vary but sizes can be multiple megabytes. As such, it is recommended to ensure that adequate disk space is available on the host system.
+

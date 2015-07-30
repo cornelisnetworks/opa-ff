@@ -1,0 +1,77 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opashowmc 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opashowmc
+
+.NL
+
+.PP
+
+\fB(Linux)\fR
+Displays the Intel(R) Omni-Path Multicast groups created for the fabric along with the Intel(R) Omni-Path Host Fabric Interface (HFI) ports which are a member of each multicast group. This command can be helpful when attempting to analyze or debug True Scale multicast usage by applications or ULPs such as IPoIB.
+.SH Syntax
+.NL
+opashowmc [-v] [-t \fIportsfile\fR] [-p \fIports\fR]
+.PP
+or
+.br
+opashowmc --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produce full help text.
+.TP 10
+-v 
+.NL
+Verbose output, show name of each member.
+.TP 10
+-t \fIportsfile\fR 
+.NL
+File with list of local HFI ports used to access fabric(s) for analysis, default is /etc/sysconfig/opa/ports .
+.TP 10
+-p \fIports\fR 
+.NL
+List of local HFI ports used to access fabric(s) for analysis default is first active port.This is specified as hfi:port :
+
+.sp
+0:0 
+First active port in system.
+.sp
+0:y 
+Port y within system.
+.sp
+x:0 
+First active port on HFI x.
+.sp
+x:y 
+HFI x, port y.
+.IP
+The first HFI in the system is 1. The first port on an HFI is 1.
+.SH Examples 
+.NL
+opashowmc check\(ulports\(ulargs PORTS PORTS\(ulFILE /etc/sysconfig/opa/ports Fabric 0:0 Multicast Information:
+.br
+opashowmc -p \'1:1\' opashowmc -p \'1:1 1:2\' check\(ulports\(ulargs PORTS 1:1 1:2 PORTS\(ulFILE /etc/sysconfig/opa/ports Fabric 1:1 Multicast Information: GID: 0xff15400180010003:0x0400000000000000 MLID: 0x0000c008 PKey: 0x8001 Mtu: 2048 Rate: 10g PktLifeTime: 536 ms QKey: 0x80010000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0xfe80000000000000:0x001175010078b026 Membership: Full GID: 0xff12601b80010000:0x00000000000000fb MLID: 0x0000c007 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12601b80010000:0x0000000000000016 MLID: 0x0000c006 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12601b80010000:0x0000000000000002 MLID: 0x0000c005 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12601b80010000:0x0000000000000001 MLID: 0x0000c004 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12401b80010000:0x00000000000000fb MLID: 0x0000c003 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12401b80010000:0x0000000000000016 MLID: 0x0000c002 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12401b80010000:0x0000000000000001 MLID: 0x0000c001 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12401b80010000:0x00000000ffffffff MLID: 0x0000c000 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full Fabric 1:2 Multicast Information:
+.SH Environment Variables
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+\fBPORTS\fR 
+.NL
+List of ports, used in absence of -t and -p .
+.TP 10
+\fBPORTS\(ulFILE\fR 
+.NL
+File containing list of ports, used in absence of -t and -p .

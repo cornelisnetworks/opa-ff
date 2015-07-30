@@ -1,0 +1,1747 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# assumptions:
+#	slot numbers are alphanumeric: A-Za-z0-9 (actually are numeric in <=3.1)
+#	card types are alphanumeric with dot, dash, underscore: A-Za-z0-9._-
+#	versions are alphanumeric with dot, dash, underscore: A-Za-z0-9._-
+
+# This is an expect (tcl) library of procedures to aid testing
+# These functions provide support for chassis operations
+# against a test target chassis
+
+## tcl procedures to support testing:
+## =============================================
+
+global os_type
+
+proc get_chassis_sftp_status { slot {wait_done 1 }} {
+##
+## get_chassis_sftp_status
+## -------------------------
+## return the exit status of the last sftp executed against the given slot
+##
+## Usage:
+##	get_chassis_sftp_status slot [wait_done]
+## Arguments:
+##	slot - slot number to get status for
+##	wait_done - if status is "In Progress", loop until changes to another value
+## Returns:
+##	"success"
+##	"skipped" - transfer unnecessary
+##	"invalid" - invalid firmware image for card type
+##	"inprogress" - transfer still in progress, but wait_done not set
+##	"error" - other errors or timeouts
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	while { 1 } {
+		send_chassis_cmd "showLastScpRetCode $slot"
+		set out [expect_list 60 { "Code: [0-9]+:" } { "usage" "Invalid" "Error" "Failed" "roblem" "roblem" "not found"} ]
+		regexp {[0-9]+} $out ret
+		expect_chassis_prompt 60
+
+		if { $ret == 0 } {
+			return "success"
+		} elseif { $ret == 1 } {
+			# unneeded
+			return "skipped"
+		} elseif { $ret == 2 } {
+			# wrong card type
+			return "invalid"
+		} elseif { $ret == 3 } {
+			if { ! $wait_done } {
+				# transfer in progress internal to chassis
+				return "inprogress"
+			}
+			# can be a few minutes, so lets be a little patient
+			sleep 20
+		} else {
+			# other errors
+			return "error"
+		}
+	}
+}
+
+proc check_chassis_capability { capability } {
+##
+## check_chassis_capability
+## -------------------------
+## return level of support for the given capability by the current chassis
+##
+## Usage:
+##	check_chassis_capability capability
+## Arguments:
+##	capability - the capability name to check
+## Returns:
+##	0 - capability not supported
+##	>0 - version of capability supported
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	send_chassis_cmd "showCapability -key $capability"
+	# the [:space:] bounds the + so we get all the data on the line
+	set out [expect_list 60 "{$capability: \[0-9A-Za-z\]+\[\[:space:\]\]}" { "usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+	expect_chassis_prompt 60
+	#log_message "out=$out"
+
+	# throw away the \r\n, there may be trailing spaces, TCL lists will ignore
+	regexp {: ([A-Za-z0-9]+)[[:space:]]} $out line ret
+	#log_message "ret=$ret"
+
+	if { [ string equal -nocase "$ret" "unavailable" ] } {
+		set ret 0
+	}
+
+	return "$ret"
+}
+
+proc get_chassis_slots { { card_type "" } } {
+##
+## get_chassis_type_slots
+## -------------------------
+## return the list of slots in the given chassis of the given card type
+## if no card type is specified, a list of all slots in the chassis is returned
+##
+## Usage:
+##	get_chassis_type_slots [card_type]
+## Arguments:
+##	card_type - card type, default is "" (eg. all slots)
+## Returns:
+##	list of slots in chassis
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	if { ! [ string equal "$card_type" "" ] } {
+		send_chassis_cmd "chassisQuery -ignoreInvalidType -type $card_type"
+	} else {
+		send_chassis_cmd "chassisQuery"
+	}
+	# this could return no slots, in which case "none" is output
+	# The \r\n is needed to bound the + so we get all the data on the line
+	set out [expect_list 60 "{slot\[s\]*: \[0-9A-Za-z \]+\[\r\n\]}" { "usage" "Error" "Failed" "roblem" "not found"} ]
+	expect_chassis_prompt 60
+	#log_message "out=$out"
+
+	# The \r\n is needed to bound the + so we get all the data on the line
+	# there may be trailing spaces, TCL lists will ignore
+	regexp {: ([0-9A-Za-z ]+)[\r\n]+} $out line ret
+	#log_message "ret=$ret"
+	if { [ regexp -nocase "none" "$ret" ] } {
+		set ret ""
+	}
+
+	return "$ret"
+}
+
+proc get_chassis_card_type { slot } {
+##
+## get_chassis_card_type
+## -------------------------
+## return the card type of the given slot in the given chassis
+##
+## Usage:
+##	get_chassis_card_type slot
+## Arguments:
+##	slot - slot to query
+## Returns:
+##	card type of given slot
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	# DONE
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	send_chassis_cmd "chassisQuery -showType $slot"
+	# require trailing whitespace to anchor end of string
+	set out [expect_list 60 "{type: \[a-zA-Z0-9._-\]+\[\[:space:\]\]+}" { "usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+	# just get the card type field
+	regexp {: ([a-zA-Z0-9._-]+)[[:space:]]+} $out line ret
+
+	expect_chassis_prompt 60
+
+	return "$ret"
+}
+
+proc is_management_card_type { card_type } {
+##
+## is_management_card_type
+## -------------------------
+## is the given card_type a management card for the current chassis
+##
+## Usage:
+##	is_management_card_type card_type
+## Arguments:
+##	card_type - card type to test
+## Returns:
+##	0-> this card type is not the management card type for this chassis
+##	1-> this card type is the management card type for this chassis
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+## Our best way to do this is to query slot 0 for its card type.  Slot 0
+## is always the management card
+	return [string equal [ get_chassis_card_type 0] "$card_type" ]
+}
+
+proc get_this_slot_number { } {
+##
+## get_this_slot_number
+## -------------------------
+## return the slot number of the management card we are logged into
+##
+## Usage:
+##	get_this_slot_number
+## Arguments:
+## Returns:
+##	slot number
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	send_chassis_cmd "chassisQuery 0"
+	# this could return no slots, in which case "none" is output
+	# The \r\n is needed to bound the + so we get all the data on the line
+	set out [expect_list 60 "{slot\[s\]*: \[0-9A-Za-z \]+\[\r\n\]}" { "usage" "Error" "Failed" "roblem" "not found"} ]
+	expect_chassis_prompt 60
+	#log_message "out=$out"
+
+	# The \r\n is needed to bound the + so we get all the data on the line
+	# there may be trailing spaces, TCL lists will ignore
+	regexp {: ([0-9A-Za-z ]+)[\r\n]+} $out line ret
+	#log_message "ret=$ret"
+	if { [ regexp -nocase "none" "$ret" ] } {
+		set ret ""
+	}
+
+	return "$ret"
+}
+
+proc get_chassis_active_firmware_version { slot } {
+##
+## get_chassis_active_firmware_version
+## -------------------------
+## return the presently running firmware_version of the given slot
+## in the given chassis
+##
+## Usage:
+##	get_chassis_active_firmware_version slot
+## Arguments:
+##	slot - slot to query
+## Returns:
+##	firmware version of given slot
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	send_chassis_cmd "fwVersion $slot"
+ 	# echo of command
+	set out [expect_list 60 { "fwVersion" "Firmware Version: [a-zA-Z0-9.]+[[:space:]]" } { "usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+	regexp {: ([a-zA-Z0-9._-]+)[[:space:]]} $out line ret
+	expect_chassis_prompt 60
+
+	return "$ret"
+}
+
+proc get_file_firmware_version { fw_file } {
+##
+## get_file_firmware_version
+## -------------------------
+## return the firmware version of the given local file
+##
+## Usage:
+##	get_file_firmware_version fw_file
+## Arguments:
+##	fw_file - local pathname of file
+## Returns:
+##	firmware version of given file
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	log_message "opafirmware --showVersion $fw_file\n"
+	set fw_version [exec /usr/sbin/opafirmware --showVersion $fw_file]
+	log_message "Version: $fw_version\n"
+	return "$fw_version"
+}
+
+proc get_file_firmware_type { fw_file } {
+##
+## get_file_firmware_type
+## -------------------------
+## return the firmware type of the given local file
+##
+## Usage:
+##	get_file_firmware_type fw_file
+## Arguments:
+##	fw_file - local pathname of file
+## Returns:
+##	firmware card type of given file
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	log_message "opafirmware --showType $fw_file"
+	set card_type [exec /usr/sbin/opafirmware --showType $fw_file]
+	log_message "Card Type: $card_type\n"
+	return "$card_type"
+}
+
+proc get_chassis_firmware_version { slot {location "act"} } {
+##
+## get_chassis_firmware_version
+## -------------------------
+## return the firmware version of the given slot in the chassis
+##
+## Usage:
+##	get_chassis_firmware_version slot [alternate]
+## Arguments:
+##	slot - slot to query
+##	location - location to query
+##		"pri" -> primary
+##		"alt" -> alternate
+##		"act" -> active (running) (default)
+## Returns:
+##	firmware version of given slot
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	if { [string equal "$location" "act"] } {
+		return [get_chassis_active_firmware_version $slot]
+	}
+
+	if { [string equal "$location" "alt"] } {
+		#set cmd "bootQuery $slot -showVersion -alternate"
+		set cmd "bootQuery $slot -alternate"
+	} else {
+		#set cmd "bootQuery $slot -showVersion"
+		set cmd "bootQuery $slot"
+	}
+	send_chassis_cmd "$cmd"
+	set out [expect_list 60 "{version: \[a-zA-Z0-9._-\]+\[\[:space:\]\]}" { "usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+	regexp {: ([a-zA-Z0-9._-]+)[[:space:]]} $out line ret
+	expect_chassis_prompt 60
+
+	return "$ret"
+}
+
+proc select_chassis_firmware_version { slot fw_version } {
+##
+## select_chassis_firmware_version
+## -------------------------
+## select the given firmware version for the given slot in the chassis
+##
+## Usage:
+##	select_chassis_firmware_version slot fw_version
+## Arguments:
+##	slot - slot to act on
+##	fw_version - firmware version to select
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	chassis_cmd 60 0 "bootSelect $slot -version $fw_version"
+
+	return 0
+}
+
+proc sftp_chassis_firmware { chassis fw_file {select 0} {slot "all"} } {
+##
+## sftp_chassis_firmware
+## -------------------------
+## push the given firmware file to the specified slots in the
+## given chassis.
+##
+## Usage:
+##	sftp_chassis_firmware chassis fw_file [select [slot]]
+## Arguments:
+##	chassis - IP address/name of chassis to sftp to
+##	fw_file - local pathname of file to push
+##	select - should image be selected (0->no (default), 1->yes)
+##	slot - slot to push to, default is "all" of given card type
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	if { $select } {
+		set nopt ""
+	} else {
+		set nopt "n"
+	}
+
+	# Create a basename for the firmware on the server
+	set base [ exec basename $fw_file ]
+
+	if { [ string equal "$slot" "all" ] } {
+		chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "put $fw_file A$nopt:/firmware/$base"
+	} else {
+		chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "put $fw_file $nopt$slot:/firmware/$base"
+	}
+}
+
+proc push_chassis_firmware { chassis fw_file fw_version card_type {action "push"} { slots "all" } } {
+##
+## push_chassis_firmware
+## -------------------------
+## push the given firmware file to the specified slots in the
+## given chassis.
+##
+## Usage:
+##	push_chassis_firmware chassis fw_file fw_version card_type [action [slots]]
+## Arguments:
+##	chassis - IP address/name of chassis to sftp and telnet to
+##	fw_file - local pathname of file to push
+##	fw_version - firmware version of fw_file
+##	card_type - card type of fw_file
+##	action - action after pushing firmware:
+##			push   - do not reboot, do not change as primary
+##					is already primary, no change
+##			select - select as primary, but do not reboot
+##			run    - select as primary and reboot to activate firmware
+##	slots - list of slot numbers to push to, default is "all" of given card type
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+##  Any slots which are not of a card type which matches that
+##	of the firmware file, are quietly skipped.  This allows multi-file
+##  push to work with a slot list.
+##
+##	If the sftp fails for some slots but succeeds for others.  The failed slots
+##	are logged and an exception will be thrown, however the good slots
+##	are processed to completion [except for the reboot] (if possible)
+##  so that they are not left in an odd state
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	# caller has already done this
+	#set fw_version [get_file_firmware_version $fw_file]
+	#set card_type [get_file_firmware_type $fw_file]
+
+	# variables:
+	#	select - do we want to select the image as primary
+	#	active - do we want to select the image as primary and activate it
+	if { [ string equal "$action" "push"] } {
+		set select 0
+		set active 0
+	} elseif { [string equal "$action" "select"] } {
+		set select 1
+		set active 0
+	} elseif { [string equal "$action" "run"] } {
+		set select 1
+		set active 1
+	} else {
+		fail_test "Invalid firmware push action: $action"
+	}
+
+	log_message "\nTest: Seeing if $chassis present running firmware supports firmware push ...\n"
+	target_chassis_admin_sh $chassis
+	if { [ catch { set cap [check_chassis_capability "fwPush"] } res ] != 0
+	     || $cap < 1 } {
+		fail_test "Chassis $chassis present running firmware does not support fwPush:\n$res"
+	}
+	log_message "\nTest: Getting Slot list from $chassis ...\n"
+
+	if { [string equal "$slots" "all"] } {
+		# push to all slots of matching card type
+		set push_slots [get_chassis_slots $card_type]
+		set num_slots [llength $push_slots]
+		#set push_all 0
+		set push_all 1
+	} else {
+		# push to a specific set of slots
+		set push_slots "$slots"
+		set push_all 0
+	}
+	set num_slots [llength $push_slots]
+	if { $num_slots == 0 } {
+		target_chassis_admin_sh_exit
+		skip_case "No cards of type $card_type"
+		return 0
+	}
+	set is_mgmt [ is_management_card_type $card_type]
+	set use_rebootall 0
+	if { $is_mgmt } {
+		if { [ catch { set cap [check_chassis_capability "redundantMgmtCapable"] } res ] == 0
+	     && $cap >= 1 } {
+		 	set use_rebootall 1
+		}
+	}
+
+	log_message "\nTest: Getting present installed firmware from $chassis ...\n"
+	# first get present firmware versions for each of the slots
+	set act_fw_versions ""
+	set pri_fw_versions ""
+	set alt_fw_versions ""
+	set card_types ""
+	foreach slot $push_slots {
+		lappend card_types [get_chassis_card_type $slot]
+		lappend act_fw_versions [get_chassis_firmware_version $slot "act"]
+		lappend pri_fw_versions [get_chassis_firmware_version $slot "pri"]
+		lappend alt_fw_versions [get_chassis_firmware_version $slot "alt"]
+	}
+	target_chassis_admin_sh_exit
+	# DEBUG
+	#log_message "push_slots: $push_slots"
+	#log_message "num_slots: $num_slots"
+	#log_message "card_types: $card_types"
+	#log_message "act_fw_versions: $act_fw_versions"
+	#log_message "pri_fw_versions: $pri_fw_versions"
+	#log_message "alt_fw_versions: $alt_fw_versions"
+	#log_message "is_mgmt: $is_mgmt"
+
+	log_message "\nTest: Determining operations needed to upgrade to $fw_file for $chassis ..."
+	# now check that card types match and determine if we need to push firmware
+	set need_push ""
+	set need_select ""
+	set need_reboot ""
+	set have_card 0
+	for { set i 0 } { $i < $num_slots } { incr i } {
+		set slot [lindex $push_slots $i]
+		if { ! [ string equal "$card_type" [lindex $card_types $i] ] } {
+			# if this happens card type is inconsistent with original
+			# query for slots of given card type (hot swap during update?)
+			# or user has explicitly specified slots and picked one of
+			# wrong card type
+			# quiety ignore this slot
+			lappend need_push 0
+			lappend need_select 0
+			lappend need_reboot 0
+			log_message "Test: Skipping slot $slot: is of type [lindex $card_types $i], $fw_file is for $card_type"
+			continue
+		}
+		set have_card 1
+		set in_pri [ string equal "$fw_version" [lindex $pri_fw_versions $i] ]
+		set in_alt [ string equal "$fw_version" [lindex $alt_fw_versions $i] ]
+		set booted [string equal "$fw_version" [lindex $act_fw_versions $i]]
+		if { ! $in_pri && ! $in_alt } {
+			# firmware is not in slot, need to push and possibly select/reboot
+			lappend need_push 1
+			set s $select
+			log_message "Test: Will need to push firmware to slot $slot"
+		} else {
+			# firmware is in one of the images
+			#set push_all 0
+			lappend need_push 0
+			# only need to select if not already the primary image
+			set s [ expr $select && ! $in_pri]
+			log_message "Test: Do Not need to push firmware to slot $slot"
+		}
+		#  could be running something not on chassis but matching pushed version
+		# only need to reboot if not the active image
+		set a [ expr $active && ! $booted]
+		lappend need_select $s
+		lappend need_reboot $a
+		if { $s && $a } {
+			log_message "Test: Need to select firmware and reboot slot $slot\n"
+		} elseif { $a } {
+			log_message "Test: Firmware already selected, Need to reboot slot $slot\n"
+		} elseif { $s } {
+			log_message "Test: Firmware already booted, but need to select firmware for slot $slot\n"
+		} else {
+			log_message "Test: No need to select firmware nor reboot slot $slot\n"
+		}
+	}
+	# only need do a step if applicable to at least 1 slot
+	set do_push [ expr [lsearch -exact $need_push 1] != -1 ]
+	set do_select [ expr [lsearch -exact $need_select 1] != -1 ]
+	set do_reboot [ expr [lsearch -exact $need_reboot 1] != -1 ]
+
+	# DEBUG
+	#log_message "push_all: $push_all"
+	#log_message "do_push: $do_push"
+	#log_message "do_select: $do_select"
+	#log_message "do_reboot: $do_reboot"
+	#log_message "need_push: $need_push"
+	#log_message "need_select: $need_select"
+	#log_message "need_reboot: $need_reboot"
+
+	if { ! ( $do_push || $do_select || $do_reboot ) } {
+		# we are done, everything is already the way we want it
+		if { $have_card } {
+			skip_case "No action required"
+		} else {
+			skip_case "No selected slots of type $card_type"
+		}
+		return 0
+	}
+
+	set fail 0
+	set pushed 0
+	set sftp_failures ""
+	set sftp_statuses ""
+
+	if { $do_push && $push_all } {
+		# push to all applicable slots at once
+		log_message "Test: sftp $fw_file to all applicable slots\n"
+		sftp_chassis_firmware $chassis $fw_file $select "all"
+		# will check status of sftp operations for slots we care about below
+		log_message "\nTest: Verifying firmware was pushed to $chassis ...\n"
+		target_chassis_admin_sh $chassis
+	}
+
+	for { set i 0 } { $i < $num_slots } { incr i } {
+		set slot [lindex $push_slots $i]
+		if { $do_push && ( $push_all || [lindex $need_push $i] ) } {
+			if { ! $push_all } {
+				# push one slot at a time
+				log_message "\nTest: sftp $fw_file to slot $slot\n"
+				sftp_chassis_firmware $chassis $fw_file $select $slot
+				target_chassis_admin_sh $chassis
+			}
+			# check status, must do immediately after sftp
+			set status [get_chassis_sftp_status $slot 1]
+			if { [ string equal "$status" "success" ] || [ string equal "$status"  "skipped" ] } {
+				set pushed 1
+				lappend sftp_failures 0
+				lappend sftp_statuses "$status"
+			} else {
+				log_message "\nFAILURE: Failed to sftp firmware to chassis $chassis slot $slot\n"
+				set fail 1
+				lappend sftp_failures 1
+				lappend sftp_statuses "$status"
+			}
+			if { ! $push_all } {
+				target_chassis_admin_sh_exit
+			}
+		} else {
+			# we never sftp'ed to this slot
+			lappend sftp_failures 0
+			lappend sftp_statuses "skipped"
+		}
+	}
+	# make sure we are logged in for operations below
+	if { ! ( $do_push && $push_all ) } {
+		target_chassis_admin_sh $chassis
+	}
+
+	# DEBUG
+	#log_message "pushed: $pushed"
+	#log_message "sftp_statuses: $sftp_statuses"
+	#log_message "sftp_failures: $sftp_failures"
+	#log_message "fail: $fail"
+
+	if { $pushed } {
+		# we pushed firmware to some or all of the requested slots
+		# now check firmware versions
+
+		for { set i 0 } { $i < $num_slots } { incr i } {
+			set slot [lindex $push_slots $i]
+			if { [lindex $sftp_failures $i] } {
+				# it failed, no further checks necessary
+				continue
+			}
+			if { ! $push_all && ! [lindex $need_push $i] } {
+				# we never sftp'ed to this slot
+				continue
+			}
+			# if we get here, status was success or skipped
+
+			# check what is in the slot after the sftp
+			set pri_fw_version [get_chassis_firmware_version $slot "pri"]
+			set alt_fw_version [get_chassis_firmware_version $slot "alt"]
+			set in_pri [ string equal "$fw_version" "$pri_fw_version" ]
+			set in_alt [ string equal "$fw_version" "$alt_fw_version" ]
+			if { $push_all && ! [lindex $need_push $i] } {
+				# sftp should have skipped this slot
+				if { ! [ string equal [lindex $sftp_statuses $i] "skipped" ] } {
+					set sftp_failures [lreplace $sftp_failures $i $i 1]
+					set fail 1
+					log_message "\nFAILURE: Unexpected sftp transfer for chassis $chassis slot $slot\n"
+				} elseif { ! $in_pri && ! $in_alt } {
+					# the version disappeared
+					set sftp_failures [lreplace $sftp_failures $i $i 1]
+					set fail 1
+					log_message "\nFAILURE: Unexpected removal of $fw_version for chassis $chassis slot $slot\n"
+				} elseif { $select && ! $in_pri } {
+					# the primary changed?
+					# we can recover
+					log_message "\nWARNING: Unexpected change of primary for chassis $chassis slot $slot\n"
+					set need_select [lreplace $need_select $i $i 1]
+					set do_select 1
+				}
+				continue
+			}
+
+			# if we get here, we needed to push to this slot
+			# hence the slot should not have been skipped
+			if { ! [ string equal [lindex $sftp_statuses $i] "success" ] } {
+				# it was skipped for no reason
+				set sftp_failures [lreplace $sftp_failures $i $i 1]
+				set fail 1
+				log_message "\nFAILURE: Unexpected skip of sftp transfer for chassis $chassis slot $slot\n"
+			} elseif { ! $in_pri && ! $in_alt } {
+				# the version never appeared
+				set sftp_failures [lreplace $sftp_failures $i $i 1]
+				set fail 1
+				log_message "\nFAILURE: $fw_version did not transfer to chassis $chassis slot $slot\n"
+			} elseif { $select && ! $in_pri } {
+				# the image is there but was not selected
+				# we can recover
+				log_message "\nWARNING: sftp transfered to wrong image for chassis $chassis slot $slot\n"
+				set need_select [lreplace $need_select $i $i 1]
+				set do_select 1
+			}
+		}
+	}
+
+	# DEBUG
+	#log_message "sftp_failures: $sftp_failures"
+	#log_message "do_select: $do_select"
+	#log_message "need_select: $need_select"
+
+	if { $do_select } {
+		# now select the firmware as primary for the necessary slots
+		for { set i 0 } { $i < $num_slots } { incr i } {
+			if { [lindex $sftp_failures $i] } {
+				# it failed, no further ops necessary
+				continue
+			}
+			if { ! [lindex $need_select $i] } {
+				# does not need select
+				continue
+			}
+			set slot [lindex $push_slots $i]
+			select_chassis_firmware_version $slot $fw_version
+		}
+	}
+
+	# if any of the above failed, do not activate or reboot it could
+	# make things worse
+	if { $fail } {
+		fail_test "Unable to sftp firmware to requested slots in $chassis"
+	}
+
+	# DEBUG
+	#log_message "do_reboot: $do_reboot"
+	#log_message "need_reboot: $need_reboot"
+	#log_message "is_mgmt: $is_mgmt"
+
+	# now activate the firmware for the necessary slots
+	if { $do_reboot} {
+		if { $is_mgmt } {
+			# we can't tell which slot is the active mgmt slot, so just reboot
+			# the whole chassis
+			if { $use_rebootall } {
+				chassis_cmd_reboot_all
+			} else {
+				send_chassis_cmd "reboot now"
+				expect_list 60 { "Goodbye" }
+			}
+			# may not be able to send logout command, so just get out of dodge
+			ignore_rest
+
+			chassis_wait_reboot_done $chassis
+			return 0
+		} else {
+			for { set i 0 } { $i < $num_slots } { incr i } {
+				if { [lindex $need_reboot $i] } {
+					set slot [lindex $push_slots $i]
+					chassis_cmd 60 0 "resetCard $slot now"
+				}
+			}
+			# TBD - is there a way to poll via CLI if card has finished reboot?
+			# allow 60 seconds for it to come fully on line
+			sleep 60
+		}
+	}
+
+	target_chassis_admin_sh_exit
+
+	return 0
+}
+
+proc test_case_push_chassis_firmware { chassis fw_file fw_version card_type {action "push"} { slots "all" } } {
+##
+## test_case_push_chassis_firmware
+## -------------------------
+## test case to push the given firmware file to the specified slots in the
+## given chassis.
+##
+## Usage:
+##	test_case_push_chassis_firmware chassis fw_file fw_version card_type [action [slots]]
+## Arguments:
+##	chassis - IP address/name of chassis to sftp and telnet to
+##	fw_file - local pathname of file to push
+##	fw_version - firmware version of fw_file
+##	card_type - card type of fw_file
+##	action - action after pushing firmware:
+##			push - do not reboot, do not change as primary
+##					is already primary, no change
+##			select - select as primary, but do not reboot
+##			run - select as primary and reboot to activate firmware
+##	slots - list of slot numbers to push to, default is "all" of given card type
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+##  see push_chassis_firmware for error handling summary
+
+	global env
+
+	set base [exec basename $fw_file .pkg]
+
+	test_case "$chassis.$base" "upgrade $chassis $base" "upgrade firmware on $chassis
+selected slots: $slots
+Firmware File: $fw_file
+card type: $card_type
+Firmware Version: $fw_version
+Action: $action
+File: TestTools/chassis.exp" noop noop {
+		upvar chassis chassis
+		upvar fw_file fw_file
+		upvar fw_version fw_version
+		upvar card_type card_type
+		upvar action action
+		upvar slots slots
+
+		push_chassis_firmware "$chassis" "$fw_file" "$fw_version" "$card_type" "$action" "$slots"
+	}
+}
+
+proc test_case_chassis_configure { chassis chassisIP} {
+
+	global tools_case_status
+
+	test_case "$chassis.emb.configure" "Chassis $chassis configure" "Configure $chassis
+File: TestOnly/chassis.exp" case_setup case_cleanup {
+		upvar chassis chassis
+		upvar chassisIP chassisIP
+		global env
+
+		set syslogServer $env(SYSLOG_SERVER)
+		set syslogPort $env(SYSLOG_PORT)
+		set syslogFacility $env(SYSLOG_FACILITY)
+		set ntpServer $env(NTP_SERVER)
+		set tzOffset $env(TZ_OFFSET)
+		set dstStart $env(DST_START)
+		set dstEnd $env(DST_END)
+		set linkWidthSelection $env(LINKWIDTH_SETTING)
+		set setname $env(SET_NAME)
+		set linkCRCMode $env(LINKCRCMODE)
+
+		target_chassis_admin_sh $chassis
+
+		set chassis_cmd_string "logSyslogConfig"
+		set setSyslog 0
+		if { [string equal "$syslogServer" "0.0.0.0"] == 0 } {
+			append chassis_cmd_string " -h $syslogServer"
+			set setSyslog 1
+		}
+		if { [string equal "$syslogPort" "-1"] == 0 } {
+			append chassis_cmd_string " -p $syslogPort"
+			set setSyslog 1
+		}
+		if { [string equal "$syslogFacility" "-1"] == 0 } {
+			append chassis_cmd_string " -f $syslogFacility"
+			set setSyslog 1
+		}
+		if { $setSyslog } {
+			send_chassis_cmd $chassis_cmd_string
+			expect_progress 60 {[\r\n]} { "Successfully" "facility" } { "Invalid" "usage" }
+			check_chassis_exit_status 60 0
+		}
+
+		if { [string equal "$ntpServer" "0.0.0.0"] == 0 } {
+			send_chassis_cmd "time -S $ntpServer"
+			expect_progress 60 {[\r\n]} { "Configured" "NTP" } { "not" "valid" }
+			check_chassis_exit_status 60 0
+		}
+
+		if { [string equal "$tzOffset" "100"] == 0 } {
+			send_chassis_cmd "timeZoneConf $tzOffset"
+			expect_progress 60 {[\r\n]} { "successfully" "configured" } { "invalid" "not found"  }
+			check_chassis_exit_status 60 0
+		}
+
+		if { [string equal "$dstStart" "0 0 0"] == 0 } {
+			send_chassis_cmd "timeDstConf $dstStart $dstEnd"
+			expect_progress 60 {[\r\n]} { "Timezone" "DST" } { "bounds" "not found" }
+			check_chassis_exit_status 60 0
+		}
+
+		if { [string equal "$linkWidthSelection" "0"] == 0 } {
+			send_chassis_cmd "ismChassisSetWidth $linkWidthSelection"
+			send_chassis_cmd "showLastRetCode"
+			set out [expect_list 60 { "Last Exit Code: [0-9]+" } { "Error" }]
+			regexp {([0-9]+)} $out ret
+			if { ! [ string equal "$ret" "0"] } {
+				if { [ string equal "$ret" "5"] } {
+					skip_case "\n$chassis: Skipped changing chassis link width: ismChassisSetWidth command not supported"
+				} else {
+					fail_test "\n$chassis: Failed changing chassis link width: ismChassisSetWidth command failed with return code $ret"
+				}
+			}
+		}
+
+		if { [string equal "$chassisIP" "0.0.0.0"] == 0 } {
+			send_chassis_cmd "setChassisIpAddr -h $chassisIP"
+			expect_progress 60 {[\r\n]} { "reconnect" "updated" } { "valid" "usage" }
+			check_chassis_exit_status 60 0
+		}
+
+		# $setname is y or n
+		if { [string equal "$setname" "y"] } {
+			send_chassis_cmd "setNodeDesc \"$chassis\""
+			expect_progress 60 {[\r\n]} { "success" "changed" } { "usage:" "not found" }
+			check_chassis_exit_status 60 0
+		}
+
+		if { [string equal "$linkCRCMode" "-1" ] == 0 } {
+			send_chassis_cmd "ismChassisSetCrcMode $linkCRCMode"
+			send_chassis_cmd "showLastRetCode"
+			set out [expect_list 60 { "Last Exit Code: [0-9]+" } { "Error" }]
+			regexp {([0-9]+)} $out ret
+			if { ! [ string equal "$ret" "0"] } {
+				if { [ string equal "$ret" "5" ] } {
+					skip_case "\n$chassis: Skipped changing chassis link CRC mode: ismChassisSetCrcMode command not supported"
+				} else {
+					fail_test "\n$chassis: Failed changing chassis link CRC mode: ismChassisSetCrcMode command failed with return code $ret"
+				}
+			}
+			check_chassis_exit_status 60 0
+		}
+
+		target_chassis_admin_sh_exit
+	}
+}
+
+proc check_esm_config { config_file } {
+##
+## check_esm_config
+## -------------------------
+## check the syntax of the given esm config file
+##
+## Usage:
+##	check_esm_config config_file
+## Arguments:
+##	config_file - local pathname of file
+## Returns:
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global env
+
+	if { [ file exists "/opt/opa/fm_tools/config_check" ] } {
+		set env(IFS_FM_BASE) ""
+		set tooldir "/opt/opa/fm_tools"
+	} elseif { [ file exists "/etc/sysconfig/opa/opafm.info" ] } {
+		log_message {bash -c '. /etc/sysconfig/opa/opafm.info >/dev/null 2>&1; echo $IFS_FM_BASE'}
+		set env(IFS_FM_BASE) [exec bash -c {. /etc/sysconfig/opa/opafm.info >/dev/null 2>&1; echo $IFS_FM_BASE} ]
+		set tooldir "$env(IFS_FM_BASE)/etc"
+	} else {
+		set env(IFS_FM_BASE) "/usr/local/iview"
+		set tooldir "$env(IFS_FM_BASE)/etc"
+	}
+	log_message "IFS_FM_BASE=$env(IFS_FM_BASE)"
+	log_message "tooldir=$tooldir"
+	log_message ""
+	if { [ file exists "$tooldir/config_check" ] } {
+		log_message "$tooldir/config_check -c $config_file"
+		if { [ catch { exec "$tooldir/config_check" -c "$config_file" } err_str ] != 0 } {
+			puts "$tooldir/config_check -c $config_file"
+			show_message "$err_str"
+			error "$tooldir/config_check -c $config_file: failed: $err_str"
+		}
+	} else {
+		skip_case "Unable to pre-check config file, Intel OPA FM not installed on this server"
+	}
+	return 0
+}
+
+proc sftp_esm_config { chassis config_file } {
+##
+## sftp_esm_config
+## -------------------------
+## push the given SM config file to the specified chassis
+##
+## Usage:
+##	sftp_esm_config chassis config_file
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	config_file - local pathname of file to push
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "put $config_file /firmware/opafm.xml"
+
+	return 0
+}
+
+proc get_esm_config { chassis config_file } {
+##
+## get_esm_config
+## -------------------------
+## get esm config file from the chassis
+##
+## Usage:
+##	get_esm_config config_file
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	config_file - local pathname of file to get to
+## Returns:
+##	1 - match, 0 - no match
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "get /firmware/opafm.xml $config_file"
+
+	return 0
+}
+
+proc compare_esm_config { chassis config_file mgmt_card_type } {
+##
+## compare_esm_config
+## -------------------------
+## return if the config_file matches esm config in the chassis
+##
+## Usage:
+##	compare_esm_config chassis config_file
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	config_file - local pathname of file to push
+##	mgmt_card_type - Name of management card type
+## Returns:
+##	1 - match, 0 - no match
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+	global test_tmp
+
+	log_message "\nComparing $config_file to FM config...\n"
+	set temp_file "$test_tmp/get_opafm.xml"
+	get_esm_config "$chassis" "$test_tmp/get_opafm.xml"
+	if { [catch { run_cmd "exec cmp -s $config_file $temp_file"} ] == 0 } {
+		# match
+		log_message "Test: Matches\n"
+		return 1
+	} else {
+		log_message "Test: Does not Match\n"
+		return 0
+	}
+}
+
+proc is_esm_running { } {
+##
+## is_esm_running
+## -------------------------
+## check the esm status for the current slot in the current chassis
+##
+## Usage:
+##	is_esm_running
+## Arguments:
+## Returns:
+##	esm status
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	# DONE
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	send_chassis_cmd "smControl status"
+	# require trailing whitespace to anchor end of string
+	set out [expect_list 60 "{Subnet manager is \[a-zA-Z0-9_ -\]+\\\.}" { "usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+	set ret ""
+	regexp {is ([a-zA-Z0-9_ -]+)\.} $out line ret
+
+	expect_chassis_prompt 60
+
+	return [ string equal "$ret" "running"]
+}
+
+proc chassis_get_sm_boot_options { } {
+##
+## chassis_get_sm_boot_options
+## -------------------------
+## return SM boot options
+##
+## Usage:
+##	chassis_get_sm_boot_options
+## Arguments:
+## Returns:
+##	{ startAtBoot startOnSlaveCmu }
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	send_chassis_cmd "smConfig query"
+	# the [:space:] bounds the + so we get all the data on the line
+	set out1 [expect_list 60 "{startAtBoot: \[0-9A-Za-z\]+\[\[:space:\]\]}" { "usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+	set out2 [expect_list 60 "{startOnSlaveCmu: \[0-9A-Za-z/\]+\[\[:space:\]\]}" { "usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+	check_chassis_exit_status 60 0
+	#log_message "out1=$out1"
+	#log_message "out2=$out2"
+
+	set ret1 ""
+	set ret2 ""
+	# throw away the \r\n, there may be trailing spaces, TCL lists will ignore
+	regexp {startAtBoot: ([A-Za-z0-9]+)[[:space:]]} $out1 line ret1
+	regexp {startOnSlaveCmu: ([A-Za-z0-9/]+)[[:space:]]} $out2 line ret2
+
+	return "$ret1 $ret2"
+}
+
+proc push_esm_config { chassis config_file {action "push"} {bootstate ""} } {
+##
+## push_esm_config
+## -------------------------
+## push the given ESM config file to all the applicable slots in the
+## given chassis.
+##
+## Usage:
+##	push_esm_config chassis config_file [action [bootstate]]
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	config_file - local pathname of file to push
+##			if "", no file push will occur
+##	action - action after pushing config_file:
+##			push   - push, do not restart SM
+##			select - same as push
+##			run    - make sure FM running on master, not on slave
+##			runall - make sure FM running on master and slave
+##			restart - restart FM on master, make sure not running on slave
+##			restartall - restart FM on master and slave
+##			stop - stop FM on master and slave
+##  bootstate - optional selection for FM bootstate
+##			"" - no change to FM start at boot options
+##          disable - disable FM start on all MM on boot
+##          enable - enable FM start on master MM on boot, disable on slave MM
+##          enableall - enable FM start on all MM on boot
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+##	If the scp fails for some slots but succeeds for others.  The failed slots
+##	are logged and an exception will be thrown, however the good slots
+##	are processed to completion [except for the restart] (if possible)
+##  so that they are not left in an odd state
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	# variables:
+	#	restart_only - no push, just restart FM
+	set restart_only [string equal "$config_file" ""]
+
+	# runstate: 0=no change, 1=running, 2=restart, -1=stop
+	if { "$action" == "push" || "$action" == "select" } {
+		set master_runstate 0
+		set slave_runstate 0
+	} elseif { "$action" == "stop" } {
+		set master_runstate -1
+		set slave_runstate -1
+	} elseif { "$action" == "run" } {
+		set master_runstate 1
+		set slave_runstate -1
+	} elseif { "$action" == "runall" } {
+		set master_runstate 1
+		set slave_runstate 1
+	} elseif { "$action" == "restart" } {
+		set master_runstate 2
+		set slave_runstate -1
+	} elseif { "$action" == "restartall" } {
+		set master_runstate 2
+		set slave_runstate 2
+	} else {
+		fail_test "Invalid FM config file action: $action"
+	}
+	if { "$bootstate" != "" && "$bootstate" != "disable" 
+		&& "$bootstate" != "enable" && "$bootstate" != "enableall" } {
+		fail_test "Invalid FM config bootstate: $bootstate"
+	}
+
+	# DEBUG
+	#log_message "action: $action"
+	#log_message "restart_only: $restart_only"
+	#log_message "bootstate: $bootstate"
+
+	target_chassis_admin_sh $chassis
+	# check if chassis supports slaveCli, if not then skip chassis, older FW
+	if { [ catch { set cap [check_chassis_capability "slaveCli"] } res ] != 0
+	     	|| $cap < 1 } {
+		skip_case "chassis does not support FM config via FastFabric"
+	}
+
+	log_message "\nTest: Getting Slot list from $chassis ...\n"
+	set my_slot [ get_this_slot_number ]
+	# get management card type for this chassis model
+	set mgmt_card_type [ get_chassis_card_type 0]
+	# all slots of matching card type (eg. all management cards)
+	set mgmt_slots [get_chassis_slots $mgmt_card_type]
+	set num_slots [llength $mgmt_slots]
+	if { $num_slots == 0 } {
+		# this should not happen, we should at least find card 0
+		target_chassis_admin_sh_exit
+		fail_test "No cards of type $mgmt_card_type"
+	}
+	# lets be paranoid
+	if { ! [ string equal [get_chassis_card_type $my_slot] "$mgmt_card_type" ] } {
+		target_chassis_admin_sh_exit
+		fail_test "IP address given is not for chassis mgmt card $mgmt_card_type"
+	}
+	target_chassis_admin_sh_exit
+
+	log_message "\nTest: Checking FM capabilities and status of $chassis ...\n"
+	# flag per slot indicating if slot has smConfig capability
+	# may not have smConfig on all cards, esp if ESM license key lacking
+	set card_capabilities ""
+	# flag per slot indicating if slot has FM currently running
+	set fm_running ""
+	# slot which supports sm CLI.  Prefer active mgmt card otherwise its
+	# secondary mgmt card
+	set mgmt_slot ""
+	# see if any slots in chassis support smConfig, if so check FM status
+	foreach slot $mgmt_slots {
+		if { [ string equal "$slot" "$my_slot" ] } {
+			target_chassis_admin_sh $chassis
+		} else {
+			target_chassis_admin_sh $chassis $slot
+		}
+		if { [ catch { set cap [check_chassis_capability "smConfig"] } res ] != 0
+	     	|| $cap < 1 } {
+			# slot will be skipped, doesn't support smConfig
+			lappend card_capabilities 0
+			lappend fm_running 0
+		} else {
+			lappend card_capabilities 1
+			lappend fm_running [ is_esm_running ]
+			if { [ string equal "$mgmt_slot" ""] || [ string equal "$slot" "$my_slot" ] } {
+				set mgmt_slot "$slot"
+			}
+		}
+		if { [ string equal "$slot" "$my_slot" ] } {
+			target_chassis_admin_sh_exit
+		} else {
+			target_chassis_admin_sh_exit 1
+		}
+	}
+
+	# DEBUG
+	#log_message "mgmt_slots: $mgmt_slots"
+	#log_message "mgmt_slot: $mgmt_slot"
+	#log_message "num_slots: $num_slots"
+	#log_message "card_capabilities: $card_capabilities"
+	#log_message "fm_running: $fm_running"
+
+	if { [ string equal "$mgmt_slot" "" ] } {
+		skip_case "chassis does not have an ESM license key or does not support smConfig"
+	}
+
+	set do_push 0
+	if { ! $restart_only } {
+		log_message "\nTest: Checking FM config in $chassis ...\n"
+		# we trust that secondary management cards will be synced with primary
+		# so only need to upload this once
+		set config_matches [compare_esm_config $chassis $config_file $mgmt_card_type ]
+
+		# DEBUG
+		#log_message "config_matches: $config_matches"
+
+		log_message "\nTest: Determining operations needed to update to $config_file for $chassis ..."
+		## now check that card is capable and determine if we need to push config
+
+		if { ! $config_matches } {
+			# config is not in chassis, need to push and possibly restart
+			set do_push 1
+			log_message "Test: Will need to push config to chassis"
+		} else {
+			# config is in chassis, can skip push
+			set do_push 0
+			log_message "Test: No need to push config to chassis"
+		}
+	}
+
+	# we are assuming we can trust that primary mgmt card's config files
+	# match those of secondary.  So FM runstate is only card specific aspect.
+	set need_runstate ""
+	set do_runstate 0
+	for { set i 0 } { $i < $num_slots } { incr i } {
+		set slot [lindex $mgmt_slots $i]
+		if { ! [lindex $card_capabilities $i] } {
+			# if this happens card is not capable of smConfig ignore this slot
+			lappend need_runstate 0
+			log_message "Test: Skipping slot $slot: does not support smConfig"
+			continue
+		}
+		set running [ lindex $fm_running $i]
+		if { ! [ string equal "$slot" "$my_slot" ] } {
+			# slave MM
+			if { ( $slave_runstate < 0 && $running )
+				|| ($slave_runstate == 1 && ! $running )
+				|| $slave_runstate == 2 } {
+				lappend need_runstate $slave_runstate
+				set do_runstate 1
+				log_message "Test: Need to change runstate for FM in slot $slot"
+			} else {
+				lappend need_runstate 0
+				log_message "Test: No need to change runstate for FM in slot $slot"
+			}
+		} else {
+			# master MM
+			if { ( $master_runstate < 0 && $running )
+				|| ($master_runstate == 1 && ! $running )
+				|| $master_runstate == 2 } {
+				lappend need_runstate $master_runstate
+				set do_runstate 1
+				log_message "Test: Need to change runstate for FM in slot $slot"
+			} else {
+				lappend need_runstate 0
+				log_message "Test: No need to change runstate for FM in slot $slot"
+			}
+		}
+	}
+	log_message "\n"
+
+	# DEBUG
+	#log_message "do_push: $do_push"
+	#log_message "do_runstate: $do_runstate"
+	#log_message "need_runstate: $need_runstate"
+
+	if { $do_push } {
+		set fail 0
+		set scp_statuses ""
+
+		# push is done once to chassis and automatically synced to all
+		# mgmt cards
+		log_message "Test: sftp $config_file to all applicable slots\n"
+		sftp_esm_config $chassis $config_file
+
+		# will check status of scp operations for slots we care about below
+		log_message "\nTest: Verifying config was pushed to $chassis ...\n"
+		target_chassis_admin_sh $chassis
+
+		# check status, must do immediately after scp for each slot
+		for { set i 0 } { $i < $num_slots } { incr i } {
+			set slot [lindex $mgmt_slots $i]
+			# do not expect "skipped" status
+			set status [get_chassis_sftp_status $slot 1]
+			if { [ string equal "$status" "success" ] } {
+				lappend scp_statuses "$status"
+			} else {
+				log_message "\nFAILURE: Failed to scp config to chassis $chassis slot $slot\n"
+				set fail 1
+				lappend scp_statuses "$status"
+			}
+		}
+
+		target_chassis_admin_sh_exit
+
+		# DEBUG
+		#log_message "scp_statuses: $scp_statuses"
+		#log_message "fail: $fail"
+
+		if { ! $fail } {
+			# we trust that secondary management cards will be synced with
+			# primary so only need to upload this once
+			if { ! [compare_esm_config $chassis $config_file $mgmt_card_type ] } {
+				# the config disappeared
+				set fail 1
+				log_message "\nFAILURE: Unexpected mismatch of config for chassis $chassis slot $slot\n"
+			}
+		}
+
+		# if any of the above failed, do not change runstate it could make things worse
+		if { $fail } {
+			fail_test "Unable to scp config to required slots in $chassis"
+		}
+	}
+
+	# DEBUG
+	#log_message "do_runstate: $do_runstate"
+	#log_message "need_runstate: $need_runstate"
+
+	if { $do_runstate} {
+		for { set i 0 } { $i < $num_slots } { incr i } {
+			set slot [lindex $mgmt_slots $i]
+			set new_runstate [lindex $need_runstate $i]
+			if { $new_runstate != 0 } {
+				if { [ string equal "$slot" "$my_slot" ] } {
+					target_chassis_admin_sh $chassis
+				} else {
+					target_chassis_admin_sh $chassis $slot
+				}
+				if { $new_runstate > 0 } {
+					# easier to restart, will start if not already running
+					chassis_cmd 60 0 "smControl restart"
+					# don't wait, it would risk having mismatched esm configs
+				} elseif { $new_runstate < 0 } {
+					chassis_cmd 60 0 "smControl stop"
+				}
+				if { [ string equal "$slot" "$my_slot" ] } {
+					target_chassis_admin_sh_exit
+				} else {
+					target_chassis_admin_sh_exit 1
+				}
+			}
+		}
+	}
+
+	# adjust start at boot options
+	set do_boot 0
+	if { "$bootstate" != "" } {
+		if { ! [ string equal "$mgmt_slot" "$my_slot" ] } {
+			fail_test "Master MM does not have SM license key, unable to configure start options in $chassis"
+		}
+		log_message "\nTest: Checking FM Start At Boot Options for $chassis ...\n"
+		target_chassis_admin_sh $chassis
+		# get present options to old_startAtBootArg and old_startOnSlaveCmuArg
+		set boot_options [ chassis_get_sm_boot_options ]
+		set old_startAtBootArg [lindex $boot_options 0 ]
+		set old_startOnSlaveCmuArg [lindex $boot_options 1 ]
+
+		# determine desired settings
+		if { "$bootstate" == "disable" } {
+			set startAtBootArg "no"
+			set startOnSlaveCmuArg "no"
+		} elseif { "$bootstate" == "enable" } {
+			set startAtBootArg "yes"
+			set startOnSlaveCmuArg "no"
+		} elseif { "$bootstate" == "enableall" } {
+			set startAtBootArg "yes"
+			set startOnSlaveCmuArg "yes"
+		}
+		# do what is needed
+		set arg1 ""
+		set arg2 ""
+		if { "$startAtBootArg" != "$old_startAtBootArg" } {
+			set arg1 "startAtBoot $startAtBootArg"
+		}
+		if { "$startOnSlaveCmuArg" != "$old_startOnSlaveCmuArg"
+			 && "$old_startOnSlaveCmuArg" != "N/A" } {
+			set arg2 "startOnSlaveCmu $startOnSlaveCmuArg"
+		}
+		if { "$arg1" != "" || "$arg2" != "" } {
+			log_message "\nTest: Changing FM Start At Boot Options for $chassis ...\n"
+			chassis_cmd 60 0 "smConfig $arg1 $arg2"
+			set do_boot 1
+		} else {
+			log_message "\nTest: No Change to FM Start At Boot Options for $chassis ...\n"
+		}
+		target_chassis_admin_sh_exit
+	}
+
+	if { ! $do_push && ! $do_runstate && ! $do_boot } {
+		# we are done, everything is already the way we want it
+		# report skip so user knows we didn't change anything on this chassis
+		skip_case "No action required"
+		return 0
+	}
+
+	return 0
+}
+
+proc test_case_push_esm_config { chassis config_file {action "push"} {bootstate ""} } {
+##
+## test_case_push_esm_config
+## -------------------------
+## test case to push the given config file to all applicable slots in
+## the given chassis.
+##
+## Usage:
+##	test_case_push_esm_config chassis config_file [action [bootstate]]
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	config_file - local pathname of file to push
+##	action - action after pushing firmware:
+##			push   - push, do not restart SM
+##			select - same as push
+##			run - restart FM on master, make sure not running on slave
+##			runall - restart FM on master and slave
+##			stop - stop FM on master and slave
+##  bootstate - optional selection for FM bootstate
+##			"" - no change to FM start at boot options
+##          disable - disable FM start on all MM on boot
+##          enable - enable FM start on master MM on boot, disable on slave MM
+##          enableall - enable FM start on all MM on boot
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+##  see push_esm_config for error handling summary
+
+	global env
+
+	test_case "$chassis.fmconfig" "update $chassis $config_file" "update FM config file on $chassis
+Config File: $config_file
+Action: $action
+BootState: $bootstate
+File: TestTools/chassis.exp" noop noop {
+		upvar chassis chassis
+		upvar config_file config_file
+		upvar action action
+		upvar bootstate bootstate
+
+		# translate action, when pushing config file we want to use restart
+		# so that the new file ends up "running"
+		if { "$action" == "run" } {
+			set action "restart"
+		} elseif { "$action" == "runall" } {
+			set action "restartall"
+		}
+
+		push_esm_config "$chassis" "$config_file" "$action" "$bootstate"
+	}
+}
+
+proc test_case_get_esm_config { chassis config_file } {
+##
+## test_case_get_esm_config
+## -------------------------
+## test case to get the given config file from the given chassis.
+##
+## Usage:
+##	test_case_get_esm_config chassis config_file
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	config_file - local pathname of file to fetch to
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+##  see push_esm_config for error handling summary
+
+	global env
+
+	test_case "$chassis.fm_get_config" "get $chassis $config_file" "get FM config file from $chassis
+To Config File: $config_file
+File: TestTools/chassis.exp" noop noop {
+		upvar chassis chassis
+		upvar config_file config_file
+		upvar action action
+
+		# check if chassis supports slaveCli, if not then skip chassis, older FW
+		target_chassis_admin_sh $chassis
+		if { [ catch { set cap [check_chassis_capability "slaveCli"] } res ] != 0
+	     		|| $cap < 1 } {
+			skip_case "chassis does not support FM config via FastFabric"
+		}
+
+		# TBD - make this common code with fmconfig
+		log_message "\nTest: Getting Slot list from $chassis ...\n"
+		set my_slot [ get_this_slot_number ]
+		# get management card type for this chassis model
+		set mgmt_card_type [ get_chassis_card_type 0]
+		# all slots of matching card type (eg. all management cards)
+		set mgmt_slots [get_chassis_slots $mgmt_card_type]
+		set num_slots [llength $mgmt_slots]
+		if { $num_slots == 0 } {
+			# this should not happen, we should at least find card 0
+			target_chassis_admin_sh_exit
+			fail_test "No cards of type $mgmt_card_type"
+		}
+		# lets be paranoid
+		if { ! [ string equal [get_chassis_card_type $my_slot] "$mgmt_card_type" ] } {
+			target_chassis_admin_sh_exit
+			fail_test "IP address given is not for chassis mgmt card $mgmt_card_type"
+		}
+		target_chassis_admin_sh_exit
+
+		log_message "\nTest: Checking FM capabilities and status of $chassis ...\n"
+		# slot which supports sm CLI.  Prefer active mgmt card otherwise its
+		# secondary mgmt card
+		set mgmt_slot ""
+		# see if any slots in chassis support smConfig
+		foreach slot $mgmt_slots {
+			if { [ string equal "$slot" "$my_slot" ] } {
+				target_chassis_admin_sh $chassis
+			} else {
+				target_chassis_admin_sh $chassis $slot
+			}
+			if { [ catch { set cap [check_chassis_capability "smConfig"] } res ] != 0
+	     		|| $cap < 1 } {
+				# slot will be skipped, doesn't support smConfig
+			} else {
+				if { [ string equal "$mgmt_slot" ""] || [ string equal "$slot" "$my_slot" ] } {
+					set mgmt_slot "$slot"
+				}
+			}
+			if { [ string equal "$slot" "$my_slot" ] } {
+				target_chassis_admin_sh_exit
+			} else {
+				target_chassis_admin_sh_exit 1
+			}
+		}
+
+		if { [ string equal "$mgmt_slot" "" ] } {
+			skip_case "chassis does not have an ESM license key or does not support smConfig"
+		}
+
+		log_message "mkdir -p [exec dirname $config_file]"
+		exec mkdir -p "[exec dirname $config_file]"
+		get_esm_config "$chassis" "$config_file"
+	}
+}
+
+
+proc test_case_chassis_getconfig { chassis {fd ""}} {
+##
+## test_case_chassis_getconfig
+## -------------------------
+## test case to get basic config from the given chassis.
+##
+## Usage:
+##	test_case_chassis_getconfig chassis [fd]
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	fd - file to write config info to
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+
+	global env
+
+	test_case "$chassis.getconfig" "get $chassis" "get basic configuration from $chassis
+File: TestTools/chassis.exp" noop noop {
+		upvar chassis chassis
+		upvar fd fd
+		set ntpVal ""
+		set sysLogVal ""
+		set timeZone ""
+		set out ""
+		set linkWidth ""
+		set nodeDesc ""
+		set act_fw_version ""
+		set pri_fw_version ""
+		set linkCRCmode ""
+
+		# check if chassis supports slaveCli, if not then skip chassis, older FW
+		target_chassis_admin_sh $chassis
+		# slot 0 is alias for mgmt card in all chassis models
+		set act_fw_version [get_chassis_firmware_version 0 "act"]
+		set pri_fw_version [get_chassis_firmware_version 0 "pri"]
+		send_chassis_cmd "time"
+		set out [expect_list 240 { "[Cc]onfigured.+\n" } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+		regexp {([A-Za-z0-9:. ]+)} $out tmp ntpVal
+		expect_chassis_prompt 60
+		send_chassis_cmd "logSyslogConfig"
+		set out [expect_list 240 { "logSyslogConfig" "[Ss]yslog.+\n" } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found"}  ]
+		regexp {([A-Za-z0-9:. ]+)} $out tmp sysLogVal
+		expect_chassis_prompt 60
+		send_chassis_cmd "timeZoneConf"
+		set out [expect_list 240 { "timeZoneConf" ".+[tT]ime.+\n" } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+		regexp {([-A-Za-z0-9:. ]+)} $out tmp timeZone
+		expect_chassis_prompt 60
+		send_chassis_cmd "ismChassisSetWidth"
+		set out [expect_list 240 { "ismChassisSetWidth" "link width supported: [^\r\n]*[\r\n]"  } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+		# "4X" or "4X/8X" or "UNKNOWN" or similar
+		regexp {supported: ([^\r\n]+)[\r\n]} $out tmp linkWidth
+		expect_chassis_prompt 60
+		send_chassis_cmd "showNodeDesc"
+		set out [expect_list 240 { "showNodeDesc" "Node" "\(SMA\)" "Description.+[\r\n]"  } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
+		regexp {.+= (.+)[\r\n]} $out tmp nodeDesc
+		expect_chassis_prompt 60
+ 		send_chassis_cmd "ismChassisSetCrcMode"
+		set out [expect_list 240 { "ismChassisSetCrcMode" "CRD_MODE: [^\r\n]*[\r\n]" } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found" } ]
+		regexp {CRD_MODE: ([^\r\n]+)[\r\n]} $out tmp linkCRCmode
+		expect_chassis_prompt 60
+		set out "
+    Firmware Active        : $act_fw_version
+    Firmware Primary       : $pri_fw_version
+    Syslog Configuration   : $sysLogVal
+    NTP                    : $ntpVal
+    Time Zone              : $timeZone
+    LinkWidth Support      : $linkWidth
+    Node Description       : $nodeDesc
+    Link CRC Mode          : $linkCRCmode"
+		show_message "\n$chassis:$out"
+		if { ! [ string equal "$fd" "" ] } {
+			puts $fd "$out"
+		}
+		target_chassis_admin_sh_exit
+	}
+}
