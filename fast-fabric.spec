@@ -25,15 +25,6 @@ Requires(post): libibmad, libibumad, libibverbs
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.
 
-%package fastfabric
-Summary: Management level tools and scripts.
-Group: System Environment/Libraries
-AutoReq: no
-Requires: opa-basic-tools
-
-%description fastfabric
-Contains tools for managing fabric on a managment node.
-
 %package address-resolution
 Summary: Contains Address Resolution manager
 Group: System Environment/Libraries
@@ -235,22 +226,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files basic-tools -f %{_builddir}/basic_file.list
 %defattr(-,root,root,-)
-
-%files fastfabric -f %{_builddir}/ff_file.list
-%defattr(-,root,root,-)
-%{_sysconfdir}/sysconfig/opa/opamon.si.conf
-%config(noreplace) %{_sysconfdir}/sysconfig/opa/opafastfabric.conf
-%config(noreplace) %{_sysconfdir}/sysconfig/opa/opamon.conf
-%config(noreplace) %{_sysconfdir}/sysconfig/opa/allhosts
-%config(noreplace) %{_sysconfdir}/sysconfig/opa/chassis
-%config(noreplace) %{_sysconfdir}/sysconfig/opa/hosts
-%config(noreplace) %{_sysconfdir}/sysconfig/opa/ports
-%config(noreplace) %{_sysconfdir}/sysconfig/opa/switches
-%config(noreplace) %{_sysconfdir}/sysconfig/opa/opaff.xml
-%config(noreplace) /opt/opa/tools/osid_wrapper
-%{_sbindir}/opafmconfigcheck
-%{_sbindir}/opafmconfigdiff
-
 
 %files address-resolution
 %defattr(-,root,root,-)
