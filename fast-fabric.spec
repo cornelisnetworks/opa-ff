@@ -62,7 +62,7 @@ fi
 
 %define basic_tools_sbin_sym opapmaquery opaportconfig
 
-%define basic_tools_opt opaswquery opaswconfigure opaswfwconfigure opaswfwupdate opaswfwverify opaswping opaswreset setup_self_ssh bsd_ping usemem opaipcalc 
+%define basic_tools_opt opaswquery opaswconfigure opaswfwconfigure opaswfwupdate opaswfwverify opaswping opaswreset setup_self_ssh usemem opaipcalc 
 
 %define basic_mans opacapture.1 opaconfig.1 opadisablehosts.1 opadisableports.1 opadownloadall.1 opahfirev.1 opapaquery.1 opapmaquery.1 opaportconfig.1 opaportinfo.1 oparesolvehfiport.1 opasaquery.1 opashowmc.1 opasmaquery.1
 

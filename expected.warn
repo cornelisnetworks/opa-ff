@@ -47,10 +47,6 @@ warning: No version string in file: ./fastfabric/opatop_pm_config.hlp
 warning: No version string in file: ./fastfabric/opatop_port_stats.hlp
 warning: No version string in file: ./fastfabric/opatop_summary.hlp
 config.status: WARNING:  'MCONFIG.in' seems to ignore the --datarootdir setting
-bsd_ping.c:753: warning: ignoring return value of 'write', declared with attribute warn_unused_result
-bsd_ping.c:830: warning: ignoring return value of 'write', declared with attribute warn_unused_result
-bsd_ping.c:907: warning: ignoring return value of 'write', declared with attribute warn_unused_result
-bsd_ping.c:918: warning: ignoring return value of 'write', declared with attribute warn_unused_result
 opapacketcapture.c:870: warning: ignoring return value of 'write', declared with attribute warn_unused_result
 opapacketcapture.c:871: warning: ignoring return value of 'write', declared with attribute warn_unused_result
 opapacketcapture.c:873: warning: ignoring return value of 'write', declared with attribute warn_unused_result

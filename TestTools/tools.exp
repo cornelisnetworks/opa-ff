@@ -2115,16 +2115,18 @@ proc noop {} {
 	return
 }
 
-proc expect_eof { timelimit } {
+proc expect_eof { timelimit  { ignore_rest 0 } } {
 ##
 ## expect_eof
 ## ----------
 ## utility procedure to check for eof
 ##
 ## Usage:
-##	expect_eof timelimit
+##	expect_eof timelimit [ignore_rest]
 ## Arguments:
 ##	timelimit - maximum time to wait
+##	ignore_rest - ignore any data prior to eof (default 0)
+##				if 0 any data received before eof is an error
 ## Returns:
 ##	eof found - nothing
 ##	eof not found - error exception
@@ -2151,9 +2153,11 @@ proc expect_eof { timelimit } {
 
 	expect {
 		eof	noop
-		"?*"	{ log_message "\nERROR: expected: EOF"
-			  log_message "\nERROR: Unexpected data: $expect_out(buffer)"
-			  fail_test "Unexpected data"
+		"?*"	{ if { ! $ignore_rest } {
+					log_message "\nERROR: expected: EOF"
+			  		log_message "\nERROR: Unexpected data: $expect_out(buffer)"
+			  		fail_test "Unexpected data"
+				  }
 			}
 		timeout	{ 
 				log_message "\nERROR: timeout ($timeout) waiting for: EOF"

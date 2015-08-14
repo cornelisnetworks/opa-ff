@@ -60,43 +60,40 @@ proc reboot_host { host } {
 ## Additional Information:
 ##      None
 
-        global env
-        global os_type
-        global ibtools_dir
+	global env
 
-        local_sh
+	target_root_sh "$host"
+	send_unix_cmd "reboot"
 
-        if { [ auto_execok /opt/opa/tools/opagetipaddrtype ] !=  "" } {
-                send_unix_cmd "/opt/opa/tools/opagetipaddrtype $host"
-	    set out [expect_any 60 {"ipv6" "ipv4" } {"Error:" "Usage:"}]
-	    regexp {([ip]+)([A-Za-z0-9]+)} $out iptype
-        } else {
-                set iptype "ipv4"
-        }
-        host_unix_cmd 60 "" $host reboot
-        # bsd_ping reports all failures, linux requires a few failures                                                                      
-        # before it reports Unreachable                                                                                                     
-        # newer servers can reboot faster than linux ping will detect                                                                      
-        if { $iptype == "ipv4" } {
-            if { [file exists $ibtools_dir/bsd_ping] } {
-                send_unix_cmd "$ibtools_dir/bsd_ping -i 5 $host"
-                # allow 4 minutes for host shutdown                                                                                         
-                expect_any 240 { "Unreachable" "unreachable" }
-            } else {
-                # sleep 120 because initially ping will be successful                                                                       
-                sleep 120
-                send_unix_cmd "ping -i 5 $host"
-            }
-        } else {
-                send_unix_cmd "ping6 -i 5 $host"
-        }
+	# wait for host login shell to go down
+	expect_eof 60 1
+	sleep 10
 
-        # allow 8 minutes for host to complete reboot                                                                                       
-        expect_list 480 { "ttl=" "time=" }
-        sleep 40
-        local_sh_exit
-        # network can be up before rest of host, allow a little more time                     
-        sleep 20
+	# now wait for host to come online
+	log_message "Waiting for Host $host to come online"
+	set online 0
+	for { set i 0 } { $i < 100 } { incr i } {
+		if { $i != 0 }  {
+			log_message "Retrying: Host $host is not yet up"
+			# wait before we try again
+			sleep [ calc_timeout 5 ]
+		}
+		if { [ catch { target_root_sh $host } res ] != 0 } {
+			# send escape sequence to close timed out ssh sessions
+			catch { exp_send "~.\n" }
+		} else {
+			# we got in
+			target_root_sh_exit
+			set online 1
+			break
+		}
+	}
+	if { ! $online } {
+		set info "Host did not come online within timeout limit"
+		return -code error -errorinfo $info $info
+	}
+    # network can be up before rest of host, allow a little more time
+    sleep 20
 }
 
 proc test_case_reboot { host {iterations 1}} {
@@ -120,7 +117,7 @@ proc test_case_reboot { host {iterations 1}} {
 	global env
 
 	test_case "$host.reboot" "$host reboot" "test reboot of $host
-use ping to confirm host goes down and comes back up
+confirm host goes down and comes back up
 File: TestTools/basic.exp" case_setup case_cleanup {
 		upvar host host
 		upvar iterations iterations
@@ -206,12 +203,12 @@ proc chassis_wait_reboot_done { chassis } {
 	for { set i 0 } { $i < 130 } { incr i } {
 		if { $i != 0 }  {
 			log_message "Retrying: Chassis $chassis CLI is not yet up"
+			# wait before we try again
+			sleep [ calc_timeout 5 ]
 		}
 		if { [ catch { target_chassis_admin_sh $chassis } res ] != 0 } {
 			# send escape sequence to close timed out ssh sessions
 			catch { exp_send "~.\n" }
-			# wait before we try again
-			sleep [ calc_timeout 5 ]
 		} else {
 			# we got in
 			target_chassis_admin_sh_exit
@@ -256,7 +253,7 @@ File: TestTools/basic.exp" case_setup case_cleanup {
 			target_chassis_admin_sh $chassis
 			chassis_cmd_reboot_all
 			# may not be able to send logout command, so just get out of dodge
-			ignore_rest
+			expect_eof 60 1
 
 			chassis_wait_reboot_done $chassis
 		}
