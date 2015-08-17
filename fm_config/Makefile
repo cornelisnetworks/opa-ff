@@ -115,6 +115,10 @@ CLOCAL	=  $(CPIE)
 LOCALDEPLIBS = cs ibaccess config public vslogu Xml Md5 
 LOCALLIBS = rt
 
+ifneq "$(BUILD_TARGET_OS)" "VXWORKS"
+LOCALLIBS+= expat
+endif
+
 # Include Make Rules definitions and rules
 ifneq "$(PROJ_SM_DIR)" ""
 include $(PROJ_SM_DIR)/Makerules.module

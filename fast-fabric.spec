@@ -20,7 +20,13 @@ Basic package
 Summary: Managment level tools and scripts.
 Group: System Environment/Libraries
 AutoReq: no
-Requires(post): libibmad, libibumad, libibverbs
+%if 0%{?rhel}
+Requires(post): expat, libibmad, libibumad, libibverbs, expect, tcl
+BuildRequires: expat-devel
+%else
+Requires(post): libexpat1, libibmad5, libibumad, libibverbs1
+BuildRequires: libexpat-devel
+%endif
 
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.

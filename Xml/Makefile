@@ -40,15 +40,20 @@ include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
 DS_SUBPROJECTS	= 
 # name of executable or downloadable image
 EXECUTABLE		= # Xml$(EXE_SUFFIX)
+
 # list of sub directories to build
+# Roll our own build of expat for VxWorks
+ifeq "$(BUILD_TARGET_OS)" "VXWORKS"
 DIRS			=  \
 				XmlParser
+endif
 ifneq "$(BUILD_TARGET_OS)" "VXWORKS"
 DIRS			+=  \
 				xml_sample \
 				xml_sample2 \
 				opaxmlindent
 endif
+
 # C files (.c)
 CFILES			= \
 				ixml.c \
@@ -71,7 +76,9 @@ CCFILES			= \
 LFILES			= \
 				# Add more lex files here
 # archive library files (basename, $ARFILES will add MOD_LIB_DIR/prefix and suffix)
+ifeq "$(BUILD_TARGET_OS)" "VXWORKS"
 LIBFILES = XmlParser
+endif
 # Windows Resource Files (.rc)
 RSCFILES		=
 # Windows IDL File (.idl)
@@ -145,6 +152,9 @@ CLOCAL = $(CPIE)
 LOCALDEPLIBS = 
 ifneq (ATOM,$(BUILD_TARGET))
 CLOCAL += -I$(TL_DIR)/tmsTarget/src/ssecure/sshield/include
+endif
+ifneq "$(BUILD_TARGET_OS)" "VXWORKS"
+LOCALIBS = expat
 endif
 
 # Include Make Rules definitions and rules

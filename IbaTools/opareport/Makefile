@@ -123,6 +123,10 @@ LOCALLIBS=$(OPENIB_USER_LIBS) m rt
 LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
 endif
 
+ifneq "$(BUILD_TARGET_OS)" "VXWORKS"
+LOCALLIBS+= expat
+endif
+
 # Include Make Rules definitions and rules
 include $(TL_DIR)/IbaTools/Makerules.module
 
