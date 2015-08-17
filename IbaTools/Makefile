@@ -68,7 +68,6 @@ DIRS			= \
 ifeq "$(IB_STACK)" "OPENIB"
 DIRS			+= \
 				$(shell ls -d opainfo 2>/dev/null) \
-				$(shell ls -d opasw 2>/dev/null) \
 				$(shell ls -d opapaquery 2>/dev/null) \
 				$(shell ls -d oparesolvehfiport 2>/dev/null) \
 				$(shell ls -d opagenchassis 2>/dev/null) \
