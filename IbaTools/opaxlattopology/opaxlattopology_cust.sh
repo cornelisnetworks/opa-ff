@@ -177,6 +177,16 @@ debug_7=
 ## Local functions:
 functout=
 
+function clean_tempfiles() {
+	if [ $fl_clean == 1 ]
+	then
+		rm -f $FILE_TEMP $FILE_TEMP2
+	fi
+}
+
+trap 'clean_tempfiles; exit 1' SIGINT SIGHUP SIGTERM
+trap 'clean_tempfiles' EXIT
+
 # Output usage information
 usage_full()
 {
@@ -259,9 +269,6 @@ proc_coreswitch()
 
 
 ## Main function:
-
-rm -f $FILE_DEBUG
-rm -f $FILE_DEBUG2
 
 # Get options
 while getopts c:i:Ks:t:T:v:? option
@@ -444,11 +451,7 @@ done	# End of for (( ix=0 ; $ix <= $max_coreswitch ; ix=$[ix+1] ))
 echo ",,,,,,,,,,,,,," >> ${file_topology_out}
 
 # Clean temporary files
-if [ $fl_clean == 1 ]
-	then
-	rm -f $FILE_TEMP
-	rm -f $FILE_TEMP2
-fi
+clean_tempfiles
 
 display_progress "Done"
 exit 0

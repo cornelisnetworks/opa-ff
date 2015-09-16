@@ -33,8 +33,9 @@
 
 # disable the specified set of hosts
 
-tempfile=/tmp/opadisablehosts$$
+tempfile=`mktemp`
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $tempfile" EXIT
 
 Usage_full()
 {

@@ -32,8 +32,9 @@
 
 # analyzes all the links in the fabric
 
-tempfile=/tmp/opalinkanalysis$$
+tempfile=`mktemp`
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $tempfile" EXIT
 
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]

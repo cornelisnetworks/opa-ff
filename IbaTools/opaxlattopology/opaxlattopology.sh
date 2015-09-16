@@ -220,6 +220,23 @@ debug_6=
 debug_7=
 #echo "DEBUG-x.y: 0:$debug_0: 1:$debug_1: 2:$debug_2: 3:$debug_3: 4:$debug_4: 5:$debug_5: 6:$debug_6: 7:$debug_7:"
 
+function clean_tempfiles() {
+  if [ $fl_clean == 1 ]
+    then
+    rm -f $FILE_TEMP
+    rm -f $FILE_TEMP2
+    rm -f $FILE_LINKSUM
+    rm -f $FILE_LINKSUM_NOCORE
+    rm -f $FILE_LINKSUM_NOCABLE
+    rm -f $FILE_NODEFIS
+    rm -f $FILE_NODESWITCHES
+    rm -f $FILE_NODELEAVES
+    rm -f $FILE_NODECHASSIS
+  fi
+}
+
+trap 'clean_tempfiles; exit 1' SIGINT SIGHUP SIGTERM
+trap 'clean_tempfiles' EXIT
 
 ## Local functions:
 functout=
@@ -400,18 +417,7 @@ gen_topology()
   echo "</Report>" >> $FILE_TOPOLOGY_OUT
 
   # Clean temporary files
-  if [ $fl_clean == 1 ]
-    then
-    rm -f $FILE_TEMP
-    rm -f $FILE_TEMP2
-    rm -f $FILE_LINKSUM
-    rm -f $FILE_LINKSUM_NOCORE
-    rm -f $FILE_LINKSUM_NOCABLE
-    rm -f $FILE_NODEFIS
-    rm -f $FILE_NODESWITCHES
-    rm -f $FILE_NODELEAVES
-    rm -f $FILE_NODECHASSIS
-  fi
+  clean_tempfiles
 }  # End of gen_topology
 
 # Process rack group name; check for non-null name and find in tb_group[].
@@ -592,9 +598,6 @@ proc_switch()
 
 
 ## Main function:
-
-rm -f $FILE_DEBUG
-rm -f $FILE_DEBUG2
 
 # Get options
 while getopts c:d:i:Kv:? option

@@ -31,7 +31,9 @@
 # [ICS VERSION STRING: unknown]
 # copy a file to all hosts
 
-trap "exit 1" SIGHUP SIGTERM SIGINT
+temp="$(mktemp --tmpdir "opascpall.XXXXXX")"
+trap "rm -f $temp; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $temp" EXIT
 
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
@@ -43,7 +45,7 @@ fi
 
 . /opt/opa/tools/ff_funcs
 
-temp=/tmp/opascpall$$
+temp=`mktemp`
 trap "rm -f $temp" 1 2 3 9 15
 
 Usage_full()

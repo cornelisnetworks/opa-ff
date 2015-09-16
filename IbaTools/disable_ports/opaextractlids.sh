@@ -35,8 +35,9 @@
 TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
 BINDIR=${BINDIR:-/usr/sbin}
 
-tempfile=/tmp/opaextractlids$$
+tempfile=`mktemp`
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $tempfile" EXIT
 
 Usage_full()
 {

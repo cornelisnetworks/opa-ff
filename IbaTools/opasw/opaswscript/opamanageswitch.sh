@@ -366,8 +366,7 @@ fwUpdate)
 	else
 		fn=$fileNameArg
 	fi
-	tmpdir=/tmp/12200FW$$
-	mkdir $tmpdir
+	tmpdir=`mktemp -d`
 	cd $tmpdir
 	tar xzf $fn > /dev/null 2>&1
 

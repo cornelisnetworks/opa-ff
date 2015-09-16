@@ -39,9 +39,6 @@
 # information obtained via opareport -o links (live fabric or snapshot).
 
 
-## Includes
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -160,6 +157,9 @@ clean_files()
 	fi
 }	# End of clean_files()
 
+trap 'clean_files; exit 1' SIGINT SIGHUP SIGTERM 
+trap clean_files EXIT
+
 Usage_full()
 {
 	echo "Usage: opagenswitches [-t portsfile] [-p ports] [-R]" >&2
@@ -221,7 +221,6 @@ Usage()
 	echo "for example:" >&2
 	echo "   opagenswitches" >&2
 	echo "   opagenswitches -T topology.0:0.xml" >&2
-	clean_files
 	exit 2
 }	# End of Usage()
 

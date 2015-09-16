@@ -33,8 +33,9 @@
 
 # reenable the specified set of ports
 
-tempfile=/tmp/opaenableports$$
+tempfile=`mktemp`
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $tempfile" EXIT
 
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
