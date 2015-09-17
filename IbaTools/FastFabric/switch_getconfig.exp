@@ -110,7 +110,7 @@ File: /opt/opa/tools/switch_getconfig.exp" suite_setup noop {
 
 	# we will get config information to this temp file
 	set mypid [pid]
-	set fname "/tmp/sw_getconfig_$mypid"
+	set fname [ exec mktemp --tmpdir "sw_getconfig_XXXX" ]
 	set fd [ open "$fname" {CREAT WRONLY APPEND TRUNC} ]
 
 	parallel opaswitch $env(CFG_OPASWITCHES) {
