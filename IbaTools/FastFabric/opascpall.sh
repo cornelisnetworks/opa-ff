@@ -45,9 +45,6 @@ fi
 
 . /opt/opa/tools/ff_funcs
 
-temp=`mktemp`
-trap "rm -f $temp" 1 2 3 9 15
-
 Usage_full()
 {
 	echo "Usage: opascpall [-p] [-r] [-f hostfile] [-h 'hosts'] [-u user] source_file ... dest_file" >&2

@@ -58,19 +58,18 @@ OPA_REPORT="$BINDIR/opareport"
 OPASAQUERY="$BINDIR/opasaquery"
 XML_EXTRACT="$BINDIR/opaxmlextract"
 GEN_OPASWITCHES_HELPER="$TOOLSDIR/opagenswitcheshelper"
-FILE_OPASWITCHES="file_switches"
-FILE_OPASWITCHES2="file_switches2"
-FILE_LINKSUM_LEAF_EDGE="linksum_leaf_edge.csv"
-FILE_LINKSUM_EDGE_HFI="linksum_edge_hfi.csv"
-FILE_LINKS_LEAF_EDGE="links_leaf_edge.csv"
-FILE_LINKS_LEAF_EDGE2="links_leaf_edge2.csv"
-FILE_LINKS_EDGE_HFI="links_edge_hfi.csv"
-FILE_LINKS_EDGE_HFI2="links_edge_hfi2.csv"
-FILE_RESERVE="file_reserve"
-FILE_TEMP="file_temp"
-FILE_TEMP2="file_temp2"
-FILE_DEBUG="file_debug"
-FILE_DEBUG2="file_debug2"
+FILE_OPASWITCHES=$(mktemp "opagensw-file_switches-XXXX")
+FILE_OPASWITCHES2=$(mktemp "opagensw-file_switches2-XXXX")
+FILE_LINKSUM_LEAF_EDGE=$(mktemp "opagensw-linksum_leaf_edge-XXXX.csv")
+FILE_LINKSUM_EDGE_HFI=$(mktemp "opagensw-linksum_edge_hfi-XXXX.csv")
+FILE_LINKS_LEAF_EDGE=$(mktemp "opagensw-links_leaf_edge-XXXX.csv")
+FILE_LINKS_LEAF_EDGE2=$(mktemp "opagensw-links_leaf_edge2-XXXX.csv")
+FILE_LINKS_EDGE_HFI=$(mktemp "opagensw-links_edge_hfi-XXXX.csv")
+FILE_LINKS_EDGE_HFI2=$(mktemp "opagensw-links_edge_hfi2-XXXX.csv")
+FILE_TEMP=$(mktemp "opagensw-1-XXXX")
+FILE_TEMP2=$(mktemp "opagensw-2-XXXX")
+FILE_DEBUG=$(mktemp "opagensw-d1-XXXX")
+FILE_DEBUG2=$(mktemp "opagensw-d2-XXXX")
 
 
 ## Global variables:

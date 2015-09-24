@@ -95,10 +95,8 @@ HOST_NAME_BASE="host"
 EDGE_NAME_BASE="opasw"
 CORE_NAME_BASE="opacore"
 FILE_RESERVE="file_reserve"
-FILE_TEMP="file_temp"
-FILE_TEMP2="file_temp2"
-FILE_DEBUG="file_debug"
-FILE_DEBUG2="file_debug2"
+FILE_TEMP=$(mktemp "opaxlattopo-1.XXXX")
+FILE_TEMP2=$(mktemp "opaxlattopo-2.XXXX")
 OUTPUT_DETAIL=0
 NODETYPE_HFI="FI"
 NODETYPE_EDGE="SW"
@@ -176,6 +174,16 @@ debug_7=
 
 ## Local functions:
 functout=
+
+function clean_tempfiles() {
+	if [ $fl_clean == 1 ]
+	then
+		rm -f $FILE_TEMP $FILE_TEMP2
+	fi
+}
+
+trap 'clean_tempfiles; exit 1' SIGINT SIGHUP SIGTERM
+trap 'clean_tempfiles' EXIT
 
 function clean_tempfiles() {
 	if [ $fl_clean == 1 ]

@@ -103,10 +103,8 @@ FILE_CHASSIS="chassis"
 FILE_HOSTS="hosts"
 FILE_TOPOLOGY_OUT="topology.0:0.xml"
 FILE_RESERVE="file_reserve"
-FILE_TEMP="file_temp"
-FILE_TEMP2="file_temp2"
-FILE_DEBUG="file_debug"
-FILE_DEBUG2="file_debug2"
+FILE_TEMP=$(mktemp "opaxlattopo-1.XXXX")
+FILE_TEMP2=$(mktemp "opaxlattopo-2.XXXX")
 # Note: there are no real limits on numbers of groups, racks or switches;
 #  these defines simply allow error messages before too much thrashing
 #  takes place in cases where FILE_TOPOLOGY_LINKS has bad data
@@ -131,6 +129,20 @@ CORE_FULL="Core Full:"
 HFI_SUFFIX="HFI-1"
 CAT_CHAR_CORE=" "
 
+function clean_tempfiles() {
+  if [ $fl_clean == 1 ]
+    then
+    rm -f $FILE_TEMP
+    rm -f $FILE_TEMP2
+    rm -f $FILE_LINKSUM
+    rm -f $FILE_LINKSUM_NOCORE
+    rm -f $FILE_LINKSUM_NOCABLE
+    rm -f $FILE_NODEFIS
+    rm -f $FILE_NODESWITCHES
+    rm -f $FILE_NODELEAVES
+    rm -f $FILE_NODECHASSIS
+  fi
+}
 
 ## Global variables:
 

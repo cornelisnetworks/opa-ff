@@ -49,8 +49,9 @@ then
 	export FF_IPOIB_SUFFIX=""
 fi
 
-temp=`mktemp`
-trap "rm -f $temp" 1 2 3 9 15
+temp="$(mktemp --tmpdir "opatest.XXXXXX")"
+trap "rm -f $temp; exit 1" 1 2 3 9 15 
+trap "rm -f $temp" EXIT
 
 # identify how we are being run, affects valid options and usage
 mode=opatest
