@@ -34,24 +34,17 @@
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-# optional override of defaults
-if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
+if [ -f /opt/opa/tools/ff_funcs ]
 then
-	. /etc/sysconfig/opa/opafastfabric.conf
-fi
+	# optional override of defaults
+	if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
+	then
+		. /etc/sysconfig/opa/opafastfabric.conf
+	fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+	. /opt/opa/tools/opafastfabric.conf.def
 
-if [ -f $TOOLDDIR/opafastfabric.conf ]
-then
-	. $TOOLSDIR/opafastfabric.conf
-fi
-if [ -f $TOOLSDIR/ff_funcs ]
-then
-	. $TOOLSDIR/ff_funcs
+	. /opt/opa/tools/ff_funcs
 	ff_available=y
 else
 	ff_available=n
@@ -69,31 +62,33 @@ show_info()
 	else
 		port_opts="-h $hfi -p $port"
 	fi
-	if [ "$ff_available" = y ]
+	echo "Fabric $hfi:$port Information:"
+	if /usr/sbin/opasmaquery $port_opts -o pkey 2>/dev/null|grep 0xffff >/dev/null 2>&1
 	then
-		echo "Fabric $hfi:$port Information:"
+		# Mgmt Node
+		/usr/sbin/opasaquery $port_opts -o sminfo|grep "Guid:"|while read trash lid trash guid trash state
+		do
+			echo "SM:" `/usr/sbin/opasaquery $port_opts -g $guid -o desc|head -1` "Guid: $guid State: $state"
+		done
+		/usr/sbin/opasaquery $port_opts -o fabricinfo
 	else
-		echo "Fabric Information:"
+		# Non-Mgmt Node
+		/usr/sbin/opaportinfo $port_opts|grep "SMLID:"|while read trash lid trash smlid
+		do
+			echo "Master SM:" `/usr/sbin/opasaquery $port_opts -l $smlid -o desc|head -1`
+		done
+	
+		echo "Number of HFIs:" `/usr/sbin/opasaquery $port_opts -t fi -o nodeguid|sort -u|wc -l`
+	 	echo "Number of HFI Ports:" `/usr/sbin/opasaquery $port_opts -t fi -o desc|wc -l`
 	fi
-	$BINDIR/opasaquery $port_opts -o sminfo|grep "Guid:"|while read trash lid trash guid trash state
-	do
-		echo "SM:" `$BINDIR/opasaquery $port_opts -g $guid -o desc|head -1` "Guid: $guid State: $state"
-	done
-	echo "Number of HFIs:" `$BINDIR/opasaquery $port_opts -t fi -o nodeguid|sort -u|wc -l`
-	echo "Number of HFI Ports:" `$BINDIR/opasaquery $port_opts -t fi -o desc|wc -l`
-	echo "Number of Switch Chips:" `$BINDIR/opasaquery $port_opts -t sw -o nodeguid|sort -u|grep -v 'No Records Returned'|wc -l`
-	echo "Number of Links:" $(($($BINDIR/opasaquery $port_opts -o link|wc -l) / 2))
-	# check for any slow or 1x links
-	echo "Number of slow Ports (not 25Gb/lane):" `$BINDIR/opasaquery $port_opts -o portinfo|grep 'LinkSpeed'|grep -v 'Act: 25Gb'|wc -l`
-	echo "Number of degraded Ports (not at 4x):" `$BINDIR/opasaquery $port_opts -o portinfo|grep 'LinkWidthDnGrd'|grep -v 'ActTx: 4  Rx: 4'|wc -l`
 	echo "-------------------------------------------------------------------------------"
 }
 
 Usage_ff_full()
 {
-	echo "Usage: fabric_info [-t portsfile] [-p ports]" >&2
+	echo "Usage: opafabricinfo [-t portsfile] [-p ports]" >&2
 	echo "              or" >&2
-	echo "       fabric_info --help" >&2
+	echo "       opafabricinfo --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -t portsfile - file with list of local HFI ports used to access" >&2
 	echo "                  fabric(s) for analysis, default is $CONFIG_DIR/opa/ports" >&2
@@ -109,26 +104,47 @@ Usage_ff_full()
 	echo "   PORTS - list of ports, used in absence of -t and -p" >&2
 	echo "   PORTS_FILE - file containing list of ports, used in absence of -t and -p" >&2
 	echo "for example:" >&2
-	echo "   fabric_info" >&2
-	echo "   fabric_info -p '1:1 1:2 2:1 2:2'" >&2
+	echo "   opafabricinfo" >&2
+	echo "   opafabricinfo -p '1:1 1:2 2:1 2:2'" >&2
+	exit 0
+}
+
+Usage_basic_full()
+{
+	echo "Usage: opafabricinfo [-p ports]" >&2
+	echo "              or" >&2
+	echo "       opafabricinfo --help" >&2
+	echo "   --help - produce full help text" >&2
+	echo "   -p ports - list of local HFI ports used to access fabric(s) for analysis" >&2
+	echo "              default is 1st active port" >&2
+	echo "              This is specified as hfi:port" >&2
+	echo "                 0:0 = 1st active port in system" >&2
+	echo "                 0:y = port y within system" >&2
+	echo "                 x:0 = 1st active port on HFI x" >&2
+	echo "                 x:y = HFI x, port y" >&2
+	echo "              The first HFI in the system is 1.  The first port on an HFI is 1." >&2
+	echo " Environment:" >&2
+	echo "   PORTS - list of ports, used in absence of -p" >&2
+	echo "for example:" >&2
+	echo "   opafabricinfo" >&2
+	echo "   opafabricinfo -p '1:1 1:2 2:1 2:2'" >&2
 	exit 0
 }
 
 Usage_ff()
 {
-	echo "Usage: fabric_info" >&2
+	echo "Usage: opafabricinfo" >&2
 	echo "              or" >&2
-	echo "       fabric_info --help" >&2
+	echo "       opafabricinfo --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo "for example:" >&2
-	echo "   fabric_info" >&2
+	echo "   opafabricinfo" >&2
 	exit 2
 }
 
 Usage_basic()
 {
-	echo "Usage: fabric_info" >&2
-	exit 2
+	Usage_ff
 }
 
 Usage()
@@ -141,9 +157,14 @@ Usage()
 	fi
 }
 
-if [ "$ff_available" = y  -a  x"$1" = "x--help" ]
+if [ x"$1" = "x--help" ]
 then
-	Usage_ff_full
+	if [ "$ff_available" = y ]
+	then
+		Usage_ff_full
+	else
+		Usage_basic_full
+	fi
 fi
 
 status=ok
@@ -158,6 +179,15 @@ then
 		esac
 	done
 	shift $((OPTIND -1))
+else
+	while getopts p: param
+	do
+		case $param in
+		p)	export PORTS="$OPTARG";;
+		?)	Usage;;
+		esac
+	done
+	shift $((OPTIND -1))
 fi
 if [ $# -ge 1 ]
 then
@@ -166,9 +196,12 @@ fi
 
 if [ "$ff_available" = y ]
 then
-	check_ports_args fabric_info
+	check_ports_args opafabricinfo
 else
-	PORTS='0:0'
+	if [ "x$PORTS" = "x" ]
+	then
+		PORTS='0:0'
+	fi
 fi
 
 for hfi_port in $PORTS
@@ -177,7 +210,7 @@ do
 	port=$(expr $hfi_port : '[0-9]*:\([0-9]*\)')
 	if [ "$hfi" = "" -o "$port" = "" ]
 	then
-		echo "fabric_info: Error: Invalid port specification: $hfi_port" >&2
+		echo "opafabricinfo: Error: Invalid port specification: $hfi_port" >&2
 		status=bad
 		continue
 	fi

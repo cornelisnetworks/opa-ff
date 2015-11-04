@@ -123,7 +123,6 @@ sub print_usage() {
 "  -n, --network       Display network address\n",
 "Help options:\n",
 "  -?, --help          Show this help message\n",
-"  --usage             Display brief usage message\n";
 }
 
 $ret = &GetOptions(\%longopts, 'broadcast|b', 'netmask|m', 'network|n');

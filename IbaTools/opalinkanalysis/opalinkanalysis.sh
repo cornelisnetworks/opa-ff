@@ -32,7 +32,7 @@
 
 # analyzes all the links in the fabric
 
-tempfile=`mktemp`
+tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
 trap "rm -f $tempfile" EXIT
 
@@ -44,10 +44,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 punchlist=$FF_RESULT_DIR/punchlist.csv
 del=';'
@@ -102,10 +99,9 @@ Usage_full()
 	echo "                     limit analysis to links external to systems" >&2
 	echo "         verifyfis - verify FIs against topology input" >&2
 	echo "         verifysws - verify Switches against topology input" >&2
-	echo "         verifyrtrs - verify Routers against topology input" >&2
-	echo "         verifynodes - verify FIs, Switches and Routers against topology input" >&2
+	echo "         verifynodes - verify FIs, Switches and against topology input" >&2
 	echo "         verifysms - verify SMs against topology input" >&2
-	echo "         verifyall - verifies links, FIs, Switches, Routers and SMs" >&2
+	echo "         verifyall - verifies links, FIs, Switches, and SMs" >&2
 	echo "                     against topology input" >&2
 	echo "         clearerrors - clear error counters, uses PM if available" >&2
 	echo "         clearhwerrors - clear HW error counters, bypasses PM" >&2
@@ -143,10 +139,9 @@ Usage()
 	echo "                     limit analysis to links external to systems" >&2
 	echo "         verifyfis - verify FIs against topology input" >&2
 	echo "         verifysws - verify Switches against topology input" >&2
-	echo "         verifyrtrs - verify Routers against topology input" >&2
-	echo "         verifynodes - verify FIs, Switches and Routers against topology input" >&2
+	echo "         verifynodes - verify FIs, Switches and against topology input" >&2
 	echo "         verifysms - verify SMs against topology input" >&2
-	echo "         verifyall - verifies links, FIs, Switches, Routers and SMs" >&2
+	echo "         verifyall - verifies links, FIs, Switches, and SMs" >&2
 	echo "                     against topology input" >&2
 	echo "         clearerrors - clear error counters, uses PM if available" >&2
 	echo "         clearhwerrors - clear HW error counters, bypasses PM" >&2
@@ -172,6 +167,19 @@ append_punchlist()
 	echo "$timestamp$del$1$del$2" >> $punchlist
 }
 
+set_beaconing_led()
+# $1 = nodedesc
+# $2 = port num
+{
+	#echo "setting led on node:$1 port:$2"
+	#Map node desc to lid so we can use opaportconfig tool to enable LED
+	nodelid=$(opasaquery -d $1 -o lid | head -n 1)
+	if [ "$nodelid" != "No Records Returned" ]
+	then
+		/usr/sbin/opaportconfig -l $nodelid -m $2 ledon
+	fi
+}
+
 gen_errors_punchlist()
 # $@ =  snapshot, port and/or topology selection options for opareport
 {
@@ -179,8 +187,8 @@ gen_errors_punchlist()
 	# TBD - is cable information available?
 	export IFS=';'
 	port1=
-	#opareport -q "$@" -o errors -x | $BINDIR/opaxmlextract -H -d \; -e LinkErrors.Link.Port.NodeGUID -e LinkErrors.Link.Port.PortNum -e LinkErrors.Link.Port.NodeType -e LinkErrors.Link.Port.NodeDesc|while read line
-	opareport -q "$@" -o errors -x | $BINDIR/opaxmlextract -H -d \; -e LinkErrors.Link.Port.NodeDesc -e LinkErrors.Link.Port.PortNum|while read desc port
+	#opareport -q "$@" -o errors -x | /usr/sbin/opaxmlextract -H -d \; -e LinkErrors.Link.Port.NodeGUID -e LinkErrors.Link.Port.PortNum -e LinkErrors.Link.Port.NodeType -e LinkErrors.Link.Port.NodeDesc|while read line
+	opareport -q "$@" -o errors -x | /usr/sbin/opaxmlextract -H -d \; -e LinkErrors.Link.Port.NodeDesc -e LinkErrors.Link.Port.PortNum|while read desc port
 	do
 		if [ x"$port1" = x ]
 		then
@@ -188,6 +196,11 @@ gen_errors_punchlist()
 		else
 			append_punchlist "$port1 $desc p$port" "Link errors"
 			port1=
+		fi
+
+		if [ x"$port" != x ] && [ x"$desc" != x ]
+		then
+			set_beaconing_led $desc $port
 		fi
 	done
 	)
@@ -200,8 +213,8 @@ gen_slowlinks_punchlist()
 	# TBD - is cable information available?
 	export IFS=';'
 	port1=
-	#opareport -q "$@" -o slowlinks -x | $BINDIR/opaxmlextract -H -d \; -e LinksExpected.Link.Port.NodeGUID -e LinksExpected.Link.Port.PortNum -e LinksExpected.Link.Port.NodeType -e LinksExpected.Link.Port.NodeDesc|while read line
-	opareport -q "$@" -o slowlinks -x | $BINDIR/opaxmlextract -H -d \; -e LinksExpected.Link.Port.NodeDesc -e LinksExpected.Link.Port.PortNum|while read desc port
+	#opareport -q "$@" -o slowlinks -x | /usr/sbin/opaxmlextract -H -d \; -e LinksExpected.Link.Port.NodeGUID -e LinksExpected.Link.Port.PortNum -e LinksExpected.Link.Port.NodeType -e LinksExpected.Link.Port.NodeDesc|while read line
+	opareport -q "$@" -o slowlinks -x | /usr/sbin/opaxmlextract -H -d \; -e LinksExpected.Link.Port.NodeDesc -e LinksExpected.Link.Port.PortNum|while read desc port
 	do
 		if [ x"$port1" = x ]
 		then
@@ -209,6 +222,11 @@ gen_slowlinks_punchlist()
 		else
 			append_punchlist "$port1 $desc p$port" "Link speed/width lower than expected"
 			port1=
+		fi
+
+		if [ x"$port" != x ] && [ x"$desc" != x ]
+		then
+			set_beaconing_led $desc $port
 		fi
 	done
 	)
@@ -221,8 +239,8 @@ gen_misconfiglinks_punchlist()
 	# TBD - is cable information available?
 	export IFS=';'
 	port1=
-	#opareport -q "$@" -o misconfiglinks -x | $BINDIR/opaxmlextract -H -d \; -e LinksConfig.Link.Port.NodeGUID -e LinksConfig.Link.Port.PortNum -e LinksConfig.Link.Port.NodeType -e LinksConfig.Link.Port.NodeDesc|while read line
-	opareport -q "$@" -o misconfiglinks -x | $BINDIR/opaxmlextract -H -d \; -e LinksConfig.Link.Port.NodeDesc -e LinksConfig.Link.Port.PortNum|while read desc port
+	#opareport -q "$@" -o misconfiglinks -x | /usr/sbin/opaxmlextract -H -d \; -e LinksConfig.Link.Port.NodeGUID -e LinksConfig.Link.Port.PortNum -e LinksConfig.Link.Port.NodeType -e LinksConfig.Link.Port.NodeDesc|while read line
+	opareport -q "$@" -o misconfiglinks -x | /usr/sbin/opaxmlextract -H -d \; -e LinksConfig.Link.Port.NodeDesc -e LinksConfig.Link.Port.PortNum|while read desc port
 	do
 		if [ x"$port1" = x ]
 		then
@@ -230,6 +248,11 @@ gen_misconfiglinks_punchlist()
 		else
 			append_punchlist "$port1 $desc p$port" "Link speed/width configured lower than supported"
 			port1=
+		fi
+		
+		if [ x"$port" != x ] && [ x"$desc" != x ]
+		then
+			set_beaconing_led $desc $port
 		fi
 	done
 	)
@@ -242,8 +265,8 @@ gen_misconnlinks_punchlist()
 	# TBD - is cable information available?
 	export IFS=';'
 	line1=
-	#opareport -q "$@" -o misconnlinks -x | $BINDIR/opaxmlextract -H -d \; -e LinksMismatched.Link.Port.NodeGUID -e LinksMismatched.Link.Port.PortNum -e LinksMismatched.Link.Port.NodeType -e LinksMismatched.Link.Port.NodeDesc|while read line
-	opareport -q "$@" -o misconnlinks -x | $BINDIR/opaxmlextract -H -d \; -e LinksMismatched.Link.Port.NodeDesc -e LinksMismatched.Link.Port.PortNum|while read desc port
+	#opareport -q "$@" -o misconnlinks -x | /usr/sbin/opaxmlextract -H -d \; -e LinksMismatched.Link.Port.NodeGUID -e LinksMismatched.Link.Port.PortNum -e LinksMismatched.Link.Port.NodeType -e LinksMismatched.Link.Port.NodeDesc|while read line
+	opareport -q "$@" -o misconnlinks -x | /usr/sbin/opaxmlextract -H -d \; -e LinksMismatched.Link.Port.NodeDesc -e LinksMismatched.Link.Port.PortNum|while read desc port
 	do
 		if [ x"$line1" = x ]
 		then
@@ -251,6 +274,11 @@ gen_misconnlinks_punchlist()
 		else
 			append_punchlist "$line1 $desc p$port" "Link speed/width mismatch"
 			line1=
+		fi
+		
+		if [ x"$port" != x ] && [ x"$desc" != x ]
+		then
+			set_beaconing_led $desc $port
 		fi
 	done
 	)
@@ -281,8 +309,8 @@ gen_verifylinks_punchlist()
 	port1=
 	port2=
 	prob=
-	#eval opareport -q "$@" -o verifylinks -x | $BINDIR/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeGUID -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.NodeType -e VerifyLinks.Link.Port.NodeDesc|while read line
-	eval opareport -q "$@" -o verifylinks -x | $BINDIR/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeDesc -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.Problem -e VerifyLinks.Link.Problem|while read desc port portprob linkprob
+	#eval opareport -q "$@" -o verifylinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeGUID -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.NodeType -e VerifyLinks.Link.Port.NodeDesc|while read line
+	eval opareport -q "$@" -o verifylinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeDesc -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.Problem -e VerifyLinks.Link.Problem|while read desc port portprob linkprob
 	do
 		if [ x"$port1" = x ]
 		then
@@ -318,6 +346,11 @@ gen_verifylinks_punchlist()
 			port1=
 			port2=
 			prob=
+		fi
+		
+		if [ x"$port" != x ] && [ x"$desc" != x ]
+		then
+			set_beaconing_led $desc $port
 		fi
 	done
 	)
@@ -332,8 +365,8 @@ gen_verifyextlinks_punchlist()
 	port1=
 	port2=
 	prob=
-	#eval opareport -q "$@" -o verifyextlinks -x | $BINDIR/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeGUID -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.NodeType -e VerifyExtLinks.Link.Port.NodeDesc|while read line
-	eval opareport -q "$@" -o verifyextlinks -x | $BINDIR/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeDesc -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.Problem -e VerifyExtLinks.Link.Problem|while read desc port portprob linkprob
+	#eval opareport -q "$@" -o verifyextlinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeGUID -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.NodeType -e VerifyExtLinks.Link.Port.NodeDesc|while read line
+	eval opareport -q "$@" -o verifyextlinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeDesc -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.Problem -e VerifyExtLinks.Link.Problem|while read desc port portprob linkprob
 	do
 		if [ x"$port1" = x ]
 		then
@@ -370,6 +403,11 @@ gen_verifyextlinks_punchlist()
 			port2=
 			prob=
 		fi
+		
+		if [ x"$port" != x ] && [ x"$desc" != x ]
+		then
+			set_beaconing_led $desc $port
+		fi
 	done
 	)
 }
@@ -379,8 +417,8 @@ gen_verifyfis_punchlist()
 {
 	(
 	export IFS=';'
-	#eval opareport -q "$@" -o verifyfis -x | $BINDIR/opaxmlextract -H -d \; -e VerifyFIs.Node.NodeGUID -e VerifyFIs.Node.Desc -e VerifyFIs.Node.Problem|while read line
-	eval opareport -q "$@" -o verifyfis -x | $BINDIR/opaxmlextract -H -d \; -e VerifyFIs.Node.NodeDesc -e VerifyFIs.Node.Problem |while read desc prob
+	#eval opareport -q "$@" -o verifyfis -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyFIs.Node.NodeGUID -e VerifyFIs.Node.Desc -e VerifyFIs.Node.Problem|while read line
+	eval opareport -q "$@" -o verifyfis -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyFIs.Node.NodeDesc -e VerifyFIs.Node.Problem |while read desc prob
 	do
 		append_verify_punchlist "$desc" "$prob"
 	done
@@ -392,21 +430,8 @@ gen_verifysws_punchlist()
 {
 	(
 	export IFS=';'
-	#eval opareport -q "$@" -o verifysws -x | $BINDIR/opaxmlextract -H -d \; -e VerifySWs.Node.NodeGUID -e VerifySWs.Node.Desc -e VerifySWs.Node.Problem|while read line
-	eval opareport -q "$@" -o verifysws -x | $BINDIR/opaxmlextract -H -d \; -e VerifySWs.Node.NodeDesc -e VerifySWs.Node.Problem |while read desc prob
-	do
-		append_verify_punchlist "$desc" "$prob"
-	done
-	)
-}
-
-gen_verifyrtrs_punchlist()
-# $@ =  snapshot, port and/or topology selection options for opareport
-{
-	(
-	export IFS=';'
-	#eval opareport -q "$@" -o verifyrtrs -x | $BINDIR/opaxmlextract -H -d \; -e VerifyRTs.Node.NodeGUID -e VerifyRTs.Node.Desc -e VerifyRTs.Node.Problem|while read line
-	eval opareport -q "$@" -o verifyrtrs -x | $BINDIR/opaxmlextract -H -d \; -e VerifyRTs.Node.NodeDesc -e VerifyRTs.Node.Problem |while read desc prob
+	#eval opareport -q "$@" -o verifysws -x | /usr/sbin/opaxmlextract -H -d \; -e VerifySWs.Node.NodeGUID -e VerifySWs.Node.Desc -e VerifySWs.Node.Problem|while read line
+	eval opareport -q "$@" -o verifysws -x | /usr/sbin/opaxmlextract -H -d \; -e VerifySWs.Node.NodeDesc -e VerifySWs.Node.Problem |while read desc prob
 	do
 		append_verify_punchlist "$desc" "$prob"
 	done
@@ -418,8 +443,8 @@ gen_verifysms_punchlist()
 {
 	(
 	export IFS=';'
-	#eval opareport -q "$@" -o verifysms -x | $BINDIR/opaxmlextract -H -d \; -e VerifySMs.SM.NodeGUID -e VerifySMs.SM.Desc -e VerifySMs.SM.Problem|while read line
-	eval opareport -q "$@" -o verifysms -x | $BINDIR/opaxmlextract -H -d \; -e VerifySMs.SM.NodeDesc -e VerifySMs.SM.PortNum -e VerifySMs.SM.Problem |while read desc port prob
+	#eval opareport -q "$@" -o verifysms -x | /usr/sbin/opaxmlextract -H -d \; -e VerifySMs.SM.NodeGUID -e VerifySMs.SM.Desc -e VerifySMs.SM.Problem|while read line
+	eval opareport -q "$@" -o verifysms -x | /usr/sbin/opaxmlextract -H -d \; -e VerifySMs.SM.NodeDesc -e VerifySMs.SM.PortNum -e VerifySMs.SM.Problem |while read desc port prob
 	do
 		# port number is optional in topology_input, so for missing SMs
 		# it might not be reported
@@ -445,7 +470,6 @@ verifylinks=n
 verifyextlinks=n
 verifyfis=n
 verifysws=n
-verifyrtrs=n
 verifysms=n
 reports=""
 read_snapshot=n
@@ -486,10 +510,9 @@ do
 	verifyextlinks) verifyextlinks=y;;
 	verifyfis) verifyfis=y;;
 	verifysws) verifysws=y;;
-	verifyrtrs) verifyrtrs=y;;
-	verifynodes)  verifyfis=y; verifysws=y; verifyrtrs=y;;
+	verifynodes)  verifyfis=y; verifysws=y;;
 	verifysms) verifysms=y;;
-	verifyall) verifylinks=y; verifyfis=y; verifysws=y; verifyrtrs=y; verifysms=y;;
+	verifyall) verifylinks=y; verifyfis=y; verifysws=y; verifysms=y;;
 	clearerrors) clearerrors=y;;
 	clearhwerrors) clearhwerrors=y;;
 	clear) clearerrors=y; clearhwerrors=y;;
@@ -500,7 +523,7 @@ do
 	shift
 done
 
-for report in errors slowlinks misconfiglinks misconnlinks verifylinks verifyextlinks verifyfis verifysws verifyrtrs verifysms
+for report in errors slowlinks misconfiglinks misconnlinks verifylinks verifyextlinks verifyfis verifysws verifysms
 do
 	yes=$(eval echo \$$report)
 	if [ $yes = y ]
@@ -636,7 +659,6 @@ do
 		verifyextlinks) [ "$TOPOLOGY_FILE" != "" ] && gen_verifyextlinks_punchlist -X $snapshot_input $topt;;
 		verifyfis) [ "$TOPOLOGY_FILE" != "" ] && gen_verifyfis_punchlist -X $snapshot_input $topt;;
 		verifysws) [ "$TOPOLOGY_FILE" != "" ] && gen_verifysws_punchlist -X $snapshot_input $topt;;
-		verifyrtrs) [ "$TOPOLOGY_FILE" != "" ] && gen_verifyrtrs_punchlist -X $snapshot_input $topt;;
 		verifysms) [ "$TOPOLOGY_FILE" != "" ] && gen_verifysms_punchlist -X $snapshot_input $topt;;
 		*) continue;;	# should not happen
 		esac

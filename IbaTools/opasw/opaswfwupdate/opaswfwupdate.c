@@ -88,7 +88,10 @@ uint32 loadFirmwareBuffer(struct oib_port *port, char **fwBuffer, IB_PATH_RECORD
 	struct stat fileStat;
 
 	if (g_dirParam) {
-		chdir(fwDirName);
+		if (chdir(fwDirName) < 0) {
+			fprintf(stderr, "Error: cannot change directory to %s: %s\n", fwDirName, strerror(errno));
+			return(0);
+		}
 		if (stat("emfwMapFile", &fileStat) < 0) {
 			if (errno == ENOENT) {
 				if ((fwDir = opendir(fwDirName)) == NULL) {
@@ -195,8 +198,8 @@ int main(int argc, char *argv[])
 {
 	char				*cmdName;
 	const char			*opts="FDSvqt:l:h:o:d:f:m:s:u:T:z:";
-	uint8				*fwBuffer;
-	uint8				*fwBuffer2;
+	uint8				*fwBuffer = NULL;
+	uint8				*fwBuffer2 = NULL;
 	char				parameter[100];
 	uint8				*p;
 #if FWDELAY_WORKAROUND

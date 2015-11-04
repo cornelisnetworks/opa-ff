@@ -33,7 +33,7 @@
 
 # disable the specified set of hosts
 
-tempfile=`mktemp`
+tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
 trap "rm -f $tempfile" EXIT
 
@@ -114,13 +114,13 @@ for i in "$@"
 do
 	echo "============================================================================="
 	echo "Disabling host: $i..."
-	/sbin/opaextractsellinks $port_opts -F "nodepat:$i HFI*" > $tempfile
+	/usr/sbin/opaextractsellinks $port_opts -F "nodepat:$i hfi*" > $tempfile
 	if [ ! -s $tempfile ]
 	then
 		echo "opadisablehosts: Unable to find host: $i" >&2
 		res=1
 	else
-		/sbin/opadisableports -p "$hfi:$port" "$reason" < $tempfile
+		/usr/sbin/opadisableports -p "$hfi:$port" "$reason" < $tempfile
 	fi
 	rm -f $tempfile
 done

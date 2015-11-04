@@ -92,7 +92,6 @@ opasaquery -v -o vfinfocsv
 # query by node type
 opasaquery -v -t fi
 opasaquery -v -t sw
-opasaquery -v -t rtr
 opasaquery -v -o systemguid -t fi
 opasaquery -v -o nodeguid -t fi
 opasaquery -v -o portguid -t fi

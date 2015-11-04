@@ -67,26 +67,25 @@ File: TestTools/ib.exp" case_setup case_cleanup {
 			send_unix_cmd {type opasaquery}
 			if { 0 == [ get_exit_status 60 ] } {
 				#send_unix_cmd "opasaquery -h 0 -p 0 -t fi -o desc 2>&1 |tr 'A-Z' 'a-z' | sed -e 's/^/Node: /'"
-				send_unix_cmd {opasaquery t ca -o desc 2>&1 |tr 'A-Z' 'a-z' | sed -e 's/^/Node: /'}
+				send_unix_cmd {opasaquery -h 0 -p 0 -t fi -o desc 2>&1 |tr 'A-Z' 'a-z' | sed -e 's/^/Node: /'}
 			} else {
 				#send_unix_cmd {saquery |egrep '^[[:space:]]*NodeDescription\.*'|tr 'A-Z' 'a-z' | sed -e 's/^[[:space:]]*nodedescription\.*/Node: /'}
 				send_unix_cmd {opasaquery |egrep '^[[:space:]]*NodeDescription\.*'|tr 'A-Z' 'a-z' | sed -e 's/^[[:space:]]*nodedescription\.*/Node: /'}
 			}
 			# wait for echo of command so we don't mistake command for any
 			# similarly named hosts
-			expect_list 90 {"sed -e" "Node: /'"} {"not found" "unknown" "Error" "cannot" }
+			expect_list 90 {"sed -e" "Node: /'"} {"not found" "unknown" "Error" "cannot" "usage:" "Usage:"}
 			set expected_host_list {}
 			# for each host we expect to see a line with $h
 			# To support OFED hosts, we need to handle names with HCA-# appended to them.
 			# Ensure that hostnames in the case insensitive manners are supported.
 			set hosts [ string tolower $hosts ]
             
-# todo : uncommend later
-			#foreach h "$hosts" {
-		#		lappend expected_host_list "Node: $h\n|Node: $h hfi-\[1-9\]+\n"
-		#	}
-		#	expect_list_orderless 60 0 "$expected_host_list" { "not found" "unknown" "Error" "cannot" }
-		#	check_exit_status 60 0
+			foreach h "$hosts" {
+				lappend expected_host_list "Node: $h\n|Node: $h hfi1_\[0-9\]+\n"
+			}
+			expect_list_orderless 60 0 "$expected_host_list" { "not found" "unknown" "Error" "cannot" "usage:" "Usage:"}
+			check_exit_status 60 0
 			target_root_sh_exit
 		}  else {
 			target_root_sh_exit

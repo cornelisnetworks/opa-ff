@@ -42,14 +42,11 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
-	echo "Usage: opareports [-t portsfile] [-p ports] [opareport arguments]" >&2
+	echo "Usage: opareports [-t portsfile] [-p ports] [-T topology_input] [opareport arguments]" >&2
 	echo "              or" >&2
 	echo "       opareports --help" >&2
 	echo "   --help - produce full help text" >&2
@@ -84,7 +81,7 @@ Usage_full()
 	echo "   opareports" >&2
 	echo "   opareports -p '1:1 1:2 2:1 2:2'" >&2
 	echo "opareport arguments:" >&2
-	$BINDIR/opareport --help
+	/usr/sbin/opareport --help
 	exit 2
 }
 
@@ -98,7 +95,7 @@ Usage()
 	echo "for example:" >&2
 	echo "   opareports" >&2
 	echo "opareport arguments:" >&2
-	$BINDIR/opareport -?
+	/usr/sbin/opareport -?
 	exit 2
 }
 
@@ -109,7 +106,7 @@ fi
 
 status=ok
 
-TEMP=`getopt -a -n opareports -o 'p:t:vqo:d:PHMNxT:sri:Cac:LF:S:D:QV' -l 'verbose,quiet,output:,detail:,persist,hard,pmadirect,noname,xml,topology:,stats,routes,interval:,clear,clearall,config:,limit,focus:,src:,dest:,quietfocus,vltables' -- "$@"`
+TEMP=`getopt -a -n opareports -o 'p:t:vqo:d:PHMNxT:sri:Cac:LF:S:D:QVA' -l 'verbose,quiet,output:,detail:,persist,hard,pmadirect,noname,xml,topology:,stats,routes,interval:,clear,clearall,config:,limit,focus:,src:,dest:,quietfocus,vltables,allports' -- "$@"`
 if [ $? != 0 ]
 then
 	Usage
@@ -192,8 +189,8 @@ run_report()
 	then
 		topt="-T '$TOPOLOGY_FILE'"
 	fi
-	#echo "$BINDIR/opareport $port_opts $topt $opts"
-	eval $BINDIR/opareport $port_opts $topt $opts
+	#echo "/usr/sbin/opareport $port_opts $topt $opts"
+	eval /usr/sbin/opareport $port_opts $topt $opts
 	if [ $? -ne 0 ]
 	then
 		status=bad

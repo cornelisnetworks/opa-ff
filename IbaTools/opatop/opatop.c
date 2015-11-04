@@ -424,22 +424,13 @@ int DisplayScreen_Err(STL_PMERRSTAT_T * p_PmErrStats, char * p_title)
 		p_PmErrStats->ports[2].routingErrors,
 		p_PmErrStats->ports[3].routingErrors,
 		p_PmErrStats->ports[4].routingErrors );
-	printf("    Utilization:   %3u.%1u%%  BubbleIneffic: %3u.%1u%%  Discards: %3u.%1u%%\n",
-		   p_PmErrStats->errorMaximums.utilizationPct10 / 10,
-		   p_PmErrStats->errorMaximums.utilizationPct10 % 10,
-		   p_PmErrStats->errorMaximums.bubbleInefficiencyPct10 / 10,
-		   p_PmErrStats->errorMaximums.bubbleInefficiencyPct10 % 10,
-		   p_PmErrStats->errorMaximums.discardsPct10 / 10,
-		   p_PmErrStats->errorMaximums.discardsPct10 % 10);
-	printf("    CongIneffic:   %3u.%1u%%  WaitIneffic:   %3u.%1u%%  Congest:  %3u.%1u%%\n",
-		   p_PmErrStats->errorMaximums.congInefficiencyPct10 / 10,
-		   p_PmErrStats->errorMaximums.congInefficiencyPct10 % 10,
-		   p_PmErrStats->errorMaximums.waitInefficiencyPct10 / 10,
-		   p_PmErrStats->errorMaximums.waitInefficiencyPct10 % 10,
-		   p_PmErrStats->errorMaximums.congestionDiscardsPct10 / 10,
-		   p_PmErrStats->errorMaximums.congestionDiscardsPct10 % 10);
+	printf("    Utilization:   %3u.%1u%%  Discards: %3u.%1u%%\n",
+		p_PmErrStats->errorMaximums.utilizationPct10 / 10,
+		p_PmErrStats->errorMaximums.utilizationPct10 % 10,
+		p_PmErrStats->errorMaximums.discardsPct10 / 10,
+		p_PmErrStats->errorMaximums.discardsPct10 % 10);
 
-	return (9);
+	return (8);
 
 }	// End of DisplayScreen_Err()
 
@@ -1208,6 +1199,11 @@ void DisplayScreen(void)
 			printf( "                 Uncorrectable:  %4u  FM Config Err: %4u\n",
 				g_PmConfig.integrityWeights.UncorrectableErrors,
 				g_PmConfig.integrityWeights.FMConfigErrors );
+			printf( "                 Link Qual:      %4u  Lnk Wdth Dngd: %4u\n",
+				g_PmConfig.integrityWeights.LinkQualityIndicator,
+				g_PmConfig.integrityWeights.LinkWidthDowngrade );
+			printf( "                 Excs Bfr Ovrn:  %4u\n",
+				g_PmConfig.integrityWeights.ExcessiveBufferOverruns);
 			printf( " Congest Wts:    Tx Wait:        %4u  Cong Discards: %4u\n",
 				g_PmConfig.congestionWeights.PortXmitWait,
 				g_PmConfig.congestionWeights.SwPortCongestion);
@@ -1225,9 +1221,8 @@ void DisplayScreen(void)
 			printf( " Sweep: MaxParallelNodes: %3u PmaBatchSize:   %3u ErrorClear:  %4u\n",
 				g_PmConfig.maxParallelNodes, g_PmConfig.pmaBatchSize,
 				g_PmConfig.errorClear);
-			ct_lines -= 19;
+			ct_lines -= 20;
 		}
-
 		else
 		{
 		   	printf("PM Config: PM CONFIG NOT AVAILABLE\n");
@@ -1701,7 +1696,7 @@ void DisplayScreen(void)
 				printf( " %04X %3u  %016" PRIX64 " %-.36s%s\n",
 					pg_PmGroupFocus.portList[ix].nodeLid,
 					pg_PmGroupFocus.portList[ix].portNumber,
-					pg_PmGroupFocus.portList[ix].value2,
+					pg_PmGroupFocus.portList[ix].nodeGUID,
 					pg_PmGroupFocus.portList[ix].nodeDesc,
 					strgetlaststr(pg_PmGroupFocus.portList[ix].nodeDesc, 36) );
 
@@ -1806,7 +1801,7 @@ void DisplayScreen(void)
 				printf( " %04X %3u  %016" PRIX64 " %-.36s%s\n",
 					g_pPmVFFocus.portList[ix].nodeLid,
 					g_pPmVFFocus.portList[ix].portNumber,
-					g_pPmVFFocus.portList[ix].value2,
+					g_pPmVFFocus.portList[ix].nodeGUID,
 					g_pPmVFFocus.portList[ix].nodeDesc,
 					strgetlaststr(g_pPmVFFocus.portList[ix].nodeDesc, 36) );
 
@@ -1941,7 +1936,7 @@ void DisplayScreen(void)
 							printf( "NodeDesc: %-.41s%s NodeGUID: 0x%016"PRIX64"\n",
 								pg_PmGroupFocus.portList[g_ix_port - g_start].nodeDesc,
 								strgetlaststr(pg_PmGroupFocus.portList[g_ix_port - g_start].nodeDesc, 41),
-								pg_PmGroupFocus.portList[g_ix_port - g_start].value2 );
+								pg_PmGroupFocus.portList[g_ix_port - g_start].nodeGUID );
 
 							if (pg_PmGroupFocus.portList[g_ix_port - g_start].neighborLid)
 								printf( "Neighbor: %-.41s%s LID: 0x%X PortNum: %u\n",
@@ -1998,7 +1993,7 @@ void DisplayScreen(void)
 							printf( "NodeDesc: %-.41s%s NodeGUID: 0x%016"PRIX64"\n",
 								g_pPmVFFocus.portList[g_ix_port - g_start].nodeDesc,
 								strgetlaststr(g_pPmVFFocus.portList[g_ix_port - g_start].nodeDesc, 41),
-								g_pPmVFFocus.portList[g_ix_port - g_start].value2 );
+								g_pPmVFFocus.portList[g_ix_port - g_start].nodeGUID );
 
 							if (g_pPmVFFocus.portList[g_ix_port - g_start].neighborLid)
 								printf( "Neighbor: %-.41s%s LID: 0x%X PortNum: %u\n",
@@ -2031,50 +2026,51 @@ void DisplayScreen(void)
 			printf( " Multicast: Xmit Pkts: %-10"PRIu64"  Recv Pkts: %-10"PRIu64"\n",
 				g_portCounters.portMulticastXmitPkts, g_portCounters.portMulticastRcvPkts );
 			printf( " Integrity:        %10c | Congestion:\n", ' ' );
-			printf( "  Link Quality:    %10u |  Cong Discards: %10llu\n",
+			printf( "  Link Quality:    %10u |  Cong Discards:    %10llu\n",
 				g_portCounters.lq.s.linkQualityIndicator,
 				(unsigned long long)g_portCounters.swPortCongestion);
-			printf( "  Loc Lnk Integ:   %10llu |  Tx Wait:       %10llu\n",
+			printf( "  Loc Lnk Integ:   %10llu |  Tx Wait:          %10llu\n",
 				(unsigned long long)g_portCounters.localLinkIntegrityErrors,
 				(unsigned long long)g_portCounters.portXmitWait);
-			printf( "  Rcv Errors:      %10llu |  Tx Time Cong:  %10llu\n",
+			printf( "  Rcv Errors:      %10llu |  Tx Time Cong:     %10llu\n",
 				(unsigned long long)g_portCounters.portRcvErrors,
 				(unsigned long long)g_portCounters.portXmitTimeCong);
-			printf( "  Excs Bfr Ovrn*:  %10llu |  Mark FECN:     %10llu\n",
+			printf( "  Excs Bfr Ovrn*:  %10llu |  Mark FECN:        %10llu\n",
 				(unsigned long long)g_portCounters.excessiveBufferOverruns,
 				(unsigned long long)g_portCounters.portMarkFECN);
-			printf( "  Lnk Err Recov:   %10llu |  Rcv FECN*:     %10llu\n",
+			printf( "  Lnk Err Recov:   %10llu |  Rcv FECN*:        %10llu\n",
 				(unsigned long long)g_portCounters.linkErrorRecovery,
 				(unsigned long long)g_portCounters.portRcvFECN);
-			printf( "  Link Downed:     %10llu |  Rcv BECN:      %10llu\n",
+			printf( "  Link Downed:     %10llu |  Rcv BECN:         %10llu\n",
 				(unsigned long long)g_portCounters.linkDowned,
 				(unsigned long long)g_portCounters.portRcvBECN);
 			printf( "  Uncorrectable:   %10llu | Discards:\n",
 				(unsigned long long)g_portCounters.uncorrectableErrors);
-			printf( "  FM Conf Err:     %10llu |  Tx Discards:   %10llu\n",
+			printf( "  FM Conf Err:     %10llu |  Tx Discards:      %10llu\n",
 				(unsigned long long)g_portCounters.fmConfigErrors,
 				(unsigned long long)g_portCounters.portXmitDiscards);
-			printf( " Routing:          %10c | Bubble:\n", ' ');
-			printf( "  Rcv Sw Relay:    %10llu |  Tx Wasted BW:  %10llu\n",
-				(unsigned long long)g_portCounters.portRcvSwitchRelayErrors,
+			printf( "  Lanes Down:      %10u | Routing:\n",
+				g_portCounters.lq.s.numLanesDown);
+			printf( " Bubble:           %10c |  Rcv Sw Relay:     %10llu\n", ' ',
+				(unsigned long long)g_portCounters.portRcvSwitchRelayErrors);
+			printf( "  Tx Wasted BW:    %10llu | Security:\n",
 				(unsigned long long)g_portCounters.portXmitWastedBW);
-			printf( " Security:         %10c |  Tx Wait Data:  %10llu\n", ' ',
-				(unsigned long long)g_portCounters.portXmitWaitData);
-			printf( "  Tx Constrain:    %10llu |  Rcv Bubble*:   %10llu\n",
-				(unsigned long long)g_portCounters.portXmitConstraintErrors,
-				(unsigned long long)g_portCounters.portRcvBubble);
-			printf( "  Rcv Constrain*:  %10llu |\n",
+			printf( "  Tx Wait Data:    %10llu |  Tx Constrain:     %10llu\n",
+				(unsigned long long)g_portCounters.portXmitWaitData,
+				(unsigned long long)g_portCounters.portXmitConstraintErrors);
+			printf( "  Rcv Bubble*:     %10llu |  Rcv Constrain*:   %10llu\n",
+				(unsigned long long)g_portCounters.portRcvBubble,
 				(unsigned long long)g_portCounters.portRcvConstraintErrors);
 			ct_lines -= 17;
 			if(fb_valid_vf_port_stats_hidden) {
 			printf( " SmaCongestion (VL15):%7c |\n", ' ');
-			printf( "  Tx Wait:         %10llu |  Cong Discards: %10llu\n",
+			printf( "  Tx Wait:         %10llu |  Cong Discards:    %10llu\n",
 				(unsigned long long)g_hiddenVfPortCounters.portVFXmitWait,
 				(unsigned long long)g_hiddenVfPortCounters.swPortVFCongestion);
-			printf( "  Mark FECN*:      %10llu |  Rcv FECN*:     %10llu\n",
+			printf( "  Mark FECN*:      %10llu |  Rcv FECN*:        %10llu\n",
 				(unsigned long long)g_hiddenVfPortCounters.portVFMarkFECN,
 				(unsigned long long)g_hiddenVfPortCounters.portVFRcvFECN);
-			printf( "  Rcv BECN:        %10llu |  Tx Time Cong:  %10llu\n",
+			printf( "  Rcv BECN:        %10llu |  Tx Time Cong:     %10llu\n",
 				(unsigned long long)g_hiddenVfPortCounters.portVFRcvBECN,
 				(unsigned long long)g_hiddenVfPortCounters.portVFXmitTimeCong);
 				ct_lines -= 4;

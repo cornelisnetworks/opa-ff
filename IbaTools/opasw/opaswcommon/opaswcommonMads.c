@@ -697,26 +697,14 @@ FSTATUS sendIniDescriptorGetMad(struct oib_port *port,
 	descriptors->portDataAddr =						ntoh32(iniDescriptorData->portDataAddr);
 	descriptors->portDataLen =						ntoh32(iniDescriptorData->portDataLen);
 #if 0
-	descriptors->ffeMetaDataAddr =					ntoh32(iniDescriptorData->ffeMetaDataAddr);
-	descriptors->ffeMetaDataLen =					ntoh32(iniDescriptorData->ffeMetaDataLen);
-	descriptors->ffeDataAddr =						ntoh32(iniDescriptorData->ffeDataAddr);
-	descriptors->ffeDataLen	=						ntoh32(iniDescriptorData->ffeDataLen);
-	descriptors->ffeIndirectMetaDataAddr =			ntoh32(iniDescriptorData->ffeIndirectMetaDataAddr);
-	descriptors->ffeIndirectMetaDataLen =			ntoh32(iniDescriptorData->ffeIndirectMetaDataLen);
-	descriptors->ffeIndirectDataAddr =				ntoh32(iniDescriptorData->ffeIndirectDataAddr);
-	descriptors->ffeIndirectDataLen =				ntoh32(iniDescriptorData->ffeIndirectDataLen);
-	descriptors->qsfpMetaDataAddr =					ntoh32(iniDescriptorData->qsfpMetaDataAddr);
-	descriptors->qsfpMetaDataLen =					ntoh32(iniDescriptorData->qsfpMetaDataLen);
-	descriptors->qsfpDataAddr =						ntoh32(iniDescriptorData->qsfpDataAddr);
-	descriptors->qsfpDataLen =						ntoh32(iniDescriptorData->qsfpDataLen);
-	descriptors->customMetaDataAddr =				ntoh32(iniDescriptorData->customMetaDataAddr);
-	descriptors->customMetaDataLen =				ntoh32(iniDescriptorData->customMetaDataLen);
-	descriptors->customDataAddr =					ntoh32(iniDescriptorData->customDataAddr);
-	descriptors->customDataLen =					ntoh32(iniDescriptorData->customDataLen);
-	descriptors->dfeMetaDataAddr =					ntoh32(iniDescriptorData->dfeMetaDataAddr);
-	descriptors->dfeMetaDataLen =					ntoh32(iniDescriptorData->dfeMetaDataLen);
-	descriptors->dfeDataAddr =						ntoh32(iniDescriptorData->dfeDataAddr);
-	descriptors->dfeDataLen =						ntoh32(iniDescriptorData->dfeDataLen);
+	descriptors->rxPresetAddr = 					ntoh32(iniDescriptorData->rxPresetAddr);
+	descriptors->rxPresetLen = 						ntoh32(iniDescriptorData->rxPresetLen);
+	descriptors->txPresetAddr = 					ntoh32(iniDescriptorData->txPresetAddr);
+	descriptors->txPresetLen = 						ntoh32(iniDescriptorData->txPresetLen);
+	descriptors->qsfpAttenuationAddr = 				ntoh32(iniDescriptorData->qsfpAttenuationAddr);
+	descriptors->qsfpAttenuationLen = 				ntoh32(iniDescriptorData->qsfpAttenuationLen);
+	descriptors->variableSettingsAddr = 			ntoh32(iniDescriptorData->variableSettingsAddr);
+	descriptors->variableSettingsLen = 				ntoh32(iniDescriptorData->variableSettingsLen);
 #endif
 
 

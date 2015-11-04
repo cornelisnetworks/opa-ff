@@ -34,7 +34,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#ifdef __GUNC__
+#include <features.h>
+#endif
+#if __GNUC_PREREQ(4,8)
+#include <time.h>
+#else
 #include <sys/time.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -59,12 +66,13 @@ packet					*newestPacket;
 
 uint8					*currentBlock;
 
-int				 		blocksTableSize;
-uint64			 		numpackets;	// TBD - make uint64 later
+uint64				 	blocksTableSize;
+uint64			 		numpackets;
 
 int				 		numPacketsRead = 0;
 int				 		numPacketsTaken = 0;
 uint64			 		numPacketsMax = (uint64)-1;
+int gotModeArg = 0;
 uint8					mode = WFR_MODE;
 int				 		numPacketsStored = 0;
 int				 		stopcapture = 0;
@@ -844,7 +852,7 @@ int initPcapHeader(int fd)
 	return ((write(fd, &fileHdr, sizeof(fileHdr)) > 0) ? 0 : -1);
 }
 
-void writePCAP(int fd, uint64 pktLen, uint32 sec, uint32 usec, uint8 *pkt)
+void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 {
 	pcapRecHdr_t		pcapRec;
 	extHeader_t			ext;
@@ -852,10 +860,16 @@ void writePCAP(int fd, uint64 pktLen, uint32 sec, uint32 usec, uint8 *pkt)
 	WFR_SnC_HDR			wfrLiteSnc = {0};
 	int i;
 
+	/* Adjust to keep 'nsec' less than 1 second */
+	while (nsec >= 1E9L) {
+		sec++;
+		nsec -= 1E9L;
+	}
+
 	pcapRec.ts_sec =			sec;
-	pcapRec.ts_usec =			usec;
+	pcapRec.ts_nsec =			nsec;
 	ext.tv_sec =				sec;
-	ext.tv_usec =				usec;
+	ext.tv_nsec =				nsec;
 	ext.flags =					4;
 	ext.lossCtr = 				0;
 	ext.linkType =				ERF_TYPE_STORMLAKE;
@@ -880,13 +894,21 @@ void writePCAP(int fd, uint64 pktLen, uint32 sec, uint32 usec, uint8 *pkt)
 	ext.length =				hton16(pktLen);
 	ext.realLength =			hton16(pktLen);
 
-	write(fd, &pcapRec, sizeof(pcapRec));
-	write(fd, &ext, sizeof(ext));
+	if (write(fd, &pcapRec, sizeof(pcapRec)) < 0) {
+		fprintf(stderr, "Failed to write PCAP packet header\n");
+	}
+	if (write(fd, &ext, sizeof(ext)) < 0) {
+		fprintf(stderr, "Failed to write Ext packet header\n");
+	}
 	if (wfrLiteSnc.Direction == 2) {
-		write(fd, &wfrLiteSnc, sizeof(WFR_SnC_HDR));
+		if (write(fd, &wfrLiteSnc, sizeof(WFR_SnC_HDR)) < 0) {
+			fprintf(stderr, "Failed to write SnC packet header\n");
+		}
 		pktLen -= sizeof(WFR_SnC_HDR);
 	}
-	write(fd, pkt, pktLen);
+	if (write(fd, pkt, pktLen) < 0) {
+		fprintf(stderr, "Failed to write packet.\n");
+	}
 
 	if (Debug > 1) {
 		fprintf(stderr, "TO PCAP: ");
@@ -975,7 +997,7 @@ void writePacketData()
 	p = oldestPacket;
 
 	while (p != NULL) {
-		writePCAP(fd, (unsigned short) p->size, p->ts_sec, p->ts_usec, &blocks[p->blockNum * BLOCKSIZE]);
+		writePCAP(fd, (unsigned short) p->size, p->ts_sec, p->ts_nsec, &blocks[p->blockNum * BLOCKSIZE]);
 		p = p->next;
 	}
 
@@ -995,8 +1017,8 @@ static void Usage()
 	fprintf(stderr, "   -l - trigger lag: number of packets to collect after trigger condition met before dump and exit (default is 10)\n");
 	fprintf(stderr, "   -a - number of seconds for alarm trigger to dump capture and exit\n");
 	fprintf(stderr, "   -p - number of packets for alarm trigger to dump capture and exit\n");
-	fprintf(stderr, "   -s - max 64 byte blocks of data to capture in units of Mi (1024*1024)\n");
-	fprintf(stderr, "   -m - protocol mode: 1=WFR-lite, 2=WFR; default is WFR\n");
+	fprintf(stderr, "   -s - number of blocks to allocate for ring buffer (in Millions) [block = 64 Bytes] - default is 2 (128 MiB)\n");
+	//fprintf(stderr, "   -m - protocol mode: 1=DebugTool, 2=WFR; default is WFR\n");
 	fprintf(stderr, "   -v - verbose output\n");
 	fprintf(stderr, "   -h - Print this output\n");
 	fprintf(stderr, "   -D - increase Debugging (Use Debug Level 1+ to show levels)\n");
@@ -1023,7 +1045,11 @@ int main (int argc, char *argv[])
 	const char  *opts="a:p:m:f:t:d:o:l:s:vhD"; //D to be removed before release
 	FILE	    *fp = NULL;
 	int		    fd = 0;
-	struct      timeval		tv;
+#if __GNUC_PREREQ(4,8)
+	struct timespec ts = {0};
+#else
+	struct timeval tv;
+#endif
 	uint64      numblocks = DEFAULT_NUMBLOCKS;
 	int         verbose = 0;
 	unsigned    lasttime=0;
@@ -1031,7 +1057,8 @@ int main (int argc, char *argv[])
 	while (-1 != (c = getopt(argc, argv, opts))) {
 		switch (c) {
 		case 'a':
-			strcpy(strArg, optarg);
+			strncpy(strArg, optarg, sizeof(strArg)-1);
+			strArg[sizeof(strArg)-1]=0;
 			gotAlarmArg = 1;
 			break;
 		case 'p':
@@ -1045,24 +1072,25 @@ int main (int argc, char *argv[])
 				fprintf(stderr, "opapacketcapture: Invalid size: %s\n", optarg);
 				Usage();
 			}
+			gotModeArg = 1;
 			break;
 		case 'f':
-			strncpy(filterFileArg, optarg, sizeof(filterFileArg));
+			strncpy(filterFileArg, optarg, sizeof(filterFileArg)-1);
 			filterFileArg[sizeof(filterFileArg)-1]=0;
 			gotFilterFileArg = 1;
 			break;
 		case 't':
-			strncpy(triggerFileArg, optarg, sizeof(triggerFileArg));
+			strncpy(triggerFileArg, optarg, sizeof(triggerFileArg)-1);
 			triggerFileArg[sizeof(triggerFileArg)-1]=0;
 			gotTriggerFileArg = 1;
 			break;
 		case 'd':
-			strncpy(devfile, optarg, sizeof(devfile));
+			strncpy(devfile, optarg, sizeof(devfile)-1);
 			devfile[sizeof(devfile)-1]=0;
 			gotdevfile = 1;
 			break;
 		case 'o':
-			strncpy(out_file, optarg, sizeof(out_file));
+			strncpy(out_file, optarg, sizeof(out_file)-1);
 			out_file[sizeof(out_file)-1]=0;
 			gotoutfile = 1;
 			break;
@@ -1107,17 +1135,17 @@ int main (int argc, char *argv[])
 		alarmArg *= alarmMult;
 	}
 
-	if (gotdevfile && !mode) {
-		if (strncmp(devfile, "/dev/hfi1_diagpktX", strlen("/dev/hfi1_diagpkt")) == 0) 
+	if (gotdevfile && !gotModeArg) {
+		if (strncmp(devfile, WFR_CAPTURE_FILE, strlen(WFR_CAPTURE_FILE)-1) == 0)
 			mode = WFR_MODE;
-		else 
-			mode = WFRL_MODE;
-	} 
+		else if (strncmp(devfile, DEBUG_TOOL_CAPTURE_FILE, strlen(DEBUG_TOOL_CAPTURE_FILE)-5) == 0)
+			mode = DEBUG_TOOL_MODE;
+	}
 	
 	if (!gotdevfile) {
 		if (mode == WFR_MODE) strncpy(devfile, WFR_CAPTURE_FILE, sizeof(devfile));
-		else strncpy(devfile, WFRL_CAPTURE_FILE, sizeof(devfile));
-	} 
+		else strncpy(devfile, DEBUG_TOOL_CAPTURE_FILE, sizeof(devfile));
+	}
 
 
 	blocksTableSize = BLOCKSIZE * numblocks;
@@ -1160,7 +1188,10 @@ int main (int argc, char *argv[])
 	fdIn = open(devfile, O_RDONLY);
 	
 	if (fdIn < 0) {
-		fprintf(stderr, "opapacketcapture: Unable to open: %s: mode %u: %s\n", gotdevfile?devfile:(mode == WFR_MODE?WFR_CAPTURE_FILE:WFRL_CAPTURE_FILE), mode, strerror(errno));
+		fprintf(stderr, "opapacketcapture: Unable to open: %s: mode %u: %s\n",
+                    gotdevfile ? devfile:
+                    (mode == WFR_MODE ? WFR_CAPTURE_FILE : DEBUG_TOOL_CAPTURE_FILE),
+                    mode, strerror(errno));
 		free(packets);
 		return -1;
 	}
@@ -1189,7 +1220,21 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	printf("opapacketcapture: Capturing packets using %d MiB buffer\n", blocksTableSize/(1024*1024));
+#if __GNUC_PREREQ(4,8)
+	if (!clock_getres(CLOCK_REALTIME, &ts)) {
+		if (verbose)
+			printf("opapacketcapture: Clock precision: %ldns\n", ts.tv_nsec);
+		if (ts.tv_nsec != 1)
+			fprintf(stderr, "opapacketcapture: Error clock precision not 1ns: %ldns\n", ts.tv_nsec );
+	} else {
+		fprintf(stderr, "opapacketcapture: Error getting clock precision: %s\n", strerror(errno));
+		exit(1);
+	}
+#else
+	printf("opapacketcapture: Clock precision: %dns\n", 1000);
+#endif
+
+	printf("opapacketcapture: Capturing packets using %llu MiB buffer\n", (long long unsigned int)blocksTableSize/(1024*1024));
 
 	while (!stopcapture) {
 		numRead = read(fdIn, (char *)currentBlock , STL_MAX_PACKET_SIZE);
@@ -1212,8 +1257,11 @@ int main (int argc, char *argv[])
 
 		retryCount = 0;
 
+#if __GNUC_PREREQ(4,8)
+		clock_gettime(CLOCK_REALTIME, &ts);
+#else
 		gettimeofday(&tv, NULL);
-
+#endif
 		numPacketsRead++;
 		if (Debug) {
 			fprintf(stderr, "Packet %u", numPacketsRead);
@@ -1233,8 +1281,13 @@ int main (int argc, char *argv[])
 		newPacket->blockNum = (currentBlock - blocks) / BLOCKSIZE;
 		newPacket->size = numRead;
 		newPacket->numBlocks = (numRead / BLOCKSIZE) + ((numRead % BLOCKSIZE) ? 1 : 0);
+#if __GNUC_PREREQ(4,8)
+		newPacket->ts_sec = ts.tv_sec;
+		newPacket->ts_nsec = ts.tv_nsec;
+#else
 		newPacket->ts_sec = tv.tv_sec;
-		newPacket->ts_usec = tv.tv_usec;
+		newPacket->ts_nsec = tv.tv_usec * 1000;
+#endif
 		newPacket->next = NULL;
 
 		addNewPacket(newPacket);
@@ -1246,8 +1299,13 @@ int main (int argc, char *argv[])
 
 		advanceCurrentBlock(newPacket);
 
+#if __GNUC_PREREQ(4,8)
+		if (!Debug && verbose && ts.tv_sec > lasttime+5) {
+			lasttime = ts.tv_sec;
+#else
 		if (!Debug && verbose && tv.tv_sec > lasttime+5) {
 			lasttime = tv.tv_sec;
+#endif
 			printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%10u packets", numPacketsRead);
 			fflush(stdout);
 		}

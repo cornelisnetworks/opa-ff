@@ -41,10 +41,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
@@ -56,7 +53,7 @@ Usage_full()
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "            default is /var/opt/iba/analysis" >&2
+	echo "            default is /var/opt/opa/analysis" >&2
 	echo " Environment:" >&2
 	echo "   FF_ANALYSIS_DIR - top level directory for baselines and failed health checks" >&2
 	echo "for example:" >&2
@@ -111,16 +108,9 @@ fi
 # Set up file paths
 #-----------------------------------------------------------------
 # newer versions of the SM (which support XML config)
-# create the opafm.info files
-if [ -f /etc/sysconfig/opa/opafm.info ]
-then
-	SM_CONFIG_FILE=/etc/sysconfig/opafm.xml
-elif [ -d /etc/sysconfig ]
-then
-	SM_CONFIG_FILE=/etc/sysconfig/iview_fm.config
-else
-	SM_CONFIG_FILE=/etc/iview_fm.config
-fi
+# 
+SM_CONFIG_FILE=/etc/sysconfig/opafm.xml
+
 baseline_dir="$FF_ANALYSIS_DIR/baseline"
 latest_dir="$FF_ANALYSIS_DIR/latest"
 export FF_CURTIME="${FF_CURTIME:-`date +%Y-%m-%d-%H:%M:%S`}"
@@ -159,16 +149,12 @@ do
 		mkdir -p $latest_dir
 		rm -rf $latest.*
 
-		rpm -q opafm > $latest.smver 2>&1
+		rpm -q opa-fm > $latest.smver 2>&1
 		if [ $? != 0 ]
 		then
-			rpm -q iview_fm > $latest.smver 2>&1
-			if [ $? != 0 ]
-			then
-				echo "opahostsmanalysis: Error: Host SM not installed" >&2
-				status=bad
-				continue
-			fi
+			echo "opahostsmanalysis: Error: Host SM not installed" >&2
+			status=bad
+			continue
 		fi
 
 		cp $SM_CONFIG_FILE $latest.smconfig
@@ -192,14 +178,9 @@ do
 		# check SM health/running
 		mkdir -p $latest_dir
 
-		if [ -e /opt/opafm/bin/fm_cmd ]
-		then
-			/opt/opafm/bin/fm_cmd smShowCounters > $latest.smstatus 2>&1
-			r=$?
-		else
-			/usr/local/iview/util/sm_query smShowStatus > $latest.smstatus 2>&1
-			r=$?
-		fi
+		/opt/opafm/bin/fm_cmd smShowCounters > $latest.smstatus 2>&1
+		r=$?
+
 		if [ $r != 0 ]
 		then
 			echo "opahostsmanalysis: Error: Host SM not running. See $latest.smstatus" >&2

@@ -32,7 +32,7 @@
 
 # This script selects a VF based on the parameters given
 # It will return exactly 1 VF, represented in a CSV format
-# 			name:index:pkey:sl:mtu:rate
+# 			name:index:pkey:sl:mtu:rate:option_flags
 # if there is no matching VF, a non-zero exit code is returned
 # this script is intended for use in mpirun and wrapper scripts to
 # select a VF and aid in exported env variables

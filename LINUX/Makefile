@@ -192,37 +192,27 @@ package:
 	cd $(STAGE_DIR) ; \
 	dir=`echo IntelOPA-Tools-FF.*`; \
 	ver=`expr IntelOPA-Tools-FF.* : 'IntelOPA-Tools-FF.\(.*\)$$'`; \
-	tests_ver=`expr IntelOPA-Tools-FF.* : 'IntelOPA-Tools-FF.$(BUILD_TARGET_OS_ID).\(.*\)$$'`; \
-	rm -rf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver $(RELEASE_DIR)/IntelOPA-Tests.$$tests_ver ; \
+	rm -rf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
 	mkdir -p $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
-	mkdir -p $(RELEASE_DIR)/IntelOPA-Tests.$$tests_ver ; \
 	cp -r $$dir/arch $$dir/distro $$dir/distro_version $$dir/os_id $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
 	cp -r $$dir/config $$dir/INSTALL $$dir/comp.pl $$dir/README $$dir/version $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
 	cp -r $$dir/src/shmem $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
 	cp -r $$dir/Lsf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
 	cp -r $$dir/Moab $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
-	cp -r $$dir/version $$dir/Tests/* $(RELEASE_DIR)/IntelOPA-Tests.$$tests_ver ; \
-	cd $(RELEASE_DIR); \
-		echo "Packaging IntelOPA-Tests.$$tests_ver ..."; \
-		tar cfz IntelOPA-Tests.$$tests_ver.tgz IntelOPA-Tests.$$tests_ver; \
 	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
 	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/dist_files; \
 	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
 	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/dist_files; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tests.$$tests_ver.tgz" >> $(TL_DIR)/packaged_files; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tests.$$tests_ver.tgz" >> $(TL_DIR)/dist_files 
 
 # package some additional items which no longer normally build
 package_full: package
 	cd $(STAGE_DIR) ; \
 	dir=`echo IntelOPA-Tools-FF.*`; \
 	ver=`expr IntelOPA-Tools-FF.* : 'IntelOPA-Tools-FF.\(.*\)$$'`; \
-	tests_ver=`expr IntelOPA-Tools-FF.* : 'IntelOPA-Tools-FF.$(BUILD_TARGET_OS_ID).\(.*\)$$'`; \
 	cd $(RELEASE_DIR); \
 		export pkg_label="QLogic Inc. FastFabric Tools $$ver for $(BUILD_TARGET) $(BUILD_TARGET_OS_VENDOR)"; \
 		$(TL_DIR)/MakeTools/makeself.sh IntelOPA-Tools-FF.$$ver install-openibtools-$$ver-$(BUILD_TARGET_OS_VENDOR).$(BUILD_TARGET).bin "$$pkg_label" ./INSTALL 2> /dev/null; \
 		$(MAKEISO) -z IntelOPA-Tools-FF.$$ver.iso IntelOPA-Tools-FF.$$ver; \
-		$(MAKEISO) IntelOPA-Tests.$$tests_ver.iso IntelOPA-Tests.$$tests_ver
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

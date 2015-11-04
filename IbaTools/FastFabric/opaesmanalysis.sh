@@ -41,10 +41,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
@@ -56,7 +53,7 @@ Usage_full()
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "                  default is /var/opt/iba/analysis" >&2
+	echo "                  default is /var/opt/opa/analysis" >&2
 	echo "   -G esmchassisfile - file with SM chassis in cluster" >&2
 	echo "           default is $CONFIG_DIR/opa/esm_chassis" >&2
 	echo "   -E esmchassis - list of SM chassis to analyze" >&2
@@ -180,7 +177,7 @@ do
 
 		for cmd in $FF_ESM_CMDS
 		do
-			$BINDIR/opacmdall -C -H "$ESM_CHASSIS" $cmd > $latest.$cmd 2>&1
+			/usr/sbin/opacmdall -C -H "$ESM_CHASSIS" $cmd > $latest.$cmd 2>&1
 			if [ $? != 0 ]
 			then
 				echo "opaesmanalysis: Error: Unable to issue chassis command. See $latest.$cmd" >&2
@@ -195,7 +192,7 @@ do
 		for chassis in $ESM_CHASSIS
 		do
 			chassis=`strip_chassis_slots "$chassis"`
-			$BINDIR/opacmdall -C -H "$chassis" "showCapability -key smConfig" > $latest.$chassis.smConfig 2>&1
+			/usr/sbin/opacmdall -C -H "$chassis" "showCapability -key smConfig" > $latest.$chassis.smConfig 2>&1
 			if [ $? != 0 ]
 			then
 				echo "opaesmanalysis: Error: Unable to issue chassis command. See $latest.$chassis.smConfig" >&2
@@ -208,7 +205,7 @@ do
 				mkdir temp
 				rm -rf test.log test.res test_tmp* save_tmp
 				export FF_RESULT_DIR=.
-				$BINDIR/opachassisadmin -H "$chassis" -d $latest_dir/temp fmgetconfig > $latest.$chassis.fmgetconfig 2>&1
+				/usr/sbin/opachassisadmin -H "$chassis" -d $latest_dir/temp fmgetconfig > $latest.$chassis.fmgetconfig 2>&1
 				if [ $? != 0 ] || grep FAILED < test.res >/dev/null
 				then
 					cat test.log >> $latest.$chassis.fmgetconfig 2>/dev/null
@@ -249,7 +246,7 @@ do
 		# check SM health/running
 		mkdir -p $latest_dir
 
-		$BINDIR/opacmdall -C -H "$ESM_CHASSIS" 'smControl status' > $latest.smstatus 2>&1
+		/usr/sbin/opacmdall -C -H "$ESM_CHASSIS" 'smControl status' > $latest.smstatus 2>&1
 		if [ $? != 0 ]
 		then
 			echo "opaesmanalysis: Error: Unable to issue chassis command. See $latest.smstatus" >&2

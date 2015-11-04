@@ -43,10 +43,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage()
 {

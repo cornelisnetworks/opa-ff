@@ -37,13 +37,20 @@ INCLUDE_TARGETS	= \
 				# Add more h hpp files here
 # Non-compiled files
 MAN_PAGE_1_FILES = \
+				opa-arptbl-tuneup.1 \
 				opacapture.1 \
 				opaconfig.1 \
-				opadisablehosts.1 \
-				opadisableports.1 \
-				opadownloadall.1 \
+				opafabricinfo.1 \
+				opagetvf.1 \
+				opagetvf_env.1 \
 				opahfirev.1 \
-				opapaquery.1 \
+				opainfo.1 \
+				opa-init-kernel.1 \
+				opa_osd_dump.1 \
+				opa_osd_exercise.1 \
+				opa_osd_perf.1 \
+				opa_osd_query.1 \
+				opapacketcapture.1 \
 				opapmaquery.1 \
 				opaportconfig.1 \
 				opaportinfo.1 \
@@ -53,19 +60,57 @@ MAN_PAGE_1_FILES = \
 				opasmaquery.1 \
 				# Add more man pages for chapter 1
 MAN_PAGE_8_FILES = \
+				opaallanalysis.8 \
 				opacabletest.8 \
 				opacaptureall.8 \
+				opachassisadmin.8 \
+				opachassisanalysis.8 \
+				opacheckload.8 \
 				opacmdall.8 \
+				opadisablehosts.8 \
+				opadisableports.8 \
+				opadownloadall.8 \
+				opaenableports.8 \
+				opaesmanalysis.8 \
 				opaexpandfile.8 \
+				opaextractbadlinks.8 \
+				opaextracterror.8 \
+				opaextractlids.8 \
+				opaextractlink.8 \
+				opaextractperf.8 \
+				opaextractsellinks.8 \
+				opaextractstat.8 \
+				opaextractstat2.8 \
+				opafabricanalysis.8 \
 				opafastfabric.8 \
+				opafequery.8 \
+				opafindgood.8 \
+				opafirmware.8 \
+				opagenchassis.8 \
+				opagenesmchassis.8 \
+				opagenswitches.8 \
+				opagentopology.8 \
+				opahostadmin.8 \
+				opahostsmanalysis.8 \
 				opalinkanalysis.8 \
+				opapaquery.8 \
 				opapingall.8 \
 				opareport.8 \
+				opareports.8 \
+				opascpall.8 \
 				opasetupssh.8 \
 				opasorthosts.8 \
+				opaswitchadmin.8 \
+				opatop.8 \
+				opauploadall.8 \
 				opaverifyhosts.8 \
 				opaxlattopology.8 \
 				opaxlattopology_cust.8 \
+				opashowmc.8 \
+				opaxmlextract.8 \
+				opaxmlfilter.8 \
+				opaxmlgenerate.8 \
+				opaxmlindent.8 \
 				# Add more man pages for chapter 8
 MISC_FILES= \
 				$(MAN_PAGE_1_FILES) \

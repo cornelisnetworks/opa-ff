@@ -43,10 +43,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
@@ -125,13 +122,13 @@ if [ "$uopt" = n ]
 then
 	user=admin
 fi
-for chassis in `$BINDIR/opagenchassis`; 
+for chassis in `/usr/sbin/opagenchassis`; 
 do
 	if [ "$Sopt" = y ]
 	then
-		chassis_cmd=`$BINDIR/opacmdall -C -H $chassis -u $user -S 'smControl status' 2>&1` 
+		chassis_cmd=`/usr/sbin/opacmdall -C -H $chassis -u $user -S 'smControl status' 2>&1` 
 	else
-		chassis_cmd=`$BINDIR/opacmdall -C -H $chassis -u $user 'smControl status' 2>&1`
+		chassis_cmd=`/usr/sbin/opacmdall -C -H $chassis -u $user 'smControl status' 2>&1`
 	fi
 
 	if [ $? != 0 ]	

@@ -129,7 +129,7 @@ struct option options[] = {
 		{ 0 }
 };
 
-static FSTATUS iba_ib_init(uint8 hfi, uint8 port)
+static FSTATUS opa_pa_init(uint8 hfi, uint8 port)
 {
     FSTATUS				fstatus = FERROR;
 
@@ -150,7 +150,7 @@ static FSTATUS iba_ib_init(uint8 hfi, uint8 port)
     }
     else
     {
-        fprintf(stderr, "%s: failed to open the port: hfi %d, port %d", __func__, hfi, port);
+        fprintf(stderr, "%s: failed to open the port: hfi %d, port %d\n", __func__, hfi, port);
     }
 
     return fstatus;
@@ -799,7 +799,7 @@ static FSTATUS GetVFConfig(struct oib_port *port, char *vfName, uint64 imageNumb
 			fprintf(stderr, "PA Multiple MAD Response for VF Config vf name %s:\n", vfName);
 		}
 
-		PrintStlPAVFConfig(&g_dest, 1, vfName, 0, p->NumVFConfigRecords, p->VFConfigRecords);
+		PrintStlPAVFConfig(&g_dest, 1, vfName, p->NumVFConfigRecords, p->VFConfigRecords);
 	}
 
 	status = FSUCCESS;
@@ -897,7 +897,7 @@ static FSTATUS GetVFFocusPorts(struct oib_port *port, char *vfName, uint32 selec
 			fprintf(stderr, "PA Multiple MAD Response for VF Focus Ports VF name %s:\n", vfName);
 		}
 
-		PrintStlPAVFFocusPorts(&g_dest, 1, vfName, 0, p->NumVFFocusPortsRecords, select, start, range, p->FocusPortsRecords);
+		PrintStlPAVFFocusPorts(&g_dest, 1, vfName, p->NumVFFocusPortsRecords, select, start, range, p->FocusPortsRecords);
 	}
 
 	status = FSUCCESS;
@@ -1305,8 +1305,8 @@ int main(int argc, char ** argv)
 	}
 
     // initialize connections to IB related entities 
-    if ((fstatus = iba_ib_init(hfi, port)) != FSUCCESS) {
-		fprintf(stderr, "opapaquery: failed to initialize IB layer - status = %d\n", fstatus);
+    if ((fstatus = opa_pa_init(hfi, port)) != FSUCCESS) {
+		fprintf(stderr, "opapaquery: failed to initialize OPA PA layer - status = %d\n", fstatus);
         exit(-1);
 	}
 

@@ -47,17 +47,14 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 ## Defines:
-OPAEXPAND_FILE="$BINDIR/opaexpandfile"
-OPA_REPORT="$BINDIR/opareport"
-OPASAQUERY="$BINDIR/opasaquery"
-XML_EXTRACT="$BINDIR/opaxmlextract"
-GEN_OPASWITCHES_HELPER="$TOOLSDIR/opagenswitcheshelper"
+OPAEXPAND_FILE="/usr/sbin/opaexpandfile"
+OPA_REPORT="/usr/sbin/opareport"
+OPASAQUERY="/usr/sbin/opasaquery"
+XML_EXTRACT="/usr/sbin/opaxmlextract"
+GEN_OPASWITCHES_HELPER="/opt/opa/tools/opagenswitcheshelper"
 FILE_OPASWITCHES=$(mktemp "opagensw-file_switches-XXXX")
 FILE_OPASWITCHES2=$(mktemp "opagensw-file_switches2-XXXX")
 FILE_LINKSUM_LEAF_EDGE=$(mktemp "opagensw-linksum_leaf_edge-XXXX.csv")
@@ -68,9 +65,6 @@ FILE_LINKS_EDGE_HFI=$(mktemp "opagensw-links_edge_hfi-XXXX.csv")
 FILE_LINKS_EDGE_HFI2=$(mktemp "opagensw-links_edge_hfi2-XXXX.csv")
 FILE_TEMP=$(mktemp "opagensw-1-XXXX")
 FILE_TEMP2=$(mktemp "opagensw-2-XXXX")
-FILE_DEBUG=$(mktemp "opagensw-d1-XXXX")
-FILE_DEBUG2=$(mktemp "opagensw-d2-XXXX")
-
 
 ## Global variables:
 
@@ -263,23 +257,21 @@ gen_switches()
 	suffix=":$hfi:$port"
 	export IFS=';'
 	rm -f $FILE_TEMP
-	eval $OPA_REPORT $port_opts -q -o comps -x -F nodetype:SW -d 3| $XML_EXTRACT -H -d \; -e Node.NodeGUID -e Node.SystemImageGUID -e Node.Capability -e Node.NodeDesc -e Node.PortInfo.GUID -s Focus > $FILE_TEMP
+	eval $OPA_REPORT $port_opts -q -o comps -x -F nodetype:SW:port:0 -d 4| $XML_EXTRACT -H -d \; -e Node.NodeGUID -e Node.SystemImageGUID -e Node.Capability -e Node.PortInfo.Capability -e Node.NodeDesc -e Node.PortInfo.GUID -s Focus > $FILE_TEMP
 	if [ $? -eq 0 ]
-		then
+	then
 		fl_write_switches=1
-		cat $FILE_TEMP | while read nodeguid systemguid capability nodedesc portguid
+		cat $FILE_TEMP | while read nodeguid systemguid capability portcapability nodedesc portguid
 		do
-			if echo "$capability"|grep E0 >/dev/null 2>&1
-			then
-				continue	# EM switches don't have E0 capability
+			if [[ ! $portcapability =~ "VDR" ]]; then
+					continue
 			fi
-			[ "$nodeguid" != "$systemguid" ] && continue # EM switches have 1 guid
 
 			distance=
 			comma=
 			if [ "$get_distance" = y ]
 			then
-				distance=$(eval opasaquery $port_opts -o trace -g $portguid|grep GID|wc -l)
+				distance=$(eval opasaquery $port_opts -o trace -g $portguid | grep "NodeType: SW" | wc -l)
 				if [ ! -z "$distance" ]
 				then
 					comma=","
@@ -287,7 +279,7 @@ gen_switches()
 			fi
 
 			# valid names for switches start with a non-numeric and are alpha numeric
-			if echo "$nodedesc"|grep '^[a-zA-Z_][a-zA-Z_0-9]*$' >/dev/null 2>&1
+			if [[ $nodedesc =~ ^[a-zA-Z_][a-zA-Z_0-9]*$ ]]
 			then
 				echo "$nodeguid$suffix,$nodedesc$comma$distance" >> $file_switches
 			else
@@ -409,7 +401,7 @@ if [ $fl_gen_switches == 1 ]
 	do
 		hfi=$(expr $hfi_port : '\([0-9]*\):[0-9]*')
 		port=$(expr $hfi_port : '[0-9]*:\([0-9]*\)')
-		$BINDIR/oparesolvehfiport $hfi $port >/dev/null
+		/usr/sbin/oparesolvehfiport $hfi $port >/dev/null
 		if [ $? -ne 0 -o "$hfi" = "" -o "$port" = "" ]
 		then
 			echo "opagenswitches: Error: Invalid port specification: $hfi_port" >&2
@@ -439,7 +431,7 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 	do
 		hfi=$(expr $hfi_port : '\([0-9]*\):[0-9]*')
 		port=$(expr $hfi_port : '[0-9]*:\([0-9]*\)')
-		$BINDIR/oparesolvehfiport $hfi $port >/dev/null
+		/usr/sbin/oparesolvehfiport $hfi $port >/dev/null
 		if [ $? -ne 0 -o "$hfi" = "" -o "$port" = "" ]
 			then
 			echo "opagenswitches: Error: Invalid port specification: $hfi_port" >&2
@@ -461,10 +453,10 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 			rm -f $FILE_LINKSUM_EDGE_HFI
 			ix=0
 			rm -f $FILE_TEMP
-			cat $TOPOLOGY_FILE | $XML_EXTRACT -H -d \; -e PortNum -e NodeType -e Port.NodeDesc > $FILE_TEMP
+			cat $TOPOLOGY_FILE | $XML_EXTRACT -H -d \; -e Link.Port.PortNum -e Link.Port.NodeType -e Link.Port.NodeDesc > $FILE_TEMP
 			$GEN_OPASWITCHES_HELPER proc_linksum $FILE_TEMP $FILE_LINKSUM_EDGE_HFI $FILE_LINKSUM_LEAF_EDGE
 
-			if [ -a $FILE_LINKSUM_LEAF_EDGE ]
+			if [ -s $FILE_LINKSUM_LEAF_EDGE ]
 				then
 				display_progress "Processing $FILE_LINKSUM_LEAF_EDGE"
 				rm -f $FILE_TEMP
@@ -472,7 +464,7 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 				cat $FILE_TEMP | sort -t \; -k3,3 -k1g,1 -k4g,4 > $FILE_LINKSUM_LEAF_EDGE
 			fi
 
-			if [ -a $FILE_LINKSUM_EDGE_HFI ]
+			if [ -s $FILE_LINKSUM_EDGE_HFI ]
 				then
 				display_progress "Processing $FILE_LINKSUM_EDGE_HFI"
 				rm -f $FILE_TEMP
@@ -517,37 +509,37 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 				then
 				$GEN_OPASWITCHES_HELPER proc_links $FILE_TEMP $FILE_LINKS_EDGE_HFI $FILE_LINKS_LEAF_EDGE
 
-				if [ -a $FILE_LINKS_LEAF_EDGE ]
+				if [ -s $FILE_LINKS_LEAF_EDGE ]
 					then
 					display_progress "Processing $FILE_LINKS_LEAF_EDGE"
 					rm -f $FILE_TEMP
 					mv $FILE_LINKS_LEAF_EDGE $FILE_TEMP
 					cat $FILE_TEMP | sort -t \; -k4,4 -k2g,2 -k5g,5 > $FILE_LINKS_LEAF_EDGE
-				fi	# End of if [ -a $FILE_LINKS_LEAF_EDGE ]
+				fi	# End of if [ -s $FILE_LINKS_LEAF_EDGE ]
 
-				if [ -a $FILE_LINKS_EDGE_HFI ]
+				if [ -s $FILE_LINKS_EDGE_HFI ]
 					then
 					display_progress "Processing $FILE_LINKS_EDGE_HFI"
 					rm -f $FILE_TEMP
 					mv $FILE_LINKS_EDGE_HFI $FILE_TEMP
 					cat $FILE_TEMP | sort -t \; -k4,4 -k2g,2 -k5g,5 > $FILE_LINKS_EDGE_HFI
-				fi	# End of if [ -a $FILE_LINKS_EDGE_HFI ]
+				fi	# End of if [ -s $FILE_LINKS_EDGE_HFI ]
 
 				# Process NodeDesc in links files
 				rm -f $FILE_LINKS_LEAF_EDGE2
 				rm -f $FILE_LINKS_EDGE_HFI2
 
-				if [ -a $FILE_LINKS_LEAF_EDGE ]
+				if [ -s $FILE_LINKS_LEAF_EDGE ]
 					then
 					cp -p $FILE_LINKS_LEAF_EDGE $FILE_LINKS_LEAF_EDGE2
 				fi
-				if [ -a $FILE_LINKS_EDGE_HFI ]
+				if [ -s $FILE_LINKS_EDGE_HFI ]
 					then
 					cp -p $FILE_LINKS_EDGE_HFI $FILE_LINKS_EDGE_HFI2
 				fi
 
 				# Process edge NodeDesc
-				if [ -a $FILE_LINKS_EDGE_HFI2 ]
+				if [ -s $FILE_LINKS_EDGE_HFI2 ]
 					then
 					display_progress "Processing edge NodeDesc"
 
@@ -573,7 +565,7 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 									rm -f $FILE_TEMP
 									mv $FILE_LINKS_EDGE_HFI2 $FILE_TEMP
 									cat $FILE_TEMP | sed -e "s/$nodedesc2;/$nodedesc1;/" > $FILE_LINKS_EDGE_HFI2
-									if [ -a $FILE_LINKS_LEAF_EDGE2 ]
+									if [ -s $FILE_LINKS_LEAF_EDGE2 ]
 										then
 										rm -f $FILE_TEMP
 										mv $FILE_LINKS_LEAF_EDGE2 $FILE_TEMP
@@ -594,7 +586,7 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 										rm -f $FILE_TEMP
 										mv $FILE_LINKS_EDGE_HFI2 $FILE_TEMP
 										cat $FILE_TEMP | sed -e "s/$nodedesc2;/$nodedesc1;/" > $FILE_LINKS_EDGE_HFI2
-										if [ -a $FILE_LINKS_LEAF_EDGE2 ]
+										if [ -s $FILE_LINKS_LEAF_EDGE2 ]
 											then
 											rm -f $FILE_TEMP
 											mv $FILE_LINKS_LEAF_EDGE2 $FILE_TEMP
@@ -608,7 +600,7 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 										rm -f $FILE_TEMP
 										mv $FILE_LINKS_EDGE_HFI2 $FILE_TEMP
 										cat $FILE_TEMP | sed -e "s/$nodedesc2b;/$nodedesc1;/" > $FILE_LINKS_EDGE_HFI2
-										if [ -a $FILE_LINKS_LEAF_EDGE2 ]
+										if [ -s $FILE_LINKS_LEAF_EDGE2 ]
 											then
 											rm -f $FILE_TEMP
 											mv $FILE_LINKS_LEAF_EDGE2 $FILE_TEMP
@@ -633,10 +625,10 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 
 					done < <( cat $FILE_LINKSUM_EDGE_HFI )	# End of while read ... do
 
-				fi	# End of if [ -a $FILE_LINKS_EDGE_HFI2 ]
+				fi	# End of if [ -s $FILE_LINKS_EDGE_HFI2 ]
 
 				# Process leaf NodeDesc
-				if [ -a $FILE_LINKS_LEAF_EDGE2 ]
+				if [ -s $FILE_LINKS_LEAF_EDGE2 ]
 					then
 					display_progress "Processing leaf NodeDesc"
 
@@ -647,7 +639,7 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 					do
 						if [ "$nodedesc1" != "$nodedesc_last" ]
 							then
-							if [ -a $FILE_LINKSUM_LEAF_EDGE ]
+							if [ -s $FILE_LINKSUM_LEAF_EDGE ]
 								then
 								n_edges=`cat $FILE_LINKSUM_LEAF_EDGE | grep "$nodedesc1;" | wc -l`
 								edges=`cat $FILE_LINKSUM_LEAF_EDGE | grep "$nodedesc1;" | cut -d \; -f4-6 | tr '\012' '|' | sed -e 's/|/$|/g' -e 's/|$//'`
@@ -710,23 +702,23 @@ if [ $fl_write_switches == 1 -a $fl_gen_linksum == 1 ]
 
 					done  < <( cat $FILE_LINKSUM_LEAF_EDGE )	# End of while read ... do
 
-				fi	# End of if [ -a $FILE_LINKS_LEAF_EDGE2 ]
+				fi	# End of if [ -s $FILE_LINKS_LEAF_EDGE2 ]
 
 				# Process file_switches
 				display_progress "Processing $file_switches"
 
 				rm -f $FILE_TEMP
 				rm -f $FILE_TEMP2
-				if [ -a $FILE_LINKS_LEAF_EDGE2 ]
+				if [ -s $FILE_LINKS_LEAF_EDGE2 ]
 					then
 					cat $FILE_LINKS_LEAF_EDGE2 | cut  -d \; -f1,4 | sort -u >> $FILE_TEMP
 					cat $FILE_LINKS_LEAF_EDGE2 | cut  -d \; -f5,8 | sort -u >> $FILE_TEMP
 				fi
-				if [ -a $FILE_LINKS_EDGE_HFI2 ]
+				if [ -s $FILE_LINKS_EDGE_HFI2 ]
 					then
 					cat $FILE_LINKS_EDGE_HFI2 | cut  -d \; -f1,4 | sort -u >> $FILE_TEMP
 				fi
-				if [ -a $FILE_TEMP ]
+				if [ -s $FILE_TEMP ]
 					then
 					cat $FILE_TEMP | grep -v -e ';[0-9a-zA-Z_]*[ =-]' | sed -r -e 's/([0-9a-zA-Z_]+);([0-9a-zA-Z_]+)/s\/\(\1:'"$hfi:$port"'\),[0-9a-zA-Z =_-]*\/\\1,\2\//' | sort -u > $FILE_TEMP2
 					cat $FILE_OPASWITCHES | sed -r -f $FILE_TEMP2 > $FILE_OPASWITCHES2

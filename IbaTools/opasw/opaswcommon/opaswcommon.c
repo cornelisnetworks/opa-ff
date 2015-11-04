@@ -509,15 +509,15 @@ FSTATUS getPowerSupplyStatus(struct oib_port *port,
 							 uint32 *psStatus)
 {
 	FSTATUS			status = FSUCCESS;
-	uint32			psAddress = 0;
-	uint16 			psMgmtFpgaOffset = 0;
+	uint32			mgmtFpgaAddress = 0;
+	uint16 			mgmtFpgaOffset = 0;
 	uint32			powerSupplyStatus = 0;
 	uint8			dataBuffer[10];
 	uint8			*psPtr;
-	uint16			value;
+	uint8			value;
 
-	psAddress = I2C_OPASW_PS_ADDR;
-	psMgmtFpgaOffset = I2C_OPASW_PS_MGMT_FPGA_OFFSET;
+	mgmtFpgaAddress = I2C_OPASW_MGMT_FPGA_ADDR;
+	mgmtFpgaOffset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_PS_MGMT_FPGA_OFFSET;
 
 	if ((psNum < 1) || (psNum > 2)) {
 		status = FERROR;
@@ -526,13 +526,13 @@ FSTATUS getPowerSupplyStatus(struct oib_port *port,
 
 	if (status == FSUCCESS) {
 		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME, 
-								  psAddress, 1, psMgmtFpgaOffset, dataBuffer);
+								  mgmtFpgaAddress, 1, mgmtFpgaOffset, dataBuffer);
 
 		if (status != FSUCCESS) {
 			fprintf(stderr, "getPowerSupplyStatus: Error sending MAD packet to switch\n");
 		} else {
 			psPtr = dataBuffer;
- 			value = *(uint16 *)psPtr;
+ 			value = *psPtr;
 			if (psNum == 1) {
 				powerSupplyStatus = ~((value >> PSU1_MGMT_FPGA_BIT_PRESENT) & 0x01);
 				if (powerSupplyStatus) {
@@ -561,18 +561,16 @@ FSTATUS getAsicVersion(struct oib_port *port,
 					   IB_PATH_RECORD *path, 
 					   VENDOR_MAD *mad, 
 					   uint16 sessionID, 
-					   uint16 *asicVersion)
+					   uint32 *asicVersion)
 {
 
 	FSTATUS			status;
 	uint32			location = ASIC_VERSION_MEM_ADDR;
-	uint32			asicVersionVal;
 	uint8			memoryData[10];
 
 	status = sendMemAccessGetMad(port, path, mad, sessionID, location, (uint8)10, memoryData);
 	if (status == FSUCCESS) {
-		asicVersionVal = ntoh32(*(uint32 *)memoryData);
-		*asicVersion = asicVersionVal >> 16; 
+		*asicVersion = ntoh32(*(uint32 *)memoryData);
 	}
 	return(status);
 }
@@ -586,12 +584,17 @@ FSTATUS getBoardID(struct oib_port *port,
 
 	FSTATUS			status;
 	uint32			boardIdAddress = I2C_BOARD_ID_ADDR;
+	uint8			*b;
+	uint16			offset;
 	uint8			dataBuffer[10];
 
+	offset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_BD_MGMT_FPGA_OFFSET;
+
 	status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME, 
-							  boardIdAddress, 1, 0, dataBuffer);
+							  boardIdAddress, 2, offset, dataBuffer);
 	if (status == FSUCCESS) {
-		*boardID = dataBuffer[0];
+		b = (uint8 *)dataBuffer;
+		*boardID = *b;
 	}
 	return(status);
 }
@@ -626,6 +629,7 @@ FSTATUS getEMFWFileNames(struct oib_port *port,
 	inibinFileName[0] = 0;
 
 	status = getBoardID(port, path, &mad, sessionID, &boardID);
+
 	if (status == FSUCCESS) {
 		fpInibinMap = fopen("emfwMapFile", "r");
 		if (fpInibinMap == NULL) {
@@ -660,6 +664,7 @@ FSTATUS opaswEepromRW(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessio
 	uint32 eepromAddrIncrement;
 	uint32 location = secondary ? STL_PRR_SEC_EEPROM1_ADDR : STL_PRR_PRI_EEPROM1_ADDR;
 
+
 	while (remainingLen) {
 		xferLen = MIN(remainingLen, maxXfer);
 
@@ -667,6 +672,11 @@ FSTATUS opaswEepromRW(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessio
 
 		// update the location to account for the 4 EEPROMs
 		location = (secondary ? STL_PRR_SEC_EEPROM1_ADDR : STL_PRR_PRI_EEPROM1_ADDR) + (eepromAddrIncrement << STL_PRR_I2C_LOCATION_ADDR);
+
+		// for now, access the secondary bus at 100KHz for writing
+		if (secondary && writeData)
+			location &= 0x7fffffff;
+
 		if (writeData) {
 			result = sendI2CAccessMad(port, path, sessionID, mad, NOJUMBOMAD, MMTHD_SET, timeout, location, xferLen, offset & 0xffff, data);
 		} else {

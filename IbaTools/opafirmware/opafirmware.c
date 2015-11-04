@@ -85,6 +85,40 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PROD_SEARCH_STRING				"THIS_IS_THE_ICS_PRODUCT_NAME"
 #define BSP_SEARCH_STRING				"THIS_IS_THE_ICS_BSP_NAME"
 
+/* CSS Header definitions */
+
+#define CSS_HEADER_SIZE					644
+#define SIGNATURE_LEN					256
+#define EXPONENT_LEN					4
+#define MODULUS_LEN						256
+
+typedef struct cssHeader_s {
+	uint32_t moduleType;
+	uint32_t headerLen;
+	uint32_t headerVersion;
+	uint32_t moduleID;
+	uint32_t moduleVendor;
+	uint32_t date;
+	uint32_t size;
+	uint32_t keySize;
+	uint32_t modulusSize;
+	uint32_t exponentSize;
+	uint32_t reserved[22];
+	uint8_t  modulus[MODULUS_LEN];
+	uint8_t  exponent[EXPONENT_LEN];
+	uint8_t  signature[SIGNATURE_LEN];
+} cssHeader_t;
+
+#define CSS_MODULE_TYPE					6
+#define CSS_HEADER_LEN					0xA1
+#define CSS_HEADER_VER					0x10000
+#define CSS_DBG_MODULE_ID				0x80000000
+#define CSS_PRD_MODULE_ID				0
+#define CSS_MODULE_VENDOR				0x8086
+#define CSS_KEY_SIZE					0x40
+#define CSS_MODULUS_SIZE				0x40
+#define CSS_EXPONENT_SIZE				1
+
 char *cmpBuffer = NULL;
 char *appBuffer = NULL;
 int bufSize;
@@ -182,6 +216,25 @@ int getRecord (FILE *f, IcsImageHeader_Record_t *recordBuffer)
 	return(ERR_OK);
 }
 
+int checkCssHeader (uint8_t *buf)
+{
+	int							isSpkg = 0;
+	cssHeader_t					*cssp;
+
+	cssp = (cssHeader_t *)buf;
+	if (cssp->moduleType    == CSS_MODULE_TYPE &&
+		cssp->headerLen     == CSS_HEADER_LEN &&
+		cssp->headerVersion == CSS_HEADER_VER &&
+		cssp->moduleVendor  == CSS_MODULE_VENDOR &&
+		(cssp->moduleID     == CSS_DBG_MODULE_ID || cssp->moduleID == CSS_PRD_MODULE_ID) &&
+		cssp->keySize       == CSS_KEY_SIZE &&
+		cssp->modulusSize   == CSS_MODULUS_SIZE ) {
+		isSpkg = 1;
+    }
+
+	return(isSpkg);
+}
+
 /*
   removeHeader - removes the ICS image header from the given file, if it has one
 */
@@ -193,6 +246,8 @@ int removeHeader (char *inputFileName, char *outputBuffer)
 	IcsImageHeader_Record_t		recordBuffer;
 	uint32_t					bytesRead;
 	uint32_t					firstRecordType;
+	uint8_t						cssBuf[CSS_HEADER_SIZE + 10];
+	int							isSpkg = 0;
 
 	cmpBufferSize = 0;
  
@@ -202,6 +257,16 @@ int removeHeader (char *inputFileName, char *outputBuffer)
 		return(ERR_IO_ERROR);
 	}
 
+	if (0 == fread(&cssBuf, CSS_HEADER_SIZE, 1, inputFp))
+	{
+		fclose(inputFp);
+		return(ERR_IO_ERROR);
+	}
+
+	isSpkg = checkCssHeader(cssBuf);
+
+	fseek(inputFp, isSpkg ? CSS_HEADER_SIZE : 0, SEEK_SET);
+
 	if (0 == fread(&firstRecordType, 4, 1, inputFp))
 	{
 		fclose(inputFp);
@@ -210,7 +275,7 @@ int removeHeader (char *inputFileName, char *outputBuffer)
 
 	p = outputBuffer;
 
-	fseek(inputFp, 0, SEEK_SET);
+	fseek(inputFp, isSpkg ? CSS_HEADER_SIZE : 0, SEEK_SET);
 
 	if (ICS_IMAGE_HEADER_RECORD_TYPE_INFO != toHostEndian32(firstRecordType))
 	{
@@ -225,7 +290,7 @@ int removeHeader (char *inputFileName, char *outputBuffer)
 	}
   
 	imageHeaderSize = toHostEndian32(recordBuffer.payload.info.headerSize);
-	fseek(inputFp, imageHeaderSize, SEEK_SET);
+	fseek(inputFp, isSpkg ? CSS_HEADER_SIZE + imageHeaderSize : imageHeaderSize, SEEK_SET);
 
 	while (0 != (bytesRead = fread(g_ioBuffer, 1, INBUFFERSIZE, inputFp)))
 	{
@@ -547,8 +612,10 @@ int main(int argc, char *argv[])
 	int							firstRecordType;
 	int							result;
 	int							fileSize;
+	int							isSpkg = 0;
 	struct stat					statBuf;
 	IcsImageHeader_Record_t		recordBuffer;
+	uint8_t						cssBuf[CSS_HEADER_SIZE + 10];
 
 	struct option longopts[] = 
 	{
@@ -610,6 +677,7 @@ int main(int argc, char *argv[])
 	memset(appBuffer, 0, bufSize * 3);
 
 	/* open file */
+ 
 	if ((fpFirmwareFile = fopen(firmwareFileName, "rb")) == NULL)
 	{
 		fprintf(stderr, "Error opening file {%s} for input: %s\n",
@@ -617,7 +685,18 @@ int main(int argc, char *argv[])
 		goto fail;
 	}
 
+	if (0 == fread(&cssBuf, CSS_HEADER_SIZE, 1, fpFirmwareFile))
+	{
+		fprintf(stderr, "Error reading file {%s}: %s\n",
+			firmwareFileName, strerror(errno));
+		goto fail;
+	}
+
+	isSpkg = checkCssHeader(cssBuf);
+
 	/* get first record, check if ICS image file */
+
+	fseek(fpFirmwareFile, isSpkg ? CSS_HEADER_SIZE : 0, SEEK_SET);
 
 	if (0 == fread(&firstRecordType, 4, 1, fpFirmwareFile))
 	{
@@ -626,7 +705,7 @@ int main(int argc, char *argv[])
 		goto fail;
 	}
 
-	fseek(fpFirmwareFile, 0, SEEK_SET);
+	fseek(fpFirmwareFile, isSpkg ? CSS_HEADER_SIZE : 0, SEEK_SET);
 
 	if (ICS_IMAGE_HEADER_RECORD_TYPE_INFO != toHostEndian32(firstRecordType))
 	{

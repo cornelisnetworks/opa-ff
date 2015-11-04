@@ -13,65 +13,121 @@ opaxlattopology
 .NL
 
 .PP
-opaxlattopology , accompanied by topology.xlsx , linksum\(ul180.csv and linksum\(ul360.csv provide the capability to document the topology of a customer cluster, and generate a topology XML file based on that topology ("translate" the spread sheet to a topology file). The topology file can be used to bring up and verify the cluster.
+Generates a topology XML file of a cluster using topology.xlsx, linksum\(ulswd06.csv, and linksum\(ulswd06.csv as input. The topology file can be used to bring up and verify the cluster.
 .SH Syntax
 .NL
-opaxlattopology [-d \fIlevel\fR-v \fIlevel\fR-i \fIlevel\fR-c \fIchar\fR-K -?] [source [dest]]
+opaxlattopology [-d \fIlevel\fR-v \fIlevel\fR-i \fIlevel\fR-c \fIchar\fR-K -?]
+.br
+[source [dest]]
 .SH Options
 .NL
 
 .TP 10
 -d \fIlevel\fR 
 .NL
-Output detail level (default 0), values are additive:
+Output detail level. Default = 0. Levels are additive.
+
+.IP
+By default, the top level is always produced. Switch, rack, and rack group topology files can be added to the output by choosing the appropriate level. If the output at the group or rack level is specified, then group or rack names must be provided in the spreadsheet. Detailed output can be specified in any combination. A directory for each topology XML file is created hierarchically, with group directories (if specified) at the highest level, followed by rack and switch directories (if specified).
+.RS
+.TP 10
+
 .sp
 1 
-Edge switch topology files.
+Intel(R) Omni-Path Edge Switch 100 Family topology files.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 2 
 Rack topology files.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 4 
-Rack group topology files.The output detail level specifies the level to which the script will produce topology XML files. By default the top level is always produced, but edge switch, rack and rack group topology files can also be produced. If the output at the group or rack level is specified, then group or rack names must be provided in the spread sheet. Detailed output can be specified in any combination. A directory for each topology XML file will be created hierarchically, with group directories (if specified) at the highest level, followed by rack and edge switch directories (if specified).
+Rack group topology files.
+
+.RE
 
 .TP 10
 -v \fIlevel\fR 
 .NL
-Verbose level (0-8, default 2)
+Verbose level. Range = 0 - 8. Default = 2.
+
+.RS
+.TP 10
+
 .sp
 0 
 No output.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 1 
 Progress output.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 2 
 Reserved.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 4 
 Time stamps.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 8 
 Reserved.
+
+.RE
+
 .TP 10
 -i \fIlevel\fR 
 .NL
-Output indent level (0-15, default 0).
+Output indent level. Range = 0 - 15. Default = 0.
+
 .TP 10
 -c \fIchar\fR 
 .NL
-NodeDesc concatenation character (default SPACE). Used when creating NodeDesc values (Name to Name-2, Name to HFI-1, and so on). A space is used by default, but another character (ex. underscore) can be specified.
+NodeDesc concatenation character. Used when creating NodeDesc values (that is, Name to Name-2, Name to HFI-1, and so on). A space is used by default, but another character, such as underscore, can be specified.
+
 .TP 10
 -K 
 .NL
-Do not clean temporary files. Is Used to prevent temporary files (in each topology directory) from being removed. Temporary files contain lists (csv) of links, CAs, and switches used to create a topology XML file. They are not normally needed after a topology file is created, but they are used in the creation of linksum\(ul180.csv and linksum\(ul360.csv , or can be retained for subsequent inspection or processing.
+Does not clean temporary files. Prevents temporary files in each topology directory from being removed. Temporary files contain CSV formatted lists of links, HFIs, and switches used to create a topology XML file. Temporary files are not typically needed after a topology file is created, however they are used for creating linksum\(ulswd06.csv and linksum\(ulswd24.csv files, or can be retained for subsequent inspection or processing.
+
 .TP 10
 .BR
 
 .PP
 
 .B NOTE:
-The linksum\(ul180.csv and linksum\(ul360.csv are provided as stand-alone source files. However, they can be recreated (or modified) from the spread sheet, if needed, by performing the following steps:
+The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone source files. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
 
 
 .IP 1) 4n 
@@ -79,9 +135,9 @@ Save each of the following from the topology.xlsx file as individual .csv files:
 .RS
 
 .IP \(bu
-Internal 180 Links tab as linksum\(ul180.csv 
+Internal SWD06 Links tab as linksum\(ulswd06.csv 
 .IP \(bu
-Internal 360 Links tab as linksum\(ul360.csv 
+Internal SWD24 Links tab as linksum\(ulswd24.csv 
 .IP \(bu
 Fabric Links tab as topology.csv 
 
@@ -92,16 +148,17 @@ Fabric Links tab as topology.csv
 For each saved topology.csv file, run the script with the -K option.
 
 .IP 3) 4n 
-Upon completion of the script, save the top level linksum.csv file as linksum\(ul180.csv or linksum\(ul360.csv as appropriate.
+Upon completion of the script, save the top level linksum.csv file as linksum\(ulswd06.csv or linksum\(ulswd24.csv as appropriate.
 
 
 .TP 10
 -? 
 .NL
-Print this output.[START-DRAFT-COMMENT][gdr] Does there need to be an Examples section?[END-DRAFT-COMMENT]
+Prints this output.
+
 .SH Description
 .NL
-[START-DRAFT-COMMENT][gdr] Is this information in the Description section good or does/can it be laid out better for UX[END-DRAFT-COMMENT]
+
 .PP
 topology.xlsx provides a standard format for representing each external link in a cluster. Each link contains
 \fBSource\fR
@@ -109,7 +166,7 @@ topology.xlsx provides a standard format for representing each external link in 
 \fBDestination\fR
 , and
 \fBCable\fR
-fields with one link per row of the spread sheet. The cells cannot contain commas.
+fields with one link per row of the spreadsheet. The cells cannot contain commas.
 \fBSource\fR
 and
 \fBDestination\fR
@@ -125,7 +182,7 @@ Name-2 (secondary name)
 .IP \(bu
 Port (number)
 .IP \(bu
-Type (Port)
+Type (port)
 .PP
 The
 \fBCable\fR
@@ -137,56 +194,79 @@ Length
 .IP \(bu
 Details
 .PP
-The Rack Group and Rack names are individually optional. If either column is completely empty it will be ignored. If the Rack Group or Rack field is empty on a particular row, the script will default the value in that field to the closest previous value (Defaulting the field to a non-empty value. The first row must have a value.). Name and Name-2 provide the name of the node which is output as the NodeDesc using the following information:
+The Rack Group and Rack names are individually optional. If either column is completely empty, it is ignored. The first row must have a value. If the Rack Group or Rack field is empty on any row, the script defaults the value in that field to the closest previous value. Name and Name-2 provide the name of the node which is output as the NodeDesc using the following information:
 .TP 10
 NodeType
 .NL
 Name or Name-2
+
 .TP 10
 Host
 .NL
 Hostname or hostdetails
+
 .TP 10
 Edge Switch
 .NL
 Switchname
+
 .TP 10
 Core Leaf
 .NL
 Corename or L \fInnn\fR
+
 .TP 10
 Core Spine
 .NL
-Corename or Snnn (used only in internal core switch links)
+Corename or S \fInnn\fR(used only in internal core switch links)
+
 .PP
-For hosts Name-2 is optional and is output as NodeDetails in the topology XML file; also HFI-1 is appended to Name (see -c option). For core leaves (and spines), Name and Name-2 are concatenated (see -c option).
+For hosts, Name-2 is optional and is output as NodeDetails in the topology XML file. Also HFI-1 is appended to Name (see -c option). For core leaves (and spines), Name and Name-2 are concatenated (see -c option).
 .PP
-Port contains the port number. If the Port field is empty on a host node, the script will default to 1.
+Port contains the port number. If the Port field is empty on a host node, the script defaults to 1.
 .PP
-Type contains the node type. If the Type field is empty on a particular row, the script will default the value to the closest previous value (at least the first row must have a value). The type values are:
+Type contains the node type. The first row must have a value. If the Type field is empty on any row, the script defaults the value to the closest previous value. The type values are:
 .TP 10
 NodeType
 .NL
 Type
+
 .TP 10
 Host
 .NL
-CA
+FI
+
 .TP 10
 Edge Switch
 .NL
 SW
+
 .TP 10
 Core Leaf
 .NL
 CL
+
 .TP 10
 Core Spine
 .NL
 CS (used only in internal core switch links)
+
 .PP
-Cable values are optional and have no special syntax. If the cable information is present it will appear in the topology XML file as CableLabel, CableLength and CableDetails respectively.
+Cable values are optional and have no special syntax. If the cable information is present, it appears in the topology XML file as CableLabel, CableLength, and CableDetails respectively.
 .PP
-The opaxlattopology script reads the topology , linksum\(ul180 and linksum\(ul360 csv files. The topology.csv file is created from the topology.xlsx spread sheet by saving the Fabric Links tab as a .csv file to topology.csv . The topology.csv file should be inspected to ensure that each row contains the correct and same number of comma separators. Any extraneous entries on the excel spread sheet can cause the csv output to have extra fields.
+The opaxlattopology script reads the topology, linksum\(ulswd06, and linksum\(ulswd24 CSV files. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
 .PP
-The script produces as an output one or more topology files starting with topology.0:0.xml . Output at the top level as well as Group, Rack, and Switch level can be produced. Input files must be present in the same directory from which the script operates.
+The script outputs one or more topology files starting with topology.0:0.xml. Input files must be present in the same directory from which the script operates.
+.SH Example 
+.NL
+opaxlattopology
+.br
+# reads default input \'topology.csv\' and creates default
+.br
+# output \'topology.0:0.xml\'
+.br
+opaxlattopology fabric\(ul2.csv
+.br
+# reads input \'fabric\(ul2.csv\' and creates default output
+.PP
+See topology.xlsx for examples of links between HFI and Edge SW (rows 4-7), HFI and Core SW (rows 8-11), and Edge SW and Core SW (rows 12-15).

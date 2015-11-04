@@ -391,9 +391,9 @@ proc get_switch_type { ibnode sa_hfi_port_args node_guid } {
 		check_exit_status 60 0
 		# TODO: does this need to be updated, and how so
 		if { [ catch { unix_cmd 90 0 "echo $node_guid 2>&1 | grep 0x001175 /dev/null 2>&1" } res ] != 0 } {
-			log_message "It's a Intel switch $node_guid"
+			log_message "It's an Intel switch $node_guid"
 		} else {
-			log_message "It's not a Intel switch $node_guid"
+			log_message "It's not an Intel switch $node_guid"
 		}
 		check_exit_status 60 0
 		if { [ catch { unix_cmd 90 0 "$bindir/opasaquery -l $lid -o portinfo 2>&1 | sed -n '/PortNum: *0x00/,/-------/p' 2>&1 | grep Capability: 2>&1 | grep -v VDR > /dev/null 2>&1 " } res ] == 0 } {
@@ -449,7 +449,7 @@ proc get_switch_brand { ibnode } {
 		set out [expect_list_with_punchlist "$ibnode" "Switch not found in SA DB"  120 { "DeviceId: [A-Fa-fx0-9]+" } { "Error" "No Records Returned" }]
 		regexp {(0x[A-Fa-f0-9]+)} $out deviceid
 		# TODO: place holder value will need to be updated when we find out the real one
-		if { [ string equal "$deviceid" "0x7320"] } {
+		if { [ string equal "$deviceid" "0xabc0"] } {
 			set brand "OPA"
 			log_message "$ibnode: detected Intel OPA device"
 		} else {
@@ -583,80 +583,72 @@ proc get_switch_info { ibnode } {
 			}
 
 			check_exit_status 60 0
-			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 12"
-			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "BoardID: 0x[0-9a-fA-F]+" } { "Error" }]
-			regexp {BoardID: 0x([0-9a-fA-F]+)} $out f1 boardID
-			if { ! [ string equal "$boardID" "13"] } {
-				check_exit_status 60 0
-				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 7"
-				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "FAN 0:[A-Z]" "FAN 1:[A-Z]" "FAN 2:[A-Z]" "FAN 3:[A-Z]" "FAN 4:[A-Z]" "FAN 5:[A-Z]"} { "Error" }]
-				regexp {0:([A-Z]+)} $out f1 f2
-				if { [ string equal "$f2" "NORMAL"] } {
-					set fanaStatus "Normal"
-				} elseif { [ string equal "$f2" "FAST"] } {
-					set fanaStatus "TooFast"
-				} elseif { [ string equal "$f2" "SLOW"] } {
-					set fanaStatus "TooSlow"
-				} else {
-					set fanaStatus "Unknown"
-				}
-				regexp {1:([A-Z]+)} $out f1 f2
-				if { [ string equal "$f2" "NORMAL"] } {
-					set fanbStatus "Normal"
-				} elseif { [ string equal "$f2" "FAST"] } {
-					set fanbStatus "TooFast"
-				} elseif { [ string equal "$f2" "SLOW"] } {
-					set fanbStatus "TooSlow"
-				} else {
-					set fanbStatus "Unknown"
-				}
-				regexp {2:([A-Z]+)} $out f1 f2
-				if { [ string equal "$f2" "NORMAL"] } {
-					set fancStatus "Normal"
-				} elseif { [ string equal "$f2" "FAST"] } {
-					set fancStatus "TooFast"
-				} elseif { [ string equal "$f2" "SLOW"] } {
-					set fancStatus "TooSlow"
-				} else {
-					set fancStatus "Unknown"
-				}
-				regexp {3:([A-Z]+)} $out f1 f2
-				if { [ string equal "$f2" "NORMAL"] } {
-					set fandStatus "Normal"
-				} elseif { [ string equal "$f2" "FAST"] } {
-					set fandStatus "TooFast"
-				} elseif { [ string equal "$f2" "SLOW"] } {
-					set fandStatus "TooSlow"
-				} else {
-					set fandStatus "Unknown"
-				}
-				regexp {4:([A-Z]+)} $out f1 f2
-				if { [ string equal "$f2" "NORMAL"] } {
-					set faneStatus "Normal"
-				} elseif { [ string equal "$f2" "FAST"] } {
-					set faneStatus "TooFast"
-				} elseif { [ string equal "$f2" "SLOW"] } {
-					set faneStatus "TooSlow"
-				} else {
-					set faneStatus "Unknown"
-				}
-				regexp {5:([A-Z]+)} $out f1 f2
-				if { [ string equal "$f2" "NORMAL"] } {
-					set fanfStatus "Normal"
-				} elseif { [ string equal "$f2" "FAST"] } {
-					set fanfStatus "TooFast"
-				} elseif { [ string equal "$f2" "SLOW"] } {
-					set fanfStatus "TooSlow"
-				} else {
-					set fanfStatus "Unknown"
-				}
-				if { ! [ string equal "$fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus" "Normal/Normal/Normal/Normal/Normal/Normal" ] } {
-					append_punchlist "$ibnode" "Fan: $fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus"
-				}
-				set fanStatus "$fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus"
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 7"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "FAN[A-Z0-9: ]+"} { "Error" }]
+			regexp {0:([A-Z]+)} $out f1 f2
+			if { [ string equal "$f2" "NORMAL"] } {
+				set fanaStatus "Normal"
+			} elseif { [ string equal "$f2" "FAST"] } {
+				set fanaStatus "TooFast"
+			} elseif { [ string equal "$f2" "SLOW"] } {
+				set fanaStatus "TooSlow"
 			} else {
-				set fanStatus "N/A"
+				set fanaStatus "Unknown"
 			}
+			regexp {1:([A-Z]+)} $out f1 f2
+			if { [ string equal "$f2" "NORMAL"] } {
+				set fanbStatus "Normal"
+			} elseif { [ string equal "$f2" "FAST"] } {
+				set fanbStatus "TooFast"
+			} elseif { [ string equal "$f2" "SLOW"] } {
+				set fanbStatus "TooSlow"
+			} else {
+				set fanbStatus "Unknown"
+			}
+			regexp {2:([A-Z]+)} $out f1 f2
+			if { [ string equal "$f2" "NORMAL"] } {
+				set fancStatus "Normal"
+			} elseif { [ string equal "$f2" "FAST"] } {
+				set fancStatus "TooFast"
+			} elseif { [ string equal "$f2" "SLOW"] } {
+				set fancStatus "TooSlow"
+			} else {
+				set fancStatus "Unknown"
+			}
+			regexp {3:([A-Z]+)} $out f1 f2
+			if { [ string equal "$f2" "NORMAL"] } {
+				set fandStatus "Normal"
+			} elseif { [ string equal "$f2" "FAST"] } {
+				set fandStatus "TooFast"
+			} elseif { [ string equal "$f2" "SLOW"] } {
+				set fandStatus "TooSlow"
+			} else {
+				set fandStatus "Unknown"
+			}
+			regexp {4:([A-Z]+)} $out f1 f2
+			if { [ string equal "$f2" "NORMAL"] } {
+				set faneStatus "Normal"
+			} elseif { [ string equal "$f2" "FAST"] } {
+				set faneStatus "TooFast"
+			} elseif { [ string equal "$f2" "SLOW"] } {
+				set faneStatus "TooSlow"
+			} else {
+				set faneStatus "Unknown"
+			}
+			regexp {5:([A-Z]+)} $out f1 f2
+			if { [ string equal "$f2" "NORMAL"] } {
+				set fanfStatus "Normal"
+			} elseif { [ string equal "$f2" "FAST"] } {
+				set fanfStatus "TooFast"
+			} elseif { [ string equal "$f2" "SLOW"] } {
+				set fanfStatus "TooSlow"
+			} else {
+				set fanfStatus "Unknown"
+			}
+			if { ! [ string equal "$fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus" "Normal/Normal/Normal/Normal/Normal/Normal" ] } {
+				append_punchlist "$ibnode" "Fan: $fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus"
+			}
+			set fanStatus "$fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus"
 		} else {
 			append_punchlist "$ibnode" "Not an Intel OPA device"
 			fail_test "$ibnode: Not an Intel OPA device"
@@ -669,8 +661,8 @@ proc get_switch_info { ibnode } {
 				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 8 -i 1"
 				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 1: [A-Z ]+" } { "Error" }]
 				regexp {([PS 1:]+) ([A-Z]+)} $out p1 p2 p3
-				if { ! [ string equal "$p3" "ENGAGED" ] } {
-					if { [ string equal "$p3" "FAILED" ] } {
+				if { ! [ string equal "$p3" "ONLINE" ] } {
+					if { [ string equal "$p3" "OFFLINE" ] } {
 						append_punchlist "$ibnode" "PS 1: NOT PRESENT"
 					} else {
 						append_punchlist "$ibnode" "PS 1: $p3"
@@ -690,8 +682,8 @@ proc get_switch_info { ibnode } {
 			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 8 -i 2"
 			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 2: [A-Z ]+" } { "Error" }]
 			regexp {([PS 2:]+) ([A-Z]+)} $out p1 p2 p3
-			if { ! [ string equal "$p3" "ENGAGED" ] } {
-				if { [ string equal "$p3" "FAILED" ] } {
+			if { ! [ string equal "$p3" "ONLINE" ] } {
+				if { [ string equal "$p3" "OFFLINE" ] } {
 					append_punchlist "$ibnode" "PS 2: NOT PRESENT"
 				} else {
 					append_punchlist "$ibnode" "PS 2: $p3"
@@ -716,8 +708,10 @@ proc get_switch_info { ibnode } {
 		# report the results
 		show_message ""
 		if { [ string equal "$brand" "OPA"] } {
+#			show_message "$ibnode:
+#    F/W ver:$fwversion  H/W ver:$hwversion  H/W pt num:$partnumber  Capability:$capability  Fan status:$fanStatus  PS1 Status:$ps1Status  PS2 Status:$ps2Status"
 			show_message "$ibnode:
-    F/W ver:$fwversion  H/W ver:$hwversion  H/W pt num:$partnumber  Capability:$capability  Fan status:$fanStatus  PS1 Status:$ps1Status  PS2 Status:$ps2Status"
+    F/W ver:$fwversion  H/W ver:$hwversion  H/W pt num:$partnumber  Fan status:$fanStatus  PS1 Status:$ps1Status  PS2 Status:$ps2Status"
 			set out_msg "F/W ver:$fwversion
 H/W ver:$hwversion
 H/W pt num:$partnumber
@@ -760,6 +754,7 @@ proc get_switch_hwvpd { ibnode } {
 		set brand [get_switch_brand "$ibnode"]
         # use verbose option so we have a predictable output to expect
 		if { [ string equal "$brand" "OPA"] } {
+			check_exit_status 60 0
 			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 4"
 		} else {
 			append_punchlist "$ibnode" "Not an OPA series device"
@@ -1025,9 +1020,9 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 9"
 				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "ASIC Version: [V0-9]+" } { "Error" }]
 				regexp {([ASIC Version:]+) ([V0-9]+)} $out p1 p2 asicversion
-				if { $hwversion != $asicversion } {
+				if { ! [string match "*$asicversion*" "$hwversion"] } {
 					show_message ""
-					skip_case "ASIC Version of firmware -$hwversion- does not match capability of switch -$asicversion-\n"
+					skip_case "Switch capability of -$asicversion- does not support ASIC version of firmware -$hwversion-\n"
 					# aborts via skip_case
 				} elseif { $env(CFG_FWRELEASEVERSIONINFO) == $fwversion && $fw_override == "n" } {
 					# if the password is not being changed, we will skip below
@@ -1132,22 +1127,6 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 				if { $sessionid > $oldsessionid } {
 					append_punchlist "$ibnode" "Did not reboot properly"
 					fail_test "$ibnode did not reboot properly"
-				}
-				if { $clear_password } {
-					set save_password "\r"
-				} elseif { $new_password_set } {
-					set save_password "$switch_newPassword\r"
-				} elseif { $password_set } {
-					set save_password "$switch_password\r"
-				} else {
-					set save_password "\r"
-				}
-				check_exit_status 60 0
-				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -C 2"
-				if { $norecords } {
-					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 60 { "opaswconfigure completed"} { "Error" } 
-				} else {
-					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 300 { "opaswconfigure completed"} { "Error" } 
 				}
 				local_sh_exit
 			}
@@ -1456,14 +1435,6 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 				check_exit_status 60 0
 				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -S -C 5 -i $linkWidthSelection"
 				expect_list_with_punchlist "$ibnode" "Unable to configure switch link width" 60 { "opaswconfigure completed"} { "Error" } 
-			}
-
-			set linkSpeedSelection $env(LINKSPEED_SETTING)
-
-			if { [string equal "$linkSpeedSelection" "0"] == 0 } {
-				check_exit_status 60 0
-				send_unix_cmd "$toolsdir/opaswconfigure -t $trimmed_ibnode $hfi_port_args -S -C 7 -i $linkSpeedSelection"
-				expect_list_with_punchlist "$ibnode" "Unable to configure switch link speed" 60 { "opaswconfigure completed" } { "Error" }
 			}
 
 			set nodeDescSelection $env(NODEDESC_SETTING)

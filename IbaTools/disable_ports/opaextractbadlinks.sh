@@ -33,10 +33,7 @@
 # Run opareports and pipe output to opaxmlextract to extract
 #  links with excessive errors
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-tempfile=`mktemp`
+tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
 trap "rm -f $tempfile" EXIT
 
@@ -71,10 +68,10 @@ fi
 
 line1=
 # we do this against a single fabric, options can select a local HFI and Port
-$BINDIR/opareport -o errors -x "$@" > $tempfile
+/usr/sbin/opareport -o errors -x "$@" > $tempfile
 if [ -s $tempfile ]
 then
-	cat $tempfile| $BINDIR/opaxmlextract -H -d \; -e LinkErrors.Link.Port.NodeGUID -e LinkErrors.Link.Port.PortNum -e LinkErrors.Link.Port.NodeType -e LinkErrors.Link.Port.NodeDesc|while read line
+	cat $tempfile| /usr/sbin/opaxmlextract -H -d \; -e LinkErrors.Link.Port.NodeGUID -e LinkErrors.Link.Port.PortNum -e LinkErrors.Link.Port.NodeType -e LinkErrors.Link.Port.NodeDesc|while read line
 	do
 		if [ x"$line1" = x ]
 		then

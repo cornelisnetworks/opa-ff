@@ -13,9 +13,9 @@ opasorthosts
 .NL
 
 .PP
-Sorts its standard input in a typical host name order. Hosts are stored alphabetically by any alpha numeric prefix and then sorted numerically by any numeric suffix. Leading zeros in the numeric suffix are optional. This command does not remove duplicates, any duplicates are listed in adjacent lines. This sorts to standard output.
+Sorts its standard input in a typical host name order and sorts to standard output. Hosts are sorted alphabetically (case-insensitively) by any alpha-numeric prefix, and then sorted numerically by any numeric suffix. Host names may end in a numeric field which may optionally have leading zeros. This command does not remove duplicates; any duplicates are listed in adjacent lines.
 .PP
-This command can be useful to build mpi\(ulhosts input files for applications or cable test which places hosts in order by name.
+Use this command to build mpi\(ulhosts input files for applications or cable tests that place hosts in order by name.
 .SH Syntax
 .NL
 opasorthosts < \fIhostlist\fR> \fIoutput\(ulfile\fR
@@ -29,19 +29,56 @@ opasorthosts --help
 .TP 10
 --help 
 .NL
-Produce full help text
-.PP
-Sort the  \fIhostlist\fR alphabetically (case insensitively) then numerically, hostnames may end in a numeric field which may optionally have leading zeros.
+Produces full help text.
+
+.TP 10
+ \fIhostlist\fR 
+.NL
+List of host names.
+
+.TP 10
+ \fIoutput\(ulfile\fR 
+.NL
+Sorted list output.
+
 .SH Examples 
 .NL
 opasorthosts < host.xml > Sorted\(ulhost
-.SH Standard Input-->
+.TP 10
+\fBStandard Input\fR
 .NL
 
 .br
-opasorthosts osd04 osd1 compute20 compute3 mgmt1 mgmt2 login 
-.SH Standard Output-->
+opasorthosts
+.br
+osd04
+.br
+osd1
+.br
+compute20
+.br
+compute3
+.br
+mgmt1
+.br
+mgmt2
+.br
+login
+.TP 10
+\fBStandard Output\fR
 .NL
 
 .br
-compute3 compute20 login mgmt1 mgmt2 osd1 osd04 
+compute3
+.br
+compute20
+.br
+login
+.br
+mgmt1
+.br
+mgmt2
+.br
+osd1
+.br
+osd04

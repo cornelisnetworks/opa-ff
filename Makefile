@@ -200,9 +200,9 @@ else
 endif
 	cd $(PROJ_STAGE_DIR) && find . -print| $(PREP)
 	cd $(PROJ_STAGE_DIR) && $(PATCH_VERSION) -m % $(RELEASE_TAG) INSTALL
-	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opatest ] || $(PATCH_VERSION) -m % $(RELEASE_TAG) fastfabric/opatest fastfabric/opafastfabric
+	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opafastfabric ] || $(PATCH_VERSION) -m % $(RELEASE_TAG) fastfabric/opahostadmin fastfabric/opachassisadmin  fastfabric/opaswitchadmin fastfabric/opafastfabric
 	cd $(PROJ_STAGE_DIR) && $(PATCH_BRAND) -m % "$(BUILD_BRAND)" INSTALL
-	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opatest ] || $(PATCH_BRAND) -m % "$(BUILD_BRAND)" fastfabric/opafastfabric
+	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opafastfabric ] || $(PATCH_BRAND) -m % "$(BUILD_BRAND)" fastfabric/opafastfabric
 
 # OS specific packaging step
 # package builds standard package

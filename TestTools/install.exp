@@ -474,7 +474,10 @@ proc install_wireshark { target } {
     
     regexp {TShark ([0-9]+\.[0-9]+\.[0-9]+)} $tmp trash tshark_ver
     
-    puts "Successfully installed wireshark version $tshark_ver on $target"
+    send_unix_cmd "tshark -G protocols | grep stl ; echo DONE"
+    expect_list 60 { "echo DONE" "stl" "DONE" } { "error" "cannot open" "No such" } tmp
+        
+    log_message "Successfully installed wireshark version $tshark_ver on $target with 'stl' protocol"
     
     target_root_sh_exit
 

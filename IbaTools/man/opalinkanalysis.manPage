@@ -32,112 +32,239 @@ opalinkanalysis --help
 --help 
 .NL
 Produces full help text.
+
 .TP 10
 -U 
 .NL
-Omit unexpected devices and links in punchlist file from verify reports.
+Omits unexpected devices and links in punchlist file from verify reports.
+
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for analysis, default is /etc/sysconfig/opa/ports .
+File with list of local HFI ports used to access fabric(s) for analysis, default is /etc/sysconfig/opa/ports.
+
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric(s) for analysis. The default is the first active port.This is specified as hfi:port 
+List of local HFI ports used to access fabric(s) for analysis. The default is the first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+
+.IP
+Uses the format hfi:port, for example:
+.RS
+.TP 10
 
 .sp
 0:0 
 First active port in system.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0:y 
-Port y within system.
+Port  \fIy\fR within system.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 x:0 
-First active port on HFI x .
+First active port on HFI  \fIx\fR.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 x:y 
-HFI x , port y .
-.IP
-The first HFI in the system is 1. The first port on an HFI is 1.
+HFI  \fIx\fR, port  \fIy\fR.
+
+.RE
+
 .TP 10
 -T \fItopology\(ulinput\fR 
 .NL
-Name of a topology input file to use. Any  %P markers in this filename will be replaced with the hfi:port being operated on (such as 0:0 or 1:2). Default is /etc/sysconfig/opa/topology.%P.xml . If NONE is specified, will not use any topology\(ulinput files. See
+Name of a topology input file to use. Any  %P markers in this filename are replaced with the hfi:port being operated on (such as 0:0 or 1:2). Default is /etc/sysconfig/opa/topology.%P.xml. If NONE is specified, does not use any topology\(ulinput files. See
 \fIopareport\fR
 for more information on topology\(ulinput files.
+
 .TP 10
 -X \fIsnapshot\(ulinput\fR 
 .NL
-Perform analysis using data in  \fIsnapshot\(ulinput\fR .  \fIsnapshot\(ulinput\fR must have been generated via a previous opareport -o snapshot run. If an errors report is specified, snapshot must have been generated with the opareport -s option. When this option is used, only one port may be specified to select a topology\(ulinput file (unless -T specified). When this option is used, clearerrors and clearhwerrors reports are not permitted.
+Performs analysis using data in  \fIsnapshot\(ulinput\fR.  \fIsnapshot\(ulinput\fR must have been generated via a previous opareport -o snapshot run. If an errors report is specified, snapshot must have been generated with the opareport -s option. When this option is used, only one port may be specified to select a topology\(ulinput file (unless -T specified). When this option is used, clearerrors and clearhwerrors reports are not permitted.
+
 .TP 10
 -x \fIsnapshot\(ulsuffix\fR 
 .NL
-Create a snapshot file per selected port. The files will be created in FF\(ulRESULT\(ulDIR with names of the form: snapshotSUFFIX. \fIHFI:PORT\fR.xml .
+Creates a snapshot file per selected port. The files are created in FF\(ulRESULT\(ulDIR with names of the form: snapshotSUFFIX. \fIHFI:PORT\fR.xml.
+
 .TP 10
 -c \fIfile\fR 
 .NL
-Error thresholds configuration file. The default is /etc/sysconfig/opa/opamon.si.conf .
+Error thresholds configuration file. The default is /etc/sysconfig/opa/opamon.si.conf.
+
 .TP 10
  \fIreports\fR 
 .NL
 The following reports are supported:
+.RS
+.TP 10
+
 .sp
 errors 
 Link error analysis.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 slowlinks 
 Links running slower than expected.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 misconfiglinks 
 Links configured to run slower than supported.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 misconnlinks 
 Links connected with mismatched speed potential.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 all 
-Includes all reports above.
+Includes all reports.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 verifylinks 
-Verify links against topology input.
+Verifies links against topology input.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 verifyextlinks 
-Verify links against topology input. Limit analysis to links external to systems.
+Verifies links against topology input. Limit analysis to links external to systems.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 verifyfis 
-Verify FIs against topology input.
+Verifies FIs against topology input.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 verifysws 
-Verify Switches against topology input.
+Verifies switches against topology input.
+.RE
+
+.RS
+.TP 10
+
 .sp
 verifyrtrs 
-Verify Routers against topology input.
+Verifies routers against topology input.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 verifynodes 
-Verify FIs, Switches and Routers against topology input.
+Verifies FIs, switches, and routers against topology input.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 verifysms 
-Verify SMs against topology input.
+Verifies SMs against topology input.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 verifyall 
-Verifies links, FIs, Switches, Routers and SMs against topology input.
+Verifies links, FIs, switches, routers, and SMs against topology input.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 clearerrors 
-Clear error counters, uses PM if available.
+Clears error counters, uses PM if available.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 clearhwerrors 
-Clear hardware error counters, bypasses PM.
+Clears hardware error counters, bypasses PM.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 clear 
-Includes clearerrors and clearhwerrors .
+Includes clearerrors and clearhwerrors.
+
+.RE
+
+
 .PP
-A punchlist of bad links is also appended to FF\(ulRESULT\(ulDIR/punchlist.csv .
+A punchlist of bad links is also appended to the file: FF\(ulRESULT\(ulDIR/punchlist.csv 
 .SH Examples 
 .NL
 opalinkanalysis errors
 .br
 opalinkanalysis errors clearerrors
 .br
-opalinkanalysis -p \'1:1 1:2 2:1 2:2\'
+opalinkanalysis -p \'1:1 2:1\'
 .SH Environment Variables
 .NL
 
@@ -146,12 +273,14 @@ The following environment variables are also used by this command:
 .TP 10
 \fBPORTS\fR 
 .NL
-List of ports, used in absence of -t and -p .
+List of ports, used in absence of -t and -p.
+
 .TP 10
 \fBPORTS\(ulFILE\fR 
 .NL
-File containing list of ports, used in absence of -t and -p .
+File containing list of ports, used in absence of -t and -p.
+
 .TP 10
 \fBFF\(ulTOPOLOGY\(ulFILE\fR 
 .NL
-File containing  \fItopology\(ulinput\fR , used in absence of -T .
+File containing  \fItopology\(ulinput\fR, used in absence of -T.

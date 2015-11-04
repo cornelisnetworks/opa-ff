@@ -97,8 +97,8 @@ typedef void LinkPortSummaryDetailCallback_t(uint64 context, PortData *portp, Fo
 extern void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			uint64 context, LinkPortSummaryDetailCallback_t *callback,
 			Format_t format, int indent, int detail);
-extern void ShowCableSummary(STL_CABLE_INFO *pCable, Format_t format, 
-			int indent, int detail);
+extern void ShowCableSummary(uint8_t *pCable, Format_t format, 
+			int indent, int detail, uint8 portType);
 // show cable information for a link in brief summary format
 extern void ShowExpectedLinkBriefSummary(ExpectedLink *elinkp,
 			Format_t format, int indent, int detail);

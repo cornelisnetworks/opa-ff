@@ -70,46 +70,21 @@ find_mpi()
 	done
 }
 
-# defaults we use for MPI (QuickSilver, openmpi, mvapich1, mvapich2)
+# defaults we use for MPI (openmpi, IntelMPI, mvapich2)
 if [ -z "$MPICH_PREFIX" ]
 then
-	if test -f /opt/opa/bin/mpirun_rsh && ! rpm -q kernel-ib >/dev/null 2>&1
-	then
-		# QuickSilver MPI
-		MPICH_PREFIX=/opt/opa
-	fi
-	# by default MPI gets installed using same stack prefix as OFED
-	prefix=$(/etc/infiniband/info 2>/dev/null|grep '^prefix='|cut -f2 -d=)
-	prefix=${prefix:-/usr}	# in case $prefix not defined or not OFED
+
+	prefix=${prefix:-/usr}	
+
+	# OpenMPI is the only supported runner
 	if ! valid_mpich_prefix
 	then
-		find_mpi $prefix/mpi/gcc/openmpi*qlc
+		find_mpi $prefix/mpi/gcc/openmpi*hfi
 	fi
 	if ! valid_mpich_prefix
 	then
-		find_mpi $prefix/mpi/gcc/mvapich-1*qlc
+		find_mpi $prefix/mpi/gcc/openmpi*
 	fi
-	if ! valid_mpich_prefix
-	then
-		find_mpi $prefix/mpi/gcc/mvapich2-*qlc
-	fi
-	# Only PSM MPIs are allowed
-	#if ! valid_mpich_prefix
-	#then
-	#	find_mpi $prefix/mpi/gcc/openmpi*
-	#fi
-	#if ! valid_mpich_prefix
-	#then
-	#	find_mpi $prefix/mpi/gcc/mvapich-1*
-	#fi
-	#if ! valid_mpich_prefix
-	#then
-	#	find_mpi $prefix/mpi/gcc/mvapich2-*
-	#fi
-	#if ! valid_mpich_prefix
-	#then
-	#	find_mpi $prefix/mpi/gcc/mvapich-2*
-	#fi
 	if ! valid_mpich_prefix
 	then
 		MPICH_PREFIX=""

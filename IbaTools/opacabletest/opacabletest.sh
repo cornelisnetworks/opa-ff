@@ -32,7 +32,7 @@
 
 # start and stop HFI-SW and/or ISL cable Bit Error Rate tests
 
-tempfile=`mktemp`
+tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
 trap "rm -f $tempfile" EXIT
 
@@ -44,10 +44,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
@@ -239,13 +236,13 @@ start_isl()
 {
 	(
 		get_fmconfig
-		if [ ! -x $IFS_FM_BASE/bin/fm_opacmdall ]
+		if [ ! -x $IFS_FM_BASE/bin/fm_cmdall ]
 		then
-			echo "opacabletest: Error: $IFS_FM_BASE/bin/fm_opacmdall not found" >&2
+			echo "opacabletest: Error: $IFS_FM_BASE/bin/fm_cmdall not found" >&2
 			rm -f $tempfile
 			exit 1
 		fi
-		$IFS_FM_BASE/bin/fm_opacmdall smLooptestFastModeStart
+		$IFS_FM_BASE/bin/fm_cmdall smLooptestFastModeStart
 	)
 	res=$?
 	[ $res -ne 0 ] && exit $res
@@ -261,20 +258,20 @@ stop_fi()
 {
 	# we use patterns so the pkill doesn't kill this script or opacmdall itself
 	# use an echo at end so exit status is good
-	$BINDIR/opacmdall -p -T 60 "pkill -9 -f '[m]pi_groupstress'; echo -n"
+	/usr/sbin/opacmdall -p -T 60 "pkill -9 -f '[m]pi_groupstress'; echo -n"
 }
 
 stop_isl()
 {
 	(
 		get_fmconfig
-		if [ ! -x $IFS_FM_BASE/bin/fm_opacmdall ]
+		if [ ! -x $IFS_FM_BASE/bin/fm_cmdall ]
 		then
-			echo "opacabletest: Error: $IFS_FM_BASE/bin/fm_opacmdall not found" >&2
+			echo "opacabletest: Error: $IFS_FM_BASE/bin/fm_cmdall not found" >&2
 			rm -f $tempfile
 			exit 1
 		fi
-		$IFS_FM_BASE/bin/fm_opacmdall smLooptestStop
+		$IFS_FM_BASE/bin/fm_cmdall smLooptestStop
 	)
 	res=$?
 	[ $res -ne 0 ] && exit $res

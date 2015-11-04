@@ -127,10 +127,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define I2C_OPASW_PSOC_FAN_ADDR					(uint32)0x8000C200
 
-// TODO: MGMT FPGA has a non standard I2C specification, may need to change 0x20- to 0x04-
-#define I2C_OPASW_PS_ADDR 						(uint32)0x20007200
+#define I2C_OPASW_MGMT_FPGA_ADDR				(uint32)0x80407200	// used for power supply access
 
-#define I2C_BOARD_ID_ADDR						(uint32)0x8000B200
+#define I2C_BOARD_ID_ADDR						I2C_OPASW_MGMT_FPGA_ADDR
 
 #define I2C_OPASW_FAN_SPEED_OFFSET				0x00
 #define I2C_OPASW_FAN_CONFIG_OFFSET				0x02
@@ -142,7 +141,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define I2C_OPASW_FAN_CONFIG_VALUE				0x23
 #define I2C_OPASW_FAN_SPEED_VALUE				0x2e
 
-// TODO: MGMT FPGA has a non standard I2C specification, may need to change 0x00- to 0x0b-
+#define I2C_OPASW_MGMT_FPGA_REG_RD				0x0B
+#define I2C_OPASW_MGMT_FPGA_REG_WR				0x02
+
+#define I2C_OPASW_BD_MGMT_FPGA_OFFSET 			0x0000
 #define I2C_OPASW_PS_MGMT_FPGA_OFFSET 			0x0021
 
 #define PSU1_MGMT_FPGA_BIT_PRESENT               0
@@ -150,7 +152,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PSU2_MGMT_FPGA_BIT_PRESENT               2
 #define PSU2_MGMT_FPGA_BIT_PWR_OK                3
 
-#define ASIC_VERSION_MEM_ADDR					0x00001040
+#define ASIC_VERSION_MEM_ADDR					0x000012D6
+
+#define ASIC_ARCH_VERSION_MASK					0x00FF0000
+#define ASIC_ARCH_VERSION_SHFT					16
+#define ASIC_CHIP_NAME_MASK						0x0000FF00
+#define ASIC_CHIP_NAME_SHFT						8
+#define ASIC_CHIP_STEP_MASK						0x000000F0
+#define ASIC_CHIP_STEP_SHFT						4
+#define ASIC_CHIP_REV_MASK						0x0000000F
+#define ASIC_CHIP_REV_SHFT						0
+
+#define ASIC_CHIP_STEP_A						0
+#define ASIC_CHIP_STEP_B						1
+#define ASIC_CHIP_STEP_C						2
 
 #define OPASW_MODULE							1
 
@@ -241,26 +256,6 @@ typedef struct opasw_ini_descriptor_get_s {
 	uint32		portMetaDataLen;
 	uint32		portDataAddr;
 	uint32		portDataLen;
-	uint32		ffeMetaDataAddr;
-	uint32		ffeMetaDataLen;
-	uint32		ffeDataAddr;
-	uint32		ffeDataLen;
-	uint32		ffeIndirectMetaDataAddr;
-	uint32		ffeIndirectMetaDataLen;
-	uint32		ffeIndirectDataAddr;
-	uint32		ffeIndirectDataLen;
-	uint32		qsfpMetaDataAddr;
-	uint32		qsfpMetaDataLen;
-	uint32		qsfpDataAddr;
-	uint32		qsfpDataLen;
-	uint32		customMetaDataAddr;
-	uint32		customMetaDataLen;
-	uint32		customDataAddr;
-	uint32		customDataLen;
-	uint32		dfeMetaDataAddr;
-	uint32		dfeMetaDataLen;
-	uint32		dfeDataAddr;
-	uint32		dfeDataLen;
 } opasw_ini_descriptor_get_t;
 
 typedef struct opasw_i2c_access_s {
@@ -357,7 +352,7 @@ FSTATUS getFwVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *ma
 FSTATUS getVPDInfo(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 module, vpd_fruInfo_rec_t *vpdInfo);
 FSTATUS getFanSpeed(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 fanNum, uint32 *fanSpeed);
 FSTATUS getPowerSupplyStatus(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 psNum, uint32 *psStatus);
-FSTATUS getAsicVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint16 *asicVersion);
+FSTATUS getAsicVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 *asicVersion);
 FSTATUS getBoardID(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *boardID);
 FSTATUS doPingSwitch(struct oib_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad);
 FSTATUS getEMFWFileNames(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, char *fwFileName, char *inibinFileName);

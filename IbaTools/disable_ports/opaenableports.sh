@@ -33,7 +33,7 @@
 
 # reenable the specified set of ports
 
-tempfile=`mktemp`
+tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
 trap "rm -f $tempfile" EXIT
 
@@ -145,7 +145,7 @@ enable_ports()
 	lidmap=$CONFIG_DIR/lidmap$suffix.csv
 
 	# generate lidmap
-	/sbin/opaextractlids $port_opts > $lidmap
+	/usr/sbin/opaextractlids $port_opts > $lidmap
 	if [ ! -s $lidmap ]
 	then
 		echo "opaenableports: Unable to determine fabric lids" >&2
@@ -163,7 +163,7 @@ enable_ports()
 			skipped=$(( $skipped + 1))
 		else
 			echo "Enabling port: $desc:$port"
-			/sbin/opaportconfig $port_opts -l $lid -m $port enable
+			/usr/sbin/opaportconfig $port_opts -l $lid -m $port enable
 
 			if [ $? = 0 ]
 			then

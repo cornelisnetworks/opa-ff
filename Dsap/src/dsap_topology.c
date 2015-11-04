@@ -573,7 +573,8 @@ FSTATUS dsap_update_src_port(dsap_src_port_t *src_port, struct dsap_port *port)
 	struct dsap_ep *ep;
 
 	strncpy(src_port->hfi_name, port->dev->device->verbs->device->name,
-		sizeof(src_port->hfi_name));
+		sizeof(src_port->hfi_name)-1);
+	src_port->hfi_name[sizeof(src_port->hfi_name)-1]=0;
 	src_port->port_num = port->port->port_num;
 	src_port->base_lid = port->lid;
 	src_port->lmc = port->lmc;

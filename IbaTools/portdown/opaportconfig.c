@@ -52,7 +52,6 @@ PrintDest_t g_dest;
 uint64		g_mkey=0;                           // SMA M-Key
 uint8       g_verbose = 0;                      // Debug aid: data turn on global verbose => debugging
 uint32      debug_level = 0;                    // Debug aid: User passed-in clo; 0 = portdown; 1 = open-ib_utils; 2=debug for mad calls
-uint8       g_enableExtLinkSpeedsSupport = 0;   // Enable SMA Extended Link Speeds support for IB mode
 struct      oib_port *g_oib_port;
 uint16_t    mgmt_pkey = OIB_DEFAULT_PKEY;
 
@@ -86,12 +85,6 @@ enum cmd_t {
 } cmd;
 char *cmdname;
 
-// IB mode is only for engineering use on simulators
-enum mode_t {
-	MODE_IB,
-	MODE_STL
-} mode = MODE_STL;
-
 /**
  * set the routing portion of the SMP packet
  * 
@@ -100,25 +93,6 @@ enum mode_t {
  * @param port
  * @param smp
  */
-void set_ib_route(unsigned dlid, unsigned slid, unsigned port, SMP* smp)
-{
-	if (dlid) {
-		// lid routed to a remote node
-		smp->common.MgmtClass = MCLASS_SM_LID_ROUTED;
-		smp->common.AttributeModifier = port;
-	} else {
-		// local port control
-		smp->common.MgmtClass = MCLASS_SM_DIRECTED_ROUTE;
-		smp->common.AttributeModifier = port;
-		smp->SmpExt.DirectedRoute.DrSLID = LID_PERMISSIVE;
-		smp->SmpExt.DirectedRoute.DrDLID = LID_PERMISSIVE;
-		smp->common.u.DR.HopCount = 0;
-		smp->common.u.DR.HopPointer = 0;
-		smp->common.u.DR.s.D = 0;
-	}
-
-	smp->common.u.DR.s.Status = 0;
-}
 void set_route(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
 {
 	if (dlid) {
@@ -149,77 +123,6 @@ void set_route(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
  * 
  * @return int
  */
-int get_ib_port_info(unsigned dlid, unsigned slid, unsigned port, SMP* smp)
-{
-	uint32 attrmod = 0;
-	SMP smp2;
-	PORT_INFO* pPortInfo = (PORT_INFO *)&(smp->SmpExt.DirectedRoute.SMPData);
-	PORT_INFO* pPortInfo2 = (PORT_INFO *)&(smp2.SmpExt.DirectedRoute.SMPData);
-
-	MemoryClear(smp, sizeof(*smp));
-	smp->common.BaseVersion = IB_BASE_VERSION;
-	smp->common.ClassVersion = IB_SM_CLASS_VERSION;
-	set_ib_route(dlid, slid, port, smp);	// MgmtClass and AttributeModifier
-	smp->common.mr.AsReg8 = 0;
-	smp->common.mr.s.Method = MMTHD_GET;
-	smp->common.AttributeID = MCLASS_ATTRIB_ID_PORT_INFO;
-	smp->M_Key = g_mkey;
-	// rest of fields should be ignored for a Get, zero'ed above
-
-	if (cmd == portdown || cmd == portconfig || g_verbose)
-	{
-		if (dlid) {
-			VRBSE_PRINT("Sending Get(PortInfo) to LID 0x%04x Port %u\n", dlid, port);
-		} else {
-			VRBSE_PRINT("Sending Get(PortInfo) to Port %u\n", port);
-		}
-	}
-
-	// Get initial PortInfo and check CapabilityMask.IsExtendedSpeedsSupported
-	smp2 = *smp;
-	BSWAP_PORT_INFO(pPortInfo2, TRUE);
-	BSWAP_SMP_HEADER(&smp2);
-
-	{
-		struct oib_mad_addr addr = {
-			lid : dlid,
-			qpn : 0,
-			qkey : QP1_WELL_KNOWN_Q_KEY,
-			pkey : mgmt_pkey
-		};
-        size_t recv_size = sizeof(smp2);
-		if (FSUCCESS == oib_send_recv_mad_no_alloc(g_oib_port, (uint8_t *)&smp2, sizeof(smp2), &addr,
-											(uint8_t *)&smp2, &recv_size, RESP_WAIT_TIME, 0)) {
-			BSWAP_PORT_INFO(pPortInfo2, TRUE);
-			if (g_enableExtLinkSpeedsSupport && pPortInfo2->CapabilityMask.s.IsExtendedSpeedsSupported)
-				attrmod |= MCLASS_ATTRIB_MOD_SUPPORTS_EXT_SPEEDS;
-		}
-	}
-
-	// Get PortInfo with adjusted AttributeModifier
-	smp->common.AttributeModifier |= attrmod;
-	BSWAP_PORT_INFO(pPortInfo, TRUE);
-	BSWAP_SMP_HEADER(smp);
-
-	{
-		struct oib_mad_addr addr = {
-			lid : dlid,
-			qpn : 0,
-			qkey : QP1_WELL_KNOWN_Q_KEY,
-			pkey : mgmt_pkey
-		};
-        size_t recv_size = sizeof(*smp);
-		if (FSUCCESS != oib_send_recv_mad_no_alloc(g_oib_port, (uint8_t *)smp, sizeof(*smp), &addr,
-											(uint8_t *)smp, &recv_size, RESP_WAIT_TIME, 0)) {
-			fprintf(stderr, "Failed to send MAD or receive response MAD\n");
-			return FALSE;
-		}
-	}
-
-	BSWAP_SMP_HEADER(smp);
-	BSWAP_PORT_INFO(pPortInfo, attrmod ? TRUE : FALSE);
-	return TRUE;
-}
 int get_port_info(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
 {
 	STL_PORT_INFO* pPortInfo;
@@ -249,7 +152,7 @@ int get_port_info(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
 		struct oib_mad_addr addr = {
 			lid : dlid,
 			qpn : 0,
-			qkey : QP1_WELL_KNOWN_Q_KEY,
+			qkey : 0,
 			pkey : mgmt_pkey
 		};
         size_t recv_size = sizeof(*smp);
@@ -280,14 +183,6 @@ int get_port_info(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
  * @param portGuid
  * @param smp
  */
-void show_ib_port_info(const char* title, EUI64 portGuid, SMP* smp)
-{
-	PORT_INFO* pPortInfo = (PORT_INFO *)&(smp->SmpExt.DirectedRoute.SMPData);
-
-	printf("%s\n", title);
-	printf("Port %u Info\n", smp->common.AttributeModifier & 0xFF);
-	PrintPortInfo(&g_dest, 3, pPortInfo, portGuid, 1);
-}
 void show_port_info(const char* title, EUI64 portGuid, STL_SMP* smp)
 {
 	STL_PORT_INFO* pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
@@ -311,50 +206,6 @@ void show_port_info(const char* title, EUI64 portGuid, STL_SMP* smp)
  * @param portGuid
  * @param getInfo
  */
-void initialize_ib_set_port_info(unsigned dlid, unsigned slid, unsigned nlid, unsigned port,
-							  SMP *smp, uint state, uint physstate, uint8_t width, uint8_t speed,
-							  EUI64 portGuid, const SMP *getInfo)
-{
-	uint32 attrmod = 0;
-	PORT_INFO* pPortInfo = (PORT_INFO *)&(smp->SmpExt.DirectedRoute.SMPData);
-
-	if (! getInfo) {
-		// no Get data available
-		MemoryClear(smp, sizeof(*smp));
-		pPortInfo->LID = 0;
-		pPortInfo->MasterSMLID = 0;
-		pPortInfo->Subnet.Timeout = 8;
-		// hopefully other invalid fields won't stop port state change
-	} else {
-		PORT_INFO* pPortInfo2 = (PORT_INFO *)&(getInfo->SmpExt.DirectedRoute.SMPData);
-		// use attributes in get as starting point
-		MemoryCopy(smp, getInfo, sizeof(*smp));
-		if (g_enableExtLinkSpeedsSupport && pPortInfo2->CapabilityMask.s.IsExtendedSpeedsSupported)
-			attrmod |= MCLASS_ATTRIB_MOD_SUPPORTS_EXT_SPEEDS;
-		//pPortInfo->LID = 0;
-	}
-
-	smp->common.BaseVersion = IB_BASE_VERSION;
-	smp->common.ClassVersion = IB_SM_CLASS_VERSION;
-	smp->common.mr.AsReg8 = 0;
-	smp->common.mr.s.Method = MMTHD_SET;
-	set_ib_route(dlid, slid, port, smp);	// MgmtClass and AttributeModifier
-	smp->common.AttributeID = MCLASS_ATTRIB_ID_PORT_INFO;
-	smp->common.AttributeModifier |= attrmod;
-	smp->M_Key = g_mkey;
-
-	pPortInfo->LID = nlid;
-	pPortInfo->Link.PortState = state;
-	pPortInfo->Link.PortPhysicalState = physstate;
-	pPortInfo->LinkWidth.Enabled = width;
-	pPortInfo->Link.DownDefaultState = IB_PORT_PHYS_NOP;
-	PortDataSetLinkSpeedEnabledSplit(speed, pPortInfo);
-	pPortInfo->s3.OperationalVL = 0;
-	if (g_verbose)
-		show_ib_port_info("Setting Port State:", dlid?0:portGuid, smp);
-	BSWAP_PORT_INFO(pPortInfo, TRUE);
-	BSWAP_SMP_HEADER(smp);
-}
 void initialize_set_port_info(STL_LID_32 dlid, STL_LID_32 slid, int have_nlid, STL_LID_32 nlid, uint8_t port,
 							  STL_SMP *smp, uint8_t state, uint8_t physstate, uint16_t width, uint16_t speed, uint8_t crc, 
 							  EUI64 portGuid, uint16_t pkey8b, const STL_SMP *getInfo)
@@ -417,77 +268,6 @@ void initialize_set_port_info(STL_LID_32 dlid, STL_LID_32 slid, int have_nlid, S
  * 
  * @return int
  */
-FSTATUS send_ib_port_info(unsigned hfi, EUI64 portGuid, unsigned dlid, unsigned dport, unsigned slid, unsigned port, SMP* smp)
-{
-	FSTATUS  fstatus = FSUCCESS;
-	const char *str;
-	char hfistr[40];
-	SMP returnedSmp;
-
-	switch (cmd)
-	{
-		case portenable:
-			str = "Enabling Port";
-			break;
-		case portdisable:
-			str = "Disabling Port";
-			break;
-		case portbounce:
-			str = "Bouncing Port";
-			break;
-		case portinfo:
-			str = "Querying Port";
-			break;
-		default:
-			str = "Sending Set(PortInfo) to Port";
-			break;
-	}
-
-	if (hfi > 0)
-	{
-		sprintf(hfistr, " on HFI %u", hfi);
-	} else {
-		hfistr[0] = '\0';
-	}
-	if (dlid) {
-		printf("%s at LID 0x%04x Port %u via local port %u (0x%016"PRIx64")%s\n",
-				str, dlid, dport, port, portGuid, hfistr);
-	} else {
-		printf("%s %u (0x%016"PRIx64")%s\n", str, port, portGuid, hfistr);
-	}
-
-	MemoryClear(&returnedSmp, sizeof(returnedSmp));
-
-	{
-		struct oib_mad_addr addr = {
-			lid : dlid,
-			qpn : 0,
-			qkey : QP1_WELL_KNOWN_Q_KEY,
-			pkey : mgmt_pkey
-		};
-        size_t recv_size = sizeof(returnedSmp);
-		fstatus = oib_send_recv_mad_no_alloc(g_oib_port, (uint8_t *)smp, sizeof(*smp), &addr,
-											(uint8_t *)&returnedSmp, &recv_size, RESP_WAIT_TIME, 0);
-	}
-	if (FSUCCESS == fstatus)
-	{
-		PORT_INFO* pPortInfo = (PORT_INFO *)&(returnedSmp.SmpExt.DirectedRoute.SMPData);
-		BSWAP_SMP_HEADER(&returnedSmp);
-		if (returnedSmp.common.u.DR.s.Status != MAD_STATUS_SUCCESS) {
-			fprintf(stderr, "MAD returned with Bad Status: %s\n",
-							iba_mad_status_msg2(returnedSmp.common.u.DR.s.Status));
-		}
-		if (g_verbose)
-		{
-			BSWAP_PORT_INFO(pPortInfo, TRUE);
-			printf("status: 0x%x\n", returnedSmp.common.u.NS.Status.AsReg16);
-			show_ib_port_info("New Port State:", dlid?0:portGuid, &returnedSmp);
-		}
-	}
-
-	return fstatus;
-}
-
 FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dport, STL_LID_32 slid, uint8_t lport)
 {
 	FSTATUS  fstatus = FSUCCESS;
@@ -535,7 +315,7 @@ FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID_32 dli
 		struct oib_mad_addr addr = {
 			lid : dlid,
 			qpn : 0,
-			qkey : QP1_WELL_KNOWN_Q_KEY,
+			qkey : 0,
 			pkey : mgmt_pkey
 		};
         size_t recv_size = sizeof(returnedSmp);
@@ -606,7 +386,7 @@ FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dp
 		struct oib_mad_addr addr = {
 			lid : dlid,
 			qpn : 0,
-			qkey : QP1_WELL_KNOWN_Q_KEY,
+			qkey : 0,
 			pkey : mgmt_pkey
 		};
         size_t recv_size = sizeof(returnedSmp);
@@ -674,148 +454,6 @@ struct {
 	port_in_hfi : 0,
 	pkey8b : 0	// value to program in 8B and 10B pkey in PortInfo
 };
-
-static void run_ib_mode(void)
-{
-	SMP setPortInfo;
-	SMP getPortInfo;
-
-	/* Verify we have valid IB values */
-	if (param.dlid & 0xffff0000) {
-		fprintf (stderr,"%s: Error: IB dlid out of range: %x\n", cmdname, param.dlid);
-		exit(1);
-	}
-	if (param.slid & 0xffff0000) {
-		fprintf (stderr,"%s: Error: IB slid out of range: %x\n", cmdname, param.slid);
-		exit(1);
-	}
-	if (param.have_nlid && (param.nlid & 0xffff0000)) {
-		fprintf (stderr,"%s: Error: IB nlid out of range: %x\n", cmdname, param.nlid);
-		exit(1);
-	}
-	if (param.speed != 0xffff && param.speed & 0xff00) {
-		fprintf (stderr,"%s: Error: invalid IB speed: %x\n", cmdname, param.speed);
-		exit(1);
-	}
-	if (param.width != 0xffff && param.width & 0xff00) {
-		fprintf (stderr,"%s: Error: invalid IB width: %x\n", cmdname, param.width);
-		exit(1);
-	}
-
-	memset( &setPortInfo, 0, sizeof(setPortInfo));
-	memset( &getPortInfo, 0, sizeof(getPortInfo));
-
-	if (param.cycle && (param.physstate == IB_PORT_PHYS_NOP
-				  || param.physstate == IB_PORT_PHYS_POLLING))
-	{
-		// for param.speed or param.width change to take effect, need to take port down
-		// then back up
-		param.physstate = IB_PORT_PHYS_DISABLED;
-	} else {
-		param.cycle = 0;	// explicit param.physstate of sleep or down, do not cycle port
-	}
-
-	if (param.get) {
-		PORT_INFO* pPortInfo;
-
-		if (get_ib_port_info((IB_LID)param.dlid, (IB_LID)param.slid,
-						param.dlid?param.dport:param.port_in_hfi, &getPortInfo)) {
-			if (g_verbose || cmd == portinfo)
-				show_ib_port_info("Present Port State:", param.dlid?0:param.portGuid, &getPortInfo);
-		} else {
-			exit(1);
-		}
-		if (cmd == portinfo)
-			return;
-
-		pPortInfo = (PORT_INFO *)&(getPortInfo.SmpExt.DirectedRoute.SMPData);
-
-		if (cmd == portenable
-		    && !param.cycle
-		    && (pPortInfo->Link.PortPhysicalState == IB_PORT_PHYS_POLLING
-			    || pPortInfo->Link.PortPhysicalState == IB_PORT_PHYS_LINKUP)) {
-			/* no need to "enable" a port which is already "enabled" */
-			return;
-		}
-
-		{
-			if (param.speed != IB_LINK_SPEED_NOP && param.speed != 255) {
-				uint8 supported = PortDataGetLinkSpeedSupportedCombined(pPortInfo);
-				uint8 unsupported = (param.speed & ~supported);
-				if (unsupported) {
-					fprintf(stderr, "%s: ignoring unsupported speed bits: 0x%x (port supports 0x%x)\n",
-						cmdname, unsupported, supported);
-					fprintf (stderr,"%s: Error: Unsupported speed: %u\n",
-						cmdname, param.speed);
-					exit(1);
-				}
-			}
-			if (param.width != STL_LINK_WIDTH_NOP && param.width != 255) {
-				uint8 unsupported = (param.width & ~pPortInfo->LinkWidth.Supported);
-				if (unsupported) {
-					fprintf(stderr, "%s: ignoring unsupported width bits: 0x%x (port supports 0x%x)\n",
-						cmdname, unsupported, pPortInfo->LinkWidth.Supported);
-					fprintf(stderr, "%s: Error: Unsupported width: %u\n",
-						cmdname, param.width);
-					exit(1);
-				}
-			}
-			if (param.physstate != 0xff) {
-				switch (param.physstate) {
-				case IB_PORT_PHYS_NOP:
-				case IB_PORT_PHYS_DISABLED:
-				case IB_PORT_PHYS_POLLING:
-					break;
-				default:
-					fprintf(stderr, "%s: Error: Unsupported Port Physical State: %u\n",
-						cmdname, param.physstate);
-					exit(1);
-				}
-			}
-		}
-		initialize_ib_set_port_info((IB_LID)param.dlid, (IB_LID)param.slid, (IB_LID)param.nlid,
-								param.dlid?param.dport:param.port_in_hfi,
-								&setPortInfo, param.state, param.physstate,
-								(uint8_t)param.width, (uint8_t)param.speed, param.portGuid, &getPortInfo);
-	} else {
-		initialize_ib_set_port_info((IB_LID)param.dlid, (IB_LID)param.slid, (IB_LID)param.nlid,
-								param.dlid?param.dport:param.port_in_hfi,
-								&setPortInfo, param.state, param.physstate,
-								(uint8_t)param.width, (uint8_t)param.speed, param.portGuid, NULL);
-	}
-
-	if (FSUCCESS == send_ib_port_info(param.hfi, param.portGuid, (IB_LID)param.dlid, param.dport, (IB_LID)param.slid,
-								param.port_in_hfi, &setPortInfo)) {
-		while (param.repeat--) {
-			sleep(1);
-			if (FSUCCESS != send_ib_port_info(param.hfi, param.portGuid, (IB_LID)param.dlid, param.dport,
-								(IB_LID)param.slid, param.port_in_hfi, &setPortInfo)) {
-				exit(1);
-			}
-		}
-	} else {
-		fprintf(stderr, "%s: Unable to send port information\n", cmdname);
-	}
-	
-	if (param.cycle) {
-		param.physstate = IB_PORT_PHYS_POLLING;
-		if (param.get) {
-			initialize_ib_set_port_info((IB_LID)param.dlid, (IB_LID)param.slid, (IB_LID)param.nlid,
-									param.dlid?param.dport:param.port_in_hfi,
-									&setPortInfo, param.state, param.physstate,
-									(uint8_t)param.width, (uint8_t)param.speed, param.portGuid, &getPortInfo);
-		} else {
-			initialize_ib_set_port_info((IB_LID)param.dlid, (IB_LID)param.slid, (IB_LID)param.nlid,
-									param.dlid?param.dport:param.port_in_hfi,
-									&setPortInfo, param.state, param.physstate,
-									(uint8_t)param.width, (uint8_t)param.speed, param.portGuid, NULL);
-		}
-		if (FSUCCESS != send_ib_port_info(param.hfi, param.portGuid, (IB_LID)param.dlid,
-									param.dport, (IB_LID)param.slid,
-									param.port_in_hfi, &setPortInfo))
-			exit(1);
-	}
-}
 
 static void run_stl_mode(void)
 {
@@ -968,24 +606,21 @@ static enum cmd_t determine_invocation(const char *argv0, char **command, const 
 
 	if ( (strcmp(*command, "opaportconfig") == 0))  {
 		static struct option long_options[] = {
-			{"ib", 0, 0, 0},
 			{"pkey8b", 0, 0, 1}, // undoc opt to override pkey cntrl for testing
 			{"help", 0, 0, 2}, // display help text.
 			{0,0,0,0}
 		};
 		*longopts = long_options;
 		rc = portconfig;
-		*options = "l:m:h:p:r:zS:P:s:w:c:K:vxL:";
+		*options = "l:m:h:p:r:zS:P:s:w:c:K:vL:";
 	} else if ( (strcmp(*command, "opaportinfo") == 0)) {
 		static struct option long_options[] = {
-			{"ib", 0, 0, 0},
-			// {"", 0, 0, 1}, // unused in portinfo.
 			{"help", 0, 0, 2}, // display help text.
 			{0,0,0,0}
 		};
 		*longopts = long_options;
 		rc = portinfo;
-		*options = "l:m:h:p:K:vx";
+		*options = "l:m:h:p:K:v";
 	} else {
 		fprintf(stderr, "Invalid command name '%s' (must be opaportinfo or opaportconfig\n",
 			*command);
@@ -1071,38 +706,18 @@ void Usage(void)
 		fprintf(stderr, "          3 - armed\n");
 		fprintf(stderr, "          4 - active\n");
 		fprintf(stderr, "    -P physstate - new physical State (default is 0)\n");
+		fprintf(stderr, "       Note: Not all transitions are valid.\n");
 		fprintf(stderr, "          0 - no-op\n");
 		fprintf(stderr, "          2 - polling\n");
 		fprintf(stderr, "          3 - disabled\n");
-	if (mode != MODE_IB)	// bad indentation on purpose
-		fprintf(stderr, "         11 - Phy-Test\n");
-	else
-		fprintf(stderr, "         11 - Phy-Test (STL only)\n");
+		fprintf(stderr, "         11 - Phy-Test - current physstate must be 'disabled'\n");
         fprintf(stderr, "    -s speed - new link speeds enabled (default is 0)\n");
         fprintf(stderr, "        To enable multiple speeds, use sum of desired speeds\n"); 
-        fprintf(stderr, "          0 - no-op\n"); 
-	if (mode == MODE_IB) {	// bad indentation on purpose
-        fprintf(stderr, "       IB: (only valid with --ib)\n");
-		fprintf(stderr, "          1 - 0x0001 - 2.5 Gb/s\n");
-        fprintf(stderr, "          2 - 0x0002 - 5 Gb/s\n"); 
-        fprintf(stderr, "          4 - 0x0004 - 10 Gb/s\n"); 
-        fprintf(stderr, "         16 - 0x0010 - 14 Gb/s\n"); 
-        fprintf(stderr, "         32 - 0x0020 - 25 Gb/s\n"); 
-        fprintf(stderr, "         55 - 0x0037 - All IB supported\n");
-        fprintf(stderr, "       STL:\n"); 
-	}
-        fprintf(stderr, "          1 - 0x0001 - 12.5 Gb/s\n"); 
+        fprintf(stderr, "          0 - no-op\n");
         fprintf(stderr, "          2 - 0x0002 - 25 Gb/s\n"); 
         fprintf(stderr, "    -w width - new link widths enabled (default is 0)\n");
         fprintf(stderr, "        To enable multiple widths, use sum of desired widths\n");
         fprintf(stderr, "          0 - no-op\n");
-	if (mode == MODE_IB) {	// bad indentation on purpose
-        fprintf(stderr, "       IB:\n"); 
-        fprintf(stderr, "          1 - 0x01 - 1x\n"); 
-        fprintf(stderr, "          2 - 0x02 - 4x\n");
-        fprintf(stderr, "            - 0x03 - IB All Supported\n");
-        fprintf(stderr, "       STL:\n"); 
-	}
         fprintf(stderr, "          1 - 0x01 - 1x\n"); 
         fprintf(stderr, "          2 - 0x02 - 2x\n"); 
         fprintf(stderr, "          4 - 0x04 - 3x\n"); 
@@ -1136,12 +751,6 @@ void Usage(void)
 	}
 
 	fprintf(stderr, "\n");
-	if (mode == MODE_IB) {
-		fprintf(stderr, "  LEGACY IB options\n");
-		fprintf(stderr, "\n");
-		fprintf(stderr, "    --ib - issue IB PortInfo MAD's\n");
-		fprintf(stderr, "    -x - enable extended link speeds support\n");
-	}
 
 	exit(2);
 }
@@ -1171,9 +780,6 @@ int main(int argc, char** argv)
 	while (-1 != (c = getopt_long(argc, argv, options, longopts, &opt_idx))) {
 		switch (c) {
 			/* Process Long options */
-			case 0: /* --ib */
-				mode = MODE_IB;
-				break;
 			case 1: /* --pkey8b */
 				param.pkey8b=0x8001;
 				break;
@@ -1181,9 +787,6 @@ int main(int argc, char** argv)
 				Usage();
 				break;
 			/* End Long options */
-        	case 'x': /* modifies --ib */
-                g_enableExtLinkSpeedsSupport=1;
-                break;
 			case 'v':
 				g_verbose++;
 				if (g_verbose>2) oib_set_dbg(stderr);
@@ -1301,7 +904,7 @@ int main(int argc, char** argv)
             param.physstate = IB_PORT_PHYS_POLLING;
 		} else if ( (strcmp(subcmd, "disable") == 0))  {
             cmd = portdisable;
-            param.state = (mode == MODE_IB ? IB_PORT_DOWN : IB_PORT_NOP);
+            param.state = IB_PORT_NOP;
             param.physstate = IB_PORT_PHYS_DISABLED;
 		} else if ( (strcmp(subcmd, "bounce") == 0))  {
 			cmd = portbounce;
@@ -1323,11 +926,7 @@ int main(int argc, char** argv)
 
 	initialize_oib(param.hfi, port, &param.port_in_hfi, &param.slid, &param.portGuid);
 
-	if (mode == MODE_IB) {
-		run_ib_mode();
-	} else {
-		run_stl_mode();
-	}
+	run_stl_mode();
 
 	return 0;
 }	// int main(int argc, char** argv)

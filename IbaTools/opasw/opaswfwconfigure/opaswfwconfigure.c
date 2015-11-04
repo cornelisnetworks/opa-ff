@@ -742,7 +742,7 @@ int buildNewIniBin(U8_t *binBuffer)
 	U32_t oldPortBaseIdx;
 	U32_t newPortBaseIdx;
 	U32_t startBit;
-	U8_t segBuffer[1024];
+	U8_t segBuffer[2048];
 	int segSize;
 	U32_t nodeBuf[16];
 	U32_t guidBuf[2];
@@ -972,21 +972,21 @@ int adjustEepromOffset(int totalOffset, uint16 *newOffset, uint32 *newLocation) 
 	*newOffset = totalOffset % STL_MAX_EEPROM_SIZE;
 	int numEeprom = totalOffset / STL_MAX_EEPROM_SIZE;
 	switch (numEeprom) {
-	case 1:
+	case 0:
 		*newLocation = g_gotSecondary ? STL_PRR_SEC_EEPROM1_ADDR : STL_PRR_PRI_EEPROM1_ADDR;
 		break;
-	case 2:
+	case 1:
 		*newLocation = g_gotSecondary ? STL_PRR_SEC_EEPROM2_ADDR : STL_PRR_PRI_EEPROM2_ADDR;
 		break;
-	case 3:
+	case 2:
 		*newLocation = g_gotSecondary ? STL_PRR_SEC_EEPROM3_ADDR : STL_PRR_PRI_EEPROM3_ADDR;
 		break;
-	case 4:
+	case 3:
 		*newLocation = g_gotSecondary ? STL_PRR_SEC_EEPROM4_ADDR : STL_PRR_PRI_EEPROM4_ADDR;
 		break;
 	default:
 		*newLocation = g_gotSecondary ? STL_PRR_SEC_EEPROM1_ADDR : STL_PRR_PRI_EEPROM1_ADDR;
-		numEeprom = 1;
+		numEeprom = 0;
 		break;
 	}
 	return numEeprom;
@@ -994,17 +994,48 @@ int adjustEepromOffset(int totalOffset, uint16 *newOffset, uint32 *newLocation) 
 
 uint32 getLocationOfEeprom(int eeprom) {
 	switch (eeprom) {
-	case 1:
+	case 0:
 		return g_gotSecondary ? STL_PRR_SEC_EEPROM1_ADDR : STL_PRR_PRI_EEPROM1_ADDR;
-	case 2:
+	case 1:
 		return g_gotSecondary ? STL_PRR_SEC_EEPROM2_ADDR : STL_PRR_PRI_EEPROM2_ADDR;
-	case 3:
+	case 2:
 		return g_gotSecondary ? STL_PRR_SEC_EEPROM3_ADDR : STL_PRR_PRI_EEPROM3_ADDR;
-	case 4:
+	case 3:
 		return g_gotSecondary ? STL_PRR_SEC_EEPROM4_ADDR : STL_PRR_PRI_EEPROM4_ADDR;
 	default:
 		return g_gotSecondary ? STL_PRR_SEC_EEPROM1_ADDR : STL_PRR_PRI_EEPROM1_ADDR;
 	}
+}
+
+FSTATUS EepromRW(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID,
+	void *mad, uint8 jumbo, uint8 method, int timeout, uint32 locationDescriptor,
+	uint16 dataLen, uint16 dataOffset, uint8 *data)
+{
+	FSTATUS				status;
+	uint32				maxXfer = 128;
+	uint32				remainingLen;
+	uint32				xferLen;
+	uint32				secondary;
+
+	remainingLen = dataLen;
+	secondary = locationDescriptor & 0x00010000;
+
+	if (secondary && (method == MMTHD_SET))
+		locationDescriptor &= 0x7fffffff;
+
+	while (remainingLen) {
+		xferLen = MIN(remainingLen, maxXfer);
+
+		status = sendI2CAccessMad(port, path, sessionID, mad, jumbo, method, timeout, locationDescriptor, xferLen, dataOffset, data);
+		if (status != FSUCCESS) {
+			return(status);
+		}
+		dataOffset += xferLen;
+		data += xferLen;
+		remainingLen -= xferLen;
+	}
+
+	return FSUCCESS;
 }
 
 int main(int argc, char *argv[])
@@ -1104,13 +1135,13 @@ int main(int argc, char *argv[])
 
 			case 'f':
 				g_fileParam = 1;
-				memcpy(inibinFileName, optarg, FNAME_SIZE);
+				strncpy(inibinFileName, optarg, FNAME_SIZE-1);
 				inibinFileName[FNAME_SIZE-1] = 0;
 				break;
 
 			case 'd':
 				g_dirParam = 1;
-				strncpy(dirName, optarg, DNAME_SIZE);
+				strncpy(dirName, optarg, DNAME_SIZE-1);
 				dirName[DNAME_SIZE-1]=0;
 				break;
 
@@ -1203,7 +1234,10 @@ int main(int argc, char *argv[])
 	// Read in the inibin file and parse it
 
 	if (g_dirParam) {
-		chdir(dirName);
+		if (chdir(dirName) < 0) {
+			fprintf(stderr, "Error: cannot change directory to %s: %s\n", dirName, strerror(errno));
+			goto err_exit;
+		}
 		strcpy(inibinFileName, PRR_INIBIN);
 		/*
 		if (module == VIPER_MODULE) 
@@ -1284,14 +1318,13 @@ int main(int argc, char *argv[])
 	currentEeprom = adjustEepromOffset(totalEepromOffset, &eepromOffset, &locationDescriptor);
 
 	if (overwriteFactoryDefaults == 0) {
-		status = sendI2CAccessMad(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_GET, 
+		status = EepromRW(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_GET, 
 								  g_respTimeout, locationDescriptor, sizeof(trailer),
 								  eepromOffset, trailer);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: Error: Failed to get eeprom trailer - status %d\n", cmdName, status);
 			goto err_exit;
 		}
-
 		U32_t signature = ntoh32(*(U32_t *)&trailer[0]);
 		U32_t len = ntoh32(*(U32_t *)&trailer[4]);
 		U32_t crc = ntoh32(*(U32_t *)&trailer[12]);
@@ -1367,7 +1400,7 @@ int main(int argc, char *argv[])
 
 		if (g_verbose)
 			printf("Sending offset %d (0x%04x)\n", eepromOffset, eepromOffset);
-		status = sendI2CAccessMad(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_SET, 
+		status = EepromRW(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_SET, 
 								  g_respTimeout, locationDescriptor,
 								  xferLen, eepromOffset, ep);
 		if (status == FSUCCESS) {
@@ -1388,6 +1421,7 @@ int main(int argc, char *argv[])
 #endif
 
 	// Read back and calculate checksum
+	usleep(250000);
 	ep = eepromBuffer2;
 	status = FSUCCESS;
 	byteCount = 0;
@@ -1406,7 +1440,7 @@ int main(int argc, char *argv[])
 		if (g_verbose)
 			printf("Reading offset %d (0x%04x)\n", eepromReadOffset, eepromReadOffset);
 
-		status = sendI2CAccessMad(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_GET, 
+		status = EepromRW(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_GET, 
 								  g_respTimeout, locationDescriptor,
 								  xferLen, eepromReadOffset, ep);
 		if (status == FSUCCESS) {

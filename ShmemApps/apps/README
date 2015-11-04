@@ -1,3 +1,38 @@
+Copyright (c) 2015, Intel Corporation
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met: 
+- Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer. 
+- Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution. 
+- Neither the name of Intel Corporation nor the names of its contributors may
+  be used to endorse or promote products derived from this software without
+  specific prior written permission. 
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL INTEL, THE COPYRIGHT OWNER OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+EXPORT LAWS: THIS LICENSE ADDS NO RESTRICTIONS TO THE EXPORT LAWS OF YOUR
+JURISDICTION. It is licensee's responsibility to comply with any export
+regulations applicable in licensee's jurisdiction. Under CURRENT (May 2000)
+U.S. export regulations this software is eligible for export from the U.S.
+and can be downloaded by or otherwise exported or reexported worldwide EXCEPT
+to U.S. embargoed destinations which include Cuba, Iraq, Libya, North Korea,
+Iran, Syria, Sudan, Afghanistan and any other country to which the U.S. has
+embargoed goods and services.
+
 This package contains SHMEM applications and packages for testing and 
 evaluation.
 
@@ -5,12 +40,10 @@ evaluation.
 MPICH_PREFIX ENVIRONMENT VARIABLE:
 ----------------------------------
 
-By default, these applications will be run with the 1st MPI found to
-be installed on the system.  If multiple MPIs are found the 1st in the list
-below is used:
-   openmpi for PSM (eg. openmpi*qlc)
-   mvapich1 for PSM (eg. mvapich-1*qlc)
-   mvapich2 for PSM (eg. mvapich2-*qlc)
+The SHMEM samples require an MPI implementation to run. The
+OpenSHMEM/GASNet samples at present only supports OpenMPI. The
+select_mpi script will look for OpenMPI directories matching either
+openmpi*hfi (first) or openmpi* (second).
 
 If desired the MPICH_PREFIX may be exported to control the selection.
 Alternatively, a .prefix file can be created in this directory with the
@@ -20,20 +53,32 @@ SHMEM_PREFIX ENVIRONMENT VARIABLE:
 ----------------------------------
 
 By default, Make will build these programs with SHMEM installed in
-/usr/shmem/intel
+/usr/shmem/gcc/openshmem-1.0h-hfi. SHMEM_PREFIX is also used by the
+run_* scripts to define where bin/oshrun is found.
 
-You can override this by setting SHMEM_PREFIX in your .bashrc file. For
+You can override this by setting SHMEM_PREFIX in your environment. For
 example:
 
-export SHMEM_PREFIX=/my/copy_of_intel_shmem
+export SHMEM_PREFIX=/my/copy_of_shmem
 
+The run_* sample runner scripts set SHMEM_PREFIX from a file
+.shmem_prefix in the current working directory if that
+SHMEM_PREFIX is not already set. If not present, SHMEM_PREFIX will
+default to /usr/shmem/gcc/openshmem-1.0h-hfi.
 
+GASNET LIBRARIES AND BINARIES:
+----------------------------------
+
+The GASNet libraries and binaries must be installed and present in the
+environment in order to run the SHMEM samples. The path to the GASNet
+binaries should be added to the PATH environment variable while the path
+to the GASNet libraries should be added to the LD_LIBRARY_PATH variable.
 
 USING THESE TOOLS WITH MPI-SELECTOR:
 ------------------------------------
 
 SHMEM applications are started using the mpirun from an MPI
-implementation such as openmpi, mvapich or mvapich2.
+implementation such as openmpi, or mvapich2.
 
 In OFED (and Intel IFS), the normal method of selecting an MPI is to
 use the mpi-selector commands (type "man mpi-selector-menu" and "man
@@ -65,7 +110,7 @@ RUNNING THE TEST PROGRAMS:
 --------------------------
 
 A "run_*" script is provided for each application/benchmark.  These
-scripts assume the existence of a local "mpi_hosts" file [alternate name can be
+scripts assume the existence of a local "shmem_hosts" file [alternate name can be
 exported in MPI_HOSTS if desired] (in mpirun mode)
 and that mpd is already running (if you're using mvapich2 in mpd mode).
 For example, to run the barrier test, simply type:
@@ -74,19 +119,3 @@ For example, to run the barrier test, simply type:
 
 The scripts log the output of the SHMEM programs to the 
 /opt/opa/src/shmem_apps/logs directory.
-
-
-
-TUNING THE TEST PROGRAMS:
--------------------------
-
-MVAPICH, MVAPICH2 and OpenMPI are all extremely tunable, and a complete
-discussion of all their settings is far beyond the scope of this document.
-However, these scripts provide examples of tuning the different MPIs
-as a way to get started.
-
-When using Intel IFS, you can tune any of the MPIs (and the underlying PSM
-layer). See the files shmem.mvapich.params, shmem.mvapich2.params and
-shmem.openmpi.params for details.
-Each file describes the syntax of the parameter file, provides a link to
-online documentation on how to tune that MPI and several sample parameters.

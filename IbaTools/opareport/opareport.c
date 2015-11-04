@@ -369,100 +369,140 @@ void ShowLinkBriefSummaryHeader(Format_t format, int indent, int detail)
 	}
 }
 
-void ShowCableSummary(STL_CABLE_INFO *pCable, Format_t format, int indent, int detail)
+void ShowCableSummary(uint8_t *pCableData, Format_t format, int indent, int detail, uint8 portType)
 {
 	// CableInfo is organized in 128-byte pages but is stored in 64-byte half-pages
-	// STL_CABLE_INFO cableInfo[PORTDATA_CABLEINFO_SIZE], where PORTDATA_CABLEINFO_SIZE is 4 (topology.h)
-	// To avoid compiler warnings, data pointer is used for the data portion of the STL_CABLE_INFO
-	uint8 *pCableData = pCable->Data;
+	// For portType STANDARD we use STL_CIB_STD_START_ADDR to STL_CIB_STD_END_ADDR
+	// inclusive (128-255)
+	// To avoid compiler warnings, data pointer is used for the data portion
+	// of the STL_CABLE_INFO
+	STL_CABLE_INFO_STD *pCableInfo = (STL_CABLE_INFO_STD *)pCableData;
+	boolean cableLenValid;			// Copper cable length valid
+	char tempStr[STL_CIB_STD_MAX_STRING + 1] = {'\0'};
+	char tempBuf[129];
 
-	char tempStr[17] = {'\0'}; // 17th for null char, in case all 16 spaces are used by long names.
+	cableLenValid = IsStlCableInfoCableLengthValid(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector);
 
 	switch (format) {
-		case FORMAT_TEXT:
-			printf("%*sCableInfo:\n", indent, "");
-			printf("%*sIdentifier: %x\n", indent+4, "", pCableData[128]);
-			printf("%*sExtIdentifier: %x\n", indent+4, "", pCableData[129] & 0xC0);
-			printf("%*sConnector: %x\n", indent+4, "", pCableData[130]);
-			printf("%*sNominalBR: %x\n", indent+4, "", pCableData[140]);
-			printf("%*sSMFLength: %u\n", indent+4, "", pCableData[142]);
-			printf("%*sOM3Length: %u\n", indent+4, "", pCableData[143]);
-			printf("%*sOM2Length: %u\n", indent+4, "", pCableData[144]);
-			printf("%*sOM1Length: %u\n", indent+4, "", pCableData[145]);
-			printf("%*sCopperLength: %u\n", indent+4, "", pCableData[146]);
-			printf("%*sDeviceTech: %s\n", indent+4, "", StlCableInfoDevTechToText(pCableData[147]));
-			memcpy(tempStr, &pCableData[148], 16);
+	case FORMAT_TEXT:
+		switch (portType) {
+		case STL_PORT_TYPE_STANDARD:
+			printf("%*sQSFP Interpreted CableInfo:\n", indent, "");
+			printf("%*sIdentifier: 0x%x\n", indent+4, "", pCableInfo->ident);
+			printf( "%*sExtIdentifier: %s\n", indent+4, "",
+				StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high) );
+			printf("%*sConnector: 0x%x\n", indent+4, "", pCableInfo->connector);
+			StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
+			printf("%*sNominalBR: %s\n", indent+4, "", tempBuf);
+			printf("%*sOM2Length: %um\n", indent+4, "", StlCableInfoOM2Length(pCableInfo->len_om2));
+			printf("%*sOM3Length: %um\n", indent+4, "", StlCableInfoOM3Length(pCableInfo->len_om3));
+			printf("%*sOM4Length: %um\n", indent+4, "", StlCableInfoOM4Length(pCableInfo->len_om4, cableLenValid));
+			StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+			printf("%*sDeviceTech: %s\n", indent+4, "", tempBuf);
+			memcpy(tempStr, pCableInfo->vendor_name, sizeof(pCableInfo->vendor_name));
+			tempStr[sizeof(pCableInfo->vendor_name)] = '\0';
 			printf("%*sVendorName: %s\n", indent+4, "", tempStr);
-			printf("%*sExtendedModule: %s\n", indent+4, "", StlCableInfoOutputModuleCodeToText(pCableData[164]));
-			printf("%*sVendorOUI: %x\n", indent+4, "", pCableData[165]);
-			memcpy(tempStr, &pCableData[168], 16);
+			printf( "%*sVendorOUI: 0x%02x%02x%02x\n", indent+4, "", pCableInfo->vendor_oui[0],
+				pCableInfo->vendor_oui[1], pCableInfo->vendor_oui[2] );
+			memcpy(tempStr, pCableInfo->vendor_pn, sizeof(pCableInfo->vendor_pn));
+			tempStr[sizeof(pCableInfo->vendor_pn)] = '\0';
 			printf("%*sVendorPN: %s\n", indent+4, "", tempStr);
-			memcpy(tempStr, &pCableData[184], 2);
-			tempStr[2] = '\0';
+			memcpy(tempStr, pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev));
+			tempStr[sizeof(pCableInfo->vendor_rev)] = '\0';
 			printf("%*sVendorRev: %s\n", indent+4, "", tempStr);
-			printf("%*sOpticalWavelength: %x\n", indent+4, "", *((uint32_t*)&pCableData[186]));
-			printf("%*sMaxCaseTemp: %u\n", indent+4, "", pCableData[190]);
-			printf("%*sCC_BASE: %u\n", indent+4, "", pCableData[191]);
-			printf("%*sRxOutputAmpProg: %s\n", indent+4, "", (pCableData[193] & 1) ? "True" : "False");
-			printf("%*sRxSquelchDisImp: %s\n", indent+4, "", (pCableData[194] & 1<<3) ? "True" : "False");
-			printf("%*sRxOutputDisCap: %s\n", indent+4, "", (pCableData[194] & 1<<2) ? "True" : "False");
-			printf("%*sTxSquelchDisImp: %s\n", indent+4, "", (pCableData[194] & 1<<1) ? "True" : "False");
-			printf("%*sTxSquelchImp: %s\n", indent+4, "", (pCableData[194] & 1) ? "True" : "False");
-			printf("%*sMemPage02Provided: %s\n", indent+4, "", (pCableData[195] & 1<<7) ? "True" : "False");
-			printf("%*sMemPage01Provided: %s\n", indent+4, "", (pCableData[195] & 1<<6) ? "True" : "False");
-			printf("%*sTxDisImp: %s\n", indent+4, "", (pCableData[195] & 1<<4) ? "True" : "False");
-			printf("%*sTxFaultRepImp: %s\n", indent+4, "", (pCableData[195] & 1<<3) ? "True" : "False");
-			printf("%*sLOSReportImp: %s\n", indent+4, "", (pCableData[195] & 1<<1) ? "True" : "False");
-			memcpy(tempStr, &pCableData[196], 16);
+			if (detail > 1) {
+				printf("%*sMaxCaseTemp: %u C\n", indent+4, "", pCableInfo->max_case_temp);
+				printf("%*sCC_BASE: 0x%x\n", indent+4, "", pCableInfo->cc_base);
+			}
+			if (detail > 2) {
+				printf("%*sTxCDR: %s\n", indent+4, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.tx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl));
+				printf("%*sTxInpEqFixProg: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "True" : "False");
+				printf("%*sTxInpEqAutoAdp: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_autadp_cap ? "True" : "False");
+				printf("%*sTxSquelchImp: %s\n", indent+4, "", pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "True" : "False");
+				printf("%*sRxCDR: %s\n", indent+4, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.rx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl));
+				printf("%*sRxOutpEmphFixProg: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.rx_outemp_fixpro_cap ? "True" : "False");
+				printf("%*sRxOutpAmplFixProg: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.rx_outamp_fixpro_cap ? "True" : "False");
+				printf("%*sMemPage02Provided: %s\n", indent+4, "", pCableInfo->memtx_opt_pagesquel.s.page_2 ? "True" : "False");
+				printf("%*sMemPage01Provided: %s\n", indent+4, "", pCableInfo->memtx_opt_pagesquel.s.page_1 ? "True" : "False");
+			}
+			memcpy(tempStr, pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn));
+			tempStr[sizeof(pCableInfo->vendor_sn)] = '\0';
 			printf("%*sVendorSN: %s\n", indent+4, "", tempStr);
-			memcpy(tempStr, &pCableData[212], 6);
-			tempStr[6] = '\0';
-			printf("%*sDataCode: %s\n", indent+4, "", tempStr);
-			memcpy(tempStr, &pCableData[218], 2);
-			tempStr[2] = '\0';
-			printf("%*sLotCode: %s\n", indent+4, "", tempStr);
-			printf("%*sCC_EXT: %x\n", indent+4, "", pCableData[223]);
+			StlCableInfoDateCodeToText(pCableInfo->date_code, tempBuf);
+			printf("%*sDateCode: %s\n", indent+4, "", tempBuf);
+			if (detail > 1) {
+				printf("%*sCC_EXT: 0x%x\n", indent+4, "", pCableInfo->cc_ext);
+			}
+			printf("%*sCertCableFlag: %s\n", indent+4, "", IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? "Y" : "N");
+			if (detail > 2) {
+				printf("%*sReachClass: %u\n", indent+4, "", pCableInfo->vendor2);
+			}
+			printf("%*sCertDataRates: %s\n", indent+4, "", StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate));
 			break;
-		case FORMAT_XML:
+		case STL_PORT_TYPE_SI_PHOTONICS:
+		default:
+			//printf("%*sCableInfo: N/A for Port Type: %s \n", indent, "", StlPortTypeToText(portType));
+			break;
+		}
+		break;
+	case FORMAT_XML:
+		switch (portType) {
+		case STL_PORT_TYPE_STANDARD:
 			printf("%*s<CableInfo>\n", indent, "");
-			XmlPrintHex("Identifier", pCableData[128], indent+4);
-			XmlPrintHex("ExtIdentifier", pCableData[129] & 0xC0, indent+4);
-			XmlPrintHex("Connector", pCableData[130], indent+4);
-			XmlPrintHex("NominalBR", pCableData[140], indent+4);
-			XmlPrintDec("SMFLength", pCableData[142], indent+4);
-			XmlPrintDec("OM3Length", pCableData[143], indent+4);
-			XmlPrintDec("OM2Length", pCableData[144], indent+4);
-			XmlPrintDec("OM1Length", pCableData[145], indent+4);
-			XmlPrintDec("CopperLength", pCableData[146], indent+4);
-			XmlPrintStr("DeviceTech", StlCableInfoDevTechToText(pCableData[147]), indent+4);
-			XmlPrintStrLen("VendorName", (char*)&pCableData[148], 16, indent+4);
-			XmlPrintStr("ExtendedModule", StlCableInfoOutputModuleCodeToText(pCableData[164]), indent+4);
-			XmlPrintHex("VendorOUI", pCableData[165], indent+4);
-			XmlPrintStrLen("VendorPN", (char*)&pCableData[168], 16, indent+4);
-			XmlPrintStrLen("VendorRev", (char*)&pCableData[184], 2, indent+4);
-			XmlPrintHex("OpticalWavelength", *((uint32_t*)&pCableData[186]), indent+4);
-			XmlPrintDec("MaxCaseTemp", pCableData[190], indent+4);
-			XmlPrintDec("CC_BASE", pCableData[191], indent+4);
-			XmlPrintStr("RxOutputAmpProg", (pCableData[193] & 1) ? "True" : "False", indent+4);
-			XmlPrintStr("RxSquelchDisImp", (pCableData[194] & 1<<3) ? "True" : "False", indent+4);
-			XmlPrintStr("RxOutputDisCap", (pCableData[194] & 1<<2) ? "True" : "False", indent+4);
-			XmlPrintStr("TxSquelchDisImp", (pCableData[194] & 1<<1) ? "True" : "False", indent+4);
-			XmlPrintStr("TxSquelchImp", (pCableData[194] & 1) ? "True" : "False", indent+4);
-			XmlPrintStr("MemPage02Provided", (pCableData[195] & 1<<7) ? "True" : "False", indent+4);
-			XmlPrintStr("MemPage01Provided", (pCableData[195] & 1<<6) ? "True" : "False", indent+4);
-			XmlPrintStr("TxDisImp", (pCableData[195] & 1<<4) ? "True" : "False", indent+4);
-			XmlPrintStr("TxFaultRepImp", (pCableData[195] & 1<<3) ? "True" : "False", indent+4);
-			XmlPrintStr("LOSReportImp", (pCableData[195] & 1<<1) ? "True" : "False", indent+4);
-			XmlPrintStrLen("VendorSN", (char*)&pCableData[196], 16, indent+4);
-			XmlPrintStrLen("DataCode", (char*)&pCableData[212], 6, indent+4);
-			XmlPrintStrLen("LotCode", (char*)&pCableData[218], 2, indent+4);
-			XmlPrintHex("CC_EXT", pCableData[223], indent+4);
+			XmlPrintHex("Identifier", pCableInfo->ident, indent+4);
+			XmlPrintStr("ExtIdentifier", StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high), indent+4);
+			XmlPrintHex("Connector", pCableInfo->connector, indent+4);
+			StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
+			XmlPrintStr("NominalBR", tempBuf, indent+4);
+			XmlPrintDec("OM2Length", StlCableInfoOM2Length(pCableInfo->len_om2), indent+4);
+			XmlPrintDec("OM3Length", StlCableInfoOM3Length(pCableInfo->len_om3), indent+4);
+			XmlPrintDec("OM4Length", StlCableInfoOM4Length(pCableInfo->len_om4, cableLenValid), indent+4);
+			StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+			XmlPrintStr("DeviceTech", tempBuf, indent+4);
+			XmlPrintStrLen("VendorName", (char*)pCableInfo->vendor_name, sizeof(pCableInfo->vendor_name), indent+4);
+			XmlPrintHex("VendorOUI", (pCableInfo->vendor_oui[0]<<16) + (pCableInfo->vendor_oui[1]<<8) + pCableInfo->vendor_oui[2], indent+4);
+			XmlPrintStrLen("VendorPN", (char*)pCableInfo->vendor_pn, sizeof(pCableInfo->vendor_pn), indent+4);
+			XmlPrintStrLen("VendorRev", (char*)pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev), indent+4);
+			if (detail > 1) {
+				XmlPrintDec("MaxCaseTemp", pCableInfo->max_case_temp, indent+4);
+				XmlPrintHex("CC_BASE", pCableInfo->cc_base, indent+4);
+			}
+			if (detail > 2) {
+				XmlPrintStr("TxCDR", StlCableInfoCDRToText(pCableInfo->ext_ident.s.tx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl), indent+4);
+				XmlPrintStr("TxInpEqFixProg", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "True" : "False", indent+4);
+				XmlPrintStr("TxInpEqAutoAdp", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_autadp_cap ? "True" : "False", indent+4);
+				XmlPrintStr("TxSquelchImp", pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "True" : "False", indent+4);
+				XmlPrintStr("RxCDR", StlCableInfoCDRToText(pCableInfo->ext_ident.s.rx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl), indent+4);
+				XmlPrintStr("RxOutpEmphFixProg", pCableInfo->rxtx_opt_equemp.s.rx_outemp_fixpro_cap ? "True" : "False", indent+4);
+				XmlPrintStr("RxOutpAmplFixProg", pCableInfo->rxtx_opt_equemp.s.rx_outamp_fixpro_cap ? "True" : "False", indent+4);
+				XmlPrintStr("MemPage02Provided", pCableInfo->memtx_opt_pagesquel.s.page_2 ? "True" : "False", indent+4);
+				XmlPrintStr("MemPage01Provided", pCableInfo->memtx_opt_pagesquel.s.page_1 ? "True" : "False", indent+4);
+			}
+			XmlPrintStrLen("VendorSN", (char*)pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn), indent+4);
+			XmlPrintStrLen("DataCode", (char*)pCableInfo->date_code, sizeof(pCableInfo->date_code)-2, indent+4);
+			XmlPrintStrLen("LotCode", (char*)&pCableInfo->date_code[6], 2, indent+4);
+			if (detail > 1) {
+				XmlPrintHex("CC_EXT", pCableInfo->cc_ext, indent+4);
+			}
+			XmlPrintStr("CertCableFlag", IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? "True" : "False", indent+4);
+			if (detail > 2) {
+				XmlPrintHex("ReachClass", pCableInfo->vendor2, indent+4);
+			}
+			XmlPrintStr("CertDataRate", StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate), indent+4);
 			printf("%*s</CableInfo>\n", indent, "");
 			break;
+		case STL_PORT_TYPE_SI_PHOTONICS:
 		default:
+			//printf("%*s<CableInfo>\n", indent, "");
+			//XmlPrintStr("PortTypeNotSupported", StlPortTypeToText(portType), indent+4 );
+			//printf("%*s</CableInfo>\n", indent, "");
 			break;
+		}
+		break;
+	default:
+		break;
 	}	
-}
+}	// End of ShowCableSummary()
 
 // show 1 port in a link in brief 1 line form
 void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
@@ -490,8 +530,8 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			
 		}
 
-		if (detail > 3)
-			ShowCableSummary(portp->cableInfo, FORMAT_TEXT, indent+4, detail);
+		if (detail > 3 && portp->pCableInfoData)
+			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail-3, portp->PortInfo.PortPhyConfig.s.PortType);
 
 		break;
 	case FORMAT_XML:
@@ -517,8 +557,8 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			
 		}
 
-		if (detail > 3)
-			ShowCableSummary(portp->cableInfo, FORMAT_XML, indent+4, detail);
+		if (detail > 3 && portp->pCableInfoData)
+			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail-3, portp->PortInfo.PortPhyConfig.s.PortType);
 
 		break;
 	default:
@@ -1081,7 +1121,7 @@ done:
 	return status;
 }
 
-/* show trace routes for all paths between given node and point */
+/* show trace routes for all paths between given port and node */
 FSTATUS ShowPortNodeTraceRoutes(EUI64 portGuid, PortData *portp1, NodeData *nodep2, Format_t format, int indent, int detail)
 {
 	cl_map_item_t *p;
@@ -1978,24 +2018,24 @@ void ShowPortCounters(STL_PortStatusData_t *pPortStatus, Format_t format, int in
 			pPortStatus->PortMulticastRcvPkts);
 		printf("%*sPerformance: Congestion\n",
 			indent, "");
-		printf("%*s    Xmit Wait             %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitWait);
 		printf("%*s    Congestion Discards   %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->SwPortCongestion);
-		printf("%*s    Xmit Time Congestion  %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitTimeCong);
-		printf("%*s    Mark FECN             %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortMarkFECN);
 		printf("%*s    Rcv FECN              %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->PortRcvFECN);
 		printf("%*s    Rcv BECN              %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->PortRcvBECN);
+		printf("%*s    Mark FECN             %20"PRIu64"\n",
+			indent, "",
+			pPortStatus->PortMarkFECN);
+		printf("%*s    Xmit Time Congestion  %20"PRIu64"\n",
+			indent, "",
+			pPortStatus->PortXmitTimeCong);
+		printf("%*s    Xmit Wait             %20"PRIu64"\n",
+			indent, "",
+			pPortStatus->PortXmitWait);
 		printf("%*sPerformance: Bubbles\n",
 			indent, "");
 		printf("%*s    Rcv Bubble            %20"PRIu64"\n",
@@ -2015,27 +2055,30 @@ void ShowPortCounters(STL_PortStatusData_t *pPortStatus, Format_t format, int in
 
 		printf("%*sErrors: Signal Integrity\n",
 			indent, "");
-		printf("%*s    Local Link Integ Err  %20"PRIu64"\n",
+		printf("%*s    Uncorrectable Errors  %20u\n",	//8 bit
 			indent, "",
-			pPortStatus->LocalLinkIntegrityErrors);
+			pPortStatus->UncorrectableErrors);
+		printf("%*s    Link Downed           %20u\n",	// 32 bit
+			indent, "",
+			pPortStatus->LinkDowned);
 		printf("%*s    Rcv Errors            %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->PortRcvErrors);
 		printf("%*s    Exc. Buffer Overrun   %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->ExcessiveBufferOverruns);
-		printf("%*s    Link Error Recovery   %20u\n",	// 32 bit
-			indent, "",
-			pPortStatus->LinkErrorRecovery);
-		printf("%*s    Link Downed           %20u\n",	// 32 bit
-			indent, "",
-			pPortStatus->LinkDowned);
-		printf("%*s    Uncorrectable Errors  %20u\n",	//8 bit
-			indent, "",
-			pPortStatus->UncorrectableErrors);
 		printf("%*s    FM Config Errors      %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->FMConfigErrors);
+		printf("%*s    Link Error Recovery   %20u\n",	// 32 bit
+			indent, "",
+			pPortStatus->LinkErrorRecovery);
+		printf("%*s    Local Link Integ Err  %20"PRIu64"\n",
+			indent, "",
+			pPortStatus->LocalLinkIntegrityErrors);
+		printf("%*s    Rcv Rmt Phys Err      %20"PRIu64"\n",
+			indent, "",
+			pPortStatus->PortRcvRemotePhysicalErrors);
 
 		printf("%*sErrors: Security\n",
 			indent, "");
@@ -2054,46 +2097,49 @@ void ShowPortCounters(STL_PortStatusData_t *pPortStatus, Format_t format, int in
 		printf("%*s    Xmit Discards         %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->PortXmitDiscards);
-		printf("%*s    Rcv Rmt Phys Err      %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvRemotePhysicalErrors);
 
 		break;
 	case FORMAT_XML:
 		printf("%*s<Performance>\n", indent, "");
+		// Data movement
 		XmlPrintDec64("XmitDataMB", pPortStatus->PortXmitData/FLITS_PER_MB, indent+4);
 		printf("%*s<XmitData>%"PRIu64"</XmitData> <!-- in Flits -->\n",
 			indent+4, "", pPortStatus->PortXmitData);
-		XmlPrintDec64("XmitPkts", pPortStatus->PortXmitPkts, indent+4);
 		XmlPrintDec64("RcvDataMB", pPortStatus->PortRcvData/FLITS_PER_MB, indent+4);
+		XmlPrintDec64("XmitPkts", pPortStatus->PortXmitPkts, indent+4);
 		printf("%*s<RcvData>%"PRIu64"</RcvData> <!-- in Flits -->\n",
 			indent+4, "", pPortStatus->PortRcvData);
 		XmlPrintDec64("RcvPkts", pPortStatus->PortRcvPkts, indent+4);
 		XmlPrintDec64("MulticastXmitPkts", pPortStatus->PortMulticastXmitPkts, indent+4);
 		XmlPrintDec64("MulticastRcvPkts", pPortStatus->PortMulticastRcvPkts, indent+4);
-		XmlPrintDec64("XmitWait", pPortStatus->PortXmitWait, indent+4);
-		XmlPrintDec64("CongDiscards", pPortStatus->SwPortCongestion, indent+4);
-		XmlPrintDec64("RcvFECN", pPortStatus->PortRcvFECN, indent+4);
-		XmlPrintDec64("RcvBECN", pPortStatus->PortRcvBECN, indent+4);
-		XmlPrintDec64("XmitTimeCong", pPortStatus->PortXmitTimeCong, indent+4);
-		XmlPrintDec64("XmitWastedBW", pPortStatus->PortXmitWastedBW, indent+4);
-		XmlPrintDec64("XmitWaitData", pPortStatus->PortXmitWaitData, indent+4);
-		XmlPrintDec64("RcvBubble", pPortStatus->PortRcvBubble, indent+4);
-		XmlPrintDec64("MarkFECN", pPortStatus->PortMarkFECN, indent+4);
-		XmlPrintDec64("RcvConstraintErrors", pPortStatus->PortRcvConstraintErrors, indent+4);
-		XmlPrintDec64("RcvSwitchRelayErrors", pPortStatus->PortRcvSwitchRelayErrors, indent+4);
-		XmlPrintDec64("XmitDiscards", pPortStatus->PortXmitDiscards, indent+4);
-		XmlPrintDec64("XmitConstraintErrors", pPortStatus->PortXmitConstraintErrors, indent+4);
-		XmlPrintDec64("RcvRemotePhysicalErrors", pPortStatus->PortRcvRemotePhysicalErrors, indent+4);
-		XmlPrintDec64("LocalLinkIntegrityErrors", pPortStatus->LocalLinkIntegrityErrors, indent+4);
+		// Signal Integrity and Node/Link Stability
+		XmlPrintDec("LinkQualityIndicator", pPortStatus->lq.s.LinkQualityIndicator, indent+4);
+		XmlPrintDec("UncorrectableErrors", pPortStatus->UncorrectableErrors, indent+4);	// 8 bit
+		XmlPrintDec("LinkDowned", pPortStatus->LinkDowned, indent+4);	// 32 bit
 		XmlPrintDec64("RcvErrors", pPortStatus->PortRcvErrors, indent+4);
 		XmlPrintDec64("ExcessiveBufferOverruns", pPortStatus->ExcessiveBufferOverruns, indent+4);
 		XmlPrintDec64("FMConfigErrors", pPortStatus->FMConfigErrors, indent+4);
 
 		XmlPrintDec("LinkErrorRecovery", pPortStatus->LinkErrorRecovery, indent+4);	// 32 bit
-		XmlPrintDec("LinkDowned", pPortStatus->LinkDowned, indent+4);	// 32 bit
-		XmlPrintDec("UncorrectableErrors", pPortStatus->UncorrectableErrors, indent+4);	// 8 bit
-		XmlPrintDec("LinkQualityIndicator", pPortStatus->lq.s.LinkQualityIndicator, indent+4);
+		XmlPrintDec64("LocalLinkIntegrityErrors", pPortStatus->LocalLinkIntegrityErrors, indent+4);
+		XmlPrintDec64("RcvRemotePhysicalErrors", pPortStatus->PortRcvRemotePhysicalErrors, indent+4);
+		// Security
+		XmlPrintDec64("XmitConstraintErrors", pPortStatus->PortXmitConstraintErrors, indent+4);
+		XmlPrintDec64("RcvConstraintErrors", pPortStatus->PortRcvConstraintErrors, indent+4);
+		// Routing or Down nodes still being sent to
+		XmlPrintDec64("RcvSwitchRelayErrors", pPortStatus->PortRcvSwitchRelayErrors, indent+4);
+		XmlPrintDec64("XmitDiscards", pPortStatus->PortXmitDiscards, indent+4);
+		// Congestion
+		XmlPrintDec64("CongDiscards", pPortStatus->SwPortCongestion, indent+4);
+		XmlPrintDec64("RcvFECN", pPortStatus->PortRcvFECN, indent+4);
+		XmlPrintDec64("RcvBECN", pPortStatus->PortRcvBECN, indent+4);
+		XmlPrintDec64("MarkFECN", pPortStatus->PortMarkFECN, indent+4);
+		XmlPrintDec64("XmitTimeCong", pPortStatus->PortXmitTimeCong, indent+4);
+		XmlPrintDec64("XmitWait", pPortStatus->PortXmitWait, indent+4);
+		// Bubbles
+		XmlPrintDec64("XmitWastedBW", pPortStatus->PortXmitWastedBW, indent+4);
+		XmlPrintDec64("XmitWaitData", pPortStatus->PortXmitWaitData, indent+4);
+		XmlPrintDec64("RcvBubble", pPortStatus->PortRcvBubble, indent+4);
 		printf("%*s</Performance>\n", indent, "");
 		break;
 	default:
@@ -2144,6 +2190,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				else if (pPortInfo->NeighborLinkDownReason)
 					ldr = pPortInfo->NeighborLinkDownReason;
 
+				// SM will have cleared ldr for ports in Armed and Active
 				if (pPortInfo->PortStates.s.PortState == IB_PORT_INIT
 					&& pPortInfo->s3.LinkInitReason) {
 					printf( "%*sLocalPort: %-3d PortState: %-6s (%-13s) PhysState: %-8s\n",
@@ -2151,23 +2198,31 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 							pPortInfo->LocalPortNum,
 							IbPortStateToText(pPortInfo->PortStates.s.PortState),
 							StlLinkInitReasonToText(pPortInfo->s3.LinkInitReason),
-							IbPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState));
-				} else if (pPortInfo->PortStates.s.PortState == IB_PORT_DOWN && ldr) {
+							StlPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState));
+				} else if (pPortInfo->PortStates.s.PortState == IB_PORT_DOWN && ldr && ! g_persist) {
 					printf( "%*sLocalPort: %-3d PortState: %-6s (%-13s) PhysState: %-8s\n",
 							indent+4, "",
 							pPortInfo->LocalPortNum,
 							IbPortStateToText(pPortInfo->PortStates.s.PortState),
 							StlLinkDownReasonToText(ldr),
-							IbPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState));
+							StlPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState));
 				} else {
 					printf( "%*sLocalPort: %-3d PortState: %-6s                 PhysState: %-8s\n",
 						indent+4, "",
 						pPortInfo->LocalPortNum,
 						IbPortStateToText(pPortInfo->PortStates.s.PortState),
-						IbPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState));
+						StlPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState));
 				}
-				printf( "%*sIsSMConfigurationStarted: %-5s\n", indent+4, "", pPortInfo->PortStates.s.IsSMConfigurationStarted?"True":"False");
-				printf( "%*sNeighborNormal: %-5s\n", indent+4, "", pPortInfo->PortStates.s.NeighborNormal?"True":"False");
+				if (pPortInfo->PortStates.s.PortPhysicalState == STL_PORT_PHYS_OFFLINE
+					|| pPortInfo->PortStates.s.PortPhysicalState == IB_PORT_PHYS_DISABLED)
+					
+    				printf("%*sOfflineDisabledReason: %-14s\n",
+    					indent+4, "",
+    					StlPortOfflineDisabledReasonToText(pPortInfo->PortStates.s.OfflineDisabledReason));
+				printf( "%*sIsSMConfigurationStarted: %-5s NeighborNormal: %-5s\n",
+						indent+4, "",
+						pPortInfo->PortStates.s.IsSMConfigurationStarted?"True":"False",
+						pPortInfo->PortStates.s.NeighborNormal?"True":"False");
 			}
 			printf("%*sPortType: %-3s\n", indent+4, "", StlPortTypeToText(pPortInfo->PortPhyConfig.s.PortType));
 			if (g_hard) {
@@ -2275,11 +2330,11 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 					StlLinkWidthToText(pPortInfo->LinkWidth.Supported, buf2, sizeof(buf2)),
 					StlLinkWidthToText(pPortInfo->LinkWidth.Enabled, buf3, sizeof(buf3)));
 			if (g_hard)
-				printf( "%*sLinkWidthDnGrade: Active: Tx: xxxx Rx: xxxx Supported:    %7s  Enabled:    xxxxxxx\n",
+				printf( "%*sLinkWidthDnGrade: Active: Tx: xx Rx: xx Supported:    %7s  Enabled:    xxxxxxx\n",
 					indent+4, "",
 					StlLinkWidthToText(pPortInfo->LinkWidthDowngrade.Supported, buf1, sizeof(buf1)));
 			else
-				printf( "%*sLinkWidthDnGrade: ActiveTx: %2s Rx: %2s Supported:    %7s  Enabled:    %7s\n",
+				printf( "%*sLinkWidthDnGrade: ActiveTx: %2.2s Rx: %2.2s Supported:    %7s  Enabled:    %7s\n",
 					indent+4, "",
 					StlLinkWidthToText(pPortInfo->LinkWidthDowngrade.TxActive, buf1, sizeof(buf1)),
 					StlLinkWidthToText(pPortInfo->LinkWidthDowngrade.RxActive, buf2, sizeof(buf2)),
@@ -2488,7 +2543,8 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 						" No": "Yes");
 		}
 
-		if (detail) ShowCableSummary(portp->cableInfo, FORMAT_TEXT, indent+4, detail);
+		if (detail && portp->pCableInfoData)
+			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail, pPortInfo->PortPhyConfig.s.PortType);
 		break;
 	case FORMAT_XML:
 		printf("%*s<PortInfo id=\"0x%016"PRIx64":%u\">\n", indent, "",
@@ -2535,12 +2591,20 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				XmlPrintHex("PortType_Int", pPortInfo->PortPhyConfig.s.PortType, indent+4);
 
 				XmlPrintStr("PhysState",
-					IbPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState),
+					StlPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState),
 					indent+4);
 				XmlPrintDec("PhysState_Int",
 					pPortInfo->PortStates.s.PortPhysicalState, indent+4);
 				XmlPrintStr("IsSMConfigurationStarted", pPortInfo->PortStates.s.IsSMConfigurationStarted?"True":"False", indent+4);
 				XmlPrintStr("NeighborNormal", pPortInfo->PortStates.s.NeighborNormal?"True":"False", indent+4);
+				if (pPortInfo->PortStates.s.PortPhysicalState == STL_PORT_PHYS_OFFLINE
+					|| pPortInfo->PortStates.s.PortPhysicalState == IB_PORT_PHYS_DISABLED) {
+				XmlPrintStr("OfflineDisabledReason",
+    				StlPortOfflineDisabledReasonToText(pPortInfo->PortStates.s.OfflineDisabledReason),
+					indent+4);
+				XmlPrintDec("OfflineDisabledReason_Int",
+    				pPortInfo->PortStates.s.OfflineDisabledReason, indent+4);
+				}
 			}
 			if (g_hard) {
 				// noop
@@ -2636,16 +2700,14 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 					pPortInfo->LinkSpeed.Enabled, indent+4);
 			}
 			
-			if (g_hard) {
-				XmlPrintStr("PortLinkModeSupported", 
+			XmlPrintStr("PortLinkModeSupported", 
 				StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Supported, buf1,
 				sizeof(buf1)), indent+4);	
+				
+			if (! g_hard) {	
 				XmlPrintStr("PortLinkModeActive", 
-				StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Active, buf1,
-				sizeof(buf1)), indent+4);	
-			}
-			else
-			{
+					StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Active, buf1,
+					sizeof(buf1)), indent+4);	
 				XmlPrintStr("PortLinkModeEnabled",
 					StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Enabled, buf1, 
 					sizeof(buf1)), indent+4);	
@@ -2742,27 +2804,26 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 			} else {
 				XmlPrintHex16( "DiagCode", pPortInfo->DiagCode.AsReg16, indent+4);
 			}
-			if (g_hard) {
-				XmlPrintHex16("OverallBufferSpace", pPortInfo->OverallBufferSpace, indent+4);
+			
+			XmlPrintHex16("OverallBufferSpace", pPortInfo->OverallBufferSpace, indent+4);
+			if (! g_hard && ! g_persist) {
+				XmlPrintHex8("LinkDownReason", pPortInfo->LinkDownReason, indent+4);
+				XmlPrintHex8("NeighborLinkDownReason", pPortInfo->NeighborLinkDownReason, indent+4);
 			}
-			XmlPrintHex8("LinkDownReason", pPortInfo->LinkDownReason, indent+4);
-			XmlPrintHex8("NeighborLinkDownReason", pPortInfo->NeighborLinkDownReason, indent+4);
 			if (! g_hard ) {
 				XmlPrintStr("ActiveOptimize", pPortInfo->PortMode.s.IsActiveOptimizeEnabled?"On":"Off", indent+4);
 				XmlPrintStr("PassThrough", pPortInfo->PortMode.s.IsPassThroughEnabled?"On":"Off", indent+4);
 				XmlPrintStr("VLMarker", pPortInfo->PortMode.s.IsVLMarkerEnabled?"On":"Off", indent+4);
 			}
 			
-			if (g_hard) {
-				XmlPrintDec("FlitCtrlInterleaveDistanceMax", pPortInfo->FlitControl.Interleave.s.DistanceSupported,indent+4);
+			XmlPrintDec("FlitCtrlInterleaveDistanceMax", pPortInfo->FlitControl.Interleave.s.DistanceSupported,indent+4);
+			if (! g_hard) {
 				XmlPrintDec("MaxNestLevelRxSupported", pPortInfo->FlitControl.Interleave.s.MaxNestLevelRxSupported,indent+4);
-			} else {
 				XmlPrintDec("FlitControlInterleaveDistance", pPortInfo->FlitControl.Interleave.s.DistanceEnabled, indent+4);
 			}
 
-			if (g_hard) {
-				XmlPrintDec("SmallPktLimitMax", pPortInfo->FlitControl.Preemption.MaxSmallPktLimit, indent+4);
-			} else {
+			XmlPrintDec("SmallPktLimitMax", pPortInfo->FlitControl.Preemption.MaxSmallPktLimit, indent+4);
+			if (! g_hard) {
 				XmlPrintDec("SmallPktLimit", pPortInfo->FlitControl.Preemption.SmallPktLimit, indent+4);
 				XmlPrintDec("PreemptionLimit", pPortInfo->FlitControl.Preemption.PreemptionLimit, indent+4);
 				XmlPrintDec("MinInitial", pPortInfo->FlitControl.Preemption.MinInitial, indent+4);
@@ -2772,23 +2833,17 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 
 			if (! g_hard )
 				XmlPrintHex32("PortErrorAction", pPortInfo->PortErrorAction.AsReg32, indent+4);
-			if (g_hard)
-			{
-				XmlPrintHex16("VL15Init", pPortInfo->BufferUnits.s.VL15Init, indent+4);
-				XmlPrintHex8("CreditAck", pPortInfo->BufferUnits.s.CreditAck, indent+4);
-				XmlPrintHex8("BufferAlloc", pPortInfo->BufferUnits.s.BufferAlloc, indent+4);
-			}
-			if (g_hard)
-			{
-				XmlPrintHex8("ReplayDepthBuffer", pPortInfo->ReplayDepth.BufferDepth, indent+4);
-				XmlPrintHex8("ReplayDepthWire", pPortInfo->ReplayDepth.WireDepth, indent+4);
-			}
-			else
-				XmlPrintHex8("VL15CreditRate", pPortInfo->BufferUnits.s.VL15CreditRate, indent+4);
+		
+			XmlPrintHex16("VL15Init", pPortInfo->BufferUnits.s.VL15Init, indent+4);
+			XmlPrintHex8("CreditAck", pPortInfo->BufferUnits.s.CreditAck, indent+4);
+			XmlPrintHex8("BufferAlloc", pPortInfo->BufferUnits.s.BufferAlloc, indent+4);
+			XmlPrintHex8("ReplayDepthBuffer", pPortInfo->ReplayDepth.BufferDepth, indent+4);
+			XmlPrintHex8("ReplayDepthWire", pPortInfo->ReplayDepth.WireDepth, indent+4);
 			
-			if (g_hard) {
-				//noop
-			} else {
+			if (! g_hard) {
+				XmlPrintHex8("VL15CreditRate", pPortInfo->BufferUnits.s.VL15CreditRate, indent+4);
+			}
+			if (! g_hard) {
 				XmlPrintStr( "P_KeyEnforcementInbound",
 					pPortInfo->s3.PartitionEnforcementInbound?"On":"Off",
 					indent+4);
@@ -2825,16 +2880,15 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				ShowPortCounters(portp->pPortStatus, format, indent+8, detail-2);
 			}
 		} else {
-			if (g_hard) {
-				// noop
-			} else {
+			if (! g_hard) {
 				XmlPrintLinkWidth("LinkWidthActive",
 					pPortInfo->LinkWidth.Active, indent+4);
 				XmlPrintLinkSpeed("LinkSpeedActive",
 					pPortInfo->LinkSpeed.Active, indent+4);
 			}
 		}
-		if (detail) ShowCableSummary(portp->cableInfo, FORMAT_XML, indent+4, detail);
+		if (detail && portp->pCableInfoData)
+			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail, pPortInfo->PortPhyConfig.s.PortType);
 		printf("%*s</PortInfo>\n", indent, "");
 		break;
 	default:
@@ -2949,7 +3003,8 @@ void ShowNodeSummary(NodeData *nodep, Point *focus, Format_t format, int indent,
 			}
 		}
 	
-		printf("%*s%u Connected Ports%s\n", indent, "", (unsigned)cl_qmap_count(&nodep->Ports), detail?":":"");
+		printf("%*s%u Connected Ports%s\n", indent, "",
+				CountInitializedPorts(&g_Fabric, nodep), detail?":":"");
 		break;
 	case FORMAT_XML:
 		// omit fields which are port specific:
@@ -3044,7 +3099,7 @@ void ShowNodeSummary(NodeData *nodep, Point *focus, Format_t format, int indent,
 			}
 		}
 	
-		XmlPrintDec("ConnectedPorts", (unsigned)cl_qmap_count(&nodep->Ports),
+		XmlPrintDec("ConnectedPorts", CountInitializedPorts(&g_Fabric, nodep),
 						indent+4);
 		break;
 	default:
@@ -3188,13 +3243,14 @@ void ShowSMSummary(SMData *smp, Format_t format, int indent, int detail)
 			} else if (g_persist)
 				XmlPrintDec("Priority",
 						smp->SMInfoRecord.SMInfo.u.s.Priority, indent+4);
-			else
+			else {
 				XmlPrintHex64("SM_Key",
 						smp->SMInfoRecord.SMInfo.SM_Key, indent+4);
 				XmlPrintDec("Priority",
 						smp->SMInfoRecord.SMInfo.u.s.Priority, indent+4);
 				XmlPrintHex32("ActCount",
 						smp->SMInfoRecord.SMInfo.ActCount, indent+4);
+				}
 		}
 		printf("%*s</SM>\n", indent, "");
 		break;
@@ -3546,6 +3602,8 @@ void ShowNodeOtherPortSummary(NodeData *nodep,
 		if (portp->PortNum != port) {
 			ShowOtherPortSummary(nodep, port, format, indent, detail);
 		} else {
+			if (! IsPortInitialized(portp->PortInfo.PortStates))
+				ShowOtherPortSummary(nodep, port, format, indent, detail);
 			p = cl_qmap_next(p);
 		}
 		port++;
@@ -3592,15 +3650,18 @@ void ShowOtherPortsReport(Point *focus, Format_t format, int indent, int detail)
 	other_port_count = 0;
 	for (p=QListHead(&g_Fabric.AllFIs); p != NULL; p = QListNext(&g_Fabric.AllFIs, p)) {
 		NodeData *nodep = (NodeData *)QListObj(p);
+		uint32 initialized_port_count;
 
 		if (! CompareNodePoint(nodep, focus))
 			continue;
-		port_count += cl_qmap_count(&nodep->Ports);
-		if (cl_qmap_count(&nodep->Ports) >= nodep->NodeInfo.NumPorts)
+		initialized_port_count = CountInitializedPorts(&g_Fabric, nodep);
+		port_count += initialized_port_count;
+		if (initialized_port_count >= nodep->NodeInfo.NumPorts)
 			continue;
+		// for FIs otherports will include ports connected to other fabrics
 		if (node_count == 0 && detail)
 			ShowOtherPortSummaryHeader(format, indent+4, detail-1);
-		other_port_count += nodep->NodeInfo.NumPorts - cl_qmap_count(&nodep->Ports);
+		other_port_count += nodep->NodeInfo.NumPorts - initialized_port_count;
 		if (detail)
 			ShowNodeOtherPortSummary(nodep, format, indent+4, detail-1);
 		node_count++;
@@ -3644,23 +3705,23 @@ void ShowOtherPortsReport(Point *focus, Format_t format, int indent, int detail)
 	other_port_count = 0;
 	for (p=QListHead(&g_Fabric.AllSWs); p != NULL; p = QListNext(&g_Fabric.AllSWs, p)) {
 		NodeData *nodep = (NodeData *)QListObj(p);
-		uint32 numports;
+		uint32 initialized_port_count;
 
 		if (! CompareNodePoint(nodep, focus))
 			continue;
-		numports = cl_qmap_count(&nodep->Ports);
+		initialized_port_count = CountInitializedPorts(&g_Fabric, nodep);
 		/* don't count switch port 0 */
-		if (numports) {
+		if (initialized_port_count) {
 			PortData *portp = PARENT_STRUCT(cl_qmap_head(&nodep->Ports), PortData, NodePortsEntry);
-			if (portp->PortNum == 0)
-				numports--;
+			if (portp->PortNum == 0 && IsPortInitialized(portp->PortInfo.PortStates))
+				initialized_port_count--;
 		}
-		port_count += numports;
-		if (numports >= nodep->NodeInfo.NumPorts)
+		port_count += initialized_port_count;
+		if (initialized_port_count >= nodep->NodeInfo.NumPorts)
 			continue;
 		if (node_count == 0 && detail)
 			ShowOtherPortSummaryHeader(format, indent+4, detail-1);
-		other_port_count += nodep->NodeInfo.NumPorts - numports;
+		other_port_count += nodep->NodeInfo.NumPorts - initialized_port_count;
 		if (detail)
 			ShowNodeOtherPortSummary(nodep, format, indent+4, detail-1);
 		node_count++;
@@ -4359,9 +4420,7 @@ void ShowNodeTypeBriefReport(Point *focus, Format_t format, int indent, int deta
 static _inline
 boolean PortCounterBelowThreshold(uint32 value, uint32 threshold)
 {
-	// g_threshold_compare=0 -> worse than (report error if quality < threshold)
-	// g_threshold_compare=1 -> equal or worse (report error if quality <= threshold)
-	return (threshold && (value < (threshold + g_threshold_compare)));
+	return (threshold && value < threshold);
 }
 
 static _inline
@@ -4370,9 +4429,8 @@ boolean PortCounterExceedsThreshold(uint32 value, uint32 threshold)
 	return (threshold && value > threshold - g_threshold_compare);
 }
 
-// TBD - uint64 threshold
 static _inline
-boolean PortCounterExceedsThreshold64(uint64 value, uint32 threshold)
+boolean PortCounterExceedsThreshold64(uint64 value, uint64 threshold)
 {
 	return (threshold && value > threshold - g_threshold_compare);
 }
@@ -4380,7 +4438,6 @@ boolean PortCounterExceedsThreshold64(uint64 value, uint32 threshold)
 // check the last port counters against the new vs threshold
 // returns: TRUE - one or more counters exceed threshold
 //			FALSE - all counters below threshold
-// TBD - uint64 threshold
 static boolean PortCountersExceedThreshold(PortData *portp)
 {
 	STL_PortStatusData_t *pPortStatus = portp->pPortStatus;
@@ -4395,34 +4452,40 @@ static boolean PortCountersExceedThreshold(PortData *portp)
 #define BELOW_THRESHOLD_LQI(field) \
 			PortCounterBelowThreshold(pPortStatus->lq.s.field, g_Thresholds.lq.s.field)
 
+			// Data movement
 	return EXCEEDS_THRESHOLD64(PortXmitData)
-			|| EXCEEDS_THRESHOLD64(PortXmitPkts)
 			|| EXCEEDS_THRESHOLD64(PortRcvData)
+			|| EXCEEDS_THRESHOLD64(PortXmitPkts)
 			|| EXCEEDS_THRESHOLD64(PortRcvPkts)
 			|| EXCEEDS_THRESHOLD64(PortMulticastXmitPkts)
 			|| EXCEEDS_THRESHOLD64(PortMulticastRcvPkts)
-			|| EXCEEDS_THRESHOLD64(PortXmitWait)
+			// Signal Integrity and Node/Link Stability
+			|| BELOW_THRESHOLD_LQI(LinkQualityIndicator)
+			|| EXCEEDS_THRESHOLD(UncorrectableErrors)
+			|| EXCEEDS_THRESHOLD(LinkDowned)
+			|| EXCEEDS_THRESHOLD64(PortRcvErrors)
+			|| EXCEEDS_THRESHOLD64(FMConfigErrors)
+			|| EXCEEDS_THRESHOLD64(ExcessiveBufferOverruns)
+			|| EXCEEDS_THRESHOLD(LinkErrorRecovery)
+			|| EXCEEDS_THRESHOLD64(LocalLinkIntegrityErrors)
+			|| EXCEEDS_THRESHOLD64(PortRcvRemotePhysicalErrors)
+			// Security
+			|| EXCEEDS_THRESHOLD64(PortXmitConstraintErrors)
+			|| EXCEEDS_THRESHOLD64(PortRcvConstraintErrors)
+			// Routing or Down nodes still being sent to
+			|| EXCEEDS_THRESHOLD64(PortRcvSwitchRelayErrors)
+			|| EXCEEDS_THRESHOLD64(PortXmitDiscards)
+			// Congestion
 			|| EXCEEDS_THRESHOLD64(SwPortCongestion)
 			|| EXCEEDS_THRESHOLD64(PortRcvFECN)
 			|| EXCEEDS_THRESHOLD64(PortRcvBECN)
+			|| EXCEEDS_THRESHOLD64(PortMarkFECN)
 			|| EXCEEDS_THRESHOLD64(PortXmitTimeCong)
+			|| EXCEEDS_THRESHOLD64(PortXmitWait)
+			// Bubbles
 			|| EXCEEDS_THRESHOLD64(PortXmitWastedBW)
 			|| EXCEEDS_THRESHOLD64(PortXmitWaitData)
-			|| EXCEEDS_THRESHOLD64(PortRcvBubble)
-			|| EXCEEDS_THRESHOLD64(PortMarkFECN)
-			|| EXCEEDS_THRESHOLD64(FMConfigErrors)
-			|| EXCEEDS_THRESHOLD(UncorrectableErrors)
-			|| BELOW_THRESHOLD_LQI(LinkQualityIndicator)
-			|| EXCEEDS_THRESHOLD(LinkErrorRecovery)
-			|| EXCEEDS_THRESHOLD(LinkDowned)
-			|| EXCEEDS_THRESHOLD64(PortRcvErrors)
-			|| EXCEEDS_THRESHOLD64(PortRcvRemotePhysicalErrors)
-			|| EXCEEDS_THRESHOLD64(PortRcvSwitchRelayErrors)
-			|| EXCEEDS_THRESHOLD64(PortXmitDiscards)
-			|| EXCEEDS_THRESHOLD64(PortXmitConstraintErrors)
-			|| EXCEEDS_THRESHOLD64(PortRcvConstraintErrors)
-			|| EXCEEDS_THRESHOLD64(LocalLinkIntegrityErrors)
-			|| EXCEEDS_THRESHOLD64(ExcessiveBufferOverruns);
+			|| EXCEEDS_THRESHOLD64(PortRcvBubble);
 #undef EXCEEDS_THRESHOLD
 #undef EXCEEDS_THRESHOLD64
 #undef BELOW_THRESHOLD_LQI
@@ -4466,18 +4529,17 @@ void ShowPortCounterExceedingThreshold(const char* field, uint32 value, uint32 t
 	}
 }
 
-// TBD - uint64 threshold
-void ShowPortCounterExceedingThreshold64(const char* field, uint64 value, uint32 threshold, Format_t format, int indent, int detail)
+void ShowPortCounterExceedingThreshold64(const char* field, uint64 value, uint64 threshold, Format_t format, int indent, int detail)
 {
 	if (PortCounterExceedsThreshold64(value, threshold))
 	{
 		switch (format) {
 		case FORMAT_TEXT:
-			printf("%*s%s: %"PRIu64" Exceeds Threshold: %u\n",
+			printf("%*s%s: %"PRIu64" Exceeds Threshold: %"PRIu64"\n",
 				indent, "", field, value, threshold);
 			break;
 		case FORMAT_XML:
-			printf("%*s<%s><Value>%"PRIu64"</Value><Threshold>%u</Threshold></%s>\n",
+			printf("%*s<%s><Value>%"PRIu64"</Value><Threshold>%"PRIu64"</Threshold></%s>\n",
 				indent, "", field, value, threshold, field);
 			break;
 		default:
@@ -4486,8 +4548,7 @@ void ShowPortCounterExceedingThreshold64(const char* field, uint64 value, uint32
 	}
 }
 
-// TBD - uint64 threshold
-void ShowPortCounterExceedingMbThreshold64(const char* field, uint64 value, uint32 threshold, Format_t format, int indent, int detail)
+void ShowPortCounterExceedingMbThreshold64(const char* field, uint64 value, uint64 threshold, Format_t format, int indent, int detail)
 {
 	if (PortCounterExceedsThreshold(value, threshold))
 	{
@@ -4506,7 +4567,6 @@ void ShowPortCounterExceedingMbThreshold64(const char* field, uint64 value, uint
 	}
 }
 
-// TBD - uint64 threshold
 void ShowLinkPortErrorSummary(PortData *portp, Format_t format, int indent, int detail)
 {
 	STL_PortStatusData_t *pPortStatus = portp->pPortStatus;
@@ -4522,34 +4582,40 @@ void ShowLinkPortErrorSummary(PortData *portp, Format_t format, int indent, int 
 			ShowPortCounterExceedingThreshold64(#name, pPortStatus->field, g_Thresholds.field, format, indent, detail)
 #define SHOW_EXCEEDING_MB_THRESHOLD(field, name) \
 			ShowPortCounterExceedingMbThreshold64(#name, pPortStatus->field, g_Thresholds.field, format, indent, detail)
+	// Data movement
 	SHOW_EXCEEDING_MB_THRESHOLD(PortXmitData, XmitData);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitPkts, XmitPkts);
 	SHOW_EXCEEDING_MB_THRESHOLD(PortRcvData, RcvData);
+	SHOW_EXCEEDING_THRESHOLD64(PortXmitPkts, XmitPkts);
 	SHOW_EXCEEDING_THRESHOLD64(PortRcvPkts, RcvPkts);
 	SHOW_EXCEEDING_THRESHOLD64(PortMulticastXmitPkts, MulticastXmitPkts);
 	SHOW_EXCEEDING_THRESHOLD64(PortMulticastRcvPkts, MulticastRcvPkts);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitWait, XmitWait);
+	// Signal Integrity and Node/Link Stability
+	SHOW_BELOW_LQI_THRESHOLD(LinkQualityIndicator, LinkQualityIndicator);
+	SHOW_EXCEEDING_THRESHOLD(LinkDowned, LinkDowned);
+	SHOW_EXCEEDING_THRESHOLD(UncorrectableErrors, UncorrectableErrors);
+	SHOW_EXCEEDING_THRESHOLD64(FMConfigErrors, FMConfigErrors);
+	SHOW_EXCEEDING_THRESHOLD64(PortRcvErrors, RcvErrors);
+	SHOW_EXCEEDING_THRESHOLD64(ExcessiveBufferOverruns, ExcessiveBufferOverruns);
+	SHOW_EXCEEDING_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery);
+	SHOW_EXCEEDING_THRESHOLD64(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
+	SHOW_EXCEEDING_THRESHOLD64(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
+	// Security
+	SHOW_EXCEEDING_THRESHOLD64(PortXmitConstraintErrors, XmitConstraintErrors);
+	SHOW_EXCEEDING_THRESHOLD64(PortRcvConstraintErrors, RcvConstraintErrors);
+	// Routing or Down nodes still being sent to
+	SHOW_EXCEEDING_THRESHOLD64(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors);
+	SHOW_EXCEEDING_THRESHOLD64(PortXmitDiscards, XmitDiscards);
+	// Congestion
 	SHOW_EXCEEDING_THRESHOLD64(SwPortCongestion, CongDiscards);
 	SHOW_EXCEEDING_THRESHOLD64(PortRcvFECN, RcvFECN);
 	SHOW_EXCEEDING_THRESHOLD64(PortRcvBECN, RcvBECN);
+	SHOW_EXCEEDING_THRESHOLD64(PortMarkFECN, MarkFECN);
 	SHOW_EXCEEDING_THRESHOLD64(PortXmitTimeCong, XmitTimeCong);
+	SHOW_EXCEEDING_THRESHOLD64(PortXmitWait, XmitWait);
+	// Bubbles
 	SHOW_EXCEEDING_MB_THRESHOLD(PortXmitWastedBW, XmitWastedBW);
 	SHOW_EXCEEDING_MB_THRESHOLD(PortXmitWaitData, XmitWaitData);
 	SHOW_EXCEEDING_THRESHOLD64(PortRcvBubble, RcvBubble);
-	SHOW_EXCEEDING_THRESHOLD64(PortMarkFECN, MarkFECN);
-	SHOW_EXCEEDING_THRESHOLD64(FMConfigErrors, FMConfigErrors);
-	SHOW_EXCEEDING_THRESHOLD(UncorrectableErrors, UncorrectableErrors);
-	SHOW_BELOW_LQI_THRESHOLD(LinkQualityIndicator, LinkQualityIndicator);
-	SHOW_EXCEEDING_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery);
-	SHOW_EXCEEDING_THRESHOLD(LinkDowned, LinkDowned);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvErrors, RcvErrors);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitDiscards, XmitDiscards);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitConstraintErrors, XmitConstraintErrors);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvConstraintErrors, RcvConstraintErrors);
-	SHOW_EXCEEDING_THRESHOLD64(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
-	SHOW_EXCEEDING_THRESHOLD64(ExcessiveBufferOverruns, ExcessiveBufferOverruns);
 #undef SHOW_BELOW_LQI_THRESHOLD
 #undef SHOW_EXCEEDING_THRESHOLD
 #undef SHOW_EXCEEDING_THRESHOLD64
@@ -4579,34 +4645,46 @@ boolean ShowThresholds(Format_t format, int indent, int detail)
 #define SHOW_MB_THRESHOLD(field, name) \
 	do { if (g_Thresholds.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu MB\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB); break; case FORMAT_XML: printf("%*s<%sMB>%lu</%sMB>\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB, #field); break; default: break; } didoutput = TRUE; } }  while (0)
 
+	// Data movement
 	SHOW_MB_THRESHOLD(PortXmitData, XmitData);
-	SHOW_THRESHOLD(PortXmitPkts, XmitPkts);
 	SHOW_MB_THRESHOLD(PortRcvData, RcvData);
+	SHOW_THRESHOLD(PortXmitPkts, XmitPkts);
 	SHOW_THRESHOLD(PortRcvPkts, RcvPkts);
 	SHOW_THRESHOLD(PortMulticastXmitPkts, MulticastXmitPkts);
 	SHOW_THRESHOLD(PortMulticastRcvPkts, MulticastRcvPkts);
-	SHOW_THRESHOLD(PortXmitWait, XmitWait);
+
+	// Signal Integrity and Node/Link Stability
+	SHOW_THRESHOLD_LQI(LinkQualityIndicator, LinkQualityIndicator);
+	SHOW_THRESHOLD(UncorrectableErrors, UncorrectableErrors);
+	SHOW_THRESHOLD(LinkDowned, LinkDowned);
+	SHOW_THRESHOLD(PortRcvErrors, RcvErrors);
+	SHOW_THRESHOLD(ExcessiveBufferOverruns, ExcessiveBufferOverruns);
+	SHOW_THRESHOLD(FMConfigErrors, FMConfigErrors);
+	SHOW_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery);
+	SHOW_THRESHOLD(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
+	SHOW_THRESHOLD(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
+
+	// Security
+	SHOW_THRESHOLD(PortXmitConstraintErrors, XmitConstraintErrors);
+	SHOW_THRESHOLD(PortRcvConstraintErrors, RcvConstraintErrors);
+
+	// Routing or Down nodes still being sent to
+	SHOW_THRESHOLD(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors);
+	SHOW_THRESHOLD(PortXmitDiscards, XmitDiscards);
+
+	// Congestion
 	SHOW_THRESHOLD(SwPortCongestion, CongDiscards);
 	SHOW_THRESHOLD(PortRcvFECN, RcvFECN);
 	SHOW_THRESHOLD(PortRcvBECN, RcvBECN);
+	SHOW_THRESHOLD(PortMarkFECN, MarkFECN);
 	SHOW_THRESHOLD(PortXmitTimeCong, XmitTimeCong);
+	SHOW_THRESHOLD(PortXmitWait, XmitWait);
+
+	// Bubbles
 	SHOW_MB_THRESHOLD(PortXmitWastedBW, XmitWastedBW);
 	SHOW_MB_THRESHOLD(PortXmitWaitData, XmitWaitData);
 	SHOW_THRESHOLD(PortRcvBubble, RcvBubble);
-	SHOW_THRESHOLD(PortMarkFECN, MarkFECN);
-	SHOW_THRESHOLD(FMConfigErrors, FMConfigErrors);
-	SHOW_THRESHOLD(UncorrectableErrors, UncorrectableErrors);
-	SHOW_THRESHOLD_LQI(LinkQualityIndicator, LinkQualityIndicator);
-	SHOW_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery);
-	SHOW_THRESHOLD(LinkDowned, LinkDowned);
-	SHOW_THRESHOLD(PortRcvErrors, RcvErrors);
-	SHOW_THRESHOLD(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
-	SHOW_THRESHOLD(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors);
-	SHOW_THRESHOLD(PortXmitDiscards, XmitDiscards);
-	SHOW_THRESHOLD(PortXmitConstraintErrors, XmitConstraintErrors);
-	SHOW_THRESHOLD(PortRcvConstraintErrors, RcvConstraintErrors);
-	SHOW_THRESHOLD(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
-	SHOW_THRESHOLD(ExcessiveBufferOverruns, ExcessiveBufferOverruns);
+
 	switch (format) {
 	case FORMAT_TEXT:
 		if (! didoutput)
@@ -4632,34 +4710,45 @@ boolean NeedClearCounters(void)
 #define CHECK_COUNTER(field) \
 	do { needclear |= (0 != g_CounterSelectMask.CounterSelectMask.s.field); } while(0)
 
+	// Data movement
 	CHECK_COUNTER(PortXmitData);
-	CHECK_COUNTER(PortXmitPkts);
 	CHECK_COUNTER(PortRcvData);
+	CHECK_COUNTER(PortXmitPkts);
 	CHECK_COUNTER(PortRcvPkts);
-	CHECK_COUNTER(LinkErrorRecovery);
-	CHECK_COUNTER(LinkDowned);
-	CHECK_COUNTER(PortRcvErrors);
-	CHECK_COUNTER(PortRcvRemotePhysicalErrors);
-	CHECK_COUNTER(PortRcvSwitchRelayErrors);
-	CHECK_COUNTER(PortXmitDiscards);
-	CHECK_COUNTER(PortXmitConstraintErrors);
-	CHECK_COUNTER(PortRcvConstraintErrors);
-	CHECK_COUNTER(LocalLinkIntegrityErrors);
-	CHECK_COUNTER(ExcessiveBufferOverruns);
-
 	CHECK_COUNTER(PortMulticastXmitPkts);
 	CHECK_COUNTER(PortMulticastRcvPkts);
-	CHECK_COUNTER(PortXmitWait);
+
+	// Signal Integrity and Node/Link Stability
+	// LinkQualityIndicator N/A since readonly can't clear
+	CHECK_COUNTER(UncorrectableErrors);
+	CHECK_COUNTER(LinkDowned);
+	CHECK_COUNTER(PortRcvErrors);
+	CHECK_COUNTER(ExcessiveBufferOverruns);
+	CHECK_COUNTER(FMConfigErrors);
+	CHECK_COUNTER(LinkErrorRecovery);
+	CHECK_COUNTER(LocalLinkIntegrityErrors);
+	CHECK_COUNTER(PortRcvRemotePhysicalErrors);
+
+	// Security
+	CHECK_COUNTER(PortXmitConstraintErrors);
+	CHECK_COUNTER(PortRcvConstraintErrors);
+
+	// Routing or Down nodes still being sent to
+	CHECK_COUNTER(PortRcvSwitchRelayErrors);
+	CHECK_COUNTER(PortXmitDiscards);
+
+	// Congestion
 	CHECK_COUNTER(SwPortCongestion);
 	CHECK_COUNTER(PortRcvFECN);
 	CHECK_COUNTER(PortRcvBECN);
+	CHECK_COUNTER(PortMarkFECN);
 	CHECK_COUNTER(PortXmitTimeCong);
+	CHECK_COUNTER(PortXmitWait);
+
+	// Bubbles
 	CHECK_COUNTER(PortXmitWastedBW);
 	CHECK_COUNTER(PortXmitWaitData);
 	CHECK_COUNTER(PortRcvBubble);
-	CHECK_COUNTER(PortMarkFECN);
-	CHECK_COUNTER(FMConfigErrors);
-	CHECK_COUNTER(UncorrectableErrors);
 #undef CHECK_COUNTER
 
 	return needclear;
@@ -4683,34 +4772,40 @@ boolean ShowClearedCounters(Format_t format, int indent, int detail, boolean cle
 #define SHOW_COUNTER(field, name) \
 	do { if (clearall || g_CounterSelectMask.CounterSelectMask.s.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s\n", indent+4, "", #name); break; case FORMAT_XML: printf("%*s<%s></%s>\n", indent+4, "", #name, #name); break; default: break; } didoutput = TRUE; } }  while (0)
 
+	// Data movement
 	SHOW_COUNTER(PortXmitData, XmitData);
-	SHOW_COUNTER(PortXmitPkts, XmitPkts);
 	SHOW_COUNTER(PortRcvData, RcvData);
+	SHOW_COUNTER(PortXmitPkts, XmitPkts);
 	SHOW_COUNTER(PortRcvPkts, RcvPkts);
-	SHOW_COUNTER(LinkErrorRecovery, LinkErrorRecovery);
-	SHOW_COUNTER(LinkDowned, LinkDowned);
-	SHOW_COUNTER(PortRcvErrors, RcvErrors);
-	SHOW_COUNTER(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
-	SHOW_COUNTER(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors);
-	SHOW_COUNTER(PortXmitDiscards, XmitDiscards);
-	SHOW_COUNTER(PortXmitConstraintErrors, XmitConstraintErrors);
-	SHOW_COUNTER(PortRcvConstraintErrors, RcvConstraintErrors);
-	SHOW_COUNTER(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
-	SHOW_COUNTER(ExcessiveBufferOverruns, ExcessiveBufferOverruns);
-	
 	SHOW_COUNTER(PortMulticastXmitPkts, MulticastXmitPkts);
 	SHOW_COUNTER(PortMulticastRcvPkts, MulticastRcvPkts);
-	SHOW_COUNTER(PortXmitWait, XmitWait);
+	// Signal Integrity and Node/Link Stability
+	// LinkQualityIndicator N/A since readonly can't clear
+	SHOW_COUNTER(UncorrectableErrors, UncorrectableErrors);
+	SHOW_COUNTER(LinkDowned, LinkDowned);
+	SHOW_COUNTER(PortRcvErrors, RcvErrors);
+	SHOW_COUNTER(ExcessiveBufferOverruns, ExcessiveBufferOverruns);
+	SHOW_COUNTER(FMConfigErrors, FMConfigErrors);
+	SHOW_COUNTER(LinkErrorRecovery, LinkErrorRecovery);
+	SHOW_COUNTER(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
+	SHOW_COUNTER(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
+	// Security
+	SHOW_COUNTER(PortXmitConstraintErrors, XmitConstraintErrors);
+	SHOW_COUNTER(PortRcvConstraintErrors, RcvConstraintErrors);
+	// Routing or Down nodes still being sent to
+	SHOW_COUNTER(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors);
+	SHOW_COUNTER(PortXmitDiscards, XmitDiscards);
+	// Congestion
 	SHOW_COUNTER(SwPortCongestion, CongDiscards);
 	SHOW_COUNTER(PortRcvFECN, RcvFECN);
 	SHOW_COUNTER(PortRcvBECN, RcvBECN);
+	SHOW_COUNTER(PortMarkFECN, MarkFECN);
 	SHOW_COUNTER(PortXmitTimeCong, XmitTimeCong);
+	SHOW_COUNTER(PortXmitWait, XmitWait);
+	// Bubbles
 	SHOW_COUNTER(PortXmitWastedBW, XmitWastedBW);
 	SHOW_COUNTER(PortXmitWaitData, XmitWaitData);
 	SHOW_COUNTER(PortRcvBubble, RcvBubble);
-	SHOW_COUNTER(PortMarkFECN, MarkFECN);
-	SHOW_COUNTER(FMConfigErrors, FMConfigErrors);
-	SHOW_COUNTER(UncorrectableErrors, UncorrectableErrors);
 
 	switch (format) {
 	case FORMAT_TEXT:
@@ -4736,16 +4831,16 @@ void ShowSlowLinkPortSummaryHeader(LinkReport_t report, Format_t format, int ind
 		case FORMAT_TEXT:
 		 	switch (report) {
 			case LINK_EXPECTED_REPORT:
-				printf("%*s Active                               Enabled\n", indent+4, "");
-				printf("%*s Lanes, Used(Tx), Used(Rx),  Rate,    Lanes,  DownTo,       Rates\n", indent+4, "");
+				printf("%*s Active                            Enabled\n", indent+4, "");
+				printf("%*s Lanes, Used(Tx), Used(Rx), Rate,  Lanes,   DownTo,  Rates\n", indent+4, "");
 			break;
 			case LINK_CONFIG_REPORT:
-				printf("%*s Enabled                 Supported\n", indent+4, "");
-				printf("%*s Lanes, Used,   Rate,    Lanes,  DownTo,       Rates\n", indent+4, "");
+				printf("%*s Enabled                      Supported\n", indent+4, "");
+				printf("%*s Lanes,   Used,   Rate,       Lanes,   DownTo,  Rates\n", indent+4, "");
 				break;
 			case LINK_CONN_REPORT:
 				printf("%*s Supported\n", indent+4, "");
-				printf("%*s        Lanes,      DownTo,       Rate\n", indent+4, "");
+				printf("%*s Lanes,       DownTo,      Rate\n", indent+4, "");
 				break;
 			}
 			break;
@@ -4766,7 +4861,7 @@ void ShowSlowLinkReasonSummary(LinkReport_t report, PortData *portp, Format_t fo
 	case FORMAT_TEXT:
 		switch (report) {
 		case LINK_EXPECTED_REPORT:
-			printf("%*s %5s %8s %8s %8s %8s %8s %12s\n", indent, "",
+			printf("%*s %-6s %-9s %-9s %-6s %-8s %-8s %-12s\n", indent, "",
 				StlLinkWidthToText(portp->PortInfo.LinkWidth.Active, buf1, sizeof(buf1)),
                 StlLinkWidthToText(portp->PortInfo.LinkWidthDowngrade.TxActive, buf5, sizeof(buf5)),
 				StlLinkWidthToText(portp->PortInfo.LinkWidthDowngrade.RxActive, buf7, sizeof(buf7)),
@@ -4776,7 +4871,7 @@ void ShowSlowLinkReasonSummary(LinkReport_t report, PortData *portp, Format_t fo
 				StlLinkSpeedToText(portp->PortInfo.LinkSpeed.Enabled, buf4, sizeof(buf4)));
 			break;
 		case LINK_CONFIG_REPORT:
-			printf("%*s %5s %5s %8s %8s %8s %12s\n", indent, "",
+			printf("%*s %-8s %-7s %-11s %-8s %-8s %-12s\n", indent, "",
 				StlLinkWidthToText(portp->PortInfo.LinkWidth.Enabled, buf1, sizeof(buf1)),
                 StlLinkWidthToText(portp->PortInfo.LinkWidthDowngrade.Enabled, buf5, sizeof(buf5)),
 				StlLinkSpeedToText(portp->PortInfo.LinkSpeed.Enabled, buf2, sizeof(buf2)),
@@ -4785,7 +4880,7 @@ void ShowSlowLinkReasonSummary(LinkReport_t report, PortData *portp, Format_t fo
 				StlLinkSpeedToText(portp->PortInfo.LinkSpeed.Supported, buf4, sizeof(buf4)));
 			break;
 		case LINK_CONN_REPORT:
-			printf("%*s %12s %12s %12s\n", indent, "",
+			printf("%*s %-12s %-12s %-12s\n", indent, "",
 				StlLinkWidthToText(portp->PortInfo.LinkWidth.Supported, buf1, sizeof(buf1)),
                 StlLinkWidthToText(portp->PortInfo.LinkWidthDowngrade.Supported, buf5, sizeof(buf5)),
 				StlLinkSpeedToText(portp->PortInfo.LinkSpeed.Supported, buf2, sizeof(buf2)));
@@ -5190,26 +5285,26 @@ void ShowSlowLinkReport(LinkReport_t report, boolean one_report, Point *focus, F
 			// Links running slower than expected (not at highest supported speed that is enabled)
 			if (firstloop <= 1) {
 				if ( 
-					 /* Active speed should match highest supported value that is enabled */
+					 /* Active speed should match highest speed enabled on both ports */
 					 (pi1->LinkSpeed.Active == StlExpectedLinkSpeed(
-						pi1->LinkSpeed.Supported, pi1->LinkSpeed.Enabled)) &&
+						pi1->LinkSpeed.Enabled, pi2->LinkSpeed.Enabled)) &&
 					 (pi2->LinkSpeed.Active == StlExpectedLinkSpeed(
-						pi2->LinkSpeed.Supported, pi2->LinkSpeed.Enabled)) &&
+						pi1->LinkSpeed.Enabled, pi2->LinkSpeed.Enabled)) &&
 
-					 /* Actual width (the downgrade width) should match highest supported value that is enabled */				
+					 /* Actual width (the downgrade width) should match highest width enabled on both ports */				
 					 (pi1->LinkWidthDowngrade.TxActive == StlExpectedLinkWidth(
-						pi1->LinkWidthDowngrade.Supported, pi1->LinkWidthDowngrade.Enabled)) &&
+						pi1->LinkWidthDowngrade.Enabled, pi2->LinkWidthDowngrade.Enabled)) &&
 					 (pi2->LinkWidthDowngrade.TxActive == StlExpectedLinkWidth(
-						pi2->LinkWidthDowngrade.Supported, pi2->LinkWidthDowngrade.Enabled)) &&
+						pi1->LinkWidthDowngrade.Enabled, pi2->LinkWidthDowngrade.Enabled)) &&
 					 (pi1->LinkWidthDowngrade.RxActive == StlExpectedLinkWidth(
-						pi1->LinkWidthDowngrade.Supported, pi1->LinkWidthDowngrade.Enabled)) &&
+						pi1->LinkWidthDowngrade.Enabled, pi2->LinkWidthDowngrade.Enabled)) &&
 					 (pi2->LinkWidthDowngrade.RxActive == StlExpectedLinkWidth(
-						pi2->LinkWidthDowngrade.Supported, pi2->LinkWidthDowngrade.Enabled)) &&
-					 /* Active width should match highest supported value that is enabled */
+						pi1->LinkWidthDowngrade.Enabled, pi2->LinkWidthDowngrade.Enabled)) &&
+					 /* Active width should match highest width enabled on both ports */
 					 (pi1->LinkWidth.Active == StlExpectedLinkWidth(
-						pi1->LinkWidth.Supported, pi1->LinkWidth.Enabled)) &&
+						pi1->LinkWidth.Enabled, pi2->LinkWidth.Enabled)) &&
 					 (pi2->LinkWidth.Active == StlExpectedLinkWidth(
-						pi2->LinkWidth.Supported, pi2->LinkWidth.Enabled)) &&
+						pi1->LinkWidth.Enabled, pi2->LinkWidth.Enabled)) &&
 
 					 /* And then finally, Actual width (the downgrade width) should match the active width */
 					 (pi1->LinkWidthDowngrade.TxActive == pi1->LinkWidth.Active) &&
@@ -5232,22 +5327,22 @@ void ShowSlowLinkReport(LinkReport_t report, boolean one_report, Point *focus, F
 			if (firstloop <= 2) {
 				if (
 					/* The highest supported speed should be what is configured as enabled */
-					(StlBestLinkSpeed(pi1->LinkSpeed.Supported) == StlExpectedLinkSpeed( 
-					   pi1->LinkSpeed.Supported, pi1->LinkSpeed.Enabled)) && 
-					(StlBestLinkSpeed(pi2->LinkSpeed.Supported) == StlExpectedLinkSpeed( 
-					   pi2->LinkSpeed.Supported, pi2->LinkSpeed.Enabled)) && 
+					(StlBestLinkSpeed(pi1->LinkSpeed.Enabled) == StlExpectedLinkSpeed( 
+					   pi1->LinkSpeed.Supported, pi2->LinkSpeed.Supported)) && 
+					(StlBestLinkSpeed(pi2->LinkSpeed.Enabled) == StlExpectedLinkSpeed( 
+					   pi1->LinkSpeed.Supported, pi2->LinkSpeed.Supported)) && 
 
 					/* The highest supported widthdowngrade should be what is configured as enabled */
-					(StlBestLinkWidth(pi1->LinkWidthDowngrade.Supported) == StlExpectedLinkWidth( 
-					   pi1->LinkWidthDowngrade.Supported, pi1->LinkWidthDowngrade.Enabled)) && 
-					(StlBestLinkWidth(pi2->LinkWidthDowngrade.Supported) == StlExpectedLinkWidth( 
-					   pi2->LinkWidthDowngrade.Supported, pi2->LinkWidthDowngrade.Enabled)) && 
+					(StlBestLinkWidth(pi1->LinkWidthDowngrade.Enabled) == StlExpectedLinkWidth( 
+					   pi1->LinkWidthDowngrade.Supported, pi2->LinkWidthDowngrade.Supported)) && 
+					(StlBestLinkWidth(pi2->LinkWidthDowngrade.Enabled) == StlExpectedLinkWidth( 
+					   pi1->LinkWidthDowngrade.Supported, pi2->LinkWidthDowngrade.Supported)) && 
 
 					/* The highest supported width should be what is configured as enabled */
-					(StlBestLinkWidth(pi1->LinkWidth.Supported) == StlExpectedLinkWidth( 
-					   pi1->LinkWidth.Supported, pi1->LinkWidth.Enabled)) && 
+					(StlBestLinkWidth(pi1->LinkWidth.Enabled) == StlExpectedLinkWidth( 
+					   pi1->LinkWidth.Supported, pi2->LinkWidth.Supported)) && 
 					(StlBestLinkWidth(pi2->LinkWidth.Supported) == StlExpectedLinkWidth( 
-					   pi2->LinkWidth.Supported, pi2->LinkWidth.Enabled)) ) {
+					   pi1->LinkWidth.Supported, pi2->LinkWidth.Supported)) ) {
 
 					/* configured matches the best supported, config is good */
 					if (loop == 2)
@@ -5265,9 +5360,9 @@ void ShowSlowLinkReport(LinkReport_t report, boolean one_report, Point *focus, F
 			if (firstloop <= 3) {
 				if ( 
 					/* Bidirectional speed and width should match */
-					(pi1->LinkSpeed.Supported == pi2->LinkSpeed.Supported) &&
-					(pi1->LinkWidthDowngrade.Supported == pi2->LinkWidthDowngrade.Supported) &&
-					(pi1->LinkWidth.Supported == pi2->LinkWidth.Supported) ) {
+					(StlBestLinkSpeed(pi1->LinkSpeed.Supported) == StlBestLinkSpeed(pi2->LinkSpeed.Supported)) &&
+					(StlBestLinkWidth(pi1->LinkWidthDowngrade.Supported) == StlBestLinkWidth(pi2->LinkWidthDowngrade.Supported)) &&
+					(StlBestLinkWidth(pi1->LinkWidth.Supported) == StlBestLinkWidth(pi2->LinkWidth.Supported)) ) {
 
 					/* match, connection choice is good */
 					if (loop == 3)
@@ -9108,7 +9203,7 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 	if(oib_open_port_by_guid(&oib_port_session, g_portGuid) != FSUCCESS)
 		return;
 	if ( !(( pQueryResults =
-			GetAllVFInfo(oib_port_session, &g_Fabric, g_limitstats?focus:NULL, g_quiet) )) )
+			GetAllVFInfo(oib_port_session, &g_Fabric, focus, g_quiet) )) )
 		return;
 
 	pRR = (STL_VFINFO_RECORD_RESULTS *)pQueryResults->QueryResult;
@@ -9168,21 +9263,23 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 				(pR->optionFlags & OPT_VF_QOS) ? "QoS " : "",
 				(pR->optionFlags & OPT_VF_FLOW_DISABLE) ? "FlowCtrlDisable " : "" );
 
+			FormatTimeoutMult(buf, pR->hoqLife);
 			if (pR->optionFlags & OPT_VF_QOS)
 			{
 				if (pR->priority)
 					if (pR->bandwidthPercent)
-						printf( "%*sQOS: Bandwidth:%3d%%  Priority:%s\n",
-							indent, "", pR->bandwidthPercent, "high");
+						printf("%*sQOS: Bandwidth: %3d%%  Priority: %s  PreemptionRank: %u  HoQLife: %s\n",
+							indent, "", pR->bandwidthPercent, "high", pR->preemptionRank, buf);
 					else
-						printf("%*sQOS: HighPriority\n", indent, "");
+						printf("%*sQOS: HighPriority  PreemptionRank: %u  HoQLife: %s\n", indent, "", pR->preemptionRank, buf);
 
 				else
-					printf( "%*sQOS: Bandwidth:%3d%%\n", indent, "",
-						pR->bandwidthPercent );
+					printf("%*sQOS: Bandwidth: %3d%%  PreemptionRank: %u  HoQLife: %s\n",
+						indent, "", pR->bandwidthPercent, pR->preemptionRank, buf);
 			}
 			else
-				printf("%*sQOS: Disabled\n", indent, "");
+				printf("%*sQOS: Disabled  PreemptionRank: %u  HoQLife: %s\n",
+						indent, "", pR->preemptionRank, buf);
 			break;
 
 		case FORMAT_XML:
@@ -9224,7 +9321,10 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 			}
 			indent -= 4;
 			printf("%*s</QOS>\n", indent, "");
-
+			XmlPrintDec("PreemptionRank", pR->preemptionRank, indent);
+			FormatTimeoutMult(buf, pR->hoqLife);
+			XmlPrintStr("HoQLife", buf, indent);
+			XmlPrintDec("HoQLife_Int", pR->hoqLife, indent);
 			indent -= 4;
 			printf("%*s</vFabric>\n", indent, "");
 			break;
@@ -9293,9 +9393,9 @@ void ShowBCTForPortText(PortData *port, Format_t format, int indent, int detail)
 			port->PortInfo.ReplayDepth.WireDepth * BYTES_PER_LTP);
 
 	printf("%*sTxOverallSharedLimit (AU/B):  %6u/", indent, "",
-			port->bufCtrlTable.TxOverallSharedLimit);
+			port->pBufCtrlTable->TxOverallSharedLimit);
 	if (bytesPerAU)
-		printf("%8u\n", port->bufCtrlTable.TxOverallSharedLimit * bytesPerAU);
+		printf("%8u\n", port->pBufCtrlTable->TxOverallSharedLimit * bytesPerAU);
 	else
 		printf(" N/A\n");
 
@@ -9304,7 +9404,7 @@ void ShowBCTForPortText(PortData *port, Format_t format, int indent, int detail)
 	printf("%*sVL | Dedicated  (   Bytes) |  Shared  (   Bytes) |  MTU\n", indent, "");
 
 	for (vl = 0; vl < STL_MAX_VLS; vl++) {
-		if (port->bufCtrlTable.VL[vl].TxDedicatedLimit == 0 && port->bufCtrlTable.VL[vl].TxSharedLimit == 0)
+		if (port->pBufCtrlTable->VL[vl].TxDedicatedLimit == 0 && port->pBufCtrlTable->VL[vl].TxSharedLimit == 0)
 			continue;
 
 		uint32_t dBytes = 0;
@@ -9312,8 +9412,8 @@ void ShowBCTForPortText(PortData *port, Format_t format, int indent, int detail)
 		uint16_t mtu = 0;
 
 		if (bytesPerAU) {
-			dBytes = port->bufCtrlTable.VL[vl].TxDedicatedLimit * bytesPerAU;
-			sBytes = port->bufCtrlTable.VL[vl].TxSharedLimit * bytesPerAU;
+			dBytes = port->pBufCtrlTable->VL[vl].TxDedicatedLimit * bytesPerAU;
+			sBytes = port->pBufCtrlTable->VL[vl].TxSharedLimit * bytesPerAU;
 		}
 
 		if (vl%2 == 0) {
@@ -9325,8 +9425,8 @@ void ShowBCTForPortText(PortData *port, Format_t format, int indent, int detail)
 
 		printf("%*s%2d |    %6u  (%8u) |  %6u  (%8u) | %6u\n", indent, "",
 				vl,
-				port->bufCtrlTable.VL[vl].TxDedicatedLimit, dBytes,
-				port->bufCtrlTable.VL[vl].TxSharedLimit, sBytes,
+				port->pBufCtrlTable->VL[vl].TxDedicatedLimit, dBytes,
+				port->pBufCtrlTable->VL[vl].TxSharedLimit, sBytes,
 				mtu);
 	}
 }
@@ -9368,14 +9468,14 @@ void ShowBCTForPortXML(PortData *port, Format_t format, int indent, int detail)
 	}
 
 	printf("%*s<TxOverallSharedLimit>%u</TxOverallSharedLimit>\n", indent, "",
-			port->bufCtrlTable.TxOverallSharedLimit);
+			port->pBufCtrlTable->TxOverallSharedLimit);
 	if (bytesPerAU)
 		printf("%*s<TxOverallSharedLimitBytes>%u</TxOverallSharedLimitBytes>\n", indent, "",
-				port->bufCtrlTable.TxOverallSharedLimit * bytesPerAU);
+				port->pBufCtrlTable->TxOverallSharedLimit * bytesPerAU);
 
 	for (vl = 0; vl < STL_MAX_VLS; vl++)
 	{
-		if (port->bufCtrlTable.VL[vl].TxDedicatedLimit == 0 && port->bufCtrlTable.VL[vl].TxSharedLimit == 0)
+		if (port->pBufCtrlTable->VL[vl].TxDedicatedLimit == 0 && port->pBufCtrlTable->VL[vl].TxSharedLimit == 0)
 			continue;
 
 		printf("%*s<VLLimit vl=\"%d\">\n", indent, "", vl);
@@ -9383,15 +9483,15 @@ void ShowBCTForPortXML(PortData *port, Format_t format, int indent, int detail)
 		indent += 4;
 
 		printf("%*s<TxDedicatedLimit>%u</TxDedicatedLimit>\n", indent, "",
-			port->bufCtrlTable.VL[vl].TxDedicatedLimit);
+			port->pBufCtrlTable->VL[vl].TxDedicatedLimit);
 		if (bytesPerAU)
 			printf("%*s<TxDedicatedLimitBytes>%u</TxDedicatedLimitBytes>\n", indent, "",
-				port->bufCtrlTable.VL[vl].TxDedicatedLimit * bytesPerAU);
+				port->pBufCtrlTable->VL[vl].TxDedicatedLimit * bytesPerAU);
 		printf("%*s<TxSharedLimit>%u</TxSharedLimit>\n", indent, "",
-			port->bufCtrlTable.VL[vl].TxSharedLimit);
+			port->pBufCtrlTable->VL[vl].TxSharedLimit);
 		if (bytesPerAU)
 			printf("%*s<TxSharedLimitBytes>%u</TxSharedLimitBytes>\n", indent, "",
-				port->bufCtrlTable.VL[vl].TxSharedLimit * bytesPerAU);
+				port->pBufCtrlTable->VL[vl].TxSharedLimit * bytesPerAU);
 
 		indent -= 4;
 
@@ -9424,10 +9524,10 @@ void ShowAllBCTReports(Point *focus, Format_t format, int indent, int detail)
 	if (g_snapshot_in_file && !(g_Fabric.flags & FF_BUFCTRLTABLE)) {
 		switch (format) {
 			case FORMAT_TEXT:
-				printf("%*sReport skipped: provided snapshot was created without -B option\n", indent, "");
+				printf("%*sReport skipped: provided snapshot was created without -V option\n", indent, "");
 				break;
 			case FORMAT_XML:
-				printf("%*s<!-- Report skipped: provided snapshot was created without -B option -->\n", indent, "");
+				printf("%*s<!-- Report skipped: provided snapshot was created without -V option -->\n", indent, "");
 				break;
 			default:
 				break;
@@ -9442,6 +9542,9 @@ void ShowAllBCTReports(Point *focus, Format_t format, int indent, int detail)
 			continue;
 
 		if (port->nodep->NodeInfo.NodeType == STL_NODE_SW && port->PortNum == 0)
+			continue;
+
+		if (! port->pBufCtrlTable)
 			continue;
 
 		switch (format) {
@@ -9498,6 +9601,9 @@ done:
 
 boolean PortIsVFMember(PortData *port, int sl) 
 {
+	// VF only valid if port initialized
+	if (! IsPortInitialized(port->PortInfo.PortStates))
+		return FALSE;
 	// right now there is no saquery to find out if a port is a member of a vfabric
 	// so a port is assumed to be a member of a vfabric if:
 	//	for the base SL of the vfabric, that port has an SC assigned (SC!=15)
@@ -9540,17 +9646,19 @@ void CheckVFAllocation(PortData *port, int indent, int format, int detail, STL_V
 				continue;
 			}
 
-			// if qos is enabled, make note that this VL has a vfabric mapped to it, so we can check for contracted links
+			// if qos is enabled, make note that this VL has a vfabric mapped
+			// to it, so we can check for contracted links
 			if (pR->optionFlags & OPT_VF_QOS)
 				vls[vl]++;	
 			
-			// check that every VF that the port is a member of has buffers allocated to it
+			// check that every VF that the port is a member of has buffers
+			// allocated to it
 			// skip port 0 since it doesn't get configured for buffers
 			// and will confuse user by saying no buffers allocated
-			if ((g_Fabric.flags & FF_BUFCTRLTABLE) && (vl != 15)
-				&& port->PortNum) {
-				ded = port->bufCtrlTable.VL[vl].TxDedicatedLimit;
-				share = port->bufCtrlTable.VL[vl].TxSharedLimit;
+			if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
+				&& (vl != 15) && port->PortNum) {
+				ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
+				share = port->pBufCtrlTable->VL[vl].TxSharedLimit;
 				if (!ded && !share) {
 					switch (format) {
 					case FORMAT_TEXT:
@@ -9585,13 +9693,14 @@ void CheckVFAllocation(PortData *port, int indent, int format, int detail, STL_V
 		// check that every allocated buffer is mapped to a VF
 		// skip port 0 since it doesn't get configured for buffers
 		// and will confuse user by saying no buffers allocated
-		if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->PortNum) {
+		if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
+			&& port->PortNum) {
 			for (vl=0; vl<STL_MAX_VLS; vl++) {
 				// skip VL 15
 				if (vl==15) 
 					continue;
-				ded = port->bufCtrlTable.VL[vl].TxDedicatedLimit;
-				share = port->bufCtrlTable.VL[vl].TxSharedLimit;
+				ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
+				share = port->pBufCtrlTable->VL[vl].TxSharedLimit;
 				if (!ded && !share) 
 					continue;
 				// this VL has buffers dedicated to it
@@ -9688,7 +9797,8 @@ void ShowPortVFMembershipText(PortData *port, int indent, int detail, STL_VFINFO
 	printf("%*sVF Name\tVF Index\tBase SL", indent, "");
 	if (g_Fabric.flags & FF_QOSDATA) {
 		printf("\tBase SC\tVL");
-		if ((g_Fabric.flags & FF_BUFCTRLTABLE) && detail>2 && port->PortNum)
+		if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
+			&& detail>2 && port->PortNum)
 			printf("\tDedicated\tShared");
 	}
 	printf("\n");
@@ -9703,9 +9813,10 @@ void ShowPortVFMembershipText(PortData *port, int indent, int detail, STL_VFINFO
 			sc = port->pQOS->SL2SCMap->SLSCMap[sl].SC;
 			vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
 			printf("\t%d\t%d", sc, vl);
-			if ((g_Fabric.flags & FF_BUFCTRLTABLE) && detail>2 && port->PortNum) {
-				ded = port->bufCtrlTable.VL[vl].TxDedicatedLimit;
-				share = port->bufCtrlTable.VL[vl].TxSharedLimit;
+			if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
+				&& detail>2 && port->PortNum) {
+				ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
+				share = port->pBufCtrlTable->VL[vl].TxSharedLimit;
 				printf("\t%d\t\t%d", ded, share);
 			}
 		}
@@ -9738,9 +9849,10 @@ void ShowPortVFMembershipXML(PortData *port, int indent, int detail, STL_VFINFO_
 			vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
 			XmlPrintDec("BaseSC", sc, indent);
 			XmlPrintDec("VL", vl, indent);
-			if ((g_Fabric.flags & FF_BUFCTRLTABLE) && detail>2 && port->PortNum) {
-				ded = port->bufCtrlTable.VL[vl].TxDedicatedLimit;
-				share = port->bufCtrlTable.VL[vl].TxSharedLimit;
+			if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
+				&& detail>2 && port->PortNum) {
+				ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
+				share = port->pBufCtrlTable->VL[vl].TxSharedLimit;
 				XmlPrintDec("DedicatedBuffer", ded, indent);
 				XmlPrintDec("SharedBuffer", share, indent);
 			}
@@ -9819,10 +9931,12 @@ void ShowVFMemberReport(Point *focus, Format_t format, int indent, int detail)
 			}
 			if (port->nodep->NodeInfo.NodeType == STL_NODE_SW && port->PortNum) {
 				if (neighbor && neighbor->nodep->NodeInfo.NodeType == STL_NODE_FI) {
-					// if the node is a switch and the neighbor is a CA, use the mappings from the CA
+					// if the node is a switch and the neighbor is a CA,
+					// use the mappings from the CA
 					ShowPortVFMembershipText(neighbor, indent, detail, pRR);
 				}
-				// if the node is a switch and the neighbor is a switch then there is no VF membership
+				// if the node is a switch and the neighbor is a switch
+				// then there is no VF membership
 			} else {
 				// node is a CA or switch port 0
 				ShowPortVFMembershipText(port, indent, detail, pRR);
@@ -9841,10 +9955,12 @@ void ShowVFMemberReport(Point *focus, Format_t format, int indent, int detail)
 			XmlPrintNodeDesc((char*)port->nodep->NodeDesc.NodeString, indent);
 			if (port->nodep->NodeInfo.NodeType == STL_NODE_SW && port->PortNum) {
 				if (neighbor && neighbor->nodep->NodeInfo.NodeType == STL_NODE_FI) {
-					// if the node is a switch and the neighbor is a CA, use the mappings from the CA
+					// if the node is a switch and the neighbor is a CA,
+					// use the mappings from the CA
 					ShowPortVFMembershipXML(neighbor, indent, detail, pRR);
 				}
-				// if the node is a switch and the neighbor is a switch then there is no VF membership
+				// if the node is a switch and the neighbor is a switch
+				// then there is no VF membership
 			} else {
 				// node is a CA or switch port 0
 				ShowPortVFMembershipXML(port, indent, detail, pRR);
@@ -9956,7 +10072,7 @@ void ShowQuarantineNodeReport(Point *focus, Format_t format, int indent, int det
 	if(oib_open_port_by_guid(&oib_port_session, g_portGuid) != FSUCCESS)
 		return;
 	if ( !(( pQueryResults =
-			GetAllQuarantinedNodes(oib_port_session, &g_Fabric, g_limitstats?focus:NULL, g_quiet) )) )
+			GetAllQuarantinedNodes(oib_port_session, &g_Fabric, focus, g_quiet) )) )
 		return;
 
 	pQNRR = (STL_QUARANTINED_NODE_RECORD_RESULTS *)pQueryResults->QueryResult;
@@ -10121,6 +10237,7 @@ struct option options[] = {
 		{ "topology", no_argument, NULL, 'T' },
 		{ "quietfocus", no_argument, NULL, 'Q' },
 		{ "vltables", no_argument, NULL, 'V' },
+		{ "allports", no_argument, NULL, 'A' },
 		{ "help", no_argument, NULL, '$' },	// use an invalid option character
 
 		{ 0 }
@@ -10130,7 +10247,7 @@ void Usage_full(void)
 {
 	fprintf(stderr, "Usage: opareport [-v][-q] [-h hfi] [-p port] [-o report] [-d detail]\n"
 					"                  [-P|-H] [-N] [-x] [-X snapshot_input] [-T topology_input]\n"
-					"                  [-s] [-r] [-V] [-i seconds] [-C] [-a] [-m] [-K mkey] [-M]\n"
+					"                  [-s] [-r] [-V] [-i seconds] [-C] [-a] [-m] [-K mkey] [-M] [-A]\n"
 					"                  [-c file] [-L] [-F point] [-S point] [-D point] [-Q]\n");
 	fprintf(stderr, "              or\n");
 	fprintf(stderr, "       opareport --help\n");
@@ -10157,7 +10274,7 @@ void Usage_full(void)
 	fprintf(stderr, "                                verify fabric information.  When used various\n");
 	fprintf(stderr, "                                reports can be augmented with information\n");
 	fprintf(stderr, "                                not available electronically (such as cable\n");
-	fprintf(stderr, "                                labels and lengths).\n");
+	fprintf(stderr, "                                labels).\n");
 	fprintf(stderr, "                                '-' may be used to specify stdin\n");
 	fprintf(stderr, "    -s/--stats                - get performance stats for all ports\n");
 	fprintf(stderr, "    -i/--interval seconds     - obtain performance stats over interval seconds\n");
@@ -10170,6 +10287,10 @@ void Usage_full(void)
 	fprintf(stderr, "    -m/--smadirect            - access fabric information directly from SMA\n");
 	fprintf(stderr, "    -K/--mkey                 - SMA M_Key for direct SMA query, default is 0\n");
 	fprintf(stderr, "    -M/--pmadirect            - access performance stats via direct PMA\n");
+	fprintf(stderr, "    -A/--allports             - also get PortInfo for down switch ports.\n");
+	fprintf(stderr, "                                uses direct SMA to get this data.\n");
+	fprintf(stderr, "                                If used with -M will also get PMA stats\n");
+	fprintf(stderr, "                                for down switch ports.\n");
 	fprintf(stderr, "    -c/--config file          - error thresholds config file, default is %s\n", CONFIG_FILE);
 	fprintf(stderr, "    -L/--limit                - For port error counters check (-o errors)\n");
 	fprintf(stderr, "                                and port counters clear (-C or -i) with -F\n");
@@ -10283,14 +10404,21 @@ void Usage_full(void)
 	fprintf(stderr, "   nodetype:value - value is node type (SW, FI or RT)\n");
 	fprintf(stderr, "   nodetype:value1:port:value2 - value1 is node type (SW, FI or RT)\n");
 	fprintf(stderr, "                                 value2 is port #\n");
-	fprintf(stderr, "   rate:value - value is string for rate (2.5g, 5g, 10g, 20g, etc)\n");
+	fprintf(stderr, "   rate:value - value is string for rate (25g, 50g, 75g, 100g)\n");
 	fprintf(stderr, "                                 omits switch mgmt port 0\n");
-	fprintf(stderr, "   portstate:value - value is string for state (init, armed, active)\n");
+	fprintf(stderr, "   portstate:value - value is string for state (down, init, armed, active)\n");
+	fprintf(stderr, "   portphysstate:value - value is string for phys state (polling, disabled,\n");
+	fprintf(stderr, "                                 training, linkup, recovery, offline, test)\n");
 	fprintf(stderr, "   mtucap:value - value is MTU size (2048, 4096, 8192, 10240)\n");
 	fprintf(stderr, "                                 omits switch mgmt port 0\n");
 	fprintf(stderr, "   labelpat:value - value is glob pattern for cable label\n");
 	fprintf(stderr, "   lengthpat:value - value is glob pattern for cable length\n");
 	fprintf(stderr, "   cabledetpat:value - value is glob pattern for cable details\n");
+	fprintf(stderr, "   cabinflenpat:value - value is glob pattern for cable info length\n");
+	fprintf(stderr, "   cabinfvendnamepat:value - value is glob pattern for cable info vendor name\n");
+	fprintf(stderr, "   cabinfvendpnpat:value - value is glob pattern for cable info vendor PN\n");
+	fprintf(stderr, "   cabinfvendrevpat:value - value is glob pattern for cable info vendor rev\n");
+	fprintf(stderr, "   cabinfvendsnpat:value - value is glob pattern for cable info vendor SN\n");
 	fprintf(stderr, "   linkdetpat:value - value is glob pattern for link details\n");
 	fprintf(stderr, "   portdetpat:value - value is glob pattern for port details\n");
 	fprintf(stderr, "   sm - master SM\n");
@@ -10305,14 +10433,14 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -o nodes -F portguid:0x00066a00a000447b\n");
 	fprintf(stderr, "   opareport -o nodes -F nodeguid:0x00066a009800447b:port:1\n");
 	fprintf(stderr, "   opareport -o nodes -F nodeguid:0x00066a009800447b\n");
-	fprintf(stderr, "   opareport -o nodes -F 'node:duster HFI-1'\n");
-	fprintf(stderr, "   opareport -o nodes -F 'node:duster HFI-1:port:1'\n");
+	fprintf(stderr, "   opareport -o nodes -F 'node:duster hfi1_0'\n");
+	fprintf(stderr, "   opareport -o nodes -F 'node:duster hfi1_0:port:1'\n");
 	fprintf(stderr, "   opareport -o nodes -F 'nodepat:d*'\n");
 	fprintf(stderr, "   opareport -o nodes -F 'nodepat:d*:port:1'\n");
 	fprintf(stderr, "   opareport -o nodes -F 'nodedetpat:compute*'\n");
 	fprintf(stderr, "   opareport -o nodes -F 'nodedetpat:compute*:port:1'\n");
-	fprintf(stderr, "   opareport -o nodes -F nodetype:CA\n");
-	fprintf(stderr, "   opareport -o nodes -F nodetype:CA:port:1\n");
+	fprintf(stderr, "   opareport -o nodes -F nodetype:FI\n");
+	fprintf(stderr, "   opareport -o nodes -F nodetype:FI:port:1\n");
 	fprintf(stderr, "   opareport -o nodes -F lid:1\n");
 	fprintf(stderr, "   opareport -o nodes -F lid:1:node\n");
 	fprintf(stderr, "   opareport -o nodes -F lid:1:port:2\n");
@@ -10329,6 +10457,7 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -o nodes -F ioctype:VNIC:port:2\n");
 	fprintf(stderr, "   opareport -o extlinks -F rate:5g\n");
 	fprintf(stderr, "   opareport -o extlinks -F portstate:armed\n");
+	fprintf(stderr, "   opareport -o extlinks -F portphysstate:linkup\n");
 	fprintf(stderr, "   opareport -o extlinks -F 'labelpat:S1345*'\n");
 	fprintf(stderr, "   opareport -o extlinks -F 'lengthpat:11m'\n");
 	fprintf(stderr, "   opareport -o extlinks -F 'cabledetpat:*gore*'\n");
@@ -10337,8 +10466,8 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -o links -F mtucap:2048\n");
 	fprintf(stderr, "   opareport -o nodes -F sm\n");
 	fprintf(stderr, "   opareport -o nodes -F 'smdetpat:primary*'\n");
-	fprintf(stderr, "   opareport -o nodes -F 'route:node:duster HFI-1:node:cuda HFI-1'\n");
-	fprintf(stderr, "   opareport -o nodes -F 'route:node:duster HFI-1:port:1:node:cuda HFI-1:port:2'\n");
+	fprintf(stderr, "   opareport -o nodes -F 'route:node:duster hfi1_0:node:cuda hfi1_0'\n");
+	fprintf(stderr, "   opareport -o nodes -F 'route:node:duster hfi1_0:port:1:node:cuda hfi1_0:port:2'\n");
 	fprintf(stderr, "   opareport -s -o snapshot > file\n");
 	fprintf(stderr, "   opareport -o topology > topology.xml\n");
 	fprintf(stderr, "   opareport -o errors -X file\n");
@@ -10419,9 +10548,6 @@ int parse(const char* filename)
 			continue;	// blank line
 		if ( param[0]=='#')
 			continue; // ignore comments
-		if (strcmp(param, "SyslogFacility") == 0) {
-			continue;	// N/A for opareport
-		}
 		if (strcmp(param, "Threshold") == 0) {
 			char compare[21];
 			ret = sscanf(buffer,"%70s %20s\n", param, compare);
@@ -10442,8 +10568,6 @@ int parse(const char* filename)
 		if (ret == 2) {
 			if (param[0]=='#') {
 				// ignore comments
-			} else if (strcmp(param, "Interval") == 0) {
-				// N/A for opareport
 			} else if (strcmp(param,"LinkQualityIndicator") == 0) {
 				if (threshold > 5) {
 					fprintf(stderr, "opareport: LinkQualityIndicator max threshold setting is 5, ignoring: %llu\n", threshold);
@@ -10471,44 +10595,50 @@ int parse(const char* filename)
 		}
 #define PARSE_MB_THRESHOLD(field, name) \
 	if (strcmp(param, #name) == 0) { \
-		threshold = threshold * FLITS_PER_MB; \
-		if (threshold > (1ULL << 32)-1) { \
-			fprintf(stderr, "opareport: " #name " max threshold is %llu, ignoring: %llu\n", ((1ULL<<32)-1)/FLITS_PER_MB, threshold); \
+		if (threshold > ((1ULL << 63)-1)/(FLITS_PER_MB/2)) { \
+			fprintf(stderr, "opareport: " #name " max threshold is %llu, ignoring: %llu\n", ((1ULL << 63)-1)/(FLITS_PER_MB/2), threshold); \
 		} else { \
+			threshold = threshold * FLITS_PER_MB; \
 			g_Thresholds.field = threshold; \
 			if (threshold) { \
 				g_CounterSelectMask.CounterSelectMask.s.field = 1; \
 			} \
 		} \
 	}
+			// Data movement
 			} else PARSE_MB_THRESHOLD(PortXmitData, XmitData)
-			else PARSE_THRESHOLD64(PortXmitPkts, XmitPkts)
 			else PARSE_MB_THRESHOLD(PortRcvData, RcvData)
+			else PARSE_THRESHOLD64(PortXmitPkts, XmitPkts)
 			else PARSE_THRESHOLD64(PortRcvPkts, RcvPkts)
-			else PARSE_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery, UINT_MAX)
-			else PARSE_THRESHOLD(LinkDowned, LinkDowned, UINT_MAX)
-			else PARSE_THRESHOLD64(PortRcvErrors, RcvErrors)
-			else PARSE_THRESHOLD64(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors)
-			else PARSE_THRESHOLD64(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors)
-			else PARSE_THRESHOLD64(PortXmitDiscards, XmitDiscards)
-			else PARSE_THRESHOLD64(PortXmitConstraintErrors, XmitConstraintErrors)
-			else PARSE_THRESHOLD64(PortRcvConstraintErrors, RcvConstraintErrors)
-			else PARSE_THRESHOLD64(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors)
-			else PARSE_THRESHOLD64(ExcessiveBufferOverruns, ExcessiveBufferOverruns)
-
 			else PARSE_THRESHOLD64(PortMulticastXmitPkts, MulticastXmitPkts)
 			else PARSE_THRESHOLD64(PortMulticastRcvPkts, MulticastRcvPkts)
-			else PARSE_THRESHOLD64(PortXmitWait, XmitWait)
+			// Signal Integrity and Node/Link Stability
+			// LinkQualityIndicator parsed above
+			else PARSE_THRESHOLD(UncorrectableErrors, UncorrectableErrors, 255)
+			else PARSE_THRESHOLD(LinkDowned, LinkDowned, UINT_MAX)
+			else PARSE_THRESHOLD64(PortRcvErrors, RcvErrors)
+			else PARSE_THRESHOLD64(ExcessiveBufferOverruns, ExcessiveBufferOverruns)
+			else PARSE_THRESHOLD64(FMConfigErrors, FMConfigErrors)
+			else PARSE_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery, UINT_MAX)
+			else PARSE_THRESHOLD64(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors)
+			else PARSE_THRESHOLD64(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors)
+			// Security
+			else PARSE_THRESHOLD64(PortXmitConstraintErrors, XmitConstraintErrors)
+			else PARSE_THRESHOLD64(PortRcvConstraintErrors, RcvConstraintErrors)
+			// Routing or Down nodes still being sent to
+			else PARSE_THRESHOLD64(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors)
+			else PARSE_THRESHOLD64(PortXmitDiscards, XmitDiscards)
+			// Congestion
 			else PARSE_THRESHOLD64(SwPortCongestion, CongDiscards)
 			else PARSE_THRESHOLD64(PortRcvFECN, RcvFECN)
 			else PARSE_THRESHOLD64(PortRcvBECN, RcvBECN)
+			else PARSE_THRESHOLD64(PortMarkFECN, MarkFECN)
 			else PARSE_THRESHOLD64(PortXmitTimeCong, XmitTimeCong)
+			else PARSE_THRESHOLD64(PortXmitWait, XmitWait)
+			// Bubbles
 			else PARSE_MB_THRESHOLD(PortXmitWastedBW, XmitWastedBW)
 			else PARSE_MB_THRESHOLD(PortXmitWaitData, XmitWaitData)
 			else PARSE_THRESHOLD64(PortRcvBubble, RcvBubble)
-			else PARSE_THRESHOLD64(PortMarkFECN, MarkFECN)
-			else PARSE_THRESHOLD64(FMConfigErrors, FMConfigErrors)
-			else PARSE_THRESHOLD(UncorrectableErrors, UncorrectableErrors, 255)
 #undef PARSE_THRESHOLD
 #undef PARSE_MB_THRESHOLD
 			else {
@@ -10693,7 +10823,7 @@ int main(int argc, char ** argv)
 	g_quiet = ! isatty(2);	// disable progress if stderr is not tty
 	
 	// process command line arguments
-	while (-1 != (c = getopt_long(argc,argv, "vVqh:p:o:d:PHNsri:CamK:MLc:S:D:F:xX:T:Q",
+	while (-1 != (c = getopt_long(argc,argv, "vVAqh:p:o:d:PHNsri:CamK:MLc:S:D:F:xX:T:Q",
 									options, &index)))
     {
         switch (c)
@@ -10757,7 +10887,6 @@ int main(int argc, char ** argv)
                 stats = 1;
                 break;
             case 'i':	// get performance stats over interval
-                stats = 1;
 				if (FSUCCESS != StringToUint32(&temp, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opareport: Invalid Interval: %s\n", optarg);
 					Usage();
@@ -10781,6 +10910,9 @@ int main(int argc, char ** argv)
                 break;
 			case 'M':	// access performance stats through direct PMA
 				sweepFlags |= FF_PMADIRECT;
+				break;
+			case 'A':	// get PortInfo for all switch ports, including down ones
+				sweepFlags |= FF_DOWNPORTINFO;
 				break;
             case 'r':	// get routing FDBs
                 routes = 1;
@@ -10839,9 +10971,11 @@ int main(int argc, char ** argv)
 	{
 		Usage();
 	}
+
+	// check for incompatible reports
 	if (report & REPORT_TOPOLOGY) {
 		if((report != REPORT_TOPOLOGY)){
-			fprintf(stderr, "iba_report: -o topology cannot be run with other reports\n");
+			fprintf(stderr, "opareport: -o topology cannot be run with other reports\n");
 			Usage();
 		} else {
 			report = REPORT_BRNODES|REPORT_LINKS;
@@ -10852,12 +10986,18 @@ int main(int argc, char ** argv)
 		fprintf(stderr, "opareport: -o snapshot cannot be run with other reports\n");
 		Usage();
 	}
+
+	// check for missing required arguments
 	if ((report & REPORT_ROUTE) && route_dest == NULL) {
 		fprintf(stderr, "opareport: -o route require -D option\n");
 		Usage();
 	}
+
+	// Warn for extraneous arguments and ignore them
 	if ((route_dest || route_src) && ! (report & REPORT_ROUTE)) {
 		fprintf(stderr, "opareport: -S or -D option given without -o route, ignoring -S and -D\n");
+		route_src = NULL;
+		route_dest = NULL;
 	}
 	if (report == REPORT_ROUTE && focus_arg) {
 		fprintf(stderr, "opareport: -F ignored for -o route, using -S and -D\n");
@@ -10881,17 +11021,32 @@ int main(int argc, char ** argv)
 		g_hard = 0;
 		g_persist = 0;
 	}
-	if (g_snapshot_in_file && (g_interval || g_clearstats || g_clearallstats ||
-			fl_vlqos || bfrctrl)) {
-		fprintf(stderr, "opareport: -i, -C, -a, -V, and -B ignored for -X\n");
+	if (g_snapshot_in_file && (g_interval || g_clearstats || g_clearallstats)) {
+		fprintf(stderr, "opareport: -i, -C, and -a ignored for -X\n");
 		g_interval = 0;
 		g_clearstats = 0;
 		g_clearallstats = 0;
+	}
+	if (g_snapshot_in_file) {
+		if (sweepFlags & FF_SMADIRECT)
+			fprintf(stderr, "opareport: -m ignored for -X\n");
+		if (sweepFlags & FF_PMADIRECT)
+			fprintf(stderr, "opareport: -M ignored for -X\n");
+		if (sweepFlags & FF_DOWNPORTINFO)
+			fprintf(stderr, "opareport: -A ignored for -X\n");
+		sweepFlags &= ~(FF_SMADIRECT|FF_PMADIRECT|FF_DOWNPORTINFO);
 	}
 	if (g_snapshot_in_file && stats) {
 		if (! (report & REPORT_ERRORS)) {
 			// -s must have been explicitly specified
 			fprintf(stderr, "opareport: -s ignored for -X\n");
+		}
+		stats = 0;
+	}
+	if (g_snapshot_in_file && (fl_vlqos || bfrctrl)) {
+		if (! (report & REPORT_BUFCTRLTABLES)) {
+			// -V must have been explicitly specified
+			fprintf(stderr, "opareport: -V ignored for -X\n");
 		}
 	}
 	if (g_snapshot_in_file && routes) {
@@ -10910,19 +11065,38 @@ int main(int argc, char ** argv)
 		g_interval = 0;
 	}
 
+	// check for unignored arguments which imply need to get stats
+	if (! g_snapshot_in_file && focus_arg && NULL != ComparePrefix(focus_arg, "linkqual")) 
+		stats = 1; // using the linkqual focus option implies -s
+	if (g_interval)
+		stats = 1;
+
+	// now that we have final value for "stats" option, make sure consistent
+	if ((sweepFlags & FF_DOWNPORTINFO) && ! (sweepFlags & FF_PMADIRECT)
+		&& (stats || g_interval || g_clearstats || g_clearallstats)) {
+		fprintf(stderr, "opareport: Use of -A requires performance stats be gathered directly (via -M)\n");
+		Usage();
+	}
+	if (g_interval && focus_arg && NULL != ComparePrefix(focus_arg, "linkqual")) {
+		fprintf(stderr, "opareport: -i option not permitted in conjunction with -F linkqual, linkqualLE\n     nor linkqualGE\n");
+		Usage();
+	}
+
 	if (report == REPORT_NONE)
 		report = REPORT_BRNODES;
 
+	// Initialize Sweep Verbose option, for -X still used for Focus processing
+	fstatus = InitSweepVerbose(g_verbose?stderr:NULL);
+	if (fstatus != FSUCCESS) {
+		fprintf(stderr, "opareport: Initialize Verbose option (status=0x%x): %s\n", fstatus, iba_fstatus_msg(fstatus));
+		g_exitstatus = 1;
+		goto done;
+	}
+
+	// figure out which local port we will use to gather data
 	if (g_snapshot_in_file) {
 		if (gotport || gothfi)
 			fprintf(stderr, "opareport: -p and -h ignored for -X\n");
-		// Initialize Sweep Verbose option, used for Focus processing
-		fstatus = InitSweepVerbose(g_verbose?stderr:NULL);
-		if (fstatus != FSUCCESS) {
-			fprintf(stderr, "opareport: Initialize Verbose option (status=0x%x): %s\n", fstatus, iba_fstatus_msg(fstatus));
-			g_exitstatus = 1;
-			goto done;
-		}
 	} else {
 #ifdef IB_STACK_IBACCESS
 		// we must initialize user mode iba library first
@@ -10932,9 +11106,7 @@ int main(int argc, char ** argv)
 			g_exitstatus = 1;
 			goto done;
 		}
-
 #endif
-		fstatus = InitSweepVerbose(g_verbose?stderr:NULL);
 
 		// find portGuid for hfi/port specified
 		if (! port) {
@@ -10966,6 +11138,7 @@ int main(int argc, char ** argv)
 		}
 	}
 
+	// get thresholds config file
 	if ((report & REPORT_ERRORS) || g_clearstats) {
 		if (0 != parse(config_file)) {
 			g_exitstatus = 1;
@@ -10973,6 +11146,7 @@ int main(int argc, char ** argv)
 		}
 	}
 
+	// get the fabric data
 	if (g_snapshot_in_file) {
 		if (FSUCCESS != Xml2ParseSnapshot(g_snapshot_in_file, g_quiet, &g_Fabric, FF_NONE, 0)) {
 			g_exitstatus = 1;
@@ -11031,23 +11205,22 @@ int main(int argc, char ** argv)
 		}
 	}
 
+	// output the desired reports
 	if (g_interval) {
-		(void)ClearAllPortCountersAndShow(g_portGuid, focus_arg?&focus:NULL, TRUE, format, report == REPORT_SNAPSHOT);
+		(void)ClearAllPortCountersAndShow(g_portGuid, &focus, TRUE, format, report == REPORT_SNAPSHOT);
 		PROGRESS_PRINT(TRUE, "Waiting %d seconds", g_interval);
 		sleep(g_interval);
 	}
 
-	if (focus_arg && NULL != ComparePrefix(focus_arg, "linkqual")) 
-		stats = 1; // using the linkqual focus option implies -s
-
 	if (!g_snapshot_in_file && stats && ! g_hard && ! g_persist) {
 		if (FSUCCESS != GetAllPortCounters(g_portGuid, g_portAttrib->GIDTable[0],
-				&g_Fabric, focus_arg?&focus:NULL, g_limitstats, g_quiet)) {
+				&g_Fabric, &focus, g_limitstats, g_quiet)) {
 			g_exitstatus = 1;
 			goto done;
 		}
 	}
 
+	// get other optional fabric data
 	// now that the port counters have been collected, we can do the link quality focus
 	if (focus_arg && NULL != ComparePrefix(focus_arg, "linkqual")) {
 		if (!(g_Fabric.flags & FF_STATS) && g_snapshot_in_file ) {
@@ -11071,27 +11244,26 @@ int main(int argc, char ** argv)
 	}
 
 	if (!g_snapshot_in_file && routes && ! g_hard && ! g_persist) {
-		if (FSUCCESS != GetAllFDBs(g_portGuid, &g_Fabric, g_limitstats?&focus:NULL, g_quiet)) {
+		if (FSUCCESS != GetAllFDBs(g_portGuid, &g_Fabric, &focus, g_quiet)) {
 			g_exitstatus = 1;
 			goto done;
 		}
 	}
 
 	if (!g_snapshot_in_file && fl_vlqos && ! g_hard && ! g_persist) {
-		if (FSUCCESS != GetAllPortVLInfo(g_portGuid, &g_Fabric, g_limitstats?&focus:NULL, g_quiet)) {
+		if (FSUCCESS != GetAllPortVLInfo(g_portGuid, &g_Fabric, &focus, g_quiet)) {
 			g_exitstatus = 1;
 			goto done;
 		}
 	}
 
 	if (!g_snapshot_in_file && bfrctrl && ! g_hard && ! g_persist) {
-		if (FSUCCESS != GetAllBCTs(g_portGuid, &g_Fabric, g_limitstats?&focus:NULL, g_quiet)) {
+		if (FSUCCESS != GetAllBCTs(g_portGuid, &g_Fabric, &focus, g_quiet)) {
 			g_exitstatus = 1;
 			goto done;
 		}
 	}
 
-	// output the desired reports
 	if (format == FORMAT_XML && ! (report & REPORT_SNAPSHOT)) {
 // TBD - use IXml functions for XML output
 		char datestr[80] = "";
@@ -11210,8 +11382,8 @@ int main(int argc, char ** argv)
 	if (report & REPORT_VALIDATEROUTES)
 		ShowValidateRoutesReport(&focus, format, 0, detail);
 
-        if (report & REPORT_VALIDATECREDITLOOPS) 
-           ShowValidateCreditLoopsReport(&focus, format, 0, detail); 
+	if (report & REPORT_VALIDATECREDITLOOPS) 
+		ShowValidateCreditLoopsReport(&focus, format, 0, detail); 
 
 	if (report & REPORT_VFINFO)
 		ShowVFInfoReport(&focus, format, 0, detail);
@@ -11236,7 +11408,7 @@ int main(int argc, char ** argv)
 		ShowQuarantineNodeReport(&focus, format, 0, detail);
 
 	if (g_clearstats || g_clearallstats)
-		(void)ClearAllPortCountersAndShow(g_portGuid, focus_arg?&focus:NULL, g_clearallstats, format, report == REPORT_SNAPSHOT);
+		(void)ClearAllPortCountersAndShow(g_portGuid, &focus, g_clearallstats, format, report == REPORT_SNAPSHOT);
 	if (format == FORMAT_XML && ! (report & REPORT_SNAPSHOT)) {
 		printf("</Report>\n");
 	}

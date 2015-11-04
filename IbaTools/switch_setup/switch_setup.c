@@ -39,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Info for all switches */
 int LinkWidthSelection;	/* selection for Link Width */
-int LinkSpeedSelection;	/* selection for Link Speed */
 int NodeDescSelection;	/* selection for Node Description */
 int FMEnabledSelection; /* selection for FM Enabled */
 int LinkCRCModeSelection; /* selection for link CRC mode */
@@ -67,25 +66,28 @@ int getYesNo(char *question, int def)
 	while (!done)
 	{
 		printf("%s: ", question);
-		fgets(answerBuf, 8, stdin);
-		stripCR(answerBuf);
-		if ((answerBuf[0] == 'n') || (answerBuf[0] == 'N'))
-		{
-			res = 0;
-			done = 1;
-		}
-		else if ((answerBuf[0] == 'y') || (answerBuf[0] == 'Y'))
-		{
-			res = 1;
-			done = 1;
-		}
-		else if (strlen(answerBuf) == 0)
-		{
-			res = def;
-			done = 1;
-		}
-		else
-		{
+		if (fgets(answerBuf, 8, stdin) != NULL) {
+			stripCR(answerBuf);
+			if ((answerBuf[0] == 'n') || (answerBuf[0] == 'N'))
+			{
+				res = 0;
+				done = 1;
+			}
+			else if ((answerBuf[0] == 'y') || (answerBuf[0] == 'Y'))
+			{
+				res = 1;
+				done = 1;
+			}
+			else if (strlen(answerBuf) == 0)
+			{
+				res = def;
+				done = 1;
+			}
+			else
+			{
+				fprintf(stderr, "<%s> is not a valid entry - please enter y or n ... \n", answerBuf);
+			}
+		} else {
 			fprintf(stderr, "<%s> is not a valid entry - please enter y or n ... \n", answerBuf);
 		}
 	}
@@ -104,29 +106,32 @@ int getInt(char *question, int low, int high)
 	while (!done)
 	{
 		printf("%s: ", question);
-		fgets(answerBuf, 64, stdin);
-		stripCR(answerBuf);
+		if (fgets(answerBuf, 64, stdin) != NULL) {
+			stripCR(answerBuf);
 
-		if (strlen(answerBuf) == 0)
-			goodInt = 0;
-		else {
-			for (i = 0, goodInt = 1; (i < strlen(answerBuf)) && goodInt; i++) {
-				if (!isdigit(answerBuf[i]))
-					goodInt = 0;
+			if (strlen(answerBuf) == 0)
+				goodInt = 0;
+			else {
+				for (i = 0, goodInt = 1; (i < strlen(answerBuf)) && goodInt; i++) {
+					if (!isdigit(answerBuf[i]))
+						goodInt = 0;
+				}
 			}
-		}
 
-		if (goodInt)
-			selection = atoi(answerBuf);
-		else
-			selection = -1;
+			if (goodInt)
+				selection = atoi(answerBuf);
+			else
+				selection = -1;
 
-		if ((selection < low) || (selection > high))
+			if ((selection < low) || (selection > high))
+				fprintf(stderr, "<%s> is not a valid entry - please select a choice from %d to %d ...\n", answerBuf, low, high);
+			else
+			{
+				res = selection;
+				done = 1;
+			}
+		} else {
 			fprintf(stderr, "<%s> is not a valid entry - please select a choice from %d to %d ...\n", answerBuf, low, high);
-		else
-		{
-			res = selection;
-			done = 1;
 		}
 	}
 	return(res);
@@ -144,29 +149,32 @@ int getIntRange(char *question, int low, int high, int other)
 	while (!done)
 	{
 		printf("%s: ", question);
-		fgets(answerBuf, 64, stdin);
+		if (fgets(answerBuf, 64, stdin) != NULL) {
 		stripCR(answerBuf);
 
-		if (strlen(answerBuf) == 0)
-			goodInt = 0;
-		else {
-			for (i = 0, goodInt = 1; (i < strlen(answerBuf)) && goodInt; i++) {
-				if (!isdigit(answerBuf[i]))
-					goodInt = 0;
+			if (strlen(answerBuf) == 0)
+				goodInt = 0;
+			else {
+				for (i = 0, goodInt = 1; (i < strlen(answerBuf)) && goodInt; i++) {
+					if (!isdigit(answerBuf[i]))
+						goodInt = 0;
+				}
 			}
-		}
 
-		if (goodInt)
-			selection = atoi(answerBuf);
-		else
-			selection = -1;
+			if (goodInt)
+				selection = atoi(answerBuf);
+			else
+				selection = -1;
 
-		if (((selection < low) || (selection > high)) && (selection != other))
+			if (((selection < low) || (selection > high)) && (selection != other))
+				fprintf(stderr, "<%s> is not a valid entry - please select a choice from %d to %d, or %d ...\n", answerBuf, low, high, other);
+			else
+			{
+				res = selection;
+				done = 1;
+			}
+		} else {
 			fprintf(stderr, "<%s> is not a valid entry - please select a choice from %d to %d, or %d ...\n", answerBuf, low, high, other);
-		else
-		{
-			res = selection;
-			done = 1;
 		}
 	}
 	return(res);
@@ -184,7 +192,6 @@ void removeCR(char *buf)
 int getGeneralInfo()
 {
 	int setLinkWidthOptions = 0;
-	int setLinkSpeedOptions = 0;
 	int setNodeDesc = 0;
 	int setFMEnabled = 0;
 	int setLinkCRCMode = 0;
@@ -201,17 +208,6 @@ int getGeneralInfo()
 		printf("********************************************************************************************\n");
 	} else
 		LinkWidthSelection = 0;
-
-	setLinkSpeedOptions = getYesNo("Do you wish to configure the switch Link Speed Options? [n]", 0);
-	if (setLinkSpeedOptions)
-	{
-		LinkSpeedSelection = getInt("Enter 1 for 12G, 2 for 25G, 3 for 12G/25G", 1, 3);
-		printf("********************************************************************************************\n");
-		printf("*** Note: a reboot of all switch devices is required in order to activate\n*** changes to the switch link speed\n");
-		printf("*** Note: both sides of a link must have equivalent link speed supported\n*** settings or the link will not come up\n");
-		printf("********************************************************************************************\n");
-	} else
-		LinkSpeedSelection = 0;
 
 	setNodeDesc = getYesNo("Do you wish to configure the switch Node Description as it is set in the opanodes file? [n]", 0);
 	NodeDescSelection = setNodeDesc;
@@ -253,7 +249,6 @@ main(int argc, char *argv[])
 
 	/* display general info */
 	fprintf(fp_out, "Link Width Selection:%d\n", LinkWidthSelection);
-	fprintf(fp_out, "Link Speed Selection:%d\n", LinkSpeedSelection);
 	fprintf(fp_out, "Node Description Selection:%d\n", NodeDescSelection);
 	fprintf(fp_out, "FM Enabled Selection:%d\n", FMEnabledSelection);
 	fprintf(fp_out, "Link CRC Mode Selection:%d\n", LinkCRCModeSelection);

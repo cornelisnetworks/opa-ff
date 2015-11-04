@@ -15,7 +15,7 @@ opaportinfo
 .PP
 
 \fB(Host or Switch)\fR
-Displays configuration and state of a specified Intel(R) Omni-Path Host Fabric Interface ( HFI ) port on the local host or a remote switch.
+Displays configuration and state of a specified Intel(R) Omni-Path Host Fabric Interface (HFI) port on the local host or a remote switch.
 .SH Syntax
 .NL
 opaportinfo [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR] [-v] 
@@ -25,48 +25,61 @@ opaportinfo [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR]
 .TP 10
 -l \fIlid\fR 
 .NL
-Destination lid, default is local port
+Destination LID. Default is local port.
+
 .TP 10
 -m \fIdest\(ulport\fR 
 .NL
-Destination port, default is port with given lid useful to access switch ports
+Destination port. Default is port with given LID. Useful to access switch ports.
+
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI , numbered 1..n. Using 0 specifies that the -p \fIport\fR port will be a system wide port number (default is 0).
+HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
+
 .TP 10
 -p \fIport\fR 
 .NL
-Port, numbered 1..n. If -h \fIhfi\fR is 0 then  \fIport\fR will be a system wide port number (default is 1).
+Port, numbered 1..n. If -h \fIhfi\fR is 0, then  \fIport\fR is a system-wide port number. Default is 1.
+
 .TP 10
 -K \fImkey\fR 
 .NL
 SM management key to access remote ports.
-.PP
-The -h and -p options permit a variety of selections:
+
+.TP 10
+\fB-h and -p options permit a variety of selections:\fR
+.NL
+
 .TP 10
 -h 0 
 .NL
-First port in system (this is the default).
+First port in system (default).
+
 .TP 10
--h \fIhfi\fR 
+-h \fIx\fR 
 .NL
-First port on HFI  \fIhfi\fR.
+First port on HFI   \fIx\fR.
+
 .TP 10
--h 0 -p \fIport\fR 
+-h 0 -p \fIy\fR 
 .NL
-Port \fIport\fRwithin system.
+Port  \fIy\fR within system.
+
 .TP 10
--h \fIhfi\fR-p \fIport\fR 
+-h \fIx\fR-p \fIy\fR 
 .NL
-HFI \fIhfi\fR, port \fIport\fR.
-.SH Debug Options-->
+HFI  \fIx\fR, port  \fIy\fR.
+
+.TP 10
+\fBDebug Options\fR
 .NL
 
 .TP 10
 -v 
 .NL
-Verbose output. Additional invocations (-v -v ...) will turn on debugging, openib debugging and libibumad debugging.
+Verbose output. Additional invocations (-v -v ...) turn on debugging, openib debugging, and libibumad debugging.
+
 .SH Examples 
 .NL
 opaportinfo -p 1
@@ -76,4 +89,4 @@ opaportinfo -p 2 -h 2 -l 5 -m 18
 .NL
 
 .PP
-To access switch ports using this command, the -l and -m options must be given. The -l option will specify the lid of switch port 0 (the logical management port for the switch) and -m will specify the actual switch port to access. If SMA mkeys are being used, the -K option will also be needed. By default the Intel(R) Omni-Path Fabric Suite Fabric Manager does not use SMA mkeys, in which case this option does not need to be used.
+To access switch ports using this command, the -l and -m options must be given. The -l option specifies the LID of switch port 0 (the logical management port for the switch) and -m specifies the actual switch port to access. If SMA mkeys are used, the -K option is also needed. However, the Intel(R) Omni-Path Fabric Suite Fabric Manager does not use SMA mkeys by default, therefore this option may not be required.

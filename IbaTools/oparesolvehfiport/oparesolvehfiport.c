@@ -41,12 +41,27 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iba/ibt.h>
 #include <oib_utils.h>
 
-void Usage(void)
+void Usage(int exitcode)
 {
 	fprintf(stderr, "Usage: oparesolvehfiport hfi port\n");
-	fprintf(stderr, "    hfi             - hfi to send via, default is 1st hfi\n");
-	fprintf(stderr, "    port            - port to send via, default is 1st active port\n");
-	exit(2);
+	fprintf(stderr, "            or\n");
+	fprintf(stderr, "       oparesolvehfiport --help\n");
+	fprintf(stderr, "    hfi     - hfi, numbered 1..n, 0 = system wide port num\n");
+	fprintf(stderr, "              (default is 1)\n");
+	fprintf(stderr, "    port    - port, numbered 1..n, 0 = 1st active\n");
+ 	fprintf(stderr, "              (default is 0)\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "The host and port permit a variety of selections:\n");
+	fprintf(stderr, "  0 0     - 1st active port in system\n");
+	fprintf(stderr, "  x 0     - 1st active port on HFI x\n");
+	fprintf(stderr, "  0 y     - port y within system (irrespective of which ports are active)\n");
+	fprintf(stderr, "  x y     - HFI x, port y\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Example:\n");
+	fprintf(stderr, "    oparesolvehfiport 0 1\n");
+	fprintf(stderr, "Output:\n");
+	fprintf(stderr, "    hfi_0:1\n");
+	exit(exitcode);
 }
 
 int main(int argc, char ** argv)
@@ -62,18 +77,21 @@ int main(int argc, char ** argv)
 	if (argc > 3)
 	{
 		fprintf(stderr, "oparesolvehfiport: Too many arguments\n");
-		Usage();
+		Usage(2);
 	}
 	if (argc >= 2) {
+		if (strcmp(argv[1], "--help") == 0) {
+			Usage(0);
+		}
 		if (FSUCCESS != StringToUint8(&hfi, argv[1], NULL, 0, TRUE)) {
 			fprintf(stderr, "oparesolvehfiport: Invalid HFI Number: %s\n", argv[1]);
-			Usage();
+			Usage(2);
 		}
 	}
 	if (argc == 3) {
 		if (FSUCCESS != StringToUint8(&port, argv[2], NULL, 0, TRUE)) {
 			fprintf(stderr, "oparesolvehfiport: Invalid Port Number: %s\n", argv[2]);
-			Usage();
+			Usage(2);
 		}
 	}
 

@@ -40,6 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STL_MAX_PORT_CONFIG_DATA_SIZE (sizeof(STL_PA_PM_GROUP_CFG_RSP) * 2048)
 #define STL_MAX_GROUP_LIST_SIZE (sizeof(STL_PA_GROUP_LIST) * (STL_PM_MAX_GROUPS+1))
+#define PA_REQ_HDR_SIZE (sizeof(MAD_COMMON) + sizeof(SA_MAD_HDR))
 
 extern PrintDest_t g_dest;
 
@@ -176,7 +177,7 @@ fe_pa_multi_mad_group_response_query(
     QUERY_RESULT_VALUES         *query_result = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-	char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE] = {0};
     STL_PA_GROUP_LIST           *pa_data;
     STL_PA_GROUP_LIST_RESULTS   *pa_result;
 
@@ -331,7 +332,7 @@ fe_pa_multi_mad_group_stats_response_query(
     QUERY_RESULT_VALUES         *query_result = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                         rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + 80] = {0};  // 80 = GroupName + ImageID (request)
     STL_PA_PM_GROUP_INFO_DATA             *pa_data;
     STL_PA_PM_GROUP_INFO_DATA             *p;
     STL_PA_GROUP_INFO_RESULTS       *pa_result;
@@ -500,7 +501,7 @@ fe_pa_multi_mad_group_config_response_query(
     QUERY_RESULT_VALUES         *query_result = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_PM_GROUP_CFG_REQ)] = {0};
 	int							i;
     STL_PA_PM_GROUP_CFG_RSP          *pa_data;
     STL_PA_PM_GROUP_CFG_REQ          *p;
@@ -670,7 +671,7 @@ fe_pa_single_mad_port_counters_response_query(
     STL_PORT_COUNTERS_DATA      *p;
     uint8_t                 *rsp_mad, *data;
     uint32_t                rcv_buf_len; 
-    char                    request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                    request_data[PA_REQ_HDR_SIZE + sizeof(STL_PORT_COUNTERS_DATA)] = {0};
 
     p = (STL_PORT_COUNTERS_DATA *)request_data;
     p->nodeLid = node_lid;
@@ -794,14 +795,14 @@ fe_pa_single_mad_clr_port_counters_response_query(
     STL_CLR_PORT_COUNTERS_DATA  *p;
     uint8_t                 *rsp_mad, *data;
     uint32_t                rcv_buf_len; 
-    char                    request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                    request_data[PA_REQ_HDR_SIZE + sizeof(STL_CLR_PORT_COUNTERS_DATA)] = {0};
 
     p = (STL_CLR_PORT_COUNTERS_DATA *)request_data;
-    p->nodeLid = node_lid;
-    p->portNumber = port_number;
-    p->counterSelectMask.AsReg32 = select;
-	p->counterSelectMask.s.reserved = 0;
-	memset(p->reserved, 0, sizeof(p->reserved));
+    p->NodeLid = node_lid;
+    p->PortNumber = port_number;
+    p->CounterSelectMask.AsReg32 = select;
+	p->CounterSelectMask.s.Reserved = 0;
+	memset(p->Reserved, 0, sizeof(p->Reserved));
     BSWAP_STL_PA_CLR_PORT_COUNTERS(p);
 
 	if(g_verbose)
@@ -900,11 +901,11 @@ fe_pa_single_mad_clr_all_port_counters_response_query(
     STL_CLR_ALL_PORT_COUNTERS_DATA  *p;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_CLR_ALL_PORT_COUNTERS_DATA)] = {0};
 
     p = (STL_CLR_ALL_PORT_COUNTERS_DATA *)request_data;
-    p->counterSelectMask.AsReg32 = select;
-	p->counterSelectMask.s.reserved = 0;
+    p->CounterSelectMask.AsReg32 = select;
+	p->CounterSelectMask.s.Reserved = 0;
     BSWAP_STL_PA_CLR_ALL_PORT_COUNTERS(p);
 
 	if(g_verbose)
@@ -996,7 +997,7 @@ fe_pa_single_mad_get_pm_config_response_query(
     STL_PA_PM_CFG_DATA       *response = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_PM_CFG_DATA)] = {0};
 
 
 	if(g_verbose)
@@ -1090,7 +1091,7 @@ fe_pa_single_mad_freeze_image_response_query(
     STL_PA_IMAGE_ID_DATA               *p;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_IMAGE_ID_DATA)] = {0};
 
     p = (STL_PA_IMAGE_ID_DATA *)request_data;
     p->imageNumber = hton64(image_id->imageNumber);
@@ -1194,7 +1195,7 @@ fe_pa_single_mad_release_image_response_query(
     STL_PA_IMAGE_ID_DATA               *p;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_IMAGE_ID_DATA)] = {0};
 
     p = (STL_PA_IMAGE_ID_DATA *)request_data;
     p->imageNumber = hton64(image_id->imageNumber);
@@ -1296,7 +1297,7 @@ fe_pa_single_mad_renew_image_response_query(
     STL_PA_IMAGE_ID_DATA               *p;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_IMAGE_ID_DATA)] = {0};
 
     p = (STL_PA_IMAGE_ID_DATA *)request_data;
     p->imageNumber = hton64(image_id->imageNumber);
@@ -1398,7 +1399,7 @@ fe_pa_single_mad_move_freeze_response_query(
     STL_MOVE_FREEZE_DATA            *p;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_MOVE_FREEZE_DATA)] = {0};
 
     p = (STL_MOVE_FREEZE_DATA *)request_data;
     p->oldFreezeImage.imageNumber = hton64(move_info->oldFreezeImage.imageNumber);
@@ -1519,7 +1520,7 @@ fe_pa_multi_mad_focus_ports_response_query (
     QUERY_RESULT_VALUES         *query_result = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_FOCUS_PORTS_REQ)] = {0};
 	int							i;
     STL_FOCUS_PORTS_RSP           *pa_data;
     STL_FOCUS_PORTS_REQ           *p;
@@ -1685,7 +1686,7 @@ fe_pa_multi_mad_get_image_info_response_query (
     STL_PA_IMAGE_INFO_DATA             *p;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_IMAGE_INFO_DATA)] = {0};
 
     p = (STL_PA_IMAGE_INFO_DATA *)request_data;
     p->imageId.imageNumber = hton64(image_info->imageId.imageNumber);
@@ -1777,7 +1778,7 @@ fe_pa_classportinfo_response_query(struct net_connection *connection)
     uint32_t                record_size = sizeof(STL_CLASS_PORT_INFO);
     uint8_t                 *rsp_mad, *data;
     uint32_t                rcv_buf_len; 
-    char                    request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                    request_data[PA_REQ_HDR_SIZE] = {0};
 
 	if(g_verbose)
 		fprintf(stderr, "Sending Get Single Record request\n");
@@ -1878,7 +1879,7 @@ fe_pa_multi_mad_vf_list_response_query(
     QUERY_RESULT_VALUES         *query_result = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-	char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE] = {0};
     STL_PA_VF_LIST	        	*pa_data;
     STL_PA_VF_LIST_RESULTS     	*pa_result;
 
@@ -2033,7 +2034,7 @@ fe_pa_multi_mad_vf_info_response_query(
     QUERY_RESULT_VALUES         *query_result = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + 88] = {0};  // 88 = VFName + Reserved + ImageID
     STL_PA_VF_INFO_DATA             *pa_data;
     STL_PA_VF_INFO_DATA             *p;
     STL_PA_VF_INFO_RESULTS       *pa_result;
@@ -2202,7 +2203,7 @@ fe_pa_multi_mad_vf_config_response_query(
     QUERY_RESULT_VALUES         *query_result = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_VF_CFG_REQ)] = {0};
 	int							i;
     STL_PA_VF_CFG_RSP           *pa_data;
     STL_PA_VF_CFG_REQ           *p;
@@ -2326,7 +2327,7 @@ FSTATUS fe_GetVFConfig(struct net_connection *connection, char *vfName, uint64 i
 			fprintf(stderr, "PA Multiple MAD Response for VF Config vf name %s:\n", vfName);
 		}
 
-		PrintStlPAVFConfig(&g_dest, 1, vfName, 0, p->NumVFConfigRecords, p->VFConfigRecords);
+		PrintStlPAVFConfig(&g_dest, 1, vfName, p->NumVFConfigRecords, p->VFConfigRecords);
 	}
 
 	status = FSUCCESS;
@@ -2372,7 +2373,7 @@ fe_pa_single_mad_vf_port_counters_response_query(
     STL_PA_VF_PORT_COUNTERS_DATA      *p;
     uint8_t                 *rsp_mad, *data;
     uint32_t                rcv_buf_len; 
-    char                    request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                    request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_VF_PORT_COUNTERS_DATA)] = {0};
 
     p = (STL_PA_VF_PORT_COUNTERS_DATA *)request_data;
     p->nodeLid = node_lid;
@@ -2497,7 +2498,7 @@ fe_pa_single_mad_clr_vf_port_counters_response_query(
     STL_PA_CLEAR_VF_PORT_COUNTERS_DATA  *p;
     uint8_t                 *rsp_mad, *data;
     uint32_t                rcv_buf_len; 
-    char                    request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                    request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_CLEAR_VF_PORT_COUNTERS_DATA)] = {0};
 
     p = (STL_PA_CLEAR_VF_PORT_COUNTERS_DATA *)request_data;
     p->nodeLid = hton32(node_lid);
@@ -2615,7 +2616,7 @@ fe_pa_multi_mad_vf_focus_ports_response_query (
     QUERY_RESULT_VALUES         *query_result = NULL;
     uint8_t                     *rsp_mad, *data;
     uint32_t                    rcv_buf_len; 
-    char                        request_data[STL_IBA_SUBN_ADM_DATASIZE] = {0};
+    char                        request_data[PA_REQ_HDR_SIZE + sizeof(STL_PA_VF_FOCUS_PORTS_REQ)] = {0};
 	int							i;
     STL_PA_VF_FOCUS_PORTS_RSP     *pa_data;
     STL_PA_VF_FOCUS_PORTS_REQ     *p;
@@ -2745,7 +2746,7 @@ FSTATUS fe_GetVFFocusPorts(struct net_connection *connection, char *vfName, uint
 			fprintf(stderr, "PA Multiple MAD Response for VF Focus Ports VF name %s:\n", vfName);
 		}
 
-		PrintStlPAVFFocusPorts(&g_dest, 1, vfName, 0, p->NumVFFocusPortsRecords, select, start, range, p->FocusPortsRecords);
+		PrintStlPAVFFocusPorts(&g_dest, 1, vfName, p->NumVFFocusPortsRecords, select, start, range, p->FocusPortsRecords);
 	}
 
 	status = FSUCCESS;

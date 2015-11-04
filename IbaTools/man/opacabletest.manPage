@@ -15,7 +15,7 @@ opacabletest
 .PP
 
 \fB(Switch)\fR
-Used to initiate or stop Cable Bit Error Rate stress tests for Intel(R) Omni-Path Host Fabric Interface ( HFI )-to-switch links and/or ISLs.
+Initiates or stops Cable Bit Error Rate stress tests for Intel(R) Omni-Path Host Fabric Interface (HFI)-to-switch links and/or ISLs.
 .SH Syntax
 .NL
 opacabletest [-C|-A] [-c \fIfile\fR] [-f \fIhostfile\fR] [-h \fI\'hosts\'\fR] [-n \fInumprocs\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi|stop\(ulisl]
@@ -29,77 +29,129 @@ opacabletest --help
 .TP 10
 --help 
 .NL
-Produce full help text.
+Produces full help text.
+
 .TP 10
 -C 
 .NL
-Clear error counters.
+Clears error counters.
+
 .TP 10
 -A 
 .NL
-Force clear of hardware error counters. Implies -C .
+Forces clear of hardware error counters. Implies -C.
+
 .TP 10
 -c \fIfile\fR 
 .NL
-Error thresholds configuration file. Default is /etc/sysconfig/opa/opamon.si.conf . Only used if -C or -A specified.
+Error thresholds configuration file. Default is /etc/sysconfig/opa/opamon.si.conf file. Only used if -C or -A specified.
+
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts to include in HFI -to-SW test. Default is /etc/sysconfig/opa/hosts .
+File with hosts to include in HFI -to-SW test. Default is /etc/sysconfig/opa/hosts file.
+
 .TP 10
 -h \fIhosts\fR 
 .NL
 List of hosts to include in HFI -SW test.
+
 .TP 10
 -n \fInumprocs\fR 
 .NL
 Number of processes per host for HFI -SW test.
+
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) when clearing counters. Default is /etc/sysconfig/opa/ports .
+File with list of local HFI ports used to access fabrics when clearing counters. Default is /etc/sysconfig/opa/ports file.
+
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric(s) for counter clear. Default is first active port.This is specified as hfi:port 
+List of local HFI ports used to access fabrics for counter clear. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
 
 .IP
-The first HFI in the system is 1. The first port on an HFI is 1.
+Uses the format hfi:port, for example:
+.RS
+.TP 10
+
+.sp
+0:0 
+First active port in system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+0:y 
+Port  \fIy\fR within system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:0 
+First active port on HFI  \fIx\fR.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:y 
+HFI  \fIx\fR, port  \fIy\fR.
+
+.RE
+
 .TP 10
 start 
 .NL
-Start the HFI -SW and ISL tests.
+Starts the HFI -SW and ISL tests.
+
 .TP 10
 start\(ulfi 
 .NL
-Start the HFI -SW test.
+Starts the HFI -SW test.
+
 .TP 10
 start\(ulisl 
 .NL
-Start the ISL test.
+Starts the ISL test.
+
 .TP 10
 stop 
 .NL
-Stop the HFI -SW and ISL tests.
+Stops the HFI -SW and ISL tests.
+
 .TP 10
 stop\(ulfi 
 .NL
-Stop the HFI -SW test.
+Stops the HFI -SW test.
+
 .TP 10
 stop\(ulisl 
 .NL
-Stop the ISL test.
+Stops the ISL test.
+
 .PP
-The HFI -SW cabletest requires that \fBFF\(ulMPI\(ulAPPS\(ulDIR\fR be set, and contains a pre-built copy of Intel\'s mpi\(ulapps for an appropriate MPI.
+The HFI -SW cable test requires that the \fBFF\(ulMPI\(ulAPPS\(ulDIR\fR is set, and it contains a pre-built copy of the mpi\(ulapps for an appropriate message passing interface (MPI).
 .PP
-The ISL cable test started by this tool assumes that the master Host Subnet Manager (HSM) is running on this host. If using the Embedded Subnet Manager (ESM), or if a different host is the master HSM, the ISL cabletest will have to be controlled by the switch CLI, or by Intel(R) Omni-Path Fabric Suite FastFabric on the master HSM respectively.
+The ISL cable test started by this tool assumes that the master Host Subnet Manager (HSM) is running on this host. If using the Embedded Subnet Manager (ESM), or if a different host is the master HSM, the ISL cable test must be controlled by the switch CLI, or by Intel(R) Omni-Path Fabric Suite FastFabric on the master HSM respectively.
 .SH Examples 
 .NL
 opacabletest -A start
 .br
 opacabletest -f good -A start
 .br
-opacabletest -h \'arwen elrond\' start\(ulfi HOSTS=\'arwen elrond\' opacabletest stop
+opacabletest -h \'arwen elrond\' start\(ulfi
+.br
+HOSTS=\'arwen elrond\' opacabletest stop
 .br
 opacabletest -A
 .SH Environment Variables
@@ -111,18 +163,22 @@ The following environment variables are also used by this command:
 \fBHOSTS\fR 
 .NL
 List of hosts, used if -h option not supplied.
+
 .TP 10
 \fBHOSTS\(ulFILE\fR 
 .NL
-File containing list of hosts, used in absence of -f and -h .
+File containing list of hosts, used in absence of -f and -h.
+
 .TP 10
 \fBPORTS\fR 
 .NL
-List of ports, used in absence of -t and -p .
+List of ports, used in absence of -t and -p.
+
 .TP 10
 \fBPORTS\(ulFILE\fR 
 .NL
-File containing list of ports, used in absence of -t and -p .
+File containing list of ports, used in absence of -t and -p.
+
 .TP 10
 \fBFF\(ulMAX\(ulPARALLEL\fR 
 .NL

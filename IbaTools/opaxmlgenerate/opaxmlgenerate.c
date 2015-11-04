@@ -253,6 +253,7 @@ void dispElementRecord(ELEMENT_TABLE_ENTRY * pElement, const char * pValue)
 void errUsage(void)
 {
 	fprintf(stderr, "Usage: " NAME_PROG " [-v][-d delimiter][-i number][-g element][-h element][-e element][-X input_file][-P param_file]\n");
+	fprintf(stderr, "  At least 1 element must be specified\n");
 	fprintf(stderr, "  -g/--generate element     - name of XML element to generate\n");
 	fprintf(stderr, "                              can be used multiple times\n");
 	fprintf(stderr, "                              values assigned to elements in order xxx ... \n");
@@ -560,8 +561,7 @@ void getRecu_opt( int argc, char ** argv, const char *pOptShort,
 	// Validate command line arguments
 	if (optind < argc)
 	{
-		fprintf(stderr, NAME_PROG ": Unprocessed Parameters (%d of %d)\n",
-			argc - optind, argc);
+		fprintf(stderr, "%s: invalid argument %s\n", NAME_PROG, argv[optind]);
 		errUsage();
 	}
 
@@ -590,7 +590,7 @@ int main(int argc, char ** argv)
 	char	*pValue = NULL;				// Pointer to current input value
 	char	*pValueNext = bfInput + MAX_INPUT_BUF;  // Ptr to next input value
 
-	// Initialize for extraction
+	// Initialize for generation
 	hFileInput = stdin;
 	hFileOutput = stdout;
 
@@ -605,6 +605,11 @@ int main(int argc, char ** argv)
 
 	// Get and validate command line arguments
 	getRecu_opt(argc, argv, "vg:h:e:X:P:d:i:Z:", tbOptions);
+	if (numElementsTable <= 0)
+	{
+		fprintf(stderr, NAME_PROG ": No Elements Specified\n");
+		errUsage();
+	}
 
 	IXmlInit(&state, hFileOutput, numIndentChars, IXML_OUTPUT_FLAG_NONE, NULL);
 
@@ -678,7 +683,7 @@ int main(int argc, char ** argv)
 			dispElementRecord(&tbElements[ix++], NULL);
 
 		// Check for end of tbElements[]
-		if (ix == numElementsTable)
+		if (ix >= numElementsTable)
 		{
 			if ((pValueNext - bfInput) < ctCharInput)
 				ix = 0;					// Wrap to beg of tbElements[]

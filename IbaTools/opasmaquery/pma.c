@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MSG_PMA_SEND_RECV_FAILURE	"failed PMA Send or Receive"
 
-static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod, argrec *args, STL_PERF_MAD *mad)
+static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod, argrec *args, STL_PERF_MAD *mad, size_t send_size)
 {
 	FSTATUS status;
 	uint32_t dlid;
@@ -88,7 +88,7 @@ static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod
             sl   : sl
 		};
         size_t recv_size = sizeof(*mad);
-		status = oib_send_recv_mad_no_alloc(args->oib_port, (uint8_t *)mad, sizeof(*mad), &addr,
+		status = oib_send_recv_mad_no_alloc(args->oib_port, (uint8_t *)mad, send_size+sizeof(MAD_COMMON), &addr,
 											(uint8_t *)mad, &recv_size, RESP_WAIT_TIME, 0);
 	}
 	BSWAP_MAD_HEADER((MAD*)mad);
@@ -179,12 +179,13 @@ static boolean checkStlVLSelectMask(uint64 VLSelectMask)
 static boolean stl_pma_get_class_port_info(argrec *args, uint8_t *pm, size_t pm_len, boolean print)
 {
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
+	FSTATUS status = FSUCCESS;
 
 	STL_CLASS_PORT_INFO *pClassPortInfo = (STL_CLASS_PORT_INFO *)&(mad->PerfData);
 	MemoryClear(mad, sizeof(*mad));
 
-	if ( FSUCCESS != perform_stl_pma_query (MMTHD_GET, MCLASS_ATTRIB_ID_CLASS_PORT_INFO, 0, args, mad)) {
-		fprintf(stderr, "stl_pma_get_class_port_info %s\n", MSG_PMA_SEND_RECV_FAILURE);
+	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_GET, MCLASS_ATTRIB_ID_CLASS_PORT_INFO, 0, args, mad, 0))) {
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_PMA_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		BSWAP_STL_CLASS_PORT_INFO(pClassPortInfo );
@@ -197,6 +198,7 @@ static boolean stl_pma_get_class_port_info(argrec *args, uint8_t *pm, size_t pm_
 static boolean stl_pma_get_PortStatus(argrec *args, uint8_t *pm, size_t pm_len, boolean print)
 {
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
+	FSTATUS status = FSUCCESS;
 
 	STL_PORT_STATUS_REQ *pStlPortStatus = (STL_PORT_STATUS_REQ *)&(mad->PerfData);
 	STL_PORT_STATUS_RSP *pStlPortStatusRsp;
@@ -207,12 +209,12 @@ static boolean stl_pma_get_PortStatus(argrec *args, uint8_t *pm, size_t pm_len, 
 	memset(pStlPortStatus->Reserved, 0, sizeof(pStlPortStatus->Reserved));
 	BSWAP_STL_PORT_STATUS_REQ(pStlPortStatus );
 
-	if ( FSUCCESS != perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_PORT_STATUS, 0x01000000, args, mad)) {
-		fprintf(stderr, "stl_pma_get_PortStatus %s\n", MSG_PMA_SEND_RECV_FAILURE);
+	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_PORT_STATUS, 0x01000000, args, mad, sizeof(STL_PORT_STATUS_REQ)))) {
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_PMA_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		pStlPortStatusRsp = (STL_PORT_STATUS_RSP *)pStlPortStatus;
-		BSWAP_STL_PORT_STATUS_RSP(pStlPortStatusRsp, 0); /* toNetwork argument is 0 - this is from network */
+		BSWAP_STL_PORT_STATUS_RSP(pStlPortStatusRsp);
 		if (print)
 			PrintStlPortStatusRsp(&g_dest, 0 /* indent */, pStlPortStatusRsp);
 		return TRUE;
@@ -224,18 +226,19 @@ static boolean stl_pma_clear_PortStatus(argrec *args, uint8_t *pm, size_t pm_len
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
 	uint32	attrmod;
 	uint64 portSelectMask;
+	FSTATUS status = FSUCCESS;
 
 	STL_CLEAR_PORT_STATUS *pStlClearPortStatus = (STL_CLEAR_PORT_STATUS *)&(mad->PerfData);
 	MemoryClear(mad, sizeof(*mad));
 
 	portSelectMask = getStlPortSelectMask(g_portSelectMask, args);
 	pStlClearPortStatus->PortSelectMask[3] = portSelectMask;
-	attrmod = getNumPortsFromSelMask(portSelectMask) << 24;
+	attrmod = 1 << 24;
 	pStlClearPortStatus->CounterSelectMask.AsReg32 = g_counterSelectMask;
 	BSWAP_STL_CLEAR_PORT_STATUS_REQ(pStlClearPortStatus);
 
-	if ( FSUCCESS != perform_stl_pma_query (MMTHD_SET, STL_PM_ATTRIB_ID_CLEAR_PORT_STATUS, attrmod, args, mad)) {
-		fprintf(stderr, "stl_pma_clear_PortStatus %s\n", MSG_PMA_SEND_RECV_FAILURE);
+	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_SET, STL_PM_ATTRIB_ID_CLEAR_PORT_STATUS, attrmod, args, mad, sizeof(STL_CLEAR_PORT_STATUS)))) {
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_PMA_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		BSWAP_STL_CLEAR_PORT_STATUS_REQ(pStlClearPortStatus);
@@ -250,6 +253,7 @@ static boolean stl_pma_get_DataCounters(argrec *args, uint8_t *pm, size_t pm_len
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
 	uint32		 attrmod;
 	uint64 portSelectMask;
+	FSTATUS status = FSUCCESS;
 
 	STL_DATA_PORT_COUNTERS_REQ *pStlDataPortCountersReq = (STL_DATA_PORT_COUNTERS_REQ *)&(mad->PerfData);
 	STL_DATA_PORT_COUNTERS_RSP *pStlDataPortCountersRsp;
@@ -261,12 +265,12 @@ static boolean stl_pma_get_DataCounters(argrec *args, uint8_t *pm, size_t pm_len
 	pStlDataPortCountersReq->VLSelectMask = g_vlSelectMask;
 	BSWAP_STL_DATA_PORT_COUNTERS_REQ(pStlDataPortCountersReq);
 
-	if ( FSUCCESS != perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_DATA_PORT_COUNTERS, attrmod, args, mad)) {
-		fprintf(stderr, "stl_pma_get_DataCounters %s\n", MSG_PMA_SEND_RECV_FAILURE);
+	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_DATA_PORT_COUNTERS, attrmod, args, mad, sizeof(STL_DATA_PORT_COUNTERS_REQ)))) {
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_PMA_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		pStlDataPortCountersRsp = (STL_DATA_PORT_COUNTERS_RSP *)pStlDataPortCountersReq;
-		BSWAP_STL_DATA_PORT_COUNTERS_RSP(pStlDataPortCountersRsp, FALSE);
+		BSWAP_STL_DATA_PORT_COUNTERS_RSP(pStlDataPortCountersRsp);
 		if (print)
 			PrintStlDataPortCountersRsp(&g_dest, 0 /* indent */, pStlDataPortCountersRsp);
 		return TRUE;
@@ -278,6 +282,7 @@ static boolean stl_pma_get_ErrorCounters(argrec *args, uint8_t *pm, size_t pm_le
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
 	uint32		 attrmod;
 	uint64 portSelectMask;
+	FSTATUS status = FSUCCESS;
 
 	STL_ERROR_PORT_COUNTERS_REQ *pStlErrorPortCountersReq = (STL_ERROR_PORT_COUNTERS_REQ *)&(mad->PerfData);
 	STL_ERROR_PORT_COUNTERS_RSP *pStlErrorPortCountersRsp;
@@ -286,19 +291,18 @@ static boolean stl_pma_get_ErrorCounters(argrec *args, uint8_t *pm, size_t pm_le
 	portSelectMask = getStlPortSelectMask(g_portSelectMask, args);
 	pStlErrorPortCountersReq->PortSelectMask[3] = portSelectMask;
 	attrmod = getNumPortsFromSelMask(portSelectMask) << 24;
-	attrmod |= g_counterSizeMode << 22;
 	pStlErrorPortCountersReq->VLSelectMask = g_vlSelectMask;
 
 	BSWAP_STL_ERROR_PORT_COUNTERS_REQ(pStlErrorPortCountersReq);
 
-	if ( FSUCCESS != perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_ERROR_PORT_COUNTERS, attrmod, args, mad)) {
-		fprintf(stderr, "stl_pma_get_ErrorCounters %s\n", MSG_PMA_SEND_RECV_FAILURE);
+	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_ERROR_PORT_COUNTERS, attrmod, args, mad, sizeof(STL_ERROR_PORT_COUNTERS_REQ)))) {
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_PMA_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		pStlErrorPortCountersRsp = (STL_ERROR_PORT_COUNTERS_RSP *)pStlErrorPortCountersReq;
-		BSWAP_STL_ERROR_PORT_COUNTERS_RSP(pStlErrorPortCountersRsp, 0, g_counterSizeMode); /* 0 indicates *from* network */
+		BSWAP_STL_ERROR_PORT_COUNTERS_RSP(pStlErrorPortCountersRsp);
 		if (print)
-			PrintStlErrorPortCountersRsp(&g_dest, 0 /* indent */, pStlErrorPortCountersRsp, g_counterSizeMode);
+			PrintStlErrorPortCountersRsp(&g_dest, 0 /* indent */, pStlErrorPortCountersRsp);
 		return TRUE;
 	}
 }
@@ -309,7 +313,7 @@ static boolean stl_pma_get_ErrorInfo(argrec *args, uint8_t *pm, size_t pm_len, b
 	uint32		 attrmod;
 	uint64 portSelectMask;
 	uint32 portCount = 0;
-	size_t reqSize;
+	FSTATUS status = FSUCCESS;
 
 	STL_ERROR_INFO_REQ *pStlErrorInfoReq = (STL_ERROR_INFO_REQ *)&(mad->PerfData);
 	MemoryClear(mad, sizeof(*mad));
@@ -323,24 +327,16 @@ static boolean stl_pma_get_ErrorInfo(argrec *args, uint8_t *pm, size_t pm_len, b
 	if (portCount == 0)
 		return FALSE;
 
-	reqSize = sizeof(STL_ERROR_INFO_REQ) +
-	  sizeof(pStlErrorInfoReq->Port[0]) * (portCount - 1);
+	BSWAP_STL_ERROR_INFO_REQ(pStlErrorInfoReq);
 
-	if (reqSize > sizeof(mad->PerfData)) {
-		fprintf(stderr, "Request port mask port count exceeds"
-		  " performance MAD capacity\n");
-		return FALSE;
-	}
-
-	BSWAP_STL_ERROR_INFO(pStlErrorInfoReq, 1); /* 1 indicates *to* network */
-
-	if ( FSUCCESS != perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_ERROR_INFO, attrmod, args, mad)) {
-		fprintf(stderr, "stl_pma_get_ErrorInfo %s\n", MSG_PMA_SEND_RECV_FAILURE);
+	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_ERROR_INFO, attrmod, args, mad, sizeof(STL_ERROR_INFO_REQ)))) {
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_PMA_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
-		BSWAP_STL_ERROR_INFO(pStlErrorInfoReq, 0); /* 0 indicated *from* network */
+		BSWAP_STL_ERROR_INFO_RSP((STL_ERROR_INFO_RSP*)pStlErrorInfoReq);
 		if (print)
-			PrintStlErrorInfoReq(&g_dest, 0 /* indent */, pStlErrorInfoReq);
+			PrintStlErrorInfoRsp(&g_dest, 0 /* indent */,
+			  (STL_ERROR_INFO_RSP*)pStlErrorInfoReq, 0);
 		return TRUE;
 	}
 }
@@ -351,7 +347,7 @@ static boolean stl_pma_clear_ErrorInfo(argrec *args, uint8_t *pm, size_t pm_len,
 	uint32		 attrmod;
 	uint64 portSelectMask;
 	uint32 portCount = 0;
-	size_t reqSize;
+	FSTATUS status = FSUCCESS;
 
 	STL_ERROR_INFO_REQ *pStlErrorInfoReq = (STL_ERROR_INFO_REQ *)&(mad->PerfData);
 	MemoryClear(mad, sizeof(*mad));
@@ -365,24 +361,17 @@ static boolean stl_pma_clear_ErrorInfo(argrec *args, uint8_t *pm, size_t pm_len,
 	if (portCount == 0)
 		return FALSE;
 
-	reqSize = sizeof(STL_ERROR_INFO_REQ) +
-	  sizeof(pStlErrorInfoReq->Port[0]) * (portCount - 1);
+	BSWAP_STL_ERROR_INFO_REQ(pStlErrorInfoReq);
 
-	if (reqSize > sizeof(mad->PerfData)) {
-		fprintf(stderr, "Request port mask port count exceeds"
-		  " performance MAD capacity\n");
-		return FALSE;
-	}
-
-	BSWAP_STL_ERROR_INFO(pStlErrorInfoReq, 1); /* 1 indicates *to* network */
-
-	if ( FSUCCESS != perform_stl_pma_query (MMTHD_SET, STL_PM_ATTRIB_ID_ERROR_INFO, attrmod, args, mad)) {
-		fprintf(stderr, "stl_pma_get_ErrorInfo %s\n", MSG_PMA_SEND_RECV_FAILURE);
+	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_SET, STL_PM_ATTRIB_ID_ERROR_INFO, attrmod, args, mad, sizeof(STL_ERROR_INFO_REQ)))) {
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_PMA_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
-		BSWAP_STL_ERROR_INFO(pStlErrorInfoReq, 0); /* 0 indicated *from* network */
+		// Do not try to swap the ports
+		BSWAP_STL_ERROR_INFO_REQ(pStlErrorInfoReq);
 		if (print)
-			PrintStlErrorInfoReq(&g_dest, 0 /* indent */, pStlErrorInfoReq);
+			PrintStlErrorInfoRsp(&g_dest, 0 /* indent */,
+			  (STL_ERROR_INFO_RSP*)pStlErrorInfoReq, 1);
 		return TRUE;
 	}
 }
@@ -424,7 +413,7 @@ void pma_Usage(boolean displayAbridged)
 	fprintf(stderr, "    -h 0 -p y  - port y within system (irrespective of which ports are active)\n");
 	fprintf(stderr, "    -h x -p y  - HFI x, port y\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "otype options vary by report: [-m port] [-n mask] [-e mask] [-w mask] [-c mode]\n");
+	fprintf(stderr, "otype options vary by report: [-m port] [-n mask] [-e mask] [-w mask]\n");
 	fprintf(stderr, "    -m port  Port in destination device to query.\n");
 	fprintf(stderr, "    -n mask  Port Mask, in hex, bits represent ports 31-0\n");
 	fprintf(stderr, "             (e.g. 0x2 for port 1, 0x6 for ports 1,2)\n");
@@ -460,7 +449,6 @@ void pma_Usage(boolean displayAbridged)
 	fprintf(stderr, "             0x00000020 Uncorrectable Errors\n");
 	fprintf(stderr, "    -w mask  Virtual Lane Select Mask, in hex, bits represent VL number 31-0\n");
 	fprintf(stderr, "             (e.g. 0x1 for VL 0, 0x3 for VL 0,1) default is none\n");
-	fprintf(stderr, "    -c mode  Counter Size Mode for get/display. 0= 64bit (default), 1= 32 bit\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Possible output types (default is getportstatus):\n");
 	fprintf(stderr, "         %-17s: %-45s\n","Output Type","Description");

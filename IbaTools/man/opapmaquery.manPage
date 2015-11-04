@@ -13,13 +13,17 @@ opapmaquery
 .NL
 
 .PP
-(All) This is a low level tool which can perform individual PMA queries against a specific LID. It is very useful in displaying port runtime information.
+
+\fB(All)\fR
+Performs individual PMA queries against a specific LID. It is very useful in displaying port runtime information.
 .SH Syntax 
 .NL
 opapmaquery [-v] [-s \fIsl\fR] [-l \fIlid\fR] [-h
 \fIhfi\fR
 
-] [-p \fIport\fR][-o \fIotype\fR] [-m \fIport\fR] [-n \fImask\fR] [-e \fImask\fR] [-w \fImask\fR] [-c \fImode\fR]
+] [-p \fIport\fR] [-o \fIotype\fR]
+.br
+[-m \fIport\fR] [-n \fImask\fR] [-e \fImask\fR] [-w \fImask\fR]
 .SH Options 
 .NL
 
@@ -27,222 +31,466 @@ opapmaquery [-v] [-s \fIsl\fR] [-l \fIlid\fR] [-h
 -v 
 .NL
 Verbose output. Can be specified more than once for additional openib debugging and libibumad debugging.
+
 .TP 10
 -s \fIsl\fR 
 .NL
-Specify different Service Level (default is 0)
+Specifies different service level. Default is 0.
+
 .TP 10
 -l \fIlid\fR 
 .NL
-Destination lid, default is local port .
+Destination LID. Default is local port.
+
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI , numbered 1..n. Using 0 specifies that the -p \fIport\fR port will be a system wide port number (default is 0).
+HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
+
 .TP 10
 -p \fIport\fR 
 .NL
-Port, numbered 1..n. If -h \fIhfi\fR is 0 then  \fIport\fR will be a system wide port number (default is 1).
+Port, numbered 1..n. If -h \fIhfi\fR is 0, then  \fIport\fR is a system-wide port number. Default is first active port.
+
 .TP 10
 -o \fIotype\fR 
 .NL
-Output type. Default is getportstatus .Valid output types are: :
+Output type. Default is getportstatus.
+
+.IP
+Valid output types are:
+.RS
+.TP 10
 
 .sp
 classportinfo 
 List of port info records.
-.sp
-getportstatus 
-List of port status records. [-m port] [-w vl mask] 
+
+.RE
+
+.RS
+.TP 10
 
 .sp
-clearportstats 
-Clears the port status. [-n port mask] [-e counter mask] [-w vl mask] 
+getportstatus 
+List of port status records.
+
+.IP
+[-m port] [-w vl mask] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+clearportstatus 
+Clears the port status.
+
+.IP
+[-n port mask] [-e counter mask] [-w vl mask] 
+.RE
+
+.RS
+.TP 10
 
 .sp
 getdatacounters 
-List of data counters. [-n port mask] [-w vl mask] 
+List of data counters.
+
+.IP
+[-n port mask] [-w vl mask] 
+.RE
+
+.RS
+.TP 10
 
 .sp
 geterrorcounters 
-List of error counters. [-n port mask] [-w vl mask] 
+List of error counters.
+
+.IP
+[-n port mask] [-w vl mask] 
+.RE
+
+.RS
+.TP 10
 
 .sp
 geterrorinfo 
-List of error info. [-n port mask] 
+List of error info.
+
+.IP
+[-n port mask] 
+.RE
+
+.RS
+.TP 10
 
 .sp
 clearerrorinfo 
-Clears the error info. [-n port mask] [-e counter mask] 
+Clears the error info.
 
-.SH  -h and -p options permit a variety of selections:-->
+.IP
+[-n port mask] [-e counter mask] 
+.RE
+
+.TP 10
+\fB-h and -p options permit a variety of selections:\fR
 .NL
 
 .TP 10
 -h 0 
 .NL
-First active port in system (this is the default).
+First active port in system (default).
+
 .TP 10
 -h 0 -p 0 
 .NL
 First active port in system.
+
 .TP 10
 -h \fIx\fR 
 .NL
 First active port on HFI \fIx\fR.
+
 .TP 10
 -h \fIx\fR-p 0 
 .NL
 First active port on HFI \fIx\fR.
+
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy\fRwithin system (irrespective of which ports are active).
+Port \fIy \fR within system (no matter which ports are active).
+
 .TP 10
 -h \fIx\fR-p \fIy\fR 
 .NL
-HFI \fIx\fR, port \fIy\fR
-.SH otype options vary by report-->
+HFI \fIx\fR, port \fIy\fR.
+
+.TP 10
+\fBotype options vary by report\fR
 .NL
 
 .TP 10
 -m \fIport\fR 
 .NL
-Port in destination device to query/clear required when using -l option for all but -o classportinfo .
+Port in destination device to query/clear. Required when using -l option for all but -o classportinfo.
+
 .TP 10
 -n \fImask\fR 
 .NL
-Port Mask, in hex, bits represent ports 31-0 (For example: 0x2 for port 1, 0x6 for ports 1,2)
+Port mask, in hexadecimal. Bits represent ports 31-0. For example: 0x2 for port 1, 0x6 for ports 1, 2.
 
 .TP 10
 -e \fImask\fR 
 .NL
-Counter/error Select Mask, in hex, bit positions as shown below. Default is all bits set (e.g. 0xffffffe0).
+Counter/error select mask, in hexadecimal. Bit positions are in the following list. Default is all bits set (0xffffffe0).
+
+.RS
+.TP 10
 
 .sp
 0x80000000
-For Counters - Xmit DataFor Error Info - Rcv Error Info
+For Counters: Xmit Data
+
+.IP
+For Error Info: Rcv Error Info
+.RE
+
+.RS
+.TP 10
 
 .sp
 0x40000000
-For Counters - Rcv DataFor Error Info - Excessive Buffer Overrun
+For Counters: Rcv Data
+
+.IP
+For Error Info: Excessive Buffer Overrun
+.RE
+
+.RS
+.TP 10
 
 .sp
 0x20000000
-For Counters - Xmit PktsFor Error Info - Xmit Const Error Info
+For Counters: Xmit Pkts
+
+.IP
+For Error Info: Xmit Const Error Info
+.RE
+
+.RS
+.TP 10
 
 .sp
 0x10000000
-For Counters - Rcv PktsFor Error Info - Rcv Const Error Info
+For Counters: Rcv Pkts
+
+.IP
+For Error Info: Rcv Const Error Info
+.RE
+
+.RS
+.TP 10
 
 .sp
 0x08000000
-For Counters - Multicast Xmit PktsFor Error Info - Rcv Switch Relay Error Info
+For Counters: Multicast Xmit Pkts
+
+.IP
+For Error Info: Rcv Switch Relay Error Info
+.RE
+
+.RS
+.TP 10
 
 .sp
 0x04000000
-For Counters - Multicast Rcv PktsFor Error Info - Uncorrectable Error Info
+For Counters: Multicast Rcv Pkts
+
+.IP
+For Error Info: Uncorrectable Error Info
+.RE
+
+.RS
+.TP 10
 
 .sp
 0x02000000
-For Counters - Xmit WaitFor Error Info - FM Config Error Info
+For Counters: Xmit Wait
+
+.IP
+For Error Info: FM Config Error Info
+.RE
+
+.RS
+.TP 10
 
 .sp
 0x01000000
-For Counters - Congestion Discards
+For Counters: Congestion Discards
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00800000
-For Counters - Rcv FECN
+For Counters: Rcv FECN
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00400000
-For Counters - Rcv BECN
+For Counters: Rcv BECN
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00200000
-For Counters - Xmit Time Cong.
+For Counters: Xmit Time Cong.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00100000
-For Counters - Xmit Time Wasted BW
+For Counters: Xmit Time Wasted BW
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00080000
-For Counters - Xmit Time Wait Data
+For Counters: Xmit Time Wait Data
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00040000
-For Counters - Rcv Bubble
+For Counters: Rcv Bubble
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00020000
-For Counters - Mark FECN
+For Counters: Mark FECN
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00010000
-For Counters - Rcv Constraint Errors
+For Counters: Rcv Constraint Errors
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00008000
-For Counters - Rcv Switch Relay
+For Counters: Rcv Switch Relay
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00004000
-For Counters - Xmit Discards
+For Counters: Xmit Discards
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00002000
-For Counters - Xmt Constraint Errors
+For Counters: Xmt Constraint Errors
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00001000
-For Counters - Rcv Rmt Phys. Errors
+For Counters: Rcv Rmt Phys. Errors
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00000800
-For Counters - Local Link Integrity
+For Counters: Local Link Integrity
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00000400
-For Counters - Rcv Errors
+For Counters: Rcv Errors
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00000200
-For Counters - Exc. Buffer Overrun
+For Counters: Exc. Buffer Overrun
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00000100
-For Counters - FM Config Errors
+For Counters: FM Config Errors
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00000080
-For Counters - Link Error Recovery
+For Counters: Link Error Recovery
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00000040
-For Counters - Link Error Downed
+For Counters: Link Error Downed
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0x00000020
-For Counters - Uncorrectable Errors
+For Counters: Uncorrectable Errors
+
+.RE
+
 .TP 10
 -w \fImask\fR 
 .NL
-Virtual Lane Select Mask, in hex, bits represent VL number 31-0 (e.g. 0x1 for VL 0, 0x3 for VL 0,1). Default is none.
+Virtual Lane Select Mask, in hexadecimal. Bits represent VL number 31-0. For example, 0x1 for VL 0, 0x3 for VL 0,1. Default is none.
 
-.TP 10
--c \fImode\fR 
-.NL
-Counter Size Mode for get/display. 0= 64bit (default), 1= 32 bit.
 .SH Examples 
 .NL
-opapmaquery -o classportinfo # get PMA classportinfo opapmaquery -o getportstatus # get data and error counts, local port opapmaquery -o getdatacounters -n 0x2 # get data counts, local port 1 opapmaquery -o geterrorcounters -n 0x2 # get error counts, local port 1 opapmaquery -o clearportstatus -n 0x2 # clear all counters local port 1 opapmaquery -o geterrorinfo -n 0x2 # get error info for local port 1 opapmaquery -o clearerrorinfo -n 0x2 # clear all error info, local port 1
-.SH Additional examples-->
-.NL
+opapmaquery -o classportinfo
+.br
+# get PMA classportinfo
+.br
+opapmaquery -o getportstatus
+.br
+# get data and error counts, local port
+.br
+opapmaquery -o getdatacounters -n 0x2
+.br
+# get data counts, local port 1
+.br
+opapmaquery -o geterrorcounters -n 0x2
+.br
+# get error counts, local port 1
+.br
+opapmaquery -o clearportstatus -n 0x2
+.br
+# clear all counters local port 1
+.br
+opapmaquery -o geterrorinfo -n 0x2
+.br
+# get error info for local port 1
+.br
+opapmaquery -o clearerrorinfo -n 0x2
+.br
+# clear all error info, local port 1
+.PP
+
+\fBAdditional Examples\fR
 
 .PP
-For device at lid 6, get data counters on ports 1-6, inclusive of VL 0 data:
+For device at LID 6, get data counters on ports 1-6, inclusive of VL 0 data:
 .br
 opapmaquery -o getdatacounters -l 6 -n 0x7e -w 0x1
-
-.br
-
 .PP
-For device at lid 6, on port 1, clear only error counters:
+For device at LID 6, on port 1, clear only error counters:
 .br
 opapmaquery -o clearportstatus -l 6 -n 0x2 -e 0x1ffff
-
-.br
-
 .PP
-For device at lid 6, on ports 1, clear Uncorrectable Error Info:
+For device at LID 6, on ports 1, clear uncorrectable error info:
 .br
 opapmaquery -o clearerrorinfo -l 6 -n 0x2 -e 0x04000000
-
-.br
-
-.SH Sample Output 
-.NL
-[root@luanne ~]# opapmaquery Performance: Transmit Xmit Data 0 MiB (72 Quads) Xmit Pkts 1 Performance: Receive Rcv Data 0 MiB (0 Quads) Rcv Pkts 0 Errors: Symbol Errors 0 Link Error Recovery 0 Link Downed 0 Port Rcv Errors 0 Port Rcv Rmt Phys Err 0 Port Rcv Sw Relay Err 0 Port Xmit Discards 2 Port Xmit Constraint 0 Port Rcv Constraint 0 Local Link Integrity 0 Exc. Buffer Overrun 0 VL15 Dropped 2

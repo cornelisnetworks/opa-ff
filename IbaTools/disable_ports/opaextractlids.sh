@@ -32,10 +32,7 @@
 
 # Run opareport pipe output to opaxmlextract to extract lids to a csv file
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-tempfile=`mktemp`
+tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
 trap "rm -f $tempfile" EXIT
 
@@ -70,10 +67,10 @@ then
 fi
 
 IFS=';'
-$BINDIR/opareport -o lids -x "$@" > $tempfile
+/usr/sbin/opareport -o lids -x "$@" > $tempfile
 if [ -s $tempfile ]
 then
-	cat $tempfile | $BINDIR/opaxmlextract -H -d \; -e LIDSummary.LIDs.Value.NodeGUID -e LIDSummary.LIDs.Value.PortNum -e LIDSummary.LIDs.Value.NodeType -e LIDSummary.LIDs.Value.NodeDesc -e LIDSummary.LIDs.Value:LID
+	cat $tempfile | /usr/sbin/opaxmlextract -H -d \; -e LIDSummary.LIDs.Value.NodeGUID -e LIDSummary.LIDs.Value.PortNum -e LIDSummary.LIDs.Value.NodeType -e LIDSummary.LIDs.Value.NodeDesc -e LIDSummary.LIDs.Value:LID
 	res=0
 else
 	echo "opaextractlids: Unable to get lids report" >&2

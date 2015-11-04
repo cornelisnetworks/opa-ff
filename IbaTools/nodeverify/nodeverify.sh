@@ -54,39 +54,48 @@ PCI_WIDTH="x16"             # expected value for PCI width on Intel WFR HFI
 MIN_HFI_PKT=2500          # minimum result from hfi_pkt_test WFR HFI
 MPI_APPS=/opt/opa/src/mpi_apps/ # where to find mpi_apps for HPL test
 MIN_FLOPS="115"             # minimum flops expected from HPL test
-HPL_CORES=16                # how many cores per node to include in HPL test
-HPL_CONFIG="${HPL_CORES}s"  # problem selection arguments for config_hpl2
-                            # This can be a simple config selection: "16s"
-                            # or a config selection and problem size: "16t 9000"
-                            # if set to "", config_hpl2 will not be run
 
-# can adjust default list of tests below
-#TESTS="pcicfg pcispeed cstates initscripts hyperthreading hfi_pkt memsize hpl"
-TESTS="pcicfg pcispeed cstates initscripts hyperthreading hfi_pkt memsize"
-
-
-# If desired, single node HPL can be run.
+# If desired, single node HPL can be run, using one of the pre-defined 
+# hpl DAT files found in /opt/opa/src/mpi_apps/hpl-config.
+#
 # The goal of the single node HPL test is to check node stability and the
 # consistency of performance between hosts, NOT to optimize performance.
-# As such a small problem size, such as './config_hpl2 16s' is recommended
-# since it will run faster and be equally good at discovering slow or
-# unstable hosts.  The given problem size should be run on a known good
-# node and the result can be used to select an appropriate MIN_FLOPS
-# value for other hosts.  It may be necessary to set MIN_FLOPS slightly below
-# the observed result for the known good host to account for minor variations
-# in OS background overhead, manufacturing variations, etc.
+# As such a small problem size, such as '16s' is recommended since it will run 
+# faster and will still be equally good at discovering slow or unstable hosts.
+# The given problem size should be run on a known good node and the result 
+# can be used to select an appropriate MIN_FLOPS value for other hosts.  It 
+# may be necessary to set MIN_FLOPS slightly below the observed result for 
+# the known good host to account for minor variations in OS background 
+# overhead, manufacturing variations, etc.
 
-# HPL_CONFIG can specify a problem size for config_hpl2, in which case
-# config_hpl2 will be run at the start of the test to setup the hpl2 HPL.dat
+# To configure the problem size, the HPL_CORES variable is used to select
+# the number of cores to exercise. This is combined with the HPL_CONFIG 
+# variable and passed as an argument string to /opt/opa/src/mpi_apps/config_hpl2
+# which will select the appropriate .DAT file and passed to HPL as an 
+# argument.
 
-# if HPL_CONFIG is "", then config_hpl2 will not be run and it is expected
-# that the user has setup an appropriate HPL.dat file an appropriate single
-# node HPL_CORES count and problem size.  HPL.dat files should run a single
-# HPL computation across all selected cores.
-# See MPI_APPS/hpl-config/ for examples.
+# NOTE: if HPL_CONFIG is "", then config_hpl2 will not be run and it is 
+# expected that the user has manually setup an appropriate HPL.dat file 
+# HPL.dat files should run a single HPL computation across all selected cores.
+# See /opt/opa/src/mpi_apps/hpl-config/ for examples.
 
 # In order to run the single node HPL test, each tested host must be able to
 # ssh to locahost as root
+
+HPL_CORES=16                # how many cores per node to include in HPL test.
+                            # Supported values include 2, 4, 8, 16, 18, 32, 
+                            # 64, 128. Other values will fail due to a missing
+                            # config file.
+HPL_CONFIG="${HPL_CORES}s"  # problem selection arguments for config_hpl2
+                            # This can be a simple config selection: "16s"
+                            # or a config selection and problem size: "16t 9000"
+                            # Supported configuration variations are "t" (tiny), 
+                            # "s" (small), "m" (medium) and "l" (large).
+
+
+# can adjust default list of tests below
+#TESTS="pcicfg pcispeed cstates initscripts hyperthreading hfi_pkt memsize hpl"
+TESTS="pcicfg pcispeed initscripts memsize cpu"
 
 
 Usage()
@@ -105,14 +114,13 @@ Usage()
 	echo "The following tests are available:" >&2
 	echo "  pcicfg - verify PCI max payload and max read request size settings" >&2
 	echo "  pcispeed - verify PCI bus negotiated to PCIe Gen2 x8 speed" >&2
-	echo "  cstates - verify CPU cstates are disabled" >&2
 	echo "  initscripts - verify irqbalance, irq_balancer, powerd and cpuspeed" >&2
-	echo "                init.d scripts are disabled" >&2
-	echo "  hyperthreading - verify hyperthreading is disabled" >&2
-	echo "  ipath_pkt - check PCI-HFI bus performance.  Requires HFI port is Active" >&2
+	echo "                init.d scripts are disabled, along with acpi_pad kernel module" >&2
+	echo "  hfi_pkt - check PCI-HFI bus performance.  Requires HFI port is Active" >&2
 	echo "  memsize - check total size of memory in system" >&2
 	echo "  hpl - perform a single node HPL test," >&2
 	echo "        useful to determine if all hosts perform consistently" >&2
+	echo "  cpu - check CPU performance parameters" >&2
 	echo "  default - run all tests selected in TESTS" >&2
 	echo >&2
 	echo "Detailed output is written to stdout and appended to /root/hostverify.res" >&2
@@ -294,23 +302,17 @@ test_pcispeed()
 		{
 		failure=0
 		device="Unknown"
-		is_wfr_lite=0
 		while read cfgline
 		do
 			if  echo "$cfgline"|grep '^[0-9]' >/dev/null 2>/dev/null
 			then
 				device=$(echo "$cfgline"|cut -f1 -d ' ')
-				if echo "$cfgline"|grep 'InfiniBand' >/dev/null 2>/dev/null
-				then
-					is_wfr_lite=1
-				fi
 			else
 				result=$(echo "$cfgline"|sed -e 's/.*\(Speed .*, Width [^,]*\).*/\1'/)
 
 				expect="Speed $PCI_SPEED, Width $PCI_WIDTH"
-				 [ "$result" = "$expect" ] || [ $is_wfr_lite -eq 1 ] || { fail_msg "HFI $device: Incorrect Speed or Width: Expect: $expect  Got: $result"; failure=1; }
+				 [ "$result" = "$expect" ] ||  { fail_msg "HFI $device: Incorrect Speed or Width: Expect: $expect  Got: $result"; failure=1; }
 				device="Unknown"
-				is_wfr_lite=0
 			fi
 		done
 		[ $failure -ne 0 ] && exit 1
@@ -355,93 +357,9 @@ test_initscripts()
 		set +x
 	done
 
-	pass
-}
-
-# make sure hyperthreading is disabled
-test_hyperthreading()
-{
-	TEST="hyperthreading"
-	echo "hyperthreading ..."
-	date
-	cd "${outdir}" || fail "Can't cd $outdir"
-
-	# hyperthreading only applies to Intel CPUs,  N/A for AMD CPUs
-	set -x
-	if cat /proc/cpuinfo | grep Intel >/dev/null
-	then
-		result=$(cat /proc/cpuinfo|egrep 'cpu cores|siblings'|sort -u)
-		set +x
-	
-		[ $(echo "$result"|cut -f2 -d :|sort -u|wc -l) -ne 1 ] && fail "Siblings != Cpu Cores: $result"
-	fi
-	set +x
+	[ -n "$(lsmod | grep acpi_pad)" ] && fail "acpi_pad kernel module loaded is loaded - unload or blacklist."
 
 	pass
-}
-
-# make sure C-states are disabled
-test_cstates()
-{
-	TEST="C-states"
-	echo "C-states ..."
-	date
-	cd "${outdir}" || fail "Can't cd ${outdir}"
-
-	skipped=0
-	# does the CPU and OS support power managemnets (C-states) info
-	if ls /proc/acpi/processor/*/info
-	then 
-	# first check for power management on
-	set -x
-	cat /proc/acpi/processor/*/info 2>acpi.stderr | tee acpi.stdout || fail "Error catting acpi info"
-	set +x
-	[ -s acpi.stderr ] && fail "Error during cat of acpi info: $(cat acpi.stderr)"
-
-	if cat acpi.stdout | grep 'power' | grep 'yes'
-	then
-		fail "Power Management (C-States) enabled"
-	fi
-	else
-		echo "Power management (C-States) information not available for this system"
-		skipped=`expr $skipped + 1`
-	fi
-
-	# does the CPU and OS support C-states access
-	if ls /proc/acpi/processor/*/power
-	then
-		# next check for C-States configured
-		set -x
-		cat /proc/acpi/processor/*/power 2>acpi2.stderr | tee acpi2.stdout || fail "Error catting acpi power"
-		set +x
-		[ -s acpi2.stderr ] && fail "Error during cat of acpi power: $(cat acpi2.stderr)"
-
-		# C1 is ok, its the active state, others should be disabled
-		if cat acpi2.stdout | grep -v 'C1:' | grep 'C.:'
-		then
-			fail "Power Management (C-States) configured"
-		fi
-	else
-		echo "C-States information not available for this system"
-		skipped=`expr $skipped + 1`
-	fi
-
-	# in case all above files are not present check in sysfs
-	if ls /sys/devices/system/cpu/cpu*/cpuidle
-	then
-		fail "Power Management (C-States) enabled"
-	else
-		skipped=`expr $skipped - 1`
-	fi
-
-	#We shall mark this as skipped only if both are conditions are skipped
-	#else test shall be marked as passed.
-	if [ $skipped = 2 ]
-	then
-		skip
-	else
-		pass
-	fi
 }
 
 #test_nodeperf()
@@ -604,6 +522,36 @@ test_memsize()
 	fi
 }
 
+# Confirm CPU will not do frequency throttling.
+test_cpu()
+{
+	TEST="cpu"
+	echo "CPU test ..."
+	date
+	driver=$(cpupower -c 0 frequency-info -d | tail -1)
+	if [ "${driver}" = "intel_pstate" ]
+	then
+		fail "intel_pstate enabled in kernel. Set intel_pstate=disable on kernel cmdline."
+	fi
+	
+	result=$(cpupower -c 0 frequency-info -p | tail -1)
+	gov=$(echo ${result} |cut -f 3 -d ' ')
+	if [ "${gov}" != "performance" ]
+	then
+		fail "cpupower governor is set to ${gov}. Should be 'performance'."
+	fi
+
+	lo_freq=$(echo ${result} | cut -f 1 -d ' ')
+	hi_freq=$(echo ${result} | cut -f 2 -d ' ')
+	max_freq=$(cpupower -c -0 frequency-info -l | tail -1 | cut -f 2 -d ' ')
+
+	if [ $hi_freq -ne $lo_freq ] || [ $hi_freq -ne $max_freq ]
+	then
+		fail "CPU frequency not pinned to ${max_freq} KHz. Current operating in range of ${lo_freq} - ${hi_freq} KHz."
+	fi
+
+	pass ": CPU is operating at max frequency of ${max_freq} KHz."
+}
 
 # single node HPL
 test_hpl()

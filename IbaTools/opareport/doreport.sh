@@ -30,15 +30,12 @@
 
 # [ICS VERSION STRING: unknown]
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
 # for queries we need 2 valid guids and a node description in the fabric
 # for ease, guids can be specified as the last 6 digits of a SilverStorm Guid
 # for a node in the fabric. or you can edit the assignments below appropriately
-#OPA_REPORT='$BINDIR/opareport -X snap.xml'
-OPA_REPORT='$BINDIR/opareport'
-OPA_REPORT2='$BINDIR/opareport'
+#OPA_REPORT='/usr/sbin/opareport -X snap.xml'
+OPA_REPORT='/usr/sbin/opareport'
+OPA_REPORT2='/usr/sbin/opareport'
 if [ "$1" = "" ]
 then
 	nodedesc=duster
@@ -151,6 +148,8 @@ $OPA_REPORT -o nodes -F "nodetype:CA"
 $OPA_REPORT -o nodes -F "nodetype:CA:port:1"
 $OPA_REPORT -o nodes -F "rate:10g"
 $OPA_REPORT -o nodes -F "mtu:2048"
+$OPA_REPORT -o nodes -F "portstate:active"
+$OPA_REPORT -o nodes -F "portphysstate:linkup"
 $OPA_REPORT -o nodes -F sm
 $OPA_REPORT2 -o nodes -F "route:node:$nodedesc:port:1:node:$nodedesc2:port:2"
 $OPA_REPORT2 -o nodes -F "route:node:$nodedesc:node:$nodedesc2"

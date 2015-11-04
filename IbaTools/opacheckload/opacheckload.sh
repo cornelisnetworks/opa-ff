@@ -44,10 +44,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
@@ -118,7 +115,7 @@ do
 	d)
 		UPLOADS_DIR="$OPTARG";;
 	a)
-		numprocs="1000000";;	# more than every expected to be found
+		numprocs="1000000";;	# more than ever expected to be found
 	r)
 		ropt="";;	# sort from lowest to highest, shows least busy
 	?)
@@ -147,7 +144,7 @@ done
 opacmdall -p 'cat /proc/loadavg > /tmp/loadavg' >/dev/null
 opauploadall -p /tmp/loadavg loadavg >/dev/null
 if [ -z $skip_headers ]; then
-	echo "loadavg					host" >&2
+	echo "loadavg					host"
 fi
 
 for j in $HOSTS
@@ -160,4 +157,4 @@ do
 		l=`cat $i`
 		echo "$l	$j"
 	fi
-done | sort -n $ropt|tail -$numprocs
+done | sort -n $ropt|head -n $numprocs

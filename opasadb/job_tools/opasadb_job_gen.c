@@ -529,8 +529,7 @@ void get_opt( int argc, char ** argv, const char *p_opt_short,
 	// Validate command line arguments
 	if (optind < argc)
 	{
-		fprintf(stderr, NAME_PROG ": Unprocessed Parameters (%d of %d)\n",
-			argc - optind, argc);
+		fprintf(stderr, "%s: invalid argument %s\n", NAME_PROG, argv[optind]);
 		err_usage();
 		return;
 	}
@@ -876,4 +875,3 @@ free_param:
 
 
 // End of file
-

@@ -26,7 +26,7 @@ B) Basic Loop Test Operation
 
 3. Start loop test
 
-       ./run_hsm_loop_test_fast.sh -s   (By default injects 4 packets into each
+       ./run_hsm_loop_test_fast.sh -s   (By default injects 5 packets into each
 								    loop. See -i option for changing number of packets injected)
 
 Note:

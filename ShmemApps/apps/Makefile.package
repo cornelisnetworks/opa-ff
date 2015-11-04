@@ -49,10 +49,9 @@ CLOBBER_EXTRA = \
 .PHONEY: appl
 
 appl shmem_apps.tgz:
-	chmod +x run_* prepare_run *params select_mpi
+	chmod +x run_* prepare_run select_mpi
 	tar cvfz shmem_apps.tgz --exclude CVS \
 		Makefile mpi_hosts.sample prepare_run README select_mpi \
-		shmem.mvapich.params shmem.mvapich2.params shmem.openmpi.params \
 		run_barrier run_get_bibw run_get_bw run_get_latency run_put_bibw \
 		run_put_bw run_put_latency run_reduce run_hello run_alltoall run_rand \
 		shmem-hello.c

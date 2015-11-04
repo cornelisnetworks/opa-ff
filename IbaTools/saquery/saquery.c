@@ -203,6 +203,7 @@ void Usage_full(void)
 	fprintf(stderr, "    vfinfo        - list of vFabrics\n");
 	fprintf(stderr, "    vfinfocsv     - list of vFabrics in CSV format\n");
 	fprintf(stderr, "    vfinfocsv2    - list of vFabrics in CSV format with enums\n");
+	fprintf(stderr, "    fabricinfo    - summary of fabric devices\n");
 	fprintf(stderr, "    quarantine    - list of quarantined nodes\n");
 	fprintf(stderr, "    conginfo      - list of Congestion Info Records\n");
 	fprintf(stderr, "    swcongset     - list of Switch Congestion Settings\n");
@@ -334,108 +335,113 @@ void multiInputCheck(int inputType) {
 			break;
         default:
 			typestr = "parameter";
-	}
+		}
 	fprintf(stderr, "opasaquery: multiple selection criteria not supported, ignoring %s\n", typestr);
 }
 
+typedef struct OutputStringMap {
+	char *string;
+	QUERY_RESULT_TYPE stl_type;
+	QUERY_RESULT_TYPE ib_type;
+	int csv;
+} OutputStringMap_t;
+
+#define NO_OUTPUT_TYPE 0xffff
+OutputStringMap_t OutputTypeTable[] = {
+//--input string--------StlOutputType-----------------------IbOutputType--------csv-//
+	{"systemguid",      NO_OUTPUT_TYPE,                     OutputTypeSystemImageGuid, 0},
+	{"classportinfo",   OutputTypeStlClassPortInfo,         OutputTypeClassPortInfo, 0},
+	{"nodeguid",        NO_OUTPUT_TYPE,                     OutputTypeNodeGuid, 0},
+	{"portguid",        OutputTypeStlPortGuid,              OutputTypePortGuid, 0},
+	{"lid",             OutputTypeStlLid,                   NO_OUTPUT_TYPE, 0},
+	{"desc",            OutputTypeStlNodeDesc,              OutputTypeNodeDesc, 0},
+	{"path",            NO_OUTPUT_TYPE,                     OutputTypePathRecord, 0},
+	{"node",            OutputTypeStlNodeRecord,            OutputTypeNodeRecord, 0},
+	{"portinfo",        OutputTypeStlPortInfoRecord,        OutputTypePortInfoRecord, 0},
+	{"sminfo",          OutputTypeStlSMInfoRecord,          OutputTypeSMInfoRecord, 0},
+	{"link",            OutputTypeStlLinkRecord,            OutputTypeLinkRecord, 0},
+#ifndef NO_STL_SERVICE_OUTPUT       // Don't output STL Service if defined
+	{"service",         OutputTypeStlServiceRecord,         OutputTypeServiceRecord, 0},
+#else
+	{"service",         OutputTypeServiceRecord,            OutputTypeServiceRecord, 0},
+#endif
+#ifndef NO_STL_MCMEMBER_OUTPUT      // Don't output STL McMember (use IB format) if defined
+	{"mcmember",        OutputTypeStlMcMemberRecord,        OutputTypeMcMemberRecord, 0},
+#else
+    {"mcmember",        OutputTypeMcMemberRecord,           OutputTypeMcMemberRecord, 0},
+#endif
+	{"inform",          OutputTypeStlInformInfoRecord,      OutputTypeInformInfoRecord, 0},
+	{"trace",           OutputTypeStlTraceRecord,           NO_OUTPUT_TYPE, 0},
+	{"scsc",            OutputTypeStlSCSCTableRecord,       NO_OUTPUT_TYPE, 0},
+	{"slsc",            OutputTypeStlSLSCTableRecord,       NO_OUTPUT_TYPE, 0},
+	{"scsl",            OutputTypeStlSCSLTableRecord,       NO_OUTPUT_TYPE, 0},
+	{"scvlt",           OutputTypeStlSCVLtTableRecord,      NO_OUTPUT_TYPE, 0},
+	{"scvlnt",          OutputTypeStlSCVLntTableRecord,     NO_OUTPUT_TYPE, 0},
+	{"swinfo",          OutputTypeStlSwitchInfoRecord,      OutputTypeSwitchInfoRecord, 0},
+	{"linfdb",          OutputTypeStlLinearFDBRecord,       NO_OUTPUT_TYPE, 0},
+	{"ranfdb",          NO_OUTPUT_TYPE,                     OutputTypeRandomFDBRecord, 0},
+	{"mcfdb",           OutputTypeStlMCastFDBRecord,        NO_OUTPUT_TYPE, 0},
+	{"vlarb",           OutputTypeStlVLArbTableRecord,      NO_OUTPUT_TYPE, 0},
+	{"pkey",            OutputTypeStlPKeyTableRecord,       NO_OUTPUT_TYPE, 0},
+	{"vfinfo",          OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE, 0},
+	{"vfinfocsv",       OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE, 1},
+	{"vfinfocsv2",      OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE, 2},
+	{"fabricinfo",      OutputTypeStlFabricInfoRecord,      NO_OUTPUT_TYPE, 0},
+	{"quarantine",      OutputTypeStlQuarantinedNodeRecord, NO_OUTPUT_TYPE, 0},
+	{"conginfo",        OutputTypeStlCongInfoRecord,        NO_OUTPUT_TYPE, 0},
+	{"swcongset",       OutputTypeStlSwitchCongRecord,      NO_OUTPUT_TYPE, 0},
+	{"swportcong",      OutputTypeStlSwitchPortCongRecord,  NO_OUTPUT_TYPE, 0},
+	{"hficongset",      OutputTypeStlHFICongRecord,         NO_OUTPUT_TYPE, 0},
+	{"hficongcon",      OutputTypeStlHFICongCtrlRecord,     NO_OUTPUT_TYPE, 0},
+	{"bfrctrl",         OutputTypeStlBufCtrlTabRecord,      NO_OUTPUT_TYPE, 0},
+	{"cableinfo",       OutputTypeStlCableInfoRecord,       NO_OUTPUT_TYPE, 0},
+	{"portgroup",       OutputTypeStlPortGroupRecord,       NO_OUTPUT_TYPE, 0},
+	{"portgroupfdb",    OutputTypeStlPortGroupFwdRecord,    NO_OUTPUT_TYPE, 0},
+	//Last entry must be null, insert new attributes above here!
+	{NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, 0}
+};
+
+OutputStringMap_t *GetOutputTypeMap(const char* name) {
+
+	int i =0;
+	while(OutputTypeTable[i].string != NULL) {
+		if (0 == strcmp(name, OutputTypeTable[i].string)) {
+			return &OutputTypeTable[i];
+		}
+		i++;
+	}
+
+	fprintf(stderr, "opasaquery: Invalid Output Type: %s\n", name);
+	Usage();
+	// NOTREACHED
+	return NULL;
+}
+
+
 // convert a output type argument to the proper constant
-QUERY_RESULT_TYPE checkOutputType(const char* name)
+QUERY_RESULT_TYPE GetOutputType(OutputStringMap_t *in)
 {
-	if (0 == strcmp(optarg, "systemguid")) {
-		return OutputTypeSystemImageGuid;
-	} else if (0 == strcmp(optarg, "classportinfo")) {
-		return OutputTypeStlClassPortInfo;
-	} else if (0 == strcmp(optarg, "nodeguid")) {
-		return OutputTypeNodeGuid;
-	} else if (0 == strcmp(optarg, "portguid")) {
-		return OutputTypeStlPortGuid;
-	} else if (0 == strcmp(optarg, "lid")) {
-		return OutputTypeStlLid;
-	//} else if (0 == strcmp(optarg, "gid")) {
-		//return OutputTypeGid;
-	} else if (0 == strcmp(optarg, "desc")) {
-		if (g_IB) return OutputTypeNodeDesc;
-		else return OutputTypeStlNodeDesc;
-	} else if (0 == strcmp(optarg, "path")) {
-		return OutputTypePathRecord;
-	} else if (0 == strcmp(optarg, "node")) {
-		if (g_IB) return OutputTypeNodeRecord;
-		else return OutputTypeStlNodeRecord;
-	} else if (0 == strcmp(optarg, "portinfo")) {
-		if (g_IB) return OutputTypePortInfoRecord;
-		else return OutputTypeStlPortInfoRecord;
-	} else if (0 == strcmp(optarg, "sminfo")) {
-		return OutputTypeStlSMInfoRecord;
-	} else if (0 == strcmp(optarg, "link")) {
-		return OutputTypeStlLinkRecord;
-	} else if (0 == strcmp(optarg, "service")) {
-		if (g_IB) return OutputTypeServiceRecord;
-		else return OutputTypeStlServiceRecord;
-	} else if (0 == strcmp(optarg, "mcmember")) {
-		if (g_IB) return OutputTypeMcMemberRecord;
-		else return OutputTypeStlMcMemberRecord;
-	} else if (0 == strcmp(optarg, "inform")) {
-		if (g_IB) return OutputTypeInformInfoRecord;
-		else return OutputTypeStlInformInfoRecord;
-	} else if (0 == strcmp(optarg, "trace")) {
-		return OutputTypeStlTraceRecord;
-	} else if (0 == strcmp(optarg, "scsc")) {
-		return OutputTypeStlSCSCTableRecord;
-	} else if (0 == strcmp(optarg, "slsc")) {
-		return OutputTypeStlSLSCTableRecord;
-	} else if (0 == strcmp(optarg, "scsl")) {
-		return OutputTypeStlSCSLTableRecord;
-	} else if (0 == strcmp(optarg, "scvlt")) {
-		return OutputTypeStlSCVLtTableRecord;
-	} else if (0 == strcmp(optarg, "scvlnt")) {
-		return OutputTypeStlSCVLntTableRecord;
-	} else if (0 == strcmp(optarg, "swinfo")) {
-		return OutputTypeStlSwitchInfoRecord;
-	} else if (0 == strcmp(optarg, "linfdb")) {
-		return OutputTypeStlLinearFDBRecord;
-	} else if (0 == strcmp(optarg, "ranfdb")) {
-		return OutputTypeRandomFDBRecord;
-	} else if (0 == strcmp(optarg, "mcfdb")) {
-		return OutputTypeStlMCastFDBRecord;
-	} else if (0 == strcmp(optarg, "vlarb")) {
-		return OutputTypeStlVLArbTableRecord;
-	} else if (0 == strcmp(optarg, "pkey")) {
-		return OutputTypeStlPKeyTableRecord;
-	} else if (0 == strcmp(optarg, "vfinfo")) {
-		return OutputTypeStlVfInfoRecord;
-	} else if (0 == strcmp(optarg, "vfinfocsv")) {
-		g_CSV=1;
-		return OutputTypeStlVfInfoRecord;
-	} else if (0 == strcmp(optarg, "vfinfocsv2")) {
-		g_CSV=2;
-		return OutputTypeStlVfInfoRecord;
-	} else if (0 == strcmp(optarg, "quarantine")) {
-		return OutputTypeStlQuarantinedNodeRecord;
-	} else if (0 == strcmp(optarg, "conginfo")) {
-		return OutputTypeStlCongInfoRecord;
-	} else if (0 == strcmp(optarg, "swcongset")) {
-		return OutputTypeStlSwitchCongRecord;
-	} else if (0 == strcmp(optarg, "swportcong")) {
-		return OutputTypeStlSwitchPortCongRecord;
-	} else if (0 == strcmp(optarg, "hficongset")) {
-		return OutputTypeStlHFICongRecord;
-	} else if (0 == strcmp(optarg, "hficongcon")) {
-		return OutputTypeStlHFICongCtrlRecord;
-	} else if (0 == strcmp(optarg, "bfrctrl")) {
-		return OutputTypeStlBufCtrlTabRecord;
-	} else if (0 == strcmp(optarg, "cableinfo")) {
-		return OutputTypeStlCableInfoRecord;
-	} else if (0 == strcmp(optarg, "portgroup")) {
-		return OutputTypeStlPortGroupRecord;
-	} else if (0 == strcmp(optarg, "portgroupfdb")) {
-		return OutputTypeStlPortGroupFwdRecord;
-	} else {
-		fprintf(stderr, "opasaquery: Invalid Output Type: %s\n", name);
+	QUERY_RESULT_TYPE res = NO_OUTPUT_TYPE;
+
+	//by default use STL type unless there is no STL
+	//specific type, or the user specified '-I" option
+	res = in->stl_type;
+	g_CSV = in->csv;
+	if (g_IB  || res == NO_OUTPUT_TYPE)
+		res = in->ib_type;
+
+	if(res == NO_OUTPUT_TYPE) {
+		if (g_IB)
+			fprintf(stderr, "opasaquery: Invalid IB Output Type: %s\n", in->string);
+		else
+			fprintf(stderr, "opasaquery: Invalid Output Type: %s\n", in->string);
 		Usage();
 		// NOTREACHED
 		return OutputTypeStlNodeRecord;
 	}
+	return res;
 }
+
 
 int main(int argc, char ** argv)
 {
@@ -444,6 +450,7 @@ int main(int argc, char ** argv)
     uint8               port        = 0;
 	int					index;
 	QUERY				query;
+	OutputStringMap_t	*outputTypeMap = NULL;
 
 	memset(&query, 0, sizeof(query));	// initialize reserved fields
 
@@ -466,6 +473,7 @@ int main(int argc, char ** argv)
                 break;
 			case 'I':   // issue query in legacy InfiniBand format (IB)
 				g_IB = 1;
+				query.OutputType = OutputTypeNodeRecord;
 				break;
             case 'h':	// hfi to issue query from
 				if (FSUCCESS != StringToUint8(&hfi, optarg, NULL, 0, TRUE)) {
@@ -668,7 +676,7 @@ int main(int argc, char ** argv)
                 break;
 
             case 'o':	// select output record desired
-				query.OutputType = checkOutputType(optarg);
+				outputTypeMap = GetOutputTypeMap(optarg);
                 break;
             default:
                 fprintf(stderr, "opasaquery: Invalid option -%c\n", c);
@@ -681,6 +689,9 @@ int main(int argc, char ** argv)
 	{
 		Usage();
 	}
+
+	if (NULL != outputTypeMap)
+		query.OutputType = GetOutputType(outputTypeMap); 
 
 	PrintDestInitFile(&g_dest, stdout);
 	if (g_verbose)

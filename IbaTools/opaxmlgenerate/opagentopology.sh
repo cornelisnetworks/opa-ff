@@ -32,23 +32,20 @@
 
 # Run opaxmlgenerate with fabric topology link information
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
 echo '<?xml version="1.0" encoding="utf-8" ?>'
 echo '<Topology>'
 echo '<LinkSummary>'
-$BINDIR/opaxmlgenerate -X /opt/opa/samples/opatopology_links.txt -d \; -h Link -g Rate -g MTU -g Internal -g LinkDetails -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g NodeGUID -g PortNum -g NodeDesc -g PortGUID -g NodeType -g PortDetails -e Port -h Port -g NodeGUID -g PortNum -g NodeDesc -g PortGUID -g NodeType -g PortDetails -e Port -e Link
+/usr/sbin/opaxmlgenerate -X /opt/opa/samples/opatopology_links.txt -d \; -h Link -g Rate -g MTU -g Internal -g LinkDetails -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g NodeGUID -g PortNum -g NodeDesc -g PortGUID -g NodeType -g PortDetails -e Port -h Port -g NodeGUID -g PortNum -g NodeDesc -g PortGUID -g NodeType -g PortDetails -e Port -e Link
 echo '</LinkSummary>'
 echo '<Nodes>'
 echo '<FIs>'
-$BINDIR/opaxmlgenerate -X /opt/opa/samples/opatopology_FIs.txt -d \; -h Node -g NodeGUID -g NodeDesc -g NodeDetails -e Node
+/usr/sbin/opaxmlgenerate -X /opt/opa/samples/opatopology_FIs.txt -d \; -h Node -g NodeGUID -g NodeDesc -g NodeDetails -e Node
 echo '</FIs>'
 echo '<Switches>'
-$BINDIR/opaxmlgenerate -X /opt/opa/samples/opatopology_SWs.txt -d \; -h Node -g NodeGUID -g NodeDesc -g NodeDetails -e Node
+/usr/sbin/opaxmlgenerate -X /opt/opa/samples/opatopology_SWs.txt -d \; -h Node -g NodeGUID -g NodeDesc -g NodeDetails -e Node
 echo '</Switches>'
 echo '<SMs>'
-$BINDIR/opaxmlgenerate -X /opt/opa/samples/opatopology_SMs.txt -d \; -h SM -g NodeGUID -g PortNum -g NodeDesc -g PortGUID -g NodeType -g SMDetails -e SM
+/usr/sbin/opaxmlgenerate -X /opt/opa/samples/opatopology_SMs.txt -d \; -h SM -g NodeGUID -g PortNum -g NodeDesc -g PortGUID -g NodeType -g SMDetails -e SM
 echo '</SMs>'
 echo '</Nodes>'
 echo '</Topology>'

@@ -35,7 +35,7 @@ export PORTS_FILE=${PORTS_FILE:-$CONFIG_DIR/opa/ports}
 # the special value "NONE" is used to indicate a value of ""
 # this value can be used in ff_host_basename_to_ipoib and ff_host_basename
 # below to convert between IPoIB and Ethernet hostnames
-export FF_IPOIB_SUFFIX=${FF_IPOIB_SUFFIX:--ib}
+export FF_IPOIB_SUFFIX=${FF_IPOIB_SUFFIX:--opa}
 # Alternatively a IPoIB prefix can be provided, commented out
 # examples in ff_host_basename and ff_host_basename can be enabled if desired
 export FF_IPOIB_PREFIX=${FF_IPOIB_PREFIX:-ic-}
@@ -87,17 +87,20 @@ export FF_IPOIB_NETMASK=${FF_IPOIB_NETMASK:-}
 # if "" the default is datagram mode.
 export FF_IPOIB_CONNECTED=${FF_IPOIB_CONNECTED:-}
 
-# Maximum parallel processes for opatest and -p option on other commands
+# Maximum parallel processes for opahostadmin, opachassisadmin, opaswitchadmin
+# and -p option on other commands
 # set to 1 to avoid parallel execution
-export FF_MAX_PARALLEL=${FF_MAX_PARALLEL:-20}
+# 1000 is a reasonable default. If a larger number is needed, it is recommended
+# consideration is given to ulimit -u, memory consumption by many scp/ssh sessions,
+# and the total number of TCP connections the system can handle.
+export FF_MAX_PARALLEL=${FF_MAX_PARALLEL:-1000}
 
 # If the systems are slow for some reason, this can be used to provide a
-# multiplier for all timeouts in opatest, opahostadmin, opachassisadmin,
-# opaswitchadmin
+# multiplier for all timeouts in opahostadmin, opachassisadmin, opaswitchadmin
 export FF_TIMEOUT_MULT=${FF_TIMEOUT_MULT:-2}
 
 # where to put result files from FastFabric runs of
-# opatest, opahostadmin, opachassisadmin, opaswitchadmin
+# opahostadmin, opachassisadmin, opaswitchadmin
 #export FF_RESULT_DIR=${FF_RESULT_DIR:-.}
 export FF_RESULT_DIR=${FF_RESULT_DIR:-$HOME}
 
@@ -141,16 +144,14 @@ export FF_ANALYSIS_DIR=${FF_ANALYSIS_DIR:-/var/opt/opa/analysis}
 export FF_TOPOLOGY_FILE=${FF_TOPOLOGY_FILE:-$CONFIG_DIR/opa/topology.%P.xml}
 
 # How to login to host systems during opahostadmin
-# can be ssh, rsh or telnet
+# At this time only ssh is supported.
 # Note: at present opacmdall and opascpall always assume password-less ssh/scp
-# Note: check_rsh always assumes password-less rsh/rcp
-# Note: arguments (-s) to opasetupssh select ssh setup via rsh/rcp or ssh/scp
 export FF_LOGIN_METHOD=${FF_LOGIN_METHOD:-ssh}
 
 # initial user name (cannot be root if CFG_LOGIN_METHOD=telnet)
 export FF_USERNAME=${FF_USERNAME:-root}
 
-# password for FF_USERNAME (not needed if password-less ssh/rsh configured)
+# password for FF_USERNAME (not needed if password-less ssh configured)
 export FF_PASSWORD=${FF_PASSWORD:-}
 
 # if FF_USERNAME is not root, what is the root password needed when
@@ -192,9 +193,7 @@ fi
 export FF_FABRIC_HEALTH=${FF_FABRIC_HEALTH:- -s -C -o errors -o slowlinks}
 
 # list of CLI commands to issue during opachassisanalysis
-export FF_CHASSIS_CMDS=${FF_CHASSIS_CMDS:-showInventory fwVersion showNodeDesc timeZoneConf timeDSTConf snmpCommunityConf snmpTargetAddr showChassisIpAddr showDefaultRoute}
-# other possible additions (if running newer chassis FW which supports these)
-# ismIslSet12x, ismIslSetSpeed
+export FF_CHASSIS_CMDS=${FF_CHASSIS_CMDS:-showAllConfig}
 
 # single CLI command to issue to check overall health during opachassisanalysis
 # hwCheck is prefered, but is not supported on older chassis FW

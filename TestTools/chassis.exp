@@ -866,6 +866,293 @@ File: TestTools/chassis.exp" noop noop {
 	}
 }
 
+proc sftp_chassis_security_file { chassis sec_file } {
+##
+## sftp_chassis_security_file
+## -------------------------
+## push the given FM security file to the specified chassis the
+# given chassis.
+##
+## Usage:
+##	sftp_chassis_security_file chassis sec_file
+## Arguments:
+##	chassis - IP address/name of chassis to sftp to
+##	sec_file - local pathname of file to push
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "put $sec_file /firmware"
+}
+
+proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all" } } {
+##
+## push_chassis_security_file
+## -------------------------
+## push the given FM security file to the specified slots in the
+## given chassis.
+##
+## Usage:
+##	push_chassis_security_file chassis sec_file [action [slots]]
+## Arguments:
+##	chassis - IP address/name of chassis to sftp and telnet to
+##	sec_file - local pathname of file to push
+##	action - action after pushing firmware:
+##			push   - do not reboot, do not change as primary
+##					is already primary, no change
+##	slots - list of slot numbers to push to, default is "all" to all
+#           management cards
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+##  Any slots which are not of a management card, are quietly skipped.
+##  This allows multi-file push to work with a slot list.
+##
+##	If the sftp fails for some slots but succeeds for others.  The failed slots
+##	are logged and an exception will be thrown, however the good slots
+##	are processed to completion.
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	# variables:
+	if { [ string equal "$action" "push"] } {
+		set active 0
+	} else {
+		fail_test "Invalid FM security file push action: $action"
+	}
+
+	log_message "\nTest: Seeing if $chassis present running firmware supports FM security file push ...\n"
+	target_chassis_admin_sh $chassis
+	if { [ catch { set cap [check_chassis_capability "fwPush"] } res ] != 0
+	     || $cap < 1 } {
+		fail_test "Chassis $chassis present running firmware does not support push:\n$res"
+	}
+
+	log_message "\nTest: Getting card type of management card from $chassis ...\n"
+    set my_slot [ get_this_slot_number ]
+    set mgmt_card_type [get_chassis_card_type 0]
+
+    log_message "\nTest: Getting Slot list from $chassis ...\n"
+	if { [string equal "$slots" "all"] } {
+		# push to all slots of matching card type
+		set push_slots [get_chassis_slots $mgmt_card_type]
+		set num_slots [llength $push_slots]
+		#set push_all 0
+		set push_all 1
+	} else {
+		# push to a specific set of slots
+		set push_slots "$slots"
+		set push_all 0
+	}
+	set num_slots [llength $push_slots]
+	if { $num_slots == 0 } {
+		target_chassis_admin_sh_exit
+		skip_case "No management cards of type $mgmt_card_type"
+		return 0
+	}
+	set use_rebootall 0
+
+	log_message "\nTest: Getting present installed firmware from $chassis ...\n"
+	# first get present card types for each of the slots
+    set card_types ""
+         
+	foreach slot $push_slots {
+		lappend card_types [get_chassis_card_type $slot]
+	}
+	target_chassis_admin_sh_exit
+
+	# DEBUG
+	#log_message "push_slots: $push_slots"
+	#log_message "num_slots: $num_slots"
+    #log_message "card_types: $card_types"
+	#log_message "mgmt_card_type: $mgmt_card_type"
+    #log_message "my_slot: $my_slot"
+
+	log_message "\nTest: Determining operations needed to upgrade to $sec_file for $chassis ..."
+	# now check that card types match and determine if we need to push security file
+	set need_push ""
+	set have_card 0
+    set mgmt_slot ""
+
+	for { set i 0 } { $i < $num_slots } { incr i } {
+		set slot [lindex $push_slots $i]
+		if { ! [ string equal "$mgmt_card_type" [lindex $card_types $i] ] } {
+			# if this happens card type is inconsistent with original
+			# query for slots of given card type (hot swap during update?)
+			# or user has explicitly specified slots and picked one of
+			# wrong card type
+			# quiety ignore this slot
+			lappend need_push 0
+			log_message "Test: Skipping slot $slot: is of type [lindex $card_types $i], $sec_file is for $mgmt_card_type"
+			continue
+		}
+
+        # check whether the slot support running the ESM
+        if { [ string equal "$slot" "$my_slot" ] } {
+            target_chassis_admin_sh $chassis
+        } else {
+            target_chassis_admin_sh $chassis $slot
+        }
+        if { [ catch { set cap [check_chassis_capability "smConfig"] } res ] != 0
+            || $cap < 1 } {
+            # slot will be skipped, doesn't support smConfig
+            lappend card_capabilities 0
+        } else {
+            lappend card_capabilities 1
+            if { [ string equal "$mgmt_slot" ""] || [ string equal "$slot" "$my_slot" ] } {
+                set mgmt_slot "$slot"
+            }
+        }
+        if { [ string equal "$slot" "$my_slot" ] } {
+            target_chassis_admin_sh_exit
+        } else {
+            target_chassis_admin_sh_exit 1
+        }
+
+		set have_card 1
+        # valid slot so push security file to this slot
+        lappend need_push 1
+        log_message "Test: Will need to push FM security file to slot $slot"
+	}
+
+	# only need do a step if applicable to at least 1 slot
+	set do_push [ expr [lsearch -exact $need_push 1] != -1 ]
+
+    # DEBUG
+    #log_message "mgmt_slot: $mgmt_slot"
+    #log_message "card_capabilities: $card_capabilities"
+
+    if { [ string equal "$mgmt_slot" "" ] } {
+        skip_case "chassis does not have an ESM license key or does not support smConfig"
+        return 0
+	}
+
+	# DEBUG
+	#log_message "push_all: $push_all"
+	#log_message "do_push: $do_push"
+	#log_message "need_push: $need_push"
+
+	if { ! ( $do_push ) } {
+		# we are done, everything is already the way we want it
+		if { $have_card } {
+			skip_case "No action required"
+		} else {
+			skip_case "No selected slots of type $mgmt_card_type"
+		}
+		return 0
+	}
+
+	set fail 0
+	set pushed 0
+	set sftp_failures ""
+	set sftp_statuses ""
+
+	for { set i 0 } { $i < $num_slots } { incr i } {
+		set slot [lindex $push_slots $i]
+        if { ! [lindex $card_capabilities $i] } {
+            # if this happens card is not capable of smConfig ignore this slot
+            log_message "Test: Skipping slot $slot: does not support smConfig"
+            continue
+        }
+
+		if { $do_push && ( $push_all || [lindex $need_push $i] ) } {
+            # push one slot at a time
+            log_message "\nTest: sftp $sec_file to slot $slot\n"
+            sftp_chassis_security_file $chassis $sec_file
+            target_chassis_admin_sh $chassis
+
+			# check status, must do immediately after sftp
+			set status [get_chassis_sftp_status $slot 1]
+			if { [ string equal "$status" "success" ] || [ string equal "$status"  "skipped" ] } {
+				set pushed 1
+				lappend sftp_failures 0
+				lappend sftp_statuses "$status"
+			} else {
+				log_message "\nFAILURE: Failed to sftp FM security file to chassis $chassis slot $slot\n"
+				set fail 1
+				lappend sftp_failures 1
+				lappend sftp_statuses "$status"
+			}
+			if { ! $push_all } {
+				target_chassis_admin_sh_exit
+			}
+		} else {
+			# we never sftp'ed to this slot
+			lappend sftp_failures 0
+			lappend sftp_statuses "skipped"
+		}
+	}
+
+	# make sure we are logged in for operations below
+	if { ! ( $do_push && $push_all ) } {
+		target_chassis_admin_sh $chassis
+	}
+
+	# DEBUG
+	#log_message "pushed: $pushed"
+	#log_message "sftp_statuses: $sftp_statuses"
+	#log_message "sftp_failures: $sftp_failures"
+	#log_message "fail: $fail"
+
+	if { $fail } {
+		fail_test "Unable to sftp FM security file to requested slots in $chassis"
+	}
+
+	target_chassis_admin_sh_exit
+
+	return 0
+}
+
+proc test_case_push_chassis_security_file { chassis sec_file {action "push"} { slots "all" } } {
+##
+## test_case_push_chassis_security_file
+## -------------------------
+## test case to push the given FM security file to the specified slots in the
+## given chassis.
+##
+## Usage:
+##	test_case_push_chassis_security_file chassis sec_file [action [slots]]
+## Arguments:
+##	chassis - IP address/name of chassis to sftp and telnet to
+##	sec_file - local pathname of file to push
+##	action - action after pushing firmware:
+##			push - do not reboot, do not change as primary
+##					is already primary, no change
+##	slots - list of slot numbers to push to, default is "all" of given card type
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+##  see push_chassis_security_file for error handling summary
+
+	global env
+
+	set base [exec basename $sec_file .pem]
+
+	test_case "$chassis.$base" "upgrade $chassis $base" "upgrade FM security file on $chassis
+Selected slots: $slots
+Security File: $sec_file
+Action: $action
+File: TestTools/chassis.exp" noop noop {
+		upvar chassis chassis
+		upvar sec_file sec_file
+		upvar action action
+		upvar slots slots
+
+	    push_chassis_security_file "$chassis" "$sec_file" "$action" "$slots"
+	}
+}
+
 proc test_case_chassis_configure { chassis chassisIP} {
 
 	global tools_case_status
@@ -1062,7 +1349,7 @@ proc get_esm_config { chassis config_file } {
 	global spawn_id expect_out spawn_out timeout
 	global expecting
 
-	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "get /firmware/opafm.xml $config_file"
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "get /firmware/opafm.xml $config_file" 0
 
 	return 0
 }
@@ -1745,3 +2032,122 @@ File: TestTools/chassis.exp" noop noop {
 		target_chassis_admin_sh_exit
 	}
 }
+
+proc get_esm_security_files { chassis security_files dest_dir } {
+##
+## get_esm_security_files
+## -------------------------
+## get esm security files from the chassis
+##
+## Usage:
+##	get_esm_security security_files
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	security_files - local pathname of file to get to
+## Returns:
+##	1 - match, 0 - no match
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "get /firmware/$security_files $dest_dir" 0
+
+	return 0
+}
+
+proc test_case_get_esm_security_files { chassis security_files dest_dir } {
+##
+## test_case_get_esm_security_file
+## -------------------------
+## test case to get the given security files from the given chassis.
+##
+## Usage:
+##	test_case_get_esm_security_files chassis security_files
+## Arguments:
+##	chassis - IP address/name of chassis to scp and telnet to
+##	security_files - security files to fetch
+## Returns:
+##	0 -> success
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+##
+##  see push_esm_security_files for error handling summary
+
+	global env
+
+	test_case "$chassis.fm_get_security_files" "get $chassis $security_files $dest_dir" "get FM security files from $chassis
+Get Security Files: $security_files
+Dest Directory:     $dest_dir
+File: TestTools/chassis.exp" noop noop {
+		upvar chassis chassis
+		upvar security_files security_files
+		upvar action action
+		upvar dest_dir dest_dir
+
+		# check if chassis supports slaveCli, if not then skip chassis, older FW
+		target_chassis_admin_sh $chassis
+		if { [ catch { set cap [check_chassis_capability "slaveCli"] } res ] != 0
+	     		|| $cap < 1 } {
+			skip_case "chassis does not support FM config via FastFabric"
+		}
+
+		# TBD - make this common code with fmconfig
+		log_message "\nTest: Getting Slot list from $chassis ...\n"
+		set my_slot [ get_this_slot_number ]
+		# get management card type for this chassis model
+		set mgmt_card_type [ get_chassis_card_type 0]
+		# all slots of matching card type (eg. all management cards)
+		set mgmt_slots [get_chassis_slots $mgmt_card_type]
+		set num_slots [llength $mgmt_slots]
+		if { $num_slots == 0 } {
+			# this should not happen, we should at least find card 0
+			target_chassis_admin_sh_exit
+			fail_test "No cards of type $mgmt_card_type"
+		}
+		# lets be paranoid
+		if { ! [ string equal [get_chassis_card_type $my_slot] "$mgmt_card_type" ] } {
+			target_chassis_admin_sh_exit
+			fail_test "IP address given is not for chassis mgmt card $mgmt_card_type"
+		}
+		target_chassis_admin_sh_exit
+
+		log_message "\nTest: Checking FM capabilities and status of $chassis ...\n"
+		# slot which supports sm CLI.  Prefer active mgmt card otherwise its
+		# secondary mgmt card
+		set mgmt_slot ""
+		# see if any slots in chassis support smConfig
+		foreach slot $mgmt_slots {
+			if { [ string equal "$slot" "$my_slot" ] } {
+				target_chassis_admin_sh $chassis
+			} else {
+				target_chassis_admin_sh $chassis $slot
+			}
+			if { [ catch { set cap [check_chassis_capability "smConfig"] } res ] != 0
+	     		|| $cap < 1 } {
+				# slot will be skipped, doesn't support smConfig
+			} else {
+				if { [ string equal "$mgmt_slot" ""] || [ string equal "$slot" "$my_slot" ] } {
+					set mgmt_slot "$slot"
+				}
+			}
+			if { [ string equal "$slot" "$my_slot" ] } {
+				target_chassis_admin_sh_exit
+			} else {
+				target_chassis_admin_sh_exit 1
+			}
+		}
+
+		if { [ string equal "$mgmt_slot" "" ] } {
+			skip_case "chassis does not have an ESM license key or does not support smConfig"
+		}
+
+		log_message "mkdir -p $dest_dir"
+        exec mkdir -p $dest_dir
+        get_esm_security_files "$chassis" "$security_files" "$dest_dir"
+	}
+}
+

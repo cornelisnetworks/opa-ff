@@ -106,13 +106,6 @@ array set sw_config_linkwidths {
 0 "no change"
 }
 
-array set sw_config_linkspeeds {
-1 12G
-2 25G
-3 12G/25G
-0 "no change"
-}
-
 array set sw_config_nodedesc {
 0 "not being set"
 1 "being set as per opaswitches file"
@@ -152,7 +145,6 @@ if {![info exists myarray($key)]} {
 
 test_suite "configure" "configure" "configure all switches:
 LINKWIDTH: [sw_get_array_entry sw_config_linkwidths $env(LINKWIDTH_SETTING)]
-LINKSPEED: [sw_get_array_entry sw_config_linkspeeds $env(LINKSPEED_SETTING)]
 NODEDESC:  [sw_get_array_entry sw_config_nodedesc $env(NODEDESC_SETTING)]
 FMENABLED: [sw_get_array_entry sw_config_fmenabled $env(FMENABLED_SETTING)]
 LINKCRCMODE:	[sw_get_array_entry sw_config_linkcrcmode $env(LINKCRCMODE_SETTING)]

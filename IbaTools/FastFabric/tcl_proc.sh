@@ -30,7 +30,7 @@
 
 # [ICS VERSION STRING: unknown]
 # execute a tcl procedure using front
-# if not exported, TEST_CONFIG_FILE is set to /dev/null
+# TEST_CONFIG_FILE is always set to /dev/null
 # this allows the environment required for a specific tcl proc (if any)
 # to be explicitly provided.  For example many commands only need
 # CFG_HOSTS defined
@@ -50,4 +50,4 @@ fi
 
 proc="$1"
 shift
-TEST_CONFIG_FILE="${TEST_CONFIG_FILE:-/dev/null}" TCLLIBPATH="/opt/opa/tools /usr/lib/tcl" expect -f /opt/opa/tools/front "$proc" "$@"
+TEST_CONFIG_FILE="/dev/null" TCLLIBPATH="/opt/opa/tools /usr/lib/tcl" expect -f /opt/opa/tools/front "$proc" "$@"

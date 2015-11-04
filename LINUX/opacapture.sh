@@ -35,13 +35,15 @@
 
 Usage_full()
 {
-	echo "Usage: opacapture [-d detail] output_tar_file" >&2
+	echo "Usage: opacapture [-d detail] output_tgz_file" >&2
 	echo "              or" >&2
 	echo "       opacapture --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -d detail - level of detail of capture" >&2
-	echo "               1-Local 2-Fabric 3-Fabric+FDB 4-Analysis" >&2
+	echo "               1-Local 2-Fabric 3-Fabric+FDB 4-Analysis (default=1)" >&2
 	echo "This will capture critical system information into a zipped tar file" >&2
+	echo "The program will automatically append .tgz to the <output_tgz_file>" >&2
+	echo "if it does not already have a .tgz suffix" >&2
 	echo "The resulting tar file should be sent to Customer Support along with any" 2>&1
 	echo "IntelOPA problem report regarding this system" >&2
 }
@@ -210,10 +212,15 @@ do
 	fi
 done
 
+
 # Check if HFI driver debug data dir) is present; log only if present
 HFI_DEBUGDIR="/sys/kernel/debug/hfi1"
 if [ -d ${HFI_DEBUGDIR} ]
 then
+	#hfi1stats requires the existance of ${HFI_DEBUGDIR}
+	echo "Obtaining HFI statistics ..."
+	hfi1stats > /$dir/hfi1stats 2>&1
+
 	mkdir -p /${dir}${HFI_DEBUGDIR}
 	echo "Copying kernel debug information from ${HFI_DEBUGDIR}..."
 	cp -r ${HFI_DEBUGDIR}/* /${dir}/${HFI_DEBUGDIR} 2>/dev/null
@@ -231,13 +238,19 @@ then
 		then
 			rm -f /$dir/$f
 			cp -r $f/ /$dir/sys/class/infiniband/ 2>/dev/null
-			#if [ -h $f/device ]
-			#then
-			#	dev=`basename $f`
+			if [ -h $f/device ]
+			then
+				dev=`basename $f`
+				unit=`expr $dev : 'hfi1_\(.*\)'`
+				if [ ! -z "$unit" ]
+				then
+					echo "   Getting statedump for $dev ..."
+					echo -e "unit $unit\nstate save hw /$dir/opa${dev}.dump"|hfidiags -s - > /$dir/opa${dev}.dump.res 2>&1
+				fi
 			#	rm -f /$dir/$f/device
 			#	mkdir -p /$dir/sys/class/infiniband/$dev/ 2>/dev/null
 			#	cp -r $f/device/ /$dir/sys/class/infiniband/$dev/ 2>/dev/null
-			#fi
+			fi
 		fi
 	done
 fi
@@ -300,43 +313,54 @@ then
         # make hfi_port directory
         mkdir $hfi_port_dir
 
-        if [ "$ff_available" = n ]
+        # opasaquery doesn't require FF available
+        /usr/sbin/opasaquery -h $hfi -p $port -o node > $hfi_port_dir/nodes 2>&1
+        /usr/sbin/opafabricinfo -p $hfi_port > $hfi_port_dir/opafabricinfo 2>&1
+
+        if [ "$ff_available" = y ]
         then
-            # fabric_info doesn't require FF available, but then can't have -p
-            /usr/sbin/fabric_info > $hfi_port_dir/fabric_info 2>&1
-        else
-            /usr/sbin/fabric_info -p $hfi_port > $hfi_port_dir/fabric_info 2>&1
-            if [ $detail -eq 2 ]
+            router_opt=""
+
+            if [ $port -eq 0 ]
             then
-                # opareport doesn't accept explicit port specification of 0
-                if [ $port -eq 0 ]
-                then
-                    /usr/sbin/opareport -h $hfi -o snapshot -s > $hfi_port_dir/snapshot.xml
-                else
-                    /usr/sbin/opareport -h $hfi -p $port -o snapshot -s > $hfi_port_dir/snapshot.xml
-                fi
+                 port_opt="-h $hfi"
             else
-                if [ $port -eq 0 ]
-                then
-                    /usr/sbin/opareport -h $hfi -o snapshot -s -r > $hfi_port_dir/snapshot.xml
-                else
-                    /usr/sbin/opareport -h $hfi -p $port -o snapshot -s -r > $hfi_port_dir/snapshot.xml
-                fi
-                /usr/sbin/opashowmc -p $hfi:$port > $hfi_port_dir/fabric_showmc 2>&1
+                 port_opt="-h $hfi -p $port"
             fi
+
+            # determine if port is management enabled
+            /usr/sbin/opasmaquery $port_opt -o pkey 2>/dev/null|grep -q 0xffff
+            mgmt_disabled=$?
+
+            # add router table information to snapshot report
+            if [ $detail -gt 2 ]
+            then
+                router_opt="-r"
+            fi
+
             /usr/sbin/opareport -o links -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_links 2>&1
             /usr/sbin/opareport -o comps -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_comps 2>&1
             /usr/sbin/opareport -o errors -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_errors 2>&1
             /usr/sbin/opareport -o extlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_extlinks 2>&1
             /usr/sbin/opareport -o slowlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_slowlinks 2>&1
-            /usr/sbin/opareport -o vfmember -V -d 4  > $hfi_port_dir/fabric_vfmember 2>&1
+
+            if [ $mgmt_disabled -eq 0 ]
+            then
+                /usr/sbin/opareport $port_opt -o snapshot -s $router_opt > $hfi_port_dir/snapshot.xml 2>&1
+                /usr/sbin/opareport -o vfmember -V -d 4  > $hfi_port_dir/fabric_vfmember 2>&1
+            fi
+
+            if [ $detail -gt 2 ]
+            then
+                /usr/sbin/opashowmc -p $hfi:$port > $hfi_port_dir/fabric_showmc 2>&1
+            fi
         fi
     done
 fi
 
 cd /
 files="$dir"
-for f in var/log/iba* var/log/ics_* var/log/messages* var/log/ksyms.* var/log/boot* etc/*release* etc/sysconfig/ipoib.cfg* etc/sysconfig/opa etc/modules.conf* etc/modprobe.conf* etc/sysconfig/network-scripts/ifcfg* etc/dapl/ibhosts etc/hosts etc/sysconfig/boot etc/sysconfig/firstboot etc/dat.conf etc/sysconfig/network/ifcfg* etc/infiniband etc/sysconfig/*config etc/security etc/sysconfig/qlogic_fm.xml etc/sysconfig/opafm.xml etc/sysconfig/iview_fm.config var/log/fm* var/log/sm* var/log/bm* var/log/pm* var/log/fe* var/log/opensm* var/log/ipath* etc/rc.d/rc.local etc/modprobe.d boot/grub/menu.lst boot/grub/grub.conf boot/grub2/grub.cfg boot/grub2/grubenv boot/grub2/device.map etc/grub*.conf etc/udev* etc/opensm etc/sysconfig/opensm
+for f in var/log/iba* var/log/ics_* var/log/messages* var/log/ksyms.* var/log/boot* etc/*release* etc/sysconfig/ipoib.cfg* etc/sysconfig/opa etc/modules.conf* etc/modprobe.conf* etc/sysconfig/network-scripts/ifcfg* etc/dapl/ibhosts etc/hosts etc/sysconfig/boot etc/sysconfig/firstboot etc/dat.conf etc/sysconfig/network/ifcfg* etc/infiniband etc/sysconfig/*config etc/security etc/sysconfig/opafm.xml etc/sysconfig/iview_fm.config var/log/fm* var/log/sm* var/log/bm* var/log/pm* var/log/fe* var/log/opensm* var/log/ipath* etc/rc.d/rc.local etc/modprobe.d boot/grub/menu.lst boot/grub/grub.conf boot/grub2/grub.cfg boot/grub2/grubenv boot/grub2/device.map etc/grub*.conf etc/udev* etc/opensm etc/sysconfig/opensm
 do
 	if [ -e "$f" ]
 	then
@@ -394,12 +418,13 @@ tar --format=gnu -czf $tar_file $files
 retval=$?
 rm -rf /$dir
 
-if [ $retval -eq 0 ]
+if [ $retval -ne 0 ]
 then
-	echo "Done."
-	echo
-	echo "Please include $tar_file with any problem reports to Customer Support"
-else
-	echo "ERROR: Unable to generate $tar_file" >&2
+	echo "WARN: tar exited with code $retval, may have failed to create $tar_file!" >&2
 fi
+
+echo "Done."
+echo
+echo "Please include $tar_file with any problem reports to Customer Support"
+
 exit $retval

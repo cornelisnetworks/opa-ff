@@ -152,6 +152,33 @@ proc get_switch_lids_to_hfi_ports_map { cmd_host }  {
     return $lid_port_map
 }
 
+
+
+#########################################################################################
+# Name		: get_lid_from_guid
+# Input		: guid
+# Return	: output of opasaquery -o lid -n $guid
+# Description	: get lid from guid
+#########################################################################################
+
+
+proc get_lid_from_guid { guid } {
+##
+## get_lid_from_guid
+## --------------
+## Obtain my guid
+## assumes that target_root_sh has already been called for the host
+        set cmd "lid=`opasaquery -o lid -n $guid`"
+        #debug_message "running: $cmd"
+        unix_cmd 60 "" $cmd
+        send_unix_cmd { echo "XXX${lid}XXX"; echo DONE }
+        expect_list 60 { "DONE" "XXX" "DONE" } { "exiting" "No such" "Error" "ERROR" "VAPI" "THH" } tmp
+        check_exit_status 60 0
+        regexp {DONE.*XXX *(.*) *XXX.*DONE} $tmp trash lid
+
+        return "$lid"
+}
+
 #########################################################################################
 # Name        : get_switchport_from_lid
 # Input       : cmd_host lid  *** LID must be in format 0x0001 (the same format as provided by opareport -o lids)
@@ -217,11 +244,14 @@ proc get_switchport_from_lid { cmd_host mylid }  {
           set port2_GUID [[$port2 child all NodeGUID] asText]
           set port1_PortNum [[$port1 child all PortNum] asText]
           set port2_PortNum [[$port2 child all PortNum] asText]
+          target_root_sh $cmd_host
           if { ([string compare $port1_GUID $myguid]==0) } {
-            set return_lid $lid
+            #set return_lid $lid
+	    set return_lid [get_lid_from_guid $port2_GUID]
             set return_port $port2_PortNum
           } elseif { ([string compare $port2_GUID $myguid]==0) } {
-            set return_lid $lid
+            #set return_lid $lid
+	    set return_lid [get_lid_from guid $port1_GUID]
             set return_port $port1_PortNum
           }
 
@@ -276,7 +306,7 @@ proc get_switchport_from_guid { cmd_host myguid }  {
         set linkList [ $links_dom selectNodes /Report/LinkSummary/Link ]
         #puts "found [ llength $linkList ] links"
         foreach link $linkList {
-#          puts "processing link [$link asXML] [$link asText]"
+          #puts "processing link [$link asXML] [$link asText]"
           set portNodes [ $link getElementsByTagName Port ]
           set port1 [lindex $portNodes 0]
           set port2 [lindex $portNodes 1]
@@ -286,15 +316,21 @@ proc get_switchport_from_guid { cmd_host myguid }  {
           set port2_GUID [[$port2 child all NodeGUID] asText]
           set port1_PortNum [[$port1 child all PortNum] asText]
           set port2_PortNum [[$port2 child all PortNum] asText]
+          #puts "myguid is $myguid port1guid = $port1_GUID port2guid= $port2_GUID lid = $lid"
           if { ([string compare $port1_GUID $myguid]==0) } {
             set return_lid $lid
+            set return_lid [get_lid_from_guid $port2_GUID]
+
             set return_port $port2_PortNum
           } elseif { ([string compare $port2_GUID $myguid]==0) } {
             set return_lid $lid
+            set return_lid [get_lid_from_guid $port1_GUID]
+
             set return_port $port1_PortNum
           }
         }
     }
+   
     $lids_dom delete
     $links_dom delete
     return [list $return_lid $return_port]

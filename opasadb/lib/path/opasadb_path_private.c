@@ -1288,6 +1288,7 @@ int op_ppath_find_path(op_ppath_reader_t *r,
 			if (!p) {
 				// Didn't find a good match, use the default.
 				p = def_sid;
+				sid_record = &(r->sid_table[p]);
 			}
 			if (!p) {
 				_DBG_INFO("Failed to match query to any sid.\n");

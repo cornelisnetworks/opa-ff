@@ -41,10 +41,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
@@ -59,7 +56,7 @@ Usage_full()
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "            default is /var/opt/iba/analysis" >&2
+	echo "            default is /var/opt/opa/analysis" >&2
 	echo "   -c file - error thresholds config file" >&2
 	echo "             default is $CONFIG_DIR/opa/opamon.conf" >&2
 	echo "   -t portsfile - file with list of local HFI ports used to access" >&2
@@ -182,28 +179,28 @@ for i in $FF_ALL_ANALYSIS
 do
 	case $i in
 	fabric)
-		$BINDIR/opafabricanalysis $opts -c "$configfile"
+		/usr/sbin/opafabricanalysis $opts -c "$configfile"
 		if [ $? != 0 ]
 		then
 			status=bad
 		fi
 		;;
 	chassis)
-		$BINDIR/opachassisanalysis $opts
+		/usr/sbin/opachassisanalysis $opts
 		if [ $? != 0 ]
 		then
 			status=bad
 		fi
 		;;
 	hostsm)
-		$BINDIR/opahostsmanalysis $opts
+		/usr/sbin/opahostsmanalysis $opts
 		if [ $? != 0 ]
 		then
 			status=bad
 		fi
 		;;
 	esm)
-		$BINDIR/opaesmanalysis $opts
+		/usr/sbin/opaesmanalysis $opts
 		if [ $? != 0 ]
 		then
 			status=bad

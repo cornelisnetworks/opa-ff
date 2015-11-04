@@ -88,16 +88,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DBG_FLAGS_BIT6_P_L2				1<<6
 #define DBG_FLAGS_BIT7_P_MAD			1<<7
 
-#define DEFAULT_MODE	0
-#define WFRL_MODE		1
-#define WFR_MODE		2
+#define DEBUG_TOOL_MODE 1
+#define WFR_MODE        2
 
 typedef struct _packet {
 	uint64				blockNum;
 	uint64				size;
 	uint64				numBlocks;
-	uint32				ts_usec;
-	uint32				ts_sec;
+	time_t				ts_sec;
+	long				ts_nsec;
 	struct _packet		*next;
 } packet;
 
@@ -112,14 +111,14 @@ typedef struct _pcapHdr_s {
 } pcapHdr_t;
 
 typedef struct _pcapRecHdr_s {
-	uint32				ts_usec;
+	uint32				ts_nsec;
 	uint32				ts_sec;
 	uint32				packetSize;
 	uint32				packetOrigSize;
 } pcapRecHdr_t;
 
 typedef struct extHeader_s {
-	uint32				tv_usec;
+	uint32				tv_nsec;
 	uint32				tv_sec;
 	uint8				linkType;		/* Lyink Type 26 = STL; 21 = IB */
 	uint8				flags;			/* ERF flags */
@@ -239,8 +238,8 @@ enum qib_packet_filter_opcodes {
 #define STL_MAX_PACKET_SIZE		2*1024*8 // Max 16B is < 2K flits
 #define WIRESHARK_MAX_LENGTH	65535
 
-#define WFRL_CAPTURE_FILE 		"/dev/ipath_capture_00_01"
-#define WFR_CAPTURE_FILE 		"/dev/hfi1_diagpkt0"
+#define DEBUG_TOOL_CAPTURE_FILE "/dev/ipath_capture_00_01"
+#define WFR_CAPTURE_FILE "/dev/hfi1_diagpkt0"
 
 #define PACKET_OUT_FILE 		"packetDump.pcap"
 

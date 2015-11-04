@@ -50,6 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "stl_print.h"
 
 extern uint64	g_mkey;
+extern uint8 g_detail;
 extern unsigned g_verbose;
 extern PrintDest_t g_dest;
 extern uint8 g_drpath[64];
@@ -79,6 +80,7 @@ typedef struct _argrec {
 	boolean				mflag;	// was -m option supplied
 	boolean				mflag2;	// were two ports supplied
 	uint8				dport;	// typical -m option
+	uint8				mcount;	// optional count specified via -m
 	uint8				inport; // used for SLVL and SLSC maps.
 	uint8				outport;// used for SLVL and SLSC maps.
 	const char*			oname;	// -o name
@@ -116,5 +118,4 @@ extern void pma_Usage(boolean displayAbridged);
 extern uint32   g_counterSelectMask;
 extern uint64   g_portSelectMask;
 extern uint64   g_vlSelectMask;
-extern uint32	g_counterSizeMode;
 

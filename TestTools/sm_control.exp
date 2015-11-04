@@ -51,7 +51,7 @@ proc stop_sm { host } {
 	send_unix_cmd "systemctl stop opafm"
 	    
 	send_unix_cmd "systemctl -n 0 status opafm"
-	catch {expect_any 60 {"dead"} {"running"} out} ret	    
+	catch {expect_any 60 {"dead" "failed"} {"running"} out} ret	    
     } else {
 	send_unix_cmd "service opafm stop"
 	catch {expect_any 60 {"Stopping IFS Fabric Manager" "Shutting down IFS Fabric Manager" "shutting down all instances"} {} out} ret
@@ -76,7 +76,7 @@ proc start_sm { host } {
 	send_unix_cmd "systemctl start opafm" 
 	    
         send_unix_cmd "systemctl -n 0 status opafm"
-        catch {expect_any 60 {"running"} {"failed" "unknown"} out} ret	    
+        catch {expect_any 60 {"running"} {"failed" "unknown" "dead" } out} ret	    
     } else {
 	send_unix_cmd "service opafm start"
         catch {expect_any 60 {"Starting IFS Fabric Manager"} {"unable to start" "not properly shutdown"} out } ret

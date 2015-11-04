@@ -115,29 +115,30 @@ extern "C" {
 #define Q_SA_SWPORTCONG			36
 #define Q_SA_HFICONG			37
 #define Q_SA_HFICONGCTRL		38
-#define Q_LAST_SA 				38
+#define Q_SA_FABRICINFO			39
+#define Q_LAST_SA 				39
 
-#define Q_PA_GETGROUPLIST		39
-#define Q_PA_GETGROUPINFO		40
-#define Q_PA_GETGROUPCONFIG		41
-#define Q_PA_GETPORTCOUNTERS	42
-#define Q_PA_CLRPORTCOUNTERS	43
-#define Q_PA_CLRALLPORTCOUNTERS	44
-#define Q_PA_GETPMCONFIG		45
-#define Q_PA_FREEZEIMAGE		46
-#define Q_PA_RELEASEIMAGE		47
-#define Q_PA_RENEWIMAGE			48
-#define Q_PA_GETFOCUSPORTS		49
-#define Q_PA_GETIMAGECONFIG		50
-#define Q_PA_MOVEFREEZE			51
-#define Q_PA_CLASSPORTINFO		52
-#define Q_PA_GETVFLIST			53
-#define Q_PA_GETVFINFO			54
-#define Q_PA_GETVFCONFIG		55
-#define Q_PA_GETVFPORTCOUNTERS	56
-#define Q_PA_CLRVFPORTCOUNTERS	57
-#define Q_PA_GETVFFOCUSPORTS	58
-#define Q_LAST_PA 				58
+#define Q_PA_GETGROUPLIST		40
+#define Q_PA_GETGROUPINFO		41
+#define Q_PA_GETGROUPCONFIG		42
+#define Q_PA_GETPORTCOUNTERS	43
+#define Q_PA_CLRPORTCOUNTERS	44
+#define Q_PA_CLRALLPORTCOUNTERS	45
+#define Q_PA_GETPMCONFIG		46
+#define Q_PA_FREEZEIMAGE		47
+#define Q_PA_RELEASEIMAGE		48
+#define Q_PA_RENEWIMAGE			49
+#define Q_PA_GETFOCUSPORTS		50
+#define Q_PA_GETIMAGECONFIG		51
+#define Q_PA_MOVEFREEZE			52
+#define Q_PA_CLASSPORTINFO		53
+#define Q_PA_GETVFLIST			54
+#define Q_PA_GETVFINFO			55
+#define Q_PA_GETVFCONFIG		56
+#define Q_PA_GETVFPORTCOUNTERS	57
+#define Q_PA_CLRVFPORTCOUNTERS	58
+#define Q_PA_GETVFFOCUSPORTS	59
+#define Q_LAST_PA 				59
 
 /* Global variables */
 PrintDest_t g_dest;
@@ -271,7 +272,7 @@ static void sslParmsXmlParserEnd(IXmlParserState_t *state, const IXML_FIELD *fie
  */
 void Usage(void)
 {
-	fprintf(stderr, "Usage: opafequery [-v] [-a ipAddr | -h hostName] -o type\n");
+	fprintf(stderr, "Usage: opafequery [-v] [-a ipAddr | -h hostName] [-E] [-T paramsfile] -o type [SA options | PA options]\n");
 
 	fprintf(stderr, "General Options:\n");
 	fprintf(stderr, "    -v/--verbose       - verbose output\n");
@@ -369,6 +370,7 @@ void Usage(void)
 	fprintf(stderr, "    vfinfo      - list of vFabrics\n");
 	fprintf(stderr, "    vfinfocsv   - list of vFabrics in CSV format\n");
 	fprintf(stderr, "    vfinfocsv2  - list of vFabrics in CSV format with enums\n");
+	fprintf(stderr, "    fabricinfo  - summary of fabric devices\n");
 	fprintf(stderr, "    quarantine  - list of quarantined nodes\n");
 	fprintf(stderr, "    conginfo    - list of Congestion Info Records\n");
 	fprintf(stderr, "    swcongset   - list of Switch Congestion Settings\n");
@@ -481,6 +483,8 @@ int getOutputType(const char* outputType)
 		return Q_SA_PORTGROUP;
 	} else if (0 == strcmp(optarg, "bfrctrl")) {
 		return Q_SA_BUFCTRL;
+	} else if (0 == strcmp(optarg, "fabricinfo")) {
+		return Q_SA_FABRICINFO;
 	} else if (0 == strcmp(optarg, "quarantine")) {
 		return Q_SA_QUARANTINE;
 	} else if (0 == strcmp(optarg, "conginfo")) {
@@ -698,8 +702,12 @@ int fe_getSAOutputTypeFromQueryType(int queryType)
 	case Q_SA_LINK:
 		return OutputTypeStlLinkRecord;
 	case Q_SA_SERVICE:
+#ifndef NO_STL_SERVICE_OUTPUT       // Don't output STL Service if defined
 		if (g_IB) return OutputTypeServiceRecord;
 		else return OutputTypeStlServiceRecord;
+#else
+		return OutputTypeServiceRecord;
+#endif
 	case Q_SA_PKEY:
 		return OutputTypeStlPKeyTableRecord;
 	case Q_SA_PATH:
@@ -707,8 +715,12 @@ int fe_getSAOutputTypeFromQueryType(int queryType)
 	case Q_SA_VLARB:
 		return OutputTypeStlVLArbTableRecord;
 	case Q_SA_MCMEMBER:
+#ifndef NO_STL_MCMEMBER_OUTPUT       // Don't output STL McMember if defined
 		if (g_IB) return OutputTypeMcMemberRecord;
 		else return OutputTypeStlMcMemberRecord;
+#else
+		return OutputTypeMcMemberRecord;
+#endif
 	case Q_SA_TRACE:
 		return OutputTypeStlTraceRecord;
 	case Q_SA_SLSC:
@@ -729,6 +741,8 @@ int fe_getSAOutputTypeFromQueryType(int queryType)
 		return OutputTypeStlPortGroupRecord;
 	case Q_SA_BUFCTRL:
 		return OutputTypeStlBufCtrlTabRecord;
+	case Q_SA_FABRICINFO:
+		return OutputTypeStlFabricInfoRecord;
 	case Q_SA_QUARANTINE:
 		return OutputTypeStlQuarantinedNodeRecord;
 	case Q_SA_CONGINFO:

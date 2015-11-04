@@ -49,10 +49,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 punchlist=$FF_RESULT_DIR/punchlist.csv
 del=';'
@@ -201,7 +198,7 @@ function to_canon()
 
 function mycomm12()
 {
-	$TOOLSDIR/comm12 $1 $2
+	/opt/opa/tools/comm12 $1 $2
 }
 
 echo "$(ff_var_filter_dups_to_stdout "$HOSTS"|wc -l) hosts will be checked"
@@ -251,16 +248,17 @@ then
 			port_opts="-h $hfi -p $port"
 		fi
 
-		opasaquery $port_opts -t fi -o desc|sed -e 's/ HFI-[0-9]*$//'
+		opasaquery $port_opts -t fi -o desc | sed "s/ hfi1_[0-9]*$//"
 	done | ff_filter_dups|opasorthosts > $dir/active
 	# don't waste time reporting hosts which don't ping or can't ssh
 	# they are probably down so no use double reporting them
-	append_punchlist $good_file $dir/active "No active port"
+	# If performing quarantine test, wait for its results
+	if [ "$skip_quarantine" = y ]; then
+		append_punchlist $good_file $dir/active "No active port"
+	fi
 	# put in alphabetic order for "comm" command
 	mycomm12 <(to_canon < $good_file)  <(to_canon < $dir/active) | opasorthosts > $dir/good
 	good_meaning="$good_meaning, active"
-	#good_file=$dir/good	# can't really say this if next step would use it
-	good_file=
 	echo "$(cat $dir/active|wc -l) total hosts have FIs active on one or more fabrics (active)"
 else
 	cat $good_file > $dir/good
@@ -270,61 +268,82 @@ fi
 # quarantined node test
 if [ "$skip_quarantine" = n ]
 then
-	# Change the field delimiter so we don't multiprocess node descriptions with spaces
 	OLDIFS=$IFS
-	IFS=$(echo -en "\n\b")
-	testi=1
+	IFS=";"
 
-	# Get the node type and desc to output only quarantined HFIs
-	for qnode in $(opareport -q -o quarantinednodes -x | opaxmlextract -H -e QuarantinedNodes.QNode.NodeType -e QuarantinedNodes.QNode.NodeDesc)
-	do
-		if [ $(echo $qnode | cut -f 1 -d ';') == "FI" ] 
+	lastnodeguid=""
+	punchlist_str=""
+
+	opareport -q -o quarantinednodes -x | opaxmlextract -H -d \; -e QuarantinedNodes.QNode.TrustedNodeGUID -e QuarantinedNodes.QNode.NodeType -e QuarantinedNodes.QNode.NodeDesc -e QuarantinedNodes.QNode.QuarantineReasons.Reason | opasorthosts |
+	while : ; do
+		read nodeguid nodetype nodedesc reason
+
+		if [ -z $nodeguid ]
 		then
-			echo $qnode | cut -f 2 -d ';' | sed -e 's/ HFI-[0-9]*$//'
+			# Get trailing writes for last entry, if any
+			if [ "$punchlist_str" != "" ]
+			then
+				echo "$punchlist_str" >> $punchlist
+			fi
+			break
 		fi
-	done | ff_filter_dups | opasorthosts > $dir/quarantined
+		if [ "$nodetype" != "FI" ]
+		then
+			continue
+		fi
+		# trim host name
+		nodedesc=$(echo "$nodedesc" | cut -d ' ' -f 1)
+
+		# allow for $HOSTS filtering
+		if [[ "$HOSTS" =~ (^|[[:space:]])"$nodedesc"($|[[:space:]]) ]]
+		then
+		    :
+		else
+		    continue
+		fi
+
+		if [ "$nodeguid" != "$lastnodeguid" ]
+		then
+			# New Node, may be the first
+			if [ "$lastnodeguid" != "" ]
+			then
+				# New node, write out last's punchlist item
+				echo "$punchlist_str" >> $punchlist
+			fi
+			punchlist_str="$timestamp;$nodedesc;Quarantined: $reason"
+			echo "$nodedesc" >> $dir/quarantined
+		else
+			# Same Node
+			punchlist_str+=", $reason"
+		fi
+		lastnodeguid="$nodeguid"
+	done
 
 	IFS=$OLDIFS
 
-	# Remove nodes from the "good" file that are quarantined. Have to use a temp file as comm doesn't like rewriting a file it's reading
-	comm -23 <(sort $dir/good) <(sort $dir/quarantined) | opasorthosts > $dir/temp
-	mv $dir/temp $dir/good
+	# Apply logic requiring Quarantine report completion
+	if [ -f "$dir/quarantined" ]
+	then
+		cat $dir/quarantined | ff_filter_dups | opasorthosts > $dir/temp
+		mv -f $dir/temp $dir/quarantined
 
-	# Add punchlist items for any quarantined nodes. We can't use the defined append_punchlist as quarantined items will likely
-	# have already failed the active test. We use awk as opaxmlextract doesn't handle multiple quarantine reasons nicely.
-	punchlistgen='
-		# Use the NodeType tag as a record separator
-		BEGIN { FS="\n"; RS="<NodeType>"; ORS="" }
-		{
-			# Strip XML tags and leading whitespace from NodeType
-			gsub(/(<[^>]*>|^[ \t]+)/, "", $1)
-			if( $1 == "FI" ) {
-				# Strip XML tags and leading whitespace from NodeDesc
-				gsub(/(<[^>]*>|^[ \t]+)/, "", $2)
-				# Print timestamp, lower cased hostname, and start of quarantine reasons
-				print timestamp
-				$2 = tolower($2)
-				print delim$2
-				print delim"Quarantined: "
-				for(i = 3; i < NF; i++) {
-					# Strip XML tags and leading whitespace from each quarantine Reason
-					gsub(/(<[^>]*>|^[ \t]+)/, "", $i)
-					print $i
-		
-					if( i != NF-1 )
-						print ", "
-				}
-				print "\n"
-			}
-		}
-	'
-
-	# Steps are as follows:
-	# Output quarantine nodes | Limit to NodeDesc,NodeType,Reason | Format into punchlist style | 
-	# Insert extra delim into NodeDesc for sorting | Sort on NodeDesc string then HFI num | Remove extra delim >> Output to punchlist
-	opareport -q -o quarantinednodes -x | grep -E '(\<NodeDesc\>|\<NodeType\>|\<Reason\>)' | awk -v delim="$del" -v timestamp="$timestamp" "$punchlistgen"  | awk -v delim="$del" -v FS="$del" -v OFS="$del" '{gsub(/([0-9]*)$/, delim"&", $2); print $0}' | sort --ignore-case -k2,2 -k3,3n -t $del | awk -v delim="$del" -v FS="$del" '{print $1delim$2$3delim$4 }' >> $punchlist 
-
-	echo "$(cat $dir/quarantined|wc -l) hosts have FIs that have failed authentication (quarantined)"
+		# Remove nodes from the "good" file that are quarantined. Have to use a temp file as comm doesn't like rewriting a file it's reading
+		comm -23 <(sort $dir/good) <(sort $dir/quarantined) | opasorthosts > $dir/temp
+		mv -f $dir/temp $dir/good
+		#  Active Port Test: Don't output any hosts that have been marked as quarantined.
+		if [ "$skip_active" = n ]
+		then
+			comm -23 <(sort $good_file) <(sort $dir/quarantined) | opasorthosts > $dir/temp
+			append_punchlist $dir/temp $dir/active "No active port"
+			rm -f $dir/temp
+		fi
+	else
+		# Quarantine test completed with no results
+		if [ "$skip_active" = n ]
+		then
+			append_punchlist $good_file $dir/active "No active port"
+		fi
+	fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -332,5 +351,6 @@ fi
 echo "$(cat $dir/good|wc -l) hosts are $good_meaning (good)"
 comm -23 <(ff_var_filter_dups_to_stdout "$HOSTS") <(sort $dir/good)| opasorthosts > $dir/bad
 echo "$(cat $dir/bad|wc -l) hosts are bad (bad)"
+echo "Bad hosts have been added to $punchlist"
 
 exit 0

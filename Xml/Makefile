@@ -153,9 +153,6 @@ LOCALDEPLIBS =
 ifneq (ATOM,$(BUILD_TARGET))
 CLOCAL += -I$(TL_DIR)/tmsTarget/src/ssecure/sshield/include
 endif
-ifneq "$(BUILD_TARGET_OS)" "VXWORKS"
-LOCALIBS = expat
-endif
 
 # Include Make Rules definitions and rules
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makerules.project

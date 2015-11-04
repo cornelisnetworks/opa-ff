@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "opasmaquery.h"
 
 uint64	g_mkey=0;
+uint8 g_detail = CABLEINFO_DETAIL_BRIEF;
 unsigned g_verbose = 0;
 PrintDest_t g_dest;
 uint8 g_drpath[64] = {0};
@@ -43,7 +44,6 @@ char *g_cmdname;
 uint32	g_counterSelectMask = 0xffffffff;	// default is all counters, so set all bits
 uint64	g_portSelectMask = 0;
 uint64	g_vlSelectMask = 0;
-uint32	g_counterSizeMode = STL_PM_COUNTER_SIZE_MODE_ALL64;
 
 /* for pma/sma query*/
 uint64_t g_transactID = 0xffffffff12340000; // Upper half overwritten by driver.
@@ -97,11 +97,11 @@ int main(int argc, char** argv)
 	}
 
 	if ( (strcmp(g_cmdname, "opasmaquery") == 0)) {
-		options = "vnl:m:h:p:K:o:b:f:g?";
+		options = "vd:nl:m:h:p:K:o:b:f:g?";
 		g_optypes = sma_query;
 		otype = string_to_otype("nodeinfo");
 	} else if ( (strcmp(g_cmdname, "opapmaquery") == 0)) {
-		options = "vn:s:l:m:h:p:o:e:c:w:?";
+		options = "vn:s:l:m:h:p:o:e:w:?";
 		g_optypes = stl_pma_query;
 		otype = string_to_otype("getportstatus");
 	} else {
@@ -122,6 +122,12 @@ int main(int argc, char** argv)
 		switch (c) {
 		case 'g':
 			args.printLineByLine++;
+			break;
+		case 'd':
+			if (FSUCCESS != StringToUint8(&g_detail, optarg, NULL, 0, TRUE)) {
+				fprintf(stderr, "%s: Invalid Detail Level: %s\n", g_cmdname, optarg);
+				Usage(FALSE);
+			}
 			break;
 		case 'v':
 			g_verbose++;
@@ -225,16 +231,6 @@ int main(int argc, char** argv)
 				Usage(FALSE);
 			}
 			break;
-		case 'c':
-			if (FSUCCESS != StringToUint32(&g_counterSizeMode, optarg, NULL, 0, TRUE)) {
-				fprintf(stderr, "%s: Invalid number of large counters: %s\n", g_cmdname, optarg);
-				Usage(FALSE);
-			}
-			if (g_counterSizeMode > STL_PM_COUNTER_SIZE_MODE_MIXED) {
-				fprintf(stderr, "%s: Invalid counter size mode : %d - must be 0-2\n", g_cmdname, g_counterSizeMode);
-				Usage(FALSE);
-			}
-			break;
 		case 'w':
 			if (FSUCCESS != StringToUint64(&g_vlSelectMask, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "%s: Invalid VL select mask: %s\n", g_cmdname, optarg);
@@ -288,6 +284,7 @@ int main(int argc, char** argv)
 				fprintf(stderr, "%s: Invalid port: %s\n", g_cmdname, mports);
 				Usage(FALSE);
 			}
+			args.mcount=1;
 		} else if (g_optypes[otype].mflag2 && strchr(mports,',')) {	
 			// inport,outport
 			char *sTemp;
@@ -302,6 +299,19 @@ int main(int argc, char** argv)
 				Usage(FALSE);
 			}
 			args.mflag2=1;
+		} else if (otype == string_to_otype("portinfo") && strchr(mports,',')) {
+			// port,count
+			char *sTemp;
+			if (FSUCCESS != StringToUint8(&args.dport, mports, &sTemp, 0, TRUE)
+				|| ! sTemp || *sTemp != ',') {
+				fprintf(stderr, "%s: Invalid ports: %s, ports must be the form <port,count>\n", g_cmdname, mports);
+				Usage(FALSE);
+			}
+			sTemp++;
+			if (FSUCCESS != StringToUint8(&args.mcount, sTemp, NULL, 0, TRUE) || args.mcount == 0) {
+				fprintf(stderr, "%s: Invalid Port Count: %s\n", g_cmdname, mports);
+				Usage(FALSE);
+			}
 		} else {
 			fprintf(stderr, "%s: illegal value for -m: \"%s\"\n", 
 				g_cmdname, mports);
@@ -311,13 +321,21 @@ int main(int argc, char** argv)
 
 	status = oib_open_port_by_num (&args.oib_port, hfi, port);
 	if (status == EAGAIN) {
-		// Wildcard search for either/or port & hfi yielded no
-		// ACTIVE ports. Default any wildcards (i.e. hfi/port < 1)
-		// to 1 while preserving specific hfi/port numbers requested by
-		// the user.
-		if (!hfi) hfi = 1;
-		if (!port) port = 1;
-		status = oib_open_port_by_num(&args.oib_port, hfi, port);
+		// Wildcard search for either/or port & hfi yielded no ACTIVE ports.
+		if (!port) {
+			char *sErr_msg="No Active port found";
+			if(!hfi) {
+				// System wildcard search for Active port failed.
+				// Fallback and query default hfi:1, port:1
+				fprintf(stderr, "%s in System. Trying default hfi:1 port:1\n", sErr_msg);
+				hfi = 1;
+				port = 1;
+				status = oib_open_port_by_num(&args.oib_port, hfi, port);
+			} else {
+				fprintf(stderr, "%s on hfi:%d\n", sErr_msg, hfi);
+				exit (1);
+			}
+		}
 	}
 	if (status != 0) {
 		fprintf(stderr, "failed to open port hfi %d:%d: %s\n", hfi, port, strerror(status));

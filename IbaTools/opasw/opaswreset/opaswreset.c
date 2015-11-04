@@ -54,6 +54,7 @@ int						g_verbose = 0;
 int						g_quiet = 0;
 int						g_gotHfi = 0;
 int						g_gotPort = 0;
+int						g_gotDelay = 0;
 
 #define LIST_FILE_SUPPORTED 0
 
@@ -63,7 +64,7 @@ static void usage(char *app_name)
 #if LIST_FILE_SUPPORTED
 	fprintf(stderr, "[-l list_file] ");
 #endif
-	fprintf(stderr, "[-v|-q] [-h hfi] [-o port]");
+	fprintf(stderr, "[-v|-q] [-h hfi] [-o port] [-i delay-interval]");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "   -t - target to reset\n");
 #if LIST_FILE_SUPPORTED
@@ -75,6 +76,7 @@ static void usage(char *app_name)
 	fprintf(stderr, "        system wide port num (default is 0)\n");
 	fprintf(stderr, "   -o - port, numbered 1..n, 0=1st active (default\n");
 	fprintf(stderr, "        is 1st active)\n");
+	fprintf(stderr, "   -i - delay interval in seconds before switch reset (must be in range 1-1800)\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The -h and -o options permit a variety of selections:\n");
 	fprintf(stderr, "    -h 0       - 1st active port in system (this is the default)\n");
@@ -90,7 +92,7 @@ static void usage(char *app_name)
 int main(int argc, char *argv[])
 {
 	char				*cmdName;
-	const char			*opts="Dvqt:l:h:o:";
+	const char			*opts="Dvqt:l:h:o:i:";
 	char				parameter[100];
 	char				*p;
 	EUI64				destPortGuid = -1;
@@ -168,6 +170,14 @@ int main(int argc, char *argv[])
 				g_gotPort = 1;
 				break;
 
+			case 'i':
+				if (FSUCCESS != StringToUint32(&delay, optarg, NULL, 0, TRUE)) {
+					fprintf(stderr, "%s: Error: Invalid Delay Value: %s\n", cmdName, optarg);
+					usage(cmdName);
+				}
+				g_gotDelay = 1;
+				break;
+
 			default:
 				usage(cmdName);
 				break;
@@ -195,6 +205,15 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s: Error: Invalid port number, First Port is 1\n", cmdName);
 		exit(1);
 	}
+
+	if (g_gotDelay) {
+		if ((delay < 1) || (delay > 1800)) {
+			fprintf(stderr, "%s: Error: Invalid delay value %d, must be in range 1-1800\n", cmdName, delay);
+			exit(1);
+		} else
+			delay *= 1000; /* convert to milliseconds */
+	}
+
 	if (port == (uint8)-1)
 		port = 0;			// first active port
 

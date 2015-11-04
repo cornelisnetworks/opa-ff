@@ -112,6 +112,16 @@ boolean PortVerify(PortData *portp, Format_t format, int indent, int detail)
 			StlNodeTypeToText(portselp->NodeType),
 			StlNodeTypeToText(portp->nodep->NodeInfo.NodeType));
 	}
+	/* to get here the port must have a neighbor and hence should be linkup
+	 * but it could be quarantined or failing to move to Active
+	 */
+	if (portp->PortInfo.PortStates.s.PortState != IB_PORT_ACTIVE) {
+		ret = FALSE;
+		ShowProblem(format, indent, detail, 
+			"Port not Active: PortState: %s",
+			StlPortStateToText(portp->PortInfo.PortStates.s.PortState));
+	}
+
 	return ret;
 }
 

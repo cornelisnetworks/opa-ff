@@ -29,31 +29,38 @@ opapingall --help
 .TP 10
 --help 
 .NL
-Produce full help text.
+Produces full help text.
+
 .TP 10
 -C 
 .NL
 Performs a ping against a chassis. The default is hosts.
+
 .TP 10
 -p 
 .NL
-Ping all hosts/chassis in parallel.
+Pings all hosts/chassis in parallel.
+
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster, default is /etc/sysconfig/opa/hosts .
+File with hosts in cluster, default is /etc/sysconfig/opa/hosts.
+
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-File with chassis in cluster default is /etc/sysconfig/opa/chassis .
+File with chassis in cluster default is /etc/sysconfig/opa/chassis.
+
 .TP 10
 -h hosts 
 .NL
 List of hosts to ping.
+
 .TP 10
 -H chassis 
 .NL
 List of chassis to ping.
+
 .SH Example 
 .NL
 opapingall
@@ -66,7 +73,7 @@ opapingall -C
 .PP
 
 .B NOTE:
-This command pings all hosts/chassis found in the specified host/chassis file. The use of -C option merely selects the default file and/or environment variable to use. For this command it is valid to use a file which lists both hosts and chassis.
+This command pings all hosts/chassis found in the specified host/chassis file. The use of -C option merely selects the default file and/or environment variable to use. For this command, it is valid to use a file that lists both hosts and chassis.
 
 
 .br
@@ -77,22 +84,26 @@ CHASSIS=\'chassis1 chassis2\' opapingall -C
 .NL
 
 .TP 10
-HOSTS
+\fBHOSTS\fR 
 .NL
 List of hosts, used if -h option not supplied.
+
 .TP 10
-CHASSIS
+\fBCHASSIS\fR 
 .NL
 List of chassis, used if -H option not supplied.
+
 .TP 10
-HOSTS\(ulFILE
+\fBHOSTS\(ulFILE\fR 
 .NL
-File containing list of hosts, used in absence of -f and -h .
+File containing list of hosts, used in absence of -f and -h.
+
 .TP 10
-CHASSIS\(ulFILE
+\fBCHASSIS\(ulFILE\fR 
 .NL
-File containing list of chassis, used in absence of -F and -H .
+File containing list of chassis, used in absence of -F and -H.
+
 .TP 10
-FF\(ulMAX\(ulPARALLEL
+\fBFF\(ulMAX\(ulPARALLEL\fR 
 .NL
-When -p option is used, maximum concurrent operations.
+When -p option is used, maximum concurrent operations are performed.

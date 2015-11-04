@@ -30,7 +30,7 @@
 #[ICS VERSION STRING: unknown]
 #!/bin/bash
 
-INJECT_NUM_PKTS=4
+INJECT_NUM_PKTS=5
 start_test=0
 end_test=0
 inject=0

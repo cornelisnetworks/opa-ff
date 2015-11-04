@@ -13,67 +13,107 @@ opaxlattopology\(ulcust
 .NL
 
 .PP
-The script opaxlattopology\(ulcust has been added, accompanied by topology\(ulcust.xlsx . The script and spread sheet provide a sample alternative to the standard-format topology capability to document the topology of a customer cluster (see
-\fI opaxlattopology \fR
-). The alternative is provided for situations in which a customer chooses not to define a fabric topology using the standard-format spread sheet and opaxlattopology . topology\(ulcust.xlsx provides an alternative for representing each external link in a cluster. opaxlattopology\(ulcust translates the csv form of the alternate spread sheet cluster tab(s) to the standard csv form used by opaxlattopology . In using the alternative, a user would modify the sample spread sheet as needed to fit specific needs, then modify the script as needed to translate the spread sheet csv output to the standard-format csv output.
+Customizable script for documenting cluster topology. Provides an alternative to the standard script (see
+\fIopaxlattopology\fR
+). Edit the sample topology\(ulcust.xlsx to represent each external link in a cluster, then modify opaxlattopology\(ulcust to translate the alternate CSV form to the standard CSV form used by opaxlattopology.
 .SH Syntax
 .NL
-opaxlattopology\(ulcust -t \fItopology\(ulprime\fR[-s \fItopology\(ulsecond\fR] -T \fItopology\(ulout\fR[-v \fIlevel\fR] [-i \fIlevel\fR] [-c \fIchar\fR] [-K] [-?]
+opaxlattopology\(ulcust -t \fItopology\(ulprime\fR[-s \fItopology\(ulsecond\fR] -T \fItopology\(ulout\fR
+.br
+[-v \fIlevel\fR] [-i \fIlevel\fR] [-c \fIchar\fR] [-K] [-?]
 .SH Options
 .NL
 
 .TP 10
 -t \fItopology\(ulprime\fR 
 .NL
-Primary topology csv input file. Specifies the primary csv input file and must be present.
+Primary topology CSV input file. Specifies the primary CSV input file and must be present.
+
 .TP 10
 -s \fItopology\(ulsecond\fR 
 .NL
-Secondary topology csv input file. Specifies a secondary csv input file. It will be appended to the primary for processing.
+Secondary topology CSV input file. Specifies a secondary CSV input file. Appended to the primary for processing.
+
 .TP 10
 -T \fItopology\(ulout\fR 
 .NL
-Topology csv output file. Specifies the csv output file name and must be specified.
+Topology CSV output file. Specifies the CSV output file name and must be specified.
+
 .TP 10
 -v \fIlevel\fR 
 .NL
-Verbose level (0-8, default 2):
+Verbose level. Range = 0 - 8, default = 2.
+
+.RS
+.TP 10
+
 .sp
 0 
 No output.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 1 
 Progress output.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 2 
 Reserved.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 4 
 Time stamps.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 8 
 Reserved.
+
+.RE
+
 .TP 10
 -i \fIlevel\fR 
 .NL
-Screen output indent level (0-15, default 0)
+Screen output indent level. Range = 0 - 15, default = 0.
+
 .TP 10
 -c \fIchar\fR 
 .NL
-Concatenation character. Used when creating Cable Label values. A space is used by default, but another character (e.g., underscore) can be specified.
+Concatenation character, used for Cable Label values. A space is used by default, but another character, such as underscore, can be specified.
+
 .TP 10
 -K 
 .NL
-DO NOT clean temporary files. Used to prevent temporary files from being removed. Temporary files contain csv data used during processing. They are not needed after the standard-format csv file is created, but they can be retained for subsequent inspection or processing.
+Does not clean temporary files. Prevents temporary files from being removed. Temporary files contain CSV data used during processing. Temporary files are not needed after the standard-format CSV file is created, but they can be retained for subsequent inspection or processing.
+
 .TP 10
 -? 
 .NL
-Print this output[START-DRAFT-COMMENT][gdr] Do we need a Example section for this?[END-DRAFT-COMMENT]
+Prints this output.
+
 .SH Description
 .NL
 
 .PP
-Like the standard format, each link contains source, destination and cable fields with one link per line (row) of the spread sheet. Link fields must not contain commas. Source and Destination fields are each a concatenation of name and port information in the following forms (N/n is a host/switch/port number; names not of the form \'ib\' or \'C\' are taken to be host names):
+Each link contains source, destination, and cable fields with one link per row of the spreadsheet. Link fields must not contain commas. Source and Destination fields are each a concatenation of name and port information in the following forms. Names not of the form ib or C are assumed to be host names.
 .TP 10
 
 \fBNode Type\fR
@@ -85,14 +125,16 @@ Like the standard format, each link contains source, destination and cable field
 .TP 10
 Host 
 .NL
-hostN
+host \fIN\fR where N is a host number.
 .TP 10
 Edge Switch 
 .NL
-ibNpN
+ib \fIN\fR p \fIN\fR where N is a switch/port number.
 .TP 10
 Core Leaf 
 .NL
-CnLnnnpN
+C \fIn\fR L \fInnn\fR p \fIN\fR where N/n is a host/switch/port number.
 .PP
-Cable values, CableLength, and CableDetails are optional and have no special syntax. If present, they are placed in the standard-format csv file exactly as they appear. CableLabel is created automatically by opaxlattopology\(ulcust as the concatenation (see -c option) of Source and Destination. Rack Group, and Rack are not supported in topology\(ulcust.xlsx . opaxlattopology\(ulcust leaves these fields empty in the standard-format csv file.
+Cable values, CableLength, and CableDetails are optional and have no special syntax. If present, they are placed in the standard-format CSV file exactly as they appear. CableLabel is created automatically by opaxlattopology\(ulcust as the concatenation of Source and Destination (see -c option).
+.PP
+Rack Group and Rack are not supported in topology\(ulcust.xlsx. Therefore, opaxlattopology\(ulcust leaves these fields empty in the standard-format CSV file.

@@ -41,10 +41,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
@@ -57,7 +54,7 @@ Usage_full()
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "            default is /var/opt/iba/analysis" >&2
+	echo "            default is /var/opt/opa/analysis" >&2
 	echo "   -c file - error thresholds config file" >&2
 	echo "             default is $CONFIG_DIR/opa/opamon.conf" >&2
 	echo "   -t portsfile - file with list of local HFI ports used to access" >&2
@@ -200,7 +197,7 @@ do
 		mkdir -p $latest_dir
 		rm -rf $latest.*
 
-		$BINDIR/opareport $port_opts -o snapshot -q > $latest.snapshot.xml 2> $latest.snapshot.stderr
+		/usr/sbin/opareport $port_opts -o snapshot -q > $latest.snapshot.xml 2> $latest.snapshot.stderr
 		if [ $? != 0 ]
 		then
 			echo "opafabricanalysis: Port $hfi_port Error: Unable to access fabric. See $latest.snapshot.stderr" >&2
@@ -209,7 +206,7 @@ do
 			continue
 		fi
 
-		$BINDIR/opareport -X $latest.snapshot.xml -q -o links -P > $latest.links 2> $latest.links.stderr
+		/usr/sbin/opareport -X $latest.snapshot.xml -q -o links -P > $latest.links 2> $latest.links.stderr
 		if [ $? != 0 ]
 		then
 			echo "opafabricanalysis: Port $hfi_port Error: Unable to analyze fabric snapshot. See $latest.links.stderr" >&2
@@ -218,7 +215,7 @@ do
 			continue
 		fi
 
-		$BINDIR/opareport -X $latest.snapshot.xml -q -o comps -P -d 4 > $latest.comps 2> $latest.comps.stderr
+		/usr/sbin/opareport -X $latest.snapshot.xml -q -o comps -P -d 4 > $latest.comps 2> $latest.comps.stderr
 		if [ $? != 0 ]
 		then
 			echo "opafabricanalysis: Port $hfi_port Error: Unable to analyze fabric snapshot. See $latest.comps.stderr" >&2
@@ -240,7 +237,7 @@ do
 		# check fabric health 
 		mkdir -p $latest_dir
 
-		$BINDIR/opareport $port_opts $topt -c "$configfile" -q $FF_FABRIC_HEALTH > $latest.errors 2>$latest.errors.stderr
+		/usr/sbin/opareport $port_opts $topt -c "$configfile" -q $FF_FABRIC_HEALTH > $latest.errors 2>$latest.errors.stderr
 		if [ $? != 0 ]
 		then
 			echo "opafabricanalysis: Port $hfi_port Error: Unable to access fabric. See $latest.errors.stderr" >&2
@@ -273,7 +270,7 @@ do
 				echo "opafabricanalysis: Port $hfi_port: New baseline required" >&2
 			else
 				# see if change is only due to new FF version
-				$BINDIR/opareport -X $baseline.snapshot.xml -q -o links -P > $latest.links.rebase 2> $latest.links.rebase.stderr
+				/usr/sbin/opareport -X $baseline.snapshot.xml -q -o links -P > $latest.links.rebase 2> $latest.links.rebase.stderr
 				if [ $? != 0 ]
 				then
 					# there are other issues
@@ -286,7 +283,7 @@ do
 						# use new output format
 						echo "opafabricanalysis: Port $hfi_port: New baseline recommended" >&2
 						$FF_DIFF_CMD $latest.links.rebase $latest.links > $latest.links.diff 2>&1
-						$BINDIR/opareport -X $baseline.snapshot.xml -q -o comps -P -d 4 > $latest.comps.rebase 2> $latest.comps.rebase.stderr
+						/usr/sbin/opareport -X $baseline.snapshot.xml -q -o comps -P -d 4 > $latest.comps.rebase 2> $latest.comps.rebase.stderr
 						if [ $? != 0 ]
 						then
 							# there are other issues
@@ -304,8 +301,8 @@ do
 			# we then use that as the expect topology and compare the
 			# latest snapshot to the expected topology to generate a more
 			# precise and understandable summary of the differences
-			( $BINDIR/opareport -X $baseline.snapshot.xml $topt -q -o links -P -x|
-				$BINDIR/opareport -T - -X $latest.snapshot.xml -q -o verifylinks -P > $latest.links.changes ) 2> $latest.links.changes.stderr
+			( /usr/sbin/opareport -X $baseline.snapshot.xml $topt -q -o links -P -x|
+				/usr/sbin/opareport -T - -X $latest.snapshot.xml -q -o verifylinks -P > $latest.links.changes ) 2> $latest.links.changes.stderr
 		fi
 
 		$FF_DIFF_CMD $base_comps $latest.comps > $latest.comps.diff 2>&1
@@ -315,8 +312,8 @@ do
 			# we then use that as the expect topology and compare the
 			# latest snapshot to the expected topology to generate a more
 			# precise and understandable summary of the differences
-			( $BINDIR/opareport -X $baseline.snapshot.xml $topt -q -o brnodes -d 1 -P -x|
-				$BINDIR/opareport -T - -X $latest.snapshot.xml -q -o verifynodes -o verifysms -P > $latest.comps.changes ) 2> $latest.comps.changes.stderr
+			( /usr/sbin/opareport -X $baseline.snapshot.xml $topt -q -o brnodes -d 1 -P -x|
+				/usr/sbin/opareport -T - -X $latest.snapshot.xml -q -o verifynodes -o verifysms -P > $latest.comps.changes ) 2> $latest.comps.changes.stderr
 		fi
 
 		if [ -s $latest.links.changes -o -s $latest.comps.changes ]

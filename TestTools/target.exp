@@ -2002,7 +2002,7 @@ proc chassis_scp_cmd { scp_cmd } {
     return 0
 }
 
-proc chassis_sftp_cmd { sftp_cmd sftp_action } {
+proc chassis_sftp_cmd { sftp_cmd sftp_action { not_found 1 } } {
 ##
 ## chassis_sftp_cmd
 ## -------------------
@@ -2064,7 +2064,11 @@ proc chassis_sftp_cmd { sftp_cmd sftp_action } {
 				  return -code error -errorinfo $info $info
 				}
 	}
-	expect_progress 200 { "\\\*" "\\\." "=" "-" "%" } { "SFTP IS DONE" } {"No such" "Error" "Invalid" "lost" "not found"}
+	if { $not_found } {
+		expect_progress 200 { "\\\*" "\\\." "=" "-" "%" } { "SFTP IS DONE" } {"No such" "Error" "Invalid" "lost" "not found"}
+	} else {
+		expect_progress 200 { "\\\*" "\\\." "=" "-" "%" } { "SFTP IS DONE" } {"No such" "Error" "Invalid" "lost"}
+	}
 	check_exit_status 60 0 
 	local_sh_exit
 

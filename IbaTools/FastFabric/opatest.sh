@@ -39,10 +39,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 if [ x"$FF_IPOIB_SUFFIX" = xNONE ]
 then
@@ -54,148 +51,18 @@ trap "rm -f $temp; exit 1" 1 2 3 9 15
 trap "rm -f $temp" EXIT
 
 # identify how we are being run, affects valid options and usage
-mode=opatest
+mode=invalid
 cmd=`basename $0`
 case $cmd in
 opahostadmin|opaswitchadmin|opachassisadmin) mode=$cmd;;
 esac
 
-Usage_opatest_full()
-{
-	echo "Usage: opatest [-cCn] [-i ipoib_suffix] [-f hostfile] [-F chassisfile]" >&2
-	echo "              [-h 'hosts'] [-H 'chassis'] [-N 'nodes'] [-L nodefile]" >&2
-	echo "              [-r release] [-I install_options] [-U upgrade_options] [-d dir]" >&2
-	echo "              [-T product] [-P packages] [-m netmask] [-a action] [-S] [-O]" >&2
-	echo "              [-t portsfile] [-p ports] operation ..." >&2
-	echo "              or" >&2
-	echo "       opatest --help" >&2
-	echo "  --help - produce full help text" >&2
-	echo "  -c - clobber result files from any previous run before starting this run" >&2
-	echo "  -C - perform operation against chassis, default is hosts" >&2
-	echo "  -n - perform operation against IB node, default is hosts" >&2
-	echo "  -i ipoib_suffix - suffix to apply to host names to create ipoib host names" >&2
-	echo "         default is '$FF_IPOIB_SUFFIX'" >&2
-	echo "  -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
-	echo "  -F chassisfile - file with chassis in cluster" >&2
-	echo "           default is $CONFIG_DIR/opa/chassis" >&2
-	echo "  -h hosts - list of hosts to execute operation against" >&2
-	echo "  -H chassis - list of chassis to execute operation against" >&2
-	echo "  -N nodes - list of IB nodes to execute operation against" >&2
-	echo "  -L nodefile - file with IB nodes in cluster" >&2
-	echo "           default is $CONFIG_DIR/opa/switches" >&2
-	echo "  -r release - IntelOPA release to load/upgrade to, default is $FF_PRODUCT_VERSION" >&2
-	echo "  -d dir - directory to get product.release.tgz from for load/upgrade" >&2
-	echo "           to upload FM config files to for fmgetconfig (default is uploads)" >&2
-	echo "           to upload capture files to for capture (default is uploads)" >&2
-	echo "  -I install_options - IntelOPA install options" >&2
-	echo "              or for Chassis fmconfig and fmcontrol:" >&2
-	echo "                 disable - disable FM start at chassis boot" >&2
-	echo "                 enable - enable FM start on master at chassis boot" >&2
-	echo "                 enableall - enable FM start on all MM at chassis boot" >&2
-	echo "  -U upgrade_options - IntelOPA upgrade options" >&2
-	echo "  -t portsfile - file with list of local HFI ports used to access" >&2
-	echo "           fabric(s) for switch access, default is /etc/sysconfig/opa/ports" >&2
-	echo "  -p ports - list of local HFI ports used to access fabric(s) for switch access" >&2
-	echo "           default is 1st active port" >&2
-	echo "           This is specified as hfi:port" >&2
-	echo "              0:0 = 1st active port in system" >&2
-	echo "              0:y = port y within system" >&2
-	echo "              x:0 = 1st active port on HFI x" >&2
-	echo "              x:y = HFI x, port y" >&2
-	echo "              The first HFI in the system is 1.  The first port on an HFI is 1." >&2
-	echo "  -T product - IntelOPA product type to install, default is $FF_PRODUCT" >&2
-	echo "           Other options include: IntelOPA-Basic, InfiniServBasic, InfiniServPerf, InfiniServMgmt, InfiniServTools, etc" >&2
-	echo "  -P packages - IntelOPA packages to install, default is 'iba ipoib mpi'" >&2
-	echo -n "                Host allows:" >&2
-	/sbin/opaconfig -C >&2
-	echo "                or for Chassis upgrade, filenames/directories of firmware" >&2
-	echo "                   images to install.  For directories specified, all" >&2
-	echo "                   .pkg files in directory tree will be used." >&2
-	echo "                   shell wildcards may also be used within quotes." >&2
-	echo "                or for Chassis fmconfig, filename of FM config file to use" >&2
-	echo "                or for Chassis fmgetconfig, filename to upload to (default" >&2
-	echo "                   opafm.xml)" >&2
-	echo "                or for Switch upgrade, filename/directory of firmware" >&2
-	echo "                   image to install.  For directory specified," >&2
-	echo "                   .emfw file in directory tree will be used." >&2
-	echo "                   shell wildcards may also be used within quotes." >&2
-	echo "                or for Switch capture, filename to upload to (default" >&2
-	echo "                   switchcapture)" >&2
-	echo "  -m netmask - IPoIB netmask to use for configipoib" >&2
-	echo "  -a action - action for supplied file" >&2
-	echo "              For Chassis/Switch upgrade:" >&2
-	echo "                 push   - ensure firmware is in primary or alternate" >&2
-    echo "                          (alternate only applicable to chassis)" >&2
-	echo "                 select - ensure firmware is in primary" >&2
-	echo "                 run    - ensure firmware is in primary and running" >&2
-	echo "                 default is push for chassis, select for switch" >&2
-	echo "              For Chassis fmconfig:" >&2
-	echo "                 push   - ensure config file is in chassis" >&2
-	echo "                 run    - after push, restart FM on master, stop on slave" >&2
-	echo "                 runall - after push, restart FM on all MM" >&2
-	echo "                 default is push" >&2
-	echo "              For Chassis fmcontrol:" >&2
-	echo "                 stop   - stop FM on all MM" >&2
-	echo "                 run    - make sure FM running on master, stopped on slave" >&2
-	echo "                 runall - make sure FM running on all MM" >&2
-	echo "                 restart- restart FM on master, stop on slave" >&2
-	echo "                 restartall- restart FM on all MM" >&2
-	echo "  -S - securely prompt for password for user on remote system/chassis" >&2
-	echo "  -O - override: for Switch upgrade, bypass version checks and force update unconditionally" >&2
-	echo "  operation - operation to perform." >&2
-	echo "    Host Operation can be one or more of:" >&2
-	echo "     load - initial install of all hosts" >&2
-	echo "     upgrade - upgrade install of all hosts" >&2
-	echo "     configipoib - create ifcfg-ib1 using host IP addr from /etc/hosts" >&2
-	echo "     reboot - reboot hosts, ensure they go down and come back" >&2
-	echo "     sacache - confirm sacache has all hosts in it" >&2
-	echo "     ipoibping - verify this host can ping each host via IPoIB" >&2
-	echo "     mpiperf - verify latency and bandwidth for each host" >&2
-	echo "     mpiperfdeviation - check for latency and bandwidth tolerance deviation between hosts" >&2
-	echo "    Chassis Operation can be one or more of:" >&2
-	echo "     reboot - reboot chassis, ensure they go down and come back" >&2
-	echo "     configure - run wizard to set up chassis configuration" >&2
-	echo "     upgrade - upgrade install of all chassis" >&2
-	echo "     getconfig - gets basic configuration of chassis" >&2
-	echo "     fmconfig - FM config operation on all chassis" >&2
-	echo "     fmgetconfig - Fetch FM config from all chassis" >&2
-	echo "     fmcontrol - Control FM on all chassis" >&2
-    echo "    IB Node Operation can be one or more of:" >&2
-    echo "     reboot - reboot IB node, ensure they go down and come back" >&2
-	echo "     configure - run wizard to set up IB node configuration" >&2
-    echo "     upgrade - upgrade install of all IB nodes" >&2
-    echo "     info - report f/w & h/w version, part number, and data rate capability of all IB nodes" >&2
-    echo "     hwvpd - complete hardware VPD report of all IB nodes" >&2
-    echo "     ping - ping all IB nodes - test for presence" >&2
-    echo "     fwverify - report integrity of failsafe firmware of all IB nodes" >&2
-	echo "     capture - get switch hardware and firmware state capture of all IB nodes" >&2
-	echo "     getconfig - get port configurations of a externally managed switch" >&2
-	echo " Environment:" >&2
-	echo "   HOSTS - list of hosts, used if -h option not supplied" >&2
-	echo "   CHASSIS - list of chassis, used if -C used and -H and -F option not supplied" >&2
-	echo "   OPASWITCHES - list of nodes, used if -n used and -N and -L option not supplied" >&2
-	echo "   HOSTS_FILE - file containing list of hosts, used in absence of -f and -h" >&2
-	echo "   CHASSIS_FILE - file containing list of chassis, used in absence of -F and -H" >&2
-	echo "   OPASWITCHES_FILE - file containing list of nodes, used in absence of -N and -L" >&2
-	echo "   FF_MAX_PARALLEL - maximum concurrent operations" >&2
-	echo "   FF_SERIALIZE_OUTPUT - serialize output of parallel operations (yes or no)" >&2
-	echo "   UPLOADS_DIR - directory to upload to, used in absence of -d" >&2
-	echo "for example:" >&2
-	echo "   opatest -c reboot" >&2
-	echo "   opatest upgrade" >&2
-	echo "   opatest -h 'elrond arwen' reboot" >&2
-	echo "   HOSTS='elrond arwen' opatest reboot" >&2
-	echo "   opatest -C -a run -P '*.pkg' upgrade" >&2
-	echo "During run the following files are produced:" >&2
-	echo "  test.res - appended with summary results of run" >&2
-	echo "  test.log - appended with detailed results of run" >&2
-	echo "  save_tmp/ - contains a directory per failed operation with detailed logs" >&2
-	echo "  test_tmp*/ - intermediate result files while operation is running" >&2
-	echo "-c option will remove all of the above" >&2
-   # remove temporary work directory
-   rm -rf $temp
-	exit 0
-}
+if [ "$mode" = "invalid" ]
+then
+	echo "Invalid executable name for this file: $cmd; expected opahostadmin, opaswitchadmin or opachassisadmin" >&2
+	exit 1
+fi
+
 Usage_opahostadmin_full()
 {
 	echo "Usage: opahostadmin [-c] [-i ipoib_suffix] [-f hostfile] [-h 'hosts'] " >&2
@@ -213,11 +80,12 @@ Usage_opahostadmin_full()
 	echo "  -d dir - directory to get product.release.tgz from for load/upgrade" >&2
 	echo "  -I install_options - IntelOPA install options" >&2
 	echo "  -U upgrade_options - IntelOPA upgrade options" >&2
-	echo "  -T product - IntelOPA product type to install, default is $FF_PRODUCT" >&2
-	echo "           Other options include: IntelOPA-Basic, InfiniServBasic, InfiniServPerf, InfiniServMgmt, InfiniServTools, etc" >&2
-	echo "  -P packages - IntelOPA packages to install, default is 'iba ipoib mpi'" >&2
-	echo -n "                Host allows:" >&2
-	/sbin/opaconfig -C >&2
+	echo "  -T product - IntelOPA product type to install" >&2
+	echo "           default is $FF_PRODUCT" >&2
+	echo "           Other options include: IntelOPA-Basic.<distro>, IntelOPA-IFS.<distro>" >&2
+	echo "           Where <distro> is the distro and CPU, such as RHEL7-x86_64" >&2
+	echo "  -P packages - IntelOPA packages to install, default is '$FF_PACKAGES'" >&2
+	echo "                See IntelOPA INSTALL -C for a complete list of packages" >&2
 	echo "  -m netmask - IPoIB netmask to use for configipoib" >&2
 	echo "  -S - securely prompt for password for user on remote system" >&2
 	echo "  operation - operation to perform. operation can be one or more of:" >&2
@@ -253,7 +121,7 @@ Usage_opachassisadmin_full()
 {
 	echo "Usage: opachassisadmin [-c] [-F chassisfile] [-H 'chassis'] " >&2
 	echo "              [-P packages] [-a action] [-I fm_bootstate]" >&2
-    echo "              [-S] [-d upload_dir] operation ..." >&2
+    echo "              [-S] [-d upload_dir] [-s securityfiles] operation ..." >&2
 	echo "              or" >&2
 	echo "       opachassisadmin --help" >&2
 	echo "  --help - produce full help text" >&2
@@ -263,7 +131,7 @@ Usage_opachassisadmin_full()
 	echo "  -H chassis - list of chassis to execute operation against" >&2
 	echo "  -P packages - filenames/directories of firmware" >&2
 	echo "                   images to install.  For directories specified, all" >&2
-	echo "                   .pkg files in directory tree will be used." >&2
+	echo "                   .pkg and .spkg files in directory tree will be used." >&2
 	echo "                   shell wildcards may also be used within quotes." >&2
 	echo "                or for fmconfig, filename of FM config file to use" >&2
 	echo "                or for fmgetconfig, filename to upload to (default" >&2
@@ -284,12 +152,21 @@ Usage_opachassisadmin_full()
 	echo "                 runall - make sure FM running on all MM" >&2
 	echo "                 restart- restart FM on master, stop on slave" >&2
 	echo "                 restartall- restart FM on all MM" >&2
+	echo "              For Chassis fmsecurityfiles:" >&2
+	echo "                 push   - ensure FM security files are in chassis" >&2
 	echo "  -I fm_bootstate fmconfig and fmcontrol install options" >&2
 	echo "                 disable - disable FM start at chassis boot" >&2
 	echo "                 enable - enable FM start on master at chassis boot" >&2
 	echo "                 enableall - enable FM start on all MM at chassis boot" >&2
 	echo "  -d upload_dir - directory to upload FM config files to, default is uploads" >&2
 	echo "  -S - securely prompt for password for admin on chassis" >&2
+	echo "  -s securityFiles - security files to install, default is '*.pem'" >&2
+	echo "                For Chassis fmsecurityfiles, filenames/directories of" >&2
+	echo "                   security files to install.  For directories specified," >&2
+	echo "                   all security files in directory tree will be used." >&2
+	echo "                   shell wildcards may also be used within quotes." >&2
+	echo "                or for Chassis fmgetsecurityfiles, filename to upload to" >&2
+	echo "                   (default *.pem)" >&2
 	echo "  operation - operation to perform. operation can be one or more of:" >&2
 	echo "     reboot - reboot chassis, ensure they go down and come back" >&2
 	echo "     configure - run wizard to set up chassis configuration" >&2
@@ -298,6 +175,8 @@ Usage_opachassisadmin_full()
 	echo "     fmconfig - FM config operation on all chassis" >&2
 	echo "     fmgetconfig - Fetch FM config from all chassis" >&2
 	echo "     fmcontrol - Control FM on all chassis" >&2
+	echo "     fmsecurityfiles - FM security files operation on all chassis" >&2
+	echo "     fmgetsecurityfiles - Fetch FM security files from all chassis" >&2
 	echo " Environment:" >&2
 	echo "   CHASSIS - list of chassis, used if -H and -F option not supplied" >&2
 	echo "   CHASSIS_FILE - file containing list of chassis, used in absence of -F and -H" >&2
@@ -322,23 +201,19 @@ Usage_opachassisadmin_full()
 }
 Usage_opaswitchadmin_full()
 {
-	echo "Usage: opaswitchadmin [-c] [-N 'nodes'] [-L nodefile] [-d upload_dir]" >&2
-	echo "              [-O] [-P packages] [-a action]" >&2
-	echo "              [-t portsfile] [-p ports] operation ..." >&2
+	echo "Usage: opaswitchadmin [-c] [-N 'nodes'] [-L nodefile] [-O] [-P packages]" >&2
+	echo "              [-a action] [-t portsfile] [-p ports] operation ..." >&2
 	echo "              or" >&2
 	echo "       opaswitchadmin --help" >&2
 	echo "  --help - produce full help text" >&2
 	echo "  -c - clobber result files from any previous run before starting this run" >&2
-	echo "  -N nodes - list of IB nodes to execute operation against" >&2
-	echo "  -L nodefile - file with IB nodes in cluster" >&2
+	echo "  -N nodes - list of OPA switches to execute operation against" >&2
+	echo "  -L nodefile - file with OPA switches in cluster" >&2
 	echo "           default is $CONFIG_DIR/opa/switches" >&2
-	echo "  -d upload_dir - directory to upload capture files to for capture" >&2
-	echo "                  (default is uploads)" >&2
 	echo "  -P packages - for upgrade, filename/directory of firmware" >&2
 	echo "                   image to install.  For directory specified," >&2
 	echo "                   .emfw file in directory tree will be used." >&2
 	echo "                   shell wildcards may also be used within quotes." >&2
-	echo "                or for capture, filename to upload to (default switchcapture)" >&2
 	echo "  -t portsfile - file with list of local HFI ports used to access" >&2
 	echo "           fabric(s) for switch access, default is /etc/sysconfig/opa/ports" >&2
 	echo "  -p ports - list of local HFI ports used to access fabric(s) for switch access" >&2
@@ -358,11 +233,10 @@ Usage_opaswitchadmin_full()
    echo "     reboot - reboot switches, ensure they go down and come back" >&2
    echo "     configure - run wizard to set up switch configuration" >&2
    echo "     upgrade - upgrade install of all switches" >&2
-   echo "     info - report f/w & h/w version, part number, and data rate capability of all IB nodes" >&2
-   echo "     hwvpd - complete hardware VPD report of all IB nodes" >&2
-   echo "     ping - ping all IB nodes - test for presence" >&2
-   echo "     fwverify - report integrity of failsafe firmware of all IB nodes" >&2
-   echo "     capture - get switch hardware and firmware state capture of all IB nodes" >&2
+   echo "     info - report f/w & h/w version, part number, and data rate capability of all OPA switches" >&2
+   echo "     hwvpd - complete hardware VPD report of all OPA switches" >&2
+   echo "     ping - ping all OPA switches - test for presence" >&2
+   echo "     fwverify - report integrity of failsafe firmware of all OPA switches" >&2
    echo "     getconfig - get port configurations of a externally managed switch" >&2
 	echo " Environment:" >&2
 	echo "   OPASWITCHES - list of nodes, used if -N and -L option not supplied" >&2
@@ -386,110 +260,10 @@ Usage_opaswitchadmin_full()
 Usage_full()
 {
 	case $mode in
-	opatest) Usage_opatest_full;;
 	opahostadmin) Usage_opahostadmin_full;;
 	opachassisadmin) Usage_opachassisadmin_full;;
 	opaswitchadmin) Usage_opaswitchadmin_full;;
 	esac
-}
-Usage_opatest()
-{
-	echo "Usage: opatest [-cCn] [-f hostfile] [-F chassisfile] [-L nodefile]" >&2
-	echo "              [-r release] [-d dir]" >&2
-	echo "              [-T product] [-P packages] [-a action] [-S] [-O] [-d upload_dir] operation ..." >&2
-	echo "              or" >&2
-	echo "       opatest --help" >&2
-	echo "  --help - produce full help text" >&2
-	echo "  -c - clobber result files from any previous run before starting this run" >&2
-	echo "  -C - perform operation against chassis, default is hosts" >&2
-	echo "  -n - perform operation against IB node, default is hosts" >&2
-	echo "  -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
-	echo "  -F chassisfile - file with chassis in cluster" >&2
-	echo "           default is $CONFIG_DIR/opa/chassis" >&2
-	echo "  -L nodefile - file with IB nodes in cluster" >&2
-	echo "           default is $CONFIG_DIR/opa/switches" >&2
-	echo "  -r release - IntelOPA release to load/upgrade to, default is $FF_PRODUCT_VERSION" >&2
-	echo "  -d dir - directory to get product.release.tgz from for load/upgrade" >&2
-	echo "           to upload FM config files to for fmgetconfig (default is uploads)" >&2
-	echo "           to upload capture files to for capture (default is uploads)" >&2
-	echo "  -T product - IntelOPA product type to install, default is $FF_PRODUCT" >&2
-	echo "           Other options include: IntelOPA-Basic, InfiniServBasic, InfiniServPerf, InfiniServMgmt, InfiniServTools, etc" >&2
-	echo "  -P packages - IntelOPA packages to install, default is 'iba ipoib mpi'" >&2
-	echo -n "                Host allows:" >&2
-	/sbin/opaconfig -C >&2
-	echo "                or for Chassis upgrade, filenames/directories of firmware" >&2
-	echo "                   images to install.  For directories specified, all" >&2
-	echo "                   .pkg files in directory tree will be used." >&2
-	echo "                   shell wildcards may also be used within quotes." >&2
-	echo "                or for Chassis fmconfig, filename of FM config file to use" >&2
-	echo "                or for Chassis fmgetconfig, filename to upload to (default" >&2
-	echo "                   opafm.xml)" >&2
-	echo "                or for Switch upgrade, filename/directory of firmware" >&2
-	echo "                   image to install.  For directory specified," >&2
-	echo "                   .emfw file in directory tree will be used." >&2
-	echo "                   shell wildcards may also be used within quotes." >&2
-	echo "                or for Switch capture, filename to upload to (default" >&2
-	echo "                   switchcapture)" >&2
-	echo "  -a action - action for supplied file" >&2
-	echo "              For Chassis/Switch upgrade:" >&2
-	echo "                 push   - ensure firmware is in primary or alternate" >&2
-    echo "                          (alternate only applicable to chassis)" >&2
-	echo "                 select - ensure firmware is in primary" >&2
-	echo "                 run    - ensure firmware is in primary and running" >&2
-	echo "                 default is push for chassis, select for switch" >&2
-	echo "              For Chassis fmconfig:" >&2
-	echo "                 push   - ensure config file is in chassis" >&2
-	echo "                 run    - after push, restart FM on master, stop on slave" >&2
-	echo "                 runall - after push, restart FM on all MM" >&2
-	echo "              For Chassis fmcontrol:" >&2
-	echo "                 stop   - stop FM on all MM" >&2
-	echo "                 run    - make sure FM running on master, stopped on slave" >&2
-	echo "                 runall - make sure FM running on all MM" >&2
-	echo "                 restart- restart FM on master, stop on slave" >&2
-	echo "                 restartall- restart FM on all MM" >&2
-	echo "  -S - securely prompt for password for user on remote system/chassis" >&2
-	echo "  -O - override: for Switch upgrade, bypass version checks and force update unconditionally" >&2
-	echo "  operation - operation to perform." >&2
-	echo "    Host Operation can be one or more of:" >&2
-	echo "     load - initial install of all hosts" >&2
-	echo "     upgrade - upgrade install of all hosts" >&2
-	echo "     configipoib - create ifcfg-ib1 using host IP addr from /etc/hosts" >&2
-	echo "     reboot - reboot hosts, ensure they go down and come back" >&2
-	echo "     sacache - confirm sacache has all hosts in it" >&2
-	echo "     ipoibping - verify this host can ping each host via IPoIB" >&2
-	echo "     mpiperf - verify latency and bandwitch for each host" >&2
-	echo "     mpiperfdeviation - check for latency and bandwidth tolerance deviation between hosts" >&2
-	echo "    Chassis Operation can be one or more of:" >&2
-	echo "     reboot - reboot chassis, ensure they go down and come back" >&2
-	echo "     configure - run wizard to set up chassis configuration" >&2
-	echo "     upgrade - upgrade install of all chassis" >&2
-	echo "     getconfig - get basic configuration of chassis" >&2
-	echo "     fmconfig - FM config operation on all chassis" >&2
-	echo "     fmgetconfig - Fetch FM config from all chassis" >&2
-	echo "     fmcontrol - Control FM on all chassis" >&2
-   echo "    IB Node Operation can be one or more of:" >&2
-   echo "     reboot - reboot IB nodes, ensure they go down and come back" >&2
-   echo "     configure - run wizard to set up IB node configuration" >&2
-   echo "     upgrade - upgrade install of all IB nodes" >&2
-   echo "     info - report f/w & h/w version, part number, and data rate capability of all IB nodes" >&2
-   echo "     hwvpd - complete hardware VPD report of all IB nodes" >&2
-   echo "     ping - ping all IB nodes - test for presence" >&2
-   echo "     fwverify - report integrity of failsafe firmware of all IB nodes" >&2
-   echo "     capture - get switch hardware and firmware state capture of all IB nodes" >&2
-   echo "     getconfig - get port configurations of a externally managed switch" >&2
-	echo "for example:" >&2
-	echo "   opatest -c reboot" >&2
-	echo "   opatest upgrade" >&2
-	echo "   opatest -C -a run -P '*.pkg' upgrade" >&2
-	echo "During run the following files are produced:" >&2
-	echo "  test.res - appended with summary results of run" >&2
-	echo "  test.log - appended with detailed results of run" >&2
-	echo "  save_tmp/ - contains a directory per failed test with detailed logs" >&2
-	echo "  test_tmp*/ - intermediate result files while test is running" >&2
-	echo "-c option will remove all of the above" >&2
-   # remove temporary work directory
-   rm -rf $temp
-	exit 2
 }
 Usage_opahostadmin()
 {
@@ -502,11 +276,12 @@ Usage_opahostadmin()
 	echo "  -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
 	echo "  -r release - IntelOPA release to load/upgrade to, default is $FF_PRODUCT_VERSION" >&2
 	echo "  -d dir - directory to get product.release.tgz from for load/upgrade" >&2
-	echo "  -T product - IntelOPA product type to install, default is $FF_PRODUCT" >&2
-	echo "           Other options include: IntelOPA-Basic, InfiniServBasic, InfiniServPerf, InfiniServMgmt, InfiniServTools, etc" >&2
-	echo "  -P packages - IntelOPA packages to install, default is 'iba ipoib mpi'" >&2
-	echo -n "                Host allows:" >&2
-	/sbin/opaconfig -C >&2
+	echo "  -T product - IntelOPA product type to install" >&2
+	echo "           default is $FF_PRODUCT" >&2
+	echo "           Other options include: IntelOPA-Basic.<distro>, IntelOPA-IFS.<distro>" >&2
+	echo "           Where <distro> is the distro and CPU, such as RHEL7-x86_64" >&2
+	echo "  -P packages - IntelOPA packages to install, default is '$FF_PACKAGES'" >&2
+	echo "                See IntelOPA INSTALL -C for a complete list of packages" >&2
 	echo "  -S - securely prompt for password for user on remote system" >&2
 	echo "  operation - operation to perform. operation can be one or more of:" >&2
 	echo "     load - initial install of all hosts" >&2
@@ -534,7 +309,7 @@ Usage_opachassisadmin()
 {
 	echo "Usage: opachassisadmin [-c] [-F chassisfile] " >&2
 	echo "              [-P packages] [-I fm_bootstate] [-a action]" >&2
-    echo "              [-S] [-d upload_dir] operation ..." >&2
+    echo "              [-S] [-d upload_dir] [-s securityfiles] operation ..." >&2
 	echo "              or" >&2
 	echo "       opachassisadmin --help" >&2
 	echo "  --help - produce full help text" >&2
@@ -543,7 +318,7 @@ Usage_opachassisadmin()
 	echo "           default is $CONFIG_DIR/opa/chassis" >&2
 	echo "  -P packages - filenames/directories of firmware" >&2
 	echo "                   images to install.  For directories specified, all" >&2
-	echo "                   .pkg files in directory tree will be used." >&2
+	echo "                   .pkg and .spkg files in directory tree will be used." >&2
 	echo "                   shell wildcards may also be used within quotes." >&2
 	echo "                or for fmconfig, filename of FM config file to use" >&2
 	echo "                or for fmgetconfig, filename to upload to (default" >&2
@@ -564,12 +339,21 @@ Usage_opachassisadmin()
 	echo "                 runall - make sure FM running on all MM" >&2
 	echo "                 restart- restart FM on master, stop on slave" >&2
 	echo "                 restartall- restart FM on all MM" >&2
+	echo "              For Chassis fmsecurityfiles:" >&2
+	echo "                 push   - ensure FM security files are in chassis" >&2
 	echo "  -I fm_bootstate fmconfig and fmcontrol install options" >&2
 	echo "                 disable - disable FM start at chassis boot" >&2
 	echo "                 enable - enable FM start on master at chassis boot" >&2
 	echo "                 enableall - enable FM start on all MM at chassis boot" >&2
 	echo "  -d upload_dir - directory to upload FM config files to, default is uploads" >&2
 	echo "  -S - securely prompt for password for admin on chassis" >&2
+	echo "  -s securityFiles - security files to install, default is '*.pem'" >&2
+	echo "                For Chassis fmsecurityfiles, filenames/directories of" >&2
+	echo "                   security files to install.  For directories specified," >&2
+	echo "                   all security files in directory tree will be used." >&2
+	echo "                   shell wildcards may also be used within quotes." >&2
+	echo "                or for Chassis fmgetsecurityfiles, filename to upload to" >&2
+	echo "                   (default *.pem)" >&2
 	echo "  operation - operation to perform. operation can be one or more of:" >&2
 	echo "     reboot - reboot chassis, ensure they go down and come back" >&2
 	echo "     configure - run wizard to set up chassis configuration" >&2
@@ -578,6 +362,8 @@ Usage_opachassisadmin()
 	echo "     fmconfig - FM config operation on all chassis" >&2
 	echo "     fmgetconfig - Fetch FM config from all chassis" >&2
 	echo "     fmcontrol - Control FM on all chassis" >&2
+	echo "     fmsecurityfiles - FM security files operation on all chassis" >&2
+	echo "     fmgetsecurityfiles - Fetch FM security files from all chassis" >&2
 	echo "for example:" >&2
 	echo "   opachassisadmin -c reboot" >&2
 	echo "   opachassisadmin -P /root/ChassisFw4.2.0.0.1 upgrade" >&2
@@ -594,21 +380,18 @@ Usage_opachassisadmin()
 }
 Usage_opaswitchadmin()
 {
-	echo "Usage: opaswitchadmin [-c] [-L nodefile] [-d upload_dir] [-O] [-P packages]" >&2
+	echo "Usage: opaswitchadmin [-c] [-L nodefile] [-O] [-P packages]" >&2
 	echo "                        [-a action] operation ..." >&2
 	echo "              or" >&2
 	echo "       opaswitchadmin --help" >&2
 	echo "  --help - produce full help text" >&2
 	echo "  -c - clobber result files from any previous run before starting this run" >&2
-	echo "  -L nodefile - file with IB nodes in cluster" >&2
+	echo "  -L nodefile - file with OPA switches in cluster" >&2
 	echo "           default is $CONFIG_DIR/opa/switches" >&2
-	echo "  -d upload_dir - directory to upload capture files to for capture" >&2
-	echo "                  (default is uploads)" >&2
 	echo "  -P packages - for upgrade, filename/directory of firmware" >&2
 	echo "                   image to install.  For directory specified," >&2
 	echo "                   .emfw file in directory tree will be used." >&2
 	echo "                   shell wildcards may also be used within quotes." >&2
-	echo "                or for capture, filename to upload to (default switchcapture)" >&2
 	echo "  -a action - action for firmware file for Switch upgrade" >&2
 	echo "              select - ensure firmware is in primary" >&2
 	echo "              run    - ensure firmware is in primary and running" >&2
@@ -618,11 +401,10 @@ Usage_opaswitchadmin()
    echo "     reboot - reboot switches, ensure they go down and come back" >&2
    echo "     configure - run wizard to set up switch configuration" >&2
    echo "     upgrade - upgrade install of all switches" >&2
-   echo "     info - report f/w & h/w version, part number, and data rate capability of all IB nodes" >&2
-   echo "     hwvpd - complete hardware VPD report of all IB nodes" >&2
-   echo "     ping - ping all IB nodes - test for presence" >&2
-   echo "     fwverify - report integrity of failsafe firmware of all IB nodes" >&2
-   echo "     capture - get switch hardware and firmware state capture of all IB nodes" >&2
+   echo "     info - report f/w & h/w version, part number, and data rate capability of all OPA switches" >&2
+   echo "     hwvpd - complete hardware VPD report of all OPA switches" >&2
+   echo "     ping - ping all OPA switches - test for presence" >&2
+   echo "     fwverify - report integrity of failsafe firmware of all OPA switches" >&2
    echo "     getconfig - get port configurations of a externally managed switch" >&2
 	echo "for example:" >&2
 	echo "   opaswitchadmin -c reboot" >&2
@@ -641,7 +423,6 @@ Usage_opaswitchadmin()
 Usage()
 {
 	case $mode in
-	opatest) Usage_opatest;;
 	opahostadmin) Usage_opahostadmin;;
 	opachassisadmin) Usage_opachassisadmin;;
 	opaswitchadmin) Usage_opaswitchadmin;;
@@ -712,10 +493,10 @@ Sopt=n
 sopt=n
 bypassSwitchCheck=n
 fwOverride=n
+securityFiles="notsupplied"
 case $mode in
-opatest) options='a:BcCnd:h:H:f:F:i:r:I:U:P:T:m:p:t:L:N:S';;
 opahostadmin) host=1; options='cd:h:f:i:r:I:U:P:T:m:S';;
-opachassisadmin) chassis=1; options='a:I:cH:F:P:d:S';;
+opachassisadmin) chassis=1; options='a:I:cH:F:P:d:Ss:';;
 opaswitchadmin) opaswitch=1; options='a:Bcd:P:p:t:L:N:O';;
 esac
 while getopts "$options"  param
@@ -727,8 +508,6 @@ do
 		bypassSwitchCheck=y;;
 	c)
 		clobber=y;;
-	C)
-		chassis=1;;
 	d)
 		dir="$OPTARG"
 		export UPLOADS_DIR="$dir";;
@@ -738,8 +517,6 @@ do
 	H)
 		chassis=1
 		CHASSIS="$OPTARG";;
-	n)
-		opaswitch=1;;
 	N)
 		opaswitch=1
 		OPASWITCHES="$OPTARG";;
@@ -771,6 +548,8 @@ do
 		export PORTS="$OPTARG";;
 	t)
 		export PORTS_FILE="$OPTARG";;
+	s)
+		securityFiles="$OPTARG";;
 	S)
 		Sopt=y;;
 	O)
@@ -785,11 +564,13 @@ if [ $# -lt 1 ]
 then
 	Usage
 fi
+# given optarg selections, this error should not be able to happen
 if [[ $(($chassis+$host+$opaswitch)) -gt 1 ]]
 then
 	echo "$cmd: conflicting arguments, more than one of host, chassis or opaswitches specified" >&2
 	Usage
 fi
+# given mode checks, this error should not be able to happen
 if [[ $(($chassis+$host+$opaswitch)) -eq 0 ]]
 then
 	host=1
@@ -875,12 +656,8 @@ if [ $chassis -eq 1 ]
 then
 	if [ "$Sopt" = y ]
 	then
-		echo -n "Password for admin on all chassis: " > /dev/tty
-		stty -echo < /dev/tty > /dev/tty
-		password=
-		read password < /dev/tty
-		stty echo < /dev/tty > /dev/tty
-		echo > /dev/tty
+		read -sp "Password for admin on all chassis: " password
+		echo
 		export CFG_CHASSIS_ADMIN_PASSWORD="$password"
 	fi
 	for test_suite in $*
@@ -889,7 +666,7 @@ then
 		reboot)
 			run_test chassis_$test_suite;;
 		configure)
-			$TOOLSDIR/chassis_setup $CFG_CHASSIS
+			/opt/opa/tools/chassis_setup $CFG_CHASSIS
 			if [ $? = 0 ]
 			then
 				export SYSLOG_SERVER=`grep "Syslog Server IP_Address" .chassisSetup.out | cut -d : -f 2`
@@ -923,12 +700,13 @@ then
 			CFG_FWFILES=""
 			for fwfile in $packages
 			do
-				# expand directory, also filters files without .pkg suffix
+				# expand directory, also filters files without .pkg/.spkg suffix
 				# this also expands wildcards in "$packages"
 				fwfiles=`find $fwfile -type f -name '*.pkg'`
-				if [ $? != 0 -o x"$fwfiles" == x ]
+				fwfiles="$fwfiles `find $fwfile -type f -name '*.spkg'`"
+				if [ $? != 0 -o x"$fwfiles" == x -o x"$fwfiles" == x" " ]
 				then
-					echo "$cmd: $fwfile: No .pkg files found" >&2
+					echo "$cmd: $fwfile: No .pkg nor .spkg files found" >&2
 					Usage
 				fi
 				CFG_FWFILES="$CFG_FWFILES $fwfiles"
@@ -976,6 +754,41 @@ then
 			fi
 			export CFG_FMFILE="$packages"
 			run_test chassis_$test_suite;;
+		fmsecurityfiles)
+			if [ "$securityFiles" = "notsupplied" -o "$securityFiles" = "" ]
+			then
+				echo "$cmd: -s option required for chassis fmsecurityfiles" >&2
+				Usage
+			fi
+			if [ "$action" != "push" ]
+			then
+				echo "$cmd: Invalid security files upgrade action: $action" >&2
+				Usage
+			fi
+			# check security files exist, expand directories
+			CFG_SECFILES=""
+			for securityfile in $securityFiles
+			do
+				# expand directory, also filters files without .pem suffix
+				# this also expands wildcards in "$securityFiles"
+				securityfiles=`find $securityfile -type f -name '*.pem'`
+				if [ $? != 0 -o x"$securityfiles" == x ]
+				then
+					echo "$cmd: $securityfile: No .pem files found" >&2
+					Usage
+				fi
+				CFG_SECFILES="$CFG_SECFILES $securityfiles"
+			done
+			export CFG_SECFILES
+			export CFG_SECACTION="$action"
+			run_test chassis_$test_suite;;
+		fmgetsecurityfiles)
+			if [ "$securityFiles" = "notsupplied" -o "$securityFiles" = "" ]
+			then
+    			securityFiles="*.pem"
+			fi
+			export CFG_SECFILE="$securityFiles"
+			run_test chassis_$test_suite;;
 		*)
 			echo "Invalid Operation name: $test_suite" >&2
 			Usage;
@@ -1004,21 +817,11 @@ then
 			run_test switch_$test_suite;;
 		fwverify)
 			run_test switch_$test_suite;;
-		capture)
-			if [ "$packages" = "notsupplied" -o "$packages" = "" ]
-			then
-				packages="switchcapture"
-				#echo "$cmd: -P option required for switch capture" >&2
-				#Usage
-			fi
-			export CFG_CAPTUREFILE="$packages"
-			run_test switch_$test_suite;;
 		configure)
-			$TOOLSDIR/switch_setup
+			/opt/opa/tools/switch_setup
 			if [ $? = 0 ]
 			then
 				export LINKWIDTH_SETTING=`grep "Link Width Selection" .switchSetup.out | cut -d : -f 2`
-				export LINKSPEED_SETTING=`grep "Link Speed Selection" .switchSetup.out | cut -d : -f 2`
 				export NODEDESC_SETTING=`grep "Node Description Selection" .switchSetup.out | cut -d : -f 2`
 				export FMENABLED_SETTING=`grep "FM Enabled Selection" .switchSetup.out | cut -d : -f 2`
 				export LINKCRCMODE_SETTING=`grep "Link CRC Mode Selection" .switchSetup.out | cut -d : -f 2`
@@ -1144,22 +947,16 @@ then
 else
 	if [ "$Sopt" = y ]
 	then
-		echo -n "Password for $CFG_USERNAME on all hosts: " > /dev/tty
-		stty -echo < /dev/tty > /dev/tty
-		password=
-		read password < /dev/tty
-		stty echo < /dev/tty > /dev/tty
-		echo > /dev/tty
+		read -sp "Password for $CFG_USERNAME on all hosts: " password
+		echo
 		export CFG_PASSWORD="$password"
 		if [ "$CFG_USERNAME" != "root" ]
 		then
-			echo -n "Password for root on all hosts: " > /dev/tty
-			stty -echo < /dev/tty > /dev/tty
-			password=
-			read password < /dev/tty
-			stty echo < /dev/tty > /dev/tty
-			echo > /dev/tty
+			read -sp "Password for root on all hosts: " password
+			echo
 			export CFG_ROOTPASS="$password"
+		else
+			export CFG_ROOTPASS="$CFG_PASSWORD"
 		fi
 	fi
 	for test_suite in $*

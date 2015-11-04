@@ -41,22 +41,20 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 Usage_full()
 {
 	echo "Usage: opachassisanalysis [-b|-e] [-s] [-d dir] [-F chassisfile] [-H 'chassis']" >&2
 	echo "              or" >&2
 	echo "       opachassisanalysis --help" >&2
+	echo "Check configuration and health for the Intel Omni-Path Fabric Chassis" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -b - baseline mode, default is compare/check mode" >&2
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "                  default is /var/opt/iba/analysis" >&2
+	echo "                  default is /var/opt/opa/analysis" >&2
 	echo "   -F chassisfile - file with chassis in cluster" >&2
 	echo "           default is $CONFIG_DIR/opa/chassis" >&2
 	echo "   -H chassis - list of chassis to analyze" >&2
@@ -64,6 +62,10 @@ Usage_full()
 	echo "   CHASSIS - list of chassis, used if -F and -H options not supplied" >&2
 	echo "   CHASSIS_FILE - file containing list of chassis, used if -F and -H options not supplied" >&2
 	echo "   FF_ANALYSIS_DIR - top level directory for baselines and failed health checks" >&2
+	echo "   FF_CHASSIS_CMDS - list of commands to issue during analysis," >&2
+	echo "                      unused if -e option supplied" >&2
+	echo "   FF_CHASSIS_HEALTH - single command to issue to check overall health during analysis," >&2
+	echo "                        unused if -b option supplied" >&2
 	echo "for example:" >&2
 	echo "   opachassisanalysis" >&2
 	exit 0
@@ -169,7 +171,7 @@ do
 
 		for cmd in $FF_CHASSIS_CMDS
 		do
-			$BINDIR/opacmdall -C $cmd > $latest.$cmd 2>&1
+			/usr/sbin/opacmdall -C $cmd > $latest.$cmd 2>&1
 			if [ $? != 0 ]
 			then
 				echo "opachassisanalysis: Error: Unable to issue chassis command. See $latest.$cmd" >&2
@@ -203,7 +205,7 @@ do
 		# check chassis health/running
 		mkdir -p $latest_dir
 
-		$BINDIR/opacmdall -C "$FF_CHASSIS_HEALTH" > $latest.$FF_CHASSIS_HEALTH 2>&1
+		/usr/sbin/opacmdall -C "$FF_CHASSIS_HEALTH" > $latest.$FF_CHASSIS_HEALTH 2>&1
 		if [ $? != 0 ]
 		then
 			echo "opachassisanalysis: Error: Unable to issue chassis command: $FF_CHASSIS_HEALTH. See $latest.$FF_CHASSIS_HEALTH" >&2

@@ -63,9 +63,9 @@ DEFFILE			=
 INCLUDE_TARGETS	= \
 				# Add more h hpp files here
 # Non-compiled files
-MISC_FILES		= switches opaff.xml allhosts-sample chassis-sample hosts-sample switches-sample ports-sample osid_wrapper opaff.xml-sample mac_to_dhcp
+MISC_FILES		= switches opaff.xml allhosts-sample chassis-sample hosts-sample switches-sample ports-sample osid_wrapper opaff.xml-sample mac_to_dhcp opa_ca_openssl.cnf opa_comp_openssl.cnf opa_ca_openssl.cnf-sample opa_comp_openssl.cnf-sample
 # expect files
-TCL_SOURCES		= chassis_reboot.exp reboot.exp sacache.exp load.exp chassis_upgrade.exp chassis_fmconfig.exp chassis_fmcontrol.exp chassis_fmgetconfig.exp upgrade.exp configipoib.exp mpiperf.exp mpiperfdeviation.exp ipoibping.exp ff_function.exp switch_upgrade.exp switch_dump.exp switch_reboot.exp switch_info.exp switch_hwvpd.exp switch_ping.exp switch_fwverify.exp switch_capture.exp chassis_configure.exp switch_configure.exp  switch_getconfig.exp chassis_getconfig.exp
+TCL_SOURCES		= chassis_reboot.exp reboot.exp sacache.exp load.exp chassis_upgrade.exp chassis_fmconfig.exp chassis_fmcontrol.exp chassis_fmgetconfig.exp chassis_fmgetsecurityfiles.exp chassis_fmsecurityfiles.exp upgrade.exp configipoib.exp mpiperf.exp mpiperfdeviation.exp ipoibping.exp ff_function.exp switch_upgrade.exp switch_dump.exp switch_reboot.exp switch_info.exp switch_hwvpd.exp switch_ping.exp switch_fwverify.exp switch_capture.exp chassis_configure.exp switch_configure.exp  switch_getconfig.exp chassis_getconfig.exp
 # all source files
 SOURCES			= $(CFILES) $(CCFILES) $(LFILES) $(RSCFILES) $(IDLFILE)
 # Source files to include in DSP File
@@ -83,9 +83,9 @@ LIB_TARGETS_MISC	=
 # targets to build during CMDS phase
 CMD_TARGETS_SHLIB	= 
 CMD_TARGETS_EXE		= $(EXECUTABLE)
-CMD_TARGETS_MISC	= opasetupssh opascpall opauploadall opadownloadall opapingall opacmdall showallports opacaptureall opatest opahostadmin opachassisadmin opaswitchadmin tcl_proc ff_funcs opafastfabric.conf.def opafabricanalysis opahostsmanalysis opaesmanalysis opachassisanalysis opaallanalysis opafastfabric opaswdisableall opaexpandfile show_counts
+CMD_TARGETS_MISC	= opasetupssh opascpall opauploadall opadownloadall opapingall opacmdall opashowallports opacaptureall opahostadmin opachassisadmin opaswitchadmin tcl_proc ff_funcs opafastfabric.conf.def opafastfabric.conf-sample opafabricanalysis opahostsmanalysis opaesmanalysis opachassisanalysis opaallanalysis opafastfabric opaswdisableall opaexpandfile show_counts
 # files to remove during clean phase
-CLEAN_TARGETS_MISC  =
+CLEAN_TARGETS_MISC  = opatest
 CLEAN_TARGETS       = $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
 # other files to remove during clobber phase
 CLOBBER_TARGETS_MISC=
@@ -136,6 +136,10 @@ opafastfabric.conf.def: opafastfabric.conf.$(BUILD_TARGET_OS).$(IB_STACK)
 	cp opafastfabric.conf.$(BUILD_TARGET_OS).$(IB_STACK) opafastfabric.conf.def
 	chmod a+x opafastfabric.conf.def
 
+opafastfabric.conf-sample: opafastfabric.conf.$(BUILD_TARGET_OS).$(IB_STACK)
+	cp opafastfabric.conf.$(BUILD_TARGET_OS).$(IB_STACK) opafastfabric.conf-sample
+	chmod a+x opafastfabric.conf-sample
+
 .SUFFIXES: .pl -sample
 %:%.pl
 	$(RM) $(RMFORCE) $@
@@ -178,9 +182,9 @@ include $(TL_DIR)/Makerules/Maketargets.install
 # install for stage phase
 #include $(TL_DIR)/Makerules/Maketargets.stage
 STAGE::
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) opasetupssh opascpall opauploadall opadownloadall opapingall opacmdall showallports opacaptureall opatest opahostadmin opachassisadmin opaswitchadmin opafabricanalysis opahostsmanalysis opaesmanalysis opachassisanalysis opaallanalysis opafastfabric opaswdisableall opaexpandfile opafastfabric.conf.def ff_funcs
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) opasetupssh opascpall opauploadall opadownloadall opapingall opacmdall opashowallports opacaptureall opahostadmin opachassisadmin opaswitchadmin opafabricanalysis opahostsmanalysis opaesmanalysis opachassisanalysis opaallanalysis opafastfabric opaswdisableall opaexpandfile ff_funcs opafastfabric.conf.def
 	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_IBTOOLS_DIR) tcl_proc $(TCL_SOURCES) opafastfabric.conf.def ff_funcs ports hosts allhosts switches chassis show_counts opaff.xml osid_wrapper
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR)/samples allhosts-sample chassis-sample hosts-sample switches-sample ports-sample opaff.xml-sample mac_to_dhcp
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR)/samples allhosts-sample chassis-sample hosts-sample switches-sample ports-sample opaff.xml-sample mac_to_dhcp opafastfabric.conf-sample opa_ca_openssl.cnf-sample opa_comp_openssl.cnf-sample
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

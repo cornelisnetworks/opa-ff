@@ -2640,8 +2640,16 @@ proc scp_get_file { host usercode target_filename local_filename } {
 ##	usercode - usercode on that host
 ##	target_filename - file to get
 ##	local_filename - destination file on local system
-
-	unix_cmd 400 0 "scp $usercode@$host:/nfs/site/proj/stlbuilds/$target_filename $local_filename"
+    global env
+    
+    if { ! [ info exists env(CFG_SCP_FLAGS) ] } {
+        set env(CFG_SCP_FLAGS) ""
+    }
+    
+    #randomly wait up to a minute to alleviate many hosts attempting to scp files at once
+    unix_cmd 150 0 "r=\$(( \$RANDOM % 60 + 1 )); sleep \$r"
+    
+	unix_cmd 400 0 "scp $env(CFG_SCP_FLAGS) $usercode@$host:/nfs/site/proj/stlbuilds/$target_filename $local_filename"
 }
 
 proc ftp_connect { host usercode password { do_spawn 1 } } {

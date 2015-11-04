@@ -13,27 +13,30 @@ opacaptureall
 .NL
 
 .PP
-(Switch and Host) Captures supporting information for a problem report from all
+
+\fB(Chassis and Host)\fR
+Captures supporting information for a problem report from all hosts or Intel(R) Omni-Path Chassis and uploads to this system.
+.IP \(bu
+
+\fBFor Hosts\fR
+
+When a host opacaptureall is performed, opacapture is run to create the specified capture file within ~root on each host (with the .tgz suffix added as needed). The files are uploaded and unpacked into a matching directory name within upload\(uldir/\fIhostname\fR/ on the local system. The default file name is hostcapture.
+
+.IP \(bu
+
+\fBFor Chassis\fR
+
+When a chassis opacaptureall is performed, opacapture is run on each chassis and its output is saved to upload\(uldir/\fIchassisname\fR/\fIfile\fR on the local system. The default file name is chassiscapture.
+
 .PP
-hosts or Intel(R) Omni-Path Chassis and uploads to this system
+For both host and chassis capture, the uploaded captures are combined into a .tgz file with the file name specified and the suffix .all.tgz added.
 .SH Syntax
 .NL
-opacaptureall [-C \fIchassis\fR] [-n \fIswitches\fR] [-p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-L \fInodefile\fR] [-h \'
-\fIHOSTS\fR
-
-\'] [-H \'
-\fIchassis\fR
-
-\'] [-N \'
-\fInodes\fR
-
-\'] [-t
-\fIportsfile\fR
-
-] [-d
-\fIupload\(uldir\fR
-
-] [-S] [-D \fIdetail\(ullevel\fR] [ \fIfile\fR]
+opacaptureall [-C] [-p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR]
+.br
+[-h \'\fIhosts\fR\']
+.br
+[-H \'\fIchassis\fR\'] [-t \fIportsfile\fR] [-d \fIupload\(uldir\fR] [-S] [-D \fIdetail\(ullevel\fR] [ \fIfile\fR]
 .PP
 or
 .br
@@ -44,209 +47,201 @@ opacaptureall --help
 .TP 10
 --help 
 .NL
-Produce full help text.
+Produces full help text.
+
 .TP 10
--C \fIchassis\fR 
+-C 
 .NL
-Perform capture against chassis, default is  \fIhosts\fR .
-.TP 10
--n \fIswitches\fR 
-.NL
-Performs a capture against the externally-managed Intel(R) Omni-Path Fabric switches. The default is hosts .
+Performs capture against chassis. Default is hosts.
+
 .TP 10
 -p 
 .NL
-Perform capture upload in parallel on all host/chassis/switches [for a host capture this only affects the upload phase] .
+Performs capture upload in parallel on all host/chassis. For a host capture, this only affects the upload phase.
+
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster, default is /etc/sysconfig/opa/hosts .
+File with hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-File containing a list of chassis in the cluster. The default is /etc/sysconfig/opa/chassis .
+File containing a list of chassis in the cluster. Default is /etc/sysconfig/opa/chassis file.
+
 .TP 10
--L \fInodefile\fR 
+-h \fIhosts\fR 
 .NL
-File containing a list of the nodes in the cluster. The default file is /etc/sysconfig/opa/ibnodes .
-.TP 10
--h \fIhost\fR 
-.NL
-List of hosts from which to perform a capture.
+List of hosts on which to perform a capture.
+
 .TP 10
 -H \fIchassis\fR 
 .NL
-List of chassis from which to perform a capture.
-.TP 10
--N \fInodes\fR 
-.NL
-List of nodes to execute operation against.
+List of chassis on which to perform a capture.
+
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for switch access, default is /etc/sysconfig/opa/ports .
+File with list of local HFI ports used to access fabric(s) for switch access, default is /etc/sysconfig/opa/ports file.
+
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Directory to upload to, default is uploads . If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default ( ./uploads ) will be used.
+Directory to upload to, default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default (./uploads) is used.
+
 .TP 10
 -S 
 .NL
-Securely prompt for password for administrator on a chassis or switch.
+Securely prompts for password for administrator on a chassis.
+
 .TP 10
 -D \fIdetail\(ullevel\fR 
 .NL
-Level of detail of the capture passed to host opacapture (only used for host captures, ignored for chassis captures)
+Level of detail of the capture passed to host opacapture. (Only used for host captures; ignored for chassis captures.)
+.RS
+.TP 10
+
 .sp
 1 
-Normal - Obtains local information from each host
+Normal. Obtains local information from each host.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 2 
-Fabric - In addition to ``Normal'', also obtains basic fabric information by queries to the SM and fabric error analysis using opareport 
+Fabric. In addition to \fINormal\fR, also obtains basic fabric information by queries to the SM and fabric error analysis using opareport.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 3 
-Fabric+FDB - In addition to ``Fabric'', also obtains all the switch forwarding tables from the SM
+Fabric+FDB. In addition to \fIFabric\fR, also obtains the Forwarding Database (FDB), which includes the switch forwarding tables from the SM.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 4 
-Analysis - In addition to ``Fabric+FDB'', also obtains opaallanalysis results. If opaallanalysis has not yet been run, it is run as part of the capture.
+Analysis. In addition to \fIFabric+FDB\fR, also obtains opaallanalysis results. If opaallanalysis has not yet been run, it is run as part of the capture.
+
+.RE
+
+
 .TP 10
 .BR
 
 .PP
 
 .B NOTE:
-Detail levels 2-4 can be used when fabric operational problems occur. If the problem is most likely node specific, detail level 1 should be sufficient. Detail levels 2-4 require an operational Intel(R) Omni-Path Fabric Suite Fabric Manager . Typically your support representative will request a given detail level. If a given detail level takes excessively long or fails to be gathered, try a lower detail level.
+Detail levels 2-4 can be used when fabric operational problems occur. If the problem is node-specific, detail level 1 should be sufficient. Detail levels 2-4 require an operational Intel(R) Omni-Path Fabric Suite Fabric Manager. Typically your support representative requests a given detail level. If a given detail level takes excessively long or fails to be gathered, try a lower detail level.
 
+
+.IP
 For detail levels 2-4, the additional information is only gathered on the node running the opacaptureall command. The information is gathered for every fabric specified in the /etc/sysconfig/opa/ports file.
-
 .TP 10
  \fIfile\fR 
 .NL
-Name for capture file (if the filename given does not have a .tgz suffix, .tgz will be appended)
+Name for capture file. The suffix .tgz is appended if it is not specified in the name.
+
 .SH Examples 
 .NL
 
-.SH Host Capture Examples-->
-.NL
-opacaptureall 
 .PP
-The above example creates a hostcapture directory in upload\(uldir/ \fIhostname\fR/ for each host in /etc/sysconfig/opa/hosts file, then creates hostcapture.all.tgz .
+
+\fBHost Capture Examples\fR
+opacaptureall
+.PP
+Creates a hostcapture directory in upload\(uldir/\fIhostname\fR/ for each host in /etc/sysconfig/opa/hosts file, then creates hostcapture.all.tgz.
 .br
-opacaptureall mycapture 
+opacaptureall mycapture
 .PP
-The above example creates a mycapture directory in upload\(uldir/ \fIhostname\fR/ for each host in /etc/sysconfig/opa/hosts file, then creates mycapture.all.tgz .
+Creates a mycapture directory in upload\(uldir/\fIhostname\fR/ for each host in /etc/sysconfig/opa/hosts file, then creates mycapture.all.tgz.
 .br
-opacaptureall -h \'arwen elrond\' 030127capture 
+opacaptureall -h \'arwen elrond\' 030127capture
 .PP
-The above example gets the list of host from arwen elrond file and creates 030127capture.tgz file.
-.SH Chassis Capture Examples-->
-.NL
+Gets the list of hosts from arwen elrond file and creates 030127capture.tgz file.
+.PP
+
+\fBChassis Capture Examples\fR
 
 .br
-opacaptureall -C 
+opacaptureall -C
 .PP
-The above example creates a chassiscapture file in upload\(uldir/ \fIchassisname\fR/ for each chassis in /etc/sysconfig/opa/chassis file, then creates chassiscapture.all.tgz .
+Creates a chassiscapture file in upload\(uldir/\fIchassisname\fR/ for each chassis in /etc/sysconfig/opa/chassis file, then creates chassiscapture.all.tgz.
 .br
-opacaptureall -C mycapture 
+opacaptureall -C mycapture
 .PP
-The above example creates a mycapture.tgz file in upload\(uldir/ \fIchassisname\fR/ for each chassis in /etc/sysconfig/opa/chassis file, then creates mycapture.all.tgz .
+Creates a mycapture.tgz file in upload\(uldir/\fIchassisname\fR/ for each chassis in /etc/sysconfig/opa/chassis file, then creates mycapture.all.tgz.
 .br
-opacaptureall -C -H \'chassis1 chassis2\' 030127capture 
+opacaptureall -C -H \'chassis1 chassis2\' 030127capture
 .PP
-The above example captures from chassis1 and chassis2 , and creates 030127capture.tgz file.
-.SH Switch Capture Examples-->
+Captures from chassis1 and chassis2, and creates 030127capture.tgz file.
 .NL
 
-.br
-opacaptureall -n 
-.PP
-The above example creates a switchcapture file in upload\(uldir/ \fIswitchname\fR/ for each switch in /etc/sysconfig/opa/switches file, then creates chassiscapture.all.tgz .
-.br
-opacaptureall -n mycapture 
-.PP
-The above example creates a mycapture.tgz file in upload\(uldir/ \fIswitchname\fR/ for each switch in /etc/sysconfig/opa/switches file, then creates mycapture.all.tgz .
-.br
-opacaptureall -n -N \'0x00066a00e300299f 0x00066a00e3002930\' 030127capture 
-.PP
-The above example captures from 0x00066a00e300299f and 0x00066a00e3002930 nodes, and creates 030127capture.tgz file.
-.NL
-
-.SH Environment Variables-->
+.SH Environment Variables
 .NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-HOSTS
+\fBHOSTS\fR 
 .NL
 List of hosts, used if -h option not supplied.
+
 .TP 10
-CHASSIS
+\fBCHASSIS\fR 
 .NL
 List of chassis, used if -C is used and -h option is not supplied.
+
 .TP 10
-OPASWITCHES
+\fBHOSTS\(ulFILE\fR 
 .NL
-List of nodes, used if -n is used and -N and -L option is not supplied
+File containing a list of hosts, used in the absence of -f and -h.
+
 .TP 10
-HOSTS\(ulFILE
+\fBCHASSIS\(ulFILE\fR 
 .NL
-File containing a list of hosts, used in the absence of -f and -h .
+File containing a list of chassis, used in the absence of -F and -H.
+
 .TP 10
-CHASSIS\(ulFILE
+\fBUPLOADS\(ulDIR\fR 
 .NL
-File containing a list of chassis, used in the absence of -F and -H .
+Directory to upload to, used in the absence of -d.
+
 .TP 10
-OPASWITCHES\(ulFILE
+\fBFF\(ulMAX\(ulPARALLEL\fR 
 .NL
-File containing a list of nodes, used in the absence of -N and -L .
+When -p option is used, maximum concurrent operations are performed.
+
 .TP 10
-UPLOADS\(ulDIR
+\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR 
 .NL
-Directory to upload to, used in the absence of -d .
+How to log into chassis. Can be Telnet or SSH.
+
 .TP 10
-FF\(ulMAX\(ulPARALLEL
-.NL
-When -p option is used, maximum concurrent operations will be performed.
-.TP 10
-FF\(ulCHASSIS\(ulLOGIN\(ulMETHOD
-.NL
-How to login to chassis. Can be telnet or SSH.
-.TP 10
-FF\(ulCHASSIS\(ulADMIN\(ulPASSWORD
+\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR 
 .NL
 Password for administrator on all chassis. Used in absence of -S option.
-.SH Details
-.NL
 
-.SH For Hosts-->
-.NL
-
-.PP
-When a host opacaptureall is performed, opacapture will be run to create the specified capture file within ~root on each host (with the .tgz suffix added as needed). The files will be uploaded and unpacked into a matching directory name within upload\(uldir/ \fIhostname\fR/ on the local system. The default file name is hostcapture .
-.SH For Chassis-->
-.NL
-
-.PP
-When a chassis opacaptureall is performed, opacapture will be run on each chassis and its output will be saved to upload\(uldir/ \fIchassisname\fR/ \fIfile\fR on the local system. The default file name is chassiscapture .
-.SH For Switches-->
-.NL
-
-.PP
-When a switch opacaptureall is performed, opaswitchadmin capture will be run to capture all of the switches and its output will be saved to upload\(uldir/ \fIswitchesname\fR/ \fIfile\fR on the local system. The default file name is switchcapture .
 .SH More Information
 .NL
 
 .PP
-For both host and chassis capture, the uploaded captures will be combined into a .tgz file with the file name specified and the suffix .all.tgz added.
-.PP
 When performing opacaptureall against hosts, internally SSH is used. The command opacaptureall requires that password-less SSH be set up between the host running Intel(R) Omni-Path Fabric Suite FastFabric Toolset and the hosts opacaptureall is operating against. The opasetupssh command can aid in setting up password-less SSH.
 .PP
-When performing operations against chassis, set up of ssh keys is recommended (see
+When performing operations against chassis, set up of SSH keys is recommended (see
 \fIopasetupssh\fR
-). If ssh keys are not set up, all chassis must be configured with the same admin password and use of the -S option is recommended. The -S option avoids the need to keep the password in configuration files.
+). If SSH keys are not set up, all chassis must be configured with the same admin password and use of the -S option is recommended. The -S option avoids the need to keep the password in configuration files.
 .PP
 
 .B NOTE:
-The resulting host capture files can require significant amounts of space on the Intel(R) Omni-Path Fabric Suite FastFabric Toolset host. Actual size will vary, but sizes can be multiple megabytes per host. As such it is recommended to ensure adequate space is available on the Intel(R) Omni-Path Fabric Suite FastFabric Toolset system. In many cases it may not be necessary to run opacaptureall against all hosts or chassis, but rather a representative subset may be sufficient. Consult with your support representative for further information.
+The resulting host capture files can require significant amounts of space on the Intel(R) Omni-Path Fabric Suite FastFabric Toolset host. Actual size varies, but sizes can be multiple megabytes per host. Intel recommends that you ensure adequate space is available on the Intel(R) Omni-Path Fabric Suite FastFabric Toolset system. In many cases, it may not be necessary to run opacaptureall against all hosts or chassis; instead, a representative subset may be sufficient. Consult with your support representative for further information.
 

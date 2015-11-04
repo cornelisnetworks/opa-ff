@@ -31,9 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shmem.h>
 #include <stdio.h>
 
-int main()
+int main(int argc, char ** argv)
 {
-	shmem_init();
-	printf("Hello from PE %d out of %d\n", my_pe(), num_pes());
+	start_pes(0);
+	printf("Hello from PE %d out of %d\n", _my_pe(), _num_pes());
 	return 0;
 }

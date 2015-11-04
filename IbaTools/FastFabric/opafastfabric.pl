@@ -130,17 +130,17 @@ my @FabricSetupSteps;
 
 	# full name of steps for prompts
 my %FabricSetupStepsName = (
-				"config" => "Edit Config and Select/Edit Host File",
+				"config" => "Edit config and select/edit Host file",
 				"findgood" => "Verify hosts pingable",
-				"setupssh" => "Setup Password-less ssh/scp",
+				"setupssh" => "Setup password-less ssh/scp",
 				"copyhosts" => "Copy /etc/hosts to all hosts",
 				"showuname" => "Show uname -a for all hosts",
 				"install" => "Install/Upgrade OPA Software",
-				"configipoib" => "Configure IPoIB IP Address",
-				"buildapps" => "Build Test Apps and Copy to Hosts",
+				"configipoib" => "Configure IPoIB IP address",
+				"buildapps" => "Build Test Apps and copy to Hosts",
 				"reboot" => "Reboot Hosts",
 				"refreshssh" => "Refresh ssh Known Hosts",
-				"rebuildmpi" => "Rebuild MPI Library and Tools",
+				"rebuildmpi" => "Rebuild MPI library and tools",
 				"opacmdall" => "Run a command on all hosts",
 				"copyall" => "Copy a file to all hosts",
 				"viewres" => "View opahostadmin result files"
@@ -172,18 +172,18 @@ my @FabricAdminSteps;
 					);
 	# full name of steps for prompts
 my %FabricAdminStepsName = (
-				"config" => "Edit Config and Select/Edit Host File",
-				"fabric_info" => "Summary of Fabric Components",
+				"config" => "Edit config and select/edit Host file",
+				"fabric_info" => "Summary of Fabric components",
 				#"opapingall" => "Verify Hosts via Ethernet ping",
-				"findgood" => "Verify hosts pingable, sshable, active, and not quarantined",
-				"singlehost" => "Perform Single Host verification",
+				"findgood" => "Verify hosts are pingable, sshable, and active",
+				"singlehost" => "Perform single host verification",
 				"showallports" => "Verify OPA Fabric status and topology",
-				"sacache" => "Verify Hosts see each other",
-				"ipoibping" => "Verify Hosts ping via IPoIB",
+				"sacache" => "Verify hosts see each other",
+				"ipoibping" => "Verify hosts ping via IPoIB",
 				"refreshssh" => "Refresh ssh Known Hosts",
-				"mpiperf" => "Check MPI Performance",
-				"health" => "Check Overall Fabric Health",
-				"cabletest" => "Start or Stop Bit Error Rate Cable Test",
+				"mpiperf" => "Check MPI performance",
+				"health" => "Check overall Fabric health",
+				"cabletest" => "Start or stop Bit Error Rate Cable Test",
 				"opacaptureall" => "Generate all Hosts Problem Report Info",
 				"opacmdall" => "Run a command on all hosts",
 				"viewres" => "View opahostadmin result files"
@@ -218,7 +218,7 @@ my %FabricMonitorStepsMenuDelimiter = (
 				"ibatop" => ""
 				);
 my @FabricChassisSteps = ( "config", "opapingall", "fwpush", "setup", "setupssh",
-				"reboot", "fmconfig", "getconfig" ,"showallports", "fmcontrol", "opacaptureall", "opacmdall", "viewres"
+				"reboot", "getconfig" , "fmconfig", "fmsecurityfiles", "fmgetsecurityfiles", "showallports", "fmcontrol", "opacaptureall", "opacmdall", "viewres"
 					);
 # what to output before each menu item as a delimiter/marker
 my %FabricChassisStepsMenuDelimiter = (
@@ -228,8 +228,10 @@ my %FabricChassisStepsMenuDelimiter = (
 				"setup" => "",
 				"setupssh" => "",
 				"reboot" => "",
-				"fmconfig" => "",
 				"getconfig" => "",
+				"fmconfig" => "",
+                "fmsecurityfiles" => "",
+                "fmgetsecurityfiles" => "",
 				"showallports" => "admin",
 				"fmcontrol" => "",
 				"opacaptureall" => "",
@@ -237,36 +239,37 @@ my %FabricChassisStepsMenuDelimiter = (
 				"viewres" => "review",
 				);
 my %FabricChassisStepsName = (
-				"config" => "Edit Config and Select/Edit Chassis File",
+				"config" => "Edit config and select/edit Chassis file",
 				"opapingall" => "Verify Chassis via Ethernet ping",
-				"fwpush" => "Update Chassis Firmware",
-				"setup" => "Setup Chassis Basic Configuration",
-				"setupssh" => "Setup Password-less ssh/scp",
+				"fwpush" => "Update Chassis firmware",
+				"setup" => "Setup Chassis basic configuration",
+				"setupssh" => "Setup password-less ssh/scp",
 				"reboot" => "Reboot Chassis",
-				"fmconfig" => "Configure Chassis Fabric Manager",
-				"getconfig" => "Get Basic Chassis Configuration",
+				"fmconfig" => "Configure Chassis Fabric Manager (FM)",
+				"getconfig" => "Get basic Chassis configuration",
+                "fmsecurityfiles" => "Update Chassis FM security files",
+                "fmgetsecurityfiles" => "Get Chassis FM security files",
 				"showallports" => "Check OPA Fabric status",
-				"fmcontrol" => "Control Chassis Fabric Manager",
+				"fmcontrol" => "Control Chassis Fabric Manager (FM)",
 				"opacaptureall" => "Generate all Chassis Problem Report Info",
 				"opacmdall" => "Run a command on all chassis",
 				"viewres" => "View opachassisadmin result files"
 				);
 my @FabricExtMgmtSwSteps = ( "config", "genopaswitches", "ibping", "fwverify",
 				"fwpush", "setup", "reboot", "switchinfo", "getconfig",
-			   	"hwvpd", "opacaptureall", "viewres"
+			   	"hwvpd","viewres"
 				);
 my %FabricExtMgmtSwStepsName = (
-				"config" => "Edit Config and Select/Edit Switch File",
-				"genopaswitches" => "Generate or Update Switch File",
-				"ibping" => "Test for Switch Presence",
-				"fwverify" => "Verify Switch Firmware",
-				"fwpush" => "Update Switch Firmware",
-				"setup" => "Setup Switch Basic Configuration",
+				"config" => "Edit config and select/edit Switch file",
+				"genopaswitches" => "Generate or update Switch file",
+				"ibping" => "Test for Switch presence",
+				"fwverify" => "Verify Switch firmware",
+				"fwpush" => "Update Switch firmware",
+				"setup" => "Setup Switch basic configuration",
 				"reboot" => "Reboot Switch",
-				"switchinfo" => "Report Switch Firmware & Hardware Info",
-				"getconfig" => "Get Basic Switch configuration",
-				"hwvpd" => "Report Switch VPD Information",
-				"opacaptureall" => "Generate all Switch Problem Report Info",
+				"switchinfo" => "Report Switch firmware & hardware info",
+				"getconfig" => "Get basic Switch configuration",
+				"hwvpd" => "Report Switch VPD information",
 				"viewres" => "View opaswitchadmin result files"
 				);
 # what to output before each menu item as a delimiter/marker
@@ -281,7 +284,6 @@ my %FabricExtMgmtSwStepsMenuDelimiter = (
 				"switchinfo" => "",
 				"getconfig" => "",
 				"hwvpd" => "admin",
-				"opacaptureall" => "",
 				"viewres" => "review",
 				);
 my $FabricSetupHostsFile="$OPA_CONFIG_DIR/hosts";
@@ -304,6 +306,7 @@ if ( "$ENV{CHASSIS_FILE}" ne "" ) {
 }
 my $FabricChassisPackages="none";
 my $FabricChassisFMConfig="none";
+my $FabricChassisFMSecurityFiles="none";
 my $FabricExtMgmtSwFile="$OPA_CONFIG_DIR/switches";
 # OPASWITCHES_FILE overrides default
 if ( "$ENV{OPASWITCHES_FILE}" ne "" ) {
@@ -642,7 +645,7 @@ DO_MENU:
 				$firstline=0;
 			}
 		}
-	} elsif ($inp =~ /[0123456789abcdef]/) {
+	} elsif ($inp =~ /[0123456789abcdefABCDEF]/) {
 		my $value = hex($inp);
 		my $index = ($firstline + $value);
 		if ( $value < $maxlines && $index < scalar(@selections)) {
@@ -686,8 +689,7 @@ sub installed_mpidev
 
 sub installed_shmem
 {
-	return (-e "/opt/opa/src/shmem_apps/Makefile"
-			&& -e "$ROOT/opt/opa/.comp_intel_shmem.pl");
+	return (system("rpm -q --whatprovides openshmem_gcc_hfi") == 0);
 }
 
 sub installed_mpisrc
@@ -1127,12 +1129,11 @@ sub fabricsetup_buildmpi
 			chomp $mpich_prefix;
 
 			# identify other alternatives
-			my $prefix=`/etc/infiniband/info 2>/dev/null|grep '^prefix='|cut -f2 -d=`;
-			if ( "$prefix" eq "" || ! -e "$prefix" ) {
-				$prefix="/usr";
-			}
+			my $prefix="/usr";
 			my $dirs=`find $prefix/mpi -maxdepth 2 -mindepth 2 -type d 2>/dev/null|sort`;
+			$dirs=$dirs . `find /opt/intel/impi/*/intel64 -maxdepth 0 -type d 2>/dev/null|sort`;
 			my @dirs = split /[[:space:]]+/, $dirs;
+
 			#print "The following MPIs have been found on this system:\n";
 			if ( $dirs !~ m|$mpich_prefix|) {
 				# odd case, default is not in a normal location
@@ -1224,13 +1225,12 @@ sub fabricsetup_buildshmem
 		$mpich_prefix= `cd $shmem_apps_dir 2>/dev/null; . ./select_mpi 2>/dev/null; echo \$MPICH_PREFIX`;
 		chomp $mpich_prefix;
 
-		# identify other alternatives
-		my $prefix=`/etc/infiniband/info 2>/dev/null|grep '^prefix='|cut -f2 -d=`;
-		if ( "$prefix" eq "" || ! -e "$prefix" ) {
-			$prefix="/usr";
-		}
-		# limit choices to PSM (qlc) MPIs
-		my $dirs=`find $prefix/mpi -maxdepth 2 -mindepth 2 -type d 2>/dev/null|grep qlc|sort`;
+		my $prefix="/usr";
+
+		# Selected MPI implementation does not affect compilation,
+		# only running. Limit selection to openmpi implementations as
+		# these are the only supported implementations
+		my $dirs=`find $prefix/mpi -maxdepth 2 -mindepth 2 -type d 2>/dev/null|grep openmpi|sort`;
 		my @dirs = split /[[:space:]]+/, $dirs;
 		#print "The following MPIs have been found on this system:\n";
 		if ( $dirs !~ m|$mpich_prefix|) {
@@ -1441,7 +1441,7 @@ DO_SETUP:
 			$selected{$step}= 0;
 		}
 	}
-	elsif ($inp =~ /[0123456789abcdef]/)
+	elsif ($inp =~ /[0123456789abcdefABCDEF]/)
 	{
 		$step = $FabricSetupSteps[hex($inp)];
 		$selected{$step}= ! $selected{$step};
@@ -1515,12 +1515,12 @@ sub fabricadmin_config
 
 sub fabricadmin_fabric_info
 {
-	if ( ! -e "$BIN_DIR/fabric_info" ) {
-		print "fabric_info requires $ComponentName{iba} be installed\n";
+	if ( ! -e "$BIN_DIR/opafabricinfo" ) {
+		print "opafabricinfo requires $ComponentName{iba} be installed\n";
 		HitKeyCont;
 		return 1;
 	}
-	return run_fabric_cmd("/sbin/fabric_info");
+	return run_fabric_cmd("$BIN_DIR/opafabricinfo");
 }
 #sub fabricadmin_opapingall
 #{
@@ -1573,7 +1573,7 @@ sub fabricadmin_findgood
 
 sub fabricadmin_singlehost
 {
-	my $verifyhosts_opts="";
+	my $verifyhosts_opts="-c"; # Always copy the hostverify.sh file.
 	my $verifyhosts_tests="";
 	my $result_dir = read_ffconfig_param("FF_RESULT_DIR");
 	my $hostverify = "/opt/opa/samples/hostverify.sh";
@@ -1592,7 +1592,6 @@ sub fabricadmin_singlehost
 		if ( ! -e "$hostverify" ) {
 			print "You must have a $hostverify file to proceed\n\n";
 		} else {
-	    	$verifyhosts_opts = "$verifyhosts_opts -c";
 			last;
 		}
 	}
@@ -1618,7 +1617,9 @@ sub fabricadmin_singlehost
 	}
 
 	my $timelimit=GetNumericValue("Timelimit in minutes:", 1, 1, 100) * 60;
-	check_load($FabricAdminHostsFile, "", "prior to verification");
+	if (check_load($FabricAdminHostsFile, "", "prior to verification") ) {
+		return 1;
+	}
 	run_fabric_cmd("$BIN_DIR/opaverifyhosts -k $verifyhosts_opts -u $hostverify_res -T $timelimit -f $FabricAdminHostsFile $verifyhosts_tests", "skip_prompt");
 	print "About to: $Editor $result_dir/verifyhosts.res\n";
 	if ( HitKeyContAbortable() ) {
@@ -1709,7 +1710,7 @@ sub fabricadmin_showallports
 		if (! valid_config_file("Host File", $FabricAdminHostsFile) ) {
 			return 1;
 		}
-		if ( run_fabric_cmd("$BIN_DIR/showallports -f $FabricAdminHostsFile > $linkanalysis_file 2>&1", "skip_prompt") ) {
+		if ( run_fabric_cmd("$BIN_DIR/opashowallports -f $FabricAdminHostsFile > $linkanalysis_file 2>&1", "skip_prompt") ) {
 			return 1;
 		}
 	}
@@ -1747,10 +1748,14 @@ sub fabricadmin_mpiperf
 		return 1;
 	}
 	if (GetYesNo("Test Latency and Bandwidth deviation between all hosts?", "y") ) {
-		check_load($FabricAdminHostsFile, "", "prior to test");
+		if (check_load($FabricAdminHostsFile, "", "prior to test")) {
+			return 1;
+		}
 		return run_fabric_cmd("$BIN_DIR/opahostadmin -f $FabricAdminHostsFile mpiperfdeviation");
 	} else {
-		check_load($FabricAdminHostsFile, "", "prior to test");
+		if (check_load($FabricAdminHostsFile, "", "prior to test")) {
+			return 1;
+		}
 		return run_fabric_cmd("$BIN_DIR/opahostadmin -f $FabricAdminHostsFile mpiperf");
 	}
 }
@@ -1782,9 +1787,9 @@ sub fabricadmin_cabletest
 					return 1;
 				}
 				$cabletest_file="-f '$FabricAdminHostsFile'";
-				$cabletest_cmds="$cabletest_cmds stop_ca";
+				$cabletest_cmds="$cabletest_cmds stop_fi";
 			}
-			if ( -e "$rundir/fm_opacmdall" ) {
+			if ( -e "$rundir/fm_cmdall" ) {
 				if (GetYesNo("Stop ISL Cable Test?", "y") ) {
 					$cabletest_cmds="$cabletest_cmds stop_isl";
 				}
@@ -1808,19 +1813,21 @@ sub fabricadmin_cabletest
 				}
 				my $numprocs=GetNumericValue("Number of Processes per host:", 3, 1, 64);
 				$cabletest_opts="$cabletest_opts -n $numprocs";
-				$cabletest_cmds="$cabletest_cmds start_ca";
+				$cabletest_cmds="$cabletest_cmds start_fi";
 				$cabletest_file="-f '$FabricAdminHostsFile'";
 				$check_load_before = 1;
 			}
 	
-			if ( -e "$rundir/fm_opacmdall" ) {
+			if ( -e "$rundir/fm_cmdall" ) {
 				if (GetYesNo("Start ISL Cable Test?", "y") ) {
 					$cabletest_cmds="$cabletest_cmds start_isl";
 				}
 			}
 		}
 		if ( $check_load_before) {
-			check_load($FabricAdminHostsFile, "", "prior to test");
+			if (check_load($FabricAdminHostsFile, "", "prior to test")) {
+				return 1;
+			}
 		}
 		if ( "$cabletest_opts" ne "" || "$cabletest_cmds" ne "" ) {
 			print "About to run: $BIN_DIR/opacabletest $cabletest_opts $cabletest_file $cabletest_cmds\n";
@@ -1875,7 +1882,7 @@ DO_SETUP:
 	{
 		$step = $FabricAdminSteps[$i];
 		print_delimiter("$FabricAdminStepsMenuDelimiter{$step}");
-		printf ("%x) %-41s ", $i, $FabricAdminStepsName{$step});
+		printf ("%x) %-48s ", $i, $FabricAdminStepsName{$step});
 		printStepSelected($selected{$step}, $statusMessage{$step});
 	}
 
@@ -1898,7 +1905,7 @@ DO_SETUP:
 			$selected{$step}= 0;
 		}
 	}
-	elsif ($inp =~ /[0123456789abcdef]/)
+	elsif ($inp =~ /[0123456789abcdefABCDEF]/)
 	{
 		$step = $FabricAdminSteps[hex($inp)];
 		$selected{$step}= ! $selected{$step};
@@ -1973,7 +1980,7 @@ DO_SETUP:
 			$selected{$step}= 0;
 		}
 	}
-	elsif ($inp =~ /[0123456789abcdef]/)
+	elsif ($inp =~ /[0123456789abcdefABCDEF]/)
 	{
 		$step = $FabricMonitorSteps[hex($inp)];
 		$selected{$step}= ! $selected{$step};
@@ -2051,6 +2058,122 @@ sub chassis_getconfig
 	}
 	return run_fabric_cmd("$BIN_DIR/opachassisadmin  -F $FabricChassisFile getconfig");
 }
+
+sub chassis_fmgetsecurityfiles
+{
+	return run_fabric_cmd("$BIN_DIR/opachassisadmin  -F $FabricChassisFile fmgetsecurityfiles");
+}
+
+
+# expand security files list, returns "" if "none" or has invalid entries
+sub chassis_expand_fmsecurityfiles
+{
+	my $packages = $_[0];
+	my $all_packages="";
+	if ( "$packages" eq "none" ) {
+		return "";
+	}
+	foreach my $package (split(/[[:space:]]+/, "$packages")) {
+		# file or directory (can be wildcards)
+		# expand directory, also filters files without .pem suffix
+		my $expanded = `find $package -type f -name '*.pem' 2>/dev/null`;
+		if ( $expanded eq "" ) {
+			print "$package: No .pem files found\n";
+			return "";
+		}
+		$all_packages="$all_packages$expanded";
+	}
+	return "$all_packages";
+}
+
+sub chassis_fmsecurityfiles
+{
+	my $packages="$FabricChassisPackages";
+	my $parallel=1;
+	my $query=0;
+	my $action;
+	my $all_packages="";
+	my $Sopt="";
+
+	if (! valid_config_file("Chassis File", $FabricChassisFile) ) {
+		return 1;
+	}
+	do {
+QUERY:
+		$Sopt="";
+		do {
+			if ( $query ) {
+				# we must query again, don't check validity
+			} elsif ( "$packages" eq "none" ) {
+				$query=1;
+			} else {
+				$all_packages=chassis_expand_fmsecurityfiles("$packages");
+			    if ("$all_packages"	eq "") {
+					$query=1;
+				}
+			}
+			if ( ! $query ) {
+				$query = ! GetYesNo("Do you want to use $packages?", "y");
+			}
+			if ( $query ) {
+				do {
+					print "Multiple FM Security files and/or Directories may be space separated\n";
+					print "Shell wildcards may be used\n";
+					print "For Directories all .pem files in the directory tree will be used\n";
+					print "Enter Files/Directories to use (or none):";
+					chomp($packages = <STDIN>);
+					$packages=remove_whitespace($packages);
+				} until ( length($packages) != 0 );
+				$all_packages=chassis_expand_fmsecurityfiles("$packages");
+				if ("$packages" eq "none" || "$all_packages" ne "") {
+					$query=0;
+				}
+			}
+		} until ( ! $query);
+		if ("$packages" eq "none" ) {
+			print "You have selected to skip the security files upgrade step\n";
+			$action="skip";
+		} else {
+			print "You have selected to use: $packages\n";
+			print "The following security files will be used:\n";
+			#$all_packages =~ s/^/    /mg;
+			#print "$all_packages";
+			my $file;
+			my $ver;
+			my $type;
+			foreach $file (split(/[[:space:]]+/, "$all_packages"))
+			{
+				print "$file\n";
+			}
+			if ( $query ) {
+				goto QUERY;
+			}
+			$FabricChassisPackages="$all_packages";
+			$parallel=1;
+			if (GetYesNo("Would you like to push the security files?", "n") ) {
+				$action="push";
+				print "You have selected to push FM security files\n";
+			} else {
+				print "You have selected to skip the security files upgrade step\n";
+				$action="skip";
+			}
+		}
+		if ( "$action" ne "skip" ) {
+			if (GetYesNo("Would you like to be prompted for chassis' password?", "n") ) {
+				$Sopt="-S";
+			}
+		}
+	} until (GetYesNo("Are you sure you want to proceed?", "n") );
+	if ( "$action" ne "skip" ) {
+		my $pathnames=expand_pathnames($FabricChassisPackages);
+		if ( $parallel ) {
+			return run_fabric_cmd("$BIN_DIR/opachassisadmin $Sopt -F $FabricChassisFile -P '$pathnames' -a $action fmsecurityfiles");
+		} else {
+			return run_fabric_cmd("FF_MAX_PARALLEL=0 $BIN_DIR/opachassisadmin $Sopt -F $FabricChassisFile -P '$pathnames' -a $action fmsecurityfiles");
+		}
+	}
+}
+
 sub chassis_opapingall
 {
 	if (! valid_config_file("Chassis File", $FabricChassisFile) ) {
@@ -2096,7 +2219,7 @@ sub expand_pathnames
 	my $first=1;
 	foreach my $pathname (split(/[[:space:]]+/, "$pathnames")) {
 		# file or directory (can be wildcards)
-		# expand directory, also filters files without .pkg suffix
+		# expand directory, also filters files without .spkg suffix
 		my $expanded = `echo -n $pathname`;
 		if ( $expanded ne "" ) {
 			if ( $first ) {
@@ -2120,10 +2243,10 @@ sub chassis_expand_fwpackages
 	}
 	foreach my $package (split(/[[:space:]]+/, "$packages")) {
 		# file or directory (can be wildcards)
-		# expand directory, also filters files without .pkg suffix
-		my $expanded = `find $package -type f -name '*.pkg' 2>/dev/null`;
+		# expand directory, also filters files without .spkg suffix
+		my $expanded = `find $package -type f -name '*.spkg' 2>/dev/null`;
 		if ( $expanded eq "" ) {
-			print "$package: No .pkg files found\n";
+			print "$package: No .spkg files found\n";
 			return "";
 		}
 		$all_packages="$all_packages$expanded";
@@ -2163,7 +2286,7 @@ QUERY:
 				do {
 					print "Multiple Firmware files and/or Directories may be space separated\n";
 					print "Shell wildcards may be used\n";
-					print "For Directories all .pkg files in the directory tree will be used\n";
+					print "For Directories all .spkg files in the directory tree will be used\n";
 					print "Enter Files/Directories to use (or none):";
 					chomp($packages = <STDIN>);
 					$packages=remove_whitespace($packages);
@@ -2201,7 +2324,7 @@ QUERY:
 			if ( $query ) {
 				goto QUERY;
 			}
-			$FabricChassisPackages="$packages";
+			$FabricChassisPackages="$all_packages";
 			$parallel=1;
 			print "After push, the firmware may be optionally selected or booted\n";
 			if (GetYesNo("Would you like to run the firmware now?", "n") ) {
@@ -2471,7 +2594,7 @@ sub chassis_showallports
 		if (GetYesNo("Would you like to be prompted for chassis' password?", "n") ) {
 			$Sopt="-S";
 		}
-		if ( run_fabric_cmd("$BIN_DIR/showallports -C $Sopt -F $FabricChassisFile > $linkanalysis_file 2>&1", "skip_prompt") ) {
+		if ( run_fabric_cmd("$BIN_DIR/opashowallports -C $Sopt -F $FabricChassisFile > $linkanalysis_file 2>&1", "skip_prompt") ) {
 			return 1;
 		}
 	}
@@ -2634,7 +2757,7 @@ DO_SETUP:
 			$selected{$step}= 0;
 		}
 	}
-	elsif ($inp =~ /[0123456789abcdef]/)
+	elsif ($inp =~ /[0123456789abcdefABCDEF]/)
 	{
 		$step = $FabricChassisSteps[hex($inp)];
 		$selected{$step}= ! $selected{$step};
@@ -2757,84 +2880,54 @@ sub ext_mgmt_sw_ibping
 
 sub ext_mgmt_sw_setup
 {
-	my $Sopt = "";
 
 	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
 		return 1;
 	}
-	# always use Sopt ... user is instructed to hit enter for no password
-	$Sopt="-S";
 	return run_fabric_cmd("$BIN_DIR/opaswitchadmin -F $FabricExtMgmtSwFile configure");
 }
 
 sub ext_mgmt_sw_switchinfo
 {
-	my $Sopt="";
 
 	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
 		return 1;
 	}
-	# always use Sopt ... user is instructed to hit enter for no password
-	$Sopt="-S";
 	return run_fabric_cmd("$BIN_DIR/opaswitchadmin -L $FabricExtMgmtSwFile info");
 }
 sub ext_mgmt_sw_getconfig
 {
-	my $Sopt="";
 
 	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
 		return 1;
 	}
-	# always use Sopt ... user is instructed to hit enter for no password
-	$Sopt="-S";
 	return run_fabric_cmd("$BIN_DIR/opaswitchadmin -L $FabricExtMgmtSwFile getconfig");
 }
 
 sub ext_mgmt_sw_fwverify
 {
-	my $Sopt="";
 
 	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
 		return 1;
 	}
-	# always use Sopt ... user is instructed to hit enter for no password
-	$Sopt="-S";
 	return run_fabric_cmd("$BIN_DIR/opaswitchadmin -L $FabricExtMgmtSwFile fwverify");
 }
 
 sub ext_mgmt_sw_hwvpd
 {
-	my $Sopt="";
 
 	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
 		return 1;
 	}
-	# always use Sopt ... user is instructed to hit enter for no password
-	$Sopt="-S";
 	return run_fabric_cmd("$BIN_DIR/opaswitchadmin -L $FabricExtMgmtSwFile hwvpd");
-}
-
-sub ext_mgmt_sw_opacaptureall
-{
-	my $Sopt = "";
-
-	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
-		return 1;
-	}
-	# always use Sopt ... user is instructed to hit enter for no password
-	$Sopt="-S";
-	return run_fabric_cmd("$BIN_DIR/opacaptureall -n $Sopt -p -L $FabricExtMgmtSwFile");
 }
 
 sub ext_mgmt_sw_setup
 {
-	my $Sopt="";
 
 	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
 		return 1;
 	}
-	# always use Sopt ... user is instructed to hit enter for no password
-	$Sopt="-S";
 	return run_fabric_cmd("$BIN_DIR/opaswitchadmin -L $FabricExtMgmtSwFile configure");
 }
 
@@ -2866,8 +2959,6 @@ sub ext_mgmt_sw_fwpush
 	my $query=0;
 	my $action;
 	my $all_packages="";
-	my $Sopt="";
-	my $sopt="";
 	my $Oopt="";
 
 	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
@@ -2911,7 +3002,7 @@ sub ext_mgmt_sw_fwpush
 			print "The following firmware files will be used:\n";
 			$all_packages =~ s/^/    /mg;
 			print "$all_packages";
-			$FabricExtMgmtSwPackages="$packages";
+			$FabricExtMgmtSwPackages="$all_packages";
 			$parallel=1;
 			print "After upgrade, the switch may be optionally rebooted\n";
 			if (GetYesNo("Would you like to reboot the switch after the update?", "n") ) {
@@ -2940,15 +3031,6 @@ sub ext_mgmt_sw_fwpush
 					$parallel=0;
 				}
 			}
-			# always use Sopt ... user is instructed to hit enter for no password
-			$Sopt="-S";
-			if (GetYesNo("Would you like to set, change, or clear switches' password?", "n") ) {
-				if ( "$action" ne "run" ) {
-						print "Warning: password change will not take effect until next switch reboot\n";
-				}
-			} else {
-				$sopt="";
-			}
 			$Oopt = "";
 			print "The firmware on the switch will be checked. If the running version is the same\n";
 			print "as the version being used for the update, the update operation will be skipped\n";
@@ -2970,13 +3052,10 @@ sub ext_mgmt_sw_fwpush
 
 sub ext_mgmt_sw_reboot
 {
-	my $Sopt="";
 
 	if (! valid_config_file("Externally Managed Switch File", $FabricExtMgmtSwFile) ) {
 		return 1;
 	}
-	# always use Sopt ... user is instructed to hit enter for no password
-	$Sopt="-S";
 	return run_fabric_cmd("$BIN_DIR/opaswitchadmin -L $FabricExtMgmtSwFile reboot");
 }
 
@@ -3030,7 +3109,7 @@ DO_SETUP:
 			$selected{$step}= 0;
 		}
 	}
-	elsif ($inp =~ /[0123456789abcdef]/)
+	elsif ($inp =~ /[0123456789abcdefABCDEF]/)
 	{
 		$step = $FabricExtMgmtSwSteps[hex($inp)];
 		$selected{$step}= ! $selected{$step};

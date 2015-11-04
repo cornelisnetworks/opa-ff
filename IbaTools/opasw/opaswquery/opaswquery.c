@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
 #include "iba/stl_helper.h"
+#include "iba/stl_types.h"
 #include "oib_utils_sa.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
@@ -136,10 +137,13 @@ int main(int argc, char *argv[])
 	uint32				numPorts;
 	uint32				portEntrySize;
 	uint8				memoryData[200];
-	uint16				asicVersion;
 	uint8				boardID;
 	VENDOR_MAD			mad;
 	FSTATUS				status = FSUCCESS;
+	uint32				asicVersion;
+	uint8				chipStep;
+	uint8				chipRev;
+
 
 
 	table_parsed_data_t	*portPtrs=NULL;
@@ -150,6 +154,8 @@ int main(int argc, char *argv[])
 	uint32				portvCUIndex;
 	uint32				portExternalLoopbackAllowedIndex;
 	char				portLinkCRCModeValue[35];
+	char				portLinkWidthSupportedText[20];
+	char				portLinkSpeedSupportedText[20];
 	struct              oib_port *oib_port_session = NULL;
 
 	// determine how we've been invoked
@@ -388,9 +394,9 @@ int main(int argc, char *argv[])
 				break;
 			}
 			if (psStatus)
-				printf("PS %d: ENGAGED\n", g_intParam);
+				printf("PS %d: ONLINE\n", g_intParam);
 			else
-				printf("PS %d: FAILED\n", g_intParam);
+				printf("PS %d: OFFLINE\n", g_intParam);
 			break;
 
 		case 9:
@@ -399,7 +405,28 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Error: Failed to get ASIC version - status %d\n", status);
 				break;
 			}
-			printf("ASIC Version: V%d\n", asicVersion);
+
+			chipStep = (asicVersion & ASIC_CHIP_STEP_MASK) >> ASIC_CHIP_STEP_SHFT;
+			chipRev = (asicVersion & ASIC_CHIP_REV_MASK) >> ASIC_CHIP_REV_SHFT;
+			printf("ASIC Version: V");
+			if (chipRev == 0) {
+				switch (chipStep) {
+					case ASIC_CHIP_STEP_A:
+						printf("1\n");
+						break;
+					case ASIC_CHIP_STEP_B:
+						printf("2\n");
+						break;
+					case ASIC_CHIP_STEP_C:
+						printf("3\n");
+						break;
+					default:
+						printf("0\n");
+						break;
+				}
+			} else {
+				printf("0\n");
+			}
 			break;
 
 		case 10:
@@ -458,8 +485,11 @@ int main(int argc, char *argv[])
 				}
 #define PRINT_REC(str,fmt,arg...)  printf("        %-*s : "fmt,35,str,arg);
 
-				PRINT_REC("Link Width"," %s\n", IbLinkWidthToText(portPtrs[portLinkWidthSupportedIndex].val.intVal));
-				PRINT_REC("Link Speed"," %s\n", IbLinkSpeedToText(portPtrs[portLinkSpeedSupportedIndex].val.intVal));
+				StlLinkWidthToText(portPtrs[portLinkWidthSupportedIndex].val.intVal, portLinkWidthSupportedText, 20);
+				StlLinkSpeedToText(portPtrs[portLinkSpeedSupportedIndex].val.intVal, portLinkSpeedSupportedText, 20);
+
+				PRINT_REC("Link Width"," %s\n", portLinkWidthSupportedText);
+				PRINT_REC("Link Speed"," %s\n", portLinkSpeedSupportedText);
 				PRINT_REC("FM Enabled"," %s\n", portPtrs[portFMEnabledIndex].val.intVal ? "Yes" : "No");
 				PRINT_REC("Link CRC Mode"," %s\n", StlPortLtpCrcModeToText(portPtrs[portLinkCRCModeIndex].val.intVal,portLinkCRCModeValue,sizeof(portLinkCRCModeValue)));
 				PRINT_REC("vCU"," %d\n", portPtrs[portvCUIndex].val.intVal);
@@ -476,7 +506,7 @@ retErr:
 				fprintf(stderr, "Error: Failed to get board id - status %d\n", status);
 				break;
 			}
-			printf("BoardID: 0x%02x\n", boardID & 0xff);
+			printf("BoardID: 0x%02x\n", boardID);
 			break;
 
 		default:

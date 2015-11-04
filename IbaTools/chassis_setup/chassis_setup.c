@@ -37,17 +37,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/stl_types.h"
 
 #define NO_TZ_DST_SETUP		100
-
+#define SYSLOG_PORT_DEFAULT 	-1
+#define SYSLOG_FACILITY_DEFAULT -1
 /* Info for all chassis */
-int tzOffset;			/* Offset in hours (from UTC) */
-dstInfo_t dstInfo;		/* DST start and end info */
-char syslogIpAddr[20];  /* IP addr of syslog server */
-int syslogPort = -1;	/* Port for syslog */
-int syslogFacility = -1; /* Facility level for syslog */
-char ntpIpAddr[20];  	/* IP addr of NTP server */
-int linkWidthSelection;	/* selection for link width */
-int setname;			/* should OPA Node Desc be set to match ethernet name */
-int linkCRCModeSelection; /* selection for Link CRC mode */
+int tzOffset;					/* Offset in hours (from UTC) */
+dstInfo_t dstInfo;				/* DST start and end info */
+char syslogIpAddr[20];  			/* IP addr of syslog server */
+int syslogPort = SYSLOG_PORT_DEFAULT;		/* Port for syslog */
+int syslogFacility = SYSLOG_FACILITY_DEFAULT; 	/* Facility level for syslog */
+char ntpIpAddr[20];  				/* IP addr of NTP server */
+int linkWidthSelection;				/* selection for link width */
+int setname;					/* should OPA Node Desc be set to match ethernet name */
+int linkCRCModeSelection; 			/* selection for Link CRC mode */
 
 /* Globals for chassis specifics */
 
@@ -78,7 +79,12 @@ int getYesNo(char *question, int def)
 		printf("%s: ", question);
 		if (fgets(answerBuf, 8, stdin)) {
 			stripCR(answerBuf);
-			if ((answerBuf[0] == 'n') || (answerBuf[0] == 'N'))
+			if (strncmp(answerBuf, "none", 4) == 0)
+			{
+				res = 0;
+				done = 1;
+			}
+			else if ((answerBuf[0] == 'n') || (answerBuf[0] == 'N'))
 			{
 				res = 0;
 				done = 1;
@@ -102,7 +108,7 @@ int getYesNo(char *question, int def)
 	return(res);
 }
 
-int getInt(char *question, int low, int high)
+int getInt(char *question, int low, int high, boolean allowAbort, int abortValue)
 {
 	int done = 0;
 	int selection;
@@ -113,9 +119,15 @@ int getInt(char *question, int low, int high)
 
 	while (!done)
 	{
-		printf("%s: ", question);
+		if (allowAbort)
+			printf("%s (or none): ", question);
+		else
+			printf("%s: ", question);
 		if (fgets(answerBuf, 64, stdin)) {
 			stripCR(answerBuf);
+
+			if (allowAbort && (strncmp(answerBuf, "none", 4) == 0))
+				return abortValue;
 
 			if (strlen(answerBuf) == 0)
 				goodInt = 0;
@@ -364,7 +376,7 @@ void getTimeZoneInfo(int configureTZDST)
 			printf("\t15 - Australia - Sydney\n");
 			printf("\t16 - New Zealand - Auckland\n");
 			printf("\t17 - Configure manually\n");
-			tzSelection = getInt("Enter selection", 1, 17);
+			tzSelection = getInt("Enter selection", 1, 17, FALSE, 0);
 			daylight = 1;
 			switch (tzSelection)
 			{
@@ -428,7 +440,7 @@ void getTimeZoneInfo(int configureTZDST)
 				setupTZInfo(timeZone);
 			else
 			{
-				tzOffset = getInt("Enter timezone offset in hours - positive is east, negative is west of UTC", -12, 12); 
+				tzOffset = getInt("Enter timezone offset in hours - positive is east, negative is west of UTC", -12, 12, FALSE, 0); 
 				daylight = getYesNo("Does your timezone observe Daylight Saving or Summer Time? [y]", 1);
 				if (daylight)
 				{
@@ -439,14 +451,14 @@ void getTimeZoneInfo(int configureTZDST)
 						printf("For month, valid replies are:           3-11: 3-Mar, 4-Apr, 5-May, 6-Jun, 7-Jul, 8-Aug, 9-Sep, 10-Oct, 11-Nov\n");
 						printf("For day of week, valid replies are:     1-7:  1-Sun, 2-Mon, 3-Tue, 4-Wed, 5-Thu, 6-Fri, 7-Sat\n");
 						printf("For which day, valid replies are:       1-5:  1-1st, 2-2nd, 3-3rd, 4-4th, 5-last\n");
-						dstInfo.startMonth = getInt("Enter the month in which your timezone begins observing DST/Summer Time", 3, 11);
-						dstInfo.startDay = getInt("Enter the day of week on which your timezone begins observing DST/Summer Time", 1, 7);
+						dstInfo.startMonth = getInt("Enter the month in which your timezone begins observing DST/Summer Time", 3, 11, FALSE, 0);
+						dstInfo.startDay = getInt("Enter the day of week on which your timezone begins observing DST/Summer Time", 1, 7, FALSE, 0);
 						snprintf(questionText, sizeof(questionText), "Enter which %s in %s your timezone begins observing DST/Summer Time", DaysOfWeek[dstInfo.startDay], MonthsOfYear[dstInfo.startMonth]);
-						dstInfo.startWhich = getInt(questionText, 1, 5);
-						dstInfo.endMonth = getInt("Enter the month in which your timezone ends observing DST/Summer Time", 3, 11);
-						dstInfo.endDay = getInt("Enter the day of week on which your timezone ends observing DST/Summer Time", 1, 7);
+						dstInfo.startWhich = getInt(questionText, 1, 5, FALSE, 0);
+						dstInfo.endMonth = getInt("Enter the month in which your timezone ends observing DST/Summer Time", 3, 11, FALSE, 0);
+						dstInfo.endDay = getInt("Enter the day of week on which your timezone ends observing DST/Summer Time", 1, 7, FALSE, 0);
 						snprintf(questionText, sizeof(questionText), "Enter which %s in %s your timezone ends observing DST/Summer Time", DaysOfWeek[dstInfo.endDay], MonthsOfYear[dstInfo.endMonth]);
-						dstInfo.endWhich = getInt(questionText, 1, 5);
+						dstInfo.endWhich = getInt(questionText, 1, 5, FALSE, 0);
 						printf("You have selected the following start/end parameters:\n");
 						printf("  Start DST/Summer Time on the %s %s in %s\n", Ordinals[dstInfo.startWhich], DaysOfWeek[dstInfo.startDay], MonthsOfYear[dstInfo.startMonth]);
 						printf("  End DST/Summer Time on the %s %s in %s\n", Ordinals[dstInfo.endWhich], DaysOfWeek[dstInfo.endDay], MonthsOfYear[dstInfo.endMonth]);
@@ -492,12 +504,16 @@ int getIpAddress(char *ipAddress, char *promptText)
 	while (!done)
 	{
 		p = inbuf;
-		printf("Enter IP address for %s: ", promptText);
+		printf("Enter IP address for %s (or none): ", promptText);
 		if (fgets(inbuf, 64, stdin) == NULL) {
 			goodSyntax = 0;
+			printf("\n");
 		} else {
+			if (strncmp(inbuf, "none", 4) == 0)
+			{
+				return 0;
+			}
 			goodSyntax = 1;
-
 			for (i = 0; i < 4; i++)
 			{
 				if ((res = validateIpAddrSection(p)) > 0)
@@ -709,12 +725,12 @@ int getGeneralInfo()
 		useSyslogPort = getYesNo("Do you wish to configure the syslog TCP/UDP port number? [n]", 0);
 		if (useSyslogPort)
 		{
-			syslogPort = getInt("Enter TCP/UDP port number for syslog", 1, 1<<16);
+			syslogPort = getInt("Enter TCP/UDP port number for syslog", 1, 1<<16, TRUE, SYSLOG_PORT_DEFAULT);
 		}
 		useSyslogFacility = getYesNo("Do you wish to configure the syslog facility? [n]", 0);
 		if (useSyslogFacility)
 		{
-			syslogFacility = getInt("Enter facility level for syslog (0-23)", 0, 23);
+			syslogFacility = getInt("Enter facility level for syslog (0-23)", 0, 23, TRUE, SYSLOG_FACILITY_DEFAULT);
 		}
 	}
 	else
@@ -738,10 +754,13 @@ int getGeneralInfo()
 	if (setLinkWidth)
 	{
 		printf("\t1 : 1X\n\t2 : 2X\n\t3 : 1X/2X\n\t4 : 3X\n\t5 : 1X/3X\n\t6 : 2X/3X\n\t7 : 1X/2X/3X\n\t8 : 4X\n\t9 : 1X/4X\n\t10 : 2X/4X\n\t11 : 1X/2X/4X\n\t12 : 3X/4X\n\t13 : 1X/3X/4X\n\t14 : 2X/3X/4X\n\t15 : 1X/2X/3X/4X\n");
-		linkWidthSelection = getInt("Enter selection", 1, 15);
-		printf("*******************************************************************************\n");
-		printf("*** Note: a reboot of all chassis devices is required in order to activate\n*** changes to the chassis link width\n");
-		printf("*******************************************************************************\n");
+		linkWidthSelection = getInt("Enter selection", 1, 15, TRUE, 0);
+		if (linkWidthSelection > 0)
+		{
+			printf("*******************************************************************************\n");
+			printf("*** Note: a reboot of all chassis devices is required in order to activate\n*** changes to the chassis link width\n");
+			printf("*******************************************************************************\n");
+		}
 	} else
 		linkWidthSelection = 0;
 
@@ -755,10 +774,13 @@ int getGeneralInfo()
 	setLinkCRCMode = getYesNo("Do you wish to configure the Link CRC Mode? [n]", 0);
 	if (setLinkCRCMode) {
 		printf("\t0 : 16b,\n\t1 : 14b/16b,\n\t2 : 48b/16b,\n\t3 : 48b/14b/16b,\n\t4 : per-lane/16b,\n\t5 : per-lane/14b/16b,\n\t6 : per-lane/48b/16b,\n\t7 : per-lane/48b/14b/16b\n");
-		linkCRCModeSelection = getInt("Enter selection", 0, 7);
-		printf("*******************************************************************************\n");
-		printf("*** Note: a reboot of all chassis devices is required in order to activate\n*** changes to the chassis link CRC mode\n");
-		printf("*******************************************************************************\n");
+		linkCRCModeSelection = getInt("Enter selection", 0, 7, TRUE, -1);
+		if (linkCRCModeSelection > -1)
+		{
+			printf("*******************************************************************************\n");
+			printf("*** Note: a reboot of all chassis devices is required in order to activate\n*** changes to the chassis link CRC mode\n");
+			printf("*******************************************************************************\n");
+		}
 	} else
 		linkCRCModeSelection = -1;
 

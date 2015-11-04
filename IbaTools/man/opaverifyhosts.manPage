@@ -13,10 +13,12 @@ opaverifyhosts
 .NL
 
 .PP
-Helps perform single node verification. The actual verification is performed using /root/hostverify.sh . A sample of hostverify.sh is provided in /opt/opa/samples/hostverify.sh and should be reviewed and edited to set appropriate configuration and performance expectations and select which tests to run by default. See /opt/opa/samples/hostverify.sh and /sbin/opaverifyhost.sh for more information.
+Performs single node verification. The actual verification is performed using /root/hostverify.sh. A sample file is provided in /opt/opa/samples/hostverify.sh. You can review and edit the sample file to set appropriate configuration and performance expectations and select which tests to run by default. See /opt/opa/samples/hostverify.sh and /sbin/opaverifyhost.sh for more information.
 .SH Syntax
 .NL
-opaverifyhosts [-kc] [-f \fIhostfile\fR] [-u \fIupload\(ulfile\fR] [-d \fIupload\(uldir\fR] [-h \fIhosts\fR] [-T \fItimelimit\fR] [ \fItest\fR...]
+opaverifyhosts [-kc] [-f \fIhostfile\fR] [-u \fIupload\(ulfile\fR] [-d \fIupload\(uldir\fR]
+.br
+[-h \fIhosts\fR] [-T \fItimelimit\fR] [ \fItest\fR...]
 .PP
 or
 .br
@@ -27,42 +29,52 @@ opaverifyhosts --help
 .TP 10
 --help 
 .NL
-Produce full help text.
+Produces full help text.
+
 .TP 10
 -k 
 .NL
-At start and end of verification, kill any existing hostverify or xhpl jobs on the hosts.
+At start and end of verification, kills any existing hostverify or xhpl jobs on the hosts.
+
 .TP 10
 -c 
 .NL
-Copy hostverify.sh to hosts first, useful if you have edited it.
+Copies hostverify.sh to hosts first, useful if you have edited it.
+
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster, default is /etc/sysconfig/opa/hosts. 
+File with hosts in cluster. Default is /etc/sysconfig/opa/hosts. 
+
 .TP 10
 -h \fIhosts\fR 
 .NL
 List of hosts to ping.
+
 .TP 10
 -u \fIupload\(ulfile\fR 
 .NL
-Filename to upload hostverify.res to after verification to allow backup and review of the detailed results for each node. The default upload destination file is hostverify.res . If -u \'\' is specified, no upload will occur.
+Filename to upload hostverify.res to after verification to allow backup and review of the detailed results for each node. The default upload destination file is hostverify.res. If -u \'\' is specified, no upload occurs.
+
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Directory to upload result from each host to, default is uploads 
+Directory to upload result from each host to. Default is uploads.
+
 .TP 10
 -T \fItimelimit\fR 
 .NL
-Time limit in seconds for host to complete tests, default of 300 seconds (5 minutes)
+Time limit in seconds for host to complete tests. Default is 300 seconds (5 minutes).
+
 .TP 10
  \fItest\fR 
 .NL
-One or more specific tests to run (see /opt/opa/samples/hostverify.sh for a list of available tests). This verifies basic node configuration and performance by running /root/hostverify.sh on all specified hosts.Prior to using the  \fItest\fR option, edit /opt/opa/samples/hostverify.sh to set proper expectations for node configuration and performance. Then be sure to use the -c option on first run for a given node so that /opt/opa/samples/hostverify.sh gets copied to each node as /root/hostverify.sh .
+One or more specific tests to run (see /opt/opa/samples/hostverify.sh for a list of available tests). This verifies basic node configuration and performance by running /root/hostverify.sh on all specified hosts.
 
+.IP
+Prior to using the  \fItest\fR option, edit /opt/opa/samples/hostverify.sh to set proper expectations for node configuration and performance. Then be sure to use the -c option on first run for a given node so that /opt/opa/samples/hostverify.sh gets copied to each node as /root/hostverify.sh.
 .PP
-A summary of results is appended to FF\(ulRESULT\(ulDIR/verifyhosts.res . A punch list of failures is also appended to FF\(ulRESULT\(ulDIR/punchlist.csv . Only failures are shown on stdout.
+A summary of results is appended to FF\(ulRESULT\(ulDIR/verifyhosts.res. A punch list of failures is also appended to FF\(ulRESULT\(ulDIR/punchlist.csv. Only failures are shown on stdout.
 .SH Examples 
 .NL
 opaverifyhosts -c
@@ -77,14 +89,17 @@ HOSTS=\'arwen elrond\' opaverifyhosts
 \fBHOSTS\fR 
 .NL
 List of hosts, used if -h option not supplied.
+
 .TP 10
 \fBHOSTS\(ulFILE\fR 
 .NL
-File containing list of hosts, used in absence of -f and -h .
+File containing list of hosts, used in absence of -f and -h.
+
 .TP 10
 \fBUPLOADS\(ulDIR\fR 
 .NL
-Directory to upload to, used in absence of -d .
+Directory to upload to, used in absence of -d.
+
 .TP 10
 \fBFF\(ulMAX\(ulPARALLEL\fR 
 .NL

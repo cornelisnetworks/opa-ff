@@ -35,11 +35,7 @@
 # this script should be . included in a run_ script
 # Input:
 #   MPICH_PREFIX  - path to MPICH tools
-#   SHMEM_PREFIX  - path to SHMEM tools
 #   MPI_HOSTS  - mpi_hosts file to use (default is $PWD/mpi_hosts)
-#   MPI_TASKSET - arguments to /bin/taskset to control CPU selection
-#                 default is to not use /bin/taskset
-#                 may be set in environment or param file
 #   SHOW_MPI_HOSTS - set to "y" if MPI_HOSTS contents should be output prior
 #                    to starting job.  Set to "n" to disable
 #                    defaults to "y"
@@ -48,35 +44,29 @@
 #                    Note the file might include some comment lines
 #   NUM_PROCESSES - number of processes in job, if "" no count is specified
 #                if "all" use wc -l $MPI_HOSTS as the process count
-#   MIN_PROCESSES - minimum number of processes in job (default of 2)
-#   MULT_PROCESSES - NUM_PROCESSES must be a multiple of this (default of 1)
-#   PARAM_FILE - Native IB param file to use, if "" no param file is specified
-#   APP - application name for use a prefix to LOGFILE name
 #   LOGFILE - logfile to append results of run to, if "" this script will define
 #   LOGSUFFIX - suffix to append to logfile name defined by this script
 # Output:
-#   SHMEM_RUN_CMD - MPI command to start job, actual program name and args can be suffixed
-#   LOGFILE - logfile to append results of run to
-#   USING_MPD - is MPD being used, in which case a -wdir option may be needed
-#   PARAM_ARG - argument to preceed param file, if "", no selection allowed
-#           this only makes sense for caller to use if PARAM_FILE="" on input
-#			If a PARAM_FILE was specified, this is built into SHMEM_RUN_CMD
-#   PROCESSES_ARG - argument to preceed process count
-#           this only makes sense for caller to use if NUM_PROCESSES="" on input
-#	MPI_USED - MPI being used (openmpi, mvapich or mvapich2)
-#   creates ff.hosts file listing each unique host used for run
+#   MPIRUN_CMD - MPI command to start job, actual program name and args can be suffixed
 
-. ./select_mpi	# default MPICH_PREFIX if necessary
-SHMEM_PREFIX=${SHMEM_PREFIX:-/usr/shmem/intel/}	# default SHMEM_PREFIX
+get_shmem_bench_dir()
+{
+	local instDir=`rpm -q --queryformat="%{INSTFILENAMES}" shmem-benchmarks_gcc_hfi`
+	if [[ $? -ne 0 || $instDir = "(none)" || ! -d $instDir ]] ; then
+		echo "Warning: shmem-benchmarks dir could not be determined via rpm" >&2
+		instDir="/usr/shmem/gcc/openshmem-1.0h-hfi/tests/shmem-benchmarks"
+	fi
+	echo $instDir
+}
 
-# helper function which can be called by each run_* script to output the
-# list of hosts the job is run for.  By default the output is enabled.
-# This can be especially useful when running many small
-# batch jobs, such as cabletest, so that errors in the log can more easily
-# be associated to the list of hosts included in the run
 show_mpi_hosts()
 {
 	local lines
+
+	if [[ -z $MPI_HOSTS ]] ; then
+		echo "No MPI hosts file defined"
+		return 0
+	fi
 
 	echo "Using hosts list: $MPI_HOSTS"
 
@@ -105,98 +95,6 @@ show_mpi_hosts()
 	fi
 }
 
-MPI_HOSTS=${MPI_HOSTS:-$PWD/mpi_hosts}
-
-if [ $(echo $MPI_HOSTS|cut -c1) != '/' ]
-then
-	MPI_HOSTS="$PWD/$MPI_HOSTS"
-fi
-
-MIN_PROCESSES=${MIN_PROCESSES:-2}
-MULT_PROCESSES=${MULT_PROCESSES:-1}
-if [ z"$NUM_PROCESSES" == zall ]
-then
-	# skip comment and blank lines
-	NUM_PROCESSES=$(cat $MPI_HOSTS|egrep -v '^[[:space:]]*#'|egrep -v '^[[:space:]]*$'|wc -l)
-fi
-if [ z"$NUM_PROCESSES" != z ]
-then
-	if ! [ $NUM_PROCESSES -ge $MIN_PROCESSES ] 2>/dev/null
-	then
-		echo " Invalid process count: $NUM_PROCESSES"
-		echo " This application requires a minimum of $MIN_PROCESSES processes"
-		exit 2
-	fi
-	if [ $(($NUM_PROCESSES % $MULT_PROCESSES)) -ne 0 ]
-	then
-		echo " Invalid process count: $NUM_PROCESSES"
-		echo " This application requires a multiple of $MULT_PROCESSES processes"
-		exit 2
-	fi
-fi
-
-SHMEM_RUN=$SHMEM_PREFIX/bin/shmemrun
-if [ ! -e "$SHMEM_RUN" ]
-then
-	echo "$SHMEM_RUN: Not Found" >&2
-	exit 1
-fi
-
-# additional arguments can be specified on mpirun command line
-MPI_CMD_ARGS=
-
-# choose mode: via MPD_MODE
-# 0 -> mpich1 IB via ssh/rsh
-# 1 -> mpich1 IB via mpd
-# 2 -> mpich2 via mpd
-# 3 -> mpich1 sockets via ssh/rsh
-# 4 -> openmpi via ssh
-# 5 -> mpich2 via mpirun_rsh
-MPD_MODE=0	# assume mvapich1 via mpirun_rsh
-if [ -e "$MPICH_PREFIX/bin/mpdtrace" ]
-then
-	$MPICH_PREFIX/bin/mpdtrace >/dev/null 2>&1
-	if [ $? = 0 ]
-	then
-		if [ -e "$MPICH_PREFIX/bin/mpirun_mpd" ]
-		then
-			MPD_MODE=1	# mvapich1 via MPD
-		else
-			MPD_MODE=2	# mvapich2 via MPD
-		fi
-	elif [ -e $MPICH_PREFIX/bin/mpirun_rsh ]
-	then
-		if [ -e "$MPICH_PREFIX/bin/mpirun.py" -o -e "$MPICH_PREFIX/bin/mpiexec" ]
-		then
-			MPD_MODE=5	# mvapich2 via mpirun_rsh
-		else
-			MPD_MODE=0	# mvapich1 via mpirun_rsh
-		fi
-	fi
-elif [ -e $MPICH_PREFIX/bin/ompi_info ]
-then
-	MPD_MODE=4	# openmpi
-elif [ ! -e $MPICH_PREFIX/bin/mpirun_rsh ]
-then
-	MPD_MODE=3	# mvapich1 sockets
-elif [ -e $MPICH_PREFIX/bin/mpirun_rsh ]
-then
-	if [ -e "$MPICH_PREFIX/bin/mpirun.py" -o -e "$MPICH_PREFIX/bin/mpiexec" ]
-	then
-		MPD_MODE=5	# mvapich2 via mpirun_rsh
-	else
-		MPD_MODE=0	# mvapich1 via mpirun_rsh
-	fi
-fi
-
-if [ $MPD_MODE != 1 -a ! -f $MPI_HOSTS ]
-then
-	echo " Please create $MPI_HOSTS file with the list of "
-	echo " processors in this cluster. One hostname per line."
-	echo " See mpi_hosts.sample file"
-	exit 1
-fi
-
 if [ -z "$LOGFILE" ]
 then
 	CURTIME=`date +%d%b%y%H%M%S`
@@ -210,105 +108,31 @@ then
 	> $LOGFILE
 fi
 
-# environment to add to MPI_RUN_CMD to disable affinity in MPI such that
-# MPI_TASKSET can have desired effect
-disable_affinity=
-if [ $MPD_MODE = 0 ]
-then
-	echo " Running in MPIRUN mode (native IB MPICH1)." | tee -i -a $LOGFILE
-	PROCESSES_ARG="-np"
-	PARAM_ARG=""
+SHMEM_PREFIX=${SHMEM_PREFIX:-`pkg-config --variable=prefix openshmem`}
+SHMEM_PREFIX=${SHMEM_PREFIX:-/usr/shmem/gcc/openshmem-1.0h-hfi}	# default SHMEM_PREFIX
+export SHMEM_RUN=$SHMEM_PREFIX/bin/oshrun
 
-	if [ -e ./shmem.mvapich.params ]
-	then
-		. ./shmem.mvapich.params
-	fi
-	disable_affinity="VIADEV_USE_AFFINITY=0"
-
-	#SHMEM_RUN_CMD="SHMEM_MPIRUN=$MPICH_PREFIX/bin/mpirun $SHMEM_RUN ${NUM_PROCESSES:+-np $NUM_PROCESSES} -m $MPI_HOSTS $MPI_CMD_ARGS "
-	SHMEM_RUN_CMD="SHMEM_MPIRUN=$MPICH_PREFIX/bin/mpirun_rsh $SHMEM_RUN ${NUM_PROCESSES:+-np $NUM_PROCESSES} -m $MPI_HOSTS $MPI_CMD_ARGS "
-	head -n $NUM_PROCESSES $MPI_HOSTS|sort -u > ff.hosts
-
-	USING_MPD=n
-	MPI_USED=mvapich
-elif [ $MPD_MODE = 1 ]
-then
-	# TBD is MPD mode supported by SHMEM
-	echo " Running in MPD mode (native IB MPICH1)." | tee -i -a $LOGFILE
-	PARAM_ARG=""
-	PROCESSES_ARG="-np"
-	if [ -e ./shmem.mvapich.params ]
-	then
-		. ./shmem.mvapich.params
-	fi
-	disable_affinity="VIADEV_USE_AFFINITY=0"
-
-	SHMEM_RUN_CMD="SHMEM_MPIRUN=$MPICH_PREFIX/bin/mpirun_mpd $SHMEM_RUN ${NUM_PROCESSES:+-np $NUM_PROCESSES} $MPI_CMD_ARGS "
-	USING_MPD=y
-	MPI_USED=mvapich
-	# TBD - how to idenfity mpi_hosts?
-	> ff.hosts
-elif [ $MPD_MODE = 2 ]
-then
-	# TBD is MPD mode supported by SHMEM
-	echo " Running in MPD mode (MPICH2)." | tee -i -a $LOGFILE
-	PARAM_ARG=""
-	PROCESSES_ARG="-n"
-
-	if [ -e ./shmem.mvapich2.params ]
-	then
-		. ./shmem.mvapich2.params
-	fi
-	disable_affinity="MV2_ENABLE_AFFINITY=0"
-	SHMEM_RUN_CMD="SHMEM_MPIRUN=$MPICH_PREFIX/bin/mpiexec $SHMEM_RUN -m $MPI_HOSTS ${NUM_PROCESSES:+-np $NUM_PROCESSES} $MPI_CMD_ARGS "
-	USING_MPD=y
-	MPI_USED=mvapich2
-	head -n $NUM_PROCESSES $MPI_HOSTS|cut -f1 -d:|sort -u > ff.hosts
-elif [ $MPD_MODE = 4 ]
-then
-	echo " Running in MPIRUN mode (OpenMPI)." | tee -i -a $LOGFILE
-	PARAM_ARG=""
-	PROCESSES_ARG="-np"
-
-	if [ -e ./shmem.openmpi.params ]
-	then
-		. ./shmem.openmpi.params
-	fi
-	SHMEM_RUN_CMD="SHMEM_MPIRUN=$MPICH_PREFIX/bin/mpirun $SHMEM_RUN ${NUM_PROCESSES:+-np $NUM_PROCESSES} -m $MPI_HOSTS $MPI_CMD_ARGS "
-	USING_MPD=n
-	MPI_USED=openmpi
-	head -n $NUM_PROCESSES $MPI_HOSTS|sort -u > ff.hosts
-elif [ $MPD_MODE = 5 ]
-then
-	echo " Running in MPIRUN mode (native IB MPICH2)." | tee -i -a $LOGFILE
-	PROCESSES_ARG="-np"
-	PARAM_ARG=""
-
-	if [ -e ./shmem.mvapich2.params ]
-	then
-		. ./shmem.mvapich2.params
-	fi
-	disable_affinity="MV2_ENABLE_AFFINITY=0"
-	#SHMEM_RUN_CMD="SHMEM_MPIRUN=$MPICH_PREFIX/bin/mpirun $SHMEM_RUN ${NUM_PROCESSES:+-np $NUM_PROCESSES} -m $MPI_HOSTS $MPI_CMD_ARGS "
-	SHMEM_RUN_CMD="SHMEM_MPIRUN=$MPICH_PREFIX/bin/mpirun_rsh $SHMEM_RUN ${NUM_PROCESSES:+-np $NUM_PROCESSES} -m $MPI_HOSTS $MPI_CMD_ARGS "
-	head -n $NUM_PROCESSES $MPI_HOSTS|sort -u > ff.hosts
-
-	USING_MPD=n
-	MPI_USED=mvapich2
-else
-	# must be mpich1 sockets, we don't support that
-	echo "Unable to determine mpirun to be used"
+if [[ ! -e $SHMEM_RUN ]] ; then
+	echo "$SHMEM_RUN: Not found" >&2
 	exit 1
 fi
 
-# add /bin/taskset to MPI_RUN_CMD based on MPI_TASKSET value
-if [ x"$MPI_TASKSET" != x ]
-then
-	if type /bin/taskset >/dev/null 2>&1
-	then
-		SHMEM_RUN_CMD="$SHMEM_RUN_CMD $disable_affinity /bin/taskset $MPI_TASKSET "
-	elif type /usr/bin/taskset > /dev/null 2>&1
-	then
-		SHMEM_RUN_CMD="$SHMEM_RUN_CMD $disable_affinity /usr/bin/taskset $MPI_TASKSET "
+OPENSHMEM_PREFIX=${OPENSHMEM_PREFIX:-`pkg-config --variable=prefix openshmem`}
+OPENSHMEM_PREFIX=${OPENSHMEM_PREFIX:-/usr/shmem/gcc/openshmem-1.0h-hfi}
+GASNET_PREFIX=${GASNET_PREFIX:-/usr/shmem/gcc/gasnet-1.24.0-openmpi-hfi}
+export MPI_HOSTS=${MPI_HOSTS:-./shmem_hosts}
+
+if [[ -z $MPICH_PREFIX ]] ; then
+	. ./select_mpi
+	if [[ -z $MPICH_PREFIX ]] ; then
+		echo "Error: MPICH_PREFIX not set" >&2
+		exit 1
 	fi
 fi
+
+export PATH=${MPICH_PREFIX}/bin:${PATH}
+export LD_LIBRARY_PATH=${MPICH_PREFIX}/lib64:${LD_LIBRARY_PATH}
+
+export PATH=${OPENSHMEM_PREFIX}/bin:${GASNET_PREFIX}/bin:${PATH}
+export LD_LIBRARY_PATH=${OPENSHMEM_PREFIX}/lib:${GASNET_PREFIX}/lib:${LD_LIBRARY_PATH}
+export MPIRUN_CMD="mpirun --map-by node -np %N -mca pml ob1 -mca btl tcp,sm,self -mca plm_rsh_no_tree_spawn 1 --allow-run-as-root --hostfile $MPI_HOSTS %P %A"

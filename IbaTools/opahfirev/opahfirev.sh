@@ -53,35 +53,23 @@ then
 	Usage
 fi
 
-# used to be:
-# when output was:
-# hfis=`/sbin/lspci | egrep -i 'InfiniBand' | grep -vi bridge | cut -d\  -f1`
-# 83:00.0 InfiniBand: QLogic Corp. IBA7322 QDR InfiniBand HFI (rev 02)
-# now output is either:
-# 83:00.0 InfiniBand: Intel Corporation Device 24f0
-# 83:00.0 Network controller: Intel Corporation Device 24f0
-hfis=`/sbin/lspci | egrep -wi 'InfiniBand|Intel Corporation Device 24f0' | grep -vi bridge | cut -d\  -f1`
+hfis=`/sbin/lspci | egrep -wi 'Intel Corporation Device 24f[01]' | grep -vi bridge | cut -d\  -f1`
 
 if [ -z "$hfis" ]
 then 
 	echo "No HFIs found."
 else
+	index=0
 	for hfi in $hfis
 	do
 		echo "######################"
 		echo `hostname` " - HFI $hfi"
 		# prepend to pci address as needed
-		if [ -e "/sys/bus/pci/drivers/ib_wfr_lite/0000:$hfi" ]
-		then
-			hfi_pci="0000:$hfi"
-			#dir=/sys/bus/pci/drivers/ib_wfr_lite/$hfi_pci
-			dir=/sys/class/infiniband
-			instance=$(cd $dir; echo wfr_lite[0-9]*)
-		elif [ -e "/sys/bus/pci/drivers/hfi1/0000:$hfi" ]
+		if [ -e "/sys/bus/pci/drivers/hfi1/0000:$hfi" ]
 		then
 			hfi_pci="0000:$hfi"
 			dir=/sys/class/infiniband
-			instance=$(cd $dir; echo hfi1_[0-9]*)
+			instance=$(cd $dir; echo hfi1_$index)
 		fi
 
 		if [ -e "/sys/class/infiniband/$instance" ]
@@ -98,5 +86,6 @@ else
 		fi
 
 		echo "######################"
+		((index++))
 	done
 fi

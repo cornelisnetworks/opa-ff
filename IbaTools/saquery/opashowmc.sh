@@ -43,10 +43,7 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-. $TOOLSDIR/ff_funcs
+. /opt/opa/tools/ff_funcs
 
 show_mc()
 {
@@ -60,23 +57,23 @@ show_mc()
 		port_opts="-h $hfi -p $port"
 	fi
 	echo "Fabric $hfi:$port Multicast Information:"
-	$BINDIR/opasaquery $port_opts -o mcmember 2>/dev/null | grep GID: | sed -e 's/GID: //' | while read mgid 
+	/usr/sbin/opasaquery $port_opts -o mcmember 2>/dev/null | grep GID: | sed -e 's/GID: //' | while read mgid 
 	do
-		$BINDIR/opasaquery $port_opts -o mcmember -m $mgid|head -4|grep -v 'PortGid:'
+		/usr/sbin/opasaquery $port_opts -o mcmember -m $mgid|head -4|grep -v 'PortGid:'
 		if [ "$showname" = "y" ]
 		then
-			$BINDIR/opasaquery $port_opts -o mcmember -m $mgid|grep 'PortGid:'|while read heading portgid rest
+			/usr/sbin/opasaquery $port_opts -o mcmember -m $mgid|grep 'PortGid:'|while read heading portgid rest
 			do
 				echo "$heading $portgid $rest"
 				portguid=$(echo $portgid|cut -f 2 -d :)
 				if [ $(($portguid)) -ne 0 ]
 				then
 					echo -n "  Name: "
-					$BINDIR/opasaquery $port_opts -o desc -g $(echo $portgid|cut -f 2 -d :)
+					/usr/sbin/opasaquery $port_opts -o desc -g $(echo $portgid|cut -f 2 -d :)
 				fi
 			done
 		else
-			$BINDIR/opasaquery $port_opts -o mcmember -m $mgid|grep 'PortGid:'
+			/usr/sbin/opasaquery $port_opts -o mcmember -m $mgid|grep 'PortGid:'
 		fi
 		echo
 	done
@@ -142,7 +139,7 @@ then
 	Usage
 fi
 
-check_ports_args fabric_info
+check_ports_args opashowmc
 
 for hfi_port in $PORTS
 do

@@ -43,7 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * NOTE: THIS CODE IS NOT FOR USE EXCEPT BY DISCOVERY AND OPA_SA_DB.
  * OTHER USERS SHOULD STICK TO USING OPA_SA_DB_PATH.H.
  *
- * OfedDiscovery exposes the path table as a set of shared-memory
+ * opasadb exposes the path table as a set of shared-memory
  * regions using a no-lock mechanism. See op_ppath_shared_table_t 
  * for a description of how access is managed.
  *

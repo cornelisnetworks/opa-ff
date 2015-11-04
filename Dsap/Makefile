@@ -26,7 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 # END_ICS_COPYRIGHT8   ****************************************
-# Makefile for OfedDiscovery
+# Makefile for Dsap
 
 # Include Make Control Settings
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project

@@ -193,7 +193,7 @@ disable_ports()
 	lidmap=$CONFIG_DIR/lidmap$suffix.csv
 
 	# generate lidmap
-	/sbin/opaextractlids $port_opts > $lidmap
+	/usr/sbin/opaextractlids $port_opts > $lidmap
 	if [ ! -s $lidmap ]
 	then
 		echo "opadisableports: Unable to determine fabric lids" >&2
@@ -292,7 +292,7 @@ disable_ports()
 			skipped=$(( $skipped + 1))
 		else
 			echo "Disabling link: $desc:$port -> $ldesc:$lport"
-			/sbin/opaportconfig $port_opts -l $lid -m $port disable
+			/usr/sbin/opaportconfig $port_opts -l $lid -m $port disable
 
 			if [ $? = 0 ]
 			then

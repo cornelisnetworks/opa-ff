@@ -57,7 +57,8 @@ APP=shmem-put-bw
 LOGFILE=
 . ./prepare_run
 
-EXECUTABLE="$SHMEM_PREFIX/bin/$APP"
+SAMPLE_DIR=${SAMPLE_DIR:-`get_shmem_bench_dir`}
+EXECUTABLE="$SAMPLE_DIR/$APP"
 CMD="$EXECUTABLE $@"
 if [ ! -x $EXECUTABLE ]
 then
@@ -69,7 +70,7 @@ fi
 	echo " Running SHMEM Uni-Directional Put Bandwidth Benchmark ..."
 	show_mpi_hosts
 	set -x
-	eval $SHMEM_RUN_CMD $CMD
+	$SHMEM_RUN -np $NUM_PROCESSES $CMD
 	set +x
 ) 2>&1 | tee -i -a $LOGFILE
 echo "########################################### " >> $LOGFILE

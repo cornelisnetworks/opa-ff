@@ -108,7 +108,7 @@ CORE_RACK="Core Rack:"
 CORE_NAME="Core Name:"
 CORE_SIZE="Core Size:"
 CORE_FULL="Core Full:"
-HFI_SUFFIX="HFI-1"
+HFI_SUFFIX="hfi1_0"
 
 
 ## Global variables:
@@ -174,16 +174,6 @@ debug_7=
 
 ## Local functions:
 functout=
-
-function clean_tempfiles() {
-	if [ $fl_clean == 1 ]
-	then
-		rm -f $FILE_TEMP $FILE_TEMP2
-	fi
-}
-
-trap 'clean_tempfiles; exit 1' SIGINT SIGHUP SIGTERM
-trap 'clean_tempfiles' EXIT
 
 function clean_tempfiles() {
 	if [ $fl_clean == 1 ]

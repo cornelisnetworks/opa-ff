@@ -1027,6 +1027,7 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 		}
 		break;
 
+#ifndef NO_STL_SERVICE_OUTPUT       // Don't output STL Service if defined
 	case OutputTypeStlServiceRecord:   
 		{   
 			STL_SERVICE_RECORD_RESULTS *pSRR;
@@ -1080,6 +1081,7 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 			}
 		}
 		break;
+#endif
 
 	case OutputTypeStlPKeyTableRecord:  
 		{   
@@ -1126,8 +1128,8 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 			PATH_RESULTS   *pPRR;
 			IB_PATH_RECORD *pPR = (IB_PATH_RECORD *)saMad.Data;
 
-			if(!g_gotSourceGid && (pQuery->InputType == InputTypeGidPair)){
-				fprintf(stderr, "SourceGid required for PathRecord query of Input=%s\n", iba_sd_query_input_type_msg(pQuery->InputType));
+			if(!g_gotSourceGid && (pQuery->InputType != InputTypeGidPair)) {
+				fprintf(stderr, "SourceGid (-x) argument required for PathRecord query of input type \"%s\"\n", iba_sd_query_input_type_msg(pQuery->InputType));
 				break;
 			}
 
@@ -1255,6 +1257,7 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 			if (pQuery->InputType != InputTypePathRecordNetworkOrder) {
 				BSWAP_IB_PATH_RECORD(pPR);
 			}
+
 			MAD_SET_METHOD_TYPE(&saMad, SUBN_ADM_GETTABLE);
 			MAD_SET_ATTRIB_ID(&saMad, SA_ATTRIB_PATH_RECORD);
 			MAD_SET_VERSION_INFO(&saMad,
@@ -1317,6 +1320,7 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 		}
 		break;
 
+#ifndef NO_STL_MCMEMBER_OUTPUT       // Don't output STL McMember if defined
 	case OutputTypeStlMcMemberRecord:  
         {   
 			STL_MCMEMBER_RECORD_RESULTS *pMCRR;
@@ -1381,6 +1385,7 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 			}
 		}
 		break;
+#endif
 
 	case OutputTypeMcMemberRecord:
 		{
@@ -1734,7 +1739,7 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 				case InputTypeNoInput:
 					break;
 				case InputTypeLid:
-					saMad.SaHdr.ComponentMask |= STL_CIB_COMP_LID;
+					saMad.SaHdr.ComponentMask |= STL_CIR_COMP_LID;
 					pCIR->LID = pQuery->InputValue.Lid;
 					break;
 				default:
@@ -1748,9 +1753,9 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 			pCIR->Reserved = 0;
 
 			// Default values.
-			saMad.SaHdr.ComponentMask |= STL_CIB_COMP_LEN | STL_CIB_COMP_ADDR;
+			saMad.SaHdr.ComponentMask |= STL_CIR_COMP_LEN | STL_CIR_COMP_ADDR;
 			pCIR->Length = STL_CABLE_INFO_PAGESZ - 1;
-			pCIR->u1.s.Address = STL_CIB_START_ADDR;
+			pCIR->u1.s.Address = STL_CIB_STD_START_ADDR;
 
 			BSWAP_STL_CABLE_INFO_RECORD(pCIR);
 			MAD_SET_METHOD_TYPE(&saMad, SUBN_ADM_GETTABLE);
@@ -1919,6 +1924,33 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 			}
 			break;
         }
+		break;
+
+	case OutputTypeStlFabricInfoRecord:
+		{
+			STL_FABRICINFO_RECORD_RESULT 	*pFIR;
+			STL_FABRICINFO_RECORD 		*pFI;
+			
+			if (pQuery->InputType != InputTypeNoInput)
+				break;
+
+			MAD_SET_METHOD_TYPE(&saMad, SUBN_ADM_GET);
+			MAD_SET_ATTRIB_ID(&saMad, STL_SA_ATTR_FABRICINFO_RECORD);
+			MAD_SET_VERSION_INFO(&saMad, STL_BASE_VERSION, MCLASS_SUBN_ADM, STL_SA_CLASS_VERSION);
+
+			fstatus = fe_saQueryCommon(connection, msgID, &saMad, &pRsp, &pQueryResults, sizeof(STL_FABRICINFO_RECORD));
+			if (fstatus != FSUCCESS) break;
+
+			pFIR = (STL_FABRICINFO_RECORD_RESULT*)pQueryResults->QueryResult;
+			pFI = &pFIR->FabricInfoRecord;
+
+			// There should only be one FabricInfo result.
+			if (pFIR->NumFabricInfoRecords > 0) {
+				*pFI = *((STL_FABRICINFO_RECORD*)fe_packetRecordOffset(pRsp, 0));
+				BSWAP_STL_FABRICINFO_RECORD(pFI);
+			}
+
+		}
 		break;
 
 	case OutputTypeStlQuarantinedNodeRecord:

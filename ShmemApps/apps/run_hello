@@ -65,7 +65,7 @@ fi
 	echo " Running SHMEM Hello Application ..."
 	show_mpi_hosts
 	set -x
-	eval $SHMEM_RUN_CMD $CMD
+	$SHMEM_RUN -np $NUM_PROCESSES $CMD
 	set +x
 ) 2>&1 | tee -i -a $LOGFILE
 echo "########################################### " >> $LOGFILE

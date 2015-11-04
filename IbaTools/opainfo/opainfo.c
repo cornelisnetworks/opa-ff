@@ -50,17 +50,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define RESP_WAIT_TIME 1000	/* in ms */
 #define MAD_ATTEMPTS 1	/* 1 attempt, no retries */
 
-#define QSFP_DATA_START 128
-
 // bit mask
 #define OTYPE_INFO 1
 #define OTYPE_STATS 2
 
 PrintDest_t g_dest;
 int g_printLineByLine = 0;
+uint8_t g_detail = 0;
 unsigned g_verbose = 0;
 uint64_t g_transactID = 0xffffffff1234000;	// Upper half overwritten by umad
 uint16_t g_pkey;	// mgmt pkey to use
+uint8_t g_cableInfo[STL_CIB_STD_LEN];
 
 #if defined(DBGPRINT)
 #undef DBGPRINT
@@ -242,7 +242,7 @@ FSTATUS get_local_stl_port_status( IN struct oib_port *portHandle,
 
 	status = perform_local_stl_pma_query(portHandle,
 						STL_PM_ATTRIB_ID_PORT_STATUS, 1<<24, mad);
-	BSWAP_STL_PORT_STATUS_RSP((STL_PORT_STATUS_RSP*)&(mad->PerfData), FALSE);
+	BSWAP_STL_PORT_STATUS_RSP((STL_PORT_STATUS_RSP*)&(mad->PerfData));
 	return status;
 }
 
@@ -250,16 +250,23 @@ FSTATUS get_local_stl_port_status( IN struct oib_port *portHandle,
 void show_info( struct oib_port *portHandle,
 					 IN int outputType,
 					 IN STL_PORT_INFO* pPortInfo,
-					 IN STL_CABLE_INFO* pCableInfo,
+					 IN uint8_t* cableInfo,
 					 IN STL_PORT_STATUS_RSP *pPortStatusRsp)
 {
 	uint64_t portGUID = oib_get_port_guid(portHandle);
 
-	if (! outputType)
+	if (! outputType) {
+		uint8_t detail = g_detail;
+
+		if (detail > CABLEINFO_DETAIL_ALL)
+			detail = CABLEINFO_DETAIL_ALL;
+
 		PrintStlPortSummary(&g_dest, 0, get_port_name(portHandle),
 				pPortInfo, portGUID, g_pkey,
-				pCableInfo, QSFP_DATA_START, STL_CABLE_INFO_MAXLEN, 
- 				pPortStatusRsp, g_printLineByLine);
+				cableInfo, STL_CIB_STD_START_ADDR, STL_CIB_STD_LEN, 
+ 				pPortStatusRsp, detail, g_printLineByLine);
+	}
+
 	if (outputType & (OTYPE_INFO|OTYPE_STATS))
 		PrintFunc(&g_dest, "%s\n", get_port_name(portHandle));
 	if ((outputType & OTYPE_INFO) && pPortInfo)
@@ -272,7 +279,7 @@ void show_info( struct oib_port *portHandle,
 void Usage(void)
 {
 
-	fprintf(stderr, "Usage: opainfo [-h hfi] [-p port] [-o type] [-v [-v]...]\n");
+	fprintf(stderr, "Usage: opainfo [-h hfi] [-p port] [-o type] [-g] [-d detail] [-v [-v]...]\n");
 	fprintf(stderr, "    -h hfi     hfi, numbered 1..n, 0=system wide port num\n");
 	fprintf(stderr, "               (default is 0)\n");
 	fprintf(stderr, "    -p port    port, numbered 1..n, 0=1st active\n");
@@ -282,6 +289,7 @@ void Usage(void)
 	fprintf(stderr, "               info - output detailed portinfo\n");
 	fprintf(stderr, "               stats - output detailed port counters\n");
 	fprintf(stderr, "    -g         Display in line-by-line format (default is summary format)\n");
+	fprintf(stderr, "    -d detail  output detail level 0-n CableInfo only (default 0)\n");
 	fprintf(stderr, "    -v         verbose output. Additional invocations will turn on debugging,\n");
 	fprintf(stderr, "               openib debugging and libibumad debugging.\n");
 	fprintf(stderr, "\n");
@@ -335,11 +343,11 @@ int main(int argc, char *argv[])
 	STL_SMP smpCableInfo;
 	STL_PERF_MAD madPortStatusRsp;
 	STL_PORT_INFO* pPortInfo;
-	STL_CABLE_INFO* pCableInfo = 0;
+	int have_cableinfo;
 	STL_PORT_STATUS_RSP *pPortStatusRsp = 0;
     struct oib_port     *portHandle = NULL;
 
-	while (-1 != (c = getopt_long(argc,argv, "h:p:o:gv", options, &index)))
+	while (-1 != (c = getopt_long(argc,argv, "h:p:o:d:gv", options, &index)))
 	{
 		switch (c)
 		{
@@ -358,7 +366,7 @@ int main(int argc, char *argv[])
 					Usage();
 				}
 				allPorts = 0;
-				break ;
+				break;
 			case 'o':
 				outputType |= checkOutputType(optarg);
 				if (outputType < 0)
@@ -366,6 +374,12 @@ int main(int argc, char *argv[])
 				break;
 			case 'g':
 				g_printLineByLine=1;
+				break;
+			case 'd':
+				if (FSUCCESS != StringToUint8(&g_detail, optarg, NULL, 0, TRUE)) {
+					fprintf(stderr, "opainfo: Invalid Detail: %s\n", optarg);
+					Usage();
+				}
 				break;
 			case 'v':
 				g_verbose++;
@@ -412,6 +426,7 @@ int main(int argc, char *argv[])
 
 	for (; portCount > 0; port++, portCount--)
 	{
+		have_cableinfo = FALSE;
 		ret = oib_open_port_by_num(&portHandle, hfi, port);
 		if (port == 0 && ret == EAGAIN) {
 			// asked for 1st active, but none active, use 1st port
@@ -442,17 +457,24 @@ int main(int argc, char *argv[])
 		}
 		pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(&smpPortInfo);
 
-		if (pPortInfo->PortPhyConfig.s.PortType == STL_PORT_TYPE_STANDARD) {
-			fstatus = get_local_stl_cable_info(portHandle, QSFP_DATA_START, &smpCableInfo);
-			if (FSUCCESS != fstatus) {
-				fprintf(stderr, "opainfo: Failed to get Cableinfo for hfi:port %s\n", 
-						get_port_name(portHandle));
-				pCableInfo = NULL;
-			} else  {
-				pCableInfo = (STL_CABLE_INFO *)stl_get_smp_data(&smpCableInfo);
+		if (IsCableInfoAvailable(pPortInfo)) {
+			uint16_t addr;
+			uint8_t *data;
+			have_cableinfo = TRUE;	// assume success
+			for (addr = STL_CIB_STD_START_ADDR, data=g_cableInfo;
+				 addr + STL_CABLE_INFO_MAXLEN <= STL_CIB_STD_END_ADDR; addr += STL_CABLE_INFO_DATA_SIZE, data += STL_CABLE_INFO_DATA_SIZE)
+			{
+				fstatus = get_local_stl_cable_info(portHandle, addr, &smpCableInfo);
+				if (FSUCCESS != fstatus) {
+					fprintf(stderr, "opainfo: Failed to get Cableinfo for hfi:port %s\n", 
+							get_port_name(portHandle));
+					have_cableinfo = FALSE;
+				} else  {
+					memcpy(data, ((STL_CABLE_INFO *)stl_get_smp_data(&smpCableInfo))->Data, STL_CABLE_INFO_DATA_SIZE);
+				}
 			}
 		} else {
-			pCableInfo = NULL;
+			have_cableinfo = FALSE;
 		}
 
 		fstatus = get_local_stl_port_status(portHandle, &madPortStatusRsp);
@@ -464,7 +486,7 @@ int main(int argc, char *argv[])
 			pPortStatusRsp = (STL_PORT_STATUS_RSP *)&(madPortStatusRsp.PerfData);
 		}
 
-		show_info(portHandle, outputType, pPortInfo, pCableInfo, pPortStatusRsp);
+		show_info(portHandle, outputType, pPortInfo, have_cableinfo?g_cableInfo:NULL, pPortStatusRsp);
 next:
 		oib_close_port(portHandle);
 		portHandle = NULL;

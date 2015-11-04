@@ -97,6 +97,9 @@ static void usage(char *app_name)
 	fprintf(stderr, "        15 - address 0x1040 - v0 or v1\n");
 	fprintf(stderr, "        16 - explore EEPROM trailer & config\n");
 	fprintf(stderr, "        17 - get board id\n");
+	fprintf(stderr, "        18 - dump primary FW EEPROMs\n");
+	fprintf(stderr, "        19 - probe mgmt fpga on EDF\n");
+	fprintf(stderr, "        20 - asic rev\n");
 	fprintf(stderr, "   -K - enforce password based security for all operations - prompts for password\n");
 	fprintf(stderr, "   -w - enforce password based security for all operations - password on command line\n");
 	fprintf(stderr, "\n");
@@ -167,14 +170,18 @@ int main(int argc, char *argv[])
 	uint32				mtuCap;
 	uint32				vlCap;
 	uint16				asicVal;
+	uint32				asicVal2;
 	uint16				dataOffset;
 	uint32				dataSize;
 	uint16				readLen;
 	uint16				bytesRecd;
 	uint8				dataBuffer[EEPROMSIZE];
+	uint8				bigDataBuffer[4 * EEPROMSIZE];
 	uint8				*data;
-	uint8				boardID;
+	uint16				boardID;
 	struct              oib_port *oib_port_session = NULL;
+	FILE				*fp;
+	char				dumpFileName[64];
 
 	// determine how we've been invoked
 	cmdName = strrchr(argv[0], '/');			// Find last '/' in path
@@ -393,16 +400,6 @@ int main(int argc, char *argv[])
 			printf("Sys Data                    : addr 0x%08x len %d\n", tableDescriptors.sysDataAddr, tableDescriptors.sysDataLen);
 			printf("Port Meta Data              : addr 0x%08x len %d\n", tableDescriptors.portMetaDataAddr, tableDescriptors.portMetaDataLen);
 			printf("Port Data                   : addr 0x%08x len %d\n", tableDescriptors.portDataAddr, tableDescriptors.portDataLen);
-			printf("FFE Meta Data               : addr 0x%08x len %d\n", tableDescriptors.ffeMetaDataAddr, tableDescriptors.ffeMetaDataLen);
-			printf("FFE Data                    : addr 0x%08x len %d\n", tableDescriptors.ffeDataAddr, tableDescriptors.ffeDataLen);
-			printf("FFE Ind Meta Data           : addr 0x%08x len %d\n", tableDescriptors.ffeIndirectMetaDataAddr, tableDescriptors.ffeIndirectMetaDataLen);
-			printf("FFE Ind Data                : addr 0x%08x len %d\n", tableDescriptors.ffeIndirectDataAddr, tableDescriptors.ffeIndirectDataLen);
-			printf("QSFP Meta Data              : addr 0x%08x len %d\n", tableDescriptors.qsfpMetaDataAddr, tableDescriptors.qsfpMetaDataLen);
-			printf("QSFP Data                   : addr 0x%08x len %d\n", tableDescriptors.qsfpDataAddr, tableDescriptors.qsfpDataLen);
-			printf("Custom Meta Data            : addr 0x%08x len %d\n", tableDescriptors.customMetaDataAddr, tableDescriptors.customMetaDataLen);
-			printf("Custom Data                 : addr 0x%08x len %d\n", tableDescriptors.customDataAddr, tableDescriptors.customDataLen);
-			printf("DFE Meta Data               : addr 0x%08x len %d\n", tableDescriptors.dfeMetaDataAddr, tableDescriptors.dfeMetaDataLen);
-			printf("DFE Data                    : addr 0x%08x len %d\n", tableDescriptors.dfeDataAddr, tableDescriptors.dfeDataLen);
 
 			printf("parsing sys data:\n");
 			sysParsedDataTable = malloc(tableDescriptors.sysDataLen * sizeof(table_parsed_data_t));
@@ -908,13 +905,66 @@ printf("TEST 16!!!\n");
 			break;
 
 		case 17:
-			location = 0x8000b200;
+			location = 0x80407200;
 			data = dataBuffer;
 			memset(dataBuffer, 0, EEPROMSIZE);
 			status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
-									  NOJUMBOMAD, MMTHD_GET, 2000, location, 1, 0, data);
-			boardID = data[0];
-			printf("board ID is 0x%02x\n", boardID & 0xff);
+									  NOJUMBOMAD, MMTHD_GET, 2000, location, 4, 0x0b00, data);
+			boardID = (uint16)data[0];
+			printf("board ID is 0x%04x\n", boardID);
+			printf("data back is 0x%02x 0x%02x 0x%02x 0x%02x\n", data[0], data[1], data[2], data[3]);
+			break;
+
+		case 18:
+			data = bigDataBuffer;
+			status = opaswEepromRW(oib_port_session, &path, sessionID, &mad, 2000, 4 * EEPROMSIZE, 0, data, FALSE, FALSE);
+			data = bigDataBuffer;
+			for (i = 0; i < 4; i++) {
+				sprintf(dumpFileName, "dumpEEPROM-%d", i);
+				fp = fopen(dumpFileName, "w");
+				fwrite(data, 1, EEPROMSIZE, fp);
+				fclose(fp);
+				data += EEPROMSIZE;
+			}
+			break;
+
+		case 19:
+			location = I2C_OPASW_MGMT_FPGA_ADDR;
+			for (i = 0; i <= 0x22; i++) {
+				if ((i == 0x10) ||
+				    (i == 0x17) ||
+				    (i == 0x02) ||
+				    (i == 0x05) ||
+				    (i == 0x0c) ||
+				    (i == 0x0d) ||
+				    (i == 0x0e) ||
+				    (i == 0x0f) ||
+				    (i == 0x11) ||
+				    (i == 0x15) ||
+				    (i == 0x1c) ||
+				    (i == 0x1e) ||
+				    (i == 0x1f) ||
+				    (i == 0x20) ||
+				    (i == 0x22) ||
+				    (i == 0x18))
+					continue;
+				memset(dataBuffer, 0, EEPROMSIZE);
+				memset(&mad, 0, sizeof(VENDOR_MAD));
+				data = dataBuffer;
+				printf("probing register 0x%x\n", i);
+				dataOffset = (0xb << 8) | i;
+				status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+									  NOJUMBOMAD, MMTHD_GET, 2000, location, 1, dataOffset, data);
+				printf("returned 0x%x\n", dataBuffer[0] & 0xff);
+			}
+			break;
+
+		case 20:
+			status = sendMemAccessGetMad(oib_port_session, &path, &mad, sessionID, 0x12d6, (uint8)4, memoryData);
+			p = memoryData;
+			asicVal2 = ntoh32(*(uint32 *)p);
+			printf("Value for asic rev is 0x%08x\n", asicVal2);
+			printf("Version is 0x%02x Chip name is %s step&rev %c%d \n", (asicVal2 & 0x00ff0000) >> 16, ((asicVal2 & 0x0000ff00) >> 8) == 2 ? "PRR" : "Unknown", ((asicVal2 & 0x000000f0) >> 4) + 'A', asicVal2 & 0x0000000f);
 			break;
 
 		default:

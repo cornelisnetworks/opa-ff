@@ -13,10 +13,12 @@ opasmaquery
 .NL
 
 .PP
-(All) This tool can perform the majority of Intel(R) Omni-Path Architecture defined SMA queries and display the resulting response. It should be noted that each query is issued directly to the SMA and does not involve SM interaction.
+
+\fB(All)\fR
+Performs Intel(R) Omni-Path Architecture-defined SMA queries and displays the resulting response. Each query is issued directly to the SMA and does not involve SM interaction.
 .SH Syntax
 .NL
-opasmaquery [-v] [-g] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR] [-o \fIotype\fR] [-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR] [hop hop ...]
+opasmaquery [-v] [-d \fIdetail\fR][-g] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR] [-o \fIotype\fR] [-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR] [hop hop ...]
 .PP
 or
 .br
@@ -27,95 +29,500 @@ opasmaquery --help
 .TP 10
 --help 
 .NL
-Produce full help text
-.SH Standard Options-->
+Produces full help text.
+
+.TP 10
+\fBStandard Options\fR
 .NL
 
 .TP 10
 -v 
 .NL
-Verbose output. Can be specified more than once for additional openib debugging and libibumad debugging.
+Returns verbose output. Can be specified more than once for additional openib and libibumad debugging.
+
+.TP 10
+-d \fIdetail\fR 
+.NL
+Output detail level for cableinfo only. Range = 0 - n. Default = 2. An upper limit for detail level is not enforced. After a maximum amount of output is reached, a larger detail value has no effect.
+
 .TP 10
 -g 
 .NL
-Display in line-by-line format (default is summary format).
+Displays line-by-line format. Default is summary format.
+
 .TP 10
 -l \fIlid\fR 
 .NL
-Destination lid, default is local port.
+Destination LID. Default is local port.
+
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI , numbered 1..n. Using 0 specifies that the -p \fIport\fR port will be a system wide port number (default is 0).
+HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
+
 .TP 10
 -p \fIport\fR 
 .NL
-Port, numbered 1..n. If -h \fIhfi\fR is 0 then  \fIport\fR will be a system wide port number (default is 1).
+Port, numbered 1..n. If -h \fIhfi\fR is 0, then  \fIport\fR is a system-wide port number. Default is 1.
+
 .TP 10
 -K \fImkey\fR 
 .NL
 SM management key to access remote ports.
+
 .TP 10
 -o \fIotype\fR 
 .NL
-Output type. Default is nodeinfo .Valid output types are:
+Output type. Default is nodeinfo.
 
-.SH  -h and -p options permit a variety of selections:-->
+.IP
+Valid output types are:
+.RS
+.TP 10
+
+.sp
+bfrctrl 
+Buffer control tables.
+
+.IP
+[-m dest\(ulport] [-m port1,port2] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+cableinfo 
+Cable information.
+
+.IP
+[-d detail] [-m dest\(ulport] [-b block[,count]] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+conginfo 
+Congestion information.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+desc or nodedesc 
+Node descriptions/names.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+hficongcon 
+HFI congestion control settings.
+
+.IP
+[-b block[,count]] [-f flid] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+hficonglog 
+HFI congestion logs.
+
+.IP
+[-b block[,count]] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+hficongset 
+HFI congestion settings.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+linfdb 
+Switch linear forwarding database (FDB) tables.
+
+.IP
+[-b block[,count]] [-f flid] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+mcfdb 
+Switch multicast FDB tables.
+
+.IP
+[-m dest\(ulport] [-b block[,count]] [-f flid] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+portgroup 
+Adaptive Routing port groups.
+
+.IP
+[-b block[,count]] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+portgroupfdb 
+Adaptive Routing port group FWD tables.
+
+.IP
+[-b block[,count]] [-f flid] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+nodeaggr 
+Node information and node descriptions.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+node or nodeinfo 
+Node information.
+
+.IP
+[-m dest\(ulport] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+portinfo 
+Port information.
+
+.IP
+[-m dest\(ulport] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+pstateinfo 
+Switch port state information.
+
+.IP
+[-m dest\(ulport] [-m port1,port2] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+pkey 
+P-Key tables.
+
+.IP
+[-m dest\(ulport] [-b block[,count]] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+slsc 
+SL to SC mapping tables.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+scsl 
+SC to SL mapping tables.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+scsc 
+SC to SC mapping tables.
+
+.IP
+[-m dest\(ulport] [-m port1,port2] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+scvlt 
+SC to VLt tables.
+
+.IP
+[-m dest\(ulport] [-m port1,port2] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+scvlnt 
+SC to VLnt tables.
+
+.IP
+[-m dest\(ulport] [-m port1,port2] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+sminfo 
+SM information.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+swaggr 
+Node information and switch information.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+swconglog 
+Switch congestion logs.
+
+.IP
+[-b block[,count]] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+swcongset 
+Switch congestion settings.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+swinfo 
+Switch information.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+swportcong 
+Switch congestion settings.
+
+.IP
+[-b block[,count]] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+vlarb 
+VL arbitration tables.
+
+.IP
+[-m dest\(ulport] 
+.RE
+
+.RS
+.TP 10
+
+.sp
+ibnodeinfo 
+IB node information.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+ledinfo 
+LED information.
+
+.IP
+[-m dest\(ulport] 
+.RE
+
+.TP 10
+\fB-h and -p options permit a variety of selections:\fR
 .NL
 
 .TP 10
 -h 0 
 .NL
-First active port in system (this is the default).
+First active port in system (default).
+
 .TP 10
 -h 0 -p 0 
 .NL
 First active port in system.
+
 .TP 10
 -h \fIx\fR 
 .NL
 First active port on HFI \fIx\fR.
+
 .TP 10
 -h \fIx\fR-p 0 
 .NL
 First active port on HFI \fIx\fR.
+
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy\fRwithin system (irrespective of which ports are active).
+Port \fIy \fR within system (no matter which ports are active).
+
 .TP 10
 -h \fIx\fR-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR
-.SH otype options vary by report-->
+
+.TP 10
+\fBotype options vary by report\fR
 .NL
 
 .TP 10
 -m \fIport\fR 
 .NL
 Port in destination device to query.
+
 .TP 10
 -m \fIport1,port2\fR 
 .NL
-For some reports, a range of ports between  \fIport1\fR and  \fIport2\fR . For others, this describes an inport/outport pair.
+For some reports, a range of ports between  \fIport1\fR and  \fIport2\fR. For others, this describes an inport/outport pair.
+
 .TP 10
 -f \fIflid\fR 
 .NL
-LID to lookup in forwarding table to select which LFT or MFT block to display. Default is to show entire table.
+LID to look up in forwarding table to select which LFT or MFT block to display. Default is to show entire table.
+
 .TP 10
 -b \fIblock[,count]\fR 
 .NL
-Block number of either guids, pkey, or ranfdb and the number of blocks to display. Default is to show entire table.For example:
+Block number of either GUIDs, pkey, or RANFDB, and the number of blocks to display. Default is to show entire table.
+
+.IP
+For example:
+.IP
+
+.RS
+.TP 10
 
 .sp
 -b \fIblock\fR 
-Display all of block "  \fIblock\fR " of a larger table.
+Displays all of block  \fIblock\fR of a larger table.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 -b \fIblock,count\fR 
-Display "  \fIcount\fR " blocks of data starting with block "  \fIblock\fR ".
+Displays  \fIcount\fR blocks of data starting with block  \fIblock\fR.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
--b , \fIcount\fR 
-Display "  \fIcount\fR " blocks of data starting with block 0.
+-b, \fIcount\fR 
+Displays  \fIcount\fR blocks of data starting with block 0.
+
+.RE
+
 .SH Examples
 .NL
-opasmaquery -o nodedesc -l 6 # get nodedesc via lid routed opasmaquery -o nodedesc 1 3 # get nodedesc via directed route # (2 dr hops) opasmaquery -o nodeinfo -l 2 3 # get nodeinfo via a combination of # lid routed and directed route # (1 dr hop) opasmaquery -o portinfo # get local port info opasmaquery -o portinfo -l 6 -m 1 # get port info of port 1 of lid 6 opasmaquery -o pkey -l 2 3 # get pkey table entries starting # (lid routed to lid 2, # then 1 dr hop to port 3)opasmaquery -o slvl -l 6 # get slvl of CA at lid 6 opasmaquery -o vlarb -l 6 # get vlarb table entries from lid 6 opasmaquery -o swinfo -l 2 # get switch info opasmaquery -o sminfo -l 1 # get SM info opasmaquery -o slsc -l 3 # get sl2sc table entries from lid 3 opasmaquery -o scsl -l 3 # get sc2sl table entries from lid 3
+
+.PP
+opasmaquery -o nodedesc -l 6
+.br
+# get nodedesc via lid routed
+.br
+opasmaquery -o nodedesc 1 3
+.br
+# get nodedesc via directed route (2 dr hops)
+.br
+opasmaquery -o nodeinfo -l 2 3
+.br
+# get nodeinfo via a combination of lid routed and directed route (1 dr hop)
+.br
+opasmaquery -o portinfo
+.br
+# get local port info
+.br
+opasmaquery -o portinfo -l 6 -m 1
+.br
+# get port info of port 1 of lid 6
+.br
+opasmaquery -o pkey -l 2 3
+.br
+# get pkey table entries starting (lid routed to lid 2, then 1 dr hop to port 3
+.br
+opasmaquery -o slvl -l 6
+.br
+# get slvl of CA at lid 6
+.br
+opasmaquery -o vlarb -l 6
+.br
+# get vlarb table entries from lid 6
+.br
+opasmaquery -o swinfo -l 2
+.br
+# get switch info
+.br
+opasmaquery -o sminfo -l 1
+.br
+# get SM info
+.br
+opasmaquery -o slsc -l 3
+.br
+# get sl2sc table entries from lid 3
+.br
+opasmaquery -o scsl -l 3
+.br
+# get sc2sl table entries from lid 3
+.br

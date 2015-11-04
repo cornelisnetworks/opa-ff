@@ -627,7 +627,7 @@ int main(int argc, char *argv[])
 		};
 
 		static char *usage[] = {
-			"Server mode: loads the specified file and emulates OfedDiscovery",
+			"Server mode: loads the specified file and emulates dsap",
 			"Client mode: loads the specified file and emulates a client",
 			"Dumps the current contents of the discovery tables to the file.",
 			"the file containing the node table (required)",

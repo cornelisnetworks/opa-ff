@@ -178,7 +178,7 @@ static FSTATUS perform_sma_query(uint16 attrid, uint32 attrmod, argrec *args, SM
 		struct oib_mad_addr addr = {
 			lid : args->dlid,
 			qpn : 0,
-			qkey : QP1_WELL_KNOWN_Q_KEY,
+			qkey : 0,
 			pkey : pkey
 		};
         size_t recv_size = sizeof(*smp);
@@ -216,7 +216,7 @@ static FSTATUS perform_stl_aggregate_query(argrec *args, STL_SMP *smp)
 	struct oib_mad_addr addr = {
 		lid : args->dlid,
 		qpn : 0,
-		qkey : QP1_WELL_KNOWN_Q_KEY,
+		qkey : 0,
         pkey : pkey
 	};
     size_t recv_size;
@@ -272,7 +272,10 @@ static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args
                             STL_SMP *smp, size_t attr_len)
 {
 	FSTATUS status;
+	int i;
 	MemoryClear(smp, sizeof(*smp));
+	uint8 requestInitPath[64];
+	MemoryClear(requestInitPath, sizeof(requestInitPath));
 
 	smp->common.BaseVersion = STL_BASE_VERSION;
 	smp->common.ClassVersion = STL_SM_CLASS_VERSION;
@@ -283,6 +286,10 @@ static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args
 	smp->common.AttributeModifier = attrmod;
 	smp->M_Key = g_mkey;
 	smp->common.TransactionID = (++g_transactID);
+
+	if (smp->common.MgmtClass == MCLASS_SM_DIRECTED_ROUTE) {
+		memcpy(requestInitPath, smp->SmpExt.DirectedRoute.InitPath, sizeof(requestInitPath));
+	}
 
 	if (g_verbose) {
 		PrintFunc(&g_dest, "Sending STL SMP:\n");
@@ -312,7 +319,7 @@ static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args
 		struct oib_mad_addr addr = {
 			lid : args->dlid,
 			qpn : 0,
-			qkey : QP1_WELL_KNOWN_Q_KEY,
+			qkey : 0,
             pkey : pkey
 		};
         size_t recv_size = sizeof(*smp);
@@ -324,6 +331,20 @@ static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args
 		PrintFunc(&g_dest, "Received STL SMP:\n");
 		PrintStlSmpHeader(&g_dest, 2, smp);
 		PrintSeparator(&g_dest);
+	}
+
+	if (smp->common.MgmtClass == MCLASS_SM_DIRECTED_ROUTE && memcmp(requestInitPath, smp->SmpExt.DirectedRoute.InitPath, sizeof(requestInitPath)) != 0) {
+		fprintf(stderr, "Response failed directed route validation, received packet with path: ");
+		for(i = 1; i < 64; i++) {
+			if(smp->SmpExt.DirectedRoute.InitPath[i] != 0) {
+				fprintf(stderr, "%d ", smp->SmpExt.DirectedRoute.InitPath[i]);
+			} else {
+				break;
+			}
+		}
+		fprintf(stderr, "\n");
+
+		status = FERROR;
 	}
 
 	if (FSUCCESS == status && smp->common.u.DR.s.Status != MAD_STATUS_SUCCESS) {
@@ -463,7 +484,7 @@ static boolean get_node_aggr(argrec *args, uint8_t *mad, size_t mad_len, boolean
 
 	status = perform_stl_aggregate_query (args, smp);
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_node_aggr: %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	}
 
@@ -532,7 +553,7 @@ static boolean get_switch_aggr(argrec *args, uint8_t *mad, size_t mad_len, boole
 
 	status = perform_stl_aggregate_query (args, smp);
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_switch_aggr: %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		if (g_verbose) {
@@ -593,7 +614,7 @@ static boolean get_node_desc(argrec *args, uint8_t *mad, size_t mad_len, boolean
 
 
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_node_desc %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		if (print || g_verbose) {
@@ -622,7 +643,7 @@ static boolean get_ib_node_info(argrec *args, uint8_t *mad, size_t mad_len, bool
 	BSWAP_NODE_INFO(pNodeInfo);
 
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_ib_node_info %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		if (print || g_verbose)
@@ -644,7 +665,7 @@ static boolean get_node_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
                     args, smp, sizeof(STL_NODE_INFO));
 
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_node_info %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	}
 
@@ -664,6 +685,8 @@ static boolean get_port_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
     STL_PORT_INFO *pPortInfo;
 	STL_NODE_INFO *pNodeInfo;
 	uint32_t amod = 0x01000000;
+	int i;
+	uint16_t firstPort = 0;
 
 	if (!get_node_info(args, (uint8_t *)smp, sizeof(*smp), g_verbose)) {
 		fprintf(stderr, "%s failed: unabled to get_node_info\n", __func__);
@@ -674,34 +697,43 @@ static boolean get_port_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 
 	if (args->mflag) {
 		if (pNodeInfo->NodeType == STL_NODE_SW) {
-			if (args->dport > pNodeInfo->NumPorts) {
-				fprintf(stderr, "%s failed: specified port %u invalid must be %u - %u for this SW\n",
-					__func__, args->dport, 1, pNodeInfo->NumPorts);
+			if ((args->dport + args->mcount - 1) > pNodeInfo->NumPorts) {
+				fprintf(stderr, "%s failed: specified port [%u-%u] invalid must be %u - %u for this SW\n",
+					__func__, args->dport, (args->dport + args->mcount - 1), 1, pNodeInfo->NumPorts);
 				return FALSE;
 			}
+			amod = (uint32_t)(args->mcount << 24);
 			amod |= (uint32_t)args->dport;
+			firstPort = args->dport;
 		} else if (strcmp(args->oname, "portinfo") == 0)
 			fprintf(stderr, "%s: -m ignored for port_info against an HFI\n", g_cmdname);
 	}
+	if (pNodeInfo->NodeType == STL_NODE_FI) 
+		firstPort = pNodeInfo->u1.s.LocalPortNum;
+	
 
 	DBGPRINT("---->get_port_info\n");
-	DBGPRINT("->dlid=0x%04x slid=0x%04x dport=%d drpaths=%d\n", 
-			args->dlid,args->slid,args->dport,args->drpaths);
+	DBGPRINT("->dlid=0x%04x slid=0x%04x dport=%d,%d drpaths=%d\n",
+				args->dlid,args->slid,args->dport,args->mcount,args->drpaths);
 
 	// Get PortInfo using attrmod
 	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_PORT_INFO, amod, args,
                                     smp, sizeof(*pPortInfo));
 
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_port_info %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	}
 
     pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
-    BSWAP_STL_PORT_INFO(pPortInfo);
-
-	if (print)
-		PrintStlPortInfoSmp(&g_dest, 0/*indent*/, smp, 0/*portGuid*/, args->printLineByLine);
+	for (i = 0; i < ((amod>>24)&0xFF); i++) {
+		BSWAP_STL_PORT_INFO(pPortInfo);
+		if (print) {
+			PrintFunc(&g_dest, "%*sPort %u Info\n", 0, "", firstPort + i);
+			PrintStlPortInfo(&g_dest, 3, pPortInfo, 0 /*portGuid*/, args->printLineByLine);
+		}
+		pPortInfo = (STL_PORT_INFO *)((size_t)(pPortInfo) + ROUNDUPP2(sizeof(STL_PORT_INFO), 8));
+	}
 
 	return TRUE;
 } //get_port_info
@@ -736,7 +768,7 @@ static boolean get_led_info(argrec *args, uint8_t *mad, size_t mad_len, boolean 
                                     smp, sizeof(*pLedInfo));
 
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_led_info %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	}
 
@@ -758,6 +790,7 @@ static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boole
 	STL_SMP *smp = (STL_SMP *)mad;
 	uint32_t amod;
 	uint8_t count;
+	uint16_t firstPort;
 
 	if (mad_len < sizeof(SMP))
 		return FALSE;
@@ -785,6 +818,7 @@ static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boole
 			if (args->mflag)
 				fprintf(stderr, "%s: -m ignored for pstateinfo againts an HFI\n", g_cmdname);
 			startPort = endPort = 0;
+			firstPort = pNodeInfo->u1.s.LocalPortNum;
 		} else {
 			if (startPort > endPort) {
 				fprintf(stderr, "%s failed: start port > end port!\n", __func__);
@@ -800,6 +834,7 @@ static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boole
 				startPort = 0;
 				endPort = maxPort;
 			}
+			firstPort = startPort;		
 		}
 	}
 
@@ -809,14 +844,14 @@ static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boole
 	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_PORT_STATE_INFO, amod, args,
                             smp, sizeof(STL_PORT_STATE_INFO)*count);
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_pstate_info %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	}
 
 	psip = (STL_PORT_STATE_INFO *)stl_get_smp_data(smp);
 	BSWAP_STL_PORT_STATE_INFO(psip, count);
 	if (print)
-		PrintStlPortStateInfo(&g_dest, 0, psip, count, amod & 0xff, args->printLineByLine);
+		PrintStlPortStateInfo(&g_dest, 0, psip, count, firstPort, args->printLineByLine);
 
 	return TRUE;
 } //get_pstate_info
@@ -840,7 +875,7 @@ static boolean get_sm_info(argrec *args, uint8_t *mad, size_t mad_len, boolean p
 	BSWAP_STL_SM_INFO(pSmInfo);
 
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_sm_info %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
 		if (print)
@@ -875,7 +910,7 @@ static boolean get_sw_info(argrec *args, uint8_t *mad, size_t mad_len, boolean p
 	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SWITCH_INFO, 0, args,
                                 smp, sizeof(STL_SWITCH_INFO));
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_sw_info %s\n", MSG_SMP_SEND_RECV_FAILURE);
+		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
         STL_SWITCH_INFO *pSwitchInfo = (STL_SWITCH_INFO *)stl_get_smp_data(smp);
@@ -1097,7 +1132,7 @@ static boolean get_scvlx_map(argrec *args, uint8_t *mad, size_t mad_len,
 			endPort = maxPort;
 		}
 	} else {
-		startPort = endPort = 1;
+		startPort = endPort = 0;
 		if (args->mflag)
 			fprintf(stderr, "%s: -m ignored for SCVLx against an HFI\n", g_cmdname);
 	}
@@ -1163,7 +1198,7 @@ static boolean print_vlarb_element(argrec *args, STL_SMP *smp, uint8_t startPort
 		status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_VL_ARBITRATION,
 						attrmod, args, smp, sizeof(STL_VLARB_TABLE)*numPorts);
 		if (status != FSUCCESS) {
-			fprintf(stderr, "get_vlarb %s\n", MSG_SMP_SEND_RECV_FAILURE);
+			fprintf(stderr, "%s: %s: %s\n", "get_vlarb", MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 			return status;
 		}
 
@@ -1991,7 +2026,7 @@ static boolean get_bfr_ctrl_table(argrec *args, uint8_t *mad, size_t mad_len, bo
                         smp, sizeof(STL_BUFFER_CONTROL_TABLE)*n);
 
 		if (status != FSUCCESS) {
-			fprintf(stderr, "get_bfr_ctrl_table %s\n", MSG_SMP_SEND_RECV_FAILURE);
+			fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 			return FALSE;
 		}
 
@@ -2007,11 +2042,16 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 {
 	FSTATUS status;
 	STL_SMP *smp = (STL_SMP *)mad;
-	uint16_t startAddr = 128;
-	uint8_t len = 63;
+	uint16_t startAddr = STL_CIB_STD_START_ADDR;
+	uint16_t len = STL_CIB_STD_LEN;
 	STL_NODE_INFO *pNodeInfo;
 	NODE_TYPE nodetype;
-	uint8 maxPort;
+	uint8_t maxPort;
+	uint8_t cableInfoData[STL_CABLE_INFO_PAGESZ];
+	uint8_t get_len = 0;
+	uint8_t bufoffset = 0;	// where to add next data to cableInfoData
+	uint16_t bufstart = 0;	// startAddr for cableInfoData[0]
+	uint8_t buflen = 0;		// amount of data in cableInfoData
 
 	if (args->bflag) {
 		startAddr = args->block;
@@ -2019,9 +2059,8 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 			fprintf(stderr, "get_cable_info failed: Invalid length specified\n");
 			return FALSE;
 		}
-		len = args->bcount-1;
+		len = args->bcount;
 	}
-	uint32_t amod = 0;
 	uint8_t portType;
 	
 	if (mad_len < sizeof(SMP))
@@ -2057,21 +2096,10 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 		}
 	}
 	
-	if (len > 63) {
-		fprintf(stderr, "get_cable_info failed: Invalid length specified\n");
-		return FALSE;
-	}
-
-	if (startAddr + len > STL_CABLE_INFO_MAXADDR) {
+	if (startAddr + len-1 > STL_CABLE_INFO_MAXADDR) {
 		fprintf(stderr, "get_cable_info failed: Invalid address range\n");
 		return FALSE;
 	}
-
-	if (startAddr/STL_CABLE_INFO_PAGESZ != (startAddr + len)/STL_CABLE_INFO_PAGESZ) {
-		fprintf(stderr, "get_cable_info failed: Given address & length crosses page boundary\n");
-		return FALSE;
-	}
-
 
 	DBGPRINT("-->get_cable_info\n");
 	{
@@ -2087,18 +2115,45 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 		portType = pPortInfo->PortPhyConfig.s.PortType;
 	}
 
+	for (; len > 0; startAddr += get_len, len -= get_len) {
+		if (bufoffset == 0) {
+			bufstart = startAddr;
+			buflen = 0;
+		}
+		// can't cross page in single query
+		get_len = MIN(len, STL_CABLE_INFO_DATA_SIZE);
+		get_len = MIN(get_len, STL_CABLE_INFO_PAGESZ - (startAddr % STL_CABLE_INFO_PAGESZ));
 
-	amod = (startAddr & 0x0fff)<<19 | (len & 0x3f)<<13 | (args->dport & 0xff);
+		DEBUG_ASSERT(startAddr/STL_CABLE_INFO_PAGESZ == (startAddr + get_len-1)/STL_CABLE_INFO_PAGESZ);
 
-	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_CABLE_INFO, amod, args,
+		uint32_t amod = (startAddr & 0x0fff)<<19 | ((get_len-1) & 0x3f)<<13 | (args->dport & 0xff);
+
+		status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_CABLE_INFO, amod, args,
                                 smp, sizeof(STL_CABLE_INFO));
-	if (status != FSUCCESS) {
-		fprintf(stderr, "get_cable_info %s\n", MSG_SMP_SEND_RECV_FAILURE);
-		return FALSE;
-	}
+		if (status != FSUCCESS) {
+			fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
+			return FALSE;
+		}
 
-	if (print)
-		PrintStlCableInfoSmp(&g_dest, 0, smp, portType, args->printLineByLine);
+		if (print) {
+			uint8_t detail = g_detail;
+			STL_CABLE_INFO *pCableInfo = (STL_CABLE_INFO*)stl_get_smp_data(smp);
+
+			if (detail > CABLEINFO_DETAIL_ALL)
+				detail = CABLEINFO_DETAIL_ALL;
+			BSWAP_STL_CABLE_INFO(pCableInfo);
+			memcpy(&cableInfoData[bufoffset], pCableInfo->Data, get_len);
+			buflen += get_len;
+			if (len <= get_len /* final SMP */
+				|| ((startAddr + get_len) % STL_CABLE_INFO_PAGESZ) == 0 /* page end */
+				) {
+				PrintStlCableInfo(&g_dest, 0, cableInfoData, bufstart, buflen, portType, detail, args->printLineByLine);
+				bufoffset = 0;
+			} else {
+				bufoffset += get_len;
+			}
+		}
+	}
 	
 	return TRUE;
 } //get_cable_info
@@ -2149,10 +2204,11 @@ void sma_Usage(boolean displayAbridged)
 	fprintf(stderr, "       opasmaquery --help\n");
 	fprintf(stderr, "    --help - produce full help text\n\n");
 
-	fprintf(stderr, "Standard options: [-v] [-g] [-l lid] [-h hfi] [-p port] [-K mkey]\n");
+	fprintf(stderr, "Standard options: [-v] [-d detail] [-g] [-l lid] [-h hfi] [-p port] [-K mkey]\n");
 	fprintf(stderr, "    -o otype Output type. See below for list.\n");
 	fprintf(stderr, "    -v       Verbose output. Can be specified more than once for\n");
 	fprintf(stderr, "             additional openib debugging and libibumad debugging.\n");
+	fprintf(stderr, "    -d detail  Output detail level 0-n CableInfo only (default is 2)\n");
 	fprintf(stderr, "    -g       Display in line-by-line format (default is summary format)\n");
 	fprintf(stderr, "    -l lid   Destination lid, default is local port\n");
 	fprintf(stderr, "    -h hfi   hfi, numbered 1..n, 0= -p port will be a\n");
@@ -2167,6 +2223,7 @@ void sma_Usage(boolean displayAbridged)
 	fprintf(stderr, "    -h x -p 0  - 1st active port on HFI x\n");
 	fprintf(stderr, "    -h 0 -p y  - port y within system (irrespective of which ports are active)\n");
 	fprintf(stderr, "    -h x -p y  - HFI x, port y\n");
+	fprintf(stderr, "Note: will fallback to h:1 p:1 if no active port is found in system\n\n");
 	fprintf(stderr, "otype options vary by report: [-m port|port1,port2]\n");
 	fprintf(stderr, "    [-f lid] [-b block[,count]]\n");
 	fprintf(stderr, "    -m port  port in destination device to query\n");
@@ -2175,10 +2232,9 @@ void sma_Usage(boolean displayAbridged)
 	fprintf(stderr, "             an inport/outport pair.\n");
 	fprintf(stderr, "    -f lid   lid to lookup in forwarding table to select an LFT or MFT block\n");
 	fprintf(stderr, "             Default is to show entire table\n");
-	fprintf(stderr, "    -b b     display block \"b\" of a larger table\n");
-	fprintf(stderr, "    -b b,c   display \"c\" blocks of data starting with block \"b\"\n");
-	fprintf(stderr, "    -b ,c    display \"c\" blocks of data starting with block 0\n");
-	fprintf(stderr, "             Default is to show entire table\n\n");
+	fprintf(stderr, "    -b b     display block or byte \"b\" of a larger table\n");
+	fprintf(stderr, "    -b b,c   display \"c\" blocks or bytes of data starting with block/byte \"b\"\n");
+	fprintf(stderr, "    -b ,c    display \"c\" blocks or bytes of data starting with block/byte 0\n\n");
 
 	fprintf(stderr, "Possible output types (default is nodeinfo):\n");
 	i=0;
@@ -2193,7 +2249,8 @@ void sma_Usage(boolean displayAbridged)
 				fprintf(stderr, "         %-12s:", " ");
 				if (sma_query[i].mflag) fprintf(stderr, " [-m dest_port]");
 				if (sma_query[i].mflag2) fprintf(stderr, " [-m port1,port2]");
-				if (sma_query[i].bflag) fprintf(stderr, " [-b block[,count]]");
+				if (sma_query[i].bflag) fprintf(stderr, " [-b %s]", 
+					strcmp(sma_query[i].name, "cableinfo") == 0 ? "address[,length]" : "block[,count]");
 				if (sma_query[i].fflag) fprintf(stderr, " [-f flid]");
 				fprintf(stderr,"\n");
 			}

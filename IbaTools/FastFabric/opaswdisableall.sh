@@ -43,19 +43,12 @@ fi
 
 . /opt/opa/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
-BINDIR=${BINDIR:-/usr/sbin}
-
-if [ -f $TOOLSDIR/opafastfabric.conf ]
+if [ -f /opt/opa/tools/ff_funcs ]
 then
-	. $TOOLSDIR/opafastfabric.conf
-fi
-if [ -f $TOOLSDIR/ff_funcs ]
-then
-	. $TOOLSDIR/ff_funcs
+	. /opt/opa/tools/ff_funcs
 fi
 
-tool="$BINDIR/opaportconfig"
+tool="/usr/sbin/opaportconfig"
 cmd=`basename $0`
 if [ "$cmd" == "opaswdisableall" ]
 then
@@ -164,11 +157,11 @@ change_swports()
   echo "NodeGUID          Port Name"
 
   IFS=';'
-  eval $BINDIR/opareport $port_opts -q -x -o otherports "$focus" | \
-       $BINDIR/opaxmlextract -d \; -e Switches.OtherPort.NodeGUID -e Switches.OtherPort.PortNum -e Switches.OtherPort.NodeDesc | \
+  eval /usr/sbin/opareport $port_opts -q -x -o otherports "$focus" | \
+       /usr/sbin/opaxmlextract -d \; -e Switches.OtherPort.NodeGUID -e Switches.OtherPort.PortNum -e Switches.OtherPort.NodeDesc | \
        tail -n +2 | while read guid port nodedesc
   do
-    lid=`$BINDIR/opasaquery -o lid -n $guid 2>/dev/null`
+    lid=`/usr/sbin/opasaquery -o lid -n $guid 2>/dev/null`
     # silently skip node guids we can't find in SA anymore, may be tranisient
 	if [ "$?" -eq 0 -a "$lid" != "No Records Returned" ]
     then

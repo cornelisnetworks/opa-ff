@@ -29,7 +29,7 @@
 
 # [ICS VERSION STRING: unknown]
 
-To install the InfiniBand Fast Fabric Tools for Linux Open Fabrics
+To install the Fast Fabric Tools
 cd to this directory
 ./INSTALL
 

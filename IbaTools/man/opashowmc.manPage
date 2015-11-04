@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opashowmc 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opashowmc 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opashowmc
 
@@ -15,7 +15,7 @@ opashowmc
 .PP
 
 \fB(Linux)\fR
-Displays the Intel(R) Omni-Path Multicast groups created for the fabric along with the Intel(R) Omni-Path Host Fabric Interface (HFI) ports which are a member of each multicast group. This command can be helpful when attempting to analyze or debug True Scale multicast usage by applications or ULPs such as IPoIB.
+Displays the Intel(R) Omni-Path Multicast groups created for the fabric along with the Intel(R) Omni-Path Host Fabric Interface (HFI) ports which are a member of each multicast group. This command can be helpful when attempting to analyze or debug Intel(R) Omni-Path multicast usage by applications or ULPs such as IPoIB.
 .SH Syntax
 .NL
 opashowmc [-v] [-t \fIportsfile\fR] [-p \fIports\fR]
@@ -29,39 +29,68 @@ opashowmc --help
 .TP 10
 --help 
 .NL
-Produce full help text.
+Produces full help text.
+
 .TP 10
 -v 
 .NL
-Verbose output, show name of each member.
+Returns verbose output and shows name of each member.
+
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for analysis, default is /etc/sysconfig/opa/ports .
+File with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports file.
+
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric(s) for analysis default is first active port.This is specified as hfi:port :
+List of local HFI ports used to access fabric(s) for analysis. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+
+.IP
+Uses the format hfi:port, for example:
+.RS
+.TP 10
 
 .sp
 0:0 
 First active port in system.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 0:y 
-Port y within system.
+Port  \fIy\fR within system.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 x:0 
-First active port on HFI x.
+First active port on HFI  \fIx\fR.
+
+.RE
+
+.RS
+.TP 10
+
 .sp
 x:y 
-HFI x, port y.
-.IP
-The first HFI in the system is 1. The first port on an HFI is 1.
+HFI  \fIx\fR, port  \fIy\fR.
+
+.RE
+
 .SH Examples 
 .NL
-opashowmc check\(ulports\(ulargs PORTS PORTS\(ulFILE /etc/sysconfig/opa/ports Fabric 0:0 Multicast Information:
+opashowmc
 .br
-opashowmc -p \'1:1\' opashowmc -p \'1:1 1:2\' check\(ulports\(ulargs PORTS 1:1 1:2 PORTS\(ulFILE /etc/sysconfig/opa/ports Fabric 1:1 Multicast Information: GID: 0xff15400180010003:0x0400000000000000 MLID: 0x0000c008 PKey: 0x8001 Mtu: 2048 Rate: 10g PktLifeTime: 536 ms QKey: 0x80010000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0xfe80000000000000:0x001175010078b026 Membership: Full GID: 0xff12601b80010000:0x00000000000000fb MLID: 0x0000c007 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12601b80010000:0x0000000000000016 MLID: 0x0000c006 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12601b80010000:0x0000000000000002 MLID: 0x0000c005 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12601b80010000:0x0000000000000001 MLID: 0x0000c004 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12401b80010000:0x00000000000000fb MLID: 0x0000c003 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12401b80010000:0x0000000000000016 MLID: 0x0000c002 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12401b80010000:0x0000000000000001 MLID: 0x0000c001 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full GID: 0xff12401b80010000:0x00000000ffffffff MLID: 0x0000c000 PKey: 0x8001 Mtu: 2048 Rate: 25g PktLifeTime: 536 ms QKey: 0x00000000 SL: 0 HopLimit: 0xff TClass: 0x00 PortGid: 0x0000000000000000:0x0000000000000000 Membership: Full Fabric 1:2 Multicast Information:
+opashowmc -p \'1:1\'
+.br
+opashowmc -p \'1:1 2:1\'
 .SH Environment Variables
 .NL
 
@@ -70,8 +99,9 @@ The following environment variables are also used by this command:
 .TP 10
 \fBPORTS\fR 
 .NL
-List of ports, used in absence of -t and -p .
+List of ports, used in absence of -t and -p.
+
 .TP 10
 \fBPORTS\(ulFILE\fR 
 .NL
-File containing list of ports, used in absence of -t and -p .
+File containing list of ports, used in absence of -t and -p.

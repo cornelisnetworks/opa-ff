@@ -99,6 +99,7 @@ check_host_args()
 	# $1 is command name
 	# uses $HOSTS and $HOSTS_FILE
 	# sets $HOSTS or calls Usage which should exit
+	local l_hosts_file
 
 	if [ "$HOSTS_FILE" = "" ]
 	then
@@ -106,18 +107,22 @@ check_host_args()
 	fi
 	if [ "$HOSTS" = "" ]
 	then
+		l_hosts_file=$HOSTS_FILE
 		HOSTS_FILE=`resolve_file "$1" "$HOSTS_FILE"`
 		if [ "$HOSTS_FILE" = "" ]
 		then
+			echo "$1: HOSTS env variable is empty and the file $l_hosts_file does not exist" >&2 
+			echo "$1: Must export HOSTS or HOSTS_FILE or use -f or -h option" >&2
 			Usage
 		fi
 		HOSTS=`expand_file "$1" "$HOSTS_FILE"`
-	fi
+		if [ "$HOSTS" = "" ]
+		then
+			echo "$1: HOSTS env variable and the file $HOSTS_FILE are both empty" >&2 
+			echo "$1: Must export HOSTS or HOSTS_FILE or use -f or -h option" >&2
+			Usage
+		fi
 	
-	if [ "$HOSTS" = "" ]
-	then
-		echo "$1: Must export HOSTS or HOSTS_FILE or use -f or -h option" >&2
-		Usage
 	fi
 }
 
@@ -126,6 +131,7 @@ check_chassis_args()
 	# $1 is command name
 	# uses $CHASSIS and $CHASSIS_FILE
 	# sets $CHASSIS or calls Usage which should exit
+	local l_chassis_file
 
 	if [ "$CHASSIS_FILE" = "" ]
 	then
@@ -133,19 +139,23 @@ check_chassis_args()
 	fi
 	if [ "$CHASSIS" = "" ]
 	then
+		l_chassis_file=$CHASSIS_FILE
 		CHASSIS_FILE=`resolve_file "$1" "$CHASSIS_FILE"`
 		if [ "$CHASSIS_FILE" = "" ]
 		then
+			echo "$1: CHASSIS env variable is empty and the file $l_chassis_file does not exist" >&2 
+			echo "$1: Must export CHASSIS or CHASSIS_FILE or use -F or -H option" >&2
 			Usage
 		fi
 		CHASSIS=`expand_file "$1" "$CHASSIS_FILE"`
+		if [ "$CHASSIS" = "" ]
+		then
+			echo "$1: CHASSIS env variable and the file $CHASSIS_FILE are both empty" >&2 
+			echo "$1: Must export CHASSIS or CHASSIS_FILE or use -F or -H option" >&2
+			Usage
+		fi
 	fi
 	
-	if [ "$CHASSIS" = "" ]
-	then
-		echo "$1: Must export CHASSIS or CHASSIS_FILE or use -F or -H option" >&2
-		Usage
-	fi
 	export CFG_CHASSIS_LOGIN_METHOD=$FF_CHASSIS_LOGIN_METHOD
 	export CFG_CHASSIS_ADMIN_PASSWORD=$FF_CHASSIS_ADMIN_PASSWORD
 }
@@ -155,6 +165,7 @@ check_ib_transport_args()
 	# $1 is command name
 	# uses $OPASWITCHES and $OPASWITCHES_FILE
 	# sets $OPASWITCHES or calls Usage which should exit
+	local l_opaswitches_file
 
 	if [ "$OPASWITCHES_FILE" = "" ]
 	then
@@ -162,19 +173,23 @@ check_ib_transport_args()
 	fi
 	if [ "$OPASWITCHES" = "" ]
 	then
+		l_opaswitches_file=$OPASWITCHES_FILE
 		OPASWITCHES_FILE=`resolve_file "$1" "$OPASWITCHES_FILE"`
 		if [ "$OPASWITCHES_FILE" = "" ]
 		then
+			echo "$1: OPASWITCHES env variable is empty and the file $l_opaswitches_file does not exist" >&2 
+			echo "$1: Must export OPASWITCHES or OPASWITCHES_FILE or use -L or -N option" >&2
 			Usage
 		fi
 		OPASWITCHES=`expand_file "$1" "$OPASWITCHES_FILE"`
+		if [ "$OPASWITCHES" = "" ]
+		then
+			echo "$1: OPASWITCHES env variable and the file $OPASWITCHES_FILE are both empty" >&2 
+			echo "$1: Must export OPASWITCHES or OPASWITCHES_FILE or use -L or -N option" >&2
+			Usage
+		fi
 	fi
 	
-	if [ "$OPASWITCHES" = "" ]
-	then
-		echo "$1: Must export OPASWITCHES or OPASWITCHES_FILE or use -L or -N option" >&2
-		Usage
-	fi
 }
 
 check_ports_args()
@@ -184,7 +199,6 @@ check_ports_args()
 	# sets $PORTS or calls Usage which should exit
 	local have_file_name
 
-echo check_ports_args PORTS $PORTS PORTS_FILE $PORTS_FILE
 	if [ "$PORTS_FILE" = "" ]
 	then
 		PORTS_FILE=$CONFIG_DIR/opa/ports
@@ -244,6 +258,7 @@ check_esm_chassis_args()
 	# $1 is command name
 	# uses $ESM_CHASSIS and $ESM_CHASSIS_FILE
 	# sets $ESM_CHASSIS or calls Usage which should exit
+	local l_esm_chassis_file
 
 	if [ "$ESM_CHASSIS_FILE" = "" ]
 	then
@@ -251,19 +266,23 @@ check_esm_chassis_args()
 	fi
 	if [ "$ESM_CHASSIS" = "" ]
 	then
+		l_esm_chassis_file=$ESM_CHASSIS_FILE
 		ESM_CHASSIS_FILE=`resolve_file "$1" "$ESM_CHASSIS_FILE"`
 		if [ "$ESM_CHASSIS_FILE" = "" ]
 		then
+			echo "$1: ESM_CHASSIS env variable is empty and the file $l_esm_chassis_file does not exist" >&2 
+			echo "$1: Must export ESM_CHASSIS or ESM_CHASSIS_FILE or use -G or -E option" >&2
 			Usage
 		fi
 		ESM_CHASSIS=`expand_file "$1" "$ESM_CHASSIS_FILE"`
+		if [ "$ESM_CHASSIS" = "" ]
+		then
+			echo "$1: ESM_CHASSIS env variable and the file $ESM_CHASSIS_FILE are both empty" >&2 
+			echo "$1: Must export ESM_CHASSIS or ESM_CHASSIS_FILE or use -G or -E option" >&2
+			Usage
+		fi
 	fi
 	
-	if [ "$ESM_CHASSIS" = "" ]
-	then
-		echo "$1: Must export ESM_CHASSIS or ESM_CHASSIS_FILE or use -G or -E option" >&2
-		Usage
-	fi
 }
 
 

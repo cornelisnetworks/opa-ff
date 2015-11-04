@@ -15,18 +15,63 @@ oparesolvehfiport
 .PP
 
 \fB(Host)\fR
-Permits the Intel(R) Omni-Path Fabric Host Software style Intel(R) Omni-Path Host Fabric Interface ( HFI ) number and port number arguments to be converted to an Host Software style HFI name and physical port number. This can be useful when writing scripts that can accept FastFabric -style arguments, and interact directly with OFED commands.
+Permits the Intel(R) Omni-Path Fabric Host Software style Intel(R) Omni-Path Host Fabric Interface (HFI) number and port number arguments to be converted to a Host Software style HFI name and physical port number. This can be useful when writing scripts that can accept FastFabric -style arguments, and interact directly with OFED commands.
 .SH Syntax
 .NL
-oparesolvehfiport \fIhfi\fR \fIport\fR
+oparesolvehfiport \fIhfi\fR \fIport\fR or
+.PP
+
+.br
+oparesolvehfiport --help
+
+.br
+
 .SH Options
 .NL
 
 .TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
  \fIhfi\fR 
 .NL
-HFI to send by , default is first HFI 
+HFI to send by. Numbered 1..n. 0 = system-wide port num. Default is first HFI.
+
 .TP 10
  \fIport\fR 
 .NL
-Port to send by, default is first active port[START-DRAFT-COMMENT][gdr] Does there need to be an Examples section?[END-DRAFT-COMMENT]
+Port to send by. Numbered 1..n. 0 (default) is first active port.
+
+.TP 10
+\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
+
+.TP 10
+-h \fIx\fR-p 0 
+.NL
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h 0 -p \fIy\fR 
+.NL
+Port \fIy \fR within system (no matter which ports are active).
+
+.TP 10
+-h \fIx\fR-p \fIy\fR 
+.NL
+HFI \fIx\fR, port \fIy\fR
+
+.SH Examples 
+.NL
+oparesolvehfiport 0 1
+.br
+Output:
+.br
+    hfi\(ul0:1
