@@ -1,0 +1,145 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opareports 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opareports
+
+.NL
+
+.PP
+
+\fB(All)\fR
+opareports is a front end to opareport that provides many of the same options and capabilities. It can also run a report against multiple fabrics or subnets (for example, local host HFI ports). opareports can use an input file to augment the reports using additional details from the topology\(ulinput file.
+.SH Syntax
+.NL
+opareports [-t \fIportsfile\fR] [-p \fIports\fR] [opareport \fIarguments\fR] [-T \fItopology\(ulinput\fR]
+.PP
+or
+.br
+opareports --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+.TP 10
+-t \fIportsfile\fR 
+.NL
+File with list of local HFI ports used to access fabric for analysis. Default is /etc/sysconfig/opa/ports file.
+.TP 10
+-p \fIports\fR 
+.NL
+List of local HFI ports used to access fabric for counter clear. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+
+.IP
+Uses the format hfi:port, for example:
+.RS
+.TP 10
+
+.sp
+0:0 
+First active port in system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+0:y 
+Port  \fIy\fR within system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:0 
+First active port on HFI  \fIx\fR.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:y 
+HFI  \fIx\fR, port  \fIy\fR.
+
+.RE
+
+.TP 10
+opareport \fIarguments\fR 
+.NL
+Any of the other opareport arguments. The -h and -X options are not available. Note that the meaning of -p is different for opareports than opareport. When run against multiple fabrics, the -x and -o snapshot options are not available.
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+When run against multiple fabrics, the -F option is applied to all fabrics. See
+\fIopareport\fR
+for more information.
+
+
+.TP 10
+-T \fItopology\(ulinput\fR 
+.NL
+Name of a topology input file to use. The filename may have %P as a marker which is replaced with the hfi:port being operated on (such as 0:0 or 1:2). The default filename is /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used.
+.SH Example 
+.NL
+opareports opareports -p \'1:1 2:1\'
+.SH Environment Variables 
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+\fBPORTS\fR 
+.NL
+List of ports, used in absence of -t and -p.
+.TP 10
+\fBPORTS\(ulFILE\fR 
+.NL
+File containing list of ports, used in absence of -t and -p.
+.TP 10
+\fBFF\(ulTOPOLOGY\(ulFILE\fR 
+.NL
+File containing topology\(ulinput (may have %P marker in filename), used in absence of -T.
+.SH Details 
+.NL
+
+.PP
+For simple fabrics, the Intel(R) Omni-Path Fabric Suite FastFabric Toolset host is connected to a single fabric. By default, the first active port on the FastFabric Toolset host is used to analyze the fabric.
+.PP
+However, in more complex fabrics, the FastFabric Toolset host may be connected to more than one fabric or subnet. In this case, you can specify the ports or HFIs to use with one of the following methods:
+.IP \(bu
+On the command line using the -p option.
+.IP \(bu
+In a file specified using the -t option.
+.IP \(bu
+Through the environment variables \fBPORTS\fR or \fBPORTS\(ulFILE\fR.
+.IP \(bu
+Using the ports\(ulfile configuration option in /etc/sysconfig/opa/opafastfabric.conf.
+.PP
+If the specified port does not exist or is empty, the first active port on the local system is used. In more complex configurations, you must specify the exact ports to use for all fabrics to be analyzed.
+.PP
+You can specify the topology\(ulinput file to be used with one of the following methods:
+.IP \(bu
+On the command line using the -T option.
+.IP \(bu
+In a file specified through the environment variable \fBFF\(ulTOPOLOGY\(ulFILE\fR.
+.IP \(bu
+Using the ff\(ultopology\(ulfile configuration option in opafastfabric.conf.
+.PP
+If the specified file does not exist, no topology\(ulinput file is used. Alternately the filename can be specified as NONE to prevent use of an input file.

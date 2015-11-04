@@ -1,0 +1,31 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaextractstat 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaextractstat
+
+.NL
+
+.PP
+Performs an error analysis of a fabric and provides augmented information from a topology\(ulinput file. The report provides cable information as well as symbol error counts.
+.PP
+opaextractstat generates a detailed opareport errors report that also has a topology input file (see
+\fIopareport\fR
+for more information about topology files). The report is piped to opaxmlextract which extracts values for Link, Cable and Port. (The port element names are context-sensitive.) Note that opaxmlextract generates two extraction records for each link (one for each port on the link); therefore, opaextractstat merges the two records into a single record and removes redundant link and cable information.
+.PP
+opaextractstat contains a while read loop that reads the CSV line-by-line, uses cut to remove redundant information, and outputs the data on a common line.
+.SH Syntax
+.NL
+
+.PP
+The portion of the script that calls opareport and opaxmlextract follows:opareport -x -d 10 -s -o errors -T $@ | opaxmlextract -d \;
+.br
+-e Rate -e MTU -e LinkDetails -e CableLength -e CableLabel
+.br
+-e CableDetails -e Port.NodeDesc -e Port.PortNum -e SymbolErrors.Value

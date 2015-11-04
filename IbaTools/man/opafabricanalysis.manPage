@@ -1,0 +1,299 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opafabricanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opafabricanalysis
+
+.NL
+
+.PP
+
+\fB(All)\fR
+Performs analysis of the fabric.
+.SH Syntax
+.NL
+opafabricanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR]
+.SH Options
+.NL
+
+.TP 10
+-b 
+.NL
+Baseline mode, default is compare/check mode.
+.TP 10
+-e 
+.NL
+Evaluate health only, default is compare/check mode.
+.TP 10
+-s 
+.NL
+Save history of failures (errors/differences).
+.TP 10
+-d dir 
+.NL
+Top-level directory for saving baseline and history of failed checks. Default = /var/opt/opa/analysis 
+.TP 10
+-c file 
+.NL
+Error thresholds config file. Default = /etc/sysconfig/opa/opamon.conf 
+.TP 10
+-t portsfile 
+.NL
+File with list of local HFI ports used to access fabric(s) for analysis. Default = /etc/sysconfig/opa/ports 
+.TP 10
+-p ports 
+.NL
+List of local HFI ports used to access fabric(s) for analysis. Default is the first active port. Specified as HFI:port as follows:
+.RS
+.TP 10
+
+.sp
+0:0 
+First active port in system
+.RE
+
+.RS
+.TP 10
+
+.sp
+0: \fIy\fR 
+Port  \fIy\fR within system
+.RE
+
+.RS
+.TP 10
+
+.sp
+ \fIx\fR:0 
+First active port on HFI  \fIx\fR 
+.RE
+
+.RS
+.TP 10
+
+.sp
+ \fIx\fR: \fIy\fR 
+HFI  \fIx\fR, port  \fIy\fR 
+.RE
+
+.TP 10
+-T \fItopology\(ulinput\fR 
+.NL
+Name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on (such as 0:0 or 1:2). Default = /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
+\fIopareport\fR
+for more information.
+.SH Example 
+.NL
+opafabricanalysis
+.br
+opafabricanalysis -p \'1:1 2:1\'
+.PP
+The fabric analysis tool checks the following:
+.IP \(bu
+Fabric links (both internal to switch chassis and external cables)
+.IP \(bu
+Fabric components (nodes, links, SMs, systems, and their SMA configuration)
+.IP \(bu
+Fabric PMA error counters and link speed mismatches
+.PP
+
+.B NOTE:
+The comparison includes components on the fabric. Therefore, operations such as shutting down a server cause the server to no longer appear on the fabric and are flagged as a fabric change or failure by opafabricanalysis.
+
+.SH Environment Variables
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+\fBPORTS\fR 
+.NL
+List of ports, used in absence of -t and -p.
+.TP 10
+\fBPORTS\(ulFILE\fR 
+.NL
+File containing list of ports, used in absence of -t and -p.
+.TP 10
+\fBFF\(ulTOPOLOGY\(ulFILE\fR 
+.NL
+File containing topology\(ulinput (may have %P marker in filename), used in absence of -T.
+.TP 10
+\fBFF\(ulANALYSIS\(ulDIR\fR 
+.NL
+Top level directory for baselines and failed health checks.
+.SH Details
+.NL
+
+.PP
+For simple fabrics, the Intel(R) Omni-Path Fabric Suite FastFabric Toolset host is connected to a single fabric. By default, the first active port on the FastFabric Toolset host is used to analyze the fabric. However, in more complex fabrics, the FastFabric Toolset host may be connected to more than one fabric or subnet. In this case, you can specify the ports or HFIs to use with one of the following methods:
+.IP \(bu
+On the command line using the -p option.
+.IP \(bu
+In a file specified using the -t option.
+.IP \(bu
+Through the environment variables \fBPORTS\fR or \fBPORTS\(ulFILE\fR.
+.IP \(bu
+Using the \fBPORTS\(ulFILE\fR configuration option in opafastfabric.conf.
+.PP
+If the specified port does not exist or is empty, the first active port on the local system is used. In more complex configurations, you must specify the exact ports to use for all fabrics to be analyzed. For more information, refer to.
+.PP
+You can specify the topology\(ulinput file to be used with one of the following methods:
+.IP \(bu
+On the command line using the -T option.
+.IP \(bu
+In a file specified through the environment variable \fBFF\(ulTOPOLOGY\(ulFILE\fR.
+.IP \(bu
+Using the ff\(ultopology\(ulfile configuration option in opafastfabric.conf.
+.PP
+If the specified file does not exist, no topology\(ulinput file is used. Alternately the filename can be specified as NONE to prevent use of an input file.
+.PP
+For more information, refer to
+\fIopareport\fR
+.
+.PP
+By default, the error analysis includes PMA counters and slow links (that is, links running below enabled speeds). You can change this using the \fBFF\(ulFABRIC\(ulHEALTH\fR configuration parameter in opafastfabric.conf. This parameter specifies the opareport options and reports to be used for the health analysis. It also can specify the PMA counter clearing behavior (-I \fIseconds\fR, -C, or none at all). See \fIAppendix A\fR in the 
+\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
+
+for more information.
+.PP
+When a topology\(ulinput file is used, it can also be useful to extend \fBFF\(ulFABRIC\(ulHEALTH\fR to include fabric topology verification options such as -o verifylinks.
+.PP
+The thresholds for PMA counter analysis default to /etc/sysconfig/opa/opamon.conf. However, you can specify an alternate configuration file for thresholds using the -c option. The opamon.si.conf file can also be used to check for any non-zero values for signal integrity (SI) counters.
+.PP
+All files generated by opafabricanalysis start with fabric in their file name. This is followed by the port selection option identifying the port used for the analysis. Default is 0:0.
+.PP
+The opafabricanalysis tool generates files such as the following within FF\(ulANALYSIS\(ulDIR :
+.IP \(bu
+Health Check
+.IP \(bu
+latest/fabric.0:0.errors stdout of opareport for errors encountered during fabric error analysis.
+
+.IP \(bu
+latest/fabric.0.0.errors.stderr stderr of opareport during fabric error analysis.
+
+.IP \(bu
+BaselineDuring a baseline run, the following files are also created in FF\(ulANALYSIS\(ulDIR/latest.
+
+.IP \(bu
+baseline/fabric.0:0.snapshot.xml opareport snapshot of complete fabric components and SMA configuration.
+
+.IP \(bu
+baseline/fabric.0:0.comps opareport summary of fabric components and basic SMA configuration.
+
+.IP \(bu
+baseline/fabric.0.0.links opareport summary of internal and external links.
+
+.IP \(bu
+Full analysis
+.IP \(bu
+latest/fabric.0:0.snapshot.xml opareport snapshot of complete fabric components and SMA configuration.
+
+.IP \(bu
+latest/fabric.0:0.snapshot.stderr stderr of opareport during snapshot.
+
+.IP \(bu
+latest/fabric.0:0.errors stdout of opareport for errors encountered during fabric error analysis.
+
+.IP \(bu
+latest/fabric.0.0.errors.stderr stderr of opareport during fabric error analysis.
+
+.IP \(bu
+latest/fabric.0:0.comps stdout of opareport for fabric components and SMA configuration.
+
+.IP \(bu
+latest/fabric.0:0.comps.stderr stderr of opareport for fabric components.
+
+.IP \(bu
+latest/fabric.0:0.comps.diff diff of baseline and latest fabric components.
+
+.IP \(bu
+latest/fabric.0:0.links stdout of opareport summary of internal and external links.
+
+.IP \(bu
+latest/fabric.0:0.links.stderr stderr of opareport summary of internal and external links.
+
+.IP \(bu
+latest/fabric.0:0.links.diff diff of baseline and latest fabric internal and external links.
+
+.IP \(bu
+latest/fabric.0:0.links.changes.stderr stderr of opareport comparison of links.
+
+.IP \(bu
+latest/fabric.0:0.links.changes opareport comparison of links against baseline. This is typically easier to read than the links.diff file and contains the same information.
+
+.IP \(bu
+latest/fabric.0:0.comps.changes.stderr stderr of opareport comparison of components.
+
+.IP \(bu
+latest/fabric.0:0.comps.changes opareport comparison of components against baseline. This is typically easier to read than the comps.diff file and contains the same information.
+The .diff and .changes files are only created if differences are detected.
+If the -s option is used and failures are detected, files related to the checks that failed are also copied to the time-stamped directory name under FF\(ulANALYSIS\(ulDIR.
+
+.SH Fabric items checked against the baseline
+.NL
+
+.PP
+Based on opareport -o links :
+.IP \(bu
+Unconnected/down/missing cables
+.IP \(bu
+Added/moved cables
+.IP \(bu
+Changes in link width and speed
+.IP \(bu
+Changes to Node GUIDs in fabric (replacement of HFI or Switch hardware)
+.IP \(bu
+Adding/Removing Nodes [FI, Virtual FIs, Virtual Switches, Physical Switches, Physical Switch internal switching cards (leaf/spine)]
+.IP \(bu
+Changes to server or switch names
+.PP
+Based on opareport -o comps :
+.IP \(bu
+Overlap with items from links report
+.IP \(bu
+Changes in port MTU, LMC, number of VLs
+.IP \(bu
+Changes in port speed/width enabled or supported
+.IP \(bu
+Changes in HFI or switch device IDs/revisions/VendorID (for example, ASIC HW changes)
+.IP \(bu
+Changes in port Capability mask (which features/agents run on port/server)
+.IP \(bu
+Changes to ErrorLimits and PKey enforcement per port
+.IP \(bu
+Changes to IOUs/IOCs/IOC Services provided
+
+
+.PP
+Location (port, node) and number of SMs in fabric. Includes:
+.IP \(bu
+Primary and backups
+.IP \(bu
+Configured priority for SM
+.SH Fabric items also checked during health check
+.NL
+
+.PP
+Based on opareport -s -C -o errors -o slowlinks :
+.IP \(bu
+PMA error counters on all Intel(R) Omni-Path Fabric ports (HFI, switch external and switch internal) checked against configurable thresholds.
+.IP \(bu
+Counters are cleared each time a health check is run. Each health check reflects a counter delta since last health check.
+.IP \(bu
+Typically identifies potential fabric errors, such as symbol errors.
+.IP \(bu
+May also identify transient congestion, depending on the counters that are monitored.
+.IP \(bu
+Link active speed/width as compared to Enabled speed.
+.IP \(bu
+Identifies links whose active speed/width is < min (enabled speed/width on each side of link).
+.IP \(bu
+This typically reflects bad cables or bad ports or poor connections.
+.IP \(bu
+Side effect is the verification of SA health.

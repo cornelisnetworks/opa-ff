@@ -1,0 +1,58 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opa\(ulosd\(ulperf 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opa\(ulosd\(ulperf
+
+.NL
+
+.SH Syntax
+.NL
+opa\(ulosd\(ulperf [ \fIopts\fR] \fIguidtable\fR
+.SH Options
+.NL
+
+.TP 10
+ \fIopts\fR 
+.NL
+Options. Values include:
+
+.RS
+.TP 10
+
+.sp
+-q \fIqueries\fR 
+Runs at least  \fIqueries\fR queries.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-p \fIpkey\fR 
+Specifies to include  \fIpkey\fR in the searches. Can be specified up to 8 times.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-S \fIsid\fR 
+Specifies to include SID in the searches. Can be specified up to 8 times. Note that providing both SIDs and pkeys may cause problems.
+.RE
+
+.TP 10
+ \fIguidtable\fR 
+.NL
+Text file that lists the destination GUIDs and LIDs. For example, from a build\(ultable.pl file.
+
+.SH Example 
+.NL
+./opa\(ulosd\(ulperf -q 100000 -p 0x8001 guidtable

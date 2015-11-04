@@ -1,0 +1,84 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opacheckload
+
+.NL
+
+.PP
+Returns load information on hosts in the fabric.
+.SH Syntax
+.NL
+opacheckload [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-r] [-a|-n numprocs]
+.PP
+or
+.br
+opacheckload --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+-f \fIhostfile\fR 
+.NL
+File with hosts to check. Default is /etc/sysconfig/opa/hosts. 
+
+.TP 10
+-h \fIhosts\fR 
+.NL
+List of hosts to check.
+
+.TP 10
+-r 
+.NL
+Reverses output to show the least busy hosts. Default is busiest hosts.
+.TP 10
+-n \fInumprocs\fR 
+.NL
+Shows top  \fInumprocs\fR hosts. Default is 10.
+.TP 10
+-a 
+.NL
+Shows all hosts. Default is 10.
+
+.TP 10
+-d \fIupload\(uldir\fR 
+.NL
+Directory to upload loadavg to. Default is uploads.
+
+.SH Examples 
+.NL
+opacheckload opacheckload -h \'arwen elrond\' HOSTS=\'arwen elrond\' opacheckload
+.SH Environment
+.NL
+
+.TP 10
+\fBHOSTS\fR 
+.NL
+List of hosts, used if -h option not supplied.
+
+.TP 10
+\fBHOSTS\(ulFILE\fR 
+.NL
+File containing list of hosts, used in absence of -f and -h.
+
+.TP 10
+\fBUPLOADS\(ulDIR\fR 
+.NL
+Directory to upload loadavg, used in absence of -d.
+
+.TP 10
+\fBFF\(ulMAX\(ulPARALLEL\fR 
+.NL
+Maximum concurrent operations.

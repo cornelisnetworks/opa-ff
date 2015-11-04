@@ -1,0 +1,536 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opahostadmin
+
+.NL
+
+.PP
+
+\fB(Host)\fR
+Performs a number of multi-step host initialization and verification operations, including upgrading software or firmware, rebooting hosts, and other operations. In general, operations performed by opahostadmin involve a login to one or more host systems.
+.SH Syntax 
+.NL
+opahostadmin [-c] [-i \fIipoib\(ulsuffix\fR] [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-r \fIrelease\fR] [-I \fIinstall\(uloptions\fR] [-U \fIupgrade\(uloptions\fR] [-d \fIdir\fR] [-T \fIproduct\fR] [-P \fIpackages\fR] [-m \fInetmask\fR] [-S] \fIoperation\fR...
+.PP
+or
+.br
+opahostadmin --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+-c 
+.NL
+Clobbers result files from any previous run before starting this run.
+
+.TP 10
+-i \fIipoib\(ulsuffix\fR 
+.NL
+Suffix to apply to host names to create ipoib host names. Default is -opa.
+
+.TP 10
+-f \fIhostfile\fR 
+.NL
+File with the names of hosts in a cluster. Default is /etc/sysconfig/opa/hosts file.
+
+.TP 10
+-h \fIhosts\fR 
+.NL
+List of hosts to execute the operation against.
+
+.TP 10
+-r \fIrelease\fR 
+.NL
+Software version to load/upgrade to. Default is the version of Intel(R) Omni-Path Software presently being run on the server.
+
+.TP 10
+-d \fIdir\fR 
+.NL
+Directory to retrieve  \fIproduct\fR. \fIrelease\fR.tgz for load or upgrade.
+
+.TP 10
+-I \fIinstall\(uloptions\fR 
+.NL
+Software install options.
+
+.TP 10
+-U \fIupgrade\(uloptions\fR 
+.NL
+Software upgrade options.
+
+.TP 10
+-T \fIproduct\fR 
+.NL
+Product type to install. Default = IntelOPA-Basic.RHEL7-x86\(ul64 
+
+.IP
+Other options include: IntelOPA-Basic. \fI<distro>\fR, IntelOPA-IFS. \fI<distro>\fR where  \fI<distro>\fR is the distribution and CPU.
+.TP 10
+-P \fIpackages\fR 
+.NL
+Packages to install. Default = oftools ipoib mpi 
+
+.TP 10
+-m \fInetmask\fR 
+.NL
+IPoIB netmask to use for configipoib operation.
+
+.TP 10
+-S 
+.NL
+Securely prompts for user password on remote system.
+
+.TP 10
+ \fIoperation\fR 
+.NL
+Performs the specified  \fIoperation\fR, which can be one or more of the following:
+
+.RS
+.TP 10
+
+.sp
+load 
+Starts initial installation of all hosts.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+upgrade 
+Upgrades installation of all hosts.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+configipoib 
+Creates ifcfg-ib1 using host IP address from /etc/hosts file.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+reboot 
+Reboots hosts, ensures they go down and come back.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+sacache 
+Confirms sacache has all hosts in it.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+ipoibping 
+Verifies this host can ping each host through IPoIB.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+mpiperf 
+Verifies latency and bandwidth for each host.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+mpiperfdeviation 
+Verifies latency and bandwidth for each host against a defined threshold (or relative to average host performance).
+
+.RE
+
+.SH Example 
+.NL
+opahostadmin -c reboot
+.br
+opahostadmin upgrade
+.br
+opahostadmin -h \'elrond arwen\' reboot
+.br
+HOSTS=\'elrond arwen\' opahostadmin reboot
+.SH Details 
+.NL
+
+.PP
+opahostadmin provides detailed logging of its results. During each run, the following files are produced:
+.TP 10
+test.res 
+.NL
+Appended with summary results of run.
+
+.TP 10
+test.log 
+.NL
+Appended with detailed results of run.
+
+.TP 10
+save\(ultmp/ 
+.NL
+Contains a directory per failed test with detailed logs.
+
+.TP 10
+test\(ultmp*/ 
+.NL
+Intermediate result files while test is running.
+The -c option removes all log files.
+.PP
+Results from opahostadmin are grouped into
+\fItest suites\fR
+
+,
+\fItest cases\fR
+
+, and
+\fItest items\fR
+
+. A given run of opahostadmin represents a single test suite. Within a test suite, multiple test cases occur; typically one test case per host being operated on. Some of the more complex operations may have multiple test items per test case. Each test item represents a major step in the overall test case.
+.PP
+Each opahostadmin run appends to test.res and test.log, and creates temporary files in test\(ultmp$PID in the current directory. test.res provides an overall summary of operations performed and their results. The same information is also displayed while opahostadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files which reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opahostadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opahostadmin.
+.PP
+opahostadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. Twenty (20) parallel operations is the default.
+.SH Environment Variables 
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+\fBHOSTS\fR 
+.NL
+List of hosts, used if -h option not supplied.
+
+.TP 10
+\fBHOSTS\(ulFILE\fR 
+.NL
+File containing list of hosts, used in absence of -f and -h.
+
+.TP 10
+\fBFF\(ulMAX\(ulPARALLEL\fR 
+.NL
+Maximum concurrent operations are performed.
+
+.TP 10
+\fBFF\(ulSERIALIZE\(ulOUTPUT\fR 
+.NL
+Serialize output of parallel operations (yes or no).
+
+.NL
+
+.SH opahostadmin Operation Details
+.NL
+
+.PP
+
+\fB(Host)\fR
+Intel recommends that you set up password SSH or SCP for use during this operation. Alternatively, the -S option can be used to securely prompt for a password, in which case the same password is used for all hosts. Alternately, the password may be put in the environment or the opafastfabric.conf file using \fBFF\(ulPASSWORD\fR and \fBFF\(ulROOTPASS\fR.
+.TP 10
+load 
+.NL
+Performs an initial installation of Intel(R) Omni-Path Software on a group of hosts. Any existing installation is uninstalled and existing configuration files are removed. Subsequently, the hosts are installed with a default Intel(R) Omni-Path Software configuration. The -I option can be used to select different install packages. Default = oftools ipoib mpi The -r option can be used to specify a release to install other than the one that this host is presently running. The  \fIFF\(ulPRODUCT\fR. \fIFF\(ulPRODUCT\(ulVERSION\fR.tgz file (for example, IntelOPA-Basic. \fIversion\fR.tgz) is expected to exist in the directory specified by -d. Default is the current working directory. The specified software is copied to all the selected hosts and installed.
+
+.TP 10
+upgrade 
+.NL
+Upgrades all selected hosts without modifying existing configurations. This operation is comparable to the -U option when running ./INSTALL manually. The -r option can be used to upgrade to a release different from this host. The default is to upgrade to the same release as this host. The  \fIFF\(ulPRODUCT\fR. \fIFF\(ulPRODUCT\(ulVERSION\fR.tgz file (for example, IntelOPA-Basic. \fIversion\fR.tgz) is expected to exist in the directory specified by -d. (The default is the current working directory.) The specified software is copied to all the end nodes and installed.
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+Only components that are currently installed are upgraded. This operation fails for hosts that do not have Intel(R) Omni-Path Software installed.
+
+
+.TP 10
+configipoib 
+.NL
+Creates a ifcfg-ib1 configuration file for each node using the IP address found using the resolver on the node. The standard Linux* resolver is used through the host command. (If running OFED Delta, this option configures ifcfg-ib0 .)
+
+.IP
+If the host is not found, /etc/hosts on the node is checked. The -i option specifies an IPoIB suffix to apply to the host name to create the IPoIB host name for the node. The default suffix is -ib. The -m option specifies a netmask other than the default for the given class of IP address, such as when dividing a class A or B address into smaller IP subnets. IPoIB is configured for a static IP address and is autostarted at boot. For the Intel(R) OPA Software Stack, the default /etc/sysconfig/ipoib.cfg file is used, which provides a redundant IPoIB configuration using both ports of the first HFI in the system.
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+opahostadmin configipoib now supports DHCP (auto or static options) for configuring the IPoIB interface. You must specify these options in /etc/sysconfig/opa/opafastfabric.conf against the \fBFF\(ulIPOIB\(ulCONFIG\fR variable. If no options are found, the static IP configuration is used by default. If auto is specified, then one IP address from either static or dhcp is chosen. Static is used if the IP address can be obtained out of /etc/hosts or the resolver, otherwise DHCP is used.
+
+
+.TP 10
+reboot 
+.NL
+Reboots the given hosts and ensures they go down and come back up by pinging them during the reboot process. The ping rate is slow (5 seconds), so if the servers boot faster than this, false failures may be seen.
+
+.TP 10
+sacache 
+.NL
+Verifies the given hosts can properly communicate with the SA and any cached SA data that is up to date. To run this command, Intel(R) Omni-Path Fabric software must be installed and running on the given hosts. The subnet manager and switches must be up. If this test fails, for QuickSilver hosts: opacmdall \'cat /proc/driver/ics\(uldsc/gids\' can be run against any problem hosts to see what they have cached. If this test fails, for OFED hosts: opacmdall \'opasaquery -o desc\' can be run against any problem hosts.
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+This operation requires that the hosts being queried be specified by a resolvable TCP/IP host name. This operation FAILS if the selected hosts are specified by IP address.
+
+
+.TP 10
+ipoibping 
+.NL
+Verifies IPoIB basic operation by ensuring that the host can ping all other nodes through IPoIB. To run this command, Intel(R) Omni-Path Fabric software must be installed, IPoIB must be configured and running on the host, and the given hosts, the SM, and switches must be up. The -i option can specify an alternate IPoIB hostname suffix.
+
+.TP 10
+mpiperf 
+.NL
+Verifies that MPI is operational and checks MPI end-to-end latency and bandwidth between pairs of nodes (for example, 1-2, 3-4, 5-6). Use this to verify switch latency/hops, PCI bandwidth, and overall MPI performance. The test.res file contains the results of each pair of nodes tested.
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+This option is available for the Intel(R) Omni-Path Fabric Host Software OFED Delta packaging, but is not presently available for other packagings of OFED.
+
+
+.IP
+To obtain accurate results, this test should be run at a time when no other stressful applications (for example, MPI jobs or high stress file system operations) are running on the given hosts.
+.IP
+Bandwidth issues typically indicate server configuration issues (for example, incorrect slot used, incorrect BIOS settings, or incorrect HFI model), or fabric issues (for example, symbol errors, incorrect link width, or speed). Assuming opareport has previously been used to check for link errors and link speed issues, the server configuration should be verified.
+.IP
+Note that BIOS settings and differences between server models can account for 10-20% differences in bandwidth. For more details about BIOS settings, consult the documentation from the server supplier and/or the server PCI chipset manufacturer.
+.TP 10
+mpiperfdeviation 
+.NL
+Enhanced version of mpiperf that verifies MPI performance. Can be used to verify switch latency/hops, PCI bandwidth, and overall MPI performance. It performs assorted pair-wise bandwidth and latency tests, and reports pairs outside an acceptable tolerance range. The tool identifies specific nodes that have problems and provides a concise summary of results. The test.res file contains the results of each pair of nodes tested.
+
+.IP
+By default, concurrent mode is used to quickly analyze the fabric and host performance. Pairs that have 20% less bandwidth or 50% more latency than the average pair are reported as failures.
+.IP
+The tool can be run in a<term xmlns:ditaarch="http://dita.oasis-open.org/architecture/2005/" ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\' topic/image \') and not(parent::*/@conref)]" class="- topic/term ">sequential</term>or a<term xmlns:ditaarch="http://dita.oasis-open.org/architecture/2005/" ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\' topic/image \') and not(parent::*/@conref)]" class="- topic/term ">concurrent</term>mode. Sequential mode runs each host against a reference host. By default, the reference host is selected based on the best performance from a quick test of the first 40 hosts. In concurrent mode, hosts are paired up and all pairs are run concurrently. Since there may be fabric contention during such a run, any poor performing pairs are then rerun sequentially against the reference host.
+.IP
+Concurrent mode runs the tests in the shortest amount of time, however, the results could be slightly less accurate due to switch contention. In heavily oversubscribed fabric designs, if concurrent mode is producing unexpectedly low performance, try sequential mode.
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+This option is available for the Intel(R) Omni-Path Fabric Host Software OFED Delta packaging, but is not presently available for other packagings of OFED.
+
+
+.IP
+To obtain accurate results, this test should be run at a time when no other stressful applications (for example, MPI jobs, high stress file system operations) are running on the given hosts.
+.IP
+Bandwidth issues typically indicate server configuration issues (for example, incorrect slot used, incorrect BIOS settings, or incorrect HFI model), or fabric issues (for example, symbol errors, incorrect link width, or speed). Assuming opareport has previously been used to check for link errors and link speed issues, the server configuration should be verified.
+.IP
+Note that BIOS settings and differences between server models can account for 10-20% differences in bandwidth. A result 5-10% below the average is typically not cause for serious alarm, but may reflect limitations in the server design or the chosen BIOS settings.
+.IP
+For more details about BIOS settings, consult the documentation from the server supplier and/or the server PCI chipset manufacturer.
+.IP
+The deviation application supports a number of parameters which allow for more precise control over the mode, benchmark and pass/fail criteria. The parameters to use can be selected using the \fBFF\(ulDEVIATION\(ulARGS\fR configuration parameter in opafastfabric.conf 
+.IP
+Available parameters for deviation application:[-bwtol bwtol] [-bwdelta MBs] [-bwthres MBs]
+.br
+[-bwloop count] [-bwsize size] [-lattol latol]
+.br
+[-latdelta usec] [-latthres usec] [-latloop count]
+.br
+[-latsize size][-c] [-b] [-v] [-vv]
+.br
+[-h reference\(ulhost]
+.RS
+.TP 10
+
+.sp
+-bwtol 
+Percent of bandwidth degradation allowed below average value.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-bwbidir 
+Performs a bidirectional bandwidth test.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-bwunidir 
+Performs a unidirectional bandwidth test (default).
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-bwdelta 
+Limit in MB/s of bandwidth degradation allowed below average value.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-bwthres 
+Lower limit in MB/s of bandwidth allowed.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-bwloop 
+Number of loops to execute each bandwidth test.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-bwsize 
+Size of message to use for bandwidth test.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-lattol 
+Percent of latency degradation allowed above average value.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-latdelta 
+Limit in usec of latency degradation allowed above average value.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-latthres 
+Lower limit in usec of latency allowed.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-latloop 
+Number of loops to execute each latency test.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-latsize 
+Size of message to use for latency test.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-c 
+Runs test pairs concurrently instead of the default of sequential.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-b 
+When comparing results against tolerance and delta, uses best instead of average.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-v 
+Verbose output.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-vv 
+Very verbose output.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-h 
+Reference host to use for sequential pairing.
+
+.RE
+
+.IP
+Both bwtol and bwdelta must be exceeded to fail bandwidth test.
+.IP
+When bwthres is supplied, bwtol and bwdelta are ignored.
+.IP
+Both lattol and latdelta must be exceeded to fail latency test.
+.IP
+When latthres is supplied, lattol and latdelta are ignored.
+.IP
+For consistency with OSU benchmarks, MB/s is defined as 1000000 bytes/s.

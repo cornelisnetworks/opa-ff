@@ -44,10 +44,10 @@ fi
 
 Usage_full()
 {
-	echo "Usage: showallports [-C] [-f hostfile] [-F chassisfile]" >&2
-	echo "                    [-h 'hosts'] [-H 'chassis'] [-M 'host'] [-S]" >&2
+	echo "Usage: opashowallports [-C] [-f hostfile] [-F chassisfile]" >&2
+	echo "                    [-h 'hosts'] [-H 'chassis'] [-S]" >&2
 	echo "              or" >&2
-	echo "       showallports --help" >&2
+	echo "       opashowallports --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -C - perform operation against chassis, default is hosts" >&2
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
@@ -55,33 +55,30 @@ Usage_full()
 	echo "           default is $CONFIG_DIR/opa/chassis" >&2
 	echo "   -h hosts - list of hosts to show ports for" >&2
 	echo "   -H chassis - list of chassis to show ports for" >&2
-	echo "   -M host - Management host. (Remote host to run IB node queries from)" >&2
-	echo "           default is localhost" >&2
 	echo "   -S - securely prompt for password for admin on chassis" >&2
 	echo " Environment:" >&2
 	echo "   HOSTS - list of hosts, used if -h option not supplied" >&2
 	echo "   CHASSIS - list of chassis, used if -H option not supplied" >&2
 	echo "   HOSTS_FILE - file containing list of hosts, used in absence of -f and -h" >&2
 	echo "   CHASSIS_FILE - file containing list of chassis, used in absence of -F and -H" >&2
-	echo "   MGMT_HOST - host to use to perform IB node queries, used in absence of -M" >&2
 	echo "   FF_CHASSIS_LOGIN_METHOD - how to login to chassis: telnet or ssh" >&2
 	echo "   FF_CHASSIS_ADMIN_PASSWORD - admin password for chassis, used in absence of -S" >&2
 	echo "example:">&2
-	echo "   showallports" >&2
-	echo "   showallports -h 'elrond arwen'" >&2
-	echo "   HOSTS='elrond arwen' showallports" >&2
-	echo "   showallports -C" >&2
-	echo "   showallports -H 'chassis1 chassis2'" >&2
-	echo "   CHASSIS='chassis1 chasssi2' showallports" >&2
+	echo "   opashowallports" >&2
+	echo "   opashowallports -h 'elrond arwen'" >&2
+	echo "   HOSTS='elrond arwen' opashowallports" >&2
+	echo "   opashowallports -C" >&2
+	echo "   opashowallports -H 'chassis1 chassis2'" >&2
+	echo "   CHASSIS='chassis1 chasssi2' opashowallports" >&2
 	exit 0
 }
 
 
 Usage()
 {
-	echo "Usage: showallports [-C] [-f hostfile] [-F chassisfile] [-S]" >&2
+	echo "Usage: opashowallports [-C] [-f hostfile] [-F chassisfile] [-S]" >&2
 	echo "              or" >&2
-	echo "       showallports --help" >&2
+	echo "       opashowallports --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -C - perform operation against chassis, default is hosts" >&2
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
@@ -89,8 +86,8 @@ Usage()
 	echo "           default is $CONFIG_DIR/opa/chassis" >&2
 	echo "   -S - securely prompt for password for admin on chassis" >&2
 	echo "example:">&2
-	echo "   showallports" >&2
-	echo "   showallports -C" >&2
+	echo "   opashowallports" >&2
+	echo "   opashowallports -C" >&2
 	exit 2
 }
 
@@ -102,7 +99,7 @@ fi
 host=0
 chassis=0
 Sopt=n
-while getopts Cf:F:h:H:M:S param
+while getopts Cf:F:h:H:S param
 do
 	case $param in
 	C)
@@ -119,8 +116,6 @@ do
 	H)
 		chassis=1
 		CHASSIS="$OPTARG";;
-	M)
-		MGMT_HOST="$OPTARG";;
 	S)
 		Sopt=y;;
 	?)
@@ -134,7 +129,7 @@ then
 fi
 if [[ $(($chassis+$host)) -gt 1 ]]
 then
-	echo "showallports: conflicting arguments, both host and chassis specified" >&2
+	echo "opashowallports: conflicting arguments, both host and chassis specified" >&2
 	Usage
 fi
 if [[ $(($chassis+$host)) -eq 0 ]]
@@ -145,7 +140,7 @@ fi
 if [ "$chassis" -eq 0 ]
 then
 
-	check_host_args showallports
+	check_host_args opashowallports
 	for hostname in $HOSTS
 	do
 		echo "--------------------------------------------------------------------"
@@ -154,7 +149,7 @@ then
 	done
 else
 
-	check_chassis_args showallports
+	check_chassis_args opashowallports
 	export CFG_CHASSIS_LOGIN_METHOD=$FF_CHASSIS_LOGIN_METHOD
 	export CFG_CHASSIS_ADMIN_PASSWORD=$FF_CHASSIS_ADMIN_PASSWORD
 	if [ "$Sopt" = y ]

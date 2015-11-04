@@ -1,0 +1,39 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaextractstat2 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaextractstat2
+
+.NL
+
+.PP
+Performs an error analysis of a fabric and provides augmented information from a topology\(ulinput file. The report is similar to opaextractstat, with the addition of extracting all error counters. Error counter names are context-sensitive.
+.SH Syntax
+.NL
+
+.PP
+The portion of the script that calls opareport and opaxmlextract follows:opareport -x -d 10 -s -o errors -T $@ | opaxmlextract -d \;
+.br
+-e Rate -e MTU -e Internal -e LinkDetails -e CableLength -e CableLabel
+.br
+-e CableDetails -e Port.NodeGUID -e Port.PortGUID -e Port.PortNum
+.br
+-e Port.PortType -e Port.NodeDesc -e Port.PortDetails
+.br
+-e PortXmitData.Value -e PortXmitPkts.Value -e PortRcvData.Value
+.br
+-e PortRcvPkts.Value -e SymbolErrors.Value -e LinkErrorRecovery.Value
+.br
+-e LinkDowned.Value -e PortRcvErrors.Value
+.br
+-e PortRcvRemotePhysicalErrors.Value -e PortRcvSwitchRelayErrors.Value
+.br
+-e PortXmitConstraintErrors.Value -e PortRcvConstraintErrors.Value
+.br
+-e LocalLinkIntegrityErrors.Value -e ExcessiveBufferOverrunErrors.Value

@@ -1,0 +1,106 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaenableports 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaenableports
+
+.NL
+
+.PP
+
+\fB(Linux)\fR
+Accepts a disabled ports input file and re-enables the specified ports. The input file can be /etc/sysconfig/opa/disabled*.csv or a user-created subset of such a file. After enabling the port, it is removed from /etc/sysconfig/opa/disabled*.csv.
+.SH Syntax 
+.NL
+opaenableports [-t \fIportsfile\fR] [-p \fIports\fR] < disabled.csv
+.PP
+or
+.br
+opaenableports --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+-t \fIportsfile\fR 
+.NL
+File with list of local HFI ports used to access fabric for operation. Default is /etc/sysconfig/opa/ports file.
+
+.TP 10
+-p \fIports\fR 
+.NL
+List of local HFI ports used to access fabric for analysis. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+
+.IP
+Uses the format hfi:port, for example:
+.RS
+.TP 10
+
+.sp
+0:0 
+First active port in system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+0:y 
+Port  \fIy\fR within system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:0 
+First active port on HFI  \fIx\fR.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:y 
+HFI  \fIx\fR, port  \fIy\fR.
+
+.RE
+
+.TP 10
+disable.csv 
+.NL
+File listing the ports to enable. The list is of the form: NodeGUID;PortNum;NodeDesc.
+
+.IP
+An input file like this is generated in /etc/sysconfig/opa/disabled* by opadisableports.
+.SH Examples 
+.NL
+opaenableports < disabled.csv
+.br
+opaenableports -p \'1:1 2:1\' < disabled.csv
+.SH Environment 
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+\fBPORTS\fR 
+.NL
+List of ports, used in absence of -t and -p.
+.TP 10
+\fBPORTS\(ulFILE\fR 
+.NL
+File containing list of ports, used in absence of -t and -p.

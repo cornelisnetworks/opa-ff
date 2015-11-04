@@ -1,0 +1,157 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opafindgood 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opafindgood
+
+.NL
+
+.PP
+Checks for hosts that are able to be pinged, accessed via SSH, and active on the Intel(R) Omni-Path Fabric. Produces a list of good hosts meeting all criteria. Typically used to identify good hosts to undergo further testing and benchmarking during initial cluster staging and startup.
+.PP
+The resulting good file lists each good host exactly once and can be used as input to create  \fImpi\(ulhosts\fR files for running mpi\(ulapps and the HFI-SW cable test. The files alive, running, active, good, and bad are created in the selected directory listing hosts passing each criteria.
+.PP
+This command assumes the Node Description for each host is based on the  \fIhostname\fR-s output in conjunction with an optional HFI-# suffix. When using a /etc/sysconfig/opa/hosts file that lists the hostnames, this assumption may not be correct.
+.PP
+This command automatically generates the file FF\(ulRESULT\(ulDIR/punchlist.csv. This file provides a concise summary of the bad hosts found. This can be imported into Excel directly as a *.csv file. Alternatively, it can be cut/pasted into Excel, and the
+\fBData/Text to Columns\fR
+toolbar can be used to separate the information into multiple columns at the semicolons.
+.PP
+For a given run, a line is generated for each failing host. Hosts are reported exactly once for a given run. Therefore, a host that does not ping is NOT listed as can\'t ssh nor No active IB port. There may be cases where ports could be active for hosts that do not ping, especially if Ethernet host names are used for the ping test. However, the lack of ping often implies there are other fundamental issues, such as PXE boot or inability to access DNS or DHCP to get proper host name and IP address. Therefore, reporting hosts that do not ping is typically of limited value.
+.PP
+Note that opafindgood queries the SA for NodeDescriptions to determine hosts with active ports. As such, ports may be active for hosts that cannot be accessed via SSH or pinged.
+.SH Syntax 
+.NL
+opafindgood [-R|-A|-Q] [-d \fIdir\fR] [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-t \fIportsfile\fR]
+.br
+[-p \fIports\fR] [-T \fItimelimit\fR]
+.PP
+or
+.br
+opafindgood --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+.TP 10
+-R 
+.NL
+Skips the running test (SSH). Recommended if password-less SSH is not set up.
+.TP 10
+-A 
+.NL
+Skips the active test. Recommended if Intel(R) Omni-Path Fabric software or fabric is not up.
+.TP 10
+-Q 
+.NL
+Skips the quarantine test. Recommended if Intel(R) Omni-Path Fabric software or fabric is not up.
+.TP 10
+-d \fIdir\fR 
+.NL
+Directory in which to create alive, active, running, good, and bad files. Default is /etc/sysconfig/opa directory.
+.TP 10
+-f \fIhostfile\fR 
+.NL
+File with hosts in cluster. Default is /etc/sysconfig/opa/hosts directory.
+.TP 10
+-h \fIhosts\fR 
+.NL
+List of hosts to ping.
+.TP 10
+-t \fIportsfile\fR 
+.NL
+File with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports file.
+.TP 10
+-p \fIports\fR 
+.NL
+List of local HFI ports used to access fabric(s) for analysis. The default is the first active port. The first HFI in the system is 1. The first port on an HFI is 1.Uses the format hfi:port, for example:
+.RS
+.TP 10
+
+.sp
+0:0 
+First active port in system.
+.RE
+
+.RS
+.TP 10
+
+.sp
+0: \fIy\fR 
+Port  \fIy\fR within system.
+.RE
+
+.RS
+.TP 10
+
+.sp
+ \fIx\fR:0 
+First active port on HFI  \fIx\fR.
+.RE
+
+.RS
+.TP 10
+
+.sp
+ \fIx\fR: \fIy\fR 
+HFI  \fIx\fR, port  \fIy\fR.
+.RE
+
+
+.TP 10
+-T \fItimelimit\fR 
+.NL
+Time limit in seconds for host to respond to SSH. Default = 20 seconds.
+
+.SH Environment Variables
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+\fBHOSTS\fR 
+.NL
+List of hosts, used if -h option not supplied.
+
+.TP 10
+\fBHOSTS\(ulFILE\fR 
+.NL
+File containing list of hosts, used in absence of -f and -h.
+
+.TP 10
+\fBPORTS\fR 
+.NL
+List of ports, used in absence of -t and -p.
+
+.TP 10
+\fBPORTS\(ulFILE\fR 
+.NL
+File containing list of ports, used in absence of -t and -p.
+
+.TP 10
+\fBFF\(ulMAX\(ulPARALLEL\fR 
+.NL
+Maximum concurrent operations.
+
+.SH Examples 
+.NL
+opafindgood
+.br
+opafindgood -f allhosts
+.br
+opafindgood -h \'arwen elrond\'
+.br
+HOSTS=\'arwen elrond\' opafindgood
+.br
+HOSTS\(ulFILE=allhosts opafindgood
+.br
+opafindgood -p \'1:1 2:1\'

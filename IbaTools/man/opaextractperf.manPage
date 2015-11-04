@@ -1,0 +1,35 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaextractperf 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaextractperf
+
+.NL
+
+.PP
+Provides a report of all the performance counters in a format easily imported to Excel for further analysis. It generates a detailed opareport component summary report and pipes the result to opaxmlextract, extracting element values for NodeDesc, SystemImageGUID, PortNum, and all the performance counters. Extraction is performed only from the Systems portion of the report, which does not contain Neighbor information (the Neighbor and SMs portions are suppressed).
+.SH Syntax
+.NL
+
+.PP
+The implementation of the script is as follows:opareport -o comps -s -x -d 10 | opaxmlextract -d \;
+.br
+-e NodeDesc -e SystemImageGUID -e PortNum -e XmitDataMB
+.br
+-e XmitData -e XmitPkts -e RcvDataMB -e RcvData -e RcvPkts
+.br
+-e SymbolErrors -e LinkErrorRecovery -e LinkDowned -e PortRcvErrors
+.br
+-e PortRcvRemotePhysicalErrors -e PortRcvSwitchRelayErrors
+.br
+-e PortXmitDiscards -e PortXmitConstraintErrors
+.br
+-e PortRcvConstraintErrors -e LocalLinkIntegrityErrors
+.br
+-e ExcessiveBufferOverrunErrors -e VL15Dropped -s Neighbor -s SMs

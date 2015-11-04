@@ -1,0 +1,109 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opagenesmchassis 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opagenesmchassis
+
+.NL
+
+.PP
+Generates a list of chassis IPv4 and IPv6 addresses and/or TCP names where the Embedded Subnet Manager (ESM) is running, in a format acceptable for inclusion in the /etc/sysconfig/opa/ports file. This tool uses opagenchassis output to iterate through all the chassis.
+.SH Syntax 
+.NL
+opagenesmchassis [-u user] [-S] [-t \fIportsfile\fR] [-p \fIports\fR]
+.PP
+or
+.br
+opagenesmchassis --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+.TP 10
+-u \fIuser\fR 
+.NL
+User to perform command as. For chassis, the default is admin.
+.TP 10
+-S 
+.NL
+Securely prompts for password for user on chassis.
+.TP 10
+-t \fIportsfile\fR 
+.NL
+File with a list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports 
+.TP 10
+-p \fIports\fR 
+.NL
+List of local HFI ports used to access fabric(s). Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+
+.IP
+Uses the format hfi:port, for example:
+.RS
+.TP 10
+
+.sp
+0:0 
+First active port in system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+0:y 
+Port  \fIy\fR within system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:0 
+First active port on HFI  \fIx\fR.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:y 
+HFI  \fIx\fR, port  \fIy\fR.
+
+.RE
+
+.SH Environment 
+.NL
+
+.TP 10
+\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR 
+.NL
+Password for chassis, used in absence of -S.
+.TP 10
+\fBPORTS\fR 
+.NL
+List of ports, used in absence of -t and -p.
+.TP 10
+\fBPORTS\(ulFILE\fR 
+.NL
+File containing list of ports, used in absence of -t and -p.
+.SH Examples 
+.NL
+opagenesmchassis
+.br
+opagenesmchassis -S -p \'1:1 2:1\'
+.PP
+Alternatively, while editing the file, use a vi command to include the output such as:
+.br
+:r! opagenesmchassis

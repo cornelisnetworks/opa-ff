@@ -1,0 +1,98 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opa\(ulosd\(ulexercise 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opa\(ulosd\(ulexercise
+
+.NL
+
+.SH Syntax
+.NL
+opa\(ulosd\(ulexercise [ \fIopts\fR] \fIguidlist\fR
+.SH Options
+.NL
+
+.TP 10
+ \fIopts\fR 
+.NL
+Options. Values include:
+
+.RS
+.TP 10
+
+.sp
+-d \fIdebug level\fR 
+Sets debugging level.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-s \fIseconds\fR 
+Specifies running for at least  \fIseconds\fR seconds.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-r \fIremote\fR 
+Host running the fabric simulator.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-x \fIcount\fR 
+Number of destinations to toggle up or down after each pass. Maximum = MAX\(ulTOGGLES.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-X \fIcount\fR 
+Specifies how often to toggle a source port up or down (in seconds).
+.RE
+
+.RS
+.TP 10
+
+.sp
+-D \fIseconds\fR 
+Specifies how long to sleep after each pass. This value gives the Subnet Manager time to process port events.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-p \fIpkey\fR 
+Specifies to include  \fIpkey\fR in the searches. Can be specified up to 8 times.
+.RE
+
+.TP 10
+-S \fIsid\fR 
+.NL
+Specifies to include SID in the searches.
+.TP 10
+-t \fIerror threshold\fR 
+.NL
+Cancels the test if the number of path errors to a single destination exceeds  \fIerror threshold\fR. The count is reset to zero when a correct result is retrieved. Can be specified up to 8 times. Note that providing both SIDs and pkeys may cause problems.
+.TP 10
+-e 
+.NL
+Instructs simulator to enable all ports before starting.
+.TP 10
+ \fIguidlist\fR 
+.NL
+Text file that lists the source and destination GUIDs and LIDs. For example, from a build\(ultable.pl file.

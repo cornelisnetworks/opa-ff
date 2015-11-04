@@ -1,0 +1,44 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaextractlids 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaextractlids
+
+.NL
+
+.SH Syntax
+.NL
+opaextractlids [-h \fIhfi\fR] [-p \fIport\fR]
+.PP
+or
+.br
+opaextractlids --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+-h/--hfi \fIhfi\fR 
+.NL
+HFI to send via. Default is first HFI.
+
+.TP 10
+-p/--port \fIport\fR 
+.NL
+Port to send via. Default is first active port.
+
+.SH Examples 
+.NL
+opaextractlids > lids.csv
+.br
+opaextractlids -h 2 -p 1 > \'lids.csv\'

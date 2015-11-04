@@ -1,0 +1,38 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaextractsellinks 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaextractsellinks
+
+.NL
+
+.PP
+
+\fB(Linux)\fR
+Produces a CSV file listing all the links that exceed the present or specified opareport -o errors thresholds. The output from this tool can be reviewed and supplied as input to opadisableports.
+.SH Syntax 
+.NL
+opaextractsellinks [opareport \fIoptions\fR]
+.PP
+or
+.br
+opaextractsellinks --help
+.SH Options 
+.NL
+
+.TP 10
+opareport \fIoptions\fR 
+.NL
+Options are passed to opareport.
+
+.SH Examples 
+.NL
+opaextractsellinks
+.br
+opaextractsellinks -h 1 -p 2

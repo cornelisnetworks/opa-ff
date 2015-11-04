@@ -111,7 +111,9 @@ INCLUDE_SUBDIR		=
 #				(in addition to LOCALDEPLIBS)
 #LOCAL_LIB_DIRS	= User library directories for libpaths [Empty]
 
-LOCALDEPLIBS=$(IBACCESS_USER_LIBS) opaswcommon oib_utils z Md5
+#LOCALDEPLIBS=$(IBACCESS_USER_LIBS) opaswcommon oib_utils z Md5
+LOCALDEPLIBS=$(IBACCESS_USER_LIBS) opaswcommon oib_utils Md5
+LDLOCAL=-lz
 LOCAL_INCLUDE_DIRS=
 LOCALLIBS=$(OPENIB_USER_LIBS)
 LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)

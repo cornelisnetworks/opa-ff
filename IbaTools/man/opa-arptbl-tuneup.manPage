@@ -1,0 +1,39 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opa-arptbl-tuneup 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opa-arptbl-tuneup
+
+.NL
+
+.SH Syntax
+.NL
+opa-arptbl-tuneup [start | stop | restart | force-reload | status]
+.SH Options
+.NL
+
+.TP 10
+start 
+.NL
+
+.TP 10
+stop 
+.NL
+
+.TP 10
+restart 
+.NL
+
+.TP 10
+force-reload 
+.NL
+
+.TP 10
+status 
+.NL

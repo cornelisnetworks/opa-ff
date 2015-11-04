@@ -1,0 +1,103 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opainfo 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opainfo
+
+.NL
+
+.SH Syntax
+.NL
+opainfo [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g] [-d \fIdetail\fR] [-v [-v]...]
+.SH Options
+.NL
+
+.TP 10
+-h \fIhfi\fR 
+.NL
+HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
+
+.TP 10
+-p \fIport\fR 
+.NL
+Port, numbered 1..n. If -h \fIhfi\fR is 0, then  \fIport\fR is a system-wide port number. Default is 1.
+
+.TP 10
+-o \fItype\fR 
+.NL
+Specifies output type. Can be used more than once. Default is brief summary of portinfo, counters, and cableinfo. Options include:
+
+.RS
+.TP 10
+
+.sp
+info 
+Outputs detailed portinfo.
+.RE
+
+.RS
+.TP 10
+
+.sp
+stats 
+Outputs detailed port counters.
+.RE
+
+.TP 10
+-g 
+.NL
+Output is displayed in line-by-line format. Default = summary format.
+
+.TP 10
+-d \fIdetail\fR 
+.NL
+Output detail level. Range = 0 - n. CableInfo only. Default = 0.
+
+.TP 10
+\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.TP 10
+-h 0 
+.NL
+All ports on all HFIs (default).
+
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
+
+.TP 10
+-h \fIx\fR 
+.NL
+All active ports on HFI \fIx\fR.
+
+.TP 10
+-h \fIx\fR-p 0 
+.NL
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h 0 -p \fIy\fR 
+.NL
+Port \fIy \fR within system (no matter which ports are active).
+
+.TP 10
+-h \fIx\fR-p \fIy\fR 
+.NL
+HFI \fIx\fR, port \fIy\fR
+
+.TP 10
+\fBDebug Options\fR
+.NL
+
+.TP 10
+-v 
+.NL
+Verbose output. Additional invocations (-v -v ...) turn on debugging, openib debugging, and libibumad debugging.

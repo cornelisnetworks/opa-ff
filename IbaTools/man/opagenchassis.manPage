@@ -1,0 +1,99 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opagenchassis 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opagenchassis
+
+.NL
+
+.PP
+Generates a list of IPv4, IPv6, and/or TCP names in a format acceptable for inclusion in the /etc/sysconfig/opa/chassis file.
+.SH Syntax 
+.NL
+opagenchassis [-t \fIportsfile\fR] [-p \fIports\fR]
+.PP
+or 
+.br
+opagenchassis --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+.TP 10
+-t \fIportsfile\fR 
+.NL
+File with list of local HFI ports used to access fabric for analysis. Default is /etc/sysconfig/opa/ports file.
+.TP 10
+-p \fIports\fR 
+.NL
+List of local HFI ports used to access fabrics for counter clear. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+
+.IP
+Uses the format hfi:port, for example:
+.RS
+.TP 10
+
+.sp
+0:0 
+First active port in system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+0:y 
+Port  \fIy\fR within system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:0 
+First active port on HFI  \fIx\fR.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:y 
+HFI  \fIx\fR, port  \fIy\fR.
+
+.RE
+
+.SH Environment 
+.NL
+
+.TP 10
+PORTS 
+.NL
+List of ports, used in absence of -t and -p.
+.TP 10
+PORTS\(ulFILE 
+.NL
+File containing list of ports, used in absence of -t and -p.
+.SH Examples 
+.NL
+opagenchassis
+.br
+opagenchassis -p \'1:1 2:1\'
+.br
+opagenchassis >> /etc/sysconfig/opa/chassis
+.PP
+Or while editing the file, use a vi command to include its output, such as:
+.br
+:r! opagenchassis

@@ -1,0 +1,111 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opa\(ulosd\(ulquery 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opa\(ulosd\(ulquery
+
+.NL
+
+.SH Syntax
+.NL
+opa\(ulosd\(ulquery [ \fIoptions\fR]
+.SH Options
+.NL
+
+.PP
+All arguments are optional, but ill-formed queries can be expected to fail. You must provide at least a pair of LIDs or a pair of GIDs.
+.PP
+If you have multiple HFIs, the same LID can appear on more than one HFI, therefore you must specify which HFI to use when searching by LIDs.
+.PP
+Numbers can be in decimal, hex or octal.
+.TP 10
+ \fIoptions\fR 
+.NL
+Options. Values include:
+
+.RS
+.TP 10
+
+.sp
+-v/--verbose \fIarg\fR 
+Sets debugging level. Range = 1 - 7.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-s/--slid \fIarg\fR 
+Specifies source LID.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-d/--dlid \fIarg\fR 
+Specifies destination LID.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-S/--sgid \fIarg\fR 
+Specifies source GID in GID format ("0x00000000:0x00000000") or in Inet6 format ("x:x:x:x:x:x:x:x").
+.RE
+
+.RS
+.TP 10
+
+.sp
+-D/--dgid \fIarg\fR 
+Specifies destination GID in GID format ("0x00000000:0x00000000") or in Inet6 format ("x:x:x:x:x:x:x:x").
+.RE
+
+.RS
+.TP 10
+
+.sp
+-k/--pkey \fIarg\fR 
+Specifies partition key.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-i/--sid \fIarg\fR 
+Specifies service ID.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-h/--hfi \fIarg\fR 
+Specifies the HFI to use. Default = first HFI. The HFI can be identified by name, for example, mthfi0 or by number, for example, 1.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-p/--port \fIarg\fR 
+Specifies the port to use. Default = first port.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-H/--help \fI\fR 
+Provides this help text.
+.RE

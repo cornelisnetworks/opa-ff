@@ -1,0 +1,147 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opatop 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opatop
+
+.NL
+
+.SH Syntax
+.NL
+opatop [-v] [-q] [-h \fIhfi\fR] [-p \fIport\fR] [-i \fIseconds\fR]
+.PP
+or
+.br
+opatop --help
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+-v/--verbose level 
+.NL
+Verbose output level. Value is additive and includes:
+.RS
+.TP 10
+
+.sp
+1 
+Screen
+.RE
+
+.RS
+.TP 10
+
+.sp
+4 
+STDERR opatop
+.RE
+
+.RS
+.TP 10
+
+.sp
+16 
+Screen PaClient
+.RE
+
+.TP 10
+-q/--quiet 
+.NL
+Disables progress reports.
+.TP 10
+-h/--hfi \fIhfi\fR 
+.NL
+HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR is a system-wide port number. Default is 0.
+
+.TP 10
+-p/--port \fIport\fR 
+.NL
+List of local HFI ports used to access fabrics for counter clear. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+
+.IP
+Uses the format hfi:port, for example:
+.RS
+.TP 10
+
+.sp
+0:0 
+First active port in system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+0:y 
+Port  \fIy\fR within system.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:0 
+First active port on HFI  \fIx\fR.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+x:y 
+HFI  \fIx\fR, port  \fIy\fR.
+
+.RE
+
+.TP 10
+-i/--interval \fIseconds\fR 
+.NL
+Obtains performance statistics for the value of  \fIseconds\fR.
+
+.TP 10
+\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.TP 10
+-h 0 
+.NL
+First active port in system (default).
+
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
+
+.TP 10
+-h \fIx\fR 
+.NL
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h \fIx\fR-p 0 
+.NL
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h 0 -p \fIy\fR 
+.NL
+Port \fIy \fR within system (no matter which ports are active).
+
+.TP 10
+-h \fIx\fR-p \fIy\fR 
+.NL
+HFI \fIx\fR, port \fIy\fR.

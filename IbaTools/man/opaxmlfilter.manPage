@@ -1,0 +1,56 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaxmlfilter 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaxmlfilter
+
+.NL
+
+.PP
+Processes an XML file and removes all specified XML tags. The remaining tags are output and indentation can also be reformatted. opaxmlfilter is the opposite of opaxmlextract.
+.SH Syntax
+.NL
+opaxmlfilter [-t|-k] [-l] [-i \fIindent\fR] [-s \fIelement\fR] [-P \fIparam\(ulfile\fR] [ \fIinput\(ulfile\fR]
+.SH Options 
+.NL
+
+.TP 10
+-t 
+.NL
+Trims leading and trailing whitespace in tag contents.
+
+.TP 10
+-k 
+.NL
+In tags with purely whitespace that contain newlines, keep newlines as-is. Default is to format as an empty list.
+
+.TP 10
+-l 
+.NL
+Adds comments with line numbers after each end tag. This can make comparison of resulting files easier since original line numbers are available.
+
+.TP 10
+-i \fIindent\fR 
+.NL
+Sets indentation to use per level. Default is 4.
+
+.TP 10
+-s \fIelement\fR 
+.NL
+Name of the XML element to suppress. Can be used multiple times (in any order).
+
+.TP 10
+-P \fIparam\(ulfile\fR 
+.NL
+Uses input command line options (parameters) from param\(ulfile.
+
+.TP 10
+ \fIinput\(ulfile\fR 
+.NL
+XML file to read. Default is stdin.

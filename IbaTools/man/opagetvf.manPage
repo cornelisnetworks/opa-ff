@@ -1,0 +1,83 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opagetvf 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opagetvf
+
+.NL
+
+.PP
+Used for scripting application use of vFabrics, such as for mpirun parameters. You can query by VF Name, VF Index, Service ID, MGID, PKey, or SL. Fetches the Virtual Fabric info in a delimited format. Returns exactly one matching VF. When multiple VFs match the query, it prefers non-default VFs in which the calling server is a full member. If multiple choices remain, it returns the one with the lowest VF Index. Uses the same algorithm as the Distributed SA Plug-in (DSAP).
+.PP
+The tool can be used with additional scripts to help set PKey, SL, MTU, and Rate when running MPI jobs. Internally, this tool is based on the opasaquery -o vfinfocsv command.
+.SH Syntax 
+.NL
+opagetvf [-h \fIhfi\fR] [-p \fIport\fR] [-e] [-d \fIvfname\fR|-S \fIserviceId\fR|-m \fImcgid\fR|-i \fIvfIndex\fR| -k \fIpkey\fR|-L \fIsl\fR]
+.PP
+or
+.br
+opagetvf --help
+
+.br
+
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+.TP 10
+-h \fIhfi\fR 
+.NL
+HFI to send by. Default is first HFI.
+.TP 10
+-p \fIport\fR 
+.NL
+Port to send by, default is first active port.
+.TP 10
+-e 
+.NL
+Output MTU and rate as enum values. 0 = unspecified.
+.TP 10
+-d \fIvfname\fR 
+.NL
+Queries by VirtualFabric Name.
+.TP 10
+-S \fIserviceId\fR 
+.NL
+Queries by Application ServiceId.
+.TP 10
+-m \fIgid\fR 
+.NL
+Queries by Application Multicast GID.
+.TP 10
+-i \fIvfindex\fR 
+.NL
+Queries by VirtualFabric Index.
+.TP 10
+-k \fIpkey\fR 
+.NL
+Queries by VirtualFabric PKey.
+.TP 10
+-L \fISL\fR 
+.NL
+Queries by VirtualFabric SL.
+.SH Examples 
+.NL
+opagetvf -d \'Compute\'
+.br
+opagetvf -h 2 -p 2 -d \'Compute\'
+.SH Sample Outputs 
+.NL
+
+.PP
+The output is of the form: name:index:pkey:sl:mtu:rate as shown in the following example.# opagetvf -d Default
+.br
+Default:0:0xffff:0:unlimited:unlimited

@@ -1,0 +1,122 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opascpall 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opascpall
+
+.NL
+
+.PP
+
+\fB(Linux)\fR
+Copies files or directories from the current system to multiple hosts in the fabric. When copying large directory trees, use the -t option to improve performance. This option tars and compresses the tree, transfers the resulting compressed tarball to each node, and untars it on each node.
+.PP
+Use this tool for copying data files, operating system files, or applications to all the hosts (or a subset of hosts) within the fabric.
+.PP
+
+.B NOTE:
+This tool can only copy from this system to a group of systems in the cluster. To copy from hosts in the cluster to this host, use opauploadall.
+
+.PP
+user@ style syntax cannot be used when specifying filenames.
+
+.SH Syntax 
+.NL
+opascpall [-p] [-r] [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-u \fIuser\fR] source\(ulfile ... dest\(ulfile opascpall -t [-p] [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-u \fIuser\fR] [ \fIsource\(uldir\fR[ \fIdest\(uldir\fR]]
+.PP
+or
+.br
+opascpall --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+.TP 10
+-p 
+.NL
+Performs copy in parallel on all hosts.
+.TP 10
+-r 
+.NL
+Performs recursive copy of directories.
+.TP 10
+-t 
+.NL
+Performs optimized recursive copy of directories using tar.  \fIdest\(uldir\fR is optional. If  \fIdest\(uldir\fR is not specified, it defaults to the current directory name. If both  \fIsource\(uldir\fR and  \fIdest\(uldir\fR are omitted, they both default to the current directory name.
+
+.TP 10
+-h \fIhosts\fR 
+.NL
+List of hosts to copy to.
+.TP 10
+-f \fIhostfile\fR 
+.NL
+File with hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+.TP 10
+-u \fIuser\fR 
+.NL
+User to perform copy to. Default is current user code.
+.TP 10
+ \fIsource\(ulfile\fR 
+.NL
+Name of files to copy from this system, relative to the current directory. Multiple files may be listed.
+.TP 10
+ \fIsource\(uldir\fR 
+.NL
+Name of directory to copy from this system, relative to the current directory.
+.TP 10
+ \fIdest\(ulfile\fR or  \fIdest\(uldir\fR 
+.NL
+Name of the file or directory on the destination system to copy to, relative to the home directory of the specified user. An absolute path name may be specified.
+.SH Example 
+.NL
+# copy a single file
+.br
+opascpall MPI-PMB /root/MPI-PMB
+.br
+# efficiently copy an entire directory tree
+.br
+opascpall -t -p /opt/opa/src/mpi\(ulapps /opt/opa/src/mpi\(ulapps
+.br
+# copy a group of files
+.br
+opascpall a b c /root/tools/
+.br
+# copy to an explitly specified set of hosts
+.br
+opascpall -h \'arwen elrond\' a b c /root/tools
+.br
+HOSTS=\'arwen elrond\' opascpall a b c /root/tools
+.SH Environment Variables 
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+\fBHOSTS\fR 
+.NL
+List of hosts; used if -h option not supplied.
+
+.TP 10
+\fBHOSTS\(ulFILE\fR 
+.NL
+File containing list of hosts; used in absence of -f and -h.
+
+.TP 10
+\fBFF\(ulMAX\(ulPARALLEL\fR 
+.NL
+When the -p option is used, maximum concurrent operations are performed.
+
+.TP 10
+\fBDOWNLOADS\(ulDIR\fR 
+.NL
+Directory to download from, used in absence of -d.

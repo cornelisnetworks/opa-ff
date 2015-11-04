@@ -1,0 +1,40 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opafirmware 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opafirmware
+
+.NL
+
+.PP
+Returns firmware information.
+.SH Syntax
+.NL
+opafirmware --showVersion \fIfirmwareFile\fR
+.PP
+or
+.br
+opafirmware --showType \fIfirmwareFile\fR
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+--showVersion \fIfirmwarefile\fR 
+.NL
+
+
+.TP 10
+--showType \fIfirmwarefile\fR 
+.NL
+

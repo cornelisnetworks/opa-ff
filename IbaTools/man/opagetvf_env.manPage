@@ -1,0 +1,18 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opagetvf\(ulenv 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opagetvf\(ulenv
+
+.NL
+
+.PP
+Provides opagetvf\(ulfunc and opagetvf2\(ulfunc shell functions that query the parameters of a vFabric. Also exports values that indicate the PKEY, SL, MTU, and RATE associated with the vFabric. This script is designed to be included in bash scripts.
+.PP
+A usage example is provided in /opt/opa/src/mpi\(ulapps/ofed.openmpi.params 
