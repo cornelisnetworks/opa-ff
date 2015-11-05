@@ -26,7 +26,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 # END_ICS_COPYRIGHT8   ****************************************
-# Makefile for fabric_info
+# Makefile for opafabricinfo
 
 # Include Make Control Settings
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
@@ -38,7 +38,7 @@ include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
 # Name of SubProjects
 DS_SUBPROJECTS	= 
 # name of executable or downloadable image
-EXECUTABLE		= #$(BUILDDIR)/fabric_info$(EXE_SUFFIX)
+EXECUTABLE		= #$(BUILDDIR)/opafabricinfo$(EXE_SUFFIX)
 # list of sub directories to build
 DIRS			= 
 # C files (.c)
@@ -82,7 +82,7 @@ LIB_TARGETS_MISC	=
 # targets to build during CMDS phase
 CMD_TARGETS_SHLIB	= 
 CMD_TARGETS_EXE		= $(EXECUTABLE)
-CMD_TARGETS_MISC	= fabric_info
+CMD_TARGETS_MISC	= opafabricinfo
 # files to remove during clean phase
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
@@ -136,9 +136,9 @@ include $(TL_DIR)/Makerules/Maketargets.toplevel
 # build cmds and libs
 include $(TL_DIR)/Makerules/Maketargets.build
 
-ifeq "$(IB_STACK)" "OPENIB"
-%: %.openib.sh
-endif
+opafabricinfo: fabric_info.sh
+	cat $< > $@
+	chmod a+x   $@
 
 # install for includes, libs and cmds phases
 include $(TL_DIR)/Makerules/Maketargets.install

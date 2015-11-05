@@ -1,0 +1,74 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location,
+# either edit this line or set MPICH_PREFIX in your environment.
+# see select_mpi for the set of default MPI selections
+# default to MPI used for build
+MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
+
+if [ -z "$1" ]
+then 
+	echo " Usage: run_pmb number_processes"
+	echo " For example: ./run_pmb 2"
+	echo "number_processes may be 'all' in which case one rank will be started for"
+	echo "every process in the mpi_hosts file"
+	exit 1
+fi
+
+NUM_PROCESSES=$1
+APP=PMB-MPI1
+LOGFILE=
+. ./prepare_run
+
+PMB_CMD="PMB2.2.1/SRC_PMB/PMB-MPI1"
+
+# to run a reduced suite of tests, uncomment a different one of these lines
+# full list of tests
+CMD="$PMB_CMD"
+#CMD="$PMB_CMD Bcast Barrier AllReduce Reduce exchange reduce_scatter pingping pingpong sendrecv alltoall allgather allgatherv"
+# avoid allgather and alltoall, too much memory needed
+#CMD="$PMB_CMD Bcast Barrier AllReduce Reduce exchange reduce_scatter pingping pingpong sendrecv"
+#CMD="$PMB_CMD Bcast Barrier AllReduce Reduce"
+#CMD="$PMB_CMD Bcast Barrier"
+#CMD="$PMB_CMD Barrier"
+
+(
+	echo " Running Pallas ..."
+	show_mpi_hosts
+	set -x
+	$MPI_RUN_CMD $CMD
+	set +x
+) 2>&1 | tee -i -a $LOGFILE
+echo "########################################### " >> $LOGFILE

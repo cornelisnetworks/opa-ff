@@ -1,0 +1,201 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# helper script to handle common setup for the sample application run scripts
+
+# this script should be . included in a run_ script
+# Input:
+#   MPICH_PREFIX  - path to MPICH tools
+#   MPI_HOSTS  - mpi_hosts file to use (default is $PWD/mpi_hosts)
+#   MPI_TASKSET - arguments to /bin/taskset to control CPU selection
+#                 default is to not use /bin/taskset
+#                 may be set in environment or param file
+#   SHOW_MPI_HOSTS - set to "y" if MPI_HOSTS contents should be output prior
+#                    to starting job.  Set to "n" to disable
+#                    defaults to "y"
+#   SHOW_MPI_HOSTS_LINES - maximum lines in MPI_HOSTS to show.  Default is 128
+#                    Only lines applicable to job will be shown.
+#                    Note the file might include some comment lines
+#   NUM_PROCESSES - number of processes in job, if "" no count is specified
+#                if "all" use wc -l $MPI_HOSTS as the process count
+#   MIN_PROCESSES - minimum number of processes in job (default of 2)
+#   MULT_PROCESSES - NUM_PROCESSES must be a multiple of this (default of 1)
+#   PARAM_FILE - Native IB param file to use, if "" no param file is specified
+#   APP - application name for use a prefix to LOGFILE name
+#   LOGFILE - logfile to append results of run to, if "" this script will define
+#   LOGSUFFIX - suffix to append to logfile name defined by this script
+# Output:
+#   MPI_RUN_CMD - MPI command to start job, actual program name and args can be suffixed
+#   LOGFILE - logfile to append results of run to
+
+. ./select_mpi	# default MPICH_PREFIX if necessary
+
+# helper function which can be called by each run_* script to output the
+# list of hosts the job is run for.  By default the output is enabled.
+# This can be especially useful when running many small
+# batch jobs, such as cabletest, so that errors in the log can more easily
+# be associated to the list of hosts included in the run
+show_mpi_hosts()
+{
+	local lines
+
+	echo "Using hosts list: $MPI_HOSTS"
+
+	if [ "${SHOW_MPI_HOSTS:-y}" = "y" ]
+	then
+		show_lines=${SHOW_MPI_HOSTS_LINES:-128}
+		if [ "z$NUM_PROCESSES" != "z" ]
+		then
+			# there may be comments before the last host.  So we number the
+			# lines, filter out the lines with comments and blank lines
+			# and then get the "NUM_PROCESSES"th line's number
+			avail_lines=$(nl -s';' -nln -w1 -ba $MPI_HOSTS|egrep -v '^[0-9]*;[[:space:]]*#'|egrep -v '^[0-9]*;[[:space:]]*$'|head -$NUM_PROCESSES|tail -1|cut -f1 -d';' )
+		else
+			# no NUM_PROCESSES, so use whole file
+			avail_lines=$(cat $MPI_HOSTS|wc -l)
+		fi
+		if [ $show_lines -ge $avail_lines ]
+		then
+			echo "Hosts in run:"
+			head -n $avail_lines $MPI_HOSTS
+		else
+			echo "First $show_lines lines in host list for run:"
+			head -n $show_lines $MPI_HOSTS
+		fi
+		echo
+	fi
+}
+
+MPI_HOSTS=${MPI_HOSTS:-$PWD/mpi_hosts}
+
+if [ $(echo $MPI_HOSTS|cut -c1) != '/' ]
+then
+	MPI_HOSTS="$PWD/$MPI_HOSTS"
+fi
+
+MIN_PROCESSES=${MIN_PROCESSES:-2}
+MULT_PROCESSES=${MULT_PROCESSES:-1}
+if [ z"$NUM_PROCESSES" == zall ]
+then
+	# skip comment and blank lines
+	NUM_PROCESSES=$(cat $MPI_HOSTS|egrep -v '^[[:space:]]*#'|egrep -v '^[[:space:]]*$'|wc -l)
+fi
+if [ z"$NUM_PROCESSES" != z ]
+then
+	if ! [ $NUM_PROCESSES -ge $MIN_PROCESSES ] 2>/dev/null
+	then
+		echo " Invalid process count: $NUM_PROCESSES"
+		echo " This application requires a minimum of $MIN_PROCESSES processes"
+		exit 2
+	fi
+	if [ $(($NUM_PROCESSES % $MULT_PROCESSES)) -ne 0 ]
+	then
+		echo " Invalid process count: $NUM_PROCESSES"
+		echo " This application requires a multiple of $MULT_PROCESSES processes"
+		exit 2
+	fi
+fi
+
+
+if [ ! -f $MPI_HOSTS ]
+then
+	echo " Please create $MPI_HOSTS file with the list of "
+	echo " processors in this cluster. One hostname per line."
+	echo " See mpi_hosts.sample file"
+	exit 1
+fi
+
+if [ -z "$LOGFILE" ]
+then
+	CURTIME=`date +%d%b%y%H%M%S`
+	if [ ! -d logs ]
+	then
+		mkdir -p logs
+	fi
+	LOGFILE=$PWD/logs/$APP.$CURTIME$LOGSUFFIX
+	echo " Running MPI tests with $NUM_PROCESSES processes"
+	echo " logfile $LOGFILE"
+	> $LOGFILE
+fi
+
+# additional arguments can be specified on mpirun command line
+MPI_CMD_ARGS=
+disable_affinity=
+USING_MPD=n #I think we can delete this variable
+# Determine which MPI is being used:
+if [ -e "$MPICH_PREFIX/bin/tune" ] #IntelMPI
+then
+	echo "IntelMPI Detected, running with mpirun." | tee -i -a $LOGFILE
+	if [ -e ./intelmpi.params ]
+	then
+		. ./intelmpi.params
+	fi
+	MPI_RUN_CMD="$MPICH_PREFIX/bin/mpirun  ${NUM_PROCESSES:+-np $NUM_PROCESSES} -hostfile $MPI_HOSTS $MPI_CMD_ARGS "
+elif [ -e "$MPICH_PREFIX/bin/ompi_info" ] #OpenMPI
+then
+	echo "OpenMPI Detected, running with mpirun." | tee -i -a $LOGFILE
+	MPI_CMD_ARGS="-mca plm_rsh_no_tree_spawn 1"
+	if [ -e ./openmpi.params ]
+	then
+		. ./openmpi.params
+	fi
+	MPI_RUN_CMD="$MPICH_PREFIX/bin/mpirun ${NUM_PROCESSES:+-np $NUM_PROCESSES} -map-by node --allow-run-as-root -machinefile $MPI_HOSTS $MPI_CMD_ARGS "
+
+elif [ -e "$MPICH_PREFIX/bin/mpichversion" ] #Mvapich2
+then
+	echo "MVAPICH2 Detected, running with mpirun." | tee -i -a $LOGFILE
+	if [ -e ./mvapich2.params ]
+	then
+		. ./mvapich2.params
+	fi
+	disable_affinity="-genv MV2_ENABLE_AFFINITY 0"
+	MPI_RUN_CMD="$MPICH_PREFIX/bin/mpirun -machinefile $MPI_HOSTS ${NUM_PROCESSES:+-n $NUM_PROCESSES} $MPI_CMD_ARGS "
+else
+	echo "MPI Not Recognized!i exiting" | tee -i -a $LOGFILE
+	exit 1
+fi
+
+head -n $NUM_PROCESSES $MPI_HOSTS|sort -u > ff.hosts
+
+
+# add /bin/taskset to MPI_RUN_CMD based on MPI_TASKSET value
+if [ x"$MPI_TASKSET" != x ]
+then
+	if [ -x /bin/taskset ]
+	then
+		MPI_RUN_CMD="$MPI_RUN_CMD $disable_affinity /bin/taskset $MPI_TASKSET "
+	elif [ -x /usr/bin/taskset ]
+	then
+		MPI_RUN_CMD="$MPI_RUN_CMD $disable_affinity /usr/bin/taskset $MPI_TASKSET "
+	fi
+fi
+

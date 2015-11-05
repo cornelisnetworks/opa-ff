@@ -1,0 +1,154 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location, 
+# either edit this line or set MPICH_PREFIX in your environment.
+# see select_mpi for the set of default MPI selections
+# default to MPI used for build
+MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
+
+bwtol=20
+lattol=50
+
+Usage()
+{
+	echo "Usage: run_deviation number_processes ['ff' | bwtol lattol]" >&2
+	echo "                        [other deviation arguments]" >&2
+	echo "  number_processes may be 'all' in which case one rank will be started for"
+	echo "           every process in the mpi_hosts file"
+	echo " 'ff'      When specified, the configured FF_DEVIATION_ARGS will be used" >&2
+	echo " bwtol     Percent of bandwidth degradation allowed below Avg value" >&2
+ 	echo " lattol    Percent of latency degradation allowed above Avg value" >&2
+	echo  >&2
+	echo "Other deviation arguments:" >&2
+	echo "       [-bwdelta MBs] [-bwthres MBs] [-bwloop count] [-bwsize size]" >&2
+   	echo "       [-bwbidir|-bwunidir]" >&2
+	echo "       [-latdelta usec] [-latthres usec] [-latloop count] [-latsize size]" >&2
+	echo "       [-c] [-b] [-v] [-vv] [-h reference_host]" >&2
+	echo "    -bwdelta   Limit in MB/s of bandwidth degradation allowed below Avg value" >&2
+	echo "    -bwthres   Lower Limit in MB/s of bandwidth allowed" >&2
+	echo "    -bwloop    Number of loops to execute each bandwidth test" >&2
+	echo "    -bwsize    Size of message to use for bandwidth test" >&2
+	echo "    -bwbidir   Perform a bidirectional bandwidth test" >&2
+	echo "    -bwunidir  Perform a unidirectional bandwidth test (default)" >&2
+	echo "    -latdelta  Limit in usec of latency degradation allowed above Avg value" >&2
+	echo "    -latthres  Upper Limit in usec of latency allowed" >&2
+	echo "    -latloop   Number of loops to execute each latency test" >&2
+	echo "    -latsize   Size of message to use for latency test" >&2
+	echo "    -c         Run test pairs concurrently instead of the default of sequential" >&2
+	echo "    -b         When comparing results against tolerance and delta use best" >&2
+	echo "               instead of Avg" >&2
+	echo "    -v         verbose output" >&2
+	echo "    -vv        Very verbose output" >&2
+	echo "    -h         Baseline host to use for sequential pairing" >&2
+	echo "Both bwtol and bwdelta must be exceeded to fail bandwidth test" >&2
+	echo "When bwthres is supplied, bwtol and bwdelta are ignored" >&2
+	echo "Both lattol and latdelta must be exceeded to fail latency test" >&2
+	echo "When latthres is supplied, lattol and latdelta are ignored" >&2
+	echo  >&2
+	echo "For consistency with OSU benchmarks MB/s is defined as 1000000 bytes/s" >&2
+	echo  >&2
+	echo "Examples:" >&2
+	echo "   ./run_deviation 20 ff" >&2
+	echo "   ./run_deviation 20 ff -v" >&2
+	echo "   ./run_deviation 20 20 50 -c" >&2
+	echo "   ./run_deviation 20 '' '' -c -v -bwthres 1200.5 -latthres 3.5" >&2
+	echo "   ./run_deviation 20 20 50 -c -h compute0001" >&2
+	echo "   ./run_deviation 20 0 0 -bwdelta 200 -latdelta 0.5" >&2
+	exit 2
+}
+
+if [ -z "$1" ]
+then
+	Usage
+else
+	NUM_PROCESSES=$1
+	shift
+fi
+
+other_args=
+if [ x"$1" = x"ff" ]
+then 
+	if [ ! -f /opt/opa/tools/ff_funcs ]
+	then
+		echo "run_deviation: 'ff' argument requires that FastFabric is installed on this host" >&2
+		Usage
+	fi
+	# get other arguments from opafastfabric config
+	# optional override of defaults
+	if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
+	then
+		. /etc/sysconfig/opa/opafastfabric.conf
+	fi
+
+	. /opt/opa/tools/opafastfabric.conf.def
+
+	other_args="$FF_DEVIATION_ARGS"
+	shift
+else
+	if [ -z $1 ]
+	then 
+		echo " Setting the default bandwidth tolerance to 20%"
+		bwtol=20
+	else
+		bwtol=$1
+	fi
+	shift
+
+	if [ -z $1 ]
+	then 
+		echo " Setting the default latency tolerance to 50%"
+		lattol=50
+	else
+		lattol=$1
+	fi
+	shift
+
+	other_args="-bwtol $bwtol -lattol $lattol"
+fi
+
+CMD="deviation/deviation $other_args $@"
+
+APP=deviation
+LOGFILE=
+. ./prepare_run
+
+(
+	echo " Running Deviation ..."
+	show_mpi_hosts
+	set -x
+	$MPI_RUN_CMD $CMD
+	set +x
+) 2>&1 | tee -i -a $LOGFILE
+echo "########################################### " >> $LOGFILE

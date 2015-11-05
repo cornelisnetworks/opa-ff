@@ -58,6 +58,7 @@ DIRS			= \
 				$(shell $(OPTIONALDIR) $(TL_DIR)/MpiApps) \
 				$(shell $(OPTIONALDIR) $(TL_DIR)/ShmemApps) \
 				$(shell $(OPTIONALDIR) $(TL_DIR)/Iih) \
+				$(shell $(OPTIONALDIR) $(TL_DIR)/zlib) \
 				$(shell $(OPTIONALDIR) $(TL_DIR)/TestTools) \
 				$(shell $(OPTIONALDIR) $(TL_DIR)/SrpTools) \
 				$(shell $(OPTIONALDIR) $(TL_DIR)/InicTools) \

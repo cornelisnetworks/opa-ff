@@ -1,0 +1,149 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+temp1="$(mktemp)"
+temp2="$(mktemp)"
+tmpdir=$PWD/tmp
+
+trap "rm -f $temp1 $temp2; exit 1" SIGHUP SIGTERM SIGINT 
+trap "rm -f $temp1 $temp2" EXIT
+
+BATCH_SIZE=${BATCH_SIZE:-18}	# now many hosts per mpi job
+
+# build the mpi_group_hosts file and start HCA-SW cable tests as a series
+# of small BATCH_SIZE node jobs.  This approach limits the impact should a few hosts
+# crash and also allows for quicker job startup.
+
+# jobs are nohup'ed so they can run for long duration in the background
+
+Usage() {
+	echo "Usage: ./run_batch_cabletest [-v] [-n numprocs] [duration [minmsg [maxmsg]]]" >&2
+	echo "           or" >&2
+	echo "       ./run_batch_cabletest --help" >&2
+	echo "    -v - verbose mode.  Additional output generated to nohup files" >&2
+	echo "    -n numprocs - number of processes per host (default 3)" >&2
+	echo "    duration - how many minutes to run.  Can be 'infinite'.  Default is 60" >&2
+	echo "    minmsg - smallest message to use.  Must be between 16384 and 4194304." >&2
+	echo "    maxmsg - largest message to use.  Must be between 16384 and 4194304." >&2
+  	echo "    Default minmsg and maxmsg is 4 Megabytes" >&2
+	echo >&2
+	echo "    This will build a set of mpi_hosts.# and mpi_group_hosts.# files with no" >&2
+	echo "    more than BATCH_SIZE hosts each.  If an odd number of hosts appear in" >&2
+  	echo "    mpi_hosts, the last one is skipped" >&2
+	echo "    Each run_cabletest MPI job will have its output saved to a corresponding" >&2
+	echo "    ./tmp/nohup.#.out file" >&2
+	echo "Environment:" >&2
+	echo "    MPI_HOSTS - mpi_hosts file to use, default is mpi_hosts" >&2
+	echo "                This should list hosts in topology order, 1 entry per host" >&2
+	echo "                hosts will be paired sequentially (1st & 2nd, 3rd & 4th, ...)" >&2 
+	echo "    BATCH_SIZE - maximum hosts per MPI job, default is 18, must be even" >&2
+	echo "Examples:" >&2
+	echo "    ./run_batch_cabletest" >&2
+	echo "    MPI_HOSTS=good ./run_batch_cabletest 1440" >&2
+	echo "    BATCH_SIZE=16 MPI_HOSTS=good ./run_batch_cabletest infinite" >&2
+	exit 2
+}
+
+if [ x"$1" = x"--help" ]
+then
+	Usage
+fi
+numprocs=
+vopt=
+while getopts vn: param
+do
+	case $param in
+	v)	vopt="-v";;
+	n)	numprocs="$OPTARG";;
+	*)	Usage;;
+	esac
+done
+shift $((OPTIND-1))
+
+export MPI_HOSTS=${MPI_HOSTS:-mpi_hosts}
+if [ ! -e $MPI_HOSTS ]
+then
+	echo "MPI_HOSTS='$MPI_HOSTS': Not Found" >&2
+	Usage
+fi
+
+if ! [ $BATCH_SIZE -gt 0 ] 2>/dev/null
+then
+	echo "Invalid BATCH_SIZE='$BATCH_SIZE': must be an even number >= 2" >&2
+	Usage
+fi
+if [ $(($BATCH_SIZE % 2)) -eq 1 ]
+then
+	echo "Invalid BATCH_SIZE='$BATCH_SIZE': must be an even number" >&2
+	Usage
+fi
+
+# ignore blank and comment lines in mpi_hosts
+cat $MPI_HOSTS|egrep -v '^[[:space:]]*#'|egrep -v '^[[:space:]]*$' > $temp1
+echo "Starting HCA-SW cabletests using $MPI_HOSTS: $(cat $temp1|wc -l) hosts"
+echo "  Max batch size $BATCH_SIZE"
+
+#set -x
+mkdir -p $tmpdir
+loop=1
+while [ $(cat $temp1|wc -l) -gt 1 ]
+do
+	head -$BATCH_SIZE $temp1 > $tmpdir/mpi_hosts.$loop
+	if [ $(($(cat $tmpdir/mpi_hosts.$loop|wc -l) % 2)) -eq 1 ]
+	then
+		# need an even number, drop the last one
+		echo "Skipping odd host:" `tail -1 $temp1`
+		head -$(($(cat $temp1|wc -l) - 1)) $temp1 > $tmpdir/mpi_hosts.$loop
+	fi
+	tail -n +$(($BATCH_SIZE + 1)) $temp1 > $temp2; mv $temp2 $temp1
+	echo "starting cabletest $loop on $(cat $tmpdir/mpi_hosts.$loop|wc -l) hosts"
+	export MPI_HOSTS=$tmpdir/mpi_hosts.$loop
+	export MPI_GROUP_HOSTS=$tmpdir/mpi_group_hosts.$loop
+	export LOGSUFFIX=".$loop"
+	./gen_group_hosts > /dev/null <<EOF
+
+
+$numprocs
+EOF
+	nohup ./run_cabletest $vopt "$@" > $tmpdir/nohup.$loop.out 2>&1 &
+	loop=$(($loop + 1))
+	#echo "Enter to Continue"
+	#read trash
+done
+
+if [ $(cat $temp1|wc -l) -gt 0 ]
+then
+	echo "Skipping odd host:" `cat $temp1`
+fi
+rm -f $temp1 $temp2
+
+echo "Started $(($loop - 1 )) MPI cabletest jobs"

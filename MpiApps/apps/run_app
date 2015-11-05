@@ -1,0 +1,270 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# This is a template to allow generic applications to be run in a test and tune
+# mode where statistics and output is desirable to be collected per run for
+# later analysis
+
+# edit the assignments below as need to define the application to run
+# you may also want to use runmyapp (or a similar script) as the actual
+# APP_CMD in which case you can put the actual command to run and any setup for
+# the command in runmyapp on each compute node see runmyapp for an example
+# of running HPL
+
+# Also you can create a file mpi_chassis listing all the relevant SilverStorm
+# chassis IP addresses/names for which switch statistics should be cleared and
+# fetched for this run.
+# If its not present the default fast fabric chassis file will be used.
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location,
+# either edit this line or set MPICH_PREFIX in your environment.
+# default to MPI used for build
+MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
+
+#   MPI_HOSTS  - mpi_hosts file to use (default is $PWD/mpi_hosts)
+MPI_HOSTS=${MPI_HOSTS:-$PWD/mpi_hosts}
+if [ $(echo $MPI_HOSTS|cut -c1) != '/' ]
+then
+	MPI_HOSTS="$PWD/$MPI_HOSTS"
+fi
+
+# temporary file name to use when collecting statistics
+# This file will be created on each node in the job
+# and deleted again after the data has been collected.
+OPASTATS_FILE="$(mktemp --tmpdir 'opastats.XXXXXXXX')"
+trap "rm -f $OPASTATS_FILE; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $OPASTATS_FILE" EXIT
+
+# the application to run along with any necessary arguments
+# APP_CMD can be ./runmyapp or the actual application name.
+# When using runmyapp, you can edit runmyapp with the
+# correct application name and arguments.  runmyapp gives you an opportunity to
+# control the environment such as library paths, core file options, etc
+APP_CMD="./runmyapp"
+#APP_CMD="PMB2.2.1/SRC_PMB/PMB-MPI1"
+
+# Application executable name, used to kill application before each run to
+# ensure no remnants from a previous run exist
+# also used as part of log directory name and included in runlog
+# if this is not set, basename of APP_CMD is used instead
+APP=xhpl
+
+# the param file to use (only applicable to MPICH 1 runs)
+PARAM_FILE=
+
+# any relevant input data files which should be saved per run as part of record
+# this should be files which you plan to change between runs as you tune
+INPUT_FILES=hpl/bin/ICS.$(uname -s).$(./get_mpi_cc.sh)/HPL.dat
+
+# any output files generated which should be saved per run as part of record
+OUTPUT_FILES=
+
+# an single output file which should be monitored and displayed when running
+# for example: hpccoutf.txt
+# the file specified must appear on the head node (possibly in a shared
+# filesystem which other ranks in the job will write to)
+# leave this blank if application primary progress/status output is to screen
+MONITOR_FILE=
+
+# any relevant code files which should be saved per run as part of record
+# this should be files which might change between runs as you tune
+# can also include any scripts or Makefiles which might be used to build the
+# app or directory of any source code for app which might be changing
+#CODE_FILES=hpl/bin/ICS.Linux.gcc/xhpl
+CODE_FILES=
+
+loop=n
+if [ x"$1" == "x-l" ]
+then
+	loop=y
+	shift
+fi
+if [ -z "$1" ]
+then 
+	echo " Usage: run_app [-l] number_processes ['reason for run']"
+	echo " For example: ./run_app 2 'run with 2t problem size'"
+	echo "number_processes may be 'all' in which case one rank will be started for"
+	echo "every process in the mpi_hosts file"
+	exit 1
+else
+	NUM_PROCESSES=$1
+fi
+
+if [ -s mpi_chassis ]
+then
+	chassis_arg="-F mpi_chassis"
+else
+	chassis_arg=
+fi
+
+if [ "x$APP" == "x" ]
+then
+	# get command name part of APP_CMD (eg. remove arguments)
+	app=`(set $APP_CMD; echo $1)`
+	APP=`basename $app`
+fi
+CURTIME=`date +%d%b%y%H%M%S`
+dir=$PWD/logs/$APP.$CURTIME$LOGSUFFIX
+LOGFILE=$dir/log
+mkdir -p $dir
+
+# keep some temp local files with info about the job
+echo "$CURTIME" > curtime
+echo "$APP" > app
+echo "$APP.$CURTIME$LOGSUFFIX - $2" >> logs/runlog
+echo " Running MPI app ($APP_CMD) with $NUM_PROCESSES processes"
+echo " logfile $LOGFILE"
+> $LOGFILE
+
+. ./prepare_run
+
+# clear output
+# remove debug output file
+echo " Removing debug and core files..."
+rm -f MVICH-DBG.* pid core.* $OUTPUT_FILES $MONITOR_FILE
+opacmdall -p -f ff.hosts -u `whoami` "cd $PWD;"'rm -f MVICH-DBG.* core.*' > /dev/null 2>&1
+if [ x"$MONITOR_FILE" != x ]
+then
+	> $MONITOR_FILE
+fi
+
+# copy data before we start the run
+echo " Copying files to $dir..."
+cp -r $PARAM_FILE $INPUT_FILES $CODE_FILES $MPI_HOSTS run_app runmyapp $dir
+if [ -f mpi_chassis ]
+then
+	cp mpi_chassis $dir
+fi
+
+# kill any existing instances of app, just to be safe
+echo " Killing $APP..."
+pkill $APP >/dev/null 2>&1
+opacmdall -p -f ff.hosts -u `whoami` "pkill $APP 2>/dev/null" >/dev/null 2>&1
+
+# fetch host stats before
+echo " Fetching host stats..."
+opacmdall -p -f ff.hosts -u `whoami` "opainfo -o stats > $OPASTATS_FILE 2>/dev/null" > /dev/null
+opauploadall -p -f ff.hosts -u `whoami` -d $dir $OPASTATS_FILE opastats-before > /dev/null
+opacmdall -p -f ff.hosts -u `whoami` "rm -f $OPASTATS_FILE" > /dev/null
+
+# fetch switch stats
+echo " Fetching switch stats..."
+opacmdall -C $chassis_arg "ismPortStats -noprompt" > $dir/switch_stats-before
+#iba_report -C -o none
+
+echo "$msg" | tee -i -a $LOGFILE
+if [ $loop = y ]
+then
+	echo " Looping $APP_CMD ..."
+	echo " Looping $APP_CMD ..." >> $LOGFILE
+else
+	echo " Running $APP_CMD ..."
+	echo " Running $APP_CMD ..." >> $LOGFILE
+fi
+show_mpi_hosts | tee -a $LOGFILE
+while true
+do
+	date
+	date >> $LOGFILE
+	echo "$MPI_RUN_CMD $APP_CMD" >> $LOGFILE
+	if [ x"$MONITOR_FILE" = x ]
+	then
+		# simple run, nothing to monitor
+		set -x
+		$MPI_RUN_CMD $APP_CMD  2>&1|tee -i -a $LOGFILE
+		res=$?
+		set +x
+	else
+		# run both a tail and app so we can see the results while it runs and
+		# stop the tail when app finishes
+		( $MPI_RUN_CMD $APP_CMD  2>&1|tee -i -a $LOGFILE ) &
+		pid=$!
+		set +x
+		echo "$pid" > pid
+		tail -f $MONITOR_FILE &
+		tail=$!
+		while true
+		do
+			if kill -s SIGCONT $pid >/dev/null 2>&1 # see if pid still running
+			then
+				sleep 10
+			else
+				break
+			fi
+		done
+		kill -9 $tail
+		wait $pid
+		res=$?
+		if [ $res = 127 ]
+		then
+			echo "Unable to get exit status of application"
+			res=0
+		fi
+		wait
+	fi
+	# check for both exit status and typical app failure messages
+	if [ ! $res ] || cat $LOGFILE $MONITOR_FILE| egrep 'ERROR|disconnect|truncated|IRECV|STOP|FAIL'
+	then 
+		echo " $APP FAILED!! See log file"
+		break
+	fi
+	if [ $loop = y ]
+	then
+		echo "########################################### " >> $LOGFILE
+		# uncomment this if global id is part of MVICH-DBG filename
+		#rm -f MVICH-DBG.*
+		#opacmdall -p -f ff.hosts -u `whoami` "cd $PWD;"'rm -f MVICH-DBG.*' > /dev/null 2>&1
+		sleep 5	# a little delay so user could cntl-C us
+	else
+		break
+	fi
+done
+
+echo " Copying files to $dir..."
+cp MVICH-DBG.* core.* $OUTPUT_FILES $MONITOR_FILE $dir
+
+# fetch host stats
+echo " Fetching host stats..."
+opacmdall -p -f ff.hosts -u `whoami` "opainfo -o stats > $OPASTATS_FILE 2>/dev/null" > /dev/null
+opauploadall -p -f ff.hosts -u `whoami` -d $dir $OPASTATS_FILE opastats-after > /dev/null
+opacmdall -p -f ff.hosts -u `whoami` "rm -f $OPASTATS_FILE" > /dev/null
+
+# fetch switch stats
+echo " Fetching switch stats..."
+opacmdall -C $chassis_arg "ismPortStats -noprompt" > $dir/switch_stats-after
+#echo " Fetching fabric errors..."
+#iba_report -o errors > $dir/iba_report_errors
+
+echo " Fetching debug and core to $dir..."
+opacmdall -p -f ff.hosts -u `whoami` "cd $PWD;"'rm -f debug.tgz; tar cfz debug.tgz MVICH-DBG.* core.*' > /dev/null 2>/dev/null
+opauploadall -p -f ff.hosts -u `whoami` -d $dir $PWD/debug.tgz debug.tgz > /dev/null 2>/dev/null
+rm -f pid curtime app ff.hosts
