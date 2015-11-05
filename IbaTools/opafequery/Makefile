@@ -155,9 +155,7 @@ include $(TL_DIR)/Makerules/Maketargets.build
 include $(TL_DIR)/Makerules/Maketargets.install
 
 # install for stage phase
-#include $(TL_DIR)/Makerules/Maketargets.stage
-STAGE::
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) $(EXECUTABLE) $(CMD_TARGETS_MISC)
+include $(TL_DIR)/Makerules/Maketargets.stage
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest
