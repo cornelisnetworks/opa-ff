@@ -56,7 +56,7 @@ cp fast-fabric.spec.in fast-fabric.spec
 sed -i "s/__RPM_VERSION/$RPM_VER/g" fast-fabric.spec
 sed -i "s/__RPM_RELEASE/$RPM_REL/g" fast-fabric.spec
 
-tar czf $RPMDIR/SOURCES/opa.tgz -C $BASE_DIR $FILES_TO_TAR --exclude-vcs --ignore-case --exclude="*VXWORKS*" --exclude="./rpmbuild"
+tar czf $RPMDIR/SOURCES/opa.tgz -C $BASE_DIR $FILES_TO_TAR --exclude-vcs --ignore-case --exclude="./rpmbuild" -X tar_excludes
 
 mv fast-fabric.spec $RPMDIR/SPECS/
 cd $RPMDIR
