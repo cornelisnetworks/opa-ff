@@ -393,7 +393,10 @@ void pma_Usage(boolean displayAbridged)
 	int i = 0;
 
 	fprintf(stderr, "Usage: opapmaquery -o otype [standard options] [otype options]\n");
-	fprintf(stderr, "\n");
+	fprintf(stderr, "              or\n");
+	fprintf(stderr, "       opapmaquery --help\n");
+	fprintf(stderr, "       --help - produce full help text\n\n");
+
 	fprintf(stderr, "Standard Options: [-v] [-s sl] [-l lid] [-h hfi] [-p port]\n");
 	fprintf(stderr, "    -o otype Output type. See below for list.\n");
 	fprintf(stderr, "    -v       Verbose output. Can be specified more than once for\n");
@@ -415,7 +418,7 @@ void pma_Usage(boolean displayAbridged)
 	fprintf(stderr, "\n");
 	fprintf(stderr, "otype options vary by report: [-m port] [-n mask] [-e mask] [-w mask]\n");
 	fprintf(stderr, "    -m port  Port in destination device to query.\n");
-	fprintf(stderr, "    -n mask  Port Mask, in hex, bits represent ports 31-0\n");
+	fprintf(stderr, "    -n mask  Port Mask, in hex, bits represent ports 63-0\n");
 	fprintf(stderr, "             (e.g. 0x2 for port 1, 0x6 for ports 1,2)\n");
 	fprintf(stderr, "    -e mask  Counter/error Select Mask, in hex, bit positions as shown below\n");
 	fprintf(stderr, "             default is all bits set (e.g. 0xffffffe0)\n");

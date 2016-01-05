@@ -13,7 +13,9 @@ opasorthosts
 .NL
 
 .PP
-Sorts its standard input in a typical host name order and sorts to standard output. Hosts are sorted alphabetically (case-insensitively) by any alpha-numeric prefix, and then sorted numerically by any numeric suffix. Host names may end in a numeric field which may optionally have leading zeros. This command does not remove duplicates; any duplicates are listed in adjacent lines.
+Sorts its standard input in a typical host name order and sorts to standard output. Hosts are sorted alphabetically (case-insensitively) by any alpha-numeric prefix, and then sorted numerically by any numeric suffix. Host names may end in a numeric field which may optionally have leading zeros. Unlike a pure alphabetic sort, this command results in intuitive sequencing of host names such as: host1, host2, host10
+.PP
+This command does not remove duplicates; any duplicates are listed in adjacent lines.
 .PP
 Use this command to build mpi\(ulhosts input files for applications or cable tests that place hosts in order by name.
 .SH Syntax

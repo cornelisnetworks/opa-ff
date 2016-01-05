@@ -252,7 +252,8 @@ void dispElementRecord(ELEMENT_TABLE_ENTRY * pElement, const char * pValue)
  */
 void errUsage(void)
 {
-	fprintf(stderr, "Usage: " NAME_PROG " [-v][-d delimiter][-i number][-g element][-h element][-e element][-X input_file][-P param_file]\n");
+	fprintf(stderr, "Usage: " NAME_PROG " [-v][-d delimiter][-i number][-g element][-h element]\n");
+	fprintf(stderr, "                         [-e element][-X input_file][-P param_file]\n");
 	fprintf(stderr, "  At least 1 element must be specified\n");
 	fprintf(stderr, "  -g/--generate element     - name of XML element to generate\n");
 	fprintf(stderr, "                              can be used multiple times\n");
@@ -262,8 +263,8 @@ void errUsage(void)
 	fprintf(stderr, "  -e/--end element          - name of header XML element to end (close)\n");
 	fprintf(stderr, "  -d/--delimit delimiter    - delimiter char input between element values\n");
 	fprintf(stderr, "                              default is semicolon\n");
-	fprintf(stderr, "  -i/--indent number        - number of spaces to indent each level of XML output\n");
-	fprintf(stderr, "                              default is zero\n");
+	fprintf(stderr, "  -i/--indent number        - number of spaces to indent each level of XML\n");
+	fprintf(stderr, "                              output; default is zero\n");
 	fprintf(stderr, "  -X/--infile input_file    - generate XML from CSV in input_file\n");
 	fprintf(stderr, "  -P/--pfile param_file     - read command parameters from param_file\n");
 	fprintf(stderr, "  -v/--verbose              - verbose output: progress reports during generation\n");

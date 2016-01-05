@@ -51,12 +51,12 @@ PCI_MINREADREQ=512          # expected value for PCI min read req size
 PCI_MAXREADREQ=4096         # expected value for PCI max read req size
 PCI_SPEED="8GT/s"           # expected value for PCI speed on Intel WFR HFI
 PCI_WIDTH="x16"             # expected value for PCI width on Intel WFR HFI
-MIN_HFI_PKT=2500          # minimum result from hfi_pkt_test WFR HFI
 MPI_APPS=/opt/opa/src/mpi_apps/ # where to find mpi_apps for HPL test
 MIN_FLOPS="115"             # minimum flops expected from HPL test
+IPOIB_IF="ib0"              # IPoIB interface to check
+IPOIB_MTU=65520             # IPoIB required MTU
 
-# If desired, single node HPL can be run, using one of the pre-defined 
-# hpl DAT files found in /opt/opa/src/mpi_apps/hpl-config.
+# If desired, single node HPL can be run, using the parameters defined below.
 #
 # The goal of the single node HPL test is to check node stability and the
 # consistency of performance between hosts, NOT to optimize performance.
@@ -68,34 +68,30 @@ MIN_FLOPS="115"             # minimum flops expected from HPL test
 # the known good host to account for minor variations in OS background 
 # overhead, manufacturing variations, etc.
 
-# To configure the problem size, the HPL_CORES variable is used to select
-# the number of cores to exercise. This is combined with the HPL_CONFIG 
-# variable and passed as an argument string to /opt/opa/src/mpi_apps/config_hpl2
-# which will select the appropriate .DAT file and passed to HPL as an 
-# argument.
-
-# NOTE: if HPL_CONFIG is "", then config_hpl2 will not be run and it is 
-# expected that the user has manually setup an appropriate HPL.dat file 
-# HPL.dat files should run a single HPL computation across all selected cores.
-# See /opt/opa/src/mpi_apps/hpl-config/ for examples.
+# When using HPL, the problem size will automatically be adjusted to match
+# the number of cores on the host, but this can be overridden by setting
+# the HPL_CORES variable.
+# 
+# The size can also be adjusted to consume a percentage of system memory
+# by adjusting the HPL_PRESSURE variable up or down between 0.1 and 0.9.
+# Note that increasing the value of HPL_PRESSURE will increast the amount
+# of time the test will take to execute.
 
 # In order to run the single node HPL test, each tested host must be able to
 # ssh to locahost as root
 
-HPL_CORES=16                # how many cores per node to include in HPL test.
-                            # Supported values include 2, 4, 8, 16, 18, 32, 
-                            # 64, 128. Other values will fail due to a missing
-                            # config file.
-HPL_CONFIG="${HPL_CORES}s"  # problem selection arguments for config_hpl2
-                            # This can be a simple config selection: "16s"
-                            # or a config selection and problem size: "16t 9000"
-                            # Supported configuration variations are "t" (tiny), 
-                            # "s" (small), "m" (medium) and "l" (large).
+# Set this if you don't want the problem size to match the number of cores on
+# the target node.
+HPL_CORES=
 
+# By default the problem size will be scaled to consume roughly 30% of RAM on
+# the target node.  This can be adjusted up or down between 0.0 and 0.9. Note
+# that larger values will cause the test to run for a longer time.
+HPL_PRESSURE=0.3			
 
 # can adjust default list of tests below
-#TESTS="pcicfg pcispeed cstates initscripts hyperthreading hfi_pkt memsize hpl"
-TESTS="pcicfg pcispeed initscripts memsize cpu"
+#TESTS="pcicfg pcispeed initscripts irqbalance hfi_pkt memsize cpu_consist cpu cstates turbo hton htoff ipoib hpl"
+TESTS="pcicfg pcispeed initscripts memsize cpu hfi_pkt hton ipoib irqbalance turbo cstates"
 
 
 Usage()
@@ -113,14 +109,21 @@ Usage()
 	echo >&2
 	echo "The following tests are available:" >&2
 	echo "  pcicfg - verify PCI max payload and max read request size settings" >&2
-	echo "  pcispeed - verify PCI bus negotiated to PCIe Gen2 x8 speed" >&2
-	echo "  initscripts - verify irqbalance, irq_balancer, powerd and cpuspeed" >&2
-	echo "                init.d scripts are disabled, along with acpi_pad kernel module" >&2
+	echo "  pcispeed - verify PCI bus negotiated to PCIe Gen3 x16 speed" >&2
+	echo "  initscripts - verify  powerd and cpuspeed init.d scripts are disabled," >&2
+	echo "                along with acpi_pad kernel module" >&2
 	echo "  hfi_pkt - check PCI-HFI bus performance.  Requires HFI port is Active" >&2
 	echo "  memsize - check total size of memory in system" >&2
 	echo "  hpl - perform a single node HPL test," >&2
 	echo "        useful to determine if all hosts perform consistently" >&2
-	echo "  cpu - check CPU performance parameters" >&2
+	echo "  cpu - check if CPU parameters are configured for optimal performance" >&2
+	echo "  cpu_consist - check if CPU parameters are configured for most consistant performance" >&2
+	echo "  turbo - check if Intel Turbo Boost is enabled" >&2
+	echo "  cstates - check if Intel C-States are enabled and optimally configured." >&2
+	echo "  hton - verify that Hyper Threading is enabled" >&2
+	echo "  htoff - verify that Hyper Threading is disabled" >&2
+	echo "  ipoib - verify IPoIB is properly configured" >&2
+	echo "  irqbalance - verify irqbalance is running with proper configuration" >&2
 	echo "  default - run all tests selected in TESTS" >&2
 	echo >&2
 	echo "Detailed output is written to stdout and appended to /root/hostverify.res" >&2
@@ -323,7 +326,7 @@ test_pcispeed()
 	pass
 }
 
-# make sure irqbalance, irq_balancer, powerd and cpuspeed are disabled
+# make sure powerd and cpuspeed are disabled
 test_initscripts()
 {
 	TEST="initscripts"
@@ -332,7 +335,7 @@ test_initscripts()
 	cd "${outdir}" || fail "Can't cd ${outdir}"
 
 	> chkconfig.out
-	for i in irqbalance irq_balancer cpuspeed powerd
+	for i in cpuspeed powerd
 	do
 		set -x
 		if [ -e /etc/init.d/$i ]
@@ -347,7 +350,7 @@ test_initscripts()
 	[ -n "${result}" ] && fail "Undesirable service enabled: $result"
 
 	#Now check systemd
-	for i in irqbalance irq_balancer cpuspeed powerd
+	for i in cpuspeed powerd
 	do
 		set -x
 		if [ -n "`systemctl list-units | grep $i`" ] 
@@ -358,6 +361,24 @@ test_initscripts()
 	done
 
 	[ -n "$(lsmod | grep acpi_pad)" ] && fail "acpi_pad kernel module loaded is loaded - unload or blacklist."
+
+	pass
+}
+
+test_irqbalance()
+{
+	TEST="irqbalance"
+	echo "irqbalance ..."
+	date
+
+	set -x
+
+	pid=$(pgrep irqbalance)	
+	[ -z "$pid" ] && fail "irqbalance process not running"
+
+	cmdline=$(ps -o command --no-heading -p $pid)
+	echo "$cmdline" | grep -q "exact" || fail "irqbalance is NOT running with hint policy 'exact'"
+	set +x
 
 	pass
 }
@@ -443,7 +464,10 @@ test_hfi_pkt()
 	cd "${outdir}" || fail "Can't cd ${outdir}"
 
 	lspci="${lspci:-/sbin/lspci}"
+	setpci="${setpci:-/sbin/setpci}"
+
 	[ ! -x "${lspci}" ] && fail "Can't find lspci"
+	[ ! -x "${setpci}" ] && fail "Can't find setpci"
 
 	# get Storm Lake Intel stand-alone WFR HFI
 	set -x
@@ -456,18 +480,18 @@ test_hfi_pkt()
 	set +x
 	[ -s pciinfo.stderr ] && fail "Error during run of lspci: $(cat pciinfo.stderr)"
 
+	pci_id=$(grep -o -m1 "24f[01]" pciinfo.stdout)
 	if [ $HFI_COUNT -gt 0 ]
 	then
-		[ ! -s pciinfo.stdout ] && fail "No Intel HFI found"
+		[ -z "$pci_id" ] && fail "No Intel HFI found"
 	else
-		[ -s pciinfo.stdout ] && fail "Unexpected Intel HFI found"
+		[ ! -z "$pci_id" ] && fail "Unexpected Intel HFI found"
 		pass
 	fi
 
+
 	hfi_pkt_test="${hfi_pkt_test:-/usr/bin/hfi1_pkt_test}"
 	[ ! -x "${hfi_pkt_test}" ] && fail "Can't find hfi_pkt_test"
-
-	[ -z "${MIN_HFI_PKT}" ] && fail "Invalid MIN_HFI_PKT"
 
 	failure=0
 	for hfi in $(seq 0 $(($HFI_COUNT-1)) )
@@ -490,13 +514,41 @@ test_hfi_pkt()
 		set +x
 		[ -s hfi_pkt_test.stderr ] && { fail_msg "Error during run of hfi_pkt_test: HFI $hfi: $(cat hfi_pkt_test.stderr)"; failure=1; continue; }
 
-		bufferbw="$(cat hfi_pkt_test.stdout | grep 'Buffer Copy test:' | head -1 | sed -e 's/  */ /g' | cut -d ' ' -f 4)"
-		[ -z "${bufferbw}" ] && { fail_msg "HFI $hfi: Unable to get result"; failure=1; continue; }
+		# Check the PCI-Express Device Status register (offset 0xA into PCI-E capability structure).
+		# Lower 4 bits used to indicate if any problems occoured on the bus PCI-E bus.
+		# Error reports range from simple retry to fatal PCI-E errors. From our perspective, any of these should indicate
+		# a problem with the card or the interface, so we declare a problem if this field is non-zero.
+		# See: PCI-Express Base Spec v 3.1, sec 7.8.5.
 
-		result="$(echo "if ( ${bufferbw} >= ${MIN_HFI_PKT} ) { print \"PASS\n\"; } else { print \"FAIL\n\"; }" | bc -lq)" || { fail_msg "Unable to analyze result: HFI $hfi: $bufferbw"; failure=1; continue; }
-		[ "${result}" != "PASS" ] && { fail_msg "HFI $hfi: Result of ${bufferbw} less than MIN_HFI_PKT ${MIN_HFI_PKT}"; failure=1; continue; }
+		# First check the HFI device itself
+		set -x
+		"${setpci}" -d 0x8086:$pci_id CAP_EXP+0xa.w 2>pciiset.stderr | tee pciiset.stdout || fail "Error running setpci"
+		set +x
+		[ -s pciiset.stderr ] && fail "Error running setpci: $(cat pciiset.stderr)"
 
-		pass_msg ": HFI $hfi: $bufferbw MB/s"
+		result="0x"
+		result="$result$(cat pciiset.stdout)"
+		let "result&=0x000f"
+		[ "${result}" != "0" ] && { fail_msg "HFI $hfi: PCI-E bus problems detected during packet test!"; failure=1; continue; }
+
+		# Now let's check the PCI-E root port the HFI device is attatched to, as it may report errors on it's side independently
+		# of the HFI.
+		pci_bus=$(head -1 pciinfo.stdout | cut -d' ' -f1 | cut -d : -f1)
+		set -x
+		pci_root_port="$(${lspci} -M 2> /dev/null | grep "$pci_bus: Entered via" | cut -d' ' -f4)"
+		set +x
+
+		set -x
+		"${setpci}" -s $pci_root_port CAP_EXP+0xa.w 2>pciiset.stderr | tee pciiset.stdout || fail "Error running setpci"
+		set +x
+		[ -s pciiset.stderr ] && fail "Error running setpci: $(cat pciiset.stderr)"
+
+		result="0x"
+		result="$result$(cat pciiset.stdout)"
+		let "result&=0x000f"
+		[ "${result}" != "0" ] && { fail_msg "HFI $hfi: PCI-E bus problems detected during packet test!"; failure=1; continue; }
+
+		pass_msg ": HFI $hfi: No PCI-E bus issues detected during buffer test"
 	done
 	[ $failure -ne 0 ] && exit 1
 
@@ -522,11 +574,13 @@ test_memsize()
 	fi
 }
 
-# Confirm CPU will not do frequency throttling.
-test_cpu()
+# Confirm CPU will not do frequency throttling or boosting. This test is good for running
+# benchmarks  or jobs that require consistancy. Such a configuration does not
+# necessarily offer best CPU performance.
+test_cpu_consist()
 {
-	TEST="cpu"
-	echo "CPU test ..."
+	TEST="cpu_consist"
+	echo "CPU consistancy test ..."
 	date
 	driver=$(cpupower -c 0 frequency-info -d | tail -1)
 	if [ "${driver}" = "intel_pstate" ]
@@ -553,6 +607,109 @@ test_cpu()
 	pass ": CPU is operating at max frequency of ${max_freq} KHz."
 }
 
+# Confirm CPU has enabled Intel P-States, favoring performance. 
+test_cpu()
+{
+	TEST="cpu"
+	echo "CPU test ..."
+	date
+	set -x
+	driver=$(cpupower -c 0 frequency-info -d | tail -1)
+	[ "${driver}" != "intel_pstate" ] && fail "intel_pstate disabled in kernel. Load module or check kernel cmdline."
+
+	result=$(cpupower -c 0 frequency-info -p | tail -1)
+	gov=$(echo ${result} |cut -f 3 -d ' ')
+	if [ "${gov}" != "performance" ]
+	then
+		fail "cpupower governor is set to ${gov}. Should be 'performance'."
+	fi
+	set +x
+
+	pass ": CPU is operating with recommended P-State and TurboStep configuration."
+}
+
+test_cstates()
+{
+	TEST="cstates"
+	echo "cstates test ..."
+	date
+	set -x
+	driver=$(cat /sys/devices/system/cpu/cpuidle/current_driver)
+	[ "${driver}" != "intel_idle" ] && fail "intel_idle not enabled in kernel, C-State config non-optimal."
+	max_cstate=$(cat /sys/module/intel_idle/parameters/max_cstate)
+	[ ! $max_cstate -gt 0 ] && fail "C-States are currently disabled."
+	set +x
+
+	pass ": intel_idle is maintaining recommended C-States."
+}
+
+test_turbo()
+{
+	TEST="turbo"
+	echo "Turbo test ..."
+	date
+
+	set -x
+	result=$(cpupower frequency-info | sed -n "1,/boost state support/d;1,+1p")
+	echo $result | grep -q "Supported: yes" || skip "Turbo not supported on platform"
+	echo $result | grep -q "Active: yes" || fail "Turbo is not enabled"
+	set +x
+
+	pass ": Supported and enabled"
+}
+
+function check_ht()
+{
+	echo "Hyperthreading test ..."
+	date
+
+	lscpu="${lscpu:-/usr/bin/lscpu}"
+	[ ! -x "${lscpu}" ] && fail "Can't find lscpu"
+
+	set -x
+	cpus="$(${lscpu} -p=cpu | tail -1)"
+	cores="$(${lscpu} -p=core | tail -1)"
+	set +x
+
+	return $([ ! $cpus = $cores ])
+}
+
+test_hton()
+{
+	TEST="hton"
+	check_ht || fail "HyperThreading is disabled"
+	pass ": Hyperthreading is enabled"
+}
+
+test_htoff()
+{
+	TEST="htoff"
+	check_ht && fail "HypterThreading is enabled"
+	pass ": Hyperthreading is disabled"
+}
+
+test_ipoib()
+{
+	TEST="ipoib"
+	echo "IPoIB test ..."
+	date
+	
+	if [ ! -e /sys/class/net/$IPOIB_IF ]
+	then
+		fail "Given IPoIB interface $IPOIB_IF couldn't be found."
+	fi
+
+	set -x
+	mtu=$(cat /sys/class/net/$IPOIB_IF/mtu)
+	mode=$(cat /sys/class/net/$IPOIB_IF/mode)
+	
+	[ $mode != "connected" ] && fail "$IPOIB_IF is in '$mode' mode - should be in 'connected' mode"
+	[ $mtu -lt $IPOIB_MTU ] && fail "$IPOIB_IF MTU of $mtu is less than required $IPOIB_MTU"
+	set +x
+	
+	pass ": IPoIB properly configured"
+}
+
 # single node HPL
 test_hpl()
 {
@@ -561,22 +718,20 @@ test_hpl()
 	date
 	cd "${MPI_APPS}" || fail "Can't cd ${MPI_APPS}"
 
-	# generate $outdir/mpi_hosts_hpl using localhost
-	for i in $(seq 1 $HPL_CORES)
-	do
-		echo localhost
-	done > $outdir/mpi_hosts_hpl
+	echo localhost > $outdir/mpi_hosts_hpl
 
 	# configure HPL2's HPL.dat file to control test
-	if [ x"$HPL_CONFIG" != x ]
-	then
-		set -x
-		MPI_HOSTS=$outdir/mpi_hosts_hpl ./config_hpl2 -l $HPL_CONFIG || fail "Error configuring HPL"
+	if [ -z "$HPL_CORES" ]; then
+		HPL_CORES=`cat /proc/cpuinfo | grep processor | wc -l`
 	fi
+	set -x
+	./hpl_dat_gen -d -n 1 -p $HPL_PRESSURE -c $HPL_CORES || fail "Error configuring HPL"
+	set +x
 
 	set -x
 	MPI_HOSTS=$outdir/mpi_hosts_hpl MPI_TASKSET="-c 0-$(($HPL_CORES - 1))" ./run_hpl2 $HPL_CORES 2> $outdir/hpl.stderr | tee $outdir/hpl.stdout || fail "Error running HPL"
 	set +x
+
 	grep -v '^+' < $outdir/hpl.stderr > $outdir/hpl.errors
 	[ -s $outdir/hpl.errors ] && fail "Error during run of HPL: $(cat $outdir/hpl.errors)"
 

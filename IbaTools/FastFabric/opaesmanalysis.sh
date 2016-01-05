@@ -45,7 +45,8 @@ fi
 
 Usage_full()
 {
-	echo "Usage: opaesmanalysis [-b|-e] [-s] [-d dir] [-G esmchassisfile] [-E 'esmchassis']" >&2
+	echo "Usage: opaesmanalysis [-b|-e] [-s] [-d dir] [-G esmchassisfile]" >&2
+	echo "                         [-E 'esmchassis']" >&2
 	echo "              or" >&2
 	echo "       opaesmanalysis --help" >&2
 	echo "   --help - produce full help text" >&2
@@ -53,13 +54,14 @@ Usage_full()
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "                  default is /var/opt/opa/analysis" >&2
+	echo "           default is /var/opt/opa/analysis" >&2
 	echo "   -G esmchassisfile - file with SM chassis in cluster" >&2
 	echo "           default is $CONFIG_DIR/opa/esm_chassis" >&2
 	echo "   -E esmchassis - list of SM chassis to analyze" >&2
 	echo " Environment:" >&2
 	echo "   ESM_CHASSIS - list of SM chassis, used if -G and -E not supplied" >&2
-	echo "   ESM_CHASSIS_FILE - file containing list of SM chassis, used if -G and -E not supplied" >&2
+	echo "   ESM_CHASSIS_FILE - file containing list of SM chassis, used if -G and -E not" >&2
+	echo "           supplied" >&2
 	echo "   FF_ANALYSIS_DIR - top level directory for baselines and failed health checks" >&2
 	echo "for example:" >&2
 	echo "   opaesmanalysis" >&2

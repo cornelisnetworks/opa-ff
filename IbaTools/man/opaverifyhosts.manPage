@@ -13,7 +13,7 @@ opaverifyhosts
 .NL
 
 .PP
-Performs single node verification. The actual verification is performed using /root/hostverify.sh. A sample file is provided in /opt/opa/samples/hostverify.sh. You can review and edit the sample file to set appropriate configuration and performance expectations and select which tests to run by default. See /opt/opa/samples/hostverify.sh and /sbin/opaverifyhost.sh for more information.
+Performs single node verification. The actual verification is performed using FF\(ulHOSTVERIFY (/root/hostverify.sh) . A sample file is provided in /opt/opa/samples/hostverify.sh. You can review and edit the sample file to set appropriate configuration and performance expectations and select which tests to run by default. See /opt/opa/samples/hostverify.sh for more information.
 .SH Syntax
 .NL
 opaverifyhosts [-kc] [-f \fIhostfile\fR] [-u \fIupload\(ulfile\fR] [-d \fIupload\(uldir\fR]
@@ -69,7 +69,7 @@ Time limit in seconds for host to complete tests. Default is 300 seconds (5 minu
 .TP 10
  \fItest\fR 
 .NL
-One or more specific tests to run (see /opt/opa/samples/hostverify.sh for a list of available tests). This verifies basic node configuration and performance by running /root/hostverify.sh on all specified hosts.
+One or more specific tests to run. (See /opt/opa/samples/hostverify.sh for a list of available tests.) This verifies basic node configuration and performance by running /root/hostverify.sh on all specified hosts.
 
 .IP
 Prior to using the  \fItest\fR option, edit /opt/opa/samples/hostverify.sh to set proper expectations for node configuration and performance. Then be sure to use the -c option on first run for a given node so that /opt/opa/samples/hostverify.sh gets copied to each node as /root/hostverify.sh.

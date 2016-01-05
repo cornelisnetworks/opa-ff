@@ -20,6 +20,8 @@ Performs various queries of the performance management (PM)/performance administ
 
 for a description of the operation and client services of the PM/PA.
 .PP
+By default, opapaquery queries the most recent data. However, if an image number ( \fIimgNum\fR) and/or image offset ( \fIimgOff\fR) is provided, the query returns previous sweep data. Queries that access previous sweep data return with the absolute image number representing that data, and therefore have an image offset of zero.
+.PP
 opapaquery \'s operation is dependent on an Intel(R) Omni-Path Fabric Suite Fabric Manager version 6.0 or greater running as master SM/PM in the fabric.
 .PP
 By default, opapaquery uses the first active port on the local system. However, if the Fabric Management Node is connected to more than one fabric (for example, a subnet), the HFI and port may be specified to select the fabric whose PA is to be queried.
@@ -33,6 +35,9 @@ opapaquery [-v] [-h \fIhfi\fR] [-p \fIport\fR] -o \fItype\fR[-g \fIgroupName\fR]
 .br
 [-V vfName]
 .SH Options 
+.NL
+
+.SH Options
 .NL
 
 .TP 10

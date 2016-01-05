@@ -47,8 +47,10 @@ fi
 
 Usage_full()
 {
-	echo "Usage: opascpall [-p] [-r] [-f hostfile] [-h 'hosts'] [-u user] source_file ... dest_file" >&2
-	echo "       opascpall -t [-p] [-f hostfile] [-h 'hosts'] [-u user] [source_dir [dest_dir]]" >&2
+	echo "Usage: opascpall [-p] [-r] [-f hostfile] [-h 'hosts'] [-u user]" >&2
+	echo "                    source_file ... dest_file" >&2
+	echo "       opascpall -t [-p] [-f hostfile] [-h 'hosts'] [-u user] " >&2
+	echo "                    [source_dir [dest_dir]]" >&2
 	echo "              or" >&2
 	echo "       opascpall --help" >&2
 	echo "   --help - produce full help text" >&2

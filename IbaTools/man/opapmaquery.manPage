@@ -27,6 +27,9 @@ opapmaquery [-v] [-s \fIsl\fR] [-l \fIlid\fR] [-h
 .SH Options 
 .NL
 
+.SH Options
+.NL
+
 .TP 10
 -v 
 .NL
@@ -180,7 +183,7 @@ Port in destination device to query/clear. Required when using -l option for all
 .TP 10
 -n \fImask\fR 
 .NL
-Port mask, in hexadecimal. Bits represent ports 31-0. For example: 0x2 for port 1, 0x6 for ports 1, 2.
+Port mask, in hexadecimal. Bits represent ports 63-0. For example: 0x2 for port 1, 0x6 for ports 1, 2.
 
 .TP 10
 -e \fImask\fR 

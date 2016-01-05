@@ -15,7 +15,7 @@ opagentopology
 .PP
 Generates sample topology verification XML. Provides an example of using opaxmlgenerate and is a prototype for customization.
 .PP
-Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology.SWs.txt to generate LinkSummary, Node FIs, and Node SWs information respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
+Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
 .PP
 LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:opaxmlgenerate -X /opt/opa/samples/opatopology\(ul1.txt -d \; -h Link -g Rate -g
 .br
@@ -44,9 +44,9 @@ This file can be found in /opt/opa/samples/ . For brevity, this sample shows onl
 .B NOTE:
 The following example exceeds the available width of the page. For readability, a blank line is shown between lines to make it clear where the line ends. In an actual link file, no blank lines are used.
 
-25g;2048;0;IO Server Link;11m;S4567;cable model 456;0x0002c9020020e004;1;bender HFI-1;0x0002c9020020e004;FI;Some info about port;0x00066a0007000df6;7;Switch 1234 Leaf 4;;SW;
+25g;2048;0;IO Server Link;11m;S4567;cable model 456;0x0002c9020020e004;1;bender HFI-1;0x0002c9020020e004;FI;Some info about port;0x0011750007000df6;7;Switch 1234 Leaf 4;;SW;
 .br
-25g;;0;;;;;0x0002c9020025a678;1;mindy2 HFI-1;;FI;;0x00066a0007000e6d;4;Switch 2345 Leaf 5;;SW;
+25g;;0;;;;;0x0002c9020025a678;1;mindy2 HFI-1;;FI;;0x0011750007000e6d;4;Switch 2345 Leaf 5;;SW;
 .NL
 
 .SH opatopology\(ulFIs.txt
@@ -62,14 +62,14 @@ This file can be found in /opt/opa/samples/ . For brevity, this sample shows onl
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.0x00066a0007000df6;Switch 1234 Leaf 4; 0x00066a0007000e6d;Switch 2345 Leaf 5;
+This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.0x0011750007000df6;Switch 1234 Leaf 4; 0x0011750007000e6d;Switch 2345 Leaf 5;
 .NL
 
 .SH opatopology\(ulSMs.txt
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only one node.0x0002c9020025a678;1;mindy2 HFI-1;0x00066a0007000e6d;FI;details about SM
+This file can be found in /opt/opa/samples/ . For brevity, this sample shows only one node.0x0002c9020025a678;1;mindy2 HFI-1;0x0011750007000e6d;FI;details about SM
 .SH Example 
 .NL
 
@@ -118,7 +118,7 @@ When run against the supplied topology input files, opagentopology produces:<?xm
 .br
 <Port>
 .br
-<NodeGUID>0x00066a0007000df6</NodeGUID>
+<NodeGUID>0x0011750007000df6</NodeGUID>
 .br
 <PortNum>7</PortNum>
 .br
@@ -154,7 +154,7 @@ When run against the supplied topology input files, opagentopology produces:<?xm
 .br
 <Port>
 .br
-<NodeGUID>0x00066a0007000e6d</NodeGUID>
+<NodeGUID>0x0011750007000e6d</NodeGUID>
 .br
 <PortNum>4</PortNum>
 .br
@@ -198,7 +198,7 @@ When run against the supplied topology input files, opagentopology produces:<?xm
 .br
 <Node>
 .br
-<NodeGUID>0x00066a0007000df6</NodeGUID>
+<NodeGUID>0x0011750007000df6</NodeGUID>
 .br
 <NodeDesc>Switch 1234 Leaf 4</NodeDesc>
 .br
@@ -206,7 +206,7 @@ When run against the supplied topology input files, opagentopology produces:<?xm
 .br
 <Node>
 .br
-<NodeGUID>0x00066a0007000e6d</NodeGUID>
+<NodeGUID>0x0011750007000e6d</NodeGUID>
 .br
 <NodeDesc>Switch 2345 Leaf 5</NodeDesc>
 .br
@@ -224,7 +224,7 @@ When run against the supplied topology input files, opagentopology produces:<?xm
 .br
 <NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
-<PortGUID>0x00066a0007000e6d</PortGUID>
+<PortGUID>0x0011750007000e6d</PortGUID>
 .br
 <NodeType>FI</NodeType>
 .br

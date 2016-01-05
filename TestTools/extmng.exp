@@ -428,6 +428,7 @@ proc get_switch_brand { ibnode } {
 		set out ""
 		set node_guid ""
 		set deviceid ""
+		set vendorid ""
 		set brand ""
 		set type "" 
 		set bypass ""
@@ -446,12 +447,16 @@ proc get_switch_brand { ibnode } {
 			log_message "Bypassing check for externally managed switch for -B option"
 		}
 		send_unix_cmd "opasaquery $sa_hfi_port_args -n $node_guid"
-		set out [expect_list_with_punchlist "$ibnode" "Switch not found in SA DB"  120 { "DeviceId: [A-Fa-fx0-9]+" } { "Error" "No Records Returned" }]
-		regexp {(0x[A-Fa-f0-9]+)} $out deviceid
-		# TODO: place holder value will need to be updated when we find out the real one
+		set out [expect_list_with_punchlist "$ibnode" "Switch not found in SA DB"  120 { "VendorID: [A-Fa-fx0-9]+ DeviceId: [A-Fa-fx0-9]+" } { "Error" "No Records Returned" }]
+		regexp {VendorID: (0x[A-Fa-f0-9]+) DeviceId: (0x[A-Fa-f0-9]+)} $out match vendorid deviceid
 		if { [ string equal "$deviceid" "0xabc0"] } {
-			set brand "OPA"
-			log_message "$ibnode: detected Intel OPA device"
+			if { [ string equal "$vendorid" "0x8086"] } {
+				set brand "OPA"
+				log_message "$ibnode: detected Intel OPA device"
+			} else {
+				set brand "unknown"
+				log_message "$ibnode: detected unknown device"
+			}
 		} else {
 			set brand "unknown"
 			log_message "$ibnode: detected unknown device"
@@ -654,6 +659,39 @@ proc get_switch_info { ibnode } {
 			fail_test "$ibnode: Not an Intel OPA device"
 		}
 
+		if { [ string equal "$brand" "OPA"] } {
+			check_exit_status 60 0
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 6"
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "SENSOR[A-Z_0-9/_: ]+" } { "Error" }]
+			regexp {LTC2974: ([NA0-9\/C]+)} $out f1 f2
+			if { [ string equal "N/A" "$f2" ] } {
+				append_punchlist "$ibnode" "LTC2974: Temperature Not Available"
+				set tempaStatus "LTC2974:$f2"
+			} else {
+				set tempaStatus "LTC2974:$f2"
+			}
+			regexp {MAX QSFP: ([NA0-9\/C]+)} $out f1 f2
+			if { [ string equal "N/A" "$f2" ] } {
+				set tempbStatus "MAX_QSFP:$f2"
+				append_punchlist "$ibnode" "MAX_QSFP: Temperature Not Available"
+			} else {
+				set tempbStatus "MAX_QSFP:$f2"
+			}
+			regexp {PRR ASIC: ([NA0-9\/C]+)} $out f1 f2
+			if { [ string equal "N/A" "$f2" ] } {
+				set tempcStatus "PRR_ASIC:$f2"
+				append_punchlist "$ibnode" "PRR_ASIC: Temperature Not Available"
+			} else {
+				set tempcStatus "PRR_ASIC:$f2"
+			}
+
+			set tempStatus "$tempaStatus/$tempbStatus/$tempcStatus"
+
+		} else {
+			append_punchlist "$ibnode" "Not an Intel OPA device"
+			fail_test "$ibnode: Not an Intel OPA device"
+		}
+
         # use verbose option so we have a predictable output to expect
 		if { [ string equal "$brand" "OPA"] } {
 			if { "$numPS" == "2" } {
@@ -711,14 +749,15 @@ proc get_switch_info { ibnode } {
 #			show_message "$ibnode:
 #    F/W ver:$fwversion  H/W ver:$hwversion  H/W pt num:$partnumber  Capability:$capability  Fan status:$fanStatus  PS1 Status:$ps1Status  PS2 Status:$ps2Status"
 			show_message "$ibnode:
-    F/W ver:$fwversion  H/W ver:$hwversion  H/W pt num:$partnumber  Fan status:$fanStatus  PS1 Status:$ps1Status  PS2 Status:$ps2Status"
+    F/W ver:$fwversion  H/W ver:$hwversion  H/W pt num:$partnumber  Fan status:$fanStatus  PS1 Status:$ps1Status  PS2 Status:$ps2Status Temperature status:$tempStatus"
 			set out_msg "F/W ver:$fwversion
 H/W ver:$hwversion
 H/W pt num:$partnumber
 Capability:$capability
 Fan status:$fanStatus
 PS1 Status:$ps1Status
-PS2 Status:$ps2Status"
+PS2 Status:$ps2Status
+Temperature status:$tempStatus"
 		} else {
 			append_punchlist "$ibnode" "Not an Intel OPA device"
 			fail_test "$ibnode: Not an Intel OPA device"
@@ -1005,8 +1044,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 
 		set brand [get_switch_brand "$ibnode"]
 		if { [ string equal "$brand" "OPA"] } {
-			# TODO: does this need to be changed?
-			if { ! [ string equal "$env(CFG_SWITCH_DEVICE)" "12000"] } {
+			if { ! [ string equal "$env(CFG_SWITCH_DEVICE)" "OPA"] } {
 				show_message ""
 				skip_case "Device type of firmware -$env(CFG_SWITCH_DEVICE)- does not match switch\n"
 			}
@@ -1066,7 +1104,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 300 { "opaswconfigure completed"} { "Error"} 
 				}
 			}
-			if { [ file exists $env(CFG_FWTEMPDIR)/iniXedge.ini.comp ] } {
+			if { [ file exists $env(CFG_FWTEMPDIR)] } {
 				check_exit_status 60 0
 				send_unix_cmd "$toolsdir/opaswfwconfigure -t $trimmed_ibnode $hfi_port_args -d $env(CFG_FWTEMPDIR)"
 				if { $norecords } {

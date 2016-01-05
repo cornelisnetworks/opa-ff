@@ -6,3 +6,6 @@
 # the name corresponding to the ethernet IP address of the chassis.
 # This file will be used by FastFabric to indicate which chassis should be
 # operated on by various fastfabric menus and CLI commands.
+#
+# The opagenchassis tool can be used to query the SM and generate a list of
+# Internally Managed switches.

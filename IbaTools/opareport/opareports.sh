@@ -46,7 +46,8 @@ fi
 
 Usage_full()
 {
-	echo "Usage: opareports [-t portsfile] [-p ports] [-T topology_input] [opareport arguments]" >&2
+	echo "Usage: opareports [-t portsfile] [-p ports] [-T topology_input]" >&2
+        echo "                     [opareport arguments]" >&2
 	echo "              or" >&2
 	echo "       opareports --help" >&2
 	echo "   --help - produce full help text" >&2

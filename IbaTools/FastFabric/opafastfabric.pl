@@ -113,8 +113,7 @@ if ( "$IB_STACK_TYPE" eq "IBACCESS" ) {
 	%ComponentName = (
 				"iba" => "IB Tools",
 				"fastfabric" => "FastFabric",
-					# mpi_apps are part of FF for OFED
-				"mpidev" => "FastFabric",
+				"mpidev" => "MpiApps",
 				"mpisrc" => "MPI Source",
 				"shmem" => "SHMEM",
 				);
@@ -130,20 +129,20 @@ my @FabricSetupSteps;
 
 	# full name of steps for prompts
 my %FabricSetupStepsName = (
-				"config" => "Edit config and select/edit Host file",
-				"findgood" => "Verify hosts pingable",
-				"setupssh" => "Setup password-less ssh/scp",
-				"copyhosts" => "Copy /etc/hosts to all hosts",
-				"showuname" => "Show uname -a for all hosts",
+				"config" => "Edit Config and Select/Edit Host File",
+				"findgood" => "Verify Hosts Pingable",
+				"setupssh" => "Set Up Password-Less SSH/SCP",
+				"copyhosts" => "Copy /etc/hosts to All Hosts",
+				"showuname" => "Show uname -a for All Hosts",
 				"install" => "Install/Upgrade OPA Software",
-				"configipoib" => "Configure IPoIB IP address",
-				"buildapps" => "Build Test Apps and copy to Hosts",
+				"configipoib" => "Configure IPoIB IP Address",
+				"buildapps" => "Build Test Apps and Copy to Hosts",
 				"reboot" => "Reboot Hosts",
-				"refreshssh" => "Refresh ssh Known Hosts",
-				"rebuildmpi" => "Rebuild MPI library and tools",
-				"opacmdall" => "Run a command on all hosts",
-				"copyall" => "Copy a file to all hosts",
-				"viewres" => "View opahostadmin result files"
+				"refreshssh" => "Refresh SSH Known Hosts",
+				"rebuildmpi" => "Rebuild MPI Library and Tools",
+				"opacmdall" => "Run a Command on All Hosts",
+				"copyall" => "Copy a File to All Hosts",
+				"viewres" => "View opahostadmin Result Files"
 				);
 # what to output before each menu item as a delimiter/marker
 my %FabricSetupStepsMenuDelimiter = (
@@ -172,21 +171,21 @@ my @FabricAdminSteps;
 					);
 	# full name of steps for prompts
 my %FabricAdminStepsName = (
-				"config" => "Edit config and select/edit Host file",
-				"fabric_info" => "Summary of Fabric components",
-				#"opapingall" => "Verify Hosts via Ethernet ping",
-				"findgood" => "Verify hosts are pingable, sshable, and active",
-				"singlehost" => "Perform single host verification",
-				"showallports" => "Verify OPA Fabric status and topology",
-				"sacache" => "Verify hosts see each other",
-				"ipoibping" => "Verify hosts ping via IPoIB",
-				"refreshssh" => "Refresh ssh Known Hosts",
-				"mpiperf" => "Check MPI performance",
-				"health" => "Check overall Fabric health",
-				"cabletest" => "Start or stop Bit Error Rate Cable Test",
-				"opacaptureall" => "Generate all Hosts Problem Report Info",
-				"opacmdall" => "Run a command on all hosts",
-				"viewres" => "View opahostadmin result files"
+				"config" => "Edit Config and Select/Edit Host File",
+				"fabric_info" => "Summary of Fabric Components",
+				#"opapingall" => "Verify Hosts via Ethernet Ping",
+				"findgood" => "Verify Hosts Are Pingable, SSHable, and Active",
+				"singlehost" => "Perform Single Host Verification",
+				"showallports" => "Verify OPA Fabric Status and Topology",
+				"sacache" => "Verify Hosts See Each Other",
+				"ipoibping" => "Verify Hosts Ping via IPoIB",
+				"refreshssh" => "Refresh SSH Known Hosts",
+				"mpiperf" => "Check MPI Performance",
+				"health" => "Check Overall Fabric Health",
+				"cabletest" => "Start or Stop Bit Error Rate Cable Test",
+				"opacaptureall" => "Generate All Hosts Problem Report Info",
+				"opacmdall" => "Run a Command on All Hosts",
+				"viewres" => "View opahostadmin Result Files"
 				);
 # what to output before each menu item as a delimiter/marker
 my %FabricAdminStepsMenuDelimiter = (
@@ -239,38 +238,38 @@ my %FabricChassisStepsMenuDelimiter = (
 				"viewres" => "review",
 				);
 my %FabricChassisStepsName = (
-				"config" => "Edit config and select/edit Chassis file",
-				"opapingall" => "Verify Chassis via Ethernet ping",
-				"fwpush" => "Update Chassis firmware",
-				"setup" => "Setup Chassis basic configuration",
-				"setupssh" => "Setup password-less ssh/scp",
+				"config" => "Edit Config and Select/Edit Chassis File",
+				"opapingall" => "Verify Chassis via Ethernet Ping",
+				"fwpush" => "Update Chassis Firmware",
+				"setup" => "Set Up Chassis Basic Configuration",
+				"setupssh" => "Set Up Password-Less SSH/SCP",
 				"reboot" => "Reboot Chassis",
 				"fmconfig" => "Configure Chassis Fabric Manager (FM)",
-				"getconfig" => "Get basic Chassis configuration",
-                "fmsecurityfiles" => "Update Chassis FM security files",
-                "fmgetsecurityfiles" => "Get Chassis FM security files",
-				"showallports" => "Check OPA Fabric status",
+				"getconfig" => "Get Basic Chassis Configuration",
+                "fmsecurityfiles" => "Update Chassis FM Security Files",
+                "fmgetsecurityfiles" => "Get Chassis FM Security Files",
+				"showallports" => "Check OPA Fabric Status",
 				"fmcontrol" => "Control Chassis Fabric Manager (FM)",
-				"opacaptureall" => "Generate all Chassis Problem Report Info",
-				"opacmdall" => "Run a command on all chassis",
-				"viewres" => "View opachassisadmin result files"
+				"opacaptureall" => "Generate All Chassis Problem Report Info",
+				"opacmdall" => "Run a Command on All Chassis",
+				"viewres" => "View opachassisadmin Result Files"
 				);
 my @FabricExtMgmtSwSteps = ( "config", "genopaswitches", "ibping", "fwverify",
 				"fwpush", "setup", "reboot", "switchinfo", "getconfig",
 			   	"hwvpd","viewres"
 				);
 my %FabricExtMgmtSwStepsName = (
-				"config" => "Edit config and select/edit Switch file",
-				"genopaswitches" => "Generate or update Switch file",
-				"ibping" => "Test for Switch presence",
-				"fwverify" => "Verify Switch firmware",
-				"fwpush" => "Update Switch firmware",
-				"setup" => "Setup Switch basic configuration",
+				"config" => "Edit Config and Select/Edit Switch File",
+				"genopaswitches" => "Generate or Update Switch File",
+				"ibping" => "Test for Switch Presence",
+				"fwverify" => "Verify Switch Firmware",
+				"fwpush" => "Update Switch Firmware",
+				"setup" => "Set Up Switch Basic Configuration",
 				"reboot" => "Reboot Switch",
-				"switchinfo" => "Report Switch firmware & hardware info",
-				"getconfig" => "Get basic Switch configuration",
-				"hwvpd" => "Report Switch VPD information",
-				"viewres" => "View opaswitchadmin result files"
+				"switchinfo" => "Report Switch Firmware & Hardware Info",
+				"getconfig" => "Get Basic Switch Configuration",
+				"hwvpd" => "Report Switch VPD Information",
+				"viewres" => "View opaswitchadmin Result Files"
 				);
 # what to output before each menu item as a delimiter/marker
 my %FabricExtMgmtSwStepsMenuDelimiter = (
@@ -449,6 +448,43 @@ sub copy_file
 sub copy_data_file
 {
 	copy_file("$_[0]", "$_[1]", "$OWNER", "$GROUP", "ugo=r,u=rw");
+}
+
+sub GetChoice($$@)
+{
+	my($Question) = shift();
+	my($default) = shift();
+
+	my %choices;
+	@choices{@_}=();  # Convert our choices to a hash table.
+
+	my $c;
+
+	if ( $Default_Prompt ) {
+		print LOG_FD "$Question -> $default\n";
+		$c=lc($default);
+		if (exists $choices{$c}) {
+			return $c;
+		}
+		# If the default is invalid, fall through.
+	}
+
+	while (1)
+	{
+		print "$Question [$default]: ";
+		chomp($_ = <STDIN>);
+		$_=remove_whitespace($_);
+		if ("$_" eq "") {
+			$_=$default;
+		}
+		$c = lc($_);
+			
+		if (exists $choices{$c})
+		{
+			print LOG_FD "$Question -> $c\n";
+			return $c;
+		}
+	}
 }
 
 sub GetNumericValue
@@ -683,8 +719,7 @@ sub remove_whitespace($)
 
 sub installed_mpidev
 {
-	#return (-e "$ROOT$LIB_DIR/.mpidev" || -e "$ROOT$OLD_LIB_DIR/.mpidev");
-	return (-e "/opt/opa/src/mpi_apps/Makefile");
+	return (system("rpm -q opa-mpi-apps > /dev/null") == 0);
 }
 
 sub installed_shmem
@@ -1072,10 +1107,13 @@ sub fabricsetup_install
 			print "\nAn upgrade/reinstall or an initial installation may be performed.\n\n";
 			print "An upgrade/reinstall requires an existing installation of OPA software\non the selected nodes and will upgrade or reinstall the existing packages.\n\n";
 			print "An initial installation will uninstall any existing OPA software\nand install the packages selected by FF_PACKAGES:\n    $packages\n";
-			if (GetYesNo("Would you like to do an upgrade/reinstall?", "y") ) {
+			my $choice = GetChoice("Would you like to do a fresh [i]nstall, an [u]pgrade or [s]kip this step?", 
+				"u", ("i", "u", "s"));
+
+			if ("$choice" eq "u") {
 				$install_mode="upgrade";
 				print "You have selected to perform an upgrade installation\n";
-			} elsif (GetYesNo("Would you like to do an initial installation?", "n") ) {
+			} elsif ("$choice" eq "i") {
 				$install_mode="load";
 				print "You have selected to perform an initial installation\n";
 				print "This will uninstall any existing OPA software on the selected nodes\n";
@@ -1102,12 +1140,6 @@ sub fabricsetup_configipoib
 sub fabricsetup_buildmpi
 {
 	my $mpi_apps_dir = read_ffconfig_param("FF_MPI_APPS_DIR");
-	if ( ! installed_mpidev() ) {
-		printf("$ComponentName{mpidev} not installed on this system\n");
-		printf("Unable to Build MPI Test Apps\n");
-		HitKeyCont;
-		return;
-	}
 	if (! -e "$mpi_apps_dir/Makefile") {
 		print "$mpi_apps_dir: not found\n";
 		print "FF_MPI_APPS_DIR parameter must point to location of mpi_apps to build\n";
@@ -1179,8 +1211,16 @@ sub fabricsetup_buildmpi
 		if ( "$mode" ne "build" ) {
 			return 0;
 		}
-		if (run_fabric_cmd("cd $mpi_apps_dir; MPICH_PREFIX=$mpich_prefix make clobber quick")) {
-			return 1;
+		if (!installed_mpidev()){
+			print "Package opa-mpi-apps not installed. Only building subset of MPI Apps\n";
+			HitKeyCont;
+			if (run_fabric_cmd("cd $mpi_apps_dir; MPICH_PREFIX=$mpich_prefix make clobber opa-base")) {
+				return 1;
+			}
+		} else{
+			if (run_fabric_cmd("cd $mpi_apps_dir; MPICH_PREFIX=$mpich_prefix make clobber quick")) {
+				return 1;
+			}
 		}
 	}
 	if (! valid_config_file("Host File", $FabricSetupHostsFile) ) {
@@ -1193,13 +1233,7 @@ sub fabricsetup_buildmpi
 sub fabricsetup_buildshmem
 {
 	my $shmem_apps_dir = read_ffconfig_param("FF_SHMEM_APPS_DIR");
-	# makes sure fastfabric installed, it provides shmem_apps and mpi_apps
-	if ( ! installed_mpidev() ) {
-		printf("$ComponentName{mpidev} not installed on this system\n");
-		printf("Unable to Build SHMEM Test Apps\n");
-		HitKeyCont;
-		return;
-	}
+	# makes sure fastfabric installed, it provides shmem_apps
 	if ( ! installed_shmem() ) {
 		printf("$ComponentName{shmem} not installed on this system\n");
 		printf("Unable to Build SHMEM Test Apps\n");
@@ -1422,7 +1456,7 @@ DO_SETUP:
 		printStepSelected($selected{$step}, $statusMessage{$step});
 	}
 
-	printf ("\nP) Perform the selected actions              N) Select None\n");
+	printf ("\nP) Perform the Selected Actions              N) Select None\n");
 	printf (  "X) Return to Previous Menu (or ESC)\n");
 			
 	%statusMessage = ();
@@ -1607,6 +1641,15 @@ sub fabricadmin_singlehost
 		}
 	}
 
+	#If HPL test is to be run, make sure mpi-tests package is installed
+	if (index($verifyhosts_tests,"hpl") != -1) {
+		if (!installed_mpidev()) {
+			print "Package opa-mpi-apps not found. Cannot hun HPL test.\n";
+        	HitKeyCont;
+			return 1;
+		}
+	}
+
 	print "Enter filename for upload destination file [$hostverify_res]: ";
 	chomp($inp = <STDIN>);
 	$inp=remove_whitespace($inp);
@@ -1659,6 +1702,12 @@ sub fabricadmin_showallports
 			$linkanalysis_reports="$linkanalysis_reports misconnlinks";
 		}
 	}
+	print "\nThe fabric deployment can be verified against the planned topology.\n";
+	print "Typically the planned topology will have been converted to an XML topology\n";
+	print "file using opaxlattopology, opaxlattopology_cust or a customized variation.\n";
+	print "If this step has been done and a topology file has been placed in the\n";
+	print "location specified by the FF_TOPOLOGY_FILE in opafastfabric.conf then\n";
+	print "a topology verification can be performed.\n\n";
 	if (GetYesNo("Would you like to verify fabric topology?", "y") ) {
 		# TBD - check for presence of topology files
 		if (GetYesNo("Verify all aspects of topology (links, nodes, SMs)?", "y") ) {
@@ -1753,6 +1802,14 @@ sub fabricadmin_mpiperf
 		}
 		return run_fabric_cmd("$BIN_DIR/opahostadmin -f $FabricAdminHostsFile mpiperfdeviation");
 	} else {
+	
+		if (!installed_mpidev()) {
+			print "Package opa-mpi-apps not found.\n";
+			print "Cannot run the tests. Deviation tests can still be used. Please try again. \n";
+			HitKeyCont;
+			return 1;
+		}
+
 		if (check_load($FabricAdminHostsFile, "", "prior to test")) {
 			return 1;
 		}
@@ -1886,7 +1943,7 @@ DO_SETUP:
 		printStepSelected($selected{$step}, $statusMessage{$step});
 	}
 
-	printf ("\nP) Perform the selected actions              N) Select None\n");
+	printf ("\nP) Perform the Selected Actions              N) Select None\n");
 	printf (  "X) Return to Previous Menu (or ESC)\n");
 			
 	%statusMessage = ();
@@ -1961,7 +2018,7 @@ DO_SETUP:
 		printStepSelected($selected{$step}, $statusMessage{$step});
 	}
 
-	printf ("\nP) Perform the selected actions              N) Select None\n");
+	printf ("\nP) Perform the Selected Actions              N) Select None\n");
 	printf (  "X) Return to Previous Menu (or ESC)\n");
 			
 	%statusMessage = ();
@@ -2150,7 +2207,27 @@ QUERY:
 			}
 			$FabricChassisPackages="$all_packages";
 			$parallel=1;
-			if (GetYesNo("Would you like to push the security files?", "n") ) {
+			print "\nAfter push of the security files, the FM may be started/restarted\n";
+			if (GetYesNo("Would you like to restart the FM?", "n") ) {
+				if (GetYesNo("Would you like to run the FM on slave MMs?", "n") ) {
+					$action="restartall";
+					print "You have selected to push, and restart the FM on all MMs\n\n";
+				} else {
+					$action="restart";
+					print "You have selected to push, and restart the FM on master MMs (stop on slaves)\n\n";
+				}
+
+				print "There will be a disruption as FMs are restarted\n";
+				print "Doing the operation in parallel (on multiple chassis) will finish the fastest\n";
+				print "Doing it serially may reduce disruption\n";
+				if (GetYesNo("Would you like to do the operation in parallel?", "y") ) {
+					print "You have selected to perform the push, and FM restart in parallel\n\n";
+					$parallel=1;
+				} else {
+					print "You have selected to perform the push, and FM restart serially\n\n";
+					$parallel=0;
+				}
+			} elsif (GetYesNo("Would you like to push the security files?", "n") ) {
 				$action="push";
 				print "You have selected to push FM security files\n";
 			} else {
@@ -2167,9 +2244,9 @@ QUERY:
 	if ( "$action" ne "skip" ) {
 		my $pathnames=expand_pathnames($FabricChassisPackages);
 		if ( $parallel ) {
-			return run_fabric_cmd("$BIN_DIR/opachassisadmin $Sopt -F $FabricChassisFile -P '$pathnames' -a $action fmsecurityfiles");
+			return run_fabric_cmd("$BIN_DIR/opachassisadmin $Sopt -F $FabricChassisFile -s '$pathnames' -a $action fmsecurityfiles");
 		} else {
-			return run_fabric_cmd("FF_MAX_PARALLEL=0 $BIN_DIR/opachassisadmin $Sopt -F $FabricChassisFile -P '$pathnames' -a $action fmsecurityfiles");
+			return run_fabric_cmd("FF_MAX_PARALLEL=0 $BIN_DIR/opachassisadmin $Sopt -F $FabricChassisFile -s '$pathnames' -a $action fmsecurityfiles");
 		}
 	}
 }
@@ -2515,7 +2592,6 @@ sub chassis_showallports
 	my $linkanalysis_opts="";
 	my $linkanalysis_reports="";
 	my $Sopt="";
-	#my $topology=0;
 	my $result_dir = read_ffconfig_param("FF_RESULT_DIR");
 	my $linkanalysis_file = "$result_dir/linkanalysis.res";
 	my $inp;
@@ -2540,39 +2616,7 @@ sub chassis_showallports
 			$linkanalysis_reports="$linkanalysis_reports misconnlinks";
 		}
 	}
-	#if (GetYesNo("Would you like to verify fabric topology?", "y") ) {
-	#	# TBD - check for presence of topology files
-	#	if (GetYesNo("Verify all aspects of topology (links, nodes, SMs)?", "y") ) {
-	#		$linkanalysis=1;
-	#		$topoloigy=1;
-	#		$linkanalysis_reports="$linkanalysis_reports verifyall";
-	#	} else {
-	#		if (GetYesNo("Verify all link topology (backplanes and cables)?", "y") ) {
-	#			$linkanalysis=1;
-	#			$topoloigy=1;
-	#			$linkanalysis_reports="$linkanalysis_reports verifylinks";
-	#		} elsif (GetYesNo("Verify cable link topology?", "y") ) {
-	#			$linkanalysis=1;
-	#			$topoloigy=1;
-	#			$linkanalysis_reports="$linkanalysis_reports verifyextlinks";
-	#		}
-	#		if (GetYesNo("Verify all nodes?", "y") ) {
-	#			$linkanalysis=1;
-	#			$topoloigy=1;
-	#			$linkanalysis_reports="$linkanalysis_reports verifynodes";
-	#		}
-	#		if (GetYesNo("Verify all SMs?", "y") ) {
-	#			$linkanalysis=1;
-	#			$topoloigy=1;
-	#			$linkanalysis_reports="$linkanalysis_reports verifysms";
-	#		}
-	#	}
-	#	if ($topology) {
-	#		if (! GetYesNo("Include unexpected devices in punchlist?", "y") ) {
-	#			$linkanalysis_reports="$linkanalysis_reports -U";
-	#		}
-	#	}
-	#}
+
 	print "Enter filename for results [$linkanalysis_file]: ";
 	chomp($inp = <STDIN>);
 	$inp=remove_whitespace($inp);
@@ -2641,7 +2685,7 @@ sub chassis_fmcontrol
 				print "You have selected to run the FM on master MMs (stop on slaves)\n\n";
 			}
 		} else {
-			print "You have selected to skip the configure FM step\n";
+			print "You have selected to skip the control FM step\n";
 			$action="skip";
 		}
 
@@ -2738,7 +2782,7 @@ DO_SETUP:
 		printStepSelected($selected{$step}, $statusMessage{$step});
 	}
 
-	printf ("\nP) Perform the selected actions              N) Select None\n");
+	printf ("\nP) Perform the Selected Actions              N) Select None\n");
 	printf (  "X) Return to Previous Menu (or ESC)\n");
 			
 	%statusMessage = ();
@@ -3090,7 +3134,7 @@ DO_SETUP:
 		printStepSelected($selected{$step}, $statusMessage{$step});
 	}
 
-	printf ("\nP) Perform the selected actions              N) Select None\n");
+	printf ("\nP) Perform the Selected Actions              N) Select None\n");
 	printf (  "X) Return to Previous Menu (or ESC)\n");
 			
 	%statusMessage = ();

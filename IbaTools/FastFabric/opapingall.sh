@@ -44,7 +44,8 @@ fi
 
 Usage_full()
 {
-	echo "Usage: opapingall [-Cp] [-f hostfile] [-F chassisfile] [-h 'hosts'] [-H 'chassis']" >&2
+	echo "Usage: opapingall [-Cp] [-f hostfile] [-F chassisfile] [-h 'hosts']" >&2
+	echo "                     [-H 'chassis']" >&2
 	echo "              or" >&2
 	echo "       opapingall --help" >&2
 	echo "   --help - produce full help text" >&2
@@ -53,7 +54,7 @@ Usage_full()
 	echo "   -p - ping all hosts/chassis in parallel" >&2
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
 	echo "   -F chassisfile - file with chassis in cluster" >&2
-	echo "           default is $CONFIG_DIR/opa/chassis" >&2
+	echo "        default is $CONFIG_DIR/opa/chassis" >&2
 	echo "   -h hosts - list of hosts to ping" >&2
 	echo "   -H chassis - list of chassis to ping" >&2
 	echo " Environment:" >&2
@@ -83,7 +84,7 @@ Usage()
 	echo "   -p - ping all hosts/chassis in parallel" >&2
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
 	echo "   -F chassisfile - file with chassis in cluster" >&2
-	echo "           default is $CONFIG_DIR/opa/chassis" >&2
+	echo "        default is $CONFIG_DIR/opa/chassis" >&2
 	echo "example:">&2
 	echo "   opapingall" >&2
 	echo "   opapingall -C" >&2

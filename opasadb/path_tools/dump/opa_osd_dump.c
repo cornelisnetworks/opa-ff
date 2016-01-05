@@ -161,9 +161,21 @@ dump(FILE *f)
 	return 0;
 }
 
+void Usage(int status)
+{
+	fprintf(stderr,  "Usage: opa_osd_dump (options)\n");
+	fprintf(stderr,  "Print the current contents of the distributed SA shared memory database.\n");
+	fprintf(stderr,  "Options are:\n");
+	fprintf(stderr, "\t-v/--verbose\t<arg>\tLog Level. Corresponds to a Kernel log level,\n\t\t\t\ta number from 1 to 7\n");
+	fprintf(stderr, "\t--help\t\t\tPrint this help text\n");
+	fprintf(stderr, "\nExample:\topa_osd_dump > opasadb_contents\n");
+
+	exit(status);
+}
+
+
 int main(int argc, char *argv[])
 {
-	int i;
 	int debug = _DBG_LVL_NOTICE;
 
 	do {
@@ -172,12 +184,8 @@ int main(int argc, char *argv[])
 		static char *short_options = "v:";
 		static struct option long_options[] = {
 			{.name = "verbose",.has_arg = 1,.val = 'v'},
+			{.name = "help", .has_arg = 0, .val = '$'},
 			{0}
-		};
-
-		static char *usage[] = {
-			"the level of logging to do.",
-			NULL
 		};
 
 		c = getopt_long(argc, argv, short_options, long_options, NULL);
@@ -188,20 +196,12 @@ int main(int argc, char *argv[])
 		case 'v':
 			debug = strtol(optarg,NULL,0);
 			break;
+		case '$':
+			Usage(0);//exits
+			break;
 		default: 
-			i=0;
-			printf( "Usage: %s (options)\n", argv[0]);
-			printf( "Options are:\n");
-			while (long_options[i].name != NULL) {
-				printf( "  [--%-8s %s | -%c %s]    %s\n",
-						long_options[i].name,
-						(long_options[i].has_arg) ? "<arg>" : "",
-						long_options[i].val,
-						(long_options[i].has_arg) ? "<arg>" : "",
-						usage[i]);
-				i++;
-			}
-			return -1;
+			Usage(2);//exits
+			break;
 		}
 	} while(1);
 

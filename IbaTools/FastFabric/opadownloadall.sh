@@ -44,7 +44,8 @@ fi
 
 Usage_full()
 {
-	echo "Usage: opadownloadall [-rp] [-f hostfile] [-d download_dir] [-h 'hosts'] [-u user]  source_file ... dest_file" >&2
+	echo "Usage: opadownloadall [-rp] [-f hostfile] [-d download_dir] [-h 'hosts']" >&2
+	echo "                         [-u user] source_file ... dest_file" >&2
 	echo "              or" >&2
 	echo "       opadownloadall --help" >&2
 	echo "   --help - produce full help text" >&2
@@ -74,7 +75,8 @@ Usage_full()
 
 Usage()
 {
-	echo "Usage: opadownloadall [-rp] [-f hostfile] [-d download_dir] source_file ... dest_file" >&2
+	echo "Usage: opadownloadall [-rp] [-f hostfile] [-d download_dir]" >&2
+	echo "                         source_file ... dest_file" >&2
 	echo "              or" >&2
 	echo "       opadownloadall --help" >&2
 	echo "   --help - produce full help text" >&2

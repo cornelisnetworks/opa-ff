@@ -12,13 +12,11 @@ opaextractlids
 
 .NL
 
+.PP
+Produces a CSV file listing all or some of the LIDs in the fabric. opaextractlids.sh is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
 .SH Syntax
 .NL
-opaextractlids [-h \fIhfi\fR] [-p \fIport\fR]
-.PP
-or
-.br
-opaextractlids --help
+opaextractlids [--help] [opareport \fIoptions\fR]
 .SH Options
 .NL
 
@@ -28,17 +26,24 @@ opaextractlids --help
 Produces full help text.
 
 .TP 10
--h/--hfi \fIhfi\fR 
+opareport \fIoptions\fR 
 .NL
-HFI to send via. Default is first HFI.
-
-.TP 10
--p/--port \fIport\fR 
-.NL
-Port to send via. Default is first active port.
+Options are passed to opareport.
 
 .SH Examples 
 .NL
-opaextractlids > lids.csv
+# List all the lids in the fabric:
 .br
-opaextractlids -h 2 -p 1 > \'lids.csv\'
+opaextractlids.sh
+.br
+
+.br
+# List all the lids of end-nodes:
+.br
+opaextractlids.sh -F "nodetype:FI"
+.br
+
+.br
+# List all the lids on the 2nd HFI\'s fabric of a multi-plane fabric:
+.br
+opaextractlids.sh -h 2

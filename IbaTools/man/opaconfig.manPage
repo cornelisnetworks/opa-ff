@@ -35,7 +35,7 @@ opaconfig -V
 .TP 10
 No option
 .NL
-Starts the Intel(R) OPA Software TUI.
+Starts the Intel(R) OP Software TUI.
 
 .TP 10
 --help 
@@ -109,7 +109,7 @@ Prohibits non-root users from querying the fabric.
 .TP 10
 --answer \fIkeyword=value\fR 
 .NL
-Provides an answer to a question that may occur during the operation. Answers to questions not asked are ignored. Invalid answers result in prompting for interactive installs, or using default options for non-interactive installs. Default options retain existing configuration files.
+Provides an answer to a question that may occur during the operation. Answers to questions not asked are ignored. Invalid answers result in prompting for interactive installs, or using default options for non-interactive installs.
 
 .IP
 Possible questions ( \fIkeyword=value\fR):

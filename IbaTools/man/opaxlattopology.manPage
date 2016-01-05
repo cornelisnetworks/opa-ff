@@ -34,7 +34,7 @@ By default, the top level is always produced. Switch, rack, and rack group topol
 
 .sp
 1 
-Intel(R) Omni-Path Edge Switch 100 Family topology files.
+Intel(R) Omni-Path Edge Switch 100 Series topology files.
 
 .RE
 
@@ -252,7 +252,7 @@ Core Spine
 CS (used only in internal core switch links)
 
 .PP
-Cable values are optional and have no special syntax. If the cable information is present, it appears in the topology XML file as CableLabel, CableLength, and CableDetails respectively.
+Cable values are optional and have no special syntax. If the cable information is present, it appears in the topology XML file as CableLabel, CableLength, and CableDetails respectively. CableLength can optionally be used to document more precise cable length information than is available through a CableInfo query (CableInfo length fields have at best a 1 meter granularity). Note, however, that topology CableLength is informational and is not validated against CableInfo length information.
 .PP
 The opaxlattopology script reads the topology, linksum\(ulswd06, and linksum\(ulswd24 CSV files. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
 .PP

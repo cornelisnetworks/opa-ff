@@ -18,6 +18,9 @@ opainfo [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g] [-d \fIdetail\fR] [-
 .SH Options
 .NL
 
+.SH Options
+.NL
+
 .TP 10
 -h \fIhfi\fR 
 .NL

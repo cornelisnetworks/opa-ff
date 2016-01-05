@@ -29,6 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* [ICS VERSION STRING: unknown] */
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -661,7 +662,7 @@ int getChassisSpecifics(int argc, char *argv[])
 	char chassisIpAddr[20];
 	char chassisSMKey[50];
 
-	for (i = 1; i < argc; i++)
+	for (i = 2; i < argc; i++)
 	{
 #if 0
 		sprintf(promptText, "chassis %s", argv[i]);
@@ -792,10 +793,20 @@ main(int argc, char *argv[])
 {
 	int i;
 	FILE *fp_out;
+	char *dirName;
 
 	chassisInfoTable = NULL;
 	chassisInfoTableSize = 0;
 	numChassis = 0;
+
+	dirName = argv[1];
+	if (dirName == NULL)
+		dirName = ".";
+
+	if (chdir(dirName) < 0) {
+		fprintf(stderr, "Error changing directory to %s: %s\n", dirName, strerror(errno));
+		exit(1);
+	}
 
 	getChassisSpecifics(argc, argv);
 	getGeneralInfo();
@@ -810,8 +821,8 @@ main(int argc, char *argv[])
 	fprintf(fp_out, "Number of chassis: %d\n", numChassis);
 	for (i = 0; i < numChassis; i++)
 	{
-		fprintf(fp_out, "%d Chassis %s IP_Addr: %s\n", i+1, argv[i+1], chassisInfoTable[i].chassisIpAddr);
-		fprintf(fp_out, "%d Chassis %s SM_Key: %s\n", i+1, argv[i+1], (chassisInfoTable[i].chassisSMKey != NULL) ? chassisInfoTable[i].chassisSMKey : "NULL");
+		fprintf(fp_out, "%d Chassis %s IP_Addr: %s\n", i+2, argv[i+2], chassisInfoTable[i].chassisIpAddr);
+		fprintf(fp_out, "%d Chassis %s SM_Key: %s\n", i+2, argv[i+2], (chassisInfoTable[i].chassisSMKey != NULL) ? chassisInfoTable[i].chassisSMKey : "NULL");
 	}
 
 	/* display general info */

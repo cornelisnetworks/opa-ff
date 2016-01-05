@@ -12,6 +12,15 @@ opapacketcapture
 
 .NL
 
+.PP
+Program dumps packets to file and exits.
+.PP
+To stop capture and trigger dump, use SIGINT or SIGUSR1.
+.PP
+
+.B NOTE:
+Using opapacketcapture with large amounts of traffic can cause performance issues on the given host. Intel recommends you use opapacketcapture on hosts with lower packet rates and bandwidth.
+
 .SH Syntax
 .NL
 opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR] [-t \fItriggerfile\fR] [-l \fItriggerlag\fR][-a \fIalarm\fR] [-p \fIpackets\fR] [-s \fImaxblocks\fR] [ -m \fImode\fR] [-v] [-h] [-D]

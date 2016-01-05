@@ -16,6 +16,11 @@ opacmdall
 
 \fB(Linux and Switch)\fR
 Executes a command on all hosts or Intel(R) Omni-Path Chassis. This powerful command can be used for configuring servers or chassis, verifying that they are running, starting and stopping host processes, and other tasks.
+.PP
+
+.B NOTE:
+opacmdall depends on the Linux* convention that utilities return 0 for success and >0 for failure. If opacmdall is used to execute a non-standard utility like diff or a program that uses custom exit codes, then opacmdall may erroneously report "Command execution FAILED" when it encounters a non-zero exit code. However, command output is still returned normally and the error may be safely ignored.
+
 .SH Syntax
 .NL
 opacmdall [-Cpq] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \fIhosts\fR] [-H \fIchassis\fR] [-u \fIuser\fR] [-S] [-m \fImarker\fR] [-T \fItimelimit\fR] [-P] \fIcmd\fR
@@ -167,15 +172,14 @@ How to log into chassis. Can be Telnet or SSH.
 .NL
 Password for admin on all chassis. Used in absence of -S option.
 
-.PP
+.SH Notes
+.NL
 
-.B NOTE:
+.PP
 All commands performed with opacmdall must be non-interactive in nature. opacmdall waits for the command to complete before proceeding. For example, when running host commands such as rm, the -i option (interactively prompt before removal) should not be used. (Note that this option is sometimes part of a standard bash alias list.) Similarly, when running chassis commands such as fwUpdateChassis, the -reboot option should not be used beccause this option causes an immediate reboot and therefore the command never returns. Also, the chassis command reboot should not be executed using opacmdall. Instead, use the opachassisadmin reboot command to reboot one or more chassis. For further information about individual chassis CLI commands, consult the 
 \fIIntel(R) Omni-Path Fabric Switches Command Line Interface Reference Guide\fR
 
-. For further information about Linux OS commands, consult the Linux man pages and any other documentation supplied with the OS by the OS supplier.
-
-
+. For further information about Linux operating system commands, consult Linux man pages.
 .PP
 When performing opacmdall against hosts, internally SSH is used. The command opacmdall requires that password-less SSH be set up between the host running the Intel(R) Omni-Path Fabric Suite FastFabric Toolset and the hosts opacmdall is operating against. The opasetupssh FastFabric tool can aid in setting up password-less SSH.
 .PP

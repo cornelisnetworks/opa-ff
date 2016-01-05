@@ -36,11 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _OPASW_COMMON_H_
 #define _OPASW_COMMON_H_
 
-#if !defined(VXWORKS) || (defined(STL_GEN) && (STL_GEN >= 1))
 #include "iba/stl_mad.h"
-#else
-#include "iba/ib_mad.h"
-#endif
 
 /***********************
  *   CONSTANTS
@@ -126,6 +122,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define I2C_OPASW_VPD_EEPROM_ADDR				(uint32)0x8160AA00
 
 #define I2C_OPASW_PSOC_FAN_ADDR					(uint32)0x8000C200
+#define I2C_OPASW_LTC2974_TEMP_ADDR				(uint32)0x80009800
+#define I2C_OPASW_LTC2974_TEMP_OFFSET				(uint16)0x008D
 
 #define I2C_OPASW_MGMT_FPGA_ADDR				(uint32)0x80407200	// used for power supply access
 
@@ -146,6 +144,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define I2C_OPASW_BD_MGMT_FPGA_OFFSET 			0x0000
 #define I2C_OPASW_PS_MGMT_FPGA_OFFSET 			0x0021
+#define I2C_OPASW_PRR_ASIC_TEMP_MGMT_FPGA_OFFSET 	0x00e6
+#define I2C_OPASW_MAX_QSFP_TEMP_MGMT_FPGA_OFFSET 	0x00e8
+#define I2C_OPASW_TEMP_SENSOR_COUNT                     3
 
 #define PSU1_MGMT_FPGA_BIT_PRESENT               0
 #define PSU1_MGMT_FPGA_BIT_PWR_OK                1
@@ -188,6 +189,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define NOJUMBOMAD								0
 #define JUMBOMAD								1
+
+#define TEMP_STR_LENGTH 64
 
 /***********************
  *   DATA TYPES
@@ -351,6 +354,7 @@ void releaseSession(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionI
 FSTATUS getFwVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *fwVersion);
 FSTATUS getVPDInfo(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 module, vpd_fruInfo_rec_t *vpdInfo);
 FSTATUS getFanSpeed(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 fanNum, uint32 *fanSpeed);
+FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH]);
 FSTATUS getPowerSupplyStatus(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 psNum, uint32 *psStatus);
 FSTATUS getAsicVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 *asicVersion);
 FSTATUS getBoardID(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *boardID);

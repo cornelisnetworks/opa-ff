@@ -1068,7 +1068,7 @@ int main(int argc, char *argv[])
 	uint32				byteCount;
 	int					primary = 1;
 	int					overwriteFactoryDefaults = 0;
-	//struct stat			fileStat;
+	struct stat			fileStat;
 	struct              oib_port *oib_port_session = NULL;
 	int					currentEeprom;
 
@@ -1239,24 +1239,18 @@ int main(int argc, char *argv[])
 			goto err_exit;
 		}
 		strcpy(inibinFileName, PRR_INIBIN);
-		/*
-		if (module == VIPER_MODULE) 
-			strcpy(inibinFileName, VIPER_INIBIN);
-		else {
-			if (stat("emfwMapFile", &fileStat) < 0) {
-				if (errno == ENOENT) {
-					strcpy(inibinFileName, OPASW_INIBIN);
-				} else {
-					fprintf(stderr, "Error: cannot validate emfwMapFile: %s\n", strerror(errno));
-					releaseSession(oib_port_session, &path, sessionID);
-					status = FERROR;
-					goto err_exit;
-				}
+		if (stat("emfwMapFile", &fileStat) < 0) {
+			if (errno == ENOENT) {
+				strcpy(inibinFileName, OPASW_INIBIN);
 			} else {
-				getEMFWFileNames(oib_port_session, &path, sessionID, fwFileName, inibinFileName);
+				fprintf(stderr, "Error: cannot validate emfwMapFile: %s\n", strerror(errno));
+				releaseSession(oib_port_session, &path, sessionID);
+				status = FERROR;
+				goto err_exit;
 			}
+		} else {
+			getEMFWFileNames(oib_port_session, &path, sessionID, fwFileName, inibinFileName);
 		}
-		*/
 	}
 
 	if (strstr(inibinFileName, ".inibin") == NULL) {

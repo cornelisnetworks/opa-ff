@@ -252,6 +252,7 @@ struct option options[] = {
 		{ "start", required_argument, NULL, 'w' },
 		{ "range", required_argument, NULL, 'r' },
 		{ "vfName", required_argument, NULL, 'V' },
+		{ "help", no_argument, NULL, '$' },
 		{ 0 }
 };
 
@@ -272,15 +273,17 @@ static void sslParmsXmlParserEnd(IXmlParserState_t *state, const IXML_FIELD *fie
  */
 void Usage(void)
 {
-	fprintf(stderr, "Usage: opafequery [-v] [-a ipAddr | -h hostName] [-E] [-T paramsfile] -o type [SA options | PA options]\n");
+	fprintf(stderr, "Usage: opafequery [-v] [-a ipAddr | -h hostName] [-E] [-T paramsfile]\n");
+	fprintf(stderr, "                     -o type [SA options | PA options]\n");
 
 	fprintf(stderr, "General Options:\n");
-	fprintf(stderr, "    -v/--verbose       - verbose output\n");
-	fprintf(stderr, "    -a/--ipAdr         - IP address of node running the FE\n");
-	fprintf(stderr, "    -h/--hostName      - host name of node running the FE\n");
-	fprintf(stderr, "    -o/--output        - output type\n");
-	fprintf(stderr, "    -E/--feEsm         - ESM FE\n");
-	fprintf(stderr, "    -T/--sslParmsFile  - SSL/TLS parameters XML file\n");
+	fprintf(stderr, "    --help                    - produce this help text\n");
+	fprintf(stderr, "    -v/--verbose              - verbose output\n");
+	fprintf(stderr, "    -a/--ipAdr                - IP address of node running the FE\n");
+	fprintf(stderr, "    -h/--hostName             - host name of node running the FE\n");
+	fprintf(stderr, "    -o/--output               - output type\n");
+	fprintf(stderr, "    -E/--feEsm                - ESM FE\n");
+	fprintf(stderr, "    -T/--sslParmsFile         - SSL/TLS parameters XML file\n");
 
 	fprintf(stderr, "SA Specific Options:\n");
 	fprintf(stderr, "    -I/--IB                   - issue query in legacy InfiniBand format\n");
@@ -298,29 +301,36 @@ void Usage(void)
 	fprintf(stderr, "    -d/--desc name            - query by node name/description\n");
 	fprintf(stderr, "    -P/--guidpair 'guid guid' - query by a pair of port Guids\n");
 	fprintf(stderr, "    -G/--gidpair 'gid gid'    - query by a pair of Gids\n");
-	fprintf(stderr, "    -B/--guidlist 'sguid ...;dguid ...' - query by a list of port Guids\n");
-	fprintf(stderr, "    -A/--gidlist 'sgid ...;dgid ...'    - query by a list of Gids\n");
+	fprintf(stderr, "    -B/--guidlist 'sguid ...;dguid ...'\n");
+	fprintf(stderr, "                              - query by a list of port Guids\n");
+	fprintf(stderr, "    -A/--gidlist 'sgid ...;dgid ...'\n");
+	fprintf(stderr, "                              - query by a list of Gids\n");
 	fprintf(stderr, "    -x/--sourcegid gid        - specify a source gid for certain queries\n");
-
 	fprintf(stderr, "PA Specific Options:\n");
-	fprintf(stderr, "    -g/--groupName     - group name for groupInfo query\n");
-	fprintf(stderr, "    -l/--lid           - lid of node for portCounters query\n");
-	fprintf(stderr, "    -N/--portNumber    - port number for portCounters query\n");
-	fprintf(stderr, "    -f/--delta         - delta flag for portCounters query - 0 or 1\n");
-	fprintf(stderr, "    -U/--userCntrs     - user controlled counters flag for portCounters query\n");
-	fprintf(stderr, "    -e/--select        - 32-bit select flag for clearing port counters\n");
-	fprintf(stderr, "                            select bits (0 is least signficant (rightmost))\n");
-	fprintf(stderr, "       0 - XmitData                9 - RcvBECN                   18 - XmitConstraintErrors\n");
-	fprintf(stderr, "       1 - RcvData                10 - XmitTimeCong              19 - RcvRemotePhysicalErrors\n");
-	fprintf(stderr, "       2 - XmitPkts               11 - XmitWastedBW              20 - LocalLinkIntegrityErrors\n");
-	fprintf(stderr, "       3 - RcvPkts                12 - XmitWaitData              21 - RcvErrors\n");
-	fprintf(stderr, "       4 - MulticastXmitPkts      13 - RcvBubble                 22 - ExcessiveBufferOverruns\n");
-	fprintf(stderr, "       5 - MulticastRcvPkts       14 - MarkFECN                  23 - FMConfigErrors\n");
-	fprintf(stderr, "       6 - XmitWait               15 - RcvConstraintErrors       24 - LinkErrorRecovery\n");
-	fprintf(stderr, "       7 - CongDiscards           16 - RcvSwitchRelayErrors      25 - LinkDowned\n");
-	fprintf(stderr, "       8 - RcvFECN                17 - XmitDiscards              26 - UncorrectableErrors\n");
-	fprintf(stderr, "    -c/--focus         - focus select value for getting focus ports\n");
-	fprintf(stderr, "                            focus select values:\n");
+	fprintf(stderr, "    -g/--groupName            - group name for groupInfo query\n");
+	fprintf(stderr, "    -l/--lid                  - lid of node for portCounters query\n");
+	fprintf(stderr, "    -N/--portNumber           - port number for portCounters query\n");
+	fprintf(stderr, "    -f/--delta                - delta flag for portCounters query - 0 or 1\n");
+	fprintf(stderr, "    -U/--userCntrs            - user controlled counters flag for portCounters\n");
+	fprintf(stderr, "                                query\n");
+	fprintf(stderr, "    -e/--select               - 32-bit select flag for clearing port counters\n");
+	fprintf(stderr, "                                select bits (0 is least signficant (rightmost))\n");
+	fprintf(stderr, "       0 - XmitData               14 - MarkFECN\n");
+	fprintf(stderr, "       1 - RcvData                15 - RcvConstraintErrors\n");
+	fprintf(stderr, "       2 - XmitPkts               16 - RcvSwitchRelayErrors\n");
+	fprintf(stderr, "       3 - RcvPkts                17 - XmitDiscards\n");
+	fprintf(stderr, "       4 - MulticastXmitPkts      18 - XmitConstraintErrors\n");
+	fprintf(stderr, "       5 - MulticastRcvPkts       19 - RcvRemotePhysicalErrors\n");
+	fprintf(stderr, "       6 - XmitWait               20 - LocalLinkIntegrityErrors\n");
+	fprintf(stderr, "       7 - CongDiscards           21 - RcvErrors\n");
+	fprintf(stderr, "       8 - RcvFECN                22 - ExcessiveBufferOverruns\n");
+	fprintf(stderr, "       9 - RcvBECN                23 - FMConfigErrors\n");
+	fprintf(stderr, "      10 - XmitTimeCong           24 - LinkErrorRecovery\n");
+	fprintf(stderr, "      11 - XmitWastedBW           25 - LinkDowned\n");
+	fprintf(stderr, "      12 - XmitWaitData           26 - UncorrectableErrors\n");
+	fprintf(stderr, "      13 - RcvBubble\n");
+	fprintf(stderr, "    -c/--focus                - focus select value for getting focus ports\n");
+	fprintf(stderr, "                                focus select values:\n");
 	fprintf(stderr, "         0x00020001 - sorted by utilization - highest first\n");                  // STL_PA_SELECT_UTIL_HIGH         0x00020001
 //	fprintf(stderr, "         0x00020081 - sorted by mulicast pkt rate - highest first\n");            // STL_PA_SELECT_UTIL_MC_HIGH      0x00020081
 	fprintf(stderr, "         0x00020082 - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_UTIL_PKTS_HIGH    0x00020082
@@ -332,77 +342,100 @@ void Usage(void)
 	fprintf(stderr, "         0x00030004 - sorted by bubble errors - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
 	fprintf(stderr, "         0x00030005 - sorted by security errors - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
 	fprintf(stderr, "         0x00030006 - sorted by routing errors - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
-	fprintf(stderr, "    -w/--start         - start of window for focus ports - should always be 0 for now\n");
-	fprintf(stderr, "    -r/--range         - size of window for focus ports list\n");
-	fprintf(stderr, "    -b/--imgNum        - 64-bit image number - may be used with groupInfo, groupConfig, portCounters (delta)\n");
-	fprintf(stderr, "    -O/--imgOff        - image offset - may be used with groupInfo, groupConfig, portCounters (delta)\n");
-	fprintf(stderr, "    -F/--moveImgNum    - 64-bit image number - used with moveFreeze to move a freeze image\n");
-	fprintf(stderr, "    -M/--moveImgOff    - image offset - may be used with moveFreeze to move a freeze image\n");
-	fprintf(stderr, "    -V/--vfName        - VF name for vfInfo query\n");
+	fprintf(stderr, "    -w/--start                - start of window for focus ports - should always\n");
+	fprintf(stderr, "                                be 0 for now\n");
+	fprintf(stderr, "    -r/--range                - size of window for focus ports list\n");
+	fprintf(stderr, "    -b/--imgNum               - 64-bit image number - may be used with,\n");
+	fprintf(stderr, "                                groupInfo, groupConfig, portCounters (delta)\n");
+	fprintf(stderr, "    -O/--imgOff               - image offset - may be used with groupInfo,\n");
+	fprintf(stderr, "                                groupConfig, portCounters (delta)\n");
+	fprintf(stderr, "    -F/--moveImgNum           - 64-bit image number - used with moveFreeze to\n");
+	fprintf(stderr, "                                move a freeze image\n");
+	fprintf(stderr, "    -M/--moveImgOff           - image offset - may be used with moveFreeze to\n");
+	fprintf(stderr, "                                move a freeze image\n");
+	fprintf(stderr, "    -V/--vfName               - VF name for vfInfo query\n");
 
 	fprintf(stderr, "SA Output Types:\n");
-	fprintf(stderr, "    saclassPortInfo    - class port info\n");
-	fprintf(stderr, "    systemguid  - list of system image guids\n");
-	fprintf(stderr, "    nodeguid    - list of node guids\n");
-	fprintf(stderr, "    portguid    - list of port guids\n");
-	fprintf(stderr, "    lid         - list of lids\n");
-	fprintf(stderr, "    desc        - list of node descriptions/names\n");
-	fprintf(stderr, "    path        - list of path records\n");
-	fprintf(stderr, "    node        - list of node records\n");
-	fprintf(stderr, "    portinfo    - list of port info records\n");
-	fprintf(stderr, "    sminfo      - list of SM info records\n");
-	fprintf(stderr, "    swinfo      - list of switch info records\n");
-	fprintf(stderr, "    link        - list of link records\n");
-	fprintf(stderr, "    scsc        - list of SC to SC mapping table records\n");
-	fprintf(stderr, "    slsc        - list of SL to SC mapping table records\n");
-	fprintf(stderr, "    scsl        - list of SC to SL mapping table records\n");
-	fprintf(stderr, "    scvlt         - list of SC to VLt table records\n");
-	fprintf(stderr, "    scvlnt        - list of SC to VLnt table records\n");
-	fprintf(stderr, "    vlarb       - list of VL arbitration table records\n");
-	fprintf(stderr, "    pkey        - list of P-Key table records\n");
-	fprintf(stderr, "    service     - list of service records\n");
-	fprintf(stderr, "    mcmember    - list of multicast member records\n");
-	fprintf(stderr, "    inform      - list of inform info records\n");
-	fprintf(stderr, "    linfdb      - list of switch linear FDB records\n");
-	fprintf(stderr, "    ranfdb      - list of switch random FDB records\n");
-	fprintf(stderr, "    mcfdb       - list of switch multicast FDB records\n");
-	fprintf(stderr, "    trace       - list of trace records\n");
-	fprintf(stderr, "    vfinfo      - list of vFabrics\n");
-	fprintf(stderr, "    vfinfocsv   - list of vFabrics in CSV format\n");
-	fprintf(stderr, "    vfinfocsv2  - list of vFabrics in CSV format with enums\n");
-	fprintf(stderr, "    fabricinfo  - summary of fabric devices\n");
-	fprintf(stderr, "    quarantine  - list of quarantined nodes\n");
-	fprintf(stderr, "    conginfo    - list of Congestion Info Records\n");
-	fprintf(stderr, "    swcongset   - list of Switch Congestion Settings\n");
+	fprintf(stderr, "    saclassPortInfo           - class port info\n");
+	fprintf(stderr, "    systemguid                - list of system image guids\n");
+	fprintf(stderr, "    nodeguid                  - list of node guids\n");
+	fprintf(stderr, "    portguid                  - list of port guids\n");
+	fprintf(stderr, "    lid                       - list of lids\n");
+	fprintf(stderr, "    desc                      - list of node descriptions/names\n");
+	fprintf(stderr, "    path                      - list of path records\n");
+	fprintf(stderr, "    node                      - list of node records\n");
+	fprintf(stderr, "    portinfo                  - list of port info records\n");
+	fprintf(stderr, "    sminfo                    - list of SM info records\n");
+	fprintf(stderr, "    swinfo                    - list of switch info records\n");
+	fprintf(stderr, "    link                      - list of link records\n");
+	fprintf(stderr, "    scsc                      - list of SC to SC mapping table records\n");
+	fprintf(stderr, "    slsc                      - list of SL to SC mapping table records\n");
+	fprintf(stderr, "    scsl                      - list of SC to SL mapping table records\n");
+	fprintf(stderr, "    scvlt                     - list of SC to VLt table records\n");
+	fprintf(stderr, "    scvlnt                    - list of SC to VLnt table records\n");
+	fprintf(stderr, "    vlarb                     - list of VL arbitration table records\n");
+	fprintf(stderr, "    pkey                      - list of P-Key table records\n");
+	fprintf(stderr, "    service                   - list of service records\n");
+	fprintf(stderr, "    mcmember                  - list of multicast member records\n");
+	fprintf(stderr, "    inform                    - list of inform info records\n");
+	fprintf(stderr, "    linfdb                    - list of switch linear FDB records\n");
+	fprintf(stderr, "    ranfdb                    - list of switch random FDB records\n");
+	fprintf(stderr, "    mcfdb                     - list of switch multicast FDB records\n");
+	fprintf(stderr, "    trace                     - list of trace records\n");
+	fprintf(stderr, "    vfinfo                    - list of vFabrics\n");
+	fprintf(stderr, "    vfinfocsv                 - list of vFabrics in CSV format\n");
+	fprintf(stderr, "    vfinfocsv2                - list of vFabrics in CSV format with enums\n");
+	fprintf(stderr, "    fabricinfo                - summary of fabric devices\n");
+	fprintf(stderr, "    quarantine                - list of quarantined nodes\n");
+	fprintf(stderr, "    conginfo                  - list of Congestion Info Records\n");
+	fprintf(stderr, "    swcongset                 - list of Switch Congestion Settings\n");
 	//fprintf(stderr, "    swportcong  - list of Switch Port Congestion Settings\n");  // Not Implemented in SM/SA
-	fprintf(stderr, "    hficongset  - list of HFI Congestion Settings\n");
-	fprintf(stderr, "    hficongcon  - list of HFI Congesting Control Settings\n");
-	fprintf(stderr, "    bfrctrl     - list of buffer control tables\n");
-	fprintf(stderr ,"    cableinfo     - list of Cable Info records\n");
-	fprintf(stderr ,"    portgroup     - list of AR Port Group records\n");
-	fprintf(stderr ,"    portgroupfdb  - list of AR Port Group FWD records\n");
+	fprintf(stderr, "    hficongset                - list of HFI Congestion Settings\n");
+	fprintf(stderr, "    hficongcon                - list of HFI Congesting Control Settings\n");
+	fprintf(stderr, "    bfrctrl                   - list of buffer control tables\n");
+	fprintf(stderr ,"    cableinfo                 - list of Cable Info records\n");
+	fprintf(stderr ,"    portgroup                 - list of AR Port Group records\n");
+	fprintf(stderr ,"    portgroupfdb              - list of AR Port Group FWD records\n");
 
 	fprintf(stderr, "PA Output Types:\n");
-	fprintf(stderr, "    paclassPortInfo    - class port info\n");
-	fprintf(stderr, "    groupList          - list of PA groups\n");
-	fprintf(stderr, "    groupInfo          - summary statistics of a PA group - requires -g option for groupName\n");
-	fprintf(stderr, "    groupConfig        - configuration of a PA group - requires -g option for groupName\n");
-	fprintf(stderr, "    portCounters       - port counters of fabric port - requires -l (lid) and -N (port) options, -f (delta) is optional\n");
-	fprintf(stderr, "    clrPortCounters    - clear port counters of fabric port - requires -l (lid), -N (port), and -e (select) options\n");
-	fprintf(stderr, "    clrAllPortCounters - clear all port counters in fabric\n");
-	fprintf(stderr, "    pmConfig           - retrieve PM configuration information\n");
-	fprintf(stderr, "    freezeImage        - create freeze frame for image ID - requires -b (imgNum)\n");
-	fprintf(stderr, "    releaseImage       - release freeze frame for image ID - requires -b (imgNum)\n");
-	fprintf(stderr, "    renewImage         - renew lease for freeze frame for image ID - requires -b (imgNum)\n");
-	fprintf(stderr, "    moveFreeze         - move freeze frame from image ID to new image ID - requires -b (imgNum) and -F (moveImgNum)\n");
-	fprintf(stderr, "    focusPorts         - get sorted list of ports using utilization or error values (from group buckets)\n");
-	fprintf(stderr, "    imageInfo          - get information about a PA image (timestamps, etc.) - requires -b (imgNum)\n");
-	fprintf(stderr, "    vfList             - list of virtual fabrics\n");
-	fprintf(stderr, "    vfInfo             - summary statistics of a virtual fabric - requires -V option for vfName\n");
-	fprintf(stderr, "    vfConfig           - configuration of a virtual fabric - requires -V option for vfName\n");
-	fprintf(stderr, "    vfPortCounters     - port counters of fabric port - requires -V (vfName), -l (lid) and -N (port) options, -f (delta) is optional\n");
-	fprintf(stderr, "    vfFocusPorts       - get sorted list of virtual fabric ports using utilization or error values (from VF buckets) - requires -V (vfname)\n");
-	fprintf(stderr, "    clrVfPortCounters  - clear VF port counters of fabric port - requires -l (lid), -N (port), -e (select), and -V (vfname) options\n");
+	fprintf(stderr, "    paclassPortInfo           - class port info\n");
+	fprintf(stderr, "    groupList                 - list of PA groups\n");
+	fprintf(stderr, "    groupInfo                 - summary statistics of a PA group - requires -g\n");
+	fprintf(stderr, "                                option for groupName\n");
+	fprintf(stderr, "    groupConfig               - configuration of a PA group - requires -g option\n");
+	fprintf(stderr, "                                for groupName\n");
+	fprintf(stderr, "    portCounters              - port counters of fabric port - requires -l (lid)\n");
+	fprintf(stderr, "                                and -N (port) options, -f (delta) is optional\n");
+	fprintf(stderr, "    clrPortCounters           - clear port counters of fabric port - requires -l\n");
+	fprintf(stderr, "                                (lid), -N (port), and -e (select) options\n");
+	fprintf(stderr, "    clrAllPortCounters        - clear all port counters in fabric\n");
+	fprintf(stderr, "    pmConfig                  - retrieve PM configuration information\n");
+	fprintf(stderr, "    freezeImage               - create freeze frame for image ID - requires -b\n");
+	fprintf(stderr, "                                (imgNum)\n");
+	fprintf(stderr, "    releaseImage              - release freeze frame for image ID - requires -b\n");
+	fprintf(stderr, "                                (imgNum)\n");
+	fprintf(stderr, "    renewImage                - renew lease for freeze frame for image ID -\n");
+	fprintf(stderr, "                                requires -b (imgNum)\n");
+	fprintf(stderr, "    moveFreeze                - move freeze frame from image ID to new image ID\n");
+	fprintf(stderr, "                                - requires -b (imgNum) and -F (moveImgNum)\n");
+	fprintf(stderr, "    focusPorts                - get sorted list of ports using utilization or\n");
+	fprintf(stderr, "                                error values (from group buckets)\n");
+	fprintf(stderr, "    imageInfo                 - get information about a PA image (timestamps,\n");
+	fprintf(stderr, "                                etc.) - requires -b (imgNum)\n");
+	fprintf(stderr, "    vfList                    - list of virtual fabrics\n");
+	fprintf(stderr, "    vfInfo                    - summary statistics of a virtual fabric -\n");
+	fprintf(stderr, "                                requires -V option for vfName\n");
+	fprintf(stderr, "    vfConfig                  - configuration of a virtual fabric - requires -V\n");
+	fprintf(stderr, "                                option for vfName\n");
+	fprintf(stderr, "    vfPortCounters            - port counters of fabric port - requires -V\n");
+	fprintf(stderr, "                                (vfName), -l (lid) and -N (port) options, -f\n");
+	fprintf(stderr, "                                (delta) is optional\n");
+	fprintf(stderr, "    vfFocusPorts              - get sorted list of virtual fabric ports using\n");
+	fprintf(stderr, "                                utilization or error values (from VF buckets) -\n");
+	fprintf(stderr, "                                requires -V (vfname)\n");
+	fprintf(stderr, "    clrVfPortCounters         - clear VF port counters of fabric port - requires\n");
+	fprintf(stderr, "                                -l (lid), -N (port), -e (select), and -V (vfname)\n");
+	fprintf(stderr, "                                options\n");
 
 	exit(2);
 }
@@ -1009,6 +1042,9 @@ int main (int argc, char *argv[])
 	while (-1 != (c = getopt_long(argc, argv, "va:h:o:l:Ik:i:S:L:t:s:n:p:u:m:d:P:G:a:A:g:N:f:Ue:c:w:r:b:O:F:M:x:V:T:E", options, &index))) {
         switch (c) {
 		/* (General) Verbose flag */
+        case '$':
+            Usage();
+            break;
         case 'v':
             g_verbose = 1;
             break;

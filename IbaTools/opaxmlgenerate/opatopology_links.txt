@@ -1,2 +1,2 @@
-25g;2048;0;IO Server Link;11m;S4567;cable model 456;0x0002c9020020e004;1;bender hfi1_0;0x0002c9020020e004;FI;Some info about port;0x00066a0007000df6;7;Switch 1234 Leaf 4;;SW;
-25g;;0;;;;;0x0002c9020025a678;1;mindy2 hfi1_0;;FI;;0x00066a0007000e6d;4;Switch 2345 Leaf 5;;SW;
+25g;2048;0;IO Server Link;11m;S4567;cable model 456;0x001175010020e004;1;bender hfi1_0;0x001175010020e004;FI;Some info about port;0x0011750107000df6;7;Switch 1234 Leaf 4;;SW;
+25g;;0;;;;;0x001175010025a678;1;mindy2 hfi1_0;;FI;;0x0011750107000e6d;4;Switch 2345 Leaf 5;;SW;

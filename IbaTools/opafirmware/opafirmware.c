@@ -50,6 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* inquiry types */
 #define SHOWVERSION 1
 #define SHOWTYPE    2
+#define HELP        3
 
 /*
  * The following set of product codes and bsp codes are to be used
@@ -599,9 +600,24 @@ fail:
 
 void Usage(void)
 {
-	fprintf(stderr, "Usage: opafirmware --showVersion firmwareFile\n");
-	fprintf(stderr, "       opafirmware --showType    firmwareFile\n");
-	return;
+	fprintf(stderr, "Usage: opafirmware [--help] [--showVersion|--showType firmwareFile]\n");
+	fprintf(stderr, "    --help - full help text\n");
+
+	exit(1);
+}
+
+void Usage_full(void)
+{
+	fprintf(stderr, "Usage: opafirmware [--help] [--showVersion|--showType firmwareFile]\n");
+	fprintf(stderr, "    --help - full help text\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Examples:\n");
+	fprintf(stderr, "  --showVersion STL1.q7.10.0.0.0.spkg\n");
+	fprintf(stderr, "      10.0.0.0\n");
+	fprintf(stderr, "  --showType STL1.q7.10.0.0.0.spkg\n");
+	fprintf(stderr, "      Omni_Path_Switch_Products.q7\n");
+
+	exit(0);
 }
 
 int main(int argc, char *argv[])
@@ -621,32 +637,19 @@ int main(int argc, char *argv[])
 	{
 		{ "showVersion", no_argument, &inquiryType, SHOWVERSION },
 		{ "showType",    no_argument, &inquiryType, SHOWTYPE    },
+		{ "help",        no_argument, &inquiryType, HELP        },
 		{ 0,             0,           0           , 0           }
 	};
 
-	/* check args */
+	/* parse options for inquiry type */
+	if ((result = getopt_long(argc, argv, "", longopts, NULL)))	// assignment, not ==
+		Usage();
+
+	if (inquiryType == HELP)
+		Usage_full();
 
 	if (argc != 3)
-	{
 		Usage();
-		exit(1);
-	}
-
-	/* parse options for inquiry type */
-
-	if ((result = getopt_long(argc, argv, "", longopts, NULL)) != -1)
-	{
-		if (result != 0)
-		{
-			Usage();
-			exit(1);
-		}
-	}
-	else
-	{
-		Usage();
-		exit(1);
-	}
 
 	/* set up endian-ness */
 

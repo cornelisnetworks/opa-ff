@@ -1653,7 +1653,7 @@ static boolean get_portgroup(argrec *args, uint8_t *mad, size_t mad_len, boolean
 		}
 	}
 	if (status != FSUCCESS) {
-		fprintf(stderr, "get_portgroupfdb failed: unable to obtain PGT\n");
+		fprintf(stderr, "get_portgroup failed: unable to obtain PGT\n");
 		return FALSE;
 	} else
 		return TRUE;
@@ -1695,7 +1695,7 @@ static boolean get_portgroupfdb(argrec *args, uint8_t *mad, size_t mad_len, bool
 			fprintf(stderr, "get_portgroupfdb failed: Adaptive Routing not supported\n");
 			return FALSE;
 		}
-		maxLid = MIN(pSwInfo->LinearFDBTop, pSwInfo->LinearFDBCap-1);
+		maxLid = MIN(pSwInfo->LinearFDBTop, DEFAULT_MAX_PGFT_LID);
 	}
 
 	if (args->flid) {

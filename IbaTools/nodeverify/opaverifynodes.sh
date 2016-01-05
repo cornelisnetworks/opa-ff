@@ -51,7 +51,8 @@ del=';' # TBD what will work best for import
 
 Usage_full()
 {
-	echo "Usage: opaverifyhosts [-kc] [-f hostfile] [-u upload_file] [-d upload_dir] [-h 'hosts'] [-T timelimit] [test ...]" >&2
+	echo "Usage: opaverifyhosts [-kc] [-f hostfile] [-u upload_file] [-d upload_dir]" >&2
+	echo "                         [-h 'hosts'] [-T timelimit] [test ...]" >&2
 	echo "              or" >&2
 	echo "       opaverifyhosts --help" >&2
 	echo "   --help - produce full help text" >&2
@@ -61,14 +62,14 @@ Usage_full()
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
 	echo "   -h hosts - list of hosts to ping" >&2
 	echo "   -u upload_file - filename to upload hostverify.res to after verification" >&2
-	echo "                   to allow backup and review of the detailed results" >&2
-	echo "                   for each node" >&2
-	echo "                   The default upload destination file is hostverify.res" >&2
-	echo "                   If -u '' is specified, no upload will occur" >&2
+	echo "                    to allow backup and review of the detailed results" >&2
+	echo "                    for each node" >&2
+	echo "                    The default upload destination file is hostverify.res" >&2
+	echo "                    If -u '' is specified, no upload will occur" >&2
 	echo "   -d upload_dir - directory to upload result from each host to" >&2
 	echo "                   default is uploads" >&2
 	echo "   -T timelimit - timelimit in seconds for host to complete tests" >&2
-	echo "               default of 300 seconds (5 minutes)" >&2
+	echo "                  default of 300 seconds (5 minutes)" >&2
 	echo "	 test - one or more specific tests to run" >&2
 	echo "	        see /opt/opa/samples/hostverify.sh for a list of available tests" >&2
 	echo "This verifies basic node configuration and performance by running" >&2
@@ -107,10 +108,10 @@ Usage()
 	echo "   -c - copy hostverify.sh to hosts first, useful if you have edited it" >&2
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
 	echo "   -u upload_file - filename to upload hostverify.res to after verification" >&2
-	echo "                   to allow backup and review of the detailed results" >&2
-	echo "                   for each node" >&2
-	echo "                   The default upload destination file is hostverify.res" >&2
-	echo "                   If -u '' is specified, no upload will occur" >&2
+	echo "                    to allow backup and review of the detailed results" >&2
+	echo "                    for each node" >&2
+	echo "                    The default upload destination file is hostverify.res" >&2
+	echo "                    If -u '' is specified, no upload will occur" >&2
 	echo >&2
 	echo "This verifies basic node configuration and performance by running" >&2
 	echo "$FF_HOSTVERIFY on all specified hosts" >&2

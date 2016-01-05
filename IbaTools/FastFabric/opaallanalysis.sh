@@ -86,9 +86,11 @@ Usage_full()
 	echo "   PORTS_FILE - file containing list of ports, used in absence of -t and -p" >&2
 	echo "   FF_TOPOLOGY_FILE - file containing topology_input, used in absence of -T" >&2
 	echo "   CHASSIS - list of chassis, used if -F and -H options not supplied" >&2
-	echo "   CHASSIS_FILE - file containing list of chassis, used if -F and -H options not supplied" >&2
+	echo "   CHASSIS_FILE - file containing list of chassis, used if -F and -H options not" >&2
+	echo "                  supplied" >&2
 	echo "   ESM_CHASSIS - list of SM chassis, used if -G and -E not supplied" >&2
-	echo "   ESM_CHASSIS_FILE - file containing list of SM chassis, used if -G and -E not supplied" >&2
+	echo "   ESM_CHASSIS_FILE - file containing list of SM chassis, used if -G and -E not" >&2
+	echo "                      supplied" >&2
 	echo "   FF_ANALYSIS_DIR - top level directory for baselines and failed health checks" >&2
 	echo "for example:" >&2
 	echo "   opaallanalysis" >&2

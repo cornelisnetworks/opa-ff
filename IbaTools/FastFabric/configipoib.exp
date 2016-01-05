@@ -143,6 +143,7 @@ File: /opt/opa/tools/configipoib.exp" case_setup case_cleanup {
 			# values. ipoib_mode is used for SLES ipoib_cm is used for RHEL.
 			set ipoib_mode "datagram"
 			set ipoib_cm "no"
+			set ipoib_mtu ""
 
 			target_root_sh $host
 
@@ -166,6 +167,7 @@ fi"
 			if { [ info exists env(CFG_IPOIB_CONNECTED) ] && [ string equal -nocase "$env(CFG_IPOIB_CONNECTED)" "yes" ]} {
 				set ipoib_mode "connected"
 				set ipoib_cm "yes"
+				set ipoib_mtu "\nMTU=65520"
 			}
 
 			if { [ string equal "$mode" "static"] } {
@@ -207,7 +209,7 @@ TYPE=Infiniband
 \$bproto_ip_mask_info
 ONBOOT=yes
 NM_CONTROLLED=no
-CONNECTED_MODE=$ipoib_cm
+CONNECTED_MODE=$ipoib_cm$ipoib_mtu
 !
 else 
 cat > /etc/sysconfig/network/ifcfg-ib$ipoib_base_dev_num <<!
@@ -216,8 +218,8 @@ cat > /etc/sysconfig/network/ifcfg-ib$ipoib_base_dev_num <<!
 STARTMODE='hotplug'
 REMOTE_IPADDR=''
 WIRELESS='no'
-IPOIB_MODE=$ipoib_mode
 NM_CONTROLLED='no'
+IPOIB_MODE=$ipoib_mode$ipoib_mtu
 !
 fi; echo DONE
 "

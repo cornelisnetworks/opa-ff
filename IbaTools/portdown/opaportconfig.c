@@ -449,7 +449,7 @@ struct {
 	physstate : IB_PORT_PHYS_NOP,	// default to no physical state change
 	width : STL_LINK_WIDTH_NOP,
 	speed : STL_LINK_SPEED_NOP,
-	crc : 0,
+	crc : STL_PORT_LTP_CRC_MODE_NONE,
 	cycle : 0,	// cycle port to cause speed or link change to activate
 	port_in_hfi : 0,
 	pkey8b : 0	// value to program in 8B and 10B pkey in PortInfo
@@ -512,40 +512,64 @@ static void run_stl_mode(void)
 		}
 
 		{
-			if (param.speed != IB_LINK_SPEED_NOP && param.speed != 0xFFFF) {
+			char buf1[64];
+			char buf2[64];
+
+			if (param.speed != IB_LINK_SPEED_NOP) {
 				uint16_t supported = pPortInfo->LinkSpeed.Supported;
 				uint16_t unsupported = (param.speed & ~supported);
 				if (unsupported) {
-					fprintf(stderr, "%s: ignoring unsupported speed bits: 0x%x (port supports 0x%x)\n",
-						cmdname, unsupported, supported);
-					fprintf (stderr,"%s: Error: Unsupported speed: %u\n",
-						cmdname, param.speed);
+					fprintf(stderr, "%s: ignoring unsupported speed bits: 0x%x [%s] (port supports 0x%x [%s])\n",
+						cmdname, unsupported, 
+						StlLinkSpeedToText(unsupported, buf1, sizeof(buf1)),
+						supported,
+						StlLinkSpeedToText(supported, buf2, sizeof(buf2)));
+					fprintf (stderr,"%s: Error: Unsupported speed: %u [%s]\n",
+						cmdname, param.speed,
+						StlLinkSpeedToText(param.speed, buf1, sizeof(buf1)));
 					exit(1);
 				}
 			}
-			if (param.width != STL_LINK_WIDTH_NOP && param.width != 0xFFFF) {
+			if (param.width != STL_LINK_WIDTH_NOP) {
 				uint16_t supported = pPortInfo->LinkWidth.Supported;
 				uint16_t unsupported = (param.width & ~supported);
 				if (unsupported) {
-					fprintf(stderr, "%s: ignoring unsupported width bits: 0x%x (port supports 0x%x)\n",
-						cmdname, unsupported, supported);
-					fprintf(stderr, "%s: Error: Unsupported width: %u\n",
-						cmdname, param.width);
+					fprintf(stderr, "%s: ignoring unsupported width bits: 0x%x [%s] (port supports 0x%x [%s])\n",
+						cmdname, unsupported,
+						StlLinkWidthToText(unsupported, buf1, sizeof(buf1)),
+						supported,
+						StlLinkWidthToText(supported, buf2, sizeof(buf2)));
+					fprintf(stderr, "%s: Error: Unsupported width: %u [%s]\n",
+						cmdname, param.width,
+						StlLinkWidthToText(param.width, buf1, sizeof(buf1)));
 					exit(1);
 				}
 			}
-			if (param.physstate != 0xff) {
-				switch (param.physstate) {
-				case IB_PORT_PHYS_NOP:
-				case IB_PORT_PHYS_DISABLED:
-				case IB_PORT_PHYS_POLLING:
-				case STL_PORT_PHYS_TEST:
-					break;
-				default:
-					fprintf(stderr, "%s: Error: Unsupported Port Physical State: %u\n",
-						cmdname, param.physstate);
+			if (param.crc != STL_PORT_LTP_CRC_MODE_NONE) {
+				uint16_t supported = pPortInfo->PortLTPCRCMode.s.Supported;
+				uint16_t unsupported = (param.crc & ~supported);
+				if (unsupported) {
+					fprintf(stderr, "%s: ignoring unsupported CRC bits: 0x%x [%s] (port supports 0x%x [%s])\n",
+						cmdname, unsupported,
+						StlPortLtpCrcModeToText(unsupported, buf1, sizeof(buf1)),
+						supported,
+						StlPortLtpCrcModeToText(supported, buf2, sizeof(buf2)));
+					fprintf(stderr, "%s: Error: Unsupported CRC: %u [%s]\n",
+						cmdname, param.crc,
+						StlPortLtpCrcModeToText(param.crc, buf1, sizeof(buf1)));
 					exit(1);
 				}
+			}
+			switch (param.physstate) {
+			case IB_PORT_PHYS_NOP:
+			case IB_PORT_PHYS_DISABLED:
+			case IB_PORT_PHYS_POLLING:
+			case STL_PORT_PHYS_TEST:
+				break;
+			default:
+				fprintf(stderr, "%s: Error: Unsupported Port Physical State: %u\n",
+					cmdname, param.physstate);
+				exit(1);
 			}
 		}
 		initialize_set_port_info(param.dlid, param.slid, param.have_nlid, param.nlid,
@@ -669,7 +693,9 @@ void Usage(void)
 {
 	if (cmd == portconfig) {
 		fprintf(stderr, "%s manually programs a local port.\n\n", cmdname); 
-		fprintf(stderr, "Usage: %s [-l lid [-m dest_port]] [-h hfi] [-p port] [-r secs] [-z] [-S state] [-P physstate] [-s speed] [-w width] [-c LTPCRC]  [-K mkey] [-v] [-L lid] [<sub command>]\n", cmdname);
+		fprintf(stderr, "Usage: %s [-l lid [-m dest_port]] [-h hfi] [-p port] [-r secs] [-z]\n", cmdname);
+		fprintf(stderr, "                      [-z] [-S state] [-P physstate] [-s speed] [-w width]\n");
+		fprintf(stderr, "                      [-c LTPCRC]  [-K mkey] [-v] [-L lid] [<sub command>]\n");
 		fprintf(stderr, "     : %s [--help]\n", cmdname);
 	} else {
 		fprintf(stderr, "%s displays local port info.\n\n", cmdname); 
@@ -693,6 +719,7 @@ void Usage(void)
 		fprintf(stderr, "    enable - Enable port\n");
 		fprintf(stderr, "    disable - disable port\n");
 		fprintf(stderr, "    bounce - bounce port\n");
+		fprintf(stderr, "      Bouncing remote ports may cause timeouts.\n");
 		fprintf(stderr, "    ledon - port LED on\n");
 		fprintf(stderr, "    ledoff - port LED off\n");
 		fprintf(stderr, "\n");
@@ -729,7 +756,6 @@ void Usage(void)
         fprintf(stderr, "          2 - 0x2 - 16-bit LTP CRC mode\n"); 
         fprintf(stderr, "          4 - 0x4 - 48-bit LTP CRC mode\n"); 
 		fprintf(stderr, "          8 - 0x8 - 12/16 bits per lane LTP CRC mode\n");
-		fprintf(stderr, "            - 0xF - enable all supported\n");
 	}
 
 	fprintf(stderr, "\n");

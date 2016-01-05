@@ -239,7 +239,8 @@ functout=
 # Output usage information
 usage_full()
 {
-  echo "Usage: opaxlattopology [-d level -v level -i level -c char -K -?] [source [dest]]"
+  echo "Usage: opaxlattopology [-d level -v level -i level -c char -K -?]"
+  echo "                          [source [dest]]"
   echo "       -d level  -  output detail level (default 0)"
   echo "                    values are additive"
   echo "                     1 - edge switch topology files"

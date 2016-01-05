@@ -1,0 +1,123 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opashowallports 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opashowallports
+
+.NL
+
+.PP
+
+\fB(Switch and Host)\fR
+Displays basic port state and statistics for all host nodes, chassis, or externally-managed switches.
+.PP
+
+.B NOTE:
+opareport and opareports are more powerful Intel(R) Omni-Path Fabric Suite FastFabric commands. For general fabric analysis, use opareport or opareports with options such as -o errors and -o slowlinks to perform an efficient analysis of link speeds and errors.
+
+
+.SH Syntax
+.NL
+opashowallports [-C] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \'\fIhosts\fR\']
+.br
+[-H \'\fIchassis\fR\'] [-S]
+.PP
+or
+.br
+opashowallports --help
+.SH Options 
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+.TP 10
+-C 
+.NL
+Performs operation against chassis. Default = host.
+.TP 10
+-f \fIhostfile\fR 
+.NL
+File with list of hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+.TP 10
+-F \fIchassisfile\fR 
+.NL
+File with list of chassis in cluster. Default is /etc/sysconfig/opa/chassis file.
+.TP 10
+-h \fIhosts\fR 
+.NL
+List of hosts for which to show ports.
+.TP 10
+-H \fIchassis\fR 
+.NL
+List of chassis for which to show ports.
+.TP 10
+-S 
+.NL
+Securely prompts for password for admin on chassis.
+.SH Environment Variables
+.NL
+
+.PP
+The following environment variables are also used by this command:
+.TP 10
+\fBHOSTS\fR 
+.NL
+List of hosts, used if -h option not supplied.
+
+.TP 10
+\fBCHASSIS\fR 
+.NL
+List of chassis, used if -C is used and -H and -F options not supplied.
+
+.TP 10
+\fBHOSTS\(ulFILE\fR 
+.NL
+File containing list of hosts, used in absence of -f and -h.
+
+.TP 10
+\fBCHASSIS\(ulFILE\fR 
+.NL
+File containing list of chassis, used in absence of -F and -H.
+
+.TP 10
+\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR 
+.NL
+How to log into chassis. Can be Telnet or SSH.
+
+.TP 10
+\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR 
+.NL
+Password for admin on all chassis. Used in absence of -S option.
+
+.SH Example 
+.NL
+opashowallports
+.br
+opashowallports -h \'elrond arwen\'
+.br
+HOSTS=\'elrond arwen\' opashowallports
+.br
+opashowallports -C
+.br
+opashowallports -H \'chassis1 chassis2\'
+.br
+CHASSIS=\'chassis1 chasssi2\' opashowallports
+.SH Notes
+.NL
+
+.PP
+When performing opashowallports against hosts, internally SSH is used. The command opashowallports requires that password-less SSH be set up between the host running the Intel(R) Omni-Path Fabric Suite FastFabric Toolset and the hosts opashowallports is operating against. The opasetupssh FastFabric tool can aid in setting up password-less SSH.
+.PP
+When performing operations against chassis, Intel recommends that you set up SSH keys (see
+\fIopasetupssh\fR
+). If SSH keys are not set up, Intel recommends that you use the -S option, to avoid keeping the password in configuration files.
+.PP
+When performing opashowallports against externally-managed switches, a node with Intel(R) Omni-Path Fabric Suite FastFabric Toolset installed is required. Typically, this is the node from which opashowallports is being run.

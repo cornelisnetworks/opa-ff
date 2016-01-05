@@ -358,13 +358,6 @@ set tools_suite_count 0
 set tools_suite_failed 0
 set log_disable 0
 
-# seed the random generator to generate predictable randomness
-
-global env
-if { [ info exists env(CFG_SEED) ] } {
-	srand $env(CFG_SEED)
-}
-
 proc test_suite { tag name information startup cleanup code } {
 ##
 ## test_suite
@@ -409,16 +402,8 @@ proc test_suite { tag name information startup cleanup code } {
 	global expecting
 	global features
 
-	global no_random
-	set no_random 0
-	if { [regexp {xmlsuite} $name ] } { set no_random 1 }
-	global suite_priority	;#	2 = med, 3 = high , 1 = low, >= 4 highest(default, always on)
-
-	if {  ![info exists suite_priority] } {  set suite_priority 4 }
-
 	set tools_suite_name $name
 	set tools_suite_tag $tag
-
 
 	if { ! [ identify_mode ] } {
 		# create test_tmp for use by startup code
@@ -561,10 +546,6 @@ proc test_suite { tag name information startup cleanup code } {
 	remove_test_tmp
 	clear_case_counters
 
-	#restore to default after every test suite so that each (test-suite) file 
-	#is compelled to specify separately for changing it
-	set suite_priority 4
-
 	return
 }
 
@@ -675,33 +656,6 @@ proc disable_expect_after {} {
 	expect_after
 }
 
-## This function returns true or false depending upon the probability set in 
-## the global variable: $suite_priority (1, 2 , or 3 ), 3 being heighest
-## So in case of 1, it returns about 10% false and 90% true, whereas in
-## 3 case, it returns about 90% false and 10% true (so that 90% of time
-## test cases would continue executing); if cases_priority is set > 0,
-## then it would be used to generate return value instead of suite_priority
-
-proc random_exit {} {
-
-	global suite_priority
-	global cases_priority
-
-	if { [expr {$cases_priority > 0}] } {
-		set retval [expr { floor(rand() < 0.5 + 0.4 * ($cases_priority - 2 ) ) }]
-	} else {
-		set retval [expr { floor(rand() < 0.5 + 0.4 * ( $suite_priority - 2 ) ) }]
-	}
-	#TBD; Currently make all tests to run, later restore
-	set retval 1
-
-	if { [expr {1 == $retval}] } {
-	 	return false
-	} else {
-	 	return true
-	}
-}
-
 proc test_case { tag name information startup cleanup code { failure_code "" }} {
 ##
 ## test_case
@@ -740,20 +694,6 @@ proc test_case { tag name information startup cleanup code { failure_code "" }} 
 ##	The log during the test case is kept in test_tmp/test.log (and
 ##	saved based on TEST_SAVE_FAILED) and at the end of the test case it is
 ##	appended to the main test.log
-
-	#if no-random is 1, then don't check random-decison logic 
-
-	global no_random
-	global cases_priority	;#	0 = don't override suite-priority (default), 3 = high , 1 = low, 2 = medium
-
-	if {  ![info exists cases_priority] } {  set cases_priority 0 }
-
-	#decide to continue further randomly
-	if { 1 != $no_random } {
-		if { [ random_exit ] == true } { return }
-	}
-
-
 
 	global tools_suite_name
 	global tools_suite_tag
@@ -2157,6 +2097,8 @@ proc expect_eof { timelimit  { ignore_rest 0 } } {
 					log_message "\nERROR: expected: EOF"
 			  		log_message "\nERROR: Unexpected data: $expect_out(buffer)"
 			  		fail_test "Unexpected data"
+				  } else {
+					exp_continue
 				  }
 			}
 		timeout	{ 

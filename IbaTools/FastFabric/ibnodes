@@ -14,7 +14,7 @@
 # specified as: guid:hfi:port,nodeDesc,distance.
 # See the FastFabric Manual for more info
 #
-# The opagenswitches tool can be used to query the SM and generate a list
+# The opagenswitches tool can be used to query the SM and generate a list of
 # Externally Managed switches in the proper form for this file.
 #
 # for example:

@@ -28,7 +28,7 @@
 # 
 # END_ICS_COPYRIGHT8   ****************************************
 
-# [ICS VERSION STRING: unknown]
+# [ICS VERSION STRING: @(#) ./bin/opahfirev 0mwhe.20151019 [10/19/15 15:19]
 
 Usage()
 {
@@ -39,53 +39,54 @@ EOF
 	exit 2
 }
 
-verbose=n
-while getopts v param
-do
-	case $param in
-	v)	verbose=y;;
-	?)	Usage;;
-	esac
-done
-shift $((OPTIND -1))
 if [ $# -ge 1 ]
 then
 	Usage
 fi
 
-hfis=`/sbin/lspci | egrep -wi 'Intel Corporation Device 24f[01]' | grep -vi bridge | cut -d\  -f1`
+BASEDIR=/sys/bus/pci/devices
+
+hfis=`/sbin/lspci -D | egrep -wi 'Intel Corporation Device 24f[01]' | grep -vi bridge | cut -d\  -f1`
 
 if [ -z "$hfis" ]
 then 
 	echo "No HFIs found."
 else
-	index=0
 	for hfi in $hfis
 	do
 		echo "######################"
 		echo `hostname` " - HFI $hfi"
-		# prepend to pci address as needed
-		if [ -e "/sys/bus/pci/drivers/hfi1/0000:$hfi" ]
+
+		boardver="UNKNOWN"
+		serial="UNKNOWN"
+		guid="UNKNOWN"
+
+		localbus_info=$(lspci -vv -s "${hfi}" | 
+			grep LnkSta: | 
+			sed -e 's/^[[:space:]]*LnkSta:[[:space:]]*//' | 
+			cut -d, -f1-2)
+
+		driver=${BASEDIR}/${hfi}/infiniband/
+		if [ -e ${driver} ]
 		then
-			hfi_pci="0000:$hfi"
-			dir=/sys/class/infiniband
-			instance=$(cd $dir; echo hfi1_$index)
+			instance=`ls ${driver} 2>/dev/null`
 		fi
 
-		if [ -e "/sys/class/infiniband/$instance" ]
+		if [ ! -e ${driver} -o ! -e ${driver}/${instance} ] 
 		then
-			dir=/sys/class/infiniband/$instance
-			eval 2>/dev/null read boardver < $dir/boardversion
-			eval 2>/dev/null read serial < $dir/serial
-			eval 2>/dev/null read localbus_info < $dir/localbus_info
-			eval 2>/dev/null read guid < $dir/node_guid
-			echo "Board: $boardver"
-			echo "SN:    $serial"
-			echo "Bus:   $localbus_info"
-			echo "GUID:  $guid"
+			instance="Driver not Loaded"
+		else
+			eval 2>/dev/null read boardver < ${driver}/${instance}/boardversion
+			eval 2>/dev/null read serial < ${driver}/${instance}/serial
+			eval 2>/dev/null read guid < ${driver}/${instance}/node_guid
 		fi
+
+		echo "HFI:   $instance"
+		echo "Board: $boardver"
+		echo "SN:    $serial"
+		echo "Bus:   ${localbus_info}"
+		echo "GUID:  $guid"
 
 		echo "######################"
-		((index++))
 	done
 fi

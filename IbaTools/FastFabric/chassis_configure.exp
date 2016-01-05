@@ -225,7 +225,7 @@ File: /opt/opa/tools/chassis_configure.exp" suite_setup noop {
 	parallel chassis $env(CFG_CHASSIS) {
 		set chassis [chassis_strip_slots "$chassis"]
 		local_sh
-		send_unix_cmd "grep $chassis .chassisSetup.out | grep IP_Addr"
+		send_unix_cmd "grep $chassis $env(CFG_CFGTEMPDIR)/.chassisSetup.out | grep IP_Addr"
 		set out [expect_list 60 { ": [0-9.]+" } ]
 		regexp {([0-9.]+)} $out c chassisIP
 		local_sh_exit

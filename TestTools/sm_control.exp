@@ -47,7 +47,7 @@ proc stop_sm { host } {
     target_root_sh $host
     	
     set host_os_id [get_target_os_id $host]
-    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {	
+    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "RHEL71-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {	
 	send_unix_cmd "systemctl stop opafm"
 	    
 	send_unix_cmd "systemctl -n 0 status opafm"
@@ -72,7 +72,7 @@ proc start_sm { host } {
     set ret {} 
     target_root_sh $host
     set host_os_id [get_target_os_id $host]
-    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {
+    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "RHEL71-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {
 	send_unix_cmd "systemctl start opafm" 
 	    
         send_unix_cmd "systemctl -n 0 status opafm"
@@ -98,7 +98,7 @@ proc restart_sm { host } {
     set ret {}
     target_root_sh $host
     set host_os_id [get_target_os_id $host]
-    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {
+    if { [ string equal "$host_os_id" "RHEL7-x86_64" ] || [ string equal "$host_os_id" "RHEL71-x86_64" ] || [ string equal "$host_os_id" "SLES12-x86_64" ] } {
 	send_unix_cmd "systemctl restart opafm"
 	check_exit_status 60 0
     } else {

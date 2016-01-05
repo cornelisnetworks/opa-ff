@@ -22,6 +22,9 @@ opaportinfo [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR]
 .SH Options
 .NL
 
+.SH Options
+.NL
+
 .TP 10
 -l \fIlid\fR 
 .NL

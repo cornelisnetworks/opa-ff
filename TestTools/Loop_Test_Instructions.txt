@@ -20,7 +20,7 @@ A) Introduction
 ============================
 B) Basic Loop Test Operation
 ============================
-1. Start SM manually. (Configure QLogic FM threshold for Integrity errors to 1 for a strict check. Default is 100.)
+1. Start SM manually. (Configure FM threshold for Integrity errors to 1 for a strict check. Default is 100.)
 
 2. Wait till SM reaches a stable state i.e. finishes all initial sweeps.
 

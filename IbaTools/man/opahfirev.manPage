@@ -15,18 +15,15 @@ opahfirev
 .PP
 
 \fB(Linux)\fR
-Displays information about the Intel(R) Omni-Path Host Fabric Interface (HFI)s in the system including model numbers, serial numbers, board revisions, and other HFI model-specific information.
+Reports hardware and firmware information about the Intel(R) Omni-Path Host Fabric Interface (HFI)s.
 .SH Syntax
 .NL
-opahfirev [-v] 
+opahfirev 
 .SH Options
 .NL
 
-.TP 10
--v 
-.NL
-Reports additional information about HFI firmware, including detailed output of the configuration options and verification of the firmware image.
-
+.PP
+None.
 .SH Example 
 .NL
 # opahfirev

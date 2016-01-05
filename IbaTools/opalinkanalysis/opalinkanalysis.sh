@@ -173,7 +173,7 @@ set_beaconing_led()
 {
 	#echo "setting led on node:$1 port:$2"
 	#Map node desc to lid so we can use opaportconfig tool to enable LED
-	nodelid=$(opasaquery -d $1 -o lid | head -n 1)
+	nodelid=$(opasaquery -d "$1" -o lid | head -n 1)
 	if [ "$nodelid" != "No Records Returned" ]
 	then
 		/usr/sbin/opaportconfig -l $nodelid -m $2 ledon
@@ -200,7 +200,7 @@ gen_errors_punchlist()
 
 		if [ x"$port" != x ] && [ x"$desc" != x ]
 		then
-			set_beaconing_led $desc $port
+			set_beaconing_led "$desc" $port
 		fi
 	done
 	)
@@ -226,7 +226,7 @@ gen_slowlinks_punchlist()
 
 		if [ x"$port" != x ] && [ x"$desc" != x ]
 		then
-			set_beaconing_led $desc $port
+			set_beaconing_led "$desc" $port
 		fi
 	done
 	)
@@ -252,7 +252,7 @@ gen_misconfiglinks_punchlist()
 		
 		if [ x"$port" != x ] && [ x"$desc" != x ]
 		then
-			set_beaconing_led $desc $port
+			set_beaconing_led "$desc" $port
 		fi
 	done
 	)
@@ -278,7 +278,7 @@ gen_misconnlinks_punchlist()
 		
 		if [ x"$port" != x ] && [ x"$desc" != x ]
 		then
-			set_beaconing_led $desc $port
+			set_beaconing_led "$desc" $port
 		fi
 	done
 	)
@@ -350,7 +350,7 @@ gen_verifylinks_punchlist()
 		
 		if [ x"$port" != x ] && [ x"$desc" != x ]
 		then
-			set_beaconing_led $desc $port
+			set_beaconing_led "$desc" $port
 		fi
 	done
 	)
@@ -406,7 +406,7 @@ gen_verifyextlinks_punchlist()
 		
 		if [ x"$port" != x ] && [ x"$desc" != x ]
 		then
-			set_beaconing_led $desc $port
+			set_beaconing_led "$desc" $port
 		fi
 	done
 	)

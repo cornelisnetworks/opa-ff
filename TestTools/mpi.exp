@@ -42,16 +42,42 @@ proc build_mpi_hosts { file host_list } {
 #	file - file to build
 #	host_list - list of hosts to put in file
 	global env
+    
+    set host_names {}
+    #max number of characters to write to the file over one
+    #ssh connection.  
+    set buf_size 500
+    set current_block_size 0
 
-	send_unix_cmd "cat > $file <<!"
-	foreach h $host_list {
+    send_unix_cmd "printf \"\" > $file"
+    expect_unix_prompt 60
+
+    foreach h $host_list {
 		# use IPoIB names
 		# When called by FastFabric, CFG_IPOIB_SUFFIX is set to ""
 		# and host_list is already translated as needed
-		send_unix "[host_basename $h]$env(CFG_IPOIB_SUFFIX)\n"
-	}
-	send_unix "!\n"
-	expect_unix_prompt 60
+        set host_entry "[host_basename $h]$env(CFG_IPOIB_SUFFIX)\n"
+        set host_length [string length  $host_entry]
+
+        if { [expr $current_block_size + $host_length ] < $buf_size } {
+            #adding the current host $h does not exceed the character limit
+            #append it to the current block of host_names
+            append host_names $host_entry
+            set current_block_size [expr $current_block_size + $host_length]
+        } else {
+            #adding the current host $h will exceed the character limit, write
+            #already queued up host_names and reset for the next block
+            send_unix_cmd "printf \"$host_names\" >> $file"
+            expect_unix_prompt 60
+            set host_names {}
+            append host_names $host_entry
+            set current_block_size $host_length
+        }
+    }
+
+    #writing the final batch of entries
+    send_unix_cmd "printf \"$host_names\" >> $file"
+    expect_unix_prompt 60
 }
 
 proc build_mpd_hosts { file host host_list } {
@@ -97,8 +123,8 @@ proc running_mpi_int_tests { } {
 
 	if { ! [ info exists env(MPICH_PREFIX) ]
 			|| [ string equal "$env(MPICH_PREFIX)" "" ]
-		|| ( [ info exists env(QLOGIC_INT_TESTS) ]
-			&& [ string equal "$env(QLOGIC_INT_TESTS)" "y" ] ) } {
+		|| ( [ info exists env(DEV_INT_TESTS) ]
+			&& [ string equal "$env(DEV_INT_TESTS)" "y" ] ) } {
 		# only occurs for int tests
 		# this is a little ugly, MPITYPE is passed in env
 		if { ! [ info exists env(MPITYPE) ]

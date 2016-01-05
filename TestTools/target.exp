@@ -2374,7 +2374,7 @@ proc scp_local_file { file_name host {directory "."} } {
     local_sh
     send_unix_cmd "scp $file_name root@$host:$directory"
 #    catch {expect_list 10 {"password:"} {"command not found"}  out}
-#    send_unix_cmd "qlogic"
+#    send_unix_cmd "thepassword"
     expect_unix_prompt 20
     local_sh_exit
     set spawn_id $save_spawn_id

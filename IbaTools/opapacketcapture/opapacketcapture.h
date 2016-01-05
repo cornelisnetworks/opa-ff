@@ -235,7 +235,7 @@ enum qib_packet_filter_opcodes {
 
 #define IB_PACKET_SIZE		4208
 
-#define STL_MAX_PACKET_SIZE		2*1024*8 // Max 16B is < 2K flits
+#define STL_MAX_PACKET_SIZE		16*1024 // 16K
 #define WIRESHARK_MAX_LENGTH	65535
 
 #define DEBUG_TOOL_CAPTURE_FILE "/dev/ipath_capture_00_01"

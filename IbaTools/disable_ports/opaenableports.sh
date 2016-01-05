@@ -67,7 +67,7 @@ Usage_full()
 	echo "disabled.csv is a file listing the ports to enable." >&2
 	echo "It is of the form:" >&2
 	echo "   NodeGUID;PortNum;NodeDesc" >&2
-	echo "A input file such as this is generated in $CONFIG_DIR/opa/disabled*" >&2
+	echo "An input file such as this is generated in $CONFIG_DIR/opa/disabled*" >&2
 	echo "by opadisableports." >&2
 	echo " Environment:" >&2
 	echo "   PORTS - list of ports, used in absence of -t and -p" >&2
@@ -88,7 +88,7 @@ Usage()
 	echo "disabled.csv is a file listing the ports to enable." >&2
 	echo "It is of the form:" >&2
 	echo "   NodeGUID;PortNum;NodeDesc" >&2
-	echo "A input file such as this is generated in $CONFIG_DIR/opa/disabled*" >&2
+	echo "An input file such as this is generated in $CONFIG_DIR/opa/disabled*" >&2
 	echo "by opadisableports." >&2
 	echo "for example:" >&2
 	echo "   opaenableports < disabled.csv" >&2

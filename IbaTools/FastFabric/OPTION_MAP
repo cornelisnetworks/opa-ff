@@ -104,7 +104,6 @@ List of command line options used in various Fast Fabric tools
 -B 'sguid ...;dguid ...' query by list of port guids
 -C			perform operation on chassis (default is hosts)
 -C			clear error counters, clear performance counters 
--D 			demangle GNU C++ symbol names (opannotate)
 -D point		Destination for trace route
 -D detail		detail level for opacapture
 -E 			ESM FE

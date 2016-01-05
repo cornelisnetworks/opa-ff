@@ -669,11 +669,11 @@ opareport can generate hundreds of different reports. Commonly generated reports
 .br
 opareport -o errors -o slowlinks
 .br
-opareport -o nodes -F portguid:0x00066a00a000447b
+opareport -o nodes -F portguid:0x00117500a000447b
 .br
-opareport -o nodes -F nodeguid:0x00066a009800447b:port:1
+opareport -o nodes -F nodeguid:0x001175009800447b:port:1
 .br
-opareport -o nodes -F nodeguid:0x00066a009800447b
+opareport -o nodes -F nodeguid:0x001175009800447b
 .br
 opareport -o nodes -F \'node:duster hfi1\(ul0\'
 .br
@@ -697,19 +697,19 @@ opareport -o nodes -F lid:1:node
 .br
 opareport -o nodes -F lid:1:port:2
 .br
-opareport -o nodes -F gid:0xfe80000000000000:0x00066a00a000447b
+opareport -o nodes -F gid:0xfe80000000000000:0x00117500a000447b
 .br
-opareport -o nodes -F systemguid:0x00066a009800447b
+opareport -o nodes -F systemguid:0x001175009800447b
 .br
-opareport -o nodes -F systemguid:0x00066a009800447b:port:1
+opareport -o nodes -F systemguid:0x001175009800447b:port:1
 .br
-opareport -o nodes -F iocguid:0x00066a01300001e0
+opareport -o nodes -F iocguid:0x00117501300001e0
 .br
-opareport -o nodes -F iocguid:0x00066a01300001e0:port:2
+opareport -o nodes -F iocguid:0x00117501300001e0:port:2
 .br
-opareport -o nodes -F \'ioc:Chassis 0x00066A005000010C, Slot 2, IOC 1\'
+opareport -o nodes -F \'ioc:Chassis 0x001175005000010C, Slot 2, IOC 1\'
 .br
-opareport -o nodes -F \'ioc:Chassis 0x00066A005000010C, Slot 2, IOC 1:port:2\'
+opareport -o nodes -F \'ioc:Chassis 0x001175005000010C, Slot 2, IOC 1:port:2\'
 .br
 opareport -o nodes -F \'iocpat:*Slot 2*\'
 .br

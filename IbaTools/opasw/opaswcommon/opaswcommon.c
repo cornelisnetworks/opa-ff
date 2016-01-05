@@ -459,6 +459,89 @@ FSTATUS getVPDInfo(struct oib_port *port,
 	return(status);
 }
 
+int ltc2974_L11_to_Celsius(uint16 half16)
+{
+        int exponent;
+        int mantissa;
+        int celsius;
+
+        /* extract components from LinearFloat5_11 (L11) format */
+        exponent = half16 >> 11;
+        mantissa = half16 & 0x7ff;
+
+        /* if mantissa is negative, sign extend */
+        if (mantissa > 0x03FF)
+                mantissa |= 0xFFFFF800;
+
+        /* determine sign of exponent */
+        if (exponent > 0x0F) {
+                /* exponent is negative, sign extend */
+                exponent |= 0xFFFFFFE0;
+                /* make exponent positive */
+                exponent = (~exponent)+1;
+                /* divide instead of multiply */
+                celsius = mantissa / (1 << exponent);
+        }
+        else /* exponent is positive */
+                celsius = mantissa * (1 << exponent);
+
+        return celsius;
+}
+
+FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
+		VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH])
+{
+	FSTATUS status = FSUCCESS;
+	uint8 ErrorFlags = 0;
+	uint16 mgmtFpgaOffset = 0;
+	union {
+		uint8 u8[2];
+		uint16 u16;
+	} value;
+
+	{ // LTC2974
+		// It is possible the LTC2974 temp sensor may need to be initilized
+		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
+			I2C_OPASW_LTC2974_TEMP_ADDR, 2, I2C_OPASW_LTC2974_TEMP_OFFSET, &value.u8[0]);
+
+		if (status != FSUCCESS) {
+			//fprintf(stderr, "getTempReadings: Error sending MAD packet to switch to read LTC2974 temp\n");
+			snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: N/A");
+			ErrorFlags |= (1<<0);
+		} else {
+			snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: %dC", ltc2974_L11_to_Celsius(value.u16));
+		}
+	}
+	{ // MAX QSFP
+		mgmtFpgaOffset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_MAX_QSFP_TEMP_MGMT_FPGA_OFFSET;
+		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
+			I2C_OPASW_MGMT_FPGA_ADDR, 1, mgmtFpgaOffset, &value.u8[0]);
+
+		if (status != FSUCCESS) {
+			//fprintf(stderr, "getTempReadings: Error sending MAD packet to switch to read MAX QSFP temp\n");
+			snprintf(tempStrs[1], TEMP_STR_LENGTH, "MAX QSFP: N/A");
+			ErrorFlags |= (1<<1);
+		} else {
+			snprintf(tempStrs[1], TEMP_STR_LENGTH, "MAX QSFP: %dC", value.u8[0]);
+		}
+	}
+	{ // PRR ASIC
+		mgmtFpgaOffset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_PRR_ASIC_TEMP_MGMT_FPGA_OFFSET;
+		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
+			I2C_OPASW_MGMT_FPGA_ADDR, 1, mgmtFpgaOffset, &value.u8[0]);
+
+		if (status != FSUCCESS) {
+			//fprintf(stderr, "getTempReadings: Error sending MAD packet to switch to read PRR ASIC temp\n");
+			snprintf(tempStrs[2], TEMP_STR_LENGTH, "PRR ASIC: N/A");
+			ErrorFlags |= (1<<2);
+		} else {
+			snprintf(tempStrs[2], TEMP_STR_LENGTH, "PRR ASIC: %dC", value.u8[0]);
+		}
+	}
+	return(status | (ErrorFlags << 8));
+
+}
+
 FSTATUS getFanSpeed(struct oib_port *port, 
 					IB_PATH_RECORD *path, 
 					VENDOR_MAD *mad, 

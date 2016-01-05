@@ -2209,7 +2209,8 @@ void Usage_full(void)
 	fprintf(stderr, "                                system wide port num (default is 0)\n");
 	fprintf(stderr, "    -p/--port port            - port, numbered 1..n, 0=1st active (default\n");
 	fprintf(stderr, "                                is 1st active)\n");
-	fprintf(stderr, "    -i/--interval seconds     - obtain performance stats over interval seconds\n");
+	fprintf(stderr, "    -i/--interval seconds     - interval at which PA queries will be performed\n");
+	fprintf(stderr, "                                to refresh to the latest PA image (default=10s) \n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The -h and -p options permit a variety of selections:\n");
 	fprintf(stderr, "    -h 0       - 1st active port in system (this is the default)\n");
@@ -2230,7 +2231,8 @@ void Usage(void)
 	fprintf(stderr, "    --help - produce full help text\n");
 	fprintf(stderr, "    -v/--verbose level        - verbose output level\n");
 	fprintf(stderr, "    -q/--quiet                - disable progress reports\n");
-	fprintf(stderr, "    -i/--interval seconds     - obtain performance stats over interval seconds\n");
+	fprintf(stderr, "    -i/--interval seconds     - interval at which PA queries will be performed\n");
+	fprintf(stderr, "                                to refresh to the latest PA image (default=10s)\n");
 	exit(2);
 }
 

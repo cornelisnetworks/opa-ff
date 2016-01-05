@@ -138,7 +138,11 @@ File: /opt/opa/tools/chassis_fmsecurityfiles.exp" case_setup case_cleanup {
 		for { set i 0 } { $i < $num_secfiles } { incr i } {
 			set sec_file [lindex $sec_files $i]
 
-			test_case_push_chassis_security_file "$chassis" "$sec_file" "$env(CFG_SECACTION)" "$slots"
+			test_case_push_chassis_security_file "$chassis" "$sec_file" "push" "$slots"
 		}
+
+        if { ! [ string equal "$env(CFG_SECACTION)" "push"] } {
+            test_case_push_chassis_security_file "$chassis" "" "$env(CFG_SECACTION)" "$slots"
+        }
 	}
 }

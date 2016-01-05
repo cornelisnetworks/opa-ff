@@ -143,9 +143,12 @@ static void
 usage(char **argv)
 {
 	fprintf(stderr, "Usage: %s [opts] guidtable\n", argv[0]);
+	fprintf(stderr, "Test performance of the distributed SA shared memory database.\n");
 	fprintf(stderr, "\toptions include:\n");
+	fprintf(stderr, "\t--help\n");
+	fprintf(stderr, "\t\tProvide this help text.\n");
 	fprintf(stderr, "\t-q <queries>\n");
-	fprintf(stderr, "\t\tRun at least <queries> queries\n");
+	fprintf(stderr, "\t\tRun at least <queries> queries.\n");
 	fprintf(stderr, "\t-p <pkey>\n");
 	fprintf(stderr, "\t\tInclude <pkey> in the searches.\n");
 	fprintf(stderr,"\t\t(Can be specified up to " add_quotes(MAX_PKEYS)
@@ -162,7 +165,7 @@ usage(char **argv)
 	fprintf(stderr,
 			"guids and lids (i.e., from build_table.pl)\n");
 	fprintf(stderr,
-			"\nExample:\t./opa_osd_perf -q 100000 -p 0x8001  guidtable\n");
+			"\nExample:\t%s -q 100000 -p 0x8001  guidtable\n", argv[0]);
 }
 
 static record *dest_ports;
@@ -242,6 +245,13 @@ main(int argc, char **argv)
 	numsources = 0;
 	numpkeys = 0;
 	numsids = 0;
+
+	if (argc > 1){
+		if (!strcmp(argv[1], "--help")){
+			usage(argv);
+			exit(0);
+		}
+	}
 
 	while ((c = getopt(argc, argv, "d:q:p:S:")) != EOF) {
 		switch (c) {

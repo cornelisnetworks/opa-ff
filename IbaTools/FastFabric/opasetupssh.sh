@@ -51,8 +51,8 @@ fi
 Usage_full()
 {
 	echo "Usage: opasetupssh [-CpU] [-f hostfile] [-F chassisfile] [-h 'hosts']" >&2
-	echo "                   [-H 'chassis'] [-i ipoib_suffix] [-u user] [-S]" >&2
-	echo "                   [-RP]" >&2
+	echo "                      [-H 'chassis'] [-i ipoib_suffix] [-u user] [-S]" >&2
+	echo "                      [-RP]" >&2
 	echo "              or" >&2
 	echo "       opasetupssh --help" >&2
 	echo >&2
@@ -60,7 +60,7 @@ Usage_full()
 	echo "   -C - perform operation against chassis, default is hosts" >&2
 	echo "   -p - perform operation against all chassis/hosts in parallel" >&2
 	echo "   -U - only perform connect (to enter in local hosts knownhosts)" >&2
-	echo "         (when run in this mode the -S option is ignored)" >&2
+	echo "        (when run in this mode the -S option is ignored)" >&2
     echo >&2
 	echo "   -f hostfile     - file with hosts in cluster, default is " >&2
 	echo "                     $CONFIG_DIR/opa/hosts" >&2
@@ -105,7 +105,7 @@ Usage_full()
 Usage()
 {
 	echo "Usage: opasetupssh [-CpU] [-f hostfile] [-F chassisfile]" >&2
-	echo "                   [-i ipoib_suffix] [-S]" >&2
+	echo "                      [-i ipoib_suffix] [-S]" >&2
 	echo "              or" >&2
 	echo "       opasetupssh --help" >&2
 	echo "   --help - produce full help text" >&2
@@ -114,7 +114,8 @@ Usage()
 	echo "   -U - only perform connect (to enter in local hosts knownhosts)" >&2
 	echo "         (when run in this mode, the -S options is ignored)" >&2
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
-	echo "   -F chassisfile - file with chassis in cluster, default is $CONFIG_DIR/opa/chassis" >&2
+	echo "   -F chassisfile - file with chassis in cluster, default is" >&2
+	echo "         $CONFIG_DIR/opa/chassis" >&2
 	echo "   -i ipoib_suffix - suffix to apply to host names to create ipoib host names" >&2
 	echo "         default is '$FF_IPOIB_SUFFIX'" >&2
 	echo "   -S - securely prompt for password for user on remote system" >&2

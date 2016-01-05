@@ -26,6 +26,9 @@ opaportconfig [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\f
 .SH Options
 .NL
 
+.SH Options
+.NL
+
 .TP 10
 -l \fIlid\fR 
 .NL
@@ -80,6 +83,24 @@ Disables port.
 .sp
 bounce 
 Bounces port.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+ledon 
+Turns port LED on.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+ledoff 
+Turns port LED off.
 
 .RE
 
@@ -171,15 +192,6 @@ Polling.
 .sp
 3 
 Disabled.
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-11 
-Phy-Test (OP only).
 
 .RE
 

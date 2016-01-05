@@ -12,6 +12,8 @@ opa\(ulosd\(ulexercise
 
 .NL
 
+.PP
+Performs stress test on SM and distributed SA query system.
 .SH Syntax
 .NL
 opa\(ulosd\(ulexercise [ \fIopts\fR] \fIguidlist\fR
@@ -45,7 +47,7 @@ Specifies running for at least  \fIseconds\fR seconds.
 
 .sp
 -r \fIremote\fR 
-Host running the fabric simulator.
+Specifies the host running the fabric simulator.
 .RE
 
 .RS
@@ -96,3 +98,7 @@ Instructs simulator to enable all ports before starting.
  \fIguidlist\fR 
 .NL
 Text file that lists the source and destination GUIDs and LIDs. For example, from a build\(ultable.pl file.
+
+.SH Example 
+.NL
+./opa\(ulosd\(ulexercise -P 0x9001 guidtable

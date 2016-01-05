@@ -31,6 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -209,7 +210,7 @@ int getGeneralInfo()
 	} else
 		LinkWidthSelection = 0;
 
-	setNodeDesc = getYesNo("Do you wish to configure the switch Node Description as it is set in the opanodes file? [n]", 0);
+	setNodeDesc = getYesNo("Do you wish to configure the switch Node Description as it is set in the switches file? [n]", 0);
 	NodeDescSelection = setNodeDesc;
 
 	setFMEnabled = getYesNo("Do you wish to configure the switch FM Enabled option? [n]", 0);
@@ -238,6 +239,16 @@ int
 main(int argc, char *argv[])
 {
 	FILE *fp_out;
+	char *dirName;
+
+	dirName = argv[1];
+	if (dirName == NULL)
+		dirName = ".";
+
+	if (chdir(dirName) < 0) {
+		fprintf(stderr, "Error changing directory to %s: %s\n", dirName, strerror(errno));
+		exit(1);
+	}
 
 	getGeneralInfo();
 

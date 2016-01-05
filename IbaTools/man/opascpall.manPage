@@ -115,8 +115,3 @@ File containing list of hosts; used in absence of -f and -h.
 \fBFF\(ulMAX\(ulPARALLEL\fR 
 .NL
 When the -p option is used, maximum concurrent operations are performed.
-
-.TP 10
-\fBDOWNLOADS\(ulDIR\fR 
-.NL
-Directory to download from, used in absence of -d.

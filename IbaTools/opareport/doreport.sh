@@ -50,7 +50,7 @@ else
 fi
 if [ "$3" = "" ]
 then
-	ioudesc='FVIC in Chassis 0x00066a00da000159, Slot 8'
+	ioudesc='FVIC in Chassis 0x00117501da000159, Slot 8'
 else
 	ioudesc="$3"
 fi

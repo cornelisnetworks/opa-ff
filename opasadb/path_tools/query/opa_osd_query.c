@@ -50,6 +50,60 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEFAULT_SID 0x1000117500000000
 
+void Usage()
+{
+	fprintf(stderr,"Usage: opa_osd_query (options)\n");
+	fprintf(stderr,"Query the opasadb for path records\n\n");
+	fprintf(stderr,"Options are:\n");
+	fprintf(stderr, "\t-v/--verbose\t<arg>\tDebug Level. Should be a number between 1 and 7\n");
+	fprintf(stderr, "\t-s/--slid\t<arg>\tSource LID\n");
+	fprintf(stderr, "\t-d/--dlid\t<arg>\tDestination LID\n");
+	fprintf(stderr, "\t-S/--sgid\t<arg>\tSource GID (in GID or inet6 format)\n");
+	fprintf(stderr, "\t-D/--dgid\t<arg>\tDestination GID (in GID or inet6 format)\n");
+	fprintf(stderr, "\t-k/--pkey\t<arg>\tPartition Key\n");
+	fprintf(stderr, "\t-i/--sid\t<arg>\tService ID\n");
+	fprintf(stderr, "\t-h/--hfi\t<arg>\tThe HFI to use (Defaults to the first hfi)\n");
+	fprintf(stderr, "\t-p/--port\t<arg>\tThe port to use (Defaults to the first port)\n");
+	fprintf(stderr, "\t--help\t\t\tProvide full help text\n");
+	
+	exit(2);
+}
+
+
+void Usage_full()
+{
+	fprintf(stderr,"Usage: opa_osd_query (options)\n");
+	fprintf(stderr,"Query the opasadb for path records\n\n");
+	fprintf(stderr,"Options are:\n");
+	fprintf(stderr, "\t-v/--verbose\t<arg>\tDebug Level. Should be a number between 1 and 7\n");
+	fprintf(stderr, "\t-s/--slid\t<arg>\tSource LID\n");
+	fprintf(stderr, "\t-d/--dlid\t<arg>\tDestination LID\n");
+	fprintf(stderr, "\t-S/--sgid\t<arg>\tSource GID (in GID or inet6 format)\n");
+	fprintf(stderr, "\t-D/--dgid\t<arg>\tDestination GID (in GID or inet6 format)\n");
+	fprintf(stderr, "\t-k/--pkey\t<arg>\tPartition Key\n");
+	fprintf(stderr, "\t-i/--sid\t<arg>\tService ID\n");
+	fprintf(stderr, "\t-h/--hfi\t<arg>\tThe HFI to use (Defaults to the first hfi)\n");
+	fprintf(stderr, "\t-p/--port\t<arg>\tThe port to use (Defaults to the first port)\n");
+	fprintf(stderr, "\t--help\t\t\tProvide full help text\n");
+	
+	fprintf(stderr,"\n"
+				"This tool allows you to create an arbitrary path\n"
+				"query and view the result. \n\n"
+				"All arguments are optional, but ill-formed\n"
+				"queries can be expected to fail. You must provide\n"
+				"at least a pair of lids, or a pair of gids.\n\n"
+				"If you have multiple HFIs, the same lid can appear on\n"
+				"more than one HFI, so you must specify which HFI to use\n"
+				"when searching by lids and you have multiple HFIs.\n\n"
+				"Numbers can be in decimal, hex or octal.\n\n"
+				"Gids can be specified in GID format (\"0x00000000:0x00000000\")\n"
+				"or in Inet6 format (\"x:x:x:x:x:x:x:x\").\n\n"
+				"The HFI can be identified by name (\"hfi1_0\") or by\n"
+				"number (1, 2, 3, et cetera)\n\n"
+				"Example:\topa_osd_query -s2 -d4\n");
+	exit(0);
+}
+
 int main(int argc, char **argv)
 {
 	int err, debug;
@@ -69,7 +123,7 @@ int main(int argc, char **argv)
 	do {
 		int c;
 
-		static char *short_options = "v:h:p:s:d:S:D:k:i:H:";
+		static char *short_options = "v:h:p:s:d:S:D:k:i:";
 		static struct option long_options[] = {
 			{ .name = "verbose", .has_arg = 1, .val = 'v' },
 			{ .name = "slid", .has_arg = 1, .val = 's' },
@@ -80,23 +134,10 @@ int main(int argc, char **argv)
 			{ .name = "sid",  .has_arg = 1, .val = 'i' },
 			{ .name = "hfi",  .has_arg = 1, .val = 'h' },
 			{ .name = "port", .has_arg = 1, .val = 'p' },
-			{ .name = "help", .has_arg = 0, .val = 'H' },
+			{ .name = "help", .has_arg = 0, .val = '$' },
 			{0}
 		};
-		static char *usage[] = {
-			"Debug level. Should be a number between 1 and 7.",
-			"Source LID",
-			"Destination LID",
-			"Source GID (in GID or inet6 format)",
-			"Destination GID (in GID or inet6 format)",
-			"Partition Key",
-			"Service ID",
-			"The HFI to use. (Defaults to the first hfi)",
-			"The port to use. (Defaults to the first port)",
-			"Provides this help text",
-			NULL
-		};
-
+		
 		c = getopt_long(argc, argv, short_options, long_options, NULL);
 		if (c == -1) 
 			break;
@@ -121,33 +162,13 @@ int main(int argc, char **argv)
 				return -1;
 			}
 			break;
-		default: {
-			int i=0;
+		case '$': 
+			Usage_full(); //exits	
+			break; 
+		default: 
+			Usage(); //exits	
+			break;		
 
-			fprintf(stderr,"Usage: %s (options)\n", argv[0]);
-			fprintf(stderr,"Options are:\n");
-			while (long_options[i].name != NULL) {
-				fprintf(stderr,"  -%c/--%-8s %s     %s\n",
-						long_options[i].val,
-						long_options[i].name,
-						(long_options[i].has_arg)?"<arg>":"     ",
-						usage[i]);
-				i++;
-			}
-			fprintf(stderr,"\n"
-				"All arguments are optional, but ill-formed\n"
-				"queries can be expected to fail. You must provide\n"
-				"at least a pair of lids, or a pair of gids.\n\n"
-				"If you have multiple HFIs, the same lid can appear on\n"
-				"more than one HFI, so you must specify which HFI to use\n"
-				"when searching by lids and you have multiple HFIs.\n\n"
-				"Numbers can be in decimal, hex or octal.\n\n"
-				"Gids can be specified in GID format (\"0x00000000:0x00000000\")\n"
-				"or in Inet6 format (\"x:x:x:x:x:x:x:x\").\n\n"
-				"The HFI can be identified by name (\"mthfi0\") or by\n"
-				"number (1, 2, 3, et cetera)\n");
-			return -1;
-			}
 		}
 			
 	} while (1);

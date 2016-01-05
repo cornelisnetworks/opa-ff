@@ -29,6 +29,9 @@ oparesolvehfiport --help
 .SH Options
 .NL
 
+.SH Options
+.NL
+
 .TP 10
 --help 
 .NL

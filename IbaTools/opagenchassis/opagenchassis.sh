@@ -30,7 +30,7 @@
 
 # [ICS VERSION STRING: unknown]
 
-# Find all the Internally Managed QLogic/SilverStorm chassis in the fabric
+# Find all the Internally Managed switch chassis in the fabric
 # and output their IP(s)/names.
 # When possible, the resolver will be used to reverse lookup the TCP/IP name
 # and output it instead of the IP address.

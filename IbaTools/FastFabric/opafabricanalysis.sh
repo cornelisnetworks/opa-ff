@@ -45,8 +45,8 @@ fi
 
 Usage_full()
 {
-	echo "Usage: opafabricanalysis [-b|-e] [-s] [-d dir] [-c file] [-t portsfile] [-p ports]" >&2
-	echo "                       [-T topology_input]" >&2
+	echo "Usage: opafabricanalysis [-b|-e] [-s] [-d dir] [-c file] [-t portsfile]" >&2
+	echo "                            [-p ports] [-T topology_input]" >&2
 	echo "              or" >&2
 	echo "       opafabricanalysis --help" >&2
 	echo "   --help - produce full help text" >&2

@@ -170,7 +170,7 @@ void Usage_full(void)
 	fprintf(stderr, "Gids:\n");
 	fprintf(stderr, "   specify 64 bit subnet and 64 bit interface id as:\n");
 	fprintf(stderr, "   	subnet:interface\n");
-	fprintf(stderr, "   such as: 0xfe80000000000000:0x00066a00a0000380\n");
+	fprintf(stderr, "   such as: 0xfe80000000000000:0x00117501a0000380\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Output Types:\n");
 	fprintf(stderr, "    classportinfo - classportinfo of the SA\n");
@@ -207,7 +207,7 @@ void Usage_full(void)
 	fprintf(stderr, "    quarantine    - list of quarantined nodes\n");
 	fprintf(stderr, "    conginfo      - list of Congestion Info Records\n");
 	fprintf(stderr, "    swcongset     - list of Switch Congestion Settings\n");
-	fprintf(stderr, "    swportcong  - list of Switch Port Congestion Settings\n");
+	fprintf(stderr, "    swportcong    - list of Switch Port Congestion Settings\n");
 	fprintf(stderr, "    hficongset    - list of HFI Congestion Settings\n");
 	fprintf(stderr, "    hficongcon    - list of HFI Congesting Control Settings\n");
 	fprintf(stderr, "    bfrctrl       - list of buffer control tables\n");
@@ -243,7 +243,7 @@ void Usage(void)
 	fprintf(stderr, "Gids:\n");
 	fprintf(stderr, "   specify 64 bit subnet and 64 bit interface id as:\n");
 	fprintf(stderr, "   	subnet:interface\n");
-	fprintf(stderr, "   such as: 0xfe80000000000000:0x00066a00a0000380\n");
+	fprintf(stderr, "   such as: 0xfe80000000000000:0x00117501a0000380\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Output Types (abridged):\n");
 	fprintf(stderr, "    systemguid  - list of system image guids\n");

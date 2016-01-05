@@ -22,6 +22,17 @@ In this situation, the command can manage more than one fabric (subnet).
 FastFabric Tools
 In this situation, the command performs analysis against the first active port on the system only. It takes no options and uses no environment variables.
 
+.PP
+opafabricinfo can be very useful as a quick assessment of the fabric state. It can be run against a known good fabric to identify its components and then later run to see if anything has changed about the fabric configuration or state.
+.PP
+For more extensive fabric analysis, use
+\fIopareport\fR
+and
+\fIopareports\fR
+. Also see opatop in the 
+\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
+
+.
 .SH Syntax
 .NL
 opafabricinfo [-t \fIportsfile\fR] [-p \fIports\fR]
@@ -120,76 +131,28 @@ If the specified port does not exist or is empty, the first active port on the l
 .NL
 opafabricinfo
 .br
-opafabricinfo -p \'1:1 2:1\'Output example:
-.br
-Fabric Information:
-.br
-SM: i9k229 Guid: 0x00066a00d8000229 State: Master
-.br
-SM: i9k3ff Guid: 0x00066a00d90003ff State: Standby
-.br
-Number of FIs: 17
-.br
-Number of FI Ports: 22
-.br
-Number of Switch Chips: 6
-.br
-Number of Links: 29
-.br
-Number of 1x Ports: 2
-.SH Output Definitions
-.NL
-
-.TP 10
-SM 
-.NL
-Each subnet manger (SM) running in the fabric is listed along with its node name, port GUID, and present SM state (Master, Standby, etc.).
-.TP 10
-Number of FIs 
-.NL
-Number of unique fabric interfaces (FI) in the fabric. An FI with two connected ports is counted as a single FI.
-.TP 10
-.BR
-
+opafabricinfo -p \'1:1 2:1\'
 .PP
 
-.B NOTE:
-Fabric Interfaces include HFIs in servers as well as HFIs within I/O Modules, Native Storage, etc.
+\fBOutput example\fR
 
-
-.TP 10
-Number of FI Ports 
-.NL
-Number of connected FI ports in the fabric.
-.TP 10
-Number of Switch Chips 
-.NL
-Number of unique switches in the fabric.
-.TP 10
-.BR
-
-.PP
-
-.B NOTE:
-A large switch may be composed of many unique switch chips.
-
-
-.TP 10
-Number of Links 
-.NL
-Number of links in the fabric. Note that a large switch may have internal links.
-.TP 10
-Number of 1x Ports 
-.NL
-Number of ports in the fabric running at 1x speed. Typically, such ports represent a bad cable connection, a bad cable, a cable that is too long, or faulty hardware on one side of the link.
-.PP
-opafabricinfo can be very useful as a quick assessment of the fabric state. opafabricinfo can be run against a known good fabric to identify its components and then later run to see if anything has changed about the fabric configuration or state. When used in this manner, it can be used to quickly identify if FIs are down, links are missing, SMs are missing, or other similar items.
-.PP
-For more extensive fabric analysis, use
-\fIopareport\fR
-and
-\fIopareports\fR
-. Also see opatop in the 
-\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
-
-.
+.br
+# opafabricinfo
+.br
+Fabric 0:0 Information:
+.br
+SM: hds1fnb6241 hfi1\(ul0 Guid: 0x0011750101575ffe State: Master
+.br
+Number of HFIs: 8
+.br
+Number of Switches: 1
+.br
+Number of Links: 8
+.br
+Number of HFI Links: 8 (Internal: 0 External: 8)
+.br
+Number of ISLs: 0 (Internal: 0 External: 0)
+.br
+Number of Degraded Links: 0 (HFI Links: 0 ISLs: 0)
+.br
+Number of Omitted Links: 0 (HFI Links: 0 ISLs: 0)

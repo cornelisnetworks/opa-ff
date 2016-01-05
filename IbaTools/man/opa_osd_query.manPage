@@ -12,6 +12,8 @@ opa\(ulosd\(ulquery
 
 .NL
 
+.PP
+Queries the opasadb for path records. This tool allows you to create an arbitrary path query and view the result.
 .SH Syntax
 .NL
 opa\(ulosd\(ulquery [ \fIoptions\fR]
@@ -23,7 +25,7 @@ All arguments are optional, but ill-formed queries can be expected to fail. You 
 .PP
 If you have multiple HFIs, the same LID can appear on more than one HFI, therefore you must specify which HFI to use when searching by LIDs.
 .PP
-Numbers can be in decimal, hex or octal.
+Numbers can be in decimal, hex, or octal.
 .TP 10
  \fIoptions\fR 
 .NL
@@ -59,7 +61,7 @@ Specifies destination LID.
 
 .sp
 -S/--sgid \fIarg\fR 
-Specifies source GID in GID format ("0x00000000:0x00000000") or in Inet6 format ("x:x:x:x:x:x:x:x").
+Specifies source GID in GID format (0x00000000:0x00000000) or in Inet6 format (x:x:x:x:x:x:x:x).
 .RE
 
 .RS
@@ -67,7 +69,7 @@ Specifies source GID in GID format ("0x00000000:0x00000000") or in Inet6 format 
 
 .sp
 -D/--dgid \fIarg\fR 
-Specifies destination GID in GID format ("0x00000000:0x00000000") or in Inet6 format ("x:x:x:x:x:x:x:x").
+Specifies destination GID in GID format (0x00000000:0x00000000) or in Inet6 format (x:x:x:x:x:x:x:x).
 .RE
 
 .RS
@@ -109,3 +111,7 @@ Specifies the port to use. Default = first port.
 -H/--help \fI\fR 
 Provides this help text.
 .RE
+
+.SH Example 
+.NL
+opa\(ulosd\(ulquery -s2 -d4

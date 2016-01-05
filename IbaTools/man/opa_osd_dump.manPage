@@ -12,6 +12,8 @@ opa\(ulosd\(uldump
 
 .NL
 
+.PP
+Prints the current contents of the distributed SA shared memory database.
 .SH Syntax
 .NL
 opa\(ulosd\(uldump [--verbose \fIarg\fR| -v \fIarg\fR]
@@ -19,6 +21,15 @@ opa\(ulosd\(uldump [--verbose \fIarg\fR| -v \fIarg\fR]
 .NL
 
 .TP 10
---verbose \fIarg\fR 
+--help 
 .NL
-Specifies the logging level to perform.
+Produces full help text.
+
+.TP 10
+--verbose/-v \fIarg\fR 
+.NL
+Specifies the logging level to perform. Range = 1 - 7.
+
+.SH Example 
+.NL
+opa\(ulosd\(uldump >opasadb\(ulcontents

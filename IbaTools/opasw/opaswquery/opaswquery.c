@@ -92,6 +92,7 @@ static void usage(char *app_name)
 	fprintf(stderr, "        3 - display firwmare version\n");
 	fprintf(stderr, "        4 - display VPD Info - comma-separated list\n");
 	fprintf(stderr, "        5 - get node description\n");
+	fprintf(stderr, "        6 - temperature readings\n");
 	fprintf(stderr, "        7 - fan speed\n");
 	fprintf(stderr, "        8 - power supply status - use with -i [%d-%d]\n", MIN_PS, MAX_PS);
 	fprintf(stderr, "        9 - display asic version\n");
@@ -125,6 +126,7 @@ int main(int argc, char *argv[])
 	uint16				sessionID;
 	uint32				regValue;
 	uint32				fanSpeed[OPASW_PSOC_FAN_CTRL_TACHS];
+	char				tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH];
 	uint32				psStatus;
 	uint8				fwVersion[40];
 	vpd_fruInfo_rec_t	vpdInfo;
@@ -363,7 +365,18 @@ int main(int argc, char *argv[])
 			}
 			printf("Node description is %s\n", nodeDesc);
 			break;
+		case 6:
+			status = getTempReadings(oib_port_session, &path, &mad, sessionID, tempStrs);
 
+			for (i=0; i<I2C_OPASW_TEMP_SENSOR_COUNT; i++) {
+				printf("SENSOR %d: %s ", i, tempStrs[i]);
+			}
+			printf("\n");
+			if (status != FSUCCESS) {
+				fprintf(stderr, "Error: Failed to get one or more temperature readings - status %s\n",
+					iba_fstatus_msg(status & 0xFF));
+			}
+			break;
 		case 7:
 			for (i = 0; i < OPASW_PSOC_FAN_CTRL_TACHS; i++) {
 				status = getFanSpeed(oib_port_session, &path, &mad, sessionID,

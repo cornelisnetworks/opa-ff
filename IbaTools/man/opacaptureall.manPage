@@ -103,7 +103,7 @@ Level of detail of the capture passed to host opacapture. (Only used for host ca
 
 .sp
 1 
-Normal. Obtains local information from each host.
+Local. Obtains local information from each host.
 
 .RE
 
@@ -112,7 +112,7 @@ Normal. Obtains local information from each host.
 
 .sp
 2 
-Fabric. In addition to \fINormal\fR, also obtains basic fabric information by queries to the SM and fabric error analysis using opareport.
+Fabric. In addition to \fILocal\fR, also obtains basic fabric information by queries to the SM and fabric error analysis using opareport.
 
 .RE
 

@@ -50,10 +50,10 @@ then
 else
 	nodedesc="$3"
 fi
-nodeguid=0x00066a0098$serial
-sysguid=0x00066a0098$serial
-portguid=0x00066a00a0$serial
-portguid2=0x00066a00a0$serial2
+nodeguid=0x0011750198$serial
+sysguid=0x0011750198$serial
+portguid=0x00117501a0$serial
+portguid2=0x00117501a0$serial2
 subnet=0xfe80000000000000	# IBTA defined default subnet prefix
 
 set -x

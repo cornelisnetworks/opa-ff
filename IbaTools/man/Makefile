@@ -37,7 +37,6 @@ INCLUDE_TARGETS	= \
 				# Add more h hpp files here
 # Non-compiled files
 MAN_PAGE_1_FILES = \
-				opa-arptbl-tuneup.1 \
 				opacapture.1 \
 				opaconfig.1 \
 				opafabricinfo.1 \
@@ -45,7 +44,6 @@ MAN_PAGE_1_FILES = \
 				opagetvf_env.1 \
 				opahfirev.1 \
 				opainfo.1 \
-				opa-init-kernel.1 \
 				opa_osd_dump.1 \
 				opa_osd_exercise.1 \
 				opa_osd_perf.1 \
@@ -58,6 +56,7 @@ MAN_PAGE_1_FILES = \
 				opasaquery.1 \
 				opashowmc.1 \
 				opasmaquery.1 \
+				opatmmtool.1 \
 				# Add more man pages for chapter 1
 MAN_PAGE_8_FILES = \
 				opaallanalysis.8 \
@@ -99,6 +98,7 @@ MAN_PAGE_8_FILES = \
 				opareports.8 \
 				opascpall.8 \
 				opasetupssh.8 \
+				opashowallports.8 \
 				opasorthosts.8 \
 				opaswitchadmin.8 \
 				opatop.8 \
@@ -111,6 +111,8 @@ MAN_PAGE_8_FILES = \
 				opaxmlfilter.8 \
 				opaxmlgenerate.8 \
 				opaxmlindent.8 \
+				opaswdisableall.8 \
+				opaswenableall.8 \
 				# Add more man pages for chapter 8
 MISC_FILES= \
 				$(MAN_PAGE_1_FILES) \

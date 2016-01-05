@@ -188,8 +188,8 @@ trap 'clean_tempfiles' EXIT
 # Output usage information
 usage_full()
 {
-	echo "Usage: $PROGRAM_NAME -t topology_prime [-s topology_second] -T topology_out"
-	echo "                     [-v level] [-i level] [-c char] [-K] [-?]"
+	echo "Usage: $PROGRAM_NAME -t topology_prime [-s topology_second]"
+	echo "                     -T topology_out [-v level] [-i level] [-c char] [-K] [-?]"
 	echo "  -t topology_prime  - primary topology CSV input file"
 	echo "  -s topology_second - secondary topology CSV input file"
 	echo "  -T topology_out    - topology CSV output file"

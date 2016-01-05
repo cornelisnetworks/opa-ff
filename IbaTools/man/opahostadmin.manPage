@@ -277,7 +277,7 @@ configipoib
 Creates a ifcfg-ib1 configuration file for each node using the IP address found using the resolver on the node. The standard Linux* resolver is used through the host command. (If running OFED Delta, this option configures ifcfg-ib0 .)
 
 .IP
-If the host is not found, /etc/hosts on the node is checked. The -i option specifies an IPoIB suffix to apply to the host name to create the IPoIB host name for the node. The default suffix is -ib. The -m option specifies a netmask other than the default for the given class of IP address, such as when dividing a class A or B address into smaller IP subnets. IPoIB is configured for a static IP address and is autostarted at boot. For the Intel(R) OPA Software Stack, the default /etc/sysconfig/ipoib.cfg file is used, which provides a redundant IPoIB configuration using both ports of the first HFI in the system.
+If the host is not found, /etc/hosts on the node is checked. The -i option specifies an IPoIB suffix to apply to the host name to create the IPoIB host name for the node. The default suffix is -ib. The -m option specifies a netmask other than the default for the given class of IP address, such as when dividing a class A or B address into smaller IP subnets. IPoIB is configured for a static IP address and is autostarted at boot. For the Intel(R) OP Software Stack, the default /etc/sysconfig/ipoib.cfg file is used, which provides a redundant IPoIB configuration using both ports of the first HFI in the system.
 .TP 10
 .BR
 
@@ -295,7 +295,7 @@ Reboots the given hosts and ensures they go down and come back up by pinging the
 .TP 10
 sacache 
 .NL
-Verifies the given hosts can properly communicate with the SA and any cached SA data that is up to date. To run this command, Intel(R) Omni-Path Fabric software must be installed and running on the given hosts. The subnet manager and switches must be up. If this test fails, for QuickSilver hosts: opacmdall \'cat /proc/driver/ics\(uldsc/gids\' can be run against any problem hosts to see what they have cached. If this test fails, for OFED hosts: opacmdall \'opasaquery -o desc\' can be run against any problem hosts.
+Verifies the given hosts can properly communicate with the SA and any cached SA data that is up to date. To run this command, Intel(R) Omni-Path Fabric software must be installed and running on the given hosts. The subnet manager and switches must be up. If this test fails: opacmdall \'opasaquery -o desc\' can be run against any problem hosts.
 
 .TP 10
 .BR
@@ -303,7 +303,7 @@ Verifies the given hosts can properly communicate with the SA and any cached SA 
 .PP
 
 .B NOTE:
-This operation requires that the hosts being queried be specified by a resolvable TCP/IP host name. This operation FAILS if the selected hosts are specified by IP address.
+This operation requires that the hosts being queried are specified by a resolvable TCP/IP host name. This operation FAILS if the selected hosts are specified by IP address.
 
 
 .TP 10

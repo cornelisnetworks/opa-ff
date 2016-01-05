@@ -48,8 +48,9 @@ BINDIR=${BINDIR:-/usr/sbin}
 
 Usage_full()
 {
-	echo "Usage: opacmdall [-Cpq] [-f hostfile] [-F chassisfile] [-h 'hosts'] [-H 'chassis']" >&2
-	echo "              [-u user] [-S] [-m 'marker'] [-T timelimit] [-P] 'cmd'" >&2
+	echo "Usage: opacmdall [-CpqPS] [-f hostfile] [-F chassisfile] [-h 'hosts']" >&2
+	echo "                    [-H 'chassis'] [-u user] [-m 'marker'] [-T timelimit]" >&2
+	echo "                    'cmd'" >&2
 	echo "              or" >&2
 	echo "       opacmdall --help" >&2
 	echo "   --help - produce full help text" >&2
@@ -69,7 +70,7 @@ Usage_full()
 	echo "           if omitted defaults to chassis command prompt" >&2
 	echo "           this may be a regular expression" >&2
 	echo "   -T timelimit - timelimit in seconds when running host commands" >&2
-	echo "                  default is -1 (infinite)" >&2
+	echo "           default is -1 (infinite)" >&2
 	echo "   -P      output hostname/chassis name as prefix to each output line" >&2
 	echo "           this can make script processing of output easier" >&2
 	echo " Environment:" >&2
@@ -112,8 +113,8 @@ Usage()
 	echo "           for chassis default is admin, this is ignored" >&2
 	echo "   -S - securely prompt for password for user on chassis" >&2
 	echo "   -T timelimit - timelimit in seconds when running host commands" >&2
-	echo "                  default is -1 (infinite)" >&2
-	echo "   -P      output hostname/chassis name as prefix to each output line" >&2
+	echo "           default is -1 (infinite)" >&2
+	echo "   -P - output hostname/chassis name as prefix to each output line" >&2
 	echo "           this can make script processing of output easier" >&2
 	echo "for example:" >&2
 	echo "  Operations on hosts" >&2

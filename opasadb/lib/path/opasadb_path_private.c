@@ -878,7 +878,7 @@ int op_ppath_add_vfab(op_ppath_writer_t *w,
 
 	// Note the pre-increment.
 	i = ++r->vfab_table->count;
-	strcpy(r->vfab_table->vfab[i].vfab_name, name);
+	snprintf(r->vfab_table->vfab[i].vfab_name, VFAB_NAME_LENGTH, "%s", name);
 	r->vfab_table->vfab[i].source_prefix = prefix;
 	r->vfab_table->vfab[i].pkey = pkey;
 	r->vfab_table->vfab[i].sl = sl;

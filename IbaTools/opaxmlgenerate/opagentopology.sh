@@ -30,7 +30,40 @@
 
 # [ICS VERSION STRING: unknown]
 
+
+Usage()
+{
+	echo "Usage: opagentopology [--help]" >&2
+	echo "    --help - produce full help text" >&2
+
+	exit 2
+}
+
+Usage_full()
+{
+	echo "Usage: opagentopology [--help]" >&2
+	echo "    --help - produce full help text" >&2
+	echo >&2
+	echo "    generates (to stdout) sample topology XML with subsections:" >&2
+	echo "      <LinkSummary>" >&2
+	echo "      <FIs>" >&2
+	echo "      <Switches>" >&2
+	echo "      <SMs>" >&2
+
+	exit 0
+}
+
 # Run opaxmlgenerate with fabric topology link information
+
+if [ x"$1" = "x--help" ]
+then
+	Usage_full
+fi
+
+if [ $# -ge 1 ]
+then
+	Usage
+fi
 
 echo '<?xml version="1.0" encoding="utf-8" ?>'
 echo '<Topology>'

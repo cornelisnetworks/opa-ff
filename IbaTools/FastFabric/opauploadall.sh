@@ -44,7 +44,8 @@ fi
 
 Usage_full()
 {
-	echo "Usage: opauploadall [-rp] [-f hostfile] [-d upload_dir] [-h 'hosts'] [-u user]  source_file ... dest_file" >&2
+	echo "Usage: opauploadall [-rp] [-f hostfile] [-d upload_dir] [-h 'hosts'] [-u user]" >&2
+	echo "                       source_file ... dest_file" >&2
 	echo "              or" >&2
 	echo "       opauploadall --help" >&2
 	echo "   --help - produce full help text" >&2
@@ -70,7 +71,8 @@ Usage_full()
 	echo "A local directory within upload_dir/ will be created for each hostname." >&2
 	echo "Destination file will be upload_dir/hostname/dest_file within the local system." >&2
 	echo "If copying multiple files, dest_file directory will be created." >&2
-	echo "To copy files from this host to hosts in the cluster use opascpall or opadownloadall." >&2
+	echo "To copy files from this host to hosts in the cluster use opascpall or" >&2
+	echo "   opadownloadall." >&2
 	exit 0
 }
 
@@ -93,7 +95,8 @@ Usage()
 	echo "A local directory within uploads/ will be created for each hostname." >&2
 	echo "Destination file will be uploads/hostname/dest_file within the local system." >&2
 	echo "If copying multiple files, dest_file directory will be created." >&2
-	echo "To copy files from this host to hosts in the cluster use opascpall or opadownloadall." >&2
+	echo "To copy files from this host to hosts in the cluster use opascpall or" >&2
+	echo "   opadownloadall." >&2
 	exit 2
 }
 

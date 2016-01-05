@@ -95,7 +95,7 @@ for more information.
 .TP 10
 -T \fItopology\(ulinput\fR 
 .NL
-Name of a topology input file to use. The filename may have %P as a marker which is replaced with the hfi:port being operated on (such as 0:0 or 1:2). The default filename is /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used.
+Name of a topology input file to use. The filename may have %P as a marker which is replaced with the hfi:port being operated on, such as 0:0 or 1:2. The default filename is specified by \fBFF\(ulTOPOLOGY\(ulFILE\fR as /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used.
 .SH Example 
 .NL
 opareports opareports -p \'1:1 2:1\'

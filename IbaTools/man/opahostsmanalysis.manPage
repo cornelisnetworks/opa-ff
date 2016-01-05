@@ -15,7 +15,15 @@ opahostsmanalysis
 .PP
 
 \fB(All)\fR
-Performs analysis against the local server only.
+Performs analysis against the local server only. It is assumed that both the host SM and the FastFabric are installed on the same system.
+.PP
+The host SM analysis tool checks the following:
+.IP \(bu
+Host SM software version
+.IP \(bu
+Host SM configuration file (simple text compare using FF\(ulDIFF\(ulCMD)
+.IP \(bu
+Host SM health (for example, is it running?)
 .SH Syntax
 .NL
 opahostsmanalysis [-b|-e] [-s] [-d \fIdir\fR]
@@ -45,16 +53,6 @@ Top-level directory for saving baseline and history of failed checks. Default = 
 .SH Example 
 .NL
 opahostsmanalysis
-.PP
-The host SM analysis tool checks the following:
-.IP \(bu
-Host SM software version
-.IP \(bu
-Host SM configuration file (simple text compare using FF\(ulDIFF\(ulCMD)
-.IP \(bu
-Host SM health (for example, is it running?)
-.PP
-The opahostsmanalysis tool performs analysis against the local server only. It is assumed that both the host SM and the FastFabric are installed on the same system.
 .SH Environment Variables
 .NL
 
@@ -64,10 +62,14 @@ The following environment variables are also used by this command:
 \fBFF\(ulANALYSIS\(ulDIR\fR 
 .NL
 Top-level directory for baselines and failed health checks.
-.IP \(bu
-FF\(ulCURTIME - Timestamp to use on the directory created in FF\(ulDIFF\(ulCMD.
-.IP \(bu
-FF\(ulDIFF\(ulCMD - Linux* command to use to compare baseline to latest snapshot.
+.TP 10
+\fBFF\(ulCURTIME\fR 
+.NL
+Timestamp to use on the directory created in FF\(ulDIFF\(ulCMD.
+.TP 10
+\fBFF\(ulDIFF\(ulCMD\fR 
+.NL
+Linux* command to use to compare baseline to latest snapshot.
 .SH Details
 .NL
 
@@ -84,7 +86,7 @@ Baseline
 .IP \(bu
 baseline/hostsm.smver - Host SM version.
 .IP \(bu
-baseline/hostsm.smconfig - Copy of ifs\(ulfm.config .During a baseline run, the files are also created in FF\(ulANALYSIS\(ulDIR/latest.
+baseline/hostsm.smconfig - Copy of opafm.config .During a baseline run, the files are also created in FF\(ulANALYSIS\(ulDIR/latest.
 
 .IP \(bu
 Full analysis
@@ -94,17 +96,17 @@ latest/hostsm.smstatus - Output of the sm\(ulquery smShowStatus command.
 latest/hostsm.smver - Host SM version. latest/hostsm.smver.diff - diff of the baseline and latest host SM version.
 
 .IP \(bu
-latest/hostsm.smconfig - Copy of ifs\(ulfm.xml.
+latest/hostsm.smconfig - Copy of opafm.xml.
 .IP \(bu
-latest/hostsm.smconfig.diff - diff of the baseline and the latest ifs\(ulfm.xml .The .diff files are only created if differences are detected.
+latest/hostsm.smconfig.diff - diff of the baseline and the latest opafm.xml .The .diff files are only created if differences are detected.
 If the -s option is used and failures are detected, files related to the checks that failed are also copied to a time-stamped directory name under FF\(ulANALYSIS\(ulDIR.
 
 .IP \(bu
 Host SM items checked against the baseline
 .IP \(bu
-SM configuration file
+SM configuration file.
 .IP \(bu
-Version of the SM rpm installed on the system
+Version of the SM rpm installed on the system.
 .IP \(bu
 Host SM items also checked during healthcheck
 .IP \(bu

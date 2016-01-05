@@ -13,18 +13,17 @@ opaextractsellinks
 .NL
 
 .PP
-
-\fB(Linux)\fR
-Produces a CSV file listing all the links that exceed the present or specified opareport -o errors thresholds. The output from this tool can be reviewed and supplied as input to opadisableports.
+Produces a CSV file listing all or some of the links in the fabric. opaextractsellinks.sh is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
 .SH Syntax 
 .NL
-opaextractsellinks [opareport \fIoptions\fR]
-.PP
-or
-.br
-opaextractsellinks --help
+opaextractsellinks [--help] [opareport \fIoptions\fR]
 .SH Options 
 .NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
 
 .TP 10
 opareport \fIoptions\fR 
@@ -33,6 +32,24 @@ Options are passed to opareport.
 
 .SH Examples 
 .NL
-opaextractsellinks
+# List all the links in the fabric:
 .br
-opaextractsellinks -h 1 -p 2
+opaextractsellinks.sh
+.br
+
+.br
+# List all the links to a switch named "OmniPth00117501ffffffff":
+.br
+opaextractsellinks.sh -F "node:OmniPth00117501ffffffff"
+.br
+
+.br
+# List all the connections to end-nodes:
+.br
+opaextractsellinks.sh -F "nodetype:FI"
+.br
+
+.br
+# List all the links on the 2nd HFI\'s fabric of a multi-plane fabric:
+.br
+opaextractsellinks.sh -h 2

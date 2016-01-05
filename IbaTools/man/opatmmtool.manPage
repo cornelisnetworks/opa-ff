@@ -1,0 +1,112 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opatmmtool 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opatmmtool
+
+.NL
+
+.PP
+
+\fB(Host)\fR
+Manages and updates the firmware on the Thermal Management Microchip (TMM).
+.SH Syntax
+.NL
+opatmmtool [-v] [-h \fIhfi\fR] [-f \fIfile\fR] \fIoperation\fR
+.SH Options
+.NL
+
+.TP 10
+--h 
+.NL
+Produces full help text.
+
+.TP 10
+-v 
+.NL
+Produces verbose output.
+
+.TP 10
+-h \fIhfi\fR 
+.NL
+HFI, numbered 1..n. Default = 1.
+
+.TP 10
+-f \fIfile\fR 
+.NL
+File parameter for  \fIfileversion\fR,  \fIupdate\fR, and  \fIdumpotp\fR operations.
+
+.TP 10
+ \fIoperation\fR 
+.NL
+Includes one of the following:
+
+.RS
+.TP 10
+
+.sp
+reboot 
+Reboots the TMM.
+.RE
+
+.RS
+.TP 10
+
+.sp
+fwversion 
+Reports the current firmware version.
+.RE
+
+.RS
+.TP 10
+
+.sp
+fileversion 
+Reports the file version. Requires -f \fIfw\(ulfile\fR option.
+.RE
+
+.RS
+.TP 10
+
+.sp
+update 
+Performs a firmware update. Requires -f \fIfw\(ulfile\fR option.
+.RE
+
+.RS
+.TP 10
+
+.sp
+dumpotp 
+Dumps the one-time programmable (OTP) region. Requires -f \fIoutput\(ulfile\fR option.
+.RE
+
+.RS
+.TP 10
+
+.sp
+lockotp 
+Locks the one-time programmable (OTP) region.
+.RE
+
+.RS
+.TP 10
+
+.sp
+status 
+Displays the current GPIO pin status.
+.RE
+
+.SH Examples 
+.NL
+opatmmtool -h 1 fwversion
+.br
+opatmmtool -v -f main.signed.bin update
+.br
+opatmmtool reboot

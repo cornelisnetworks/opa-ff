@@ -64,7 +64,8 @@ Usage_full()
 	echo "   --help - produce full help text" >&2
 	echo "   -R - skip the running test (ssh), recommended if password-less ssh not setup" >&2
 	echo "   -A - skip the active test, recommended if OPA software or fabric is not up" >&2
-	echo "   -Q - skip the quarantine test, recommended if OPA software or fabric is not up" >&2
+	echo "   -Q - skip the quarantine test, recommended if OPA software or fabric is not" >&2
+	echo "        up" >&2
 	echo "   -d - directory in which to create alive, active, running, good and bad files" >&2
 	echo "        default is $CONFIG_DIR/opa" >&2
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
@@ -113,7 +114,8 @@ Usage()
 	echo "   --help - produce full help text" >&2
 	echo "   -R - skip the running test (ssh), recommended if password-less ssh not setup" >&2
 	echo "   -A - skip the active test, recommended if OPA software or fabric is not up" >&2
-	echo "   -Q - skip the quarantine test, recommended if OPA software or fabric is not up" >&2
+	echo "   -Q - skip the quarantine test, recommended if OPA software or fabric is not" >&2
+	echo "        up" >&2
 	echo "   -d - directory in which to create alive, active, running, good and bad files" >&2
 	echo "        default is $CONFIG_DIR/opa" >&2
 	echo "   -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2

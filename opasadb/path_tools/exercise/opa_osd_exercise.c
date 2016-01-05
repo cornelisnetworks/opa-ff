@@ -206,11 +206,14 @@ static void
 usage(char **argv)
 {
 	fprintf(stderr, "Usage: %s [opts] guidlist\n", argv[0]);
+	fprintf(stderr, "Stress test SM and Distributed SA query system\n");
 	fprintf(stderr, "\toptions include:\n");
+	fprintf(stderr, "\t--help\n");
+	fprintf(stderr, "\t\tProvide this help text.");
 	fprintf(stderr, "\t-d <debug level>\n");
 	fprintf(stderr, "\t\t set debugging level.\n");
 	fprintf(stderr, "\t-s <seconds>\n");
-	fprintf(stderr, "\t\tRun for at least <seconds> seconds\n");
+	fprintf(stderr, "\t\tRun for at least <seconds> seconds.\n");
 	fprintf(stderr, "\t-r <remote>\n");
 	fprintf(stderr, "\t\tThe host running the fabric simulator.\n");
 	fprintf(stderr, "\t-x <count>\n");
@@ -239,7 +242,7 @@ usage(char **argv)
 	fprintf(stderr,
 			"guids and lids (i.e., from build_table.pl)\n");
 	fprintf(stderr,
-			"\nExample:\t./op_exercise -P 0x9001  guidtable\n");
+			"\nExample:\t%s -p 0x9001  guidtable\n", argv[0]);
 }
 
 static record *dest_ports;
@@ -323,6 +326,13 @@ main(int argc, char **argv)
 	enable_ports = 0;
 	srctogglerate = SRCTOGGLERATE;
 	delay = DELAY;
+
+	if (argc > 1){
+		if (!strcmp(argv[1], "--help")){
+			usage(argv);
+			exit(0);
+		}
+	}
 
 	while ((c = getopt(argc, argv, "ed:s:r:p:S:x:X:t:D:")) != EOF) {
 		switch (c) {

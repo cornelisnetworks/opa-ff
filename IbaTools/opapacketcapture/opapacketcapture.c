@@ -111,7 +111,7 @@ int						ioctlConfigured = 0;
 qibPacketFilterCommand_t	filterCmd;
 uint32					filterValue;
 
-uint64 					Debug = 0;
+int						verbose = 0;
 
 static void my_handler(int signal)
 {
@@ -828,7 +828,7 @@ void advanceCurrentBlock(packet *p)
 	currentBlock += (p->numBlocks * BLOCKSIZE);
 
 	/* wrap if big packet will be too big */
-	if ((blocksTableSize - (currentBlock - blocks)) < IB_PACKET_SIZE) {
+	if ((blocksTableSize - (currentBlock - blocks)) < STL_MAX_PACKET_SIZE) {
 		currentBlock = blocks;
 	}
 	return;
@@ -874,7 +874,7 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 	ext.lossCtr = 				0;
 	ext.linkType =				ERF_TYPE_STORMLAKE;
 
-	if (Debug && mode == WFR_MODE) {
+	if (verbose > 1 && mode == WFR_MODE) {
 		fprintf(stderr, "Direction:  %u\n", snc->Direction);
 		fprintf(stderr, "PortNumber: %u\n", snc->PortNumber);
 		fprintf(stderr, "PBC/RHF:    0x%"PRIx64"\n", snc->u.AsReg64);
@@ -910,7 +910,7 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 		fprintf(stderr, "Failed to write packet.\n");
 	}
 
-	if (Debug > 1) {
+	if (verbose > 2) {
 		fprintf(stderr, "TO PCAP: ");
 		i=0;
 		if (wfrLiteSnc.Direction == 2) {
@@ -1009,24 +1009,24 @@ void writePacketData()
 static void Usage()
 {
 	fprintf(stderr, "Usage: opapacketcapture [-o outfile] [-d devfile] [-f filterfile] [-t triggerfile] [-l triggerlag]\n");
-	fprintf(stderr, "                          [-a alarm] [-p packets] [-s maxblocks] [ -m mode ] [-v] [-h] [-D]\n");
-	fprintf(stderr, "   -o - output file for captured packets - default is packetDump.pcap\n");
-	fprintf(stderr, "   -d - device file for capturing packets - default is /dev/hfi1_diagpkt0\n");
+	fprintf(stderr, "                          [-a alarm] [-p packets] [-s maxblocks] [-v [-v]] [-h]\n");
+	fprintf(stderr, "   -o - output file for captured packets - default is "PACKET_OUT_FILE"\n");
+	fprintf(stderr, "   -d - device file for capturing packets - default is "WFR_CAPTURE_FILE"\n");
 	fprintf(stderr, "   -f - filter file used for filtering - if absent, no filtering\n");
 	fprintf(stderr, "   -t - trigger file used for triggering a stop capture - if absent, normal triggering \n");
 	fprintf(stderr, "   -l - trigger lag: number of packets to collect after trigger condition met before dump and exit (default is 10)\n");
 	fprintf(stderr, "   -a - number of seconds for alarm trigger to dump capture and exit\n");
 	fprintf(stderr, "   -p - number of packets for alarm trigger to dump capture and exit\n");
 	fprintf(stderr, "   -s - number of blocks to allocate for ring buffer (in Millions) [block = 64 Bytes] - default is 2 (128 MiB)\n");
-	//fprintf(stderr, "   -m - protocol mode: 1=DebugTool, 2=WFR; default is WFR\n");
-	fprintf(stderr, "   -v - verbose output\n");
-	fprintf(stderr, "   -h - Print this output\n");
-	fprintf(stderr, "   -D - increase Debugging (Use Debug Level 1+ to show levels)\n");
-	if (Debug) {
-		fprintf(stderr, "        Level 1: Basic Packet read info \n");	
-		fprintf(stderr, "        Level 2: HEX Dump of packet going into output file\n");
-		fprintf(stderr, "        Level 3: HEX Dump of data coming over snoop device\n");
+//	fprintf(stderr, "   -m - protocol mode: 1=DebugTool, 2=WFR; default is WFR\n");
+	fprintf(stderr, "   -v - verbose output (Use verbose Level 1+ to show levels)\n");
+	if (verbose) {
+		fprintf(stderr, "        Level 1: Live Packet Count\n");
+		fprintf(stderr, "        Level 2: Basic Packet read info \n");
+		fprintf(stderr, "        Level 3: HEX Dump of packet going into output file\n");
+		fprintf(stderr, "        Level 4: HEX Dump of data coming over snoop device\n");
 	}
+	fprintf(stderr, "   -h - Print this output\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "To stop capture and trigger dump, kill with SIGINT or SIGUSR1.\n");
 	fprintf(stderr, "Program will dump packets to file and exit\n");
@@ -1042,7 +1042,7 @@ int main (int argc, char *argv[])
 	int		    c;
 	packet	    *newPacket;
 	char	    strArg[64] = {0};
-	const char  *opts="a:p:m:f:t:d:o:l:s:vhD"; //D to be removed before release
+	const char  *opts="o:d:f:t:l:a:p:s:m:vh";
 	FILE	    *fp = NULL;
 	int		    fd = 0;
 #if __GNUC_PREREQ(4,8)
@@ -1051,7 +1051,6 @@ int main (int argc, char *argv[])
 	struct timeval tv;
 #endif
 	uint64      numblocks = DEFAULT_NUMBLOCKS;
-	int         verbose = 0;
 	unsigned    lasttime=0;
 
 	while (-1 != (c = getopt(argc, argv, opts))) {
@@ -1106,14 +1105,11 @@ int main (int argc, char *argv[])
 			numblocks *= (1024 * 1024);
 			break;
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 		case 'h':
 			Usage();
 			exit(0);
-		case 'D':
-			Debug++;
-			break;
 		default:
 			fprintf(stderr, "opapacketcapture: Invalid option -%c\n", c);
 			Usage();
@@ -1135,11 +1131,19 @@ int main (int argc, char *argv[])
 		alarmArg *= alarmMult;
 	}
 
-	if (gotdevfile && !gotModeArg) {
-		if (strncmp(devfile, WFR_CAPTURE_FILE, strlen(WFR_CAPTURE_FILE)-1) == 0)
-			mode = WFR_MODE;
-		else if (strncmp(devfile, DEBUG_TOOL_CAPTURE_FILE, strlen(DEBUG_TOOL_CAPTURE_FILE)-5) == 0)
-			mode = DEBUG_TOOL_MODE;
+	if (gotdevfile) {
+		if (strncmp(devfile, WFR_CAPTURE_FILE, strlen(WFR_CAPTURE_FILE)-1) == 0
+			&& strlen(devfile) == strlen(WFR_CAPTURE_FILE))
+			mode = (gotModeArg ? mode : WFR_MODE);
+		else if (strncmp(devfile, DEBUG_TOOL_CAPTURE_FILE, strlen(DEBUG_TOOL_CAPTURE_FILE)-5) == 0
+			&& strlen(devfile) == strlen(DEBUG_TOOL_CAPTURE_FILE))
+			mode = (gotModeArg ? mode : DEBUG_TOOL_MODE);
+		else {
+			fprintf(stderr, "opapacketcapture: Error device string [%s] does not match expected string [%s]\n",
+				devfile, WFR_CAPTURE_FILE);
+			Usage();
+			exit(3);
+		}
 	}
 	
 	if (!gotdevfile) {
@@ -1189,9 +1193,7 @@ int main (int argc, char *argv[])
 	
 	if (fdIn < 0) {
 		fprintf(stderr, "opapacketcapture: Unable to open: %s: mode %u: %s\n",
-                    gotdevfile ? devfile:
-                    (mode == WFR_MODE ? WFR_CAPTURE_FILE : DEBUG_TOOL_CAPTURE_FILE),
-                    mode, strerror(errno));
+			devfile, mode, strerror(errno));
 		free(packets);
 		return -1;
 	}
@@ -1263,10 +1265,10 @@ int main (int argc, char *argv[])
 		gettimeofday(&tv, NULL);
 #endif
 		numPacketsRead++;
-		if (Debug) {
+		if (verbose > 1) {
 			fprintf(stderr, "Packet %u", numPacketsRead);
 		}
-		if (Debug > 2) {
+		if (verbose > 3) {
 			fprintf(stderr," numRead: %u 0x%x", numRead, numRead);
 			for ( i = 0; i < numRead; i++) {
 				if (i % 8 == 0) fprintf(stderr, "\n0x%04x ", i);
@@ -1274,7 +1276,7 @@ int main (int argc, char *argv[])
 				if (i % 8 == 3) fprintf(stderr, " ");
 			}
 		}
-		if (Debug) fprintf(stderr, "\n");
+		if (verbose > 1) fprintf(stderr, "\n");
 
 		/* get next packet and fill it */
 		newPacket = getPacket();
@@ -1300,10 +1302,10 @@ int main (int argc, char *argv[])
 		advanceCurrentBlock(newPacket);
 
 #if __GNUC_PREREQ(4,8)
-		if (!Debug && verbose && ts.tv_sec > lasttime+5) {
+		if (verbose == 1 && ts.tv_sec > lasttime+5) {
 			lasttime = ts.tv_sec;
 #else
-		if (!Debug && verbose && tv.tv_sec > lasttime+5) {
+		if (verbose == 1 && tv.tv_sec > lasttime+5) {
 			lasttime = tv.tv_sec;
 #endif
 			printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%10u packets", numPacketsRead);

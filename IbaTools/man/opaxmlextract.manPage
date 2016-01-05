@@ -98,15 +98,15 @@ mindy2 HFI-1;0x0002c9020025a67b;2
 .br
 MT25408 ConnectX Mellanox Technologies;0x0002c9030000079b;2
 .br
-cuda;0x00066a009800413e;2
+cuda;0x001175009800413e;2
 .br
-duster;0x00066a009800447b;2
+duster;0x001175009800447b;2
 .br
-stewie HFI-1;0x00066a0098007b70;2
+stewie HFI-1;0x0011750098007b70;2
 .br
-i9k159 Spine 1, Chip B;0x00066a00da000159;24
+i9k159 Spine 1, Chip B;0x00117500da000159;24
 .br
-i9k159 Spine 2, Chip B;0x00066a00da000159;24
+i9k159 Spine 2, Chip B;0x00117500da000159;24
 .br
 i9k159 Spine 1, Chip A;;
 .br

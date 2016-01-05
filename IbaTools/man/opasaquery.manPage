@@ -38,6 +38,9 @@ opasaquery --help
 .SH Options
 .NL
 
+.SH Options
+.NL
+
 .TP 10
 --help 
 .NL
@@ -213,7 +216,7 @@ Switch
 .PP
 Specify a 64-bit subnet and 64-bit interface ID in the form:  \fIsubnet\fR: \fIinterface\fR 
 .PP
-For example:0xfe80000000000000:0x00066a00a0000380
+For example:0xfe80000000000000:0x00117500a0000380
 .SH Output Types
 .NL
 

@@ -46,10 +46,6 @@ then
 	export FF_IPOIB_SUFFIX=""
 fi
 
-temp="$(mktemp --tmpdir "opatest.XXXXXX")"
-trap "rm -f $temp; exit 1" 1 2 3 9 15 
-trap "rm -f $temp" EXIT
-
 # identify how we are being run, affects valid options and usage
 mode=invalid
 cmd=`basename $0`
@@ -73,7 +69,7 @@ Usage_opahostadmin_full()
 	echo "  --help - produce full help text" >&2
 	echo "  -c - clobber result files from any previous run before starting this run" >&2
 	echo "  -i ipoib_suffix - suffix to apply to host names to create ipoib host names" >&2
-	echo "         default is '$FF_IPOIB_SUFFIX'" >&2
+	echo "                    default is '$FF_IPOIB_SUFFIX'" >&2
 	echo "  -f hostfile - file with hosts in cluster, default is $CONFIG_DIR/opa/hosts" >&2
 	echo "  -h hosts - list of hosts to execute operation against" >&2
 	echo "  -r release - IntelOPA release to load/upgrade to, default is $FF_PRODUCT_VERSION" >&2
@@ -81,22 +77,24 @@ Usage_opahostadmin_full()
 	echo "  -I install_options - IntelOPA install options" >&2
 	echo "  -U upgrade_options - IntelOPA upgrade options" >&2
 	echo "  -T product - IntelOPA product type to install" >&2
-	echo "           default is $FF_PRODUCT" >&2
-	echo "           Other options include: IntelOPA-Basic.<distro>, IntelOPA-IFS.<distro>" >&2
-	echo "           Where <distro> is the distro and CPU, such as RHEL7-x86_64" >&2
+	echo "               default is $FF_PRODUCT" >&2
+	echo "               Other options include: IntelOPA-Basic.<distro>," >&2
+	echo "                                      IntelOPA-IFS.<distro>" >&2
+	echo "               Where <distro> is the distro and CPU, such as RHEL7-x86_64" >&2
 	echo "  -P packages - IntelOPA packages to install, default is '$FF_PACKAGES'" >&2
 	echo "                See IntelOPA INSTALL -C for a complete list of packages" >&2
 	echo "  -m netmask - IPoIB netmask to use for configipoib" >&2
 	echo "  -S - securely prompt for password for user on remote system" >&2
 	echo "  operation - operation to perform. operation can be one or more of:" >&2
-	echo "     load - initial install of all hosts" >&2
-	echo "     upgrade - upgrade install of all hosts" >&2
-	echo "     configipoib - create ifcfg-ib1 using host IP addr from /etc/hosts" >&2
-	echo "     reboot - reboot hosts, ensure they go down and come back" >&2
-	echo "     sacache - confirm sacache has all hosts in it" >&2
-	echo "     ipoibping - verify this host can ping each host via IPoIB" >&2
-	echo "     mpiperf - verify latency and bandwitch for each host" >&2
-	echo "     mpiperfdeviation - check for latency and bandwidth tolerance deviation between hosts" >&2
+	echo "              load - initial install of all hosts" >&2
+	echo "              upgrade - upgrade install of all hosts" >&2
+	echo "              configipoib - create ifcfg-ib1 using host IP addr from /etc/hosts" >&2
+	echo "              reboot - reboot hosts, ensure they go down and come back" >&2
+	echo "              sacache - confirm sacache has all hosts in it" >&2
+	echo "              ipoibping - verify this host can ping each host via IPoIB" >&2
+	echo "              mpiperf - verify latency and bandwidth for each host" >&2
+	echo "              mpiperfdeviation - check for latency and bandwidth tolerance" >&2
+	echo "                                 deviation between hosts" >&2
 	echo " Environment:" >&2
 	echo "   HOSTS - list of hosts, used if -h option not supplied" >&2
 	echo "   HOSTS_FILE - file containing list of hosts, used in absence of -f and -h" >&2
@@ -113,15 +111,13 @@ Usage_opahostadmin_full()
 	echo "  save_tmp/ - contains a directory per failed operation with detailed logs" >&2
 	echo "  test_tmp*/ - intermediate result files while operation is running" >&2
 	echo "-c option will remove all of the above" >&2
-   # remove temporary work directory
-   rm -rf $temp
 	exit 0
 }
 Usage_opachassisadmin_full()
 {
 	echo "Usage: opachassisadmin [-c] [-F chassisfile] [-H 'chassis'] " >&2
 	echo "              [-P packages] [-a action] [-I fm_bootstate]" >&2
-    echo "              [-S] [-d upload_dir] [-s securityfiles] operation ..." >&2
+	echo "              [-S] [-d upload_dir] [-s securityfiles] operation ..." >&2
 	echo "              or" >&2
 	echo "       opachassisadmin --help" >&2
 	echo "  --help - produce full help text" >&2
@@ -154,6 +150,8 @@ Usage_opachassisadmin_full()
 	echo "                 restartall- restart FM on all MM" >&2
 	echo "              For Chassis fmsecurityfiles:" >&2
 	echo "                 push   - ensure FM security files are in chassis" >&2
+	echo "                 restart- after push, restart FM on master, stop on slave" >&2
+	echo "                 restartall - after push, restart FM on all MM" >&2
 	echo "  -I fm_bootstate fmconfig and fmcontrol install options" >&2
 	echo "                 disable - disable FM start at chassis boot" >&2
 	echo "                 enable - enable FM start on master at chassis boot" >&2
@@ -195,8 +193,6 @@ Usage_opachassisadmin_full()
 	echo "  save_tmp/ - contains a directory per failed operation with detailed logs" >&2
 	echo "  test_tmp*/ - intermediate result files while operation is running" >&2
 	echo "-c option will remove all of the above" >&2
-   # remove temporary work directory
-   rm -rf $temp
 	exit 0
 }
 Usage_opaswitchadmin_full()
@@ -228,19 +224,22 @@ Usage_opaswitchadmin_full()
 	echo "              select - ensure firmware is in primary" >&2
 	echo "              run    - ensure firmware is in primary and running" >&2
 	echo "              default is select" >&2
-	echo "  -O - override: for firmware upgrade, bypass version checks and force update unconditionally" >&2
+	echo "  -O - override: for firmware upgrade, bypass version checks and force update" >&2
+	echo "           unconditionally" >&2
 	echo "  operation - operation to perform. operation can be one or more of:" >&2
-   echo "     reboot - reboot switches, ensure they go down and come back" >&2
-   echo "     configure - run wizard to set up switch configuration" >&2
-   echo "     upgrade - upgrade install of all switches" >&2
-   echo "     info - report f/w & h/w version, part number, and data rate capability of all OPA switches" >&2
-   echo "     hwvpd - complete hardware VPD report of all OPA switches" >&2
-   echo "     ping - ping all OPA switches - test for presence" >&2
-   echo "     fwverify - report integrity of failsafe firmware of all OPA switches" >&2
-   echo "     getconfig - get port configurations of a externally managed switch" >&2
+	echo "     reboot - reboot switches, ensure they go down and come back" >&2
+	echo "     configure - run wizard to set up switch configuration" >&2
+	echo "     upgrade - upgrade install of all switches" >&2
+	echo "     info - report f/w & h/w version, part number, and data rate capability of" >&2
+	echo "            all OPA switches" >&2
+	echo "     hwvpd - complete hardware VPD report of all OPA switches" >&2
+	echo "     ping - ping all OPA switches - test for presence" >&2
+	echo "     fwverify - report integrity of failsafe firmware of all OPA switches" >&2
+	echo "     getconfig - get port configurations of a externally managed switch" >&2
 	echo " Environment:" >&2
 	echo "   OPASWITCHES - list of nodes, used if -N and -L option not supplied" >&2
-	echo "   OPASWITCHES_FILE - file containing list of nodes, used in absence of -N and -L" >&2
+	echo "   OPASWITCHES_FILE - file containing list of nodes, used in absence of -N and" >&2
+	echo "                      -L" >&2
 	echo "   FF_MAX_PARALLEL - maximum concurrent operations" >&2
 	echo "   FF_SERIALIZE_OUTPUT - serialize output of parallel operations (yes or no)" >&2
 	echo "for example:" >&2
@@ -253,8 +252,6 @@ Usage_opaswitchadmin_full()
 	echo "  save_tmp/ - contains a directory per failed operation with detailed logs" >&2
 	echo "  test_tmp*/ - intermediate result files while operation is running" >&2
 	echo "-c option will remove all of the above" >&2
-   # remove temporary work directory
-   rm -rf $temp
 	exit 0
 }
 Usage_full()
@@ -277,21 +274,22 @@ Usage_opahostadmin()
 	echo "  -r release - IntelOPA release to load/upgrade to, default is $FF_PRODUCT_VERSION" >&2
 	echo "  -d dir - directory to get product.release.tgz from for load/upgrade" >&2
 	echo "  -T product - IntelOPA product type to install" >&2
-	echo "           default is $FF_PRODUCT" >&2
-	echo "           Other options include: IntelOPA-Basic.<distro>, IntelOPA-IFS.<distro>" >&2
-	echo "           Where <distro> is the distro and CPU, such as RHEL7-x86_64" >&2
+	echo "               default is $FF_PRODUCT" >&2
+	echo "               Other options include: IntelOPA-Basic.<distro>, IntelOPA-IFS.<distro>" >&2
+	echo "               Where <distro> is the distro and CPU, such as RHEL7-x86_64" >&2
 	echo "  -P packages - IntelOPA packages to install, default is '$FF_PACKAGES'" >&2
 	echo "                See IntelOPA INSTALL -C for a complete list of packages" >&2
 	echo "  -S - securely prompt for password for user on remote system" >&2
 	echo "  operation - operation to perform. operation can be one or more of:" >&2
-	echo "     load - initial install of all hosts" >&2
-	echo "     upgrade - upgrade install of all hosts" >&2
-	echo "     configipoib - create ifcfg-ib1 using host IP addr from /etc/hosts" >&2
-	echo "     reboot - reboot hosts, ensure they go down and come back" >&2
-	echo "     sacache - confirm sacache has all hosts in it" >&2
-	echo "     ipoibping - verify this host can ping each host via IPoIB" >&2
-	echo "     mpiperf - verify latency and bandwitch for each host" >&2
-	echo "     mpiperfdeviation - check for latency and bandwidth tolerance deviation between hosts" >&2
+	echo "              load - initial install of all hosts" >&2
+	echo "              upgrade - upgrade install of all hosts" >&2
+	echo "              configipoib - create ifcfg-ib1 using host IP addr from /etc/hosts" >&2
+	echo "              reboot - reboot hosts, ensure they go down and come back" >&2
+	echo "              sacache - confirm sacache has all hosts in it" >&2
+	echo "              ipoibping - verify this host can ping each host via IPoIB" >&2
+	echo "              mpiperf - verify latency and bandwidth for each host" >&2
+	echo "              mpiperfdeviation - check for latency and bandwidth tolerance" >&2
+	echo "                        	       deviation between hosts" >&2
 	echo "for example:" >&2
 	echo "   opahostadmin  -c reboot" >&2
 	echo "   opahostadmin  upgrade" >&2
@@ -301,8 +299,6 @@ Usage_opahostadmin()
 	echo "  save_tmp/ - contains a directory per failed test with detailed logs" >&2
 	echo "  test_tmp*/ - intermediate result files while test is running" >&2
 	echo "-c option will remove all of the above" >&2
-   # remove temporary work directory
-   rm -rf $temp
 	exit 2
 }
 Usage_opachassisadmin()
@@ -341,6 +337,8 @@ Usage_opachassisadmin()
 	echo "                 restartall- restart FM on all MM" >&2
 	echo "              For Chassis fmsecurityfiles:" >&2
 	echo "                 push   - ensure FM security files are in chassis" >&2
+	echo "                 restart- after push, restart FM on master, stop on slave" >&2
+	echo "                 restartall - after push, restart FM on all MM" >&2
 	echo "  -I fm_bootstate fmconfig and fmcontrol install options" >&2
 	echo "                 disable - disable FM start at chassis boot" >&2
 	echo "                 enable - enable FM start on master at chassis boot" >&2
@@ -374,8 +372,6 @@ Usage_opachassisadmin()
 	echo "  save_tmp/ - contains a directory per failed operation with detailed logs" >&2
 	echo "  test_tmp*/ - intermediate result files while operation is running" >&2
 	echo "-c option will remove all of the above" >&2
-   # remove temporary work directory
-   rm -rf $temp
 	exit 2
 }
 Usage_opaswitchadmin()
@@ -396,16 +392,18 @@ Usage_opaswitchadmin()
 	echo "              select - ensure firmware is in primary" >&2
 	echo "              run    - ensure firmware is in primary and running" >&2
 	echo "              default is select" >&2
-	echo "  -O - override: for firmware upgrade, bypass version checks and force update unconditionally" >&2
+	echo "  -O - override: for firmware upgrade, bypass version checks and force update" >&2
+	echo "           unconditionally" >&2
 	echo "  operation - operation to perform. operation can be one or more of:" >&2
-   echo "     reboot - reboot switches, ensure they go down and come back" >&2
-   echo "     configure - run wizard to set up switch configuration" >&2
-   echo "     upgrade - upgrade install of all switches" >&2
-   echo "     info - report f/w & h/w version, part number, and data rate capability of all OPA switches" >&2
-   echo "     hwvpd - complete hardware VPD report of all OPA switches" >&2
-   echo "     ping - ping all OPA switches - test for presence" >&2
-   echo "     fwverify - report integrity of failsafe firmware of all OPA switches" >&2
-   echo "     getconfig - get port configurations of a externally managed switch" >&2
+	echo "     reboot - reboot switches, ensure they go down and come back" >&2
+	echo "     configure - run wizard to set up switch configuration" >&2
+	echo "     upgrade - upgrade install of all switches" >&2
+	echo "     info - report f/w & h/w version, part number, and data rate capability of" >&2
+	echo "            all OPA switches" >&2
+	echo "     hwvpd - complete hardware VPD report of all OPA switches" >&2
+	echo "     ping - ping all OPA switches - test for presence" >&2
+	echo "     fwverify - report integrity of failsafe firmware of all OPA switches" >&2
+	echo "     getconfig - get port configurations of a externally managed switch" >&2
 	echo "for example:" >&2
 	echo "   opaswitchadmin -c reboot" >&2
 	echo "   opaswitchadmin -P /root/ChassisFw4.2.0.0.1 upgrade" >&2
@@ -416,8 +414,6 @@ Usage_opaswitchadmin()
 	echo "  save_tmp/ - contains a directory per failed operation with detailed logs" >&2
 	echo "  test_tmp*/ - intermediate result files while operation is running" >&2
 	echo "-c option will remove all of the above" >&2
-   # remove temporary work directory
-   rm -rf $temp
 	exit 2
 }
 Usage()
@@ -666,19 +662,24 @@ then
 		reboot)
 			run_test chassis_$test_suite;;
 		configure)
-			/opt/opa/tools/chassis_setup $CFG_CHASSIS
+			export CFG_CFGTEMPDIR="$(mktemp -d --tmpdir opacfgtmp.XXXXXX)"
+			# Update traps to delete all temporary directories.
+			trap "rm -rf $CFG_CFGTEMPDIR; exit 1" 1 2 3 9 15
+			trap "rm -rf $CFG_CFGTEMPDIR" EXIT
+
+			/opt/opa/tools/chassis_setup $CFG_CFGTEMPDIR $CFG_CHASSIS
 			if [ $? = 0 ]
 			then
-				export SYSLOG_SERVER=`grep "Syslog Server IP_Address" .chassisSetup.out | cut -d : -f 2`
-				export SYSLOG_PORT=`grep "Syslog Port" .chassisSetup.out | cut -d : -f 2`
-				export SYSLOG_FACILITY=`grep "Syslog Facility" .chassisSetup.out | cut -d : -f 2`
-				export NTP_SERVER=`grep "NTP Server" .chassisSetup.out | cut -d : -f 2`
-				export TZ_OFFSET=`grep "Timezone offset" .chassisSetup.out | cut -d : -f 2`
-				export DST_START=`grep "Start DST" .chassisSetup.out | cut -d : -f 2`
-				export DST_END=`grep "End DST" .chassisSetup.out | cut -d : -f 2`
-				export LINKWIDTH_SETTING=`grep "Link Width Selection" .chassisSetup.out | cut -d : -f 2`
-				export SET_NAME=`grep "Set IB Node Desc" .chassisSetup.out | cut -d : -f 2`
-				export LINKCRCMODE=`grep "Link CRC Mode" .chassisSetup.out | cut -d : -f 2`
+				export SYSLOG_SERVER=`grep "Syslog Server IP_Address" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export SYSLOG_PORT=`grep "Syslog Port" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export SYSLOG_FACILITY=`grep "Syslog Facility" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export NTP_SERVER=`grep "NTP Server" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export TZ_OFFSET=`grep "Timezone offset" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export DST_START=`grep "Start DST" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export DST_END=`grep "End DST" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export LINKWIDTH_SETTING=`grep "Link Width Selection" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export SET_NAME=`grep "Set IB Node Desc" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export LINKCRCMODE=`grep "Link CRC Mode" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
 				run_test chassis_$test_suite
 			else
 				echo "Chassis setup wizard exited abnormally ... aborting"
@@ -760,7 +761,7 @@ then
 				echo "$cmd: -s option required for chassis fmsecurityfiles" >&2
 				Usage
 			fi
-			if [ "$action" != "push" ]
+			if [ "$action" != "push" -a "$action" != "restart" -a "$action" != "restartall" ]
 			then
 				echo "$cmd: Invalid security files upgrade action: $action" >&2
 				Usage
@@ -818,13 +819,17 @@ then
 		fwverify)
 			run_test switch_$test_suite;;
 		configure)
-			/opt/opa/tools/switch_setup
+			CFG_CFGTEMPDIR="$(mktemp -d --tmpdir opacfgtmp.XXXXXX)"
+			# Update traps to delete all temporary directories.
+			trap "rm -rf $CFG_CFGTEMPDIR; exit 1" 1 2 3 9 15
+			trap "rm -rf $CFG_CFGTEMPDIR" EXIT
+			/opt/opa/tools/switch_setup $CFG_CFGTEMPDIR
 			if [ $? = 0 ]
 			then
-				export LINKWIDTH_SETTING=`grep "Link Width Selection" .switchSetup.out | cut -d : -f 2`
-				export NODEDESC_SETTING=`grep "Node Description Selection" .switchSetup.out | cut -d : -f 2`
-				export FMENABLED_SETTING=`grep "FM Enabled Selection" .switchSetup.out | cut -d : -f 2`
-				export LINKCRCMODE_SETTING=`grep "Link CRC Mode Selection" .switchSetup.out | cut -d : -f 2`
+				export LINKWIDTH_SETTING=`grep "Link Width Selection" $CFG_CFGTEMPDIR/.switchSetup.out | cut -d : -f 2`
+				export NODEDESC_SETTING=`grep "Node Description Selection" $CFG_CFGTEMPDIR/.switchSetup.out | cut -d : -f 2`
+				export FMENABLED_SETTING=`grep "FM Enabled Selection" $CFG_CFGTEMPDIR/.switchSetup.out | cut -d : -f 2`
+				export LINKCRCMODE_SETTING=`grep "Link CRC Mode Selection" $CFG_CFGTEMPDIR/.switchSetup.out | cut -d : -f 2`
 				run_test switch_$test_suite
 			else
 				echo "Ext mgd switch setup wizard exited abnormally ... aborting"
@@ -842,12 +847,11 @@ then
 				Usage
 			fi
 
-			dirnum=1
-
 			# check fw files exist, expand directories
 			CFG_FWFILES=""
 			CFG_FWBINFILES=""
 
+			CFG_TMPDIR_LIST=""
 			for fwfile in $packages
 			do
 
@@ -868,8 +872,13 @@ then
 			do
 				# create temporary work directory
 				CFG_FWFILE="$tarball"
-				CFG_FWTEMPDIR="$temp.$dirnum"
-				mkdir $CFG_FWTEMPDIR
+				CFG_FWTEMPDIR="$(mktemp -d --tmpdir opafwtmp.XXXXXX)"
+
+				# Update traps to delete all temporary directories.
+				CFG_TMPDIR_LIST="$CFG_TMPDIR_LIST $CFG_FWTEMPDIR"
+				trap "rm -rf $CFG_TMPDIR_LIST; exit 1" 1 2 3 9 15
+				trap "rm -rf $CFG_TMPDIR_LIST" EXIT
+
 				CFG_FWRELEASEFILE="$CFG_FWTEMPDIR/release.emfw.txt"
 
 				cp -f $tarball $CFG_FWTEMPDIR
@@ -929,7 +938,6 @@ then
 				echo "$cmd: upgrading with switch firmware image: $tarball : version $fwreleaseversioninfo" >&2
 				run_test switch_$test_suite
 
-				dirnum=$((dirnum + 1))
 			done
 			done
 

@@ -36,29 +36,41 @@ tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
 trap "rm -f $tempfile" EXIT
 
+cmd=`basename $0`
 Usage_full()
 {
-	echo "Usage: opaextractlids [-h hfi] [-p port]" >&2
-	echo "              or" >&2
-	echo "       opaextractlids --help" >&2
+	echo >&2
+	echo "Usage: ${cmd} [--help]|[opareport options]" >&2
 	echo "   --help - produce full help text" >&2
-	echo "   -h/--hfi hfi              - hfi to send via, default is 1st hfi" >&2
-	echo "   -p/--port port            - port to send via, default is 1st active port" >&2
+	echo "   [opareport options] - options will be passed to opareport." >&2
+	echo >&2
+	echo "${cmd} is a front end to the opareport tool that generates" >&2
+	echo "a report listing all or some of the lids in the fabric." >&2
+	echo "The output is in a CSV format suitable for importing into a spreadsheet" >&2
+	echo "or parsed by other scripts." >&2
+	echo >&2
 	echo "for example:" >&2
-	echo "   opaextractlids > lids.csv" >&2
-	echo "   opaextractlids -h 2 -p 1 > lids.csv'" >&2
+	echo "   List all the lids in the fabric:" >&2
+	echo "      ${cmd}" >&2
+	echo >&2
+	echo "   List all the lids of end-nodes:" >&2
+	echo "      ${cmd} -F \"nodetype:FI\"" >&2
+	echo >&2
+	echo "   List all the lids on the 2nd HFI's fabric of a multi-plane fabric:" >&2
+	echo "      ${cmd} -h 2" >&2
+	echo >&2
+	echo "See the man page for \"opareport\" for the full set of options." >&2
+	echo >&2
 	exit 0
 }
 
 Usage()
 {
-	echo "Usage: opaextractlids" >&2
-	echo "              or" >&2
-	echo "       opaextractlids --help" >&2
+	echo >&2
+	echo "Usage: ${cmd} [--help]|[opareport options]" >&2
 	echo "   --help - produce full help text" >&2
-	echo "for example:" >&2
-	echo "   opaextractlids > lids.csv" >&2
-	exit 2
+	echo "   [opareport options] - options will be passed to opareport." >&2
+	echo >&2
 }
 
 if [ x"$1" = "x--help" ]
@@ -73,7 +85,8 @@ then
 	cat $tempfile | /usr/sbin/opaxmlextract -H -d \; -e LIDSummary.LIDs.Value.NodeGUID -e LIDSummary.LIDs.Value.PortNum -e LIDSummary.LIDs.Value.NodeType -e LIDSummary.LIDs.Value.NodeDesc -e LIDSummary.LIDs.Value:LID
 	res=0
 else
-	echo "opaextractlids: Unable to get lids report" >&2
+	echo "${cmd}: Unable to get lids report" >&2
+	Usage
 	res=1
 fi
 		

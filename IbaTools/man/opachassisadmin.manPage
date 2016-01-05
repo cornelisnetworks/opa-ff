@@ -111,7 +111,7 @@ Ensures the configuration file is in chassis.
 
 .sp
 run 
-After push, restarts FM on master, stops on slave.
+After push, restarts FM on master, stops on secondary.
 
 .RE
 
@@ -120,7 +120,7 @@ After push, restarts FM on master, stops on slave.
 
 .sp
 runall 
-After push, restarts FM on all MM.
+After push, restarts FM on all management modules.
 
 .RE
 
@@ -137,7 +137,7 @@ For chassis fmcontrol :
 
 .sp
 stop 
-Stops FM on all MM.
+Stops FM on all management modules.
 
 .RE
 
@@ -146,7 +146,7 @@ Stops FM on all MM.
 
 .sp
 run 
-Ensures FM running on master, stopped on slave.
+Ensures FM running on master, stopped on secondary.
 
 .RE
 
@@ -155,7 +155,7 @@ Ensures FM running on master, stopped on slave.
 
 .sp
 runall 
-Ensures FM running on all MM.
+Ensures FM running on all management modules.
 
 .RE
 
@@ -164,7 +164,7 @@ Ensures FM running on all MM.
 
 .sp
 restart 
-Restarts FM on master, stops on slave.
+Restarts FM on master, stops on secondary.
 
 .RE
 
@@ -387,7 +387,7 @@ Directory to upload to, used in absence of -d.
 \fB(Switch)\fR
 All chassis operations log into the chassis as chassis user admin. Intel recommends using the -S option to securely prompt for a password, in which case the same password is used for all chassis. Alternately, the password may be put in the environment or the opafastfabric.conf file using \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR.
 .PP
-All versions of Intel(R) Omni-Path Switch 100 Family firmware permit SSH keys to be configured within the chassis for secure password-less login. In this case, there is no need to configure a \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR and \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR can be SSH. Refer to the 
+All versions of Intel(R) Omni-Path Switch 100 Series firmware permit SSH keys to be configured within the chassis for secure password-less login. In this case, there is no need to configure a \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR and \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR can be SSH. Refer to the 
 \fIIntel(R) Omni-Path Fabric Switches Command Line Interface Reference Guide\fR
 
 for more information.
@@ -405,7 +405,7 @@ For more information about chassis firmware, refer to the
 \fIIntel(R) Omni-Path Fabric Switches GUI User Guide\fR
 
 and 
-\fIIntel(R) Omni-Path Fabric Switches Release Notes\fR
+\fIIntel(R) Omni-Path Fabric Externally-Managed Switches Release Notes\fR
 
 .
 .TP 10

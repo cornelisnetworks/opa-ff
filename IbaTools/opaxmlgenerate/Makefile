@@ -149,8 +149,8 @@ include $(TL_DIR)/Makerules/Maketargets.install
 # install for stage phase
 #include $(TL_DIR)/Makerules/Maketargets.stage
 STAGE::
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) $(EXECUTABLE) opagentopology
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR)/samples opatopology_links.txt opatopology_FIs.txt opatopology_SWs.txt opatopology_SMs.txt README.topology
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) $(EXECUTABLE) 
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR)/samples opatopology_links.txt opatopology_FIs.txt opatopology_SWs.txt opatopology_SMs.txt README.topology opagentopology
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

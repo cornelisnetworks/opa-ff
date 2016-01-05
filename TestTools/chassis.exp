@@ -224,7 +224,9 @@ proc is_management_card_type { card_type } {
 ##
 ## Our best way to do this is to query slot 0 for its card type.  Slot 0
 ## is always the management card
-	return [string equal [ get_chassis_card_type 0] "$card_type" ]
+
+    	set my_slot [ get_this_slot_number ]
+	return [string equal [ get_chassis_card_type $my_slot] "$card_type" ]
 }
 
 proc get_this_slot_number { } {
@@ -245,10 +247,10 @@ proc get_this_slot_number { } {
 	global spawn_id expect_out spawn_out timeout
 	global expecting
 
-	send_chassis_cmd "chassisQuery 0"
+	send_chassis_cmd "chassisQuery -master"
 	# this could return no slots, in which case "none" is output
 	# The \r\n is needed to bound the + so we get all the data on the line
-	set out [expect_list 60 "{slot\[s\]*: \[0-9A-Za-z \]+\[\r\n\]}" { "usage" "Error" "Failed" "roblem" "not found"} ]
+	set out [expect_list 60 "{master: \[0-9A-Za-z \]+\[\r\n\]}" { "usage" "Error" "Failed" "roblem" "not found"} ]
 	expect_chassis_prompt 60
 	#log_message "out=$out"
 
@@ -901,9 +903,13 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
 ## Arguments:
 ##	chassis - IP address/name of chassis to sftp and telnet to
 ##	sec_file - local pathname of file to push
-##	action - action after pushing firmware:
-##			push   - do not reboot, do not change as primary
-##					is already primary, no change
+##	action - action after pushing FM security files:
+##			push   - push, do not restart SM
+##			run    - make sure FM running on master, not on slave
+##			runall - make sure FM running on master and slave
+##			restart - restart FM on master, make sure not running on slave
+##			restartall - restart FM on master and slave
+##			stop - stop FM on master and slave
 ##	slots - list of slot numbers to push to, default is "all" to all
 #           management cards
 ## Returns:
@@ -923,11 +929,34 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
 	global expecting
 
 	# variables:
-	if { [ string equal "$action" "push"] } {
-		set active 0
-	} else {
-		fail_test "Invalid FM security file push action: $action"
-	}
+    # runstate: 0=no change, 1=running, 2=restart, -1=stop
+    if { "$action" == "push" } {
+        set push 1
+        set master_runstate 0
+        set slave_runstate 0
+    } elseif { "$action" == "stop" } {
+        set push 0
+        set master_runstate -1
+        set slave_runstate -1
+    } elseif { "$action" == "run" } {
+        set push 0
+        set master_runstate 1
+        set slave_runstate -1
+    } elseif { "$action" == "runall" } {
+        set push 0
+        set master_runstate 1
+        set slave_runstate 1
+    } elseif { "$action" == "restart" } {
+        set push 0
+        set master_runstate 2
+        set slave_runstate -1
+    } elseif { "$action" == "restartall" } {
+        set push 0
+        set master_runstate 2
+        set slave_runstate 2
+    } else {
+        fail_test "Invalid FM security file push action: $action"
+    }
 
 	log_message "\nTest: Seeing if $chassis present running firmware supports FM security file push ...\n"
 	target_chassis_admin_sh $chassis
@@ -938,7 +967,7 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
 
 	log_message "\nTest: Getting card type of management card from $chassis ...\n"
     set my_slot [ get_this_slot_number ]
-    set mgmt_card_type [get_chassis_card_type 0]
+    set mgmt_card_type [get_chassis_card_type $my_slot]
 
     log_message "\nTest: Getting Slot list from $chassis ...\n"
 	if { [string equal "$slots" "all"] } {
@@ -958,7 +987,6 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
 		skip_case "No management cards of type $mgmt_card_type"
 		return 0
 	}
-	set use_rebootall 0
 
 	log_message "\nTest: Getting present installed firmware from $chassis ...\n"
 	# first get present card types for each of the slots
@@ -981,6 +1009,7 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
 	set need_push ""
 	set have_card 0
     set mgmt_slot ""
+    set fm_running ""
 
 	for { set i 0 } { $i < $num_slots } { incr i } {
 		set slot [lindex $push_slots $i]
@@ -1005,8 +1034,10 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
             || $cap < 1 } {
             # slot will be skipped, doesn't support smConfig
             lappend card_capabilities 0
+            lappend fm_running 0
         } else {
             lappend card_capabilities 1
+            lappend fm_running [ is_esm_running ]
             if { [ string equal "$mgmt_slot" ""] || [ string equal "$slot" "$my_slot" ] } {
                 set mgmt_slot "$slot"
             }
@@ -1019,8 +1050,12 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
 
 		set have_card 1
         # valid slot so push security file to this slot
-        lappend need_push 1
-        log_message "Test: Will need to push FM security file to slot $slot"
+        lappend need_push $push
+        if { $push } {
+            log_message "Test: Will need to push FM security file to slot $slot"
+        } else {
+            log_message "Test: No need to push FM security files slot $slot\n"
+        }
 	}
 
 	# only need do a step if applicable to at least 1 slot
@@ -1029,6 +1064,7 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
     # DEBUG
     #log_message "mgmt_slot: $mgmt_slot"
     #log_message "card_capabilities: $card_capabilities"
+    #log_message "fm_running: $fm_running"
 
     if { [ string equal "$mgmt_slot" "" ] } {
         skip_case "chassis does not have an ESM license key or does not support smConfig"
@@ -1040,7 +1076,122 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
 	#log_message "do_push: $do_push"
 	#log_message "need_push: $need_push"
 
-	if { ! ( $do_push ) } {
+    set fail 0
+    set pushed 0
+    set sftp_failures ""
+    set sftp_statuses ""
+    set need_runstate ""
+    set do_runstate 0
+
+    for { set i 0 } { $i < $num_slots } { incr i } {
+        set slot [lindex $push_slots $i]
+        if { ! [lindex $card_capabilities $i] } {
+            # if this happens card is not capable of smConfig ignore this slot
+            lappend need_runstate 0
+            log_message "Test: Skipping slot $slot: does not support smConfig"
+            continue
+        }
+        set running [ lindex $fm_running $i]
+        if { ! [ string equal "$slot" "$my_slot" ] } {
+            # slave MM
+            if { ( $slave_runstate < 0 && $running )
+                || ($slave_runstate == 1 && ! $running )
+                || $slave_runstate == 2 } {
+                lappend need_runstate $slave_runstate
+                set do_runstate 1
+                log_message "Test: Need to change runstate for FM in slot $slot"
+            } else {
+                lappend need_runstate 0
+                log_message "Test: No need to change runstate for FM in slot $slot"
+            }
+        } else {
+            # master MM
+            if { ( $master_runstate < 0 && $running )
+                || ($master_runstate == 1 && ! $running )
+                || $master_runstate == 2 } {
+                lappend need_runstate $master_runstate
+                set do_runstate 1
+                log_message "Test: Need to change runstate for FM in slot $slot"
+            } else {
+                lappend need_runstate 0
+                log_message "Test: No need to change runstate for FM in slot $slot"
+            }
+        }
+
+        if { $do_push && ( $push_all || [lindex $need_push $i] ) } {
+            # push one slot at a time
+            log_message "\nTest: sftp $sec_file to slot $slot\n"
+            sftp_chassis_security_file $chassis $sec_file
+            target_chassis_admin_sh $chassis
+
+            # check status, must do immediately after sftp
+            set status [get_chassis_sftp_status $slot 1]
+            if { [ string equal "$status" "success" ] || [ string equal "$status"  "skipped" ] } {
+                set pushed 1
+                lappend sftp_failures 0
+                lappend sftp_statuses "$status"
+            } else {
+                log_message "\nFAILURE: Failed to sftp FM security file to chassis $chassis slot $slot\n"
+                set fail 1
+                lappend sftp_failures 1
+                lappend sftp_statuses "$status"
+            }
+            if { ! $push_all } {
+                target_chassis_admin_sh_exit
+            }
+        } else {
+            # we never sftp'ed to this slot
+            lappend sftp_failures 0
+            lappend sftp_statuses "skipped"
+        }
+    }
+
+    # make sure we are logged in for operations below
+    if { ! ( $do_push && $push_all ) } {
+        target_chassis_admin_sh $chassis
+    }
+
+    # DEBUG
+    #log_message "pushed: $pushed"
+    #log_message "sftp_statuses: $sftp_statuses"
+    #log_message "sftp_failures: $sftp_failures"
+    #log_message "fail: $fail"
+
+    if { $fail } {
+        fail_test "Unable to sftp FM security file to requested slots in $chassis"
+    }
+
+    # DEBUG
+	#log_message "do_runstate: $do_runstate"
+	#log_message "need_runstate: $need_runstate"
+
+	if { $do_runstate} {
+		for { set i 0 } { $i < $num_slots } { incr i } {
+			set slot [lindex $push_slots $i]
+			set new_runstate [lindex $need_runstate $i]
+			if { $new_runstate != 0 } {
+				if { [ string equal "$slot" "$my_slot" ] } {
+					target_chassis_admin_sh $chassis
+				} else {
+					target_chassis_admin_sh $chassis $slot
+				}
+				if { $new_runstate > 0 } {
+					# easier to restart, will start if not already running
+					chassis_cmd 60 0 "smControl restart"
+					# don't wait, it would risk having mismatched esm configs
+				} elseif { $new_runstate < 0 } {
+					chassis_cmd 60 0 "smControl stop"
+				}
+				if { [ string equal "$slot" "$my_slot" ] } {
+					target_chassis_admin_sh_exit
+				} else {
+					target_chassis_admin_sh_exit 1
+				}
+			}
+		}
+	}
+
+	if { ! ( $do_push || $do_runstate ) } {
 		# we are done, everything is already the way we want it
 		if { $have_card } {
 			skip_case "No action required"
@@ -1049,64 +1200,6 @@ proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all"
 		}
 		return 0
 	}
-
-	set fail 0
-	set pushed 0
-	set sftp_failures ""
-	set sftp_statuses ""
-
-	for { set i 0 } { $i < $num_slots } { incr i } {
-		set slot [lindex $push_slots $i]
-        if { ! [lindex $card_capabilities $i] } {
-            # if this happens card is not capable of smConfig ignore this slot
-            log_message "Test: Skipping slot $slot: does not support smConfig"
-            continue
-        }
-
-		if { $do_push && ( $push_all || [lindex $need_push $i] ) } {
-            # push one slot at a time
-            log_message "\nTest: sftp $sec_file to slot $slot\n"
-            sftp_chassis_security_file $chassis $sec_file
-            target_chassis_admin_sh $chassis
-
-			# check status, must do immediately after sftp
-			set status [get_chassis_sftp_status $slot 1]
-			if { [ string equal "$status" "success" ] || [ string equal "$status"  "skipped" ] } {
-				set pushed 1
-				lappend sftp_failures 0
-				lappend sftp_statuses "$status"
-			} else {
-				log_message "\nFAILURE: Failed to sftp FM security file to chassis $chassis slot $slot\n"
-				set fail 1
-				lappend sftp_failures 1
-				lappend sftp_statuses "$status"
-			}
-			if { ! $push_all } {
-				target_chassis_admin_sh_exit
-			}
-		} else {
-			# we never sftp'ed to this slot
-			lappend sftp_failures 0
-			lappend sftp_statuses "skipped"
-		}
-	}
-
-	# make sure we are logged in for operations below
-	if { ! ( $do_push && $push_all ) } {
-		target_chassis_admin_sh $chassis
-	}
-
-	# DEBUG
-	#log_message "pushed: $pushed"
-	#log_message "sftp_statuses: $sftp_statuses"
-	#log_message "sftp_failures: $sftp_failures"
-	#log_message "fail: $fail"
-
-	if { $fail } {
-		fail_test "Unable to sftp FM security file to requested slots in $chassis"
-	}
-
-	target_chassis_admin_sh_exit
 
 	return 0
 }
@@ -1540,7 +1633,7 @@ proc push_esm_config { chassis config_file {action "push"} {bootstate ""} } {
 	log_message "\nTest: Getting Slot list from $chassis ...\n"
 	set my_slot [ get_this_slot_number ]
 	# get management card type for this chassis model
-	set mgmt_card_type [ get_chassis_card_type 0]
+	set mgmt_card_type [ get_chassis_card_type $my_slot ]
 	# all slots of matching card type (eg. all management cards)
 	set mgmt_slots [get_chassis_slots $mgmt_card_type]
 	set num_slots [llength $mgmt_slots]
@@ -1899,7 +1992,7 @@ File: TestTools/chassis.exp" noop noop {
 		log_message "\nTest: Getting Slot list from $chassis ...\n"
 		set my_slot [ get_this_slot_number ]
 		# get management card type for this chassis model
-		set mgmt_card_type [ get_chassis_card_type 0]
+		set mgmt_card_type [ get_chassis_card_type $my_slot]
 		# all slots of matching card type (eg. all management cards)
 		set mgmt_slots [get_chassis_slots $mgmt_card_type]
 		set num_slots [llength $mgmt_slots]
@@ -2013,8 +2106,8 @@ File: TestTools/chassis.exp" noop noop {
 		regexp {.+= (.+)[\r\n]} $out tmp nodeDesc
 		expect_chassis_prompt 60
  		send_chassis_cmd "ismChassisSetCrcMode"
-		set out [expect_list 240 { "ismChassisSetCrcMode" "CRD_MODE: [^\r\n]*[\r\n]" } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found" } ]
-		regexp {CRD_MODE: ([^\r\n]+)[\r\n]} $out tmp linkCRCmode
+		set out [expect_list 240 { "ismChassisSetCrcMode" "CRC_MODE: [^\r\n]*[\r\n]" } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found" } ]
+		regexp {CRC_MODE: ([^\r\n]+)[\r\n]} $out tmp linkCRCmode
 		expect_chassis_prompt 60
 		set out "
     Firmware Active        : $act_fw_version
@@ -2099,7 +2192,7 @@ File: TestTools/chassis.exp" noop noop {
 		log_message "\nTest: Getting Slot list from $chassis ...\n"
 		set my_slot [ get_this_slot_number ]
 		# get management card type for this chassis model
-		set mgmt_card_type [ get_chassis_card_type 0]
+		set mgmt_card_type [ get_chassis_card_type $my_slot]
 		# all slots of matching card type (eg. all management cards)
 		set mgmt_slots [get_chassis_slots $mgmt_card_type]
 		set num_slots [llength $mgmt_slots]

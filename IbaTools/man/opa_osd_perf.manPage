@@ -12,6 +12,8 @@ opa\(ulosd\(ulperf
 
 .NL
 
+.PP
+Tests the performance of the distributed SA shared memory database.
 .SH Syntax
 .NL
 opa\(ulosd\(ulperf [ \fIopts\fR] \fIguidtable\fR

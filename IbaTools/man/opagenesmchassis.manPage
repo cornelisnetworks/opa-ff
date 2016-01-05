@@ -13,7 +13,7 @@ opagenesmchassis
 .NL
 
 .PP
-Generates a list of chassis IPv4 and IPv6 addresses and/or TCP names where the Embedded Subnet Manager (ESM) is running, in a format acceptable for inclusion in the /etc/sysconfig/opa/ports file. This tool uses opagenchassis output to iterate through all the chassis.
+Generates a list of chassis IPv4 and IPv6 addresses and/or TCP names where the Embedded Subnet Manager (ESM) is running, in a format acceptable for inclusion in the /etc/sysconfig/opa/esm\(ulchassis file. This tool uses opagenchassis output to iterate through all the chassis.
 .SH Syntax 
 .NL
 opagenesmchassis [-u user] [-S] [-t \fIportsfile\fR] [-p \fIports\fR]

@@ -331,13 +331,13 @@ For more information about switch firmware, refer to the
 \fIIntel(R) Omni-Path Fabric Switches GUI User Guide\fR
 
 and 
-\fIIntel(R) Omni-Path Fabric Switches Release Notes\fR
+\fIIntel(R) Omni-Path Fabric Externally-Managed Switches Release Notes\fR
 
 .
 .TP 10
 configure 
 .NL
-Runs the switch setup wizard, which asks a series of questions. Once the wizard has finished prompting for configuration information, all the selected switches are configured according to the entered responses. The following items are configurable for all Intel(R) Omni-Path Switch 100 Family :
+Runs the switch setup wizard, which asks a series of questions. Once the wizard has finished prompting for configuration information, all the selected switches are configured according to the entered responses. The following items are configurable for all Intel(R) Omni-Path Switch 100 Series :
 
 .RS
 
