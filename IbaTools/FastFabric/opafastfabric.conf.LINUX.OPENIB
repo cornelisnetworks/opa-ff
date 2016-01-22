@@ -38,7 +38,7 @@ export PORTS_FILE=${PORTS_FILE:-$CONFIG_DIR/opa/ports}
 export FF_IPOIB_SUFFIX=${FF_IPOIB_SUFFIX:--opa}
 # Alternatively a IPoIB prefix can be provided, commented out
 # examples in ff_host_basename and ff_host_basename can be enabled if desired
-export FF_IPOIB_PREFIX=${FF_IPOIB_PREFIX:-ic-}
+export FF_IPOIB_PREFIX=${FF_IPOIB_PREFIX:-opa-}
 
 # Default management host
 export MGMT_HOST=${MGMT_HOST:-localhost}
@@ -79,7 +79,13 @@ then
 	}
 fi
 
-# IP netmask for IPoIB subnet [-m option]
+# input to opahostadmin configipoib indicating which mode to
+# use for IP configuration of ipoib interface, valid values are one of
+# static, dhcp, auto
+# for auto, if not found in resolver, will configure static, otherwise uses dhcp
+export FF_IPOIB_CONFIG=${FF_IPOIB_CONFIG:-static}
+
+# IP netmask for IPoIB subnet [-m option], only used for static
 # if "" default will be determined based on class of IP address [A, B, C]
 export FF_IPOIB_NETMASK=${FF_IPOIB_NETMASK:-}
 
@@ -242,13 +248,9 @@ export FF_DEVIATION_ARGS=${FF_DEVIATION_ARGS:--bwtol 20 -lattol 50 -c}
 # This MUST be a absolute path which exists on all nodes
 export FF_SHMEM_APPS_DIR=${FF_SHMEM_APPS_DIR:-/opt/opa/src/shmem_apps}
 
-# input to opahostadmin configipoib indicating which mode to 
-# use for IP configuration of ipoib interface, valid values are one of 
-# static, dhcp , auto 
-export FF_IPOIB_CONFIG=${FF_IPOIB_CONFIG:-static}
-
 #Serialize output of operations running in parallel
 export FF_SERIALIZE_OUTPUT=${FF_SERIALIZE_OUTPUT:-yes}
 
-#Filename for hostverify.sh script on each host used by opaverifyhosts
-export FF_HOSTVERIFY=${FF_HOSTVERIFY:-/root/hostverify.sh}
+# Directory name for location of hostverify.sh script and output target directory
+# on each host used by opaverifyhosts 
+export FF_HOSTVERIFY_DIR=${FF_HOSTVERIFY_DIR:-/root/}

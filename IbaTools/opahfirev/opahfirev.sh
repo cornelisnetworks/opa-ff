@@ -46,7 +46,7 @@ fi
 
 BASEDIR=/sys/bus/pci/devices
 
-hfis=`/sbin/lspci -D | egrep -wi 'Intel Corporation Device 24f[01]' | grep -vi bridge | cut -d\  -f1`
+hfis=`/sbin/lspci -Dd '8086:*' | egrep -e "24f[01]|Omni-Path" | grep -vi bridge | cut -d\  -f1`
 
 if [ -z "$hfis" ]
 then 
@@ -60,6 +60,8 @@ else
 		boardver="UNKNOWN"
 		serial="UNKNOWN"
 		guid="UNKNOWN"
+		tmmver="UNKNOWN"
+		tmm=0
 
 		localbus_info=$(lspci -vv -s "${hfi}" | 
 			grep LnkSta: | 
@@ -79,6 +81,12 @@ else
 			eval 2>/dev/null read boardver < ${driver}/${instance}/boardversion
 			eval 2>/dev/null read serial < ${driver}/${instance}/serial
 			eval 2>/dev/null read guid < ${driver}/${instance}/node_guid
+			/usr/sbin/opatmmtool 2>/dev/null 1>/dev/null
+			tmm=$?
+			if [ $tmm -ne 3 ]
+			then
+				tmmver=`/usr/sbin/opatmmtool fwversion | sed s/"Current Firmware Version="//`
+			fi
 		fi
 
 		echo "HFI:   $instance"
@@ -86,7 +94,10 @@ else
 		echo "SN:    $serial"
 		echo "Bus:   ${localbus_info}"
 		echo "GUID:  $guid"
-
+		if [ $tmm -ne 3 ]
+		then
+			echo "TMM:   $tmmver"
+		fi
 		echo "######################"
 	done
 fi

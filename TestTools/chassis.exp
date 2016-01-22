@@ -174,6 +174,44 @@ proc get_chassis_slots { { card_type "" } } {
 	return "$ret"
 }
 
+proc list_esm_security_files { } {
+##
+## list_esm_security_files
+## -------------------------
+## return the list of FM security files in the given chassis
+##
+## Usage:
+##	list_esm_security_files
+## Arguments:
+##	none
+## Returns:
+##	list of .pem files in chassis
+##	-code error on failure
+## Additional Information:
+##	The global timeout is changed by this routine
+
+	global spawn_id expect_out spawn_out timeout
+	global expecting
+
+	send_chassis_cmd "smListSecurityFiles -showSingleLine"
+
+	# this could return no *.pem files, in which case "none" is output
+	# The \r\n is needed to bound the + so we get all the data on the line
+    set out [expect_list 60 "{files: \[0-9A-Za-z._ \]+\[\r\n\]}" { "usage" "Error" "Failed" "roblem" "not found"} ]
+	expect_chassis_prompt 60
+	#log_message "out=$out"
+
+	# The \r\n is needed to bound the + so we get all the data on the line
+	# there may be trailing spaces, TCL lists will ignore
+    regexp {: ([0-9A-Za-z._ ]+)[\r\n]+} $out line ret
+	#log_message "ret=$ret"
+	if { [ regexp -nocase "none" "$ret" ] } {
+		set ret ""
+	}
+
+	return "$ret"
+}
+
 proc get_chassis_card_type { slot } {
 ##
 ## get_chassis_card_type
@@ -2082,8 +2120,9 @@ File: TestTools/chassis.exp" noop noop {
 		# check if chassis supports slaveCli, if not then skip chassis, older FW
 		target_chassis_admin_sh $chassis
 		# slot 0 is alias for mgmt card in all chassis models
-		set act_fw_version [get_chassis_firmware_version 0 "act"]
-		set pri_fw_version [get_chassis_firmware_version 0 "pri"]
+		set my_slot [ get_this_slot_number ]
+		set act_fw_version [get_chassis_firmware_version $my_slot "act"]
+		set pri_fw_version [get_chassis_firmware_version $my_slot "pri"]
 		send_chassis_cmd "time"
 		set out [expect_list 240 { "[Cc]onfigured.+\n" } { "Usage" "Invalid" "Error" "Failed" "roblem" "not found"} ]
 		regexp {([A-Za-z0-9:. ]+)} $out tmp ntpVal
@@ -2206,6 +2245,15 @@ File: TestTools/chassis.exp" noop noop {
 			target_chassis_admin_sh_exit
 			fail_test "IP address given is not for chassis mgmt card $mgmt_card_type"
 		}
+
+        # all security files on the master management card
+        set sec_files [ list_esm_security_files ]
+		set num_sec_files [llength $sec_files]
+		if { $num_sec_files == 0 } {
+			target_chassis_admin_sh_exit
+			fail_test "No FM security files found"
+		}
+
 		target_chassis_admin_sh_exit
 
 		log_message "\nTest: Checking FM capabilities and status of $chassis ...\n"
@@ -2240,7 +2288,9 @@ File: TestTools/chassis.exp" noop noop {
 
 		log_message "mkdir -p $dest_dir"
         exec mkdir -p $dest_dir
-        get_esm_security_files "$chassis" "$security_files" "$dest_dir"
+        foreach sec_file $sec_files {
+            get_esm_security_files "$chassis" "$sec_file" "$dest_dir"
+        }
 	}
 }
 

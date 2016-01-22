@@ -49,7 +49,7 @@ proc build_mpi_hosts { file host_list } {
     set buf_size 500
     set current_block_size 0
 
-    send_unix_cmd "printf \"\" > $file"
+    send_unix_cmd "> $file"
     expect_unix_prompt 60
 
     foreach h $host_list {

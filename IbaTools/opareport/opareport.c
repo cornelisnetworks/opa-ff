@@ -378,66 +378,152 @@ void ShowCableSummary(uint8_t *pCableData, Format_t format, int indent, int deta
 	// of the STL_CABLE_INFO
 	STL_CABLE_INFO_STD *pCableInfo = (STL_CABLE_INFO_STD *)pCableData;
 	boolean cableLenValid;			// Copper cable length valid
+	boolean activeCable;
 	char tempStr[STL_CIB_STD_MAX_STRING + 1] = {'\0'};
 	char tempBuf[129];
-
+	unsigned int i;
 	cableLenValid = IsStlCableInfoCableLengthValid(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector);
-
+	activeCable = IsStlCableInfoActiveCable(pCableInfo->dev_tech.s.xmit_tech);
 	switch (format) {
 	case FORMAT_TEXT:
 		switch (portType) {
 		case STL_PORT_TYPE_STANDARD:
-			printf("%*sQSFP Interpreted CableInfo:\n", indent, "");
-			printf("%*sIdentifier: 0x%x\n", indent+4, "", pCableInfo->ident);
-			printf( "%*sExtIdentifier: %s\n", indent+4, "",
-				StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high) );
-			printf("%*sConnector: 0x%x\n", indent+4, "", pCableInfo->connector);
-			StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
-			printf("%*sNominalBR: %s\n", indent+4, "", tempBuf);
-			printf("%*sOM2Length: %um\n", indent+4, "", StlCableInfoOM2Length(pCableInfo->len_om2));
-			printf("%*sOM3Length: %um\n", indent+4, "", StlCableInfoOM3Length(pCableInfo->len_om3));
-			printf("%*sOM4Length: %um\n", indent+4, "", StlCableInfoOM4Length(pCableInfo->len_om4, cableLenValid));
-			StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
-			printf("%*sDeviceTech: %s\n", indent+4, "", tempBuf);
-			memcpy(tempStr, pCableInfo->vendor_name, sizeof(pCableInfo->vendor_name));
-			tempStr[sizeof(pCableInfo->vendor_name)] = '\0';
-			printf("%*sVendorName: %s\n", indent+4, "", tempStr);
-			printf( "%*sVendorOUI: 0x%02x%02x%02x\n", indent+4, "", pCableInfo->vendor_oui[0],
+			if (detail <= 6) {
+				//line1
+				memset(tempBuf, ' ', sizeof(tempBuf));
+                        	i = 0;
+                        	strcpy(&tempBuf[i], "QSFP: ");
+                        	i = 6;
+				StlCableInfoCableTypeToTextShort(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, &tempBuf[i]);
+                        	tempBuf[i + strlen(&tempBuf[i])] = ' ';
+                        	i = 15;
+                        	tempBuf[i] = ',';
+                        	i = 17;
+                        	StlCableInfoValidCableLengthToText(pCableInfo->len_om4, cableLenValid, &tempBuf[i]);
+                        	tempBuf[i + strlen(&tempBuf[i])] = ' ';
+                        	i = 22;
+                        	memcpy(&tempBuf[i], pCableInfo->vendor_name, sizeof(pCableInfo->vendor_name));
+                        	i = 40;
+                        	strcpy(&tempBuf[i], "P/N ");
+                        	i = 44;
+                        	memcpy(&tempBuf[i], pCableInfo->vendor_pn, sizeof(pCableInfo->vendor_pn));
+                        	i = 62;
+                        	strcpy(&tempBuf[i], "Rev ");
+                        	i = 66;
+                        	memcpy(&tempBuf[i], pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev));
+                        	i = 68;
+                        	tempBuf[i] = '\0';
+                        	printf("%*s%s\n", indent, "", tempBuf);
+                        	if (detail <=1)
+                        	        break;
+				//line2
+				memset(tempBuf, ' ', sizeof(tempBuf));
+                        	i = 6;
+                        	strcpy(&tempBuf[i], StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high));
+                        	tempBuf[i + strlen(&tempBuf[i])] = ' ';
+                        	i = 30;
+                        	strcpy(&tempBuf[i], "S/N ");
+                        	i = 34;
+                        	memcpy(&tempBuf[i], pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn));
+                        	i = 51;
+                        	strcpy(&tempBuf[i], "Mfg ");
+                        	i = 55;
+                        	StlCableInfoDateCodeToText(pCableInfo->date_code, &tempBuf[i]);
+                        	printf("%*s%s\n", indent, "", tempBuf);
+				//line3
+				memset(tempBuf, ' ', sizeof(tempBuf));
+                        	i = 6;
+                        	strcpy(&tempBuf[i], "OPA Cert? ");
+                        	i = 16;
+                        	tempBuf[i] = (IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? 'Y' : 'N');
+                        	i = 19;
+                        	strcpy(&tempBuf[i], "OPA Rates: ");
+                        	i = 30;
+                        	strcpy(&tempBuf[i], StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate));
+                        	tempBuf[i + strlen(&tempBuf[i])] = ' ';
+                        	i = 56;
+                        	sprintf(&tempBuf[i], "OUI 0x%02X%02X%02X", pCableInfo->vendor_oui[0], pCableInfo->vendor_oui[1], pCableInfo->vendor_oui[2]);
+                        	printf("%*s%s\n", indent, "", tempBuf);
+                        	if (detail == 2)
+                        	        break;
+
+	                        if (cableLenValid) {
+	                                StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+	                                printf("%*sCable Type: %s\n", indent+4, "", tempBuf);
+	                        } else {
+	                                StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+	                                printf("%*sModule Type: %s\n", indent+4, "", tempBuf);
+					StlCableInfoOM4LengthToText(pCableInfo->len_om4, cableLenValid, sizeof(tempBuf), tempBuf);
+	                                printf("%*sLength Cap: OM2: %um OM3: %um OM4: %s\n", indent+4, "",
+	                                        StlCableInfoOM2Length(pCableInfo->len_om2), StlCableInfoOM3Length(pCableInfo->len_om3),
+	                                        tempBuf);
+	                        }
+	                        if (activeCable) {
+	                                StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
+	                                printf("%*sMax Temp: %u C Speed Sup: %s\n", indent+4, "", pCableInfo->max_case_temp, tempBuf);
+	                        } else {
+	                                printf("%*sMax Temp: %u C\n", indent+4, "", pCableInfo->max_case_temp);
+	                        }
+	                        if (detail == 3)
+	                                break;
+				printf("%*sTX SI: CDR: %s EQ: Fixed Cap: %s Auto Cap: %s Squelch En: %s\n",
+					indent+4, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.tx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl),
+					pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "Y" : "N",
+					pCableInfo->rxtx_opt_equemp.s.tx_inpeq_autadp_cap ? "Y" : "N",
+					pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "Y" : "N");
+				printf("%*sRX SI: CDR: %s Emph Cap: %s Ampl Cap: %s\n",
+					indent+4, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.rx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl),
+					pCableInfo->rxtx_opt_equemp.s.rx_outemp_fixpro_cap ? "Y" : "N",
+					pCableInfo->rxtx_opt_equemp.s.rx_outamp_fixpro_cap ? "Y" : "N");
+				break;
+			} else {
+				printf("%*sQSFP Interpreted CableInfo:\n", indent, "");
+				printf("%*sIdentifier: 0x%x\n", indent+4, "", pCableInfo->ident);
+				printf("%*sPowerClass: %s\n", indent+4, "",
+					StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high) );
+				printf("%*sTxCDRSupported: %s\n", indent+4, "", pCableInfo->ext_ident.s.tx_cdr_supp ? "True" : "False");
+				printf("%*sRxCDRSupported: %s\n", indent+4, "", pCableInfo->ext_ident.s.rx_cdr_supp ? "True" : "False");
+				printf("%*sConnector: 0x%x\n", indent+4, "", pCableInfo->connector);
+				StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
+				printf("%*sNominalBR: %s\n", indent+4, "", tempBuf);
+				printf("%*sOM2Length: %um\n", indent+4, "", StlCableInfoOM2Length(pCableInfo->len_om2));
+				printf("%*sOM3Length: %um\n", indent+4, "", StlCableInfoOM3Length(pCableInfo->len_om3));
+				StlCableInfoOM4LengthToText(pCableInfo->len_om4, cableLenValid, sizeof(tempBuf), tempBuf);
+				printf("%*sOM4Length: %s\n", indent+4, "", tempBuf);
+				StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+				printf("%*sDeviceTech: %s\n", indent+4, "", tempBuf);
+				memcpy(tempStr, pCableInfo->vendor_name, sizeof(pCableInfo->vendor_name));
+				tempStr[sizeof(pCableInfo->vendor_name)] = '\0';
+				printf("%*sVendorName: %s\n", indent+4, "", tempStr);
+				printf( "%*sVendorOUI: 0x%02x%02x%02x\n", indent+4, "", pCableInfo->vendor_oui[0],
 				pCableInfo->vendor_oui[1], pCableInfo->vendor_oui[2] );
-			memcpy(tempStr, pCableInfo->vendor_pn, sizeof(pCableInfo->vendor_pn));
-			tempStr[sizeof(pCableInfo->vendor_pn)] = '\0';
-			printf("%*sVendorPN: %s\n", indent+4, "", tempStr);
-			memcpy(tempStr, pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev));
-			tempStr[sizeof(pCableInfo->vendor_rev)] = '\0';
-			printf("%*sVendorRev: %s\n", indent+4, "", tempStr);
-			if (detail > 1) {
+				memcpy(tempStr, pCableInfo->vendor_pn, sizeof(pCableInfo->vendor_pn));
+				tempStr[sizeof(pCableInfo->vendor_pn)] = '\0';
+				printf("%*sVendorPN: %s\n", indent+4, "", tempStr);
+				memcpy(tempStr, pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev));
+				tempStr[sizeof(pCableInfo->vendor_rev)] = '\0';
+				printf("%*sVendorRev: %s\n", indent+4, "", tempStr);
 				printf("%*sMaxCaseTemp: %u C\n", indent+4, "", pCableInfo->max_case_temp);
 				printf("%*sCC_BASE: 0x%x\n", indent+4, "", pCableInfo->cc_base);
-			}
-			if (detail > 2) {
-				printf("%*sTxCDR: %s\n", indent+4, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.tx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl));
-				printf("%*sTxInpEqFixProg: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "True" : "False");
 				printf("%*sTxInpEqAutoAdp: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_autadp_cap ? "True" : "False");
-				printf("%*sTxSquelchImp: %s\n", indent+4, "", pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "True" : "False");
-				printf("%*sRxCDR: %s\n", indent+4, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.rx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl));
+				printf("%*sTxInpEqFixProg: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "True" : "False");
 				printf("%*sRxOutpEmphFixProg: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.rx_outemp_fixpro_cap ? "True" : "False");
 				printf("%*sRxOutpAmplFixProg: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.rx_outamp_fixpro_cap ? "True" : "False");
+				printf("%*sTxCDROnOffCtrl: %s\n", indent+4, "", pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl ? "True" : "False" );
+				printf("%*sRxCDROnOffCtrl: %s\n", indent+4, "", pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl ? "True" : "False" );
+				printf("%*sTxSquelchImp: %s\n", indent+4, "", pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "True" : "False");
 				printf("%*sMemPage02Provided: %s\n", indent+4, "", pCableInfo->memtx_opt_pagesquel.s.page_2 ? "True" : "False");
 				printf("%*sMemPage01Provided: %s\n", indent+4, "", pCableInfo->memtx_opt_pagesquel.s.page_1 ? "True" : "False");
-			}
-			memcpy(tempStr, pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn));
-			tempStr[sizeof(pCableInfo->vendor_sn)] = '\0';
-			printf("%*sVendorSN: %s\n", indent+4, "", tempStr);
-			StlCableInfoDateCodeToText(pCableInfo->date_code, tempBuf);
-			printf("%*sDateCode: %s\n", indent+4, "", tempBuf);
-			if (detail > 1) {
+				memcpy(tempStr, pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn));
+				tempStr[sizeof(pCableInfo->vendor_sn)] = '\0';
+				printf("%*sVendorSN: %s\n", indent+4, "", tempStr);
+				StlCableInfoDateCodeToText(pCableInfo->date_code, tempBuf);
+				printf("%*sDateCode: %s\n", indent+4, "", tempBuf);
 				printf("%*sCC_EXT: 0x%x\n", indent+4, "", pCableInfo->cc_ext);
-			}
-			printf("%*sCertCableFlag: %s\n", indent+4, "", IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? "Y" : "N");
-			if (detail > 2) {
+				printf("%*sCertCableFlag: %s\n", indent+4, "", IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? "Y" : "N");
 				printf("%*sReachClass: %u\n", indent+4, "", pCableInfo->vendor2);
+				printf("%*sCertDataRates: %s\n", indent+4, "", StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate));
 			}
-			printf("%*sCertDataRates: %s\n", indent+4, "", StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate));
 			break;
 		case STL_PORT_TYPE_SI_PHOTONICS:
 		default:
@@ -449,46 +535,89 @@ void ShowCableSummary(uint8_t *pCableData, Format_t format, int indent, int deta
 		switch (portType) {
 		case STL_PORT_TYPE_STANDARD:
 			printf("%*s<CableInfo>\n", indent, "");
-			XmlPrintHex("Identifier", pCableInfo->ident, indent+4);
-			XmlPrintStr("ExtIdentifier", StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high), indent+4);
-			XmlPrintHex("Connector", pCableInfo->connector, indent+4);
-			StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
-			XmlPrintStr("NominalBR", tempBuf, indent+4);
-			XmlPrintDec("OM2Length", StlCableInfoOM2Length(pCableInfo->len_om2), indent+4);
-			XmlPrintDec("OM3Length", StlCableInfoOM3Length(pCableInfo->len_om3), indent+4);
-			XmlPrintDec("OM4Length", StlCableInfoOM4Length(pCableInfo->len_om4, cableLenValid), indent+4);
-			StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
-			XmlPrintStr("DeviceTech", tempBuf, indent+4);
-			XmlPrintStrLen("VendorName", (char*)pCableInfo->vendor_name, sizeof(pCableInfo->vendor_name), indent+4);
-			XmlPrintHex("VendorOUI", (pCableInfo->vendor_oui[0]<<16) + (pCableInfo->vendor_oui[1]<<8) + pCableInfo->vendor_oui[2], indent+4);
-			XmlPrintStrLen("VendorPN", (char*)pCableInfo->vendor_pn, sizeof(pCableInfo->vendor_pn), indent+4);
-			XmlPrintStrLen("VendorRev", (char*)pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev), indent+4);
-			if (detail > 1) {
+			if (detail <= 6) {
+				StlCableInfoCableTypeToTextShort(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+				XmlPrintStr("DeviceTechShort", tempBuf, indent+4);
+				//maps to text line 1
+				StlCableInfoOM4LengthToText(pCableInfo->len_om4, cableLenValid, sizeof(tempBuf), tempBuf);
+				XmlPrintStr("OM4Length", tempBuf, indent+4);
+				XmlPrintStr("Length", tempBuf, indent+4);
+				XmlPrintStrLen("VendorName", (char*)pCableInfo->vendor_name, sizeof(pCableInfo->vendor_name), indent+4);
+				XmlPrintStrLen("VendorPN", (char*)pCableInfo->vendor_pn, sizeof(pCableInfo->vendor_pn), indent+4);
+				XmlPrintStrLen("VendorRev", (char*)pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev), indent+4);
+				if (detail >= 2) {
+					XmlPrintStr("PowerClass", StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high), indent+4);
+					XmlPrintStrLen("VendorSN", (char*)pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn), indent+4);
+					StlCableInfoDateCodeToText(pCableInfo->date_code, tempBuf);
+					XmlPrintStrLen("DateCode", (char*)tempBuf, sizeof(tempBuf), indent+4);
+					XmlPrintStrLen("CertCableFlag", (IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? "Y" : "N"), sizeof(char), indent+4);
+					XmlPrintStr("CertDataRates",StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate), indent+4);
+					XmlPrintHex("VendorOUI", (pCableInfo->vendor_oui[0]<<16) + (pCableInfo->vendor_oui[1]<<8) + pCableInfo->vendor_oui[2], indent+4);
+				}
+				if (detail >= 3) {
+					StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+					XmlPrintStr("DeviceTech", tempBuf, indent+4);
+					if (!cableLenValid) {
+						XmlPrintDec("OM2Length", StlCableInfoOM2Length(pCableInfo->len_om2), indent+4);
+						XmlPrintDec("OM3Length", StlCableInfoOM3Length(pCableInfo->len_om3), indent+4);
+					}
+					XmlPrintDec("MaxCaseTemp", pCableInfo->max_case_temp, indent+4);
+					if (activeCable) {
+	                                	StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
+						XmlPrintStr("NominalBR", tempBuf, indent+4);
+					}
+				} 
+				if (detail >= 4) {
+					XmlPrintStr("TxCDR", StlCableInfoCDRToText(pCableInfo->ext_ident.s.tx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl), indent+4);
+					XmlPrintStr("TxInpEqFixProg", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "True" : "False", indent+4);
+					XmlPrintStr("TxInpEqAutoAdp", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_autadp_cap ? "True" : "False", indent+4);
+					XmlPrintStr("TxSquelchImp", pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "True" : "False", indent+4);
+					XmlPrintStr("RxCDR", StlCableInfoCDRToText(pCableInfo->ext_ident.s.rx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl), indent+4);
+					XmlPrintStr("RxOutpEmphFixProg", pCableInfo->rxtx_opt_equemp.s.rx_outemp_fixpro_cap ? "True" : "False", indent+4);
+					XmlPrintStr("RxOutpAmplFixProg", pCableInfo->rxtx_opt_equemp.s.rx_outamp_fixpro_cap ? "True" : "False", indent+4);
+				}
+			} else {
+				StlCableInfoCableTypeToTextShort(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+				XmlPrintStr("DeviceTechShort", tempBuf, indent+4);
+				XmlPrintHex("Identifier", pCableInfo->ident, indent+4);
+				XmlPrintStr("PowerClass", StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high), indent+4);
+				XmlPrintStr("TxCDRSupported", pCableInfo->ext_ident.s.tx_cdr_supp ? "True" : "False", indent+4);
+				XmlPrintStr("RxCDRSupported", pCableInfo->ext_ident.s.rx_cdr_supp ? "True" : "False", indent+4);
+                                XmlPrintHex("Connector", pCableInfo->connector, indent+4);
+				StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
+				XmlPrintStr("NominalBR", tempBuf, indent+4);
+
+				XmlPrintDec("OM2Length", StlCableInfoOM2Length(pCableInfo->len_om2), indent+4);
+				XmlPrintDec("OM3Length", StlCableInfoOM3Length(pCableInfo->len_om3), indent+4);
+				StlCableInfoOM4LengthToText(pCableInfo->len_om4, cableLenValid, sizeof(tempBuf), tempBuf);
+				XmlPrintStr("OM4Length", tempBuf, indent+4);
+				XmlPrintStr("Length", tempBuf, indent+4);
+
+				StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
+				XmlPrintStr("DeviceTech", tempBuf, indent+4);
+				XmlPrintStrLen("VendorName", (char*)pCableInfo->vendor_name, sizeof(pCableInfo->vendor_name), indent+4);
+				XmlPrintHex("VendorOUI", (pCableInfo->vendor_oui[0]<<16) + (pCableInfo->vendor_oui[1]<<8) + pCableInfo->vendor_oui[2], indent+4);
+				XmlPrintStrLen("VendorPN", (char*)pCableInfo->vendor_pn, sizeof(pCableInfo->vendor_pn), indent+4);
+				XmlPrintStrLen("VendorRev", (char*)pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev), indent+4);
 				XmlPrintDec("MaxCaseTemp", pCableInfo->max_case_temp, indent+4);
 				XmlPrintHex("CC_BASE", pCableInfo->cc_base, indent+4);
-			}
-			if (detail > 2) {
-				XmlPrintStr("TxCDR", StlCableInfoCDRToText(pCableInfo->ext_ident.s.tx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl), indent+4);
-				XmlPrintStr("TxInpEqFixProg", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "True" : "False", indent+4);
 				XmlPrintStr("TxInpEqAutoAdp", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_autadp_cap ? "True" : "False", indent+4);
-				XmlPrintStr("TxSquelchImp", pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "True" : "False", indent+4);
-				XmlPrintStr("RxCDR", StlCableInfoCDRToText(pCableInfo->ext_ident.s.rx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl), indent+4);
+				XmlPrintStr("TxInpEqFixProg", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "True" : "False", indent+4);
 				XmlPrintStr("RxOutpEmphFixProg", pCableInfo->rxtx_opt_equemp.s.rx_outemp_fixpro_cap ? "True" : "False", indent+4);
 				XmlPrintStr("RxOutpAmplFixProg", pCableInfo->rxtx_opt_equemp.s.rx_outamp_fixpro_cap ? "True" : "False", indent+4);
+				XmlPrintStr("TxCDROnOffCtrl", pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl ? "True" : "False", indent+4);
+				XmlPrintStr("RxCDROnOffCtrl", pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl ? "True" : "False", indent+4);
+				XmlPrintStr("TxSquelchImp", pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "True" : "False", indent+4);
 				XmlPrintStr("MemPage02Provided", pCableInfo->memtx_opt_pagesquel.s.page_2 ? "True" : "False", indent+4);
 				XmlPrintStr("MemPage01Provided", pCableInfo->memtx_opt_pagesquel.s.page_1 ? "True" : "False", indent+4);
-			}
-			XmlPrintStrLen("VendorSN", (char*)pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn), indent+4);
-			XmlPrintStrLen("DataCode", (char*)pCableInfo->date_code, sizeof(pCableInfo->date_code)-2, indent+4);
-			XmlPrintStrLen("LotCode", (char*)&pCableInfo->date_code[6], 2, indent+4);
-			if (detail > 1) {
+				XmlPrintStrLen("VendorSN", (char*)pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn), indent+4);
+				StlCableInfoDateCodeToText(pCableInfo->date_code, tempBuf);
+				XmlPrintStr("DateCode", tempBuf, indent+4);
 				XmlPrintHex("CC_EXT", pCableInfo->cc_ext, indent+4);
-			}
-			XmlPrintStr("CertCableFlag", IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? "True" : "False", indent+4);
-			if (detail > 2) {
+				XmlPrintStr("CertCableFlag", IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? "True" : "False", indent+4);
 				XmlPrintHex("ReachClass", pCableInfo->vendor2, indent+4);
+				XmlPrintStr("CertDataRate", StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate), indent+4);
 			}
-			XmlPrintStr("CertDataRate", StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate), indent+4);
 			printf("%*s</CableInfo>\n", indent, "");
 			break;
 		case STL_PORT_TYPE_SI_PHOTONICS:
@@ -529,9 +658,8 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			}
 			
 		}
-
-		if (detail > 3 && portp->pCableInfoData)
-			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail-3, portp->PortInfo.PortPhyConfig.s.PortType);
+		if (detail > 1 && portp->pCableInfoData)
+			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail-1, portp->PortInfo.PortPhyConfig.s.PortType);
 
 		break;
 	case FORMAT_XML:
@@ -557,8 +685,8 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			
 		}
 
-		if (detail > 3 && portp->pCableInfoData)
-			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail-3, portp->PortInfo.PortPhyConfig.s.PortType);
+		if (detail > 1 && portp->pCableInfoData)
+			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail-1, portp->PortInfo.PortPhyConfig.s.PortType);
 
 		break;
 	default:
@@ -4643,7 +4771,7 @@ boolean ShowThresholds(Format_t format, int indent, int detail)
 	do { if (g_Thresholds.lq.s.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu\n", indent+4, "", #name, (uint64)g_Thresholds.lq.s.field); break; case FORMAT_XML: printf("%*s<%s>%lu</%s>\n", indent+4, "", #name, (uint64)g_Thresholds.lq.s.field, #name); break; default: break; } didoutput = TRUE; } }  while (0)
 
 #define SHOW_MB_THRESHOLD(field, name) \
-	do { if (g_Thresholds.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu MB\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB); break; case FORMAT_XML: printf("%*s<%sMB>%lu</%sMB>\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB, #field); break; default: break; } didoutput = TRUE; } }  while (0)
+	do { if (g_Thresholds.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu MB\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB); break; case FORMAT_XML: printf("%*s<%sMB>%lu</%sMB>\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB, #name); break; default: break; } didoutput = TRUE; } }  while (0)
 
 	// Data movement
 	SHOW_MB_THRESHOLD(PortXmitData, XmitData);

@@ -167,6 +167,6 @@ else
 		chassis=`strip_chassis_slots "$chassis"`
 		echo "--------------------------------------------------------------------"
 		echo "$chassis:"
-		/opt/opa/tools/tcl_proc chassises_run_cmd "$chassis" "admin" 'ismPortStats -noprompt' 1 2>&1|egrep 'FAIL|Cable|PortState|SymblErrors|LinkWidth|LinkSpeed|^  |^Name'
+		/opt/opa/tools/tcl_proc chassises_run_cmd "$chassis" "admin" 'ismPortStats -noprompt' 1 2>&1|egrep 'FAIL|Port State|Link Qual|Link Width|Link Speed|^[[:space:]]|^Name' | egrep -v 'Tx|Rx'
 	done
 fi

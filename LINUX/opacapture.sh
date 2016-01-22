@@ -146,6 +146,15 @@ done
 
 opahfirev -v > /$dir/opahfirev 2>&1
 
+opatmmtool 2>/dev/null 1>/dev/null
+tmm=$?
+if [ $tmm -ne 3 ]
+then
+	echo "Getting TMM information..."
+	opatmmtool -v status > /$dir/f4status 2>&1
+	opatmmtool -f /$dir/f4otpdump dumpotp 2>&1
+fi
+
 echo "Obtaining OS configuration ..."
 # get library config
 ldconfig -p > /$dir/ldconfig
@@ -276,7 +285,7 @@ then
     (cd /$dir; /opt/opafm/bin/fm_capture)
 fi
 
-if [ -f /usr/sbin/opa_osd_dump ]
+if [ -f /usr/bin/opa_osd_dump ]
 then
 	echo "Gathering Distributed SA data..."
 	opa_osd_dump > /$dir/opa_osd_dump 2>&1
@@ -338,15 +347,14 @@ then
                 router_opt="-r"
             fi
 
-            /usr/sbin/opareport -o links -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_links 2>&1
-            /usr/sbin/opareport -o comps -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_comps 2>&1
-            /usr/sbin/opareport -o errors -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_errors 2>&1
-            /usr/sbin/opareport -o extlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_extlinks 2>&1
-            /usr/sbin/opareport -o slowlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_slowlinks 2>&1
-
             if [ $mgmt_disabled -eq 0 ]
             then
                 /usr/sbin/opareport $port_opt -o snapshot -s $router_opt > $hfi_port_dir/snapshot.xml 2>&1
+            	/usr/sbin/opareport -o links -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_links 2>&1
+            	/usr/sbin/opareport -o comps -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_comps 2>&1
+            	/usr/sbin/opareport -o errors -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_errors 2>&1
+            	/usr/sbin/opareport -o extlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_extlinks 2>&1
+            	/usr/sbin/opareport -o slowlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_slowlinks 2>&1
                 /usr/sbin/opareport -o vfmember -V -d 4  > $hfi_port_dir/fabric_vfmember 2>&1
             fi
 

@@ -31,6 +31,8 @@
 
 # This is an expect (tcl) library of procedures to aid opa stack testing
 
+package require tdom
+
 #########################################################################################
 # Name        : createTextElement
 # Input       : document tagName tagValue

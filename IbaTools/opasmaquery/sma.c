@@ -1466,7 +1466,7 @@ static boolean get_mcfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 {
 	FSTATUS status = FSUCCESS; 
 	STL_LID_32 maxLid;
-	uint16 block, startBlock, endBlock;
+	uint32 block, startBlock, endBlock;
 	uint8 maxPosition;
 	uint8 maxPort;
 	uint16 position, startPosition, endPosition;
@@ -1545,8 +1545,8 @@ static boolean get_mcfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 
 		for (position = startPosition; position <= endPosition; position++) {
 			uint16_t sub;
-        	uint32_t attrmod = (0x0fffff && block) | ((0xff & numBlocks) << 24) |
-							   (position << 22);
+        	uint32_t attrmod = ((0xff & numBlocks) << 24) | (position << 22) |
+								(0x0fffff & block);
 			status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_MCAST_FWD_TABLE, 
 											attrmod, args, smp,
                                             sizeof(STL_MULTICAST_FORWARDING_TABLE)*numBlocks);

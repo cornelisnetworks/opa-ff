@@ -73,13 +73,14 @@ Usage_full()
 	echo "	 test - one or more specific tests to run" >&2
 	echo "	        see /opt/opa/samples/hostverify.sh for a list of available tests" >&2
 	echo "This verifies basic node configuration and performance by running" >&2
-	echo "$FF_HOSTVERIFY on all specified hosts" >&2
+	echo "FF_HOSTVERIFY_DIR/hostverify.sh on all specified hosts" >&2
 	echo >&2
 	echo "Prior to using this, edit /opt/opa/samples/hostverify.sh to set proper" >&2
 	echo "expectations for node configuration and performance" >&2
 	echo "Then be sure to use the -c option on first run for a given node" >&2
 	echo "so that /opt/opa/samples/hostverify.sh gets copied to each node as" >&2
-	echo "$FF_HOSTVERIFY" >&2
+	echo "FF_HOSTVERIFY_DIR/hostverify.sh" >&2
+	echo "FF_HOSTVERIFY_DIR is configured in /etc/sysconfig/opa/opafastfabric.conf" >&2
 	echo >&2
 	echo "A summary of results is appended to FF_RESULT_DIR/verifyhosts.res." >&2
 	echo "A punchlist of failures is also appended to FF_RESULT_DIR/punchlist.csv" >&2
@@ -114,13 +115,14 @@ Usage()
 	echo "                    If -u '' is specified, no upload will occur" >&2
 	echo >&2
 	echo "This verifies basic node configuration and performance by running" >&2
-	echo "$FF_HOSTVERIFY on all specified hosts" >&2
+	echo "FF_HOSTVERIFY_DIR/hostverify.sh on all specified hosts" >&2
 	echo >&2
 	echo "Prior to using this, edit /opt/opa/samples/hostverify.sh to set proper" >&2
 	echo "expectations for node configuration and performance" >&2
 	echo "Then be sure to use the -c option on first run for a given node" >&2
 	echo "so that /opt/opa/samples/hostverify.sh gets copied to each node as" >&2
-	echo "$FF_HOSTVERIFY" >&2
+	echo "FF_HOSTVERIFY_DIR/hostverify.sh" >&2
+	echo "FF_HOSTVERIFY_DIR is configured in /etc/sysconfig/opa/opafastfabric.conf" >&2
 	echo >&2
 	echo "A summary of results is appended to FF_RESULT_DIR/verifyhosts.res." >&2
 	echo "A punchlist of failures is also appended to FF_RESULT_DIR/punchlist.csv" >&2
@@ -201,15 +203,15 @@ echo "$(echo "$HOSTS"|tr -s ' ' '\n'|sed -e '/^$/d'|sort -u| wc -l) hosts will b
 
 if [ "$do_copy" = y ]
 then
-	echo "Copying /opt/opa/samples/hostverify.sh to $FF_HOSTVERIFY ..."| tee -a $FF_RESULT_DIR/verifyhosts.res
-	opascpall -p "/opt/opa/samples/hostverify.sh" "$FF_HOSTVERIFY" 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res
+	echo "Copying /opt/opa/samples/hostverify.sh to $FF_HOSTVERIFY_DIR/hostverify.sh ..."| tee -a $FF_RESULT_DIR/verifyhosts.res
+	opascpall -p "/opt/opa/samples/hostverify.sh" "$FF_HOSTVERIFY_DIR/hostverify.sh" 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res
 	date >> $FF_RESULT_DIR/verifyhosts.res
 fi
 
 timestamp=$(date +"%Y/%m/%d %T")
-echo "Running $FF_HOSTVERIFY $* ..."
+echo "Running $FF_HOSTVERIFY_DIR/hostverify.sh -d $FF_HOSTVERIFY_DIR $* ..."
 resultlineno=$(cat $FF_RESULT_DIR/verifyhosts.res|wc -l)	# for punchlist
-opacmdall -p -T $timelimit "bash $FF_HOSTVERIFY $*" 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res|egrep 'FAIL'
+opacmdall -p -T $timelimit "bash $FF_HOSTVERIFY_DIR/hostverify.sh -d $FF_HOSTVERIFY_DIR $*" 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res|egrep 'FAIL'
 # update punchlist using new failures
 tail -n +$resultlineno $FF_RESULT_DIR/verifyhosts.res| egrep 'FAIL'|append_punchlist
 date >> $FF_RESULT_DIR/verifyhosts.res
@@ -219,7 +221,7 @@ job_cleanup
 # upload the result file from each host
 if [ z"$upload_file" != z ]
 then
-	echo "Uploading /root/hostverify.res to $UPLOADS_DIR/$upload_file ..."| tee -a $FF_RESULT_DIR/verifyhosts.res
-	opauploadall -p /root/hostverify.res $upload_file 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res
+	echo "Uploading $FF_HOSTVERIFY_DIR/hostverify.res to $UPLOADS_DIR/$upload_file ..."| tee -a $FF_RESULT_DIR/verifyhosts.res
+	opauploadall -p $FF_HOSTVERIFY_DIR/hostverify.res $upload_file 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res
 	date >> $FF_RESULT_DIR/verifyhosts.res
 fi

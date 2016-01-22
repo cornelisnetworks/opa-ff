@@ -108,7 +108,7 @@ static FSTATUS fe_fillInNodeRecord(SA_MAD *saMad, PQUERY pQuery)
 	}
 
 	BSWAP_STL_NODE_RECORD(pNR);
-	BSWAP_SA_HDR(saHeader);
+	
 
 	return(FSUCCESS);
 
@@ -181,7 +181,6 @@ static FSTATUS fe_fillInIbNodeRecord(SA_MAD *saMad, PQUERY pQuery)
 	}
 
 	BSWAP_IB_NODE_RECORD(pNR);
-	BSWAP_SA_HDR(saHeader);
 
 	return(FSUCCESS);
 }
@@ -544,6 +543,7 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 				memcpy (pND, &pNR->NodeDescData.NodeString[0], NODE_DESCRIPTION_ARRAY_SIZE);
 			}
 		}
+		break;
 
 	case OutputTypeStlNodeDesc:
 		{

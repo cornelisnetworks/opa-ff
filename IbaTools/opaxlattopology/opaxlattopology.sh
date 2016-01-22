@@ -379,16 +379,16 @@ gen_topology()
   echo "<LinkSummary>" >> $FILE_TOPOLOGY_OUT
   if [ -s $FILE_LINKSUM -a $1 == 1 ]
     then
-    $XML_GENERATE -X $FILE_LINKSUM -d \; -i 2 -h Link -g Rate -g MTU -g Internal -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
+    $XML_GENERATE -X $FILE_LINKSUM -d \; -i 2 -h Link -g Rate -g Internal -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
   elif [ -s $FILE_LINKSUM_NOCORE -a $1 == 0 ]
     then
-    $XML_GENERATE -X $FILE_LINKSUM_NOCORE -d \; -i 2 -h Link -g Rate -g MTU -g Internal -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
+    $XML_GENERATE -X $FILE_LINKSUM_NOCORE -d \; -i 2 -h Link -g Rate -g Internal -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
   fi
 
   if [ -s $FILE_LINKSUM_NOCABLE -a $2 == 1 ]
     then
     # Note: <Cable> header not needed because cable data is null
-    $XML_GENERATE -X $FILE_LINKSUM_NOCABLE -d \; -i 2 -h Link -g Rate -g MTU -g Internal -g CableLength -g CableLabel -g CableDetails -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
+    $XML_GENERATE -X $FILE_LINKSUM_NOCABLE -d \; -i 2 -h Link -g Rate -g Internal -g CableLength -g CableLabel -g CableDetails -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
   fi
   echo "</LinkSummary>" >> $FILE_TOPOLOGY_OUT
 
@@ -776,7 +776,7 @@ do
       nodetype2=`cvt_nodetype "$t_dsttype"`
 
       # Output CSV FILE_LINKSUM
-      link="${rate};${mtu};${internal};${t_cablelength};${t_cablelabel};${t_cabledetails};${t_srcport};${nodetype1};${nodedesc1};${t_dstport};${nodetype2};${nodedesc2}"
+      link="${rate};${internal};${t_cablelength};${t_cablelabel};${t_cabledetails};${t_srcport};${nodetype1};${nodedesc1};${t_dstport};${nodetype2};${nodedesc2}"
       echo "${link}" >> ${FILE_LINKSUM}
       if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
         then
@@ -1001,9 +1001,9 @@ do
       else
         cat $FILE_LINKSUM_SWD24 | sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$cat_char/g" | grep -E "$leaves" >> ${FILE_LINKSUM_NOCABLE}
       fi
-      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> ${FILE_NODESWITCHES}
-      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> ${FILE_NODESWITCHES}
-      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$cat_char" -f 1 | sort -u >> ${FILE_NODECHASSIS}
+      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 8 | sort -u >> ${FILE_NODESWITCHES}
+      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 11 | sort -u >> ${FILE_NODESWITCHES}
+      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 11 | cut -d "$cat_char" -f 1 | sort -u >> ${FILE_NODECHASSIS}
 
       if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
         then
@@ -1019,9 +1019,9 @@ do
         else
           cat $FILE_LINKSUM_SWD24 | sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$cat_char/g" | grep -E "$leaves" >> $core_group/${FILE_LINKSUM_NOCABLE}
         fi
-        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> $core_group/${FILE_NODESWITCHES}
-        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> $core_group/${FILE_NODESWITCHES}
-        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$cat_char" -f 1 | sort -u >> $core_group/${FILE_NODECHASSIS}
+        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 8 | sort -u >> $core_group/${FILE_NODESWITCHES}
+        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 11 | sort -u >> $core_group/${FILE_NODESWITCHES}
+        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 11 | cut -d "$cat_char" -f 1 | sort -u >> $core_group/${FILE_NODECHASSIS}
       fi
 
       if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
@@ -1038,9 +1038,9 @@ do
         else
           cat $FILE_LINKSUM_SWD24 | sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$cat_char/g" | grep -E "$leaves" >> $core_group/$core_rack/${FILE_LINKSUM_NOCABLE}
         fi
-        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> $core_group/$core_rack/${FILE_NODESWITCHES}
-        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> $core_group/$core_rack/${FILE_NODESWITCHES}
-        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$cat_char" -f 1 | sort -u >> $core_group/$core_rack/${FILE_NODECHASSIS}
+        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 8 | sort -u >> $core_group/$core_rack/${FILE_NODESWITCHES}
+        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 11 | sort -u >> $core_group/$core_rack/${FILE_NODESWITCHES}
+        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 11 | cut -d "$cat_char" -f 1 | sort -u >> $core_group/$core_rack/${FILE_NODECHASSIS}
       fi
 
     # End of core switch information

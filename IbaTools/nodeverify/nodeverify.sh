@@ -36,7 +36,8 @@
 # node directly.
 
 # The following specify expected minimal configuration and performance
-MEMSIZE_EXPECTED=30601808   # size of memory in k as shown in /proc/meminfo
+MEMSIZE_EXPECTED=30601808   # size of memory (MemTotal) in k as shown in
+                            #  /proc/meminfo
 HFI_COUNT=1                 # expected Number of Intel HFIs
 HFI_CPU_CORE[0]=1           # CPU core to use when testing HFI 0 PCI performance
 HFI_CPU_CORE[1]=1           # CPU core to use when testing HFI 1 PCI performance
@@ -55,6 +56,8 @@ MPI_APPS=/opt/opa/src/mpi_apps/ # where to find mpi_apps for HPL test
 MIN_FLOPS="115"             # minimum flops expected from HPL test
 IPOIB_IF="ib0"              # IPoIB interface to check
 IPOIB_MTU=65520             # IPoIB required MTU
+outputdir=/root             # default outputdir is root -d $DIR overrides
+
 
 # If desired, single node HPL can be run, using the parameters defined below.
 #
@@ -91,16 +94,17 @@ HPL_PRESSURE=0.3
 
 # can adjust default list of tests below
 #TESTS="pcicfg pcispeed initscripts irqbalance hfi_pkt memsize cpu_consist cpu cstates turbo hton htoff ipoib hpl"
-TESTS="pcicfg pcispeed initscripts memsize cpu hfi_pkt hton ipoib irqbalance turbo cstates"
+TESTS="pcicfg pcispeed initscripts memsize cpu hfi_pkt hton ipoib irqbalance turbo cstates vtd"
 
 
 Usage()
 {
-	echo "Usage: ./hostverify.sh [-v] [test ...]" >&2
+	echo "Usage: ./hostverify.sh [-v] [-d OUTPUTDIR] [test ...]" >&2
 	echo "              or" >&2
 	echo "       ./hostverify.sh --help" >&2
 	echo "   -v - provide verbose output on stdout (by default only PASS/FAIL is output)" >&2
-	echo "        detailed results are always output to /root/hostverify.res" >&2
+	echo "        detailed results are always output to OUTPUTDIR/hostverify.res" >&2
+	echo "   -d OUTPUTDIR - write detailed results to OUTPUTDIR (defaults to /root)" >&2
 	echo "   --help - produce full help text" >&2
 	echo "	 test - one or more specific tests to run" >&2
 	echo "This verifies basic node configuration and performance" >&2
@@ -114,6 +118,7 @@ Usage()
 	echo "                along with acpi_pad kernel module" >&2
 	echo "  hfi_pkt - check PCI-HFI bus performance.  Requires HFI port is Active" >&2
 	echo "  memsize - check total size of memory in system" >&2
+	echo "  vtd - verify that Intel VT-d is disabled" >&2
 	echo "  hpl - perform a single node HPL test," >&2
 	echo "        useful to determine if all hosts perform consistently" >&2
 	echo "  cpu - check if CPU parameters are configured for optimal performance" >&2
@@ -126,8 +131,9 @@ Usage()
 	echo "  irqbalance - verify irqbalance is running with proper configuration" >&2
 	echo "  default - run all tests selected in TESTS" >&2
 	echo >&2
-	echo "Detailed output is written to stdout and appended to /root/hostverify.res" >&2
-	echo "egrep 'PASS|FAIL' /root/hostverify.res for a brief summary" >&2
+	echo "Detailed output is written to stdout and appended to" >&2
+	echo "  OUTPUTDIR/hostverify.res" >&2
+	echo "egrep 'PASS|FAIL' OUTPUTDIR/hostverify.res for a brief summary" >&2
 	echo >&2
 	echo "A Intel HFI is required for pcicfg, pcispeed and ipath_pkt tests" >&2
 	exit 0
@@ -145,10 +151,11 @@ myfilter()
 }
 
 filter=myfilter
-while getopts v param
+while getopts vd: param
 do
 	case $param in
 	v) filter=cat;;
+	d) outputdir="$OPTARG";;
 	?)	Usage;;
 	esac
 done
@@ -574,6 +581,22 @@ test_memsize()
 	fi
 }
 
+
+# verify correct VT-d setting
+test_vtd()
+{
+	TEST="vtd"
+	echo "Checking for correct VT-D setting ..."
+	date
+	if [ -e /sys/firmware/acpi/tables/DMAR ];
+	then
+		fail "/sys/firmware/acpi/tables/DMAR file exists. VT-D should be disabled."
+	else
+		pass ": No /sys/firmware/acpi/tables/DMAR file detected."
+	fi
+}
+
+
 # Confirm CPU will not do frequency throttling or boosting. This test is good for running
 # benchmarks  or jobs that require consistancy. Such a configuration does not
 # necessarily offer best CPU performance.
@@ -765,4 +788,4 @@ test_hpl()
 
 	rm -rf "${outdir}"
 	
-) 2>&1|tee -a /root/hostverify.res|$filter
+) 2>&1|tee -a $outputdir/hostverify.res|$filter

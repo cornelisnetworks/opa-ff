@@ -650,7 +650,7 @@ void multiInputCheck(int inputType) {
  */
 NODE_TYPE checkNodeType(const char* name)
 {
-	if (0 == strcasecmp(optarg, "ca")) {
+	if (0 == strcasecmp(optarg, "fi")) {
 		return STL_NODE_FI;
 	} else if (0 == strcasecmp(optarg, "sw")) {
 		return STL_NODE_SW;
@@ -1147,13 +1147,14 @@ int main (int argc, char *argv[])
 			break;
 
 		/* (SA) sysguid */
-		case 's':
-			multiInputCheck(query.InputType);
-			query.InputType = InputTypeServiceId;
-			if (FSUCCESS != StringToUint64(&query.InputValue.ServiceId, optarg, NULL, 0, TRUE)) {
-				fprintf(stderr, "opafequery: Invalid ServiceId: %s\n", optarg);
-				Usage();
-			}
+        case 's':	// query by system image guid
+				multiInputCheck(query.InputType);
+				query.InputType = InputTypeSystemImageGuid;
+				if (FSUCCESS != StringToUint64(&query.InputValue.Guid, optarg, NULL, 0, TRUE)) {
+					fprintf(stderr, "opafequery: Invalid GUID: %s\n", optarg);
+					Usage();
+				}
+
 			break;
 
 		/* (SA) nodeguid */

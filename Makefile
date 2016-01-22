@@ -228,11 +228,13 @@ final_package:
 	arch=`echo $(BUILD_TARGET) | tr '[A-Z]' '[a-z]'`; \
 	rpmdir=$$dir/$$subdir/RPMS/$$arch;\
 	basicrpmdir=$$basicdir/$${basic%.tgz}/RPMS/$$arch;\
+	basicsrpmdir=$$basicdir/$${basic%.tgz}/SRPMS;\
 	mkdir -p $$srpmdir; if [ $$? -ne 0 ]; then echo "ERR""OR: mkdir $$srpmdir."; fi; \
 	mkdir -p $$rpmdir; if [ $$? -ne 0 ]; then echo "ERR""OR: mkdir $$rpmdir."; fi; \
 	rm -rf $${basicdir}/$${basic} $${basicdir}/$${basic%.tgz}; \
 	cp -rp $${dir}/$${subdir} $${basicdir}/$${basic%.tgz}; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $${basicdir}/$${basic%.tgz}."; fi; \
 	cp SRPMS/opa-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$srpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
+	cp SRPMS/opa-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$basicsrpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
 	cp RPMS/$$arch/opa-basic-tools-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
 	cp RPMS/$$arch/opa-address-resolution-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
 	cp RPMS/$$arch/opa-fastfabric-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
