@@ -1,19 +1,19 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxlattopology
 
 .NL
 
 .PP
-Generates a topology XML file of a cluster using topology.xlsx, linksum\(ulswd06.csv, and linksum\(ulswd06.csv as input. The topology file can be used to bring up and verify the cluster.
+Generates a topology XML file of a cluster using topology.xlsx, linksum\(ulswd06.csv, and linksum\(ulswd24.csv as input. The topology file can be used to bring up and verify the cluster.
 .SH Syntax
 .NL
 opaxlattopology [-d \fIlevel\fR-v \fIlevel\fR-i \fIlevel\fR-c \fIchar\fR-K -?]
@@ -159,100 +159,6 @@ Prints this output.
 .SH Description
 .NL
 
-.PP
-topology.xlsx provides a standard format for representing each external link in a cluster. Each link contains
-\fBSource\fR
-,
-\fBDestination\fR
-, and
-\fBCable\fR
-fields with one link per row of the spreadsheet. The cells cannot contain commas.
-\fBSource\fR
-and
-\fBDestination\fR
-fields each have the following columns:
-.IP \(bu
-Rack Group
-.IP \(bu
-Rack
-.IP \(bu
-Name (primary name)
-.IP \(bu
-Name-2 (secondary name)
-.IP \(bu
-Port (number)
-.IP \(bu
-Type (port)
-.PP
-The
-\fBCable\fR
-fields have the following columns:
-.IP \(bu
-Label
-.IP \(bu
-Length
-.IP \(bu
-Details
-.PP
-The Rack Group and Rack names are individually optional. If either column is completely empty, it is ignored. The first row must have a value. If the Rack Group or Rack field is empty on any row, the script defaults the value in that field to the closest previous value. Name and Name-2 provide the name of the node which is output as the NodeDesc using the following information:
-.TP 10
-NodeType
-.NL
-Name or Name-2
-
-.TP 10
-Host
-.NL
-Hostname or hostdetails
-
-.TP 10
-Edge Switch
-.NL
-Switchname
-
-.TP 10
-Core Leaf
-.NL
-Corename or L \fInnn\fR
-
-.TP 10
-Core Spine
-.NL
-Corename or S \fInnn\fR(used only in internal core switch links)
-
-.PP
-For hosts, Name-2 is optional and is output as NodeDetails in the topology XML file. Also HFI-1 is appended to Name (see -c option). For core leaves (and spines), Name and Name-2 are concatenated (see -c option).
-.PP
-Port contains the port number. If the Port field is empty on a host node, the script defaults to 1.
-.PP
-Type contains the node type. The first row must have a value. If the Type field is empty on any row, the script defaults the value to the closest previous value. The type values are:
-.TP 10
-NodeType
-.NL
-Type
-
-.TP 10
-Host
-.NL
-FI
-
-.TP 10
-Edge Switch
-.NL
-SW
-
-.TP 10
-Core Leaf
-.NL
-CL
-
-.TP 10
-Core Spine
-.NL
-CS (used only in internal core switch links)
-
-.PP
-Cable values are optional and have no special syntax. If the cable information is present, it appears in the topology XML file as CableLabel, CableLength, and CableDetails respectively. CableLength can optionally be used to document more precise cable length information than is available through a CableInfo query (CableInfo length fields have at best a 1 meter granularity). Note, however, that topology CableLength is informational and is not validated against CableInfo length information.
 .PP
 The opaxlattopology script reads the topology, linksum\(ulswd06, and linksum\(ulswd24 CSV files. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
 .PP

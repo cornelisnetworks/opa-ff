@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapmaquery
 
@@ -18,13 +18,9 @@ opapmaquery
 Performs individual PMA queries against a specific LID. It is very useful in displaying port runtime information.
 .SH Syntax 
 .NL
-opapmaquery [-v] [-s \fIsl\fR] [-l \fIlid\fR] [-h
-\fIhfi\fR
-
-] [-p \fIport\fR] [-o \fIotype\fR]
+opapmaquery [-v] [-s \fIsl\fR] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fIotype\fR]
 .br
 [-m \fIport\fR] [-n \fImask\fR] [-e \fImask\fR] [-w \fImask\fR]
-.SH Options 
 .NL
 
 .SH Options

@@ -1,19 +1,25 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaverifyhosts 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaverifyhosts 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaverifyhosts
 
 .NL
 
 .PP
-Performs single node verification. The actual verification is performed using FF\(ulHOSTVERIFY (/root/hostverify.sh) . A sample file is provided in /opt/opa/samples/hostverify.sh. You can review and edit the sample file to set appropriate configuration and performance expectations and select which tests to run by default. See /opt/opa/samples/hostverify.sh for more information.
+Performs single node verification. The actual verification is performed using the FF\(ulHOSTVERIFY\(ulDIR/hostverify.sh file.
+.PP
+A sample file is provided in /opt/opa/samples/hostverify.sh. You can review and edit the sample file to set appropriate configuration and performance expectations and select which tests to run by default. See /opt/opa/samples/hostverify.sh for more information.
+.PP
+FF\(ulHOSTVERIFY\(ulDIR configures both the location of hostverify.sh and the destination of the hostverify.res output file.
+.PP
+FF\(ulHOSTVERIFY\(ulDIR is configured in the /etc/sysconfig/opa/opafastfabric.conf configuration file.
 .SH Syntax
 .NL
 opaverifyhosts [-kc] [-f \fIhostfile\fR] [-u \fIupload\(ulfile\fR] [-d \fIupload\(uldir\fR]

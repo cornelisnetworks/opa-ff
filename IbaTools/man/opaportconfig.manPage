@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaportconfig 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaportconfig 1 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaportconfig
 
@@ -83,6 +83,14 @@ Disables port.
 .sp
 bounce 
 Bounces port.
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+Bouncing remote ports may cause timeouts.
 
 .RE
 
@@ -168,6 +176,14 @@ Active.
 .NL
 New physical state. Default is 0.
 
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+Note all transitions are valid.
+
 .RS
 .TP 10
 
@@ -192,6 +208,15 @@ Polling.
 .sp
 3 
 Disabled.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+11 
+Phy-Test. Current physstate must be disabled.
 
 .RE
 
@@ -314,15 +339,6 @@ No-op.
 .sp
 8 
 0x8 - 12/16 bits per lane LTP CRC mode.
-
-.RE
-
-.RS
-.TP 10
-
-.sp
- 
-0xF - Enable all supported.
 
 .RE
 

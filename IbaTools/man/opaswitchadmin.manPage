@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaswitchadmin 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaswitchadmin 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaswitchadmin
 
@@ -140,9 +140,9 @@ Ensures firmware is in primary and running.
 .RE
 
 .TP 10
--O \fIoverride\fR 
+-O 
 .NL
-For firmware upgrades, bypasses the previous firmware version checks, and forces the update unconditionally.
+Override for firmware upgrades, bypasses the previous firmware version checks, and forces the update unconditionally.
 
 .TP 10
  \fIoperation\fR 

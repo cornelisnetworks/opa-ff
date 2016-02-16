@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*!
  @file    $Source: /cvs/ics/MakeTools/rm_version/rm_version.c,v $
  $Author: mwheinz $
- $Name: OPENIB_FF_LINUX_ALL_10_0-BRANCH_10_0_0_0_686 $
+ $Name: OPENIB_FF_LINUX_ALL_10_0-BRANCH_10_0_0_0_692 $
  $Revision: 1.5 $
  $Date: 2015/01/22 18:04:00 $
  @brief   Program to remove version strings appended at end of file by prep

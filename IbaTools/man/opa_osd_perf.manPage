@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa\(ulosd\(ulperf 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opa\(ulosd\(ulperf 1 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opa\(ulosd\(ulperf
 
@@ -57,4 +57,4 @@ Text file that lists the destination GUIDs and LIDs. For example, from a build\(
 
 .SH Example 
 .NL
-./opa\(ulosd\(ulperf -q 100000 -p 0x8001 guidtable
+opa\(ulosd\(ulperf -q 100000 -p 0x8001 guidtable

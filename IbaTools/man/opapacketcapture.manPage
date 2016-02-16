@@ -1,21 +1,21 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapacketcapture 1 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapacketcapture 1 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapacketcapture
 
 .NL
 
 .PP
-Program dumps packets to file and exits.
+Starts capturing packet data.
 .PP
-To stop capture and trigger dump, use SIGINT or SIGUSR1.
+To stop capture and trigger dump, use SIGINT or SIGUSR1. Program dumps packets to file and exits.
 .PP
 
 .B NOTE:
@@ -23,7 +23,7 @@ Using opapacketcapture with large amounts of traffic can cause performance issue
 
 .SH Syntax
 .NL
-opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR] [-t \fItriggerfile\fR] [-l \fItriggerlag\fR][-a \fIalarm\fR] [-p \fIpackets\fR] [-s \fImaxblocks\fR] [ -m \fImode\fR] [-v] [-h] [-D]
+opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR] [-t \fItriggerfile\fR] [-l \fItriggerlag\fR][-a \fIalarm\fR] [-p \fIpackets\fR] [-s \fImaxblocks\fR] [-v] [-h]
 .SH Options
 .NL
 
@@ -35,12 +35,12 @@ Produces full help text.
 .TP 10
 -o \fIoutfile\fR 
 .NL
-Output file for captured packets. Default is packetDump.pcap 
+Output file for captured packets. Default = packetDump.pcap 
 
 .TP 10
 -d \fIdevfile\fR 
 .NL
-Device file for capturing packets. Default is /dev/hfi1\(uldiagpkt0 
+Device file for capturing packets. Default = /dev/hfi1\(uldiagpkt0 
 
 .TP 10
 -f \fIfilterfile\fR 
@@ -77,7 +77,6 @@ Number of blocks to allocate for ring buffer. Value is in Millions. Default = 2 
 .NL
 Produces verbose output.
 
-.TP 10
--D 
+.SH Examples 
 .NL
-Increases debugging level. Use Debug Level 1+ to show level settings.
+TBD

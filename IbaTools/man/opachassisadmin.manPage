@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opachassisadmin
 
@@ -241,10 +241,8 @@ Securely prompts for password for user on chassis.
 .TP 10
 -s \fIsecurityFiles\fR 
 .NL
-Security files to install. Default is *.pem.
+Security files to install. Default is *.pem. For Chassis  \fIfmsecurityfiles\fR, filenames/directories of security files to install. For directories specified, all security files in directory tree are used. Shell wildcards may also be used within quotes.
 
-.IP
-For Chassis  \fIfmsecurityfiles\fR : filenames/directories of security files to install. For directories specified, all security files in directory tree are used. Shell wildcards may also be used within quotes.
 .IP
 For Chassis  \fIfmgetsecurityfiles\fR, filename to upload to. Default is *.pem 
 .TP 10

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2015, Intel Corporation                *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2015" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opahostadmin
 
@@ -274,7 +274,7 @@ Only components that are currently installed are upgraded. This operation fails 
 .TP 10
 configipoib 
 .NL
-Creates a ifcfg-ib1 configuration file for each node using the IP address found using the resolver on the node. The standard Linux* resolver is used through the host command. (If running OFED Delta, this option configures ifcfg-ib0 .)
+Creates a ifcfg-ib1 configuration file for each node using the IP address found using the resolver on the node. The standard Linux* resolver is used through the host command. (If running OFA Delta, this option configures ifcfg-ib0 .)
 
 .IP
 If the host is not found, /etc/hosts on the node is checked. The -i option specifies an IPoIB suffix to apply to the host name to create the IPoIB host name for the node. The default suffix is -ib. The -m option specifies a netmask other than the default for the given class of IP address, such as when dividing a class A or B address into smaller IP subnets. IPoIB is configured for a static IP address and is autostarted at boot. For the Intel(R) OP Software Stack, the default /etc/sysconfig/ipoib.cfg file is used, which provides a redundant IPoIB configuration using both ports of the first HFI in the system.
@@ -322,7 +322,7 @@ Verifies that MPI is operational and checks MPI end-to-end latency and bandwidth
 .PP
 
 .B NOTE:
-This option is available for the Intel(R) Omni-Path Fabric Host Software OFED Delta packaging, but is not presently available for other packagings of OFED.
+This option is available for the Intel(R) Omni-Path Fabric Host Software OFA Delta packaging, but is not presently available for other packagings of OFED.
 
 
 .IP
@@ -348,7 +348,7 @@ Concurrent mode runs the tests in the shortest amount of time, however, the resu
 .PP
 
 .B NOTE:
-This option is available for the Intel(R) Omni-Path Fabric Host Software OFED Delta packaging, but is not presently available for other packagings of OFED.
+This option is available for the Intel(R) Omni-Path Fabric Host Software OFA Delta packaging, but is not presently available for other packagings of OFED.
 
 
 .IP
