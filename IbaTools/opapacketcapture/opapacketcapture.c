@@ -872,7 +872,7 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 	ext.tv_nsec =				nsec;
 	ext.flags =					4;
 	ext.lossCtr = 				0;
-	ext.linkType =				ERF_TYPE_STORMLAKE;
+	ext.linkType =				ERF_TYPE_OPA_SNC;
 
 	if (verbose > 1 && mode == WFR_MODE) {
 		fprintf(stderr, "Direction:  %u\n", snc->Direction);

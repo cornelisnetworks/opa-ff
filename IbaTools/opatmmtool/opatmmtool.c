@@ -286,15 +286,15 @@ FSTATUS getStatus()
 boolean checkWritable() // 1 if the otp is fully writable (unlocked), 0 otherwise
 {
 	uint32_t offset;
-	uint8_t buffer[OTP_SIZE + 16] = {0};
-	uint8_t *locks = &buffer[OTP_SIZE];
+	uint8_t buffer[OTP_SIZE] = {0};
+	uint8_t *locks = &buffer[OTP_SIZE - 16];
 	boolean write_status, partial;
 	FSTATUS status = FSUCCESS;
 	// lock statuses are 16 additional bytes at the end of the otp region
 	// each lock byte corresponds to a 32 byte sector of the otp region
 
 	offset = (BYTES_OFFSET << 24) | (SLV_ADDR << 16) | (E_ADMIN_CMD_READ_MEM & 0xFF);
-	status = readFromFile(i2cFd, offset, (unsigned char*)&buffer[0], OTP_SIZE + 16);
+	status = readFromFile(i2cFd, offset, (unsigned char*)&buffer[0], OTP_SIZE);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "opatmmtool: Unable to read system lock state: %s\n", strerror(errno));
 		return -1;

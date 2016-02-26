@@ -930,10 +930,8 @@ struct dsap_port * dsap_lock_prov_port(dsap_src_port_t *src_port)
 			if (acm_get_gid((struct acm_port *) port->port, 0,
 					&gid))
 				goto next_port;
-			if (!memcmp(&gid, &src_port->gid, sizeof(gid))) {
-				SpinLockRelease(&port->lock);
+			if (!memcmp(&gid, &src_port->gid, sizeof(gid)))
 				goto get_exit;
-			}
 		next_port:
 			SpinLockRelease(&port->lock);
 			port = NULL;

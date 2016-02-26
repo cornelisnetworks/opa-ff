@@ -238,14 +238,20 @@ test_pcicfg()
 
 	# get Storm Lake Intel stand-alone WFR HFI
 	set -x
-	"${lspci}" -vvv -d 0x8086:0x24f0 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
+	"${lspci}" -n -d 0x8086:0x24f0 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
 	set +x
 	[ -s pcicfg.stderr ] && fail "Error during run of lspci: $(cat pcicfg.stderr)"
 	# also get Storm Lake Intel integrated WFR HFI
 	set -x
-	"${lspci}" -vvv -d 0x8086:0x24f1 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
+	"${lspci}" -n -d 0x8086:0x24f1 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
 	set +x
 	[ -s pcicfg.stderr ] && fail "Error during run of lspci: $(cat pcicfg.stderr)"
+
+
+	set -x
+	pci_id=$(grep -o -m1 "24f[01]" pcicfg.stdout)
+	"${lspci}" -vvv -d 0x8086:$pci_id 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
+	set +x
 
 	hfi_count=$(cat pcicfg.stdout|grep 'MaxPayload .* bytes, MaxReadReq .* bytes' | wc -l)
 	[ $hfi_count -ne $HFI_COUNT ] && { fail_msg "Incorrect number of Intel HFIs: Expect $HFI_COUNT  Got: $hfi_count"; failure=1; }
@@ -295,14 +301,19 @@ test_pcispeed()
 
 	# get Storm Lake Intel stand-alone WFR HFI
 	set -x
-	"${lspci}" -vvv -d 0x8086:0x24f0 2>pcispeed.stderr | tee -a pcispeed.stdout || fail "Error running lspci"
+	"${lspci}" -n -d 0x8086:0x24f0 2>pcispeed.stderr | tee -a pcispeed.stdout || fail "Error running lspci"
 	set +x
 	[ -s pcispeed.stderr ] && fail "Error during run of lspci: $(cat pcispeed.stderr)"
 	# also get Storm Lake Intel integrated WFR HFI
 	set -x
-	"${lspci}" -vvv -d 0x8086:0x24f1 2>pcispeed.stderr | tee -a pcispeed.stdout || fail "Error running lspci"
+	"${lspci}" -n -d 0x8086:0x24f1 2>pcispeed.stderr | tee -a pcispeed.stdout || fail "Error running lspci"
 	set +x
 	[ -s pcispeed.stderr ] && fail "Error during run of lspci: $(cat pcispeed.stderr)"
+
+	set -x
+	pci_id=$(grep -o -m1 "24f[01]" pcicfg.stdout)
+	"${lspci}" -vvv -d 0x8086:$pci_id 2>pcispeed.stderr | tee -a pcispeed.stdout || fail "Error running lspci"
+	set +x
 
 	hfi_count=$(cat pcispeed.stdout|grep 'Speed .*, Width .*' pcispeed.stdout|egrep -v 'LnkCap|LnkCtl|Supported'| wc -l)
 	[ $hfi_count -ne $HFI_COUNT ] && { fail_msg "Incorrect number of Intel HFIs: Expect $HFI_COUNT  Got: $hfi_count"; failure=1; }
@@ -478,12 +489,12 @@ test_hfi_pkt()
 
 	# get Storm Lake Intel stand-alone WFR HFI
 	set -x
-	"${lspci}" -vvv -d 0x8086:0x24f0 2>pciinfo.stderr | tee -a pciinfo.stdout || fail "Error running lspci"
+	"${lspci}" -n -d 0x8086:0x24f0 2>pciinfo.stderr | tee -a pciinfo.stdout || fail "Error running lspci"
 	set +x
 	[ -s pciinfo.stderr ] && fail "Error during run of lspci: $(cat pciinfo.stderr)"
 	# also get Storm Lake Intel integrated WFR HFI
 	set -x
-	"${lspci}" -vvv -d 0x8086:0x24f1 2>pciinfo.stderr | tee -a pciinfo.stdout || fail "Error running lspci"
+	"${lspci}" -n -d 0x8086:0x24f1 2>pciinfo.stderr | tee -a pciinfo.stdout || fail "Error running lspci"
 	set +x
 	[ -s pciinfo.stderr ] && fail "Error during run of lspci: $(cat pciinfo.stderr)"
 
@@ -501,6 +512,9 @@ test_hfi_pkt()
 	[ ! -x "${hfi_pkt_test}" ] && fail "Can't find hfi_pkt_test"
 
 	failure=0
+	declare -a pci_addr
+	pci_addr=($(lspci -nd 0x8086:$pci_id | cut -d' ' -f1))
+
 	for hfi in $(seq 0 $(($HFI_COUNT-1)) )
 	do
 		if [ -z "${nomemflush}" ]; then
@@ -516,6 +530,9 @@ test_hfi_pkt()
 			failure=1
 			continue
 		fi
+
+		pci_bus="$(echo ${pci_addr[$hfi]} | cut -d : -f1):"
+
 		set -x
 		taskset -c ${HFI_CPU_CORE[$hfi]} "${hfi_pkt_test}" -B -U $hfi 2>hfi_pkt_test.stderr | tee hfi_pkt_test.stdout || { fail_msg "HFI $hfi: Error running hfi_pkt_test"; failure=1; continue; }
 		set +x
@@ -529,7 +546,7 @@ test_hfi_pkt()
 
 		# First check the HFI device itself
 		set -x
-		"${setpci}" -d 0x8086:$pci_id CAP_EXP+0xa.w 2>pciiset.stderr | tee pciiset.stdout || fail "Error running setpci"
+		"${setpci}" -s $pci_bus -d 0x8086:$pci_id CAP_EXP+0xa.w 2>pciiset.stderr | tee pciiset.stdout || fail "Error running setpci"
 		set +x
 		[ -s pciiset.stderr ] && fail "Error running setpci: $(cat pciiset.stderr)"
 
@@ -540,9 +557,8 @@ test_hfi_pkt()
 
 		# Now let's check the PCI-E root port the HFI device is attatched to, as it may report errors on it's side independently
 		# of the HFI.
-		pci_bus=$(head -1 pciinfo.stdout | cut -d' ' -f1 | cut -d : -f1)
 		set -x
-		pci_root_port="$(${lspci} -M 2> /dev/null | grep "$pci_bus: Entered via" | cut -d' ' -f4)"
+		pci_root_port="$(${lspci} -M 2> /dev/null | grep "$pci_bus Entered via" | cut -d' ' -f4)"
 		set +x
 
 		set -x

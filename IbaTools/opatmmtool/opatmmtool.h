@@ -61,7 +61,7 @@ typedef enum {
 #define I2C_FILE_SIZE 40
 #define FNAME_SIZE 64
 #define RETRIES 3
-#define OTP_SIZE 512
+#define OTP_SIZE 528
 #define BYTES_OFFSET 1
 
 // TODO: find out the actual values
