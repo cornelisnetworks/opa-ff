@@ -8,6 +8,7 @@ License: GPLv2/BSD
 Url: http://www.intel.com/
 Source: opa.tgz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+ExclusiveArch: x86_64
 
 %if 0%{?suse_version} >= 1110
 %debug_package
@@ -23,12 +24,12 @@ AutoReq: no
 
 Requires: rdma
 
-%if 0%{?rhel}
-Requires(post): expat, libibmad, libibumad, libibverbs, expect, tcl
-BuildRequires: expat-devel
+%if 0%{?rhel} || 0%{?fedora}
+Requires(post): expat, libibmad, libibumad, libibverbs, expect, tcl, openssl
+BuildRequires: expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel
 %else
-Requires(post): libexpat1, libibmad5, libibumad, libibverbs1
-BuildRequires: libexpat-devel
+Requires(post): libexpat1, libibmad5, libibumad, libibverbs1, openssl
+BuildRequires: libexpat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel
 %endif
 
 %description basic-tools
@@ -51,6 +52,7 @@ Contains tools for managing fabric on a managment node.
 Summary: Contains Address Resolution manager
 Group: System Environment/Libraries
 AutoReq: no
+BuildRequires: ibacm-devel, %{?BuildRequires}
 Requires: opa-basic-tools
 
 %description address-resolution
