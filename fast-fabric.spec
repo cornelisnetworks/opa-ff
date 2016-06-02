@@ -1,6 +1,6 @@
 Name: opa
-Version: 10.0.1.0
-Release: 2
+Version: 10.1.0.0
+Release: 126
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
@@ -8,7 +8,6 @@ License: GPLv2/BSD
 Url: http://www.intel.com/
 Source: opa.tgz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-ExclusiveArch: x86_64
 
 %if 0%{?suse_version} >= 1110
 %debug_package
@@ -22,13 +21,13 @@ Summary: Managment level tools and scripts.
 Group: System Environment/Libraries
 AutoReq: no
 
-Requires: rdma
+Requires: rdma bc
 
 %if 0%{?rhel} || 0%{?fedora}
-Requires(post): expat, libibmad, libibumad, libibverbs, expect, tcl, openssl
+Requires: expat, libibmad, libibumad, libibverbs, expect, tcl, openssl
 BuildRequires: expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel
 %else
-Requires(post): libexpat1, libibmad5, libibumad, libibverbs1, openssl
+Requires: libexpat1, libibmad5, libibumad, libibverbs1, openssl
 BuildRequires: libexpat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel
 %endif
 
@@ -52,7 +51,6 @@ Contains tools for managing fabric on a managment node.
 Summary: Contains Address Resolution manager
 Group: System Environment/Libraries
 AutoReq: no
-BuildRequires: ibacm-devel, %{?BuildRequires}
 Requires: opa-basic-tools
 
 %description address-resolution
@@ -73,29 +71,29 @@ fi
 
 
 %install
-%define basic_tools_sbin fabric_info opacapture opagetvf opagetvf_env opahfirev opapacketcapture opaportinfo oparesolvehfiport opasaquery opashowmc opasmaquery opainfo
+%define basic_tools_sbin opacapture opafabricinfo opagetvf opagetvf_env opahfirev opapacketcapture opaportinfo oparesolvehfiport opasaquery opasmaquery opainfo opatmmtool
 
 %define basic_tools_sbin_sym opapmaquery opaportconfig
 
 %define basic_tools_opt setup_self_ssh usemem opaipcalc 
 
-%define basic_mans opacapture.1 opaconfig.1 opahfirev.1 opapmaquery.1 opaportconfig.1 opaportinfo.1 oparesolvehfiport.1 opasaquery.1 opashowmc.1 opasmaquery.1
+%define basic_mans opacapture.1 opaconfig.1 opafabricinfo.1 opagetvf.1 opagetvf_env.1 opahfirev.1 opainfo.1 opapacketcapture.1 opapmaquery.1 opaportconfig.1 opaportinfo.1 oparesolvehfiport.1 opasaquery.1 opashowmc.1 opasmaquery.1 opatmmtool.1
 
 %define ff_tools_opt opaswquery opaswconfigure opaswfwconfigure opaswfwupdate opaswfwverify opaswping opaswreset
 
 %define ff_tools_exp basic.exp chassis.exp chassis_configure.exp chassis_fmconfig.exp chassis_fmcontrol.exp chassis_fmgetconfig.exp chassis_getconfig.exp chassis_reboot.exp chassis_fmgetsecurityfiles.exp chassis_fmsecurityfiles.exp chassis_upgrade.exp common_funcs.exp configipoib.exp extmng.exp ff_function.exp ib.exp opa_to_xml.exp ibtools.exp install.exp ipoibping.exp load.exp mpi.exp mpiperf.exp mpiperfdeviation.exp network.exp proc_mgr.exp reboot.exp sacache.exp sm_control.exp switch_capture.exp switch_configure.exp switch_dump.exp switch_fwverify.exp switch_getconfig.exp switch_hwvpd.exp switch_info.exp switch_ping.exp switch_reboot.exp switch_upgrade.exp target.exp tools.exp upgrade.exp tclIndex tcl_proc comm12 front
 
-%define ff_tools_sbin opacabletest opacheckload opaextracterror opaextractlink opaextractperf opaextractstat opaextractstat2 opafindgood opafirmware opagenchassis opagenesmchassis opagenswitches opalinkanalysis opareport opareports opasorthosts opatop opaxlattopology opaxlattopology_cust opaxmlextract opaxmlfilter opaxmlgenerate opaxmlindent opaallanalysis opacaptureall opachassisanalysis opacmdall opadownloadall opaesmanalysis opafabricanalysis opafastfabric opahostsmanalysis opadisablehosts opadisableports opaenableports opaexpandfile opaextractbadlinks opaextractlids opaextractsellinks opaswenableall opaswdisableall opaverifyhosts opahostadmin opachassisadmin opaswitchadmin opapingall opascpall opasetupssh opashowallports opauploadall opapaquery opashowmc opafequery
+%define ff_tools_sbin opacabletest opacheckload opaextracterror opaextractlink opaextractperf opaextractstat opaextractstat2 opafindgood opafirmware opagenchassis opagenesmchassis opagenswitches opalinkanalysis opareport opareports opasorthosts opatop opaxlattopology opaxlattopology_cust opaxmlextract opaxmlfilter opaxmlgenerate opaxmlindent opaallanalysis opacaptureall opachassisanalysis opacmdall opadownloadall opaesmanalysis opafabricanalysis opafastfabric opahostsmanalysis opadisablehosts opadisableports opaenableports opaledports opaexpandfile opaextractbadlinks opaextractlids opaextractsellinks opaswenableall opaswdisableall opaverifyhosts opahostadmin opachassisadmin opaswitchadmin opapingall opascpall opasetupssh opashowallports opauploadall opapaquery opashowmc opafequery 
 
-%define ff_tools_misc ff_funcs opachassisip opagenswitcheshelper chassis_setup switch_setup opagetipaddrtype opafastfabric.conf.def
+%define ff_tools_misc ff_funcs opachassisip opagenswitcheshelper chassis_setup switch_setup opagetipaddrtype opafastfabric.conf.def show_counts
 
 %define ff_tools_fm config_generate config_diff config_check config_convert
 
 %define ff_libs_misc libqlgc_fork.so
 
-%define ff_mans opaallanalysis.8 opacabletest.8 opacaptureall.8 opachassisadmin.8 opachassisanalysis.8 opacheckload.8 opacmdall.8 opadisablehosts.8 opadisableports.8 opadownloadall.8 opaenableports.8 opaesmanalysis.8 opaexpandfile.8 opaextractbadlinks.8 opaextracterror.8 opaextractlids.8 opaextractlink.8 opaextractperf.8 opaextractsellinks.8 opaextractstat.8 opaextractstat2.8 opafabricanalysis.8 opafastfabric.8 opafequery.8 opafindgood.8 opagenchassis.8 opagenesmchassis.8 opagenswitches.8 opagentopology.8 opahostadmin.8 opahostsmanalysis.8 opalinkanalysis.8 opapaquery.8 opapingall.8 opareport.8 opareports.8 opascpall.8 opasetupssh.8 opashowallports.8 opasorthosts.8 opaswitchadmin.8 opatop.8 opauploadall.8 opaverifyhosts.8 opaxlattopology.8 opaxlattopology_cust.8 opashowmc.8 opaxmlextract.8 opaxmlfilter.8 opaxmlgenerate.8 opaxmlindent.8 opaswdisableall.8 opaswenableall.8
+%define ff_mans opaallanalysis.8 opacabletest.8 opacaptureall.8 opachassisadmin.8 opachassisanalysis.8 opacheckload.8 opacmdall.8 opadisablehosts.8 opadisableports.8 opadownloadall.8 opaenableports.8 opaledports.8 opaesmanalysis.8 opaexpandfile.8 opaextractbadlinks.8 opaextracterror.8 opaextractlids.8 opaextractlink.8 opaextractperf.8 opaextractsellinks.8 opaextractstat.8 opaextractstat2.8 opafabricanalysis.8 opafastfabric.8 opafequery.8 opafindgood.8 opafmconfigcheck.8 opafmconfigdiff.8 opagenchassis.8 opagenesmchassis.8 opagenswitches.8 opagentopology.8 opahostadmin.8 opahostsmanalysis.8 opalinkanalysis.8 opapaquery.8 opapingall.8 opareport.8 opareports.8 opascpall.8 opasetupssh.8 opashowallports.8 opasorthosts.8 opaswitchadmin.8 opatop.8 opauploadall.8 opaverifyhosts.8 opaxlattopology.8 opaxlattopology_cust.8 opashowmc.8 opaxmlextract.8 opaxmlfilter.8 opaxmlgenerate.8 opaxmlindent.8 opaswdisableall.8 opaswenableall.8
 
-%define ff_iba_samples hostverify.sh opatopology_FIs.txt opatopology_links.txt opatopology_SMs.txt opatopology_SWs.txt linksum_swd06.csv linksum_swd24.csv README.topology README.xlat_topology topology_cust.xlsx topology.xlsx allhosts-sample chassis-sample hosts-sample switches-sample ports-sample opaff.xml-sample mac_to_dhcp filterFile.txt triggerFile.txt opamon.conf-sample opamon.si.conf-sample opafastfabric.conf-sample opa_ca_openssl.cnf-sample opa_comp_openssl.cnf-sample opagentopology esm_chassis-sample
+%define ff_iba_samples hostverify.sh opatopology_FIs.txt opatopology_links.txt opatopology_SMs.txt opatopology_SWs.txt linksum_swd06.csv linksum_swd24.csv README.topology README.xlat_topology topology_cust.xlsx topology.xlsx allhosts-sample chassis-sample hosts-sample switches-sample ports-sample opaff.xml-sample mac_to_dhcp filterFile.txt triggerFile.txt opamon.conf-sample opamon.si.conf-sample opafastfabric.conf-sample opa_ca_openssl.cnf-sample opa_comp_openssl.cnf-sample opagentopology esm_chassis-sample 
 
 %define help_doc opatop_group_bw.hlp opatop_group_config.hlp opatop_group_err.hlp opatop_group_focus.hlp opatop_group_info_sel.hlp opatop_img_config.hlp opatop_pm_config.hlp opatop_port_stats.hlp opatop_summary.hlp opatop_vf_bw.hlp opatop_vf_info_sel.hlp opatop_vf_config.hlp
 
@@ -146,7 +144,7 @@ cp -t $RPM_BUILD_ROOT/opt/opa/help %help_doc
 
 cd ../etc
 cp -t $RPM_BUILD_ROOT/opt/opa/fm_tools/ %ff_tools_fm
-ln -s /opt/opa/fm_tools/config_check $RPM_BUILD_ROOT%{_sbindir}/opafmconfigcheck
+ln -s /opt/opa/fm_tools/config_check $RPM_BUILD_ROOT%{_sbindir}/opafmconfigcheck 
 ln -s /opt/opa/fm_tools/config_diff $RPM_BUILD_ROOT%{_sbindir}/opafmconfigdiff
 
 cd ../fastfabric/samples
@@ -166,6 +164,11 @@ cp -t $RPM_BUILD_ROOT%{_mandir}/man1 %opasadb_mans
 cd ../man8
 cp -t $RPM_BUILD_ROOT%{_mandir}/man8 %ff_mans
 cd ..
+
+
+cd ../src/shmem/shmem_apps
+tar -xzf shmem_apps.tgz -C $RPM_BUILD_ROOT/opt/opa/src/shmem_apps/
+cd ../../
 
 #Config files
 cd ../config
@@ -204,23 +207,23 @@ sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_opt_file.list
 
 #FF exp files opt
 echo "/opt/opa/tools/%{ff_tools_exp}" > %{_builddir}/ff_tools_exp.list
-sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_tools_exp.list
+sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_tools_exp.list 
 
 #FF misc files opt
 echo "/opt/opa/tools/%{ff_tools_misc}" > %{_builddir}/ff_tools_misc.list
-sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_tools_misc.list
+sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_tools_misc.list 
 
 #FF libs misc
 echo "/opt/opa/tools/%{ff_libs_misc}" > %{_builddir}/ff_libs_misc.list
-sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_libs_misc.list
+sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_libs_misc.list 
 
 #FF iba samples
 echo "/opt/opa/samples/%{ff_iba_samples}" > %{_builddir}/ff_iba_samples.list
-sed -i 's;[ ];\n/opt/opa/samples/;g' %{_builddir}/ff_iba_samples.list
+sed -i 's;[ ];\n/opt/opa/samples/;g' %{_builddir}/ff_iba_samples.list 
 
 #FF tools to FM configuration
 echo "/opt/opa/fm_tools/%{ff_tools_fm}" > %{_builddir}/ff_tools_fm.list
-sed -i 's;[ ];\n/opt/opa/fm_tools/;g' %{_builddir}/ff_tools_fm.list
+sed -i 's;[ ];\n/opt/opa/fm_tools/;g' %{_builddir}/ff_tools_fm.list 
 
 #FF man pages
 echo "/usr/share/man/man8/%{ff_mans}" > %{_builddir}/ff_mans.list
@@ -228,18 +231,24 @@ sed -i 's;[ ];\n/usr/share/man/man8/;g' %{_builddir}/ff_mans.list
 sed -i 's;\.8;\.8*;g' %{_builddir}/ff_mans.list
 
 #Final file listing for 'basic'
-cat %{_builddir}/basic_sbin_file.list %{_builddir}/basic_opt_file.list %{_builddir}/basic_mans.list > %{_builddir}/basic_file.list
+cat %{_builddir}/basic_sbin_file.list %{_builddir}/basic_opt_file.list > %{_builddir}/basic_file.list %{_builddir}/basic_mans.list
+
 
 #FF tools help doc
 echo "/opt/opa/help/%{help_doc}" > %{_builddir}/ff_help_file.list
-sed -i 's;[ ];\n/opt/opa/help/;g' %{_builddir}/ff_help_file.list
+sed -i 's;[ ];\n/opt/opa/help/;g' %{_builddir}/ff_help_file.list 
 
 #FF tools sbin
 echo "%{_sbindir}/%{ff_tools_sbin}" > %{_builddir}/ff_sbin_file.list
 sed -i 's;[ ];\n%{_sbindir}/;g' %{_builddir}/ff_sbin_file.list
 
+#ShmemApps
+echo "/opt/opa/src/shmem_apps/%{shmem_apps_files}" > %{_builddir}/ff_shmem_apps.list
+sed -i 's;[ ];\n/opt/opa/src/shmem_apps/;g' %{_builddir}/ff_shmem_apps.list 
+
 #Final file listing for 'ff'
-cat %{_builddir}/ff_sbin_file.list %{_builddir}/ff_help_file.list %{_builddir}/ff_tools_exp.list %{_builddir}/ff_tools_misc.list %{_builddir}/ff_libs_misc.list %{_builddir}/ff_iba_samples.list %{_builddir}/ff_mans.list %{_builddir}/ff_tools_fm.list %{_builddir}/ff_opt_file.list > %{_builddir}/ff_file.list
+cat %{_builddir}/ff_shmem_apps.list %{_builddir}/ff_sbin_file.list %{_builddir}/ff_help_file.list %{_builddir}/ff_tools_exp.list %{_builddir}/ff_tools_misc.list %{_builddir}/ff_libs_misc.list %{_builddir}/ff_iba_samples.list %{_builddir}/ff_mans.list %{_builddir}/ff_tools_fm.list %{_builddir}/ff_opt_file.list > %{_builddir}/ff_file.list
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT

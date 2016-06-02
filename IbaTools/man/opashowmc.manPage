@@ -19,10 +19,6 @@ Displays the Intel(R) Omni-Path Multicast groups created for the fabric along wi
 .SH Syntax
 .NL
 opashowmc [-v] [-t \fIportsfile\fR] [-p \fIports\fR]
-.PP
-or
-.br
-opashowmc --help
 .SH Options
 .NL
 
@@ -88,9 +84,7 @@ HFI  \fIx\fR, port  \fIy\fR.
 .NL
 opashowmc
 .br
-opashowmc -p \'1:1\'
-.br
-opashowmc -p \'1:1 2:1\'
+opashowmc -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .SH Environment Variables
 .NL
 

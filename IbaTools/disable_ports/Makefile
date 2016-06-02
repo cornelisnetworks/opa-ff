@@ -80,7 +80,7 @@ LIB_TARGETS_MISC	=
 # targets to build during CMDS phase
 CMD_TARGETS_SHLIB	= 
 CMD_TARGETS_EXE		= $(EXECUTABLE)
-CMD_TARGETS_MISC	= opadisableports opaextractbadlinks opaextractsellinks opaextractlids opaenableports opadisablehosts
+CMD_TARGETS_MISC	= opadisableports opaextractbadlinks opaextractsellinks opaextractlids opaenableports opaledports opadisablehosts
 # files to remove during clean phase
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)

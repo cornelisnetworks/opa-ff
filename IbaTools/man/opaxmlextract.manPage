@@ -20,11 +20,9 @@ Extracts element values from XML input and outputs the data in CSV format. opaxm
 Five sample scripts are available as prototypes for customized scripts. They combine various calls to opareport with a call to opaxmlextract with commonly used parameters.
 .SH Syntax
 .NL
-opaxmlextract [-v][-H][-d \fIdelimiter\fR][-e \fIextract\(ulelement\fR] [-s \fIsuppress\(ulelement\fR][-X \fIinput\(ulfile\fR] [-P \fIparam\(ulfile\fR]
-.PP
-or
+opaxmlextract [-v][-H][-d \fIdelimiter\fR][-e \fIextract\(ulelement\fR]
 .br
-opaxmlextract --help
+[-s \fIsuppress\(ulelement\fR][-X \fIinput\(ulfile\fR] [-P \fIparam\(ulfile\fR]
 .SH Options 
 .NL
 
@@ -42,15 +40,33 @@ Name of the XML element to extract. Elements can be nested in any order, but are
 
 .IP \(bu
 -e \fIelement\fR 
-
 .IP \(bu
 -e \fIelement:attrName\fR 
-
 .IP \(bu
 -e \fIelement:attrName:attrValue\fR 
 
+.RE
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+
+.RS
+
+.IP \(bu
+Elements can be compound values separated by a dot. For example, Switches.Node is a Node element contained within a Switches element.
+.IP \(bu
+To output the attribute value as opposed to the element value, a specification such as -e FIs.Node:id can be used. This will return the value of the id attribute of any Node elements within FIs element.
+.IP \(bu
+If desired, a specific element can be selected by its attribute value, such as -e MulticastFDB.Value:LID:0xc000 which will return the value of the Value element within Multicast FDB element where the Value element has an attribute of LID with a value of 0xc000.
+.IP \(bu
+A given element can be specified multiple times each with a different AttrName or attrValue.
 
 .RE
+
 
 .TP 10
 -s/--suppress \fIsuppress\(ulelement\fR 
@@ -86,31 +102,39 @@ Produces verbose output. Includes output progress reports during extraction and 
 .NL
 
 .PP
-Here is a simple example of opareport output filtered by opaxmlextract :>opareport -o comps -s -x | opaxmlextract -d \; -e NodeDesc -e SystemImageGUID
+Here is an example of opareport output filtered by opaxmlextract :# opareport -o comps -s -x | opaxmlextract -d \; -e NodeDesc
 .br
--e NumPorts -s Neighbor
+-e SystemImageGUID -e NumPorts -s Neighbor
 .br
-
+Getting All Node Records...
+.br
+Done Getting All Node Records
+.br
+Done Getting All Link Records
+.br
+Done Getting All Cable Info Records
+.br
+Done Getting All SM Info Records
+.br
+Getting All Port Counters...
+.br
+Done Getting All Port Counters
 .br
 NodeDesc;SystemImageGUID;NumPorts
 .br
-mindy2 HFI-1;0x0002c9020025a67b;2
+phs1fnivd13u07n4 hfi1\(ul0;0x00117501016033c7;1
 .br
-MT25408 ConnectX Mellanox Technologies;0x0002c9030000079b;2
+phs1fnivd13u07n2 hfi1\(ul0;0x00117501016033ef;1
 .br
-cuda;0x001175009800413e;2
+phs1fnivd13u07n1 hfi1\(ul0;0x001175010160347a;1
 .br
-duster;0x001175009800447b;2
+phs1fnivd13u07n3 hfi1\(ul0;0x0011750101603593;1
 .br
-stewie HFI-1;0x0011750098007b70;2
+phs1swivd13u21;0x00117501ff6a5619;48
 .br
-i9k159 Spine 1, Chip B;0x00117500da000159;24
+phs1fnivd13u07n1 hfi1\(ul0;;
 .br
-i9k159 Spine 2, Chip B;0x00117500da000159;24
-.br
-i9k159 Spine 1, Chip A;;
-.br
-i9k159 Spine 2, Chip A;;
+
 .SH Details 
 .NL
 
@@ -118,32 +142,18 @@ i9k159 Spine 2, Chip A;;
 opaxmlextract is a flexible and powerful tool to process an XML stream. The tool:
 .IP \(bu
 Requires no specific element names to be present in the XML.
-
 .IP \(bu
 Assumes no hierarchical relationship between elements.
-
 .IP \(bu
 Allows extracted element values to be output in any order.
-
 .IP \(bu
-Allows an element\'s value to be extracted only in the context of another specified element.
-
+Allows an element\[aq]s value to be extracted only in the context of another specified element.
 .IP \(bu
 Allows extraction to be suppressed during the scope of specified elements.
-
 .PP
 opaxmlextract takes the XML input stream from either stdin or a specified input file. opaxmlextract does not use or require a connection to a fabric.
 .PP
-opaxmlextract works from two lists of elements supplied as command line or input parameters. The first is a list of elements whose values are to be extracted, called
-\fIextraction elements\fR
-
-. The second is a list of elements for which extraction is to be suppressed, called
-\fIsuppression elements\fR
-
-. When an extraction element is encountered and extraction is not suppressed, the value of the element is extracted for later output in an
-\fIextraction record\fR
-
-. An extraction record contains a value for all extraction elements, including those which have a null value.
+opaxmlextract works from two lists of elements supplied as command line or input parameters. The first is a list of elements whose values are to be extracted, called extraction elements. The second is a list of elements for which extraction is to be suppressed, called suppression elements. When an extraction element is encountered and extraction is not suppressed, the value of the element is extracted for later output in an extraction record. An extraction record contains a value for all extraction elements, including those which have a null value.
 .PP
 When a suppression element is encountered, then no extraction is performed during the extent of that element, from start through end. Suppression is maintained for elements specified inside the suppression element, including elements which may happen to match extraction elements. Suppression can be used to prevent extraction in sections of XML that are present, but not of current interest. For example, NodeDesc or NodeGUID inside a Neighbor specification of opareport.
 .PP
@@ -152,16 +162,14 @@ opaxmlextract attempts to generate extraction records with data values that are 
 opaxmlextract outputs an extraction record under the following conditions:
 .IP \(bu
 One or more extraction elements containing a non-null value go out of scope (that is, the element containing the extraction elements is ended) and a record containing the element values has not already been output.
-
 .IP \(bu
 A new and different value is specified for an extraction element and an extraction record containing the previous value has not already been output.
-
 .PP
 Element names (extraction or suppression) can be made context-sensitive with an enclosing element name using the syntax element1.element2. In this case, element2 is extracted (or extraction is suppressed) only when element2 is enclosed by element1.
 .PP
-The syntax also allows \' * \' to be specified as a wildcard. In this case, *.element3 specifies element3 enclosed by any element or sequence of elements (for example, element1.element3 or element1.element2.element3). Similarly, element1.*.element3 specifies element3 enclosed by element1 with any number of (but at least 1) intermediate elements.
+The syntax also allows \[aq] * \[aq] to be specified as a wildcard. In this case, *.element3 specifies element3 enclosed by any element or sequence of elements (for example, element1.element3 or element1.element2.element3). Similarly, element1.*.element3 specifies element3 enclosed by element1 with any number of (but at least 1) intermediate elements.
 .PP
-opaxmlextract prepends any entered element name not containing a \' * \' (anywhere) with \' *. \', matching the element regardless of the enclosing elements.
+opaxmlextract prepends any entered element name not containing a \[aq] * \[aq] (anywhere) with \[aq] *. \[aq], matching the element regardless of the enclosing elements.
 .PP
 
 .B NOTE:
@@ -169,10 +177,7 @@ Any element names that include a wildcard should be quoted to the shell attempti
 
 
 .PP
-At the beginning of operation, opaxmlextract, by default, outputs a delimited
-\fIheader record\fR
-
-containing the names of the extraction elements. The order of the names is the same as specified on the command line and is the same order as that of the extraction record. Output of the header record can be disabled with the -H option. By default, element names are shown as they were entered on the command line. The -v option causes element names to be output as they are used during extraction, with any prepended wildcard characters.
+At the beginning of operation, opaxmlextract, by default, outputs a delimited header record containing the names of the extraction elements. The order of the names is the same as specified on the command line and is the same order as that of the extraction record. Output of the header record can be disabled with the -H option. By default, element names are shown as they were entered on the command line. The -v option causes element names to be output as they are used during extraction, with any prepended wildcard characters.
 .PP
 Options (parameters) to opaxmlextract can be specified on the command line, with a parameter file, or using both methods. A parameter file is specified with -P \fIparam\(ulfile\fR. When a parameter file specification is encountered on the command line, option processing on the command line is suspended, the parameter file is read and processed entirely, and then command line processing is resumed.
 .PP

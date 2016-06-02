@@ -185,8 +185,8 @@ include $(TL_DIR)/Makerules/Maketargets.install
 # install for stage phase
 #include $(TL_DIR)/Makerules/Maketargets.stage
 STAGE::
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) opasetupssh opascpall opauploadall opadownloadall opapingall opacmdall opashowallports opacaptureall opahostadmin opachassisadmin opaswitchadmin opafabricanalysis opahostsmanalysis opaesmanalysis opachassisanalysis opaallanalysis opafastfabric opaswenableall opaswdisableall opaexpandfile ff_funcs opafastfabric.conf.def
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_IBTOOLS_DIR) tcl_proc $(TCL_SOURCES) opafastfabric.conf.def ff_funcs ports hosts allhosts switches chassis esm_chassis show_counts opaff.xml osid_wrapper
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) opasetupssh opascpall opauploadall opadownloadall opapingall opacmdall opashowallports opacaptureall opahostadmin opachassisadmin opaswitchadmin opafabricanalysis opahostsmanalysis opaesmanalysis opachassisanalysis opaallanalysis opafastfabric opaswenableall opaswdisableall opaexpandfile ff_funcs opafastfabric.conf.def show_counts
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_IBTOOLS_DIR) tcl_proc $(TCL_SOURCES) opafastfabric.conf.def ff_funcs ports hosts allhosts switches chassis esm_chassis opaff.xml osid_wrapper
 	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR)/samples allhosts-sample chassis-sample hosts-sample switches-sample ports-sample opaff.xml-sample mac_to_dhcp opafastfabric.conf-sample opa_ca_openssl.cnf-sample opa_comp_openssl.cnf-sample esm_chassis-sample
 
 # Unit test execution

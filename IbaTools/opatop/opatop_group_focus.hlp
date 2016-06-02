@@ -10,8 +10,13 @@ backward.  Like the BW Stats and Err Stats screens which preceed this screen,
 the focus criterion and number of requested focus ports can be changed to
 modify the focus port list.  An index value, shown with each port, can be
 used to select the port and show the port's counters in a Port Stats screen.
-The Group/VF Focus screen accepts the following input commands.
+A symbol may be present on the first character of the line to indicate a
+non-ideal condition was observed when calculating this ports data. The
+possible conditions are, the PM was told to ignore this port ('~'), the PM
+failed to query this port ('!'), and the PM topology does not know this
+port’s identity ('?').
 
+The Group/VF Focus screen accepts the following input commands.
   S: Scroll forward (s*) or backward (S*) through port list
   C: Select group/VF focus criteria forward (c*) or reverse (C*):
      Utilization (highest first)

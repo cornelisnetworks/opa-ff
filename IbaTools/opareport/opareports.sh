@@ -32,8 +32,6 @@
 # This script provides a wrapper for opareport which can be run
 # against multiple fabrics via multiple local HFI ports
 
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -43,6 +41,8 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
 
 Usage_full()
 {
@@ -107,7 +107,7 @@ fi
 
 status=ok
 
-TEMP=`getopt -a -n opareports -o 'p:t:vqo:d:PHMNxT:sri:Cac:LF:S:D:QVA' -l 'verbose,quiet,output:,detail:,persist,hard,pmadirect,noname,xml,topology:,stats,routes,interval:,clear,clearall,config:,limit,focus:,src:,dest:,quietfocus,vltables,allports' -- "$@"`
+TEMP=`getopt -a -n opareports -o 'p:t:vqo:d:PHmMNxT:sri:Cac:LF:S:D:QVA' -l 'verbose,quiet,output:,detail:,persist,hard,smadirect,pmadirect,noname,xml,topology:,stats,routes,interval:,clear,clearall,config:,limit,focus:,src:,dest:,quietfocus,vltables,allports' -- "$@"`
 if [ $? != 0 ]
 then
 	Usage

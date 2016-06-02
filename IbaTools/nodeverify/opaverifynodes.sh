@@ -31,10 +31,8 @@
 # [ICS VERSION STRING: unknown]
 
 # verify hosts basic single node configuration and performance via hostverify.sh
-# prior to using this, edit /opt/opa/samples/hostverify.sh to set proper
-# expectations for node configuration and performance
-
-trap "exit 1" SIGHUP SIGTERM SIGINT
+# prior to using this, copy /opt/opa/samples/hostverify.sh to FF_HOSTVERIFY_DIR,
+# and edit to set proper expectations for node configuration and performance, 
 
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
@@ -45,6 +43,8 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
 
 punchlist=$FF_RESULT_DIR/punchlist.csv
 del=';' # TBD what will work best for import
@@ -75,11 +75,10 @@ Usage_full()
 	echo "This verifies basic node configuration and performance by running" >&2
 	echo "FF_HOSTVERIFY_DIR/hostverify.sh on all specified hosts" >&2
 	echo >&2
-	echo "Prior to using this, edit /opt/opa/samples/hostverify.sh to set proper" >&2
-	echo "expectations for node configuration and performance" >&2
+	echo "Prior to using this, copy /opt/opa/samples/hostverify.sh to FF_HOSTVERIFY_DIR" >&2
+	echo "and edit to set proper expectations for node configuration and performance" >&2
 	echo "Then be sure to use the -c option on first run for a given node" >&2
-	echo "so that /opt/opa/samples/hostverify.sh gets copied to each node as" >&2
-	echo "FF_HOSTVERIFY_DIR/hostverify.sh" >&2
+	echo "so that hostverify.sh gets copied to each node." >&2
 	echo "FF_HOSTVERIFY_DIR is configured in /etc/sysconfig/opa/opafastfabric.conf" >&2
 	echo >&2
 	echo "A summary of results is appended to FF_RESULT_DIR/verifyhosts.res." >&2
@@ -117,11 +116,10 @@ Usage()
 	echo "This verifies basic node configuration and performance by running" >&2
 	echo "FF_HOSTVERIFY_DIR/hostverify.sh on all specified hosts" >&2
 	echo >&2
-	echo "Prior to using this, edit /opt/opa/samples/hostverify.sh to set proper" >&2
-	echo "expectations for node configuration and performance" >&2
+	echo "Prior to using this, copy /opt/opa/samples/hostverify.sh to FF_HOSTVERIFY_DIR" >&2
+	echo "and edit to set proper expectations for node configuration and performance" >&2
 	echo "Then be sure to use the -c option on first run for a given node" >&2
-	echo "so that /opt/opa/samples/hostverify.sh gets copied to each node as" >&2
-	echo "FF_HOSTVERIFY_DIR/hostverify.sh" >&2
+	echo "so that hostverify.sh gets copied to each node." >&2
 	echo "FF_HOSTVERIFY_DIR is configured in /etc/sysconfig/opa/opafastfabric.conf" >&2
 	echo >&2
 	echo "A summary of results is appended to FF_RESULT_DIR/verifyhosts.res." >&2
@@ -203,8 +201,8 @@ echo "$(echo "$HOSTS"|tr -s ' ' '\n'|sed -e '/^$/d'|sort -u| wc -l) hosts will b
 
 if [ "$do_copy" = y ]
 then
-	echo "Copying /opt/opa/samples/hostverify.sh to $FF_HOSTVERIFY_DIR/hostverify.sh ..."| tee -a $FF_RESULT_DIR/verifyhosts.res
-	opascpall -p "/opt/opa/samples/hostverify.sh" "$FF_HOSTVERIFY_DIR/hostverify.sh" 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res
+	echo "SCPing $FF_HOSTVERIFY_DIR/hostverify.sh to $FF_HOSTVERIFY_DIR/hostverify.sh ..."| tee -a $FF_RESULT_DIR/verifyhosts.res
+	opascpall -p "$FF_HOSTVERIFY_DIR/hostverify.sh" "$FF_HOSTVERIFY_DIR/hostverify.sh" 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res
 	date >> $FF_RESULT_DIR/verifyhosts.res
 fi
 

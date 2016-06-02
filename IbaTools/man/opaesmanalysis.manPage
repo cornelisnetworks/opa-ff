@@ -24,7 +24,7 @@ Intel recommends that you set up SSH keys for chassis (see
 ). If SSH keys are not set up, all chassis must be configured with the same admin password and the password must be kept in the opafastfabric.conf configuration file.
 .SH Syntax
 .NL
-opaesmanalysis [-b|-e] [-s] [-d \fIdir\fR] [-G \fIesmchassisfile\fR] [-E \'\fIesmchassis\fR\']
+opaesmanalysis [-b|-e] [-s] [-d \fIdir\fR] [-G \fIesmchassisfile\fR] [-E#8217#160;\[aq]\fIesmchassis\fR\[aq]]
 .SH Options
 .NL
 
@@ -53,7 +53,7 @@ Top-level directory for saving baseline and history of failed checks. Default = 
 .NL
 File with SM chassis in the cluster. Default = /etc/sysconfig/opa/esm\(ulchassis 
 .TP 10
--E \'\fIesmchassis\fR\' 
+-E \[aq]\fIesmchassis\fR\[aq] 
 .NL
 List of SM chassis on which to execute the command.
 .SH Example 

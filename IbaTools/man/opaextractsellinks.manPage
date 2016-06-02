@@ -13,7 +13,7 @@ opaextractsellinks
 .NL
 
 .PP
-Produces a CSV file listing all or some of the links in the fabric. opaextractsellinks.sh is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
+Produces a CSV file listing all or some of the links in the fabric. opaextractsellinks is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
 .SH Syntax 
 .NL
 opaextractsellinks [--help] [opareport \fIoptions\fR]
@@ -28,28 +28,30 @@ Produces full help text.
 .TP 10
 opareport \fIoptions\fR 
 .NL
-Options are passed to opareport.
+Options are passed to opareport. See
+\fIopareport\fR
+for the full set of options.
 
 .SH Examples 
 .NL
 # List all the links in the fabric:
 .br
-opaextractsellinks.sh
+opaextractsellinks
 .br
 
 .br
 # List all the links to a switch named "OmniPth00117501ffffffff":
 .br
-opaextractsellinks.sh -F "node:OmniPth00117501ffffffff"
+opaextractsellinks -F "node:OmniPth00117501ffffffff"
 .br
 
 .br
 # List all the connections to end-nodes:
 .br
-opaextractsellinks.sh -F "nodetype:FI"
+opaextractsellinks -F "nodetype:FI"
 .br
 
 .br
-# List all the links on the 2nd HFI\'s fabric of a multi-plane fabric:
+# List all the links on the 2nd HFI\[aq]s fabric of a multi-plane fabric:
 .br
-opaextractsellinks.sh -h 2
+opaextractsellinks -h 2

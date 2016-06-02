@@ -23,13 +23,17 @@ This command automatically generates the file FF\(ulRESULT\(ulDIR/punchlist.csv.
 \fBData/Text to Columns\fR
 toolbar can be used to separate the information into multiple columns at the semicolons.
 .PP
-A sample generated output is:# opafindgood
+A sample generated output is:
+.PP
+
+.br
+# opafindgood
 .br
 3 hosts will be checked
 .br
 2 hosts are pingable (alive)
 .br
-2 hosts are ssh\'able (running)
+2 hosts are ssh\[aq]able (running)
 .br
 2 total hosts have FIs active on one or more fabrics (active)
 .br
@@ -47,24 +51,23 @@ Bad hosts have been added to /root/punchlist.csv
 .br
 2015/10/07 10:21:05;phs1swivd13u06;Switch not found in SA DB
 .br
-2015/10/09 14:36:48;phs1fnivd13u07n4;Doesn\'t ping
+2015/10/09 14:36:48;phs1fnivd13u07n4;Doesn\[aq]t ping
 .br
 2015/10/09 14:36:48;phs1fnivd13u07n3;No active port
+
+.br
+
 .PP
-For a given run, a line is generated for each failing host. Hosts are reported exactly once for a given run. Therefore, a host that does not ping is NOT listed as can\'t ssh nor No active port. There may be cases where ports could be active for hosts that do not ping, especially if Ethernet host names are used for the ping test. However, the lack of ping often implies there are other fundamental issues, such as PXE boot or inability to access DNS or DHCP to get proper host name and IP address. Therefore, reporting hosts that do not ping is typically of limited value.
+For a given run, a line is generated for each failing host. Hosts are reported exactly once for a given run. Therefore, a host that does not ping is NOT listed as can\[aq]t ssh nor No active port. There may be cases where ports could be active for hosts that do not ping, especially if Ethernet host names are used for the ping test. However, the lack of ping often implies there are other fundamental issues, such as PXE boot or inability to access DNS or DHCP to get proper host name and IP address. Therefore, reporting hosts that do not ping is typically of limited value.
 .PP
 Note that opafindgood queries the SA for NodeDescriptions to determine hosts with active ports. As such, ports may be active for hosts that cannot be accessed via SSH or pinged.
 .PP
 By default, opafindgood checks for and reports nodes that are quarantined for security reasons. To skip this, use the -Q option.
 .SH Syntax 
 .NL
-opafindgood [-R|-A|-Q] [-d \fIdir\fR] [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-t \fIportsfile\fR]
+opafindgood [-R|-A|-Q] [-d \fIdir\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-t \fIportsfile\fR]
 .br
 [-p \fIports\fR] [-T \fItimelimit\fR]
-.PP
-or
-.br
-opafindgood --help
 .SH Options 
 .NL
 
@@ -178,10 +181,10 @@ opafindgood
 .br
 opafindgood -f allhosts
 .br
-opafindgood -h \'arwen elrond\'
+opafindgood -h \[aq]arwen elrond\[aq]
 .br
-HOSTS=\'arwen elrond\' opafindgood
+HOSTS=\[aq]arwen elrond\[aq] opafindgood
 .br
 HOSTS\(ulFILE=allhosts opafindgood
 .br
-opafindgood -p \'1:1 2:1\'
+opafindgood -p \[aq]1:1 1:2 2:1 2:2\[aq]

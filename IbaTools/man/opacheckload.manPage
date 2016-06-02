@@ -16,11 +16,7 @@ opacheckload
 Returns load information on hosts in the fabric.
 .SH Syntax
 .NL
-opacheckload [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-r] [-a|-n numprocs] [-d uploaddir]
-.PP
-or
-.br
-opacheckload --help
+opacheckload [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r] [-a|-n numprocs] [-d uploaddir]
 .SH Options
 .NL
 
@@ -59,8 +55,8 @@ Directory to upload loadavg to. Default is uploads.
 
 .SH Examples 
 .NL
-opacheckload opacheckload -h \'arwen elrond\' HOSTS=\'arwen elrond\' opacheckload
-.SH Environment
+opacheckload opacheckload -h \[aq]arwen elrond\[aq] HOSTS=\[aq]arwen elrond\[aq] opacheckload
+.SH Environment Variables
 .NL
 
 .TP 10

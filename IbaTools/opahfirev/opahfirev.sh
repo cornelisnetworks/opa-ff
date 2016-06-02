@@ -81,6 +81,19 @@ else
 			eval 2>/dev/null read boardver < ${driver}/${instance}/boardversion
 			eval 2>/dev/null read serial < ${driver}/${instance}/serial
 			eval 2>/dev/null read guid < ${driver}/${instance}/node_guid
+			eval 2>/dev/null read hw_rev < ${driver}/${instance}/hw_rev
+			case "$hw_rev" in
+			"0") 
+				hw_string="A0";;
+			"1") 
+				hw_string=" A1";;
+			"10") 
+				hw_string="B0";;
+			"11") 
+				hw_string="B1";;
+			#note Add new HW rev codes here. This list was taken from WFR HAS CceRevision
+			esac
+
 			/usr/sbin/opatmmtool 2>/dev/null 1>/dev/null
 			tmm=$?
 			if [ $tmm -ne 3 ]
@@ -94,6 +107,14 @@ else
 		echo "SN:    $serial"
 		echo "Bus:   ${localbus_info}"
 		echo "GUID:  $guid"
+		
+		if [ -z $hw_string ]
+		then
+			echo "HWRev: $hw_rev"
+		else
+			echo "HWRev: $hw_string ($hw_rev)"
+		fi
+
 		if [ $tmm -ne 3 ]
 		then
 			echo "TMM:   $tmmver"

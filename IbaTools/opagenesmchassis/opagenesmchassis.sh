@@ -33,7 +33,6 @@
 # Call opagenchassis and iterate through the list of chassis to 
 # generate esm_chassis file by finding out all chassis where embedded
 # subnet manager is running. 
-trap "exit 1" SIGHUP SIGTERM SIGINT
 
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
@@ -44,6 +43,8 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
 
 Usage_full()
 {

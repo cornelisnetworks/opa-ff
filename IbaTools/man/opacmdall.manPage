@@ -19,15 +19,11 @@ Executes a command on all hosts or Intel(R) Omni-Path Chassis. This powerful com
 .PP
 
 .B NOTE:
-opacmdall depends on the Linux* convention that utilities return 0 for success and >0 for failure. If opacmdall is used to execute a non-standard utility like diff or a program that uses custom exit codes, then opacmdall may erroneously report "Command execution FAILED" when it encounters a non-zero exit code. However, command output is still returned normally and the error may be safely ignored.
+opacmdall depends on the Linux* convention that utilities return 0 for success and #8217gt;0 for failure. If opacmdall is used to execute a non-standard utility like diff or a program that uses custom exit codes, then opacmdall may erroneously report "Command execution FAILED" when it encounters a non-zero exit code. However, command output is still returned normally and the error may be safely ignored.
 
 .SH Syntax
 .NL
 opacmdall [-Cpq] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \fIhosts\fR] [-H \fIchassis\fR] [-u \fIuser\fR] [-S] [-m \fImarker\fR] [-T \fItimelimit\fR] [-P] \fIcmd\fR
-.PP
-or
-.br
-opacmdall --help
 .SH Options
 .NL
 
@@ -105,28 +101,29 @@ Time limit in seconds when running host commands. Default is -1 (infinite).
 .NL
 Outputs the hostname/chassis name as prefix to each output line. This can make script processing of output easier.
 
-.SH Examples 
+.SH Examples
+.NL
+
 .NL
 
 .SH Operations on Host
 .NL
 opacmdall date
 .br
-opacmdall \'uname -a\'
+opacmdall \[aq]uname -a\[aq]
 .br
-opacmdall -h \'elrond arwen\' date
+opacmdall -h \[aq]elrond arwen\[aq] date
 .br
-HOSTS=\'elrond arwen\' opacmdall date
-.TP 10
-\fBOperations on Chassis\fR
+HOSTS=\[aq]elrond arwen\[aq] opacmdall date
 .NL
 
+.SH Operations on Chassis
+.NL
+opacmdall -C \[aq]ismPortStats -noprompt\[aq]
 .br
-opacmdall -C \'ismPortStats -noprompt\'
+opacmdall -C -H \[aq]chassis1 chassis2\[aq] ismPortStats -noprompt#8217#8217;
 .br
-opacmdall -C -H \'chassis1 chassis2\' ismPortStats -noprompt\'
-.br
-CHASSIS=\'chassis1 chassis2\' opacmdall ismPortStats -noprompt\'
+CHASSIS=\[aq]chassis1 chassis2\[aq] opacmdall ismPortStats -noprompt#8217#8217;
 .SH Environment Variables
 .NL
 
@@ -179,7 +176,7 @@ Password for admin on all chassis. Used in absence of -S option.
 All commands performed with opacmdall must be non-interactive in nature. opacmdall waits for the command to complete before proceeding. For example, when running host commands such as rm, the -i option (interactively prompt before removal) should not be used. (Note that this option is sometimes part of a standard bash alias list.) Similarly, when running chassis commands such as fwUpdateChassis, the -reboot option should not be used beccause this option causes an immediate reboot and therefore the command never returns. Also, the chassis command reboot should not be executed using opacmdall. Instead, use the opachassisadmin reboot command to reboot one or more chassis. For further information about individual chassis CLI commands, consult the 
 \fIIntel(R) Omni-Path Fabric Switches Command Line Interface Reference Guide\fR
 
-. For further information about Linux operating system commands, consult Linux man pages.
+. For further information about Linux* operating system commands, consult the man pages.
 .PP
 When performing opacmdall against hosts, internally SSH is used. The command opacmdall requires that password-less SSH be set up between the host running the Intel(R) Omni-Path Fabric Suite FastFabric Toolset and the hosts opacmdall is operating against. The opasetupssh FastFabric tool can aid in setting up password-less SSH.
 .PP

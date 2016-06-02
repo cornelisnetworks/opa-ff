@@ -31,10 +31,6 @@
 # [ICS VERSION STRING: unknown]
 # copy a file to all hosts
 
-temp="$(mktemp --tmpdir "opascpall.XXXXXX")"
-trap "rm -f $temp; exit 1" SIGHUP SIGTERM SIGINT
-trap "rm -f $temp" EXIT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -44,6 +40,10 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+temp="$(mktemp --tmpdir "opascpall.XXXXXX")"
+trap "rm -f $temp; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $temp" EXIT
 
 Usage_full()
 {
@@ -118,6 +118,10 @@ user=`id -u -n`
 opts=
 topt=n
 popt=n
+status=0
+
+pids=''
+
 while getopts f:h:u:prt param
 do
 	case $param in
@@ -162,26 +166,43 @@ then
 		fi
 		dest="$file"
 	done
-		
+
 	running=0
+
 	for hostname in $HOSTS
 	do
-		if [ "$popt" = "y" ]
-		then
-			if [ $running -ge $FF_MAX_PARALLEL ]
-			then
-				wait
-				running=0
-			fi
-			echo "scp $opts $files $user@[$hostname]:$dest"
-			scp $opts $files $user@\[$hostname\]:$dest &
-			running=$(( $running + 1))
-		else
-			echo "scp $opts $files $user@[$hostname]:$dest"
-			scp $opts $files $user@\[$hostname\]:$dest
-		fi
+	  if [ "$popt" = "y" ]
+	        then
+		   if [ $running -ge $FF_MAX_PARALLEL ]
+		     then
+			   wait
+			   running=0
+		   fi
+		   echo "scp $opts $files $user@[$hostname]:$dest"
+		   scp $opts $files $user@\[$hostname\]:$dest & 
+		   pid=$!
+           pids="$pids $pid"
+		   running=$(( $running + 1))
+	    else
+		echo "scp $opts $files $user@[$hostname]:$dest"
+		scp $opts $files $user@\[$hostname\]:$dest
+		if [ "$?" -ne 0 ]
+		  then
+		    status=1
+	        fi		   
+	  fi
 	done
-	wait
+
+#checking exit status for background jobs	
+	for pid in $pids
+	do
+	   wait $pid
+   	   if [ "$?" -ne 0 ]
+ 	      then
+	         status=1
+	   fi	
+	done
+
 else
 	if [ $# -lt 2 ]
 	then
@@ -202,6 +223,7 @@ else
 	fi
 	cd $srcdir
 	tar cvfz $temp .
+
 	running=0
 	for hostname in $HOSTS
 	do
@@ -213,19 +235,43 @@ else
 				running=0
 			fi
 			(
-				echo "scp $opts $temp $user@[$hostname]:$temp"
-				scp $opts $temp $user@\[$hostname\]:$temp
-				echo "$user@$hostname: mkdir -p $destdir; cd $destdir; tar xfz $temp; rm -f $temp"
-				ssh $user@$hostname "mkdir -p $destdir; cd $destdir; tar xfz $temp; rm -f $temp"
+                echo "scp $opts $temp $user@[$hostname]:$temp"
+                scp $opts $temp $user@\[$hostname\]:$temp
+                echo "$user@$hostname: mkdir -p $destdir; cd $destdir; tar xfz $temp; rm -f $temp"
+                ssh $user@$hostname "mkdir -p $destdir; cd $destdir; tar xfz $temp; rm -f $temp"
 			) &
+			pid=$!
+		   	pids="$pids $pid"
 			running=$(( $running + 1))
 		else
 			echo "scp $opts $temp $user@[$hostname]:$temp"
 			scp $opts $temp $user@\[$hostname\]:$temp
+			if [ "$?" -ne 0 ]
+		  	  then
+		    	     status=1
+	        	fi		   
 			echo "$user@$hostname: mkdir -p $destdir; cd $destdir; tar xfz $temp; rm -f $temp"
 			ssh $user@$hostname "mkdir -p $destdir; cd $destdir; tar xfz $temp; rm -f $temp"
+			if [ "$?" -ne 0 ]
+		  	  then
+		    	     status=1
+	        	fi		   
 		fi
 	done
-	wait
+
+#checking exit status for background jobs	
+	for pid in $pids
+	do
+	   wait $pid
+   	   if [ "$?" -ne 0 ]
+ 	      then
+	         status=1
+	   fi	
+	done
 	rm -f $temp
+fi
+
+if [ $status -ne 0 ]
+  then
+     exit 1
 fi

@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	uint8				port = -1;
 	uint32				delay = RESET_DELAY;
 	IB_PATH_RECORD		path;
-	uint16				sessionID;
+	uint16				sessionID = 0;
 	VENDOR_MAD			mad;
 	FSTATUS				status = FSUCCESS;
 	struct              oib_port *oib_port_session = NULL;
@@ -250,7 +250,9 @@ int main(int argc, char *argv[])
 	// Send a reboot MAD to the LID
 
 	status = sendRebootMad(oib_port_session, &path, sessionID, &mad, delay);
-
+	if (status != FSUCCESS) {
+		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+	} 
 	printf("opaswreset completed\n");
 
 err_exit:

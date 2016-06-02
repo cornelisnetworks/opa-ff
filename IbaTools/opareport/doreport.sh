@@ -71,7 +71,7 @@ iocpat="`echo "$iocname"|cut -c1-$(( $(echo -n "$iocname"|wc -c) - 2))`*"
 iocpatb="*`echo "$iocname"|cut -c3-100`"
 iocpatc="*`echo "$iocname"|cut -c3-$(( $(echo -n "$iocname"|wc -c) - 2))`*"
 
-ioctype='VNIC'
+ioctype='SRP'
 subnet=0xfe80000000000000	# IBTA defined default subnet prefix
 lid=1	# typically SM
 

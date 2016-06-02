@@ -20,10 +20,6 @@ for additional details.
 .SH Syntax
 .NL
 opatop [-v] [-q] [-h \fIhfi\fR] [-p \fIport\fR] [-i \fIseconds\fR]
-.PP
-or
-.br
-opatop --help
 .SH Options
 .NL
 
@@ -60,7 +56,7 @@ STDERR opatop
 
 .sp
 16 
-Screen PaClient
+STDERR PaClient
 .RE
 
 .TP 10
@@ -120,8 +116,9 @@ HFI  \fIx\fR, port  \fIy\fR.
 .NL
 Interval in  \fIseconds\fR at which PA queries are performed to refresh to the latest PA image. Default = 10 seconds.
 
-.TP 10
-\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.SH -h and -p options permit a variety of selections:
 .NL
 
 .TP 10
@@ -140,16 +137,16 @@ First active port in system.
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR-p 0 
+-h \fIx\fR#8217#160;-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy \fR within system (no matter which ports are active).
+Port \fIy#8217#160;\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR-p \fIy\fR 
+-h \fIx\fR#8217#160;-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR.

@@ -1,0 +1,54 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opafmconfigdiff 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opafmconfigdiff
+
+.NL
+
+.PP
+Performs a file difference between two configuration files corresponding to two FM instances described by  \fIfile1\fR and  \fIfile2\fR.
+.SH Syntax
+.NL
+opafmconfigdiff [-f] [-l] [-d \[aq]\fIdiff\(ulargs\fR\[aq]] \fIfile1 file2\fR
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+-f 
+.NL
+Filters out FM parameters that are not part of the consistency check. Removes config tags that do not cause consistency checks on the FM to fail from diff.
+
+.TP 10
+-l 
+.NL
+Includes comments in XML to indicate original line numbers.
+
+.TP 10
+-d \[aq]\fIdiff\(ulargs\fR\[aq] 
+.NL
+Specifies additional arguments to add to diff command. For example, enter uw for unified format ignoring whitespace.
+
+.TP 10
+ \fIfile1 file2\fR 
+.NL
+Names of the configuration files to be compared.
+
+.SH Example 
+.NL
+opafmconfigdiff /etc/sysconfig/opafm.xml /opt/opafm/etc/opafm.xml
+.br
+opafmconfigdiff -f /etc/sysconfig/opafm.xml /opt/opafm/etc/opafm.xml
+.br
+opafmconfigdiff #8217#8211;d -uw /etc/sysconfig/opafm.xml /opt/opafm/etc/ opafm.xml

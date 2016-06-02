@@ -72,16 +72,16 @@ opaxmlgenerate takes the CSV data from an input file. It generates fragments of 
 .PP
 opaxmlgenerate reads CSV element values and applies element (tag) names to those values. The element names are supplied as command line options to the tool and constitute a template that is applied to the input.
 .PP
-Element names on the command line are of three (3) types, distinguished by their command line option - Generate, Header, and Header\(ulEnd. The Header and Header\(ulEnd types together constitute<term xmlns:ditaarch="http://dita.oasis-open.org/architecture/2005/" ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\' topic/image \') and not(parent::*/@conref)]" class="- topic/term ">enclosing</term>element types. Enclosing elements do not contain a value, but serve to separate and organize Generate elements.
+Element names on the command line are of three (3) types, distinguished by their command line option - Generate, Header, and Header\(ulEnd. The Header and Header\(ulEnd types together constitute enclosing element types. Enclosing elements do not contain a value, but serve to separate and organize Generate elements.
 .PP
-Generate elements, along with a value from the CSV input file, cause XML in the form of <element\(ulname> \fIvalue\fR</element\(ulname> to be generated. Generate elements are normally the majority of the XML output since they specify elements containing the input values. Header elements cause an XML header start tag of the form: <element\(ulname> to be generated. Header\(ulEnd elements cause an XML header end tag of the form </element\(ulname> to be generated. Output of enclosing elements is controlled entirely by the placement of those element types on the command line. opaxmlgenerate does
+Generate elements, along with a value from the CSV input file, cause XML in the form of #8217lt;element\(ulname> \fIvalue\fR</element\(ulname> to be generated. Generate elements are normally the majority of the XML output since they specify elements containing the input values. Header elements cause an XML header start tag of the form: <element\(ulname> to be generated. Header\(ulEnd elements cause an XML header end tag of the form </element\(ulname> to be generated. Output of enclosing elements is controlled entirely by the placement of those element types on the command line. opaxmlgenerate does
 \fBnot\fR
 check for matching start and end tags or proper nesting of tags.
 .PP
 Options (parameters) to opaxmlgenerate can be specified on the command line, with a parameter file, or both. A parameter file is specified with -P \fIparam\(ulfile\fR. When a parameter file specification is encountered on the command line, option processing on the command line is suspended, the parameter file is read and processed entirely, and then command line processing is resumed. Option syntax within a parameter file is the same as on the command line. Multiple parameter file specifications can be made, on the command line or within other parameter files. At each point that a parameter file is specified, current option processing is suspended while the parameter file is processed, then resumed. Options are processed in the order they are encountered on the command line or in parameter files. A parameter file can be up to 8192 bytes in size and may contain up to 512 parameters.
 .NL
 
-.SH Using opaxmlgenerate to create topology input files
+.SH Using opaxmlgenerate to Create Topology Input Files
 .NL
 
 .PP

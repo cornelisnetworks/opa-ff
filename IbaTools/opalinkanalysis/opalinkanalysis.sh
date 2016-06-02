@@ -32,10 +32,6 @@
 
 # analyzes all the links in the fabric
 
-tempfile="$(mktemp)"
-trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
-trap "rm -f $tempfile" EXIT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -45,6 +41,10 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+tempfile="$(mktemp)"
+trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $tempfile" EXIT
 
 punchlist=$FF_RESULT_DIR/punchlist.csv
 del=';'
@@ -171,12 +171,15 @@ set_beaconing_led()
 # $1 = nodedesc
 # $2 = port num
 {
-	#echo "setting led on node:$1 port:$2"
-	#Map node desc to lid so we can use opaportconfig tool to enable LED
-	nodelid=$(opasaquery -d "$1" -o lid | head -n 1)
-	if [ "$nodelid" != "No Records Returned" ]
+	if [ "$read_snapshot" = n ]
 	then
-		/usr/sbin/opaportconfig -l $nodelid -m $2 ledon
+		#echo "setting led on node:$1 port:$2"
+		#Map node desc to lid so we can use opaportconfig tool to enable LED
+		nodelid=$(opasaquery -d "$1" -o lid | head -n 1)
+		if [ "$nodelid" != "No Records Returned" ]
+		then
+			/usr/sbin/opaportconfig -l $nodelid -m $2 ledon
+		fi
 	fi
 }
 
@@ -308,6 +311,7 @@ gen_verifylinks_punchlist()
 	export IFS=';'
 	port1=
 	port2=
+	foundPort=
 	prob=
 	#eval opareport -q "$@" -o verifylinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeGUID -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.NodeType -e VerifyLinks.Link.Port.NodeDesc|while read line
 	eval opareport -q "$@" -o verifylinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeDesc -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.Problem -e VerifyLinks.Link.Problem|while read desc port portprob linkprob
@@ -331,23 +335,28 @@ gen_verifylinks_punchlist()
 			then
 				prob=$linkprob	# unlikely to occur here
 			fi
+		fi
 
-			if [ x"$prob" != x ]
+		if [ x"$linkprob" != x ]
+		then
+			if [ x"$prob" = x ]
 			then
-				append_verify_punchlist "$port1 $port2" "$prob"
-				port1=
-				port2=
-				prob=
+				prob=$linkprob
 			fi
-		else
-			# separate record for link problem
-			prob=$linkprob
-			append_verify_punchlist "$port1 $port2" "$prob"
+
+			# more port information available
+			if [ x"$desc" != x ]
+			then 
+				foundPort="$desc p$port"
+			fi
+
+			append_verify_punchlist "$port1 $port2" "$prob $foundPort"
 			port1=
 			port2=
+			foundPort=
 			prob=
 		fi
-		
+
 		if [ x"$port" != x ] && [ x"$desc" != x ]
 		then
 			set_beaconing_led "$desc" $port
@@ -364,6 +373,7 @@ gen_verifyextlinks_punchlist()
 	export IFS=';'
 	port1=
 	port2=
+	foundPort=
 	prob=
 	#eval opareport -q "$@" -o verifyextlinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeGUID -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.NodeType -e VerifyExtLinks.Link.Port.NodeDesc|while read line
 	eval opareport -q "$@" -o verifyextlinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeDesc -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.Problem -e VerifyExtLinks.Link.Problem|while read desc port portprob linkprob
@@ -387,20 +397,25 @@ gen_verifyextlinks_punchlist()
 			then
 				prob=$linkprob	# unlikely to occur here
 			fi
-
-			if [ x"$prob" != x ]
+		fi
+			
+		if [ x"$linkprob" != x ]
+		then
+			if [ x"$prob" = x ]
 			then
-				append_verify_punchlist "$port1 $port2" "$prob"
-				port1=
-				port2=
-				prob=
+				prob=$linkprob
+			fi		
+	
+			# more port information available	
+			if [ x"$desc" != x ]
+			then 
+				foundPort="$desc p$port"
 			fi
-		else
-			# separate record for link problem
-			prob=$linkprob
-			append_verify_punchlist "$port1 $port2" "$prob"
+
+			append_verify_punchlist "$port1 $port2" "$prob $foundPort"
 			port1=
 			port2=
+			foundPort=
 			prob=
 		fi
 		

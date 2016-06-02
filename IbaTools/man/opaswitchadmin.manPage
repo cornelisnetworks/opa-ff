@@ -18,11 +18,7 @@ opaswitchadmin
 Performs a number of multi-step initialization and verification operations against one or more externally managed Intel(R) Omni-Path switches. The operations include initial switch setup, firmware upgrades, chassis reboot, and others.
 .SH Syntax 
 .NL
-opaswitchadmin [-c] [-N \'\fInodes\fR\'] [-L \fInodefile\fR] [-O] [-P \fIpackages\fR] [-a \fIaction\fR] [-t \fIportsfile\fR] [-p \fIports\fR] \fIoperation\fR...
-.PP
-or
-.br
-opaswitchadmin --help
+opaswitchadmin [-c] [-N \[aq]\fInodes\fR\[aq]] [-L \fInodefile\fR] [-O] [-P \fIpackages\fR] [-a \fIaction\fR] [-t \fIportsfile\fR] [-p \fIports\fR] \fIoperation\fR...
 .SH Options 
 .NL
 
@@ -223,7 +219,7 @@ Gets port configurations of an externally managed switch.
 
 .PP
 For more information on operations, see
-\fIopachassisadmin operation Details\fR
+\fIopachassisadmin Operation Details\fR
 .
 .SH Example 
 .NL
@@ -231,7 +227,7 @@ opaswitchadmin -c reboot
 .br
 opaswitchadmin -P /root/ChassisFw \fIX.X.X.X.X\fR upgrade
 .br
-opaswitchadmin -a run -P \'*.emfw\' upgrade
+opaswitchadmin -a run -P \[aq]*.emfw\[aq] upgrade
 .SH Environment Variables 
 .NL
 
@@ -262,39 +258,18 @@ Serialize output of parallel operations (yes or no).
 
 .PP
 opaswitchadmin provides detailed logging of its results. During each run, the following files are produced:
-.TP 10
-test.res 
-.NL
-Appended with summary results of run.
-
-.TP 10
-test.log 
-.NL
-Appended with detailed results of run.
-
-.TP 10
-save\(ultmp/ 
-.NL
-Contains a directory per failed test with detailed logs.
-
-.TP 10
-test\(ultmp*/ 
-.NL
-Intermediate result files while test is running.
-
+.IP \(bu
+test.res : Appended with summary results of run.
+.IP \(bu
+test.log : Appended with detailed results of run.
+.IP \(bu
+save\(ultmp/ : Contains a directory per failed test with detailed logs.
+.IP \(bu
+test\(ultmp*/ : Intermediate result files while test is running.
 .PP
 The -c option removes all log files.
 .PP
-Results from opaswitchadmin are grouped into
-\fItest suites\fR
-
-,
-\fItest cases\fR
-
-, and
-\fItest items\fR
-
-. A given run of opaswitchadmin represents a single test suite. Within a test suite, multiple test cases occur; typically one test case per chassis being operated on. Some of the more complex operations may have multiple test items per test case. Each test item represents a major step in the overall test case.
+Results from opaswitchadmin are grouped into test suites, test cases, and test items. A given run of opaswitchadmin represents a single test suite. Within a test suite, multiple test cases occur; typically one test case per chassis being operated on. Some of the more complex operations may have multiple test items per test case. Each test item represents a major step in the overall test case.
 .PP
 Each opaswitchadmin run appends to test.res and test.log and creates temporary files in test\(ultmp$PID in the current directory. the test.res file provides an overall summary of operations performed and their results. The same information is also displayed while opaswitchadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files that reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opaswitchadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opaswitchadmin. opaswitchadmin also appends to punchlist.csv for failing switches.
 .PP

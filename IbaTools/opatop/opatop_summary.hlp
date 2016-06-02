@@ -94,16 +94,21 @@ and show only the beginning characters.  When opatop truncates a name, it will
 show a * as the last character.  For example, MyStoragePmPortGroup will be
 truncated to MyStorageP* when displayed in the Port group summary screen.
 
-The first display line of opatop shows the timestamp for the PM
-sweep (image) being displayed and the type of image (Live, Hist, Bkmk).
-If a Live image is not being displayed, the current time ('Now:') is also
-shown.  The last display line of opatop is a prompt showing available
-input commands.  The left section of commands are available in every
-screen and perform the same action.  The right section are screen-specific.
-Commands are case insensitive except as noted by '*'; the ENTER key must
-be pressed after a command.  Note that a help command '?' is available
-at every screen and provides information about the screen contents and input
-commands.
+The first display line of opatop shows the image interval, if available, the
+timestamp for the image being displayed, and the type of image (Live, Hist,
+Bkmk). The image interval is the time over which this image data is relevant.
+For in memory images this value is equal to the PM Sweep Interval.  For
+images stored on disk (Short Term History), the interval is equal to the sum
+of all the intervals for each image compounded into the composite (disk)
+image.  The interval can change when transitioning between images stored in
+memory and images stored on disk.  If a Live image is not being displayed,
+the current time ('Now:') is also shown.  The last display line of opatop is
+a prompt showing available input commands.  The left section of commands are
+available in every screen and perform the same action.  The right section are
+screen-specific. Commands are case insensitive except as noted by '*'; the
+ENTER key must be pressed after a command.  Note that a help command '?' is
+available at every screen and provides information about the screen contents
+and input commands.
 
 The following input commands are available in every screen:
   Q: Quit program

@@ -28,11 +28,7 @@ user@ style syntax cannot be used when specifying filenames.
 
 .SH Syntax 
 .NL
-opascpall [-p] [-r] [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-u \fIuser\fR] source\(ulfile ... dest\(ulfile opascpall -t [-p] [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-u \fIuser\fR] [ \fIsource\(uldir\fR[ \fIdest\(uldir\fR]]
-.PP
-or
-.br
-opascpall --help
+opascpall [-p] [-r] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR] source\(ulfile ... dest\(ulfile opascpall -t [-p] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR] [ \fIsource\(uldir\fR[ \fIdest\(uldir\fR]]
 .SH Options 
 .NL
 
@@ -93,9 +89,9 @@ opascpall a b c /root/tools/
 .br
 # copy to an explitly specified set of hosts
 .br
-opascpall -h \'arwen elrond\' a b c /root/tools
+opascpall -h \[aq]arwen elrond\[aq] a b c /root/tools
 .br
-HOSTS=\'arwen elrond\' opascpall a b c /root/tools
+HOSTS=\[aq]arwen elrond\[aq] opascpall a b c /root/tools
 .SH Environment Variables 
 .NL
 

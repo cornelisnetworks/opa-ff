@@ -21,22 +21,16 @@ opareport and opareports can provide a more powerful tool, however, in some case
 .PP
 The command opasaquery is installed on all hosts as part of the Intel(R) Omni-Path Fabric Host Software, but it is also included in Intel(R) Omni-Path Fabric Suite FastFabric Toolset.
 .PP
-By default, opasaquery uses the first active port on the local system. However, if the Fabric Management Node is connected to more than one fabric (for example, a subnet), the Intel(R) Omni-Path Host Fabric Interface (HFI) and port may be specified to select the fabric whose SA is to be queried.
+By default, opasaquery uses the first active port on the local system. However, if the node is connected to more than one fabric (for example, a subnet), the Intel(R) Omni-Path Host Fabric Interface (HFI) and port may be specified to select the fabric whose SA is to be queried.
 .SH Syntax
 .NL
-opasaquery [-v [-v] [-v]] [-I] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-l \fIlid\fR] [-t \fItype\fR]
+opasaquery [-v [-v] [-v]] [-I] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-l \fIlid\fR]
 .br
-[-s \fIguid\fR] [-n \fIguid\fR] [-g \fIguid\fR] [-k \fIpkey\fR] [-i \fIvfIndex\fR] [-S \fIserviceId\fR]
+[-t \fItype\fR] [-s \fIguid\fR] [-n \fIguid\fR] [-g \fIguid\fR] [-k \fIpkey\fR] [-i \fIvfIndex\fR]
 .br
-[-L \fIsl\fR] [-u \fIgid\fR] [-m \fIgid\fR] [-d \fIname\fR] [-P \'\fIguid guid\fR\'] [-G \'\fIgid gid\fR\']
+[-S \fIserviceId\fR] [-L \fIsl\fR] [-u \fIgid\fR] [-m \fIgid\fR] [-d \fIname\fR] [-P \[aq]\fIguid guid\fR\[aq]]
 .br
-[-a \'\fIsguid\fR...; \fIdguid\fR...\'] [-A \'\fIsgid\fR...; \fIdgid\fR...\']
-.PP
-or
-.br
-opasaquery --help
-.NL
-
+[-G \[aq]\fIgid gid\fR\[aq]] [-a \[aq]\fIsguid\fR...; \fIdguid\fR...\[aq]] [-A#8217#160;\[aq]\fIsgid\fR...; \fIdgid\fR...\[aq]]
 .SH Options
 .NL
 
@@ -58,12 +52,12 @@ Issues query in legacy InfiniBand* format.
 .TP 10
 -h/--hfi \fIhfi\fR 
 .NL
-HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
+HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR is a system-wide port number. Default is 0.
 
 .TP 10
 -p/--port \fIport\fR 
 .NL
-Port, numbered 1..n. If -h \fIhfi\fR is 0, then  \fIport\fR is a system-wide port number. Default is 1.
+Port, numbered 1..n. If 0, then  \fIport\fR is a first active. Default is first active.
 
 .TP 10
 -o/--output \fItype\fR 
@@ -162,8 +156,9 @@ Query by a list of GIDs. See
 \fIGIDs\fR
 for details.
 
-.TP 10
-\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.SH -h and -p options permit a variety of selections:
 .NL
 
 .TP 10
@@ -182,17 +177,17 @@ First active port in system.
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR-p 0 
+-h \fIx\fR#8217#160;-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy \fR within system (no matter which ports are active).
+Port \fIy\fR#8217#160;within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR-p \fIy\fR 
+-h \fIx\fR#8217#160;-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR.
 
@@ -213,12 +208,26 @@ Switch
 .NL
 
 .PP
-Specify a 64-bit subnet and 64-bit interface ID in the form:  \fIsubnet\fR: \fIinterface\fR 
+Specify a 64-bit subnet and 64-bit interface ID in the form:
 .PP
-For example:0xfe80000000000000:0x00117500a0000380
+ \fIsubnet\fR: \fIinterface\fR 
+.PP
+
+.B NOTE:
+In the following example, the GID corresponds to a PortGID. In this case, the interface ID coincides with the lower 64-bits of the GUID of the card. The interface ID will be different if the GID is a MGID (that is, multicast GID). See opafm.xml for MGID examples.
+
+.PP
+
+.br
+0xfe80000000000000:0x00117500a0000380
+
+.br
+
 .SH Output Types
 .NL
 
+.PP
+Default is node.
 .TP 10
 classportinfo 
 .NL
@@ -335,11 +344,6 @@ linfdb
 List of switch linear forwarding database (FDB) records.
 
 .TP 10
-ranfdb 
-.NL
-List of switch random FDB records.
-
-.TP 10
 mcfdb 
 .NL
 List of switch multicast FDB records.
@@ -365,6 +369,11 @@ vfinfocsv2
 List of vFabrics in CSV format with enums.
 
 .TP 10
+fabricinfo 
+.NL
+Summary of fabric devices.
+
+.TP 10
 quarantine 
 .NL
 List of quarantined nodes.
@@ -379,6 +388,10 @@ swcongset
 .NL
 List of Switch Congestion Settings.
 
+.TP 10
+swportcong 
+.NL
+List of Switch Port Congestion Settings.
 .TP 10
 hficongset 
 .NL
@@ -410,63 +423,34 @@ portgroupfdb
 List of AR Port Group FWD records.
 
 .PP
-The vfinfocsv and vfinfocsv2 output formats are designed to make it easier to script vfinfo queries. One line is output per vFabric of the form:name:index:pkey:sl:mtu:rate
+The vfinfocsv and vfinfocsv2 output formats are designed to make it easier to script vfinfo queries. One line is output per vFabric of the form:
 .PP
-The only difference between these two formats is how the MTU and rate are output. vfinfocsv outputs MTU and rate in human/text format, such as 2048 and 40g. vfinfocsv2 outputs MTU and rate as the IBTA enumerations defined for the SMA protocol, such as 4 and 7. The opagetvf command can be a useful tool which is based on this capability of opasaquery.
+
+.br
+
+.br
+name:index:pkey:sl:mtu:rate:optionflag
+
+.br
+
+.PP
+The only difference between these two formats is how the MTU and rate are output. vfinfocsv outputs MTU and rate in human/text readable format. vfinfocsv2 outputs MTU and rate as enumerations defined for the SMA protocol. The opagetvf command is based on this capability of opasaquery. For more information, see
+\fIopagetvf\fR
+.
 .SH Example 
 .NL
 opasaquery -o desc -t fi
 .br
-# get list of node description records for HFIs
-.br
-
-.br
 opasaquery -o portinfo -l 2
 .br
-# get list of port info records for lid 2
-.br
-
+opasaquery -o sminfo
 .br
 opasaquery -o pkey
-.br
-# get list of PKey table records
-.br
-
-.br
-opasaquery -o vlarb
-.br
-# get list of VL arbitration records
-.br
-
-.br
-opasaquery -o swinfo
-.br
-# get list of switch info records
-.br
-
-.br
-opasaquery -o slsc
-.br
-# get list of SL to SC mapping table records
-.br
-
-.br
-opasaquery -o scsl
-.br
-# get list of SC to SL mapping table records
 .SH Input Options vs. Output Permitted
 .NL
 
 .PP
 The following list shows the input (assorted query by options) and outputs (-o) that are permitted.
-.PP
-
-.B NOTE:
-In this release, the combinations displayed in
-\fBbold\fR
-are currently not available. This includes the path-given input of node description, node type, system image GUID, node GUID, and port GUID list.
-
-
 .TP 10
 None
 .NL
@@ -476,7 +460,7 @@ None
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, vswinfo 
+systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, scsc, slsc, scvlt, scnlmt, linfdb, classportinfo, fabricinfo, quarantine, conginfo, swcongset, swportcong, hficongset, hficongcon, bfrctl, cableinfo, portgroup, portgroupfdb 
 
 .RE
 
@@ -498,9 +482,7 @@ trace
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, link, desc,
-\fBpath\fR
-, node 
+systemguid, nodeguid, portguid, lid, desc, node 
 
 .RE
 
@@ -509,7 +491,7 @@ systemguid, nodeguid, portguid, lid, link, desc,
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2, vswinfo 
+portinfo, sminfo, swinfo, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2 
 
 .RE
 
@@ -523,9 +505,7 @@ portinfo, sminfo, swinfo, slvl, vlarb, pkey, guids, service, mcmember, inform, l
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, swinfo, slvl, vlarb, pkey, guids, service, mcmember,
-\fBlinfdb, ranfdb, mcfdb\fR
-, vswinfo 
+systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, swinfo, slvl, vlarb, pkey, service, mcmember, linfdb, mcfdb 
 
 .RE
 
@@ -557,7 +537,7 @@ mcmember, path, vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, vswinfo 
+systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb 
 
 .RE
 
@@ -583,7 +563,7 @@ vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, vswinfo 
+systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb 
 
 .RE
 
@@ -597,9 +577,7 @@ systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, 
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc,
-\fBpath\fR
-, node 
+systemguid, nodeguid, portguid, lid, desc, node 
 
 .RE
 
@@ -608,7 +586,7 @@ systemguid, nodeguid, portguid, lid, desc,
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2, vswinfo 
+portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2 
 
 .RE
 
@@ -622,9 +600,7 @@ portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inf
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc,
-\fBpath\fR
-, node 
+systemguid, nodeguid, portguid, lid, desc, node 
 
 .RE
 
@@ -633,7 +609,7 @@ systemguid, nodeguid, portguid, lid, desc,
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2, vswinfo 
+portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2 
 
 .RE
 
@@ -656,7 +632,7 @@ systemguid, nodeguid, portguid, lid, desc, path, node, service, mcmember, inform
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, linfdb, ranfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, vswinfo 
+portinfo, sminfo, swinfo, link, vlarb, pkey, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2 
 
 .RE
 
@@ -679,7 +655,7 @@ path, service, mcmember, inform, trace
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, linfdb, ranfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, vswinfo 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2 
 
 .RE
 
@@ -702,7 +678,7 @@ mcmember, vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, inform, linfdb, ranfdb, mcfdb, trace, vswinfo 
+systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, inform, linfdb, mcfdb, trace 
 
 .RE
 
@@ -716,7 +692,7 @@ systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo,
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, path, node 
+systemguid, nodeguid, portguid, lid, desc, node 
 
 .RE
 
@@ -748,7 +724,7 @@ path, trace
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, vswinfo 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb 
 
 .RE
 
@@ -771,7 +747,7 @@ path, vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, vswinfo 
+systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb 
 
 .RE
 
@@ -794,7 +770,7 @@ path, vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, vswinfo 
+systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb 
 
 .RE
 
@@ -817,7 +793,7 @@ path, trace
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, vswinfo 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb 
 
 .RE
 
@@ -831,9 +807,7 @@ systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link,
 
 .sp
 -o output permitted
-
-\fBpath\fR
-
+path 
 
 .RE
 
@@ -842,7 +816,7 @@ systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link,
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, trace, vswinfo 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace 
 
 .RE
 
@@ -856,9 +830,7 @@ systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link,
 
 .sp
 -o output permitted
-
-\fBpath\fR
-
+path 
 
 .RE
 
@@ -867,7 +839,7 @@ systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link,
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, slvl, vlarb, pkey, guids, service, mcmember, inform, linfdb, ranfdb, mcfdb, trace, vswinfo 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace 
 
 .RE
 

@@ -20,11 +20,7 @@ This command does not remove duplicates; any duplicates are listed in adjacent l
 Use this command to build mpi\(ulhosts input files for applications or cable tests that place hosts in order by name.
 .SH Syntax
 .NL
-opasorthosts < \fIhostlist\fR> \fIoutput\(ulfile\fR
-.PP
-or
-.br
-opasorthosts --help
+opasorthosts #8217lt; \fIhostlist\fR> \fIoutput\(ulfile\fR
 .SH Options
 .NL
 
@@ -45,7 +41,7 @@ Sorted list output.
 
 .SH Examples 
 .NL
-opasorthosts < host.xml > Sorted\(ulhost
+opasorthosts #8217lt; host.xml > Sorted\(ulhost
 .TP 10
 \fBStandard Input\fR
 .NL

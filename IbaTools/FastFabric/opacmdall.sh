@@ -31,8 +31,6 @@
 # [ICS VERSION STRING: unknown]
 # run a command on all hosts or chassis
 
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -45,6 +43,8 @@ TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
 BINDIR=${BINDIR:-/usr/sbin}
 
 . $TOOLSDIR/ff_funcs
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
 
 Usage_full()
 {

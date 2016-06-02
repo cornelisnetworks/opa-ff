@@ -39,8 +39,6 @@
 # The intent is that the good list can be a candidate list of hosts for
 # use in running MPI jobs to further use or test the cluster
 
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -50,6 +48,8 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
 
 punchlist=$FF_RESULT_DIR/punchlist.csv
 del=';'

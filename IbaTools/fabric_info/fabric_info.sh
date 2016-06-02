@@ -32,8 +32,6 @@
 # This script provides a quick summary of fabric configuration
 # it uses saquery to gather the information from the SM
 
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
 if [ -f /opt/opa/tools/ff_funcs ]
 then
 	# optional override of defaults
@@ -49,6 +47,8 @@ then
 else
 	ff_available=n
 fi
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
 
 # if ff is not available, we can only support a subset of the capability
 

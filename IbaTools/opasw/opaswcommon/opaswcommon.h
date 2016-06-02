@@ -51,6 +51,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CSS_HEADER_SIZE							644
 #define OPASW_BUFFER_PAD						20
 
+#define PS_NOT_PRESENT							0
+#define PS_OFFLINE							1
+#define PS_ONLINE							2
+#define PS_INVALID							3
+
 #define MCLASS_PERF								0x04			/* Mgmt Class for Performance Mgmt (used for ping) */
 #define MCLASS_VENDOR_OPASW						0x0A			/* Mgmt Class for OPASW Vendor Mad protocol */
 #define STL_VENDOR_SPEC_CLASS_VERSION			0x80
@@ -112,9 +117,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STL_PRR_PRI_EEPROM4_ADDR					(uint32)0x8160A600
 #define STL_PRR_SEC_EEPROM4_ADDR					(uint32)0x8161A600
 
+/*
+ * PRR VMA packets use 3 bits for Port LTP CRC mode
+ */
+#define STL_PRR_PORT_LTP_CRC_MODE_VMA_14        0x1       /* 14-bit LTP CRC mode VMA (optional) */
+#define STL_PRR_PORT_LTP_CRC_MODE_VMA_48        0x2       /* 48-bit LTP CRC mode VMA (optional) */
+#define STL_PRR_PORT_LTP_CRC_MODE_VMA_12_16_PER_LANE    0x4 /* 12/16-bit per lane LTP CRC mode VMA (optional) */
 
 #define STL_PRR_EEPROM_INI_OFFSET				(uint32)((256 * 1024) - 256) // reserved last 256 bytes in EEPROM potentially for module VPD
 #define STL_PRR_I2C_LOCATION_ADDR				8
+
+#define STL_PRR_BOARD_ID_MASK					0x1f
 
 #define I2C_OPASW_PRI_EEPROM_ADDR				(uint32)0x8000A000
 #define I2C_OPASW_SEC_EEPROM_ADDR				(uint32)0x8001A000
@@ -144,8 +157,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define I2C_OPASW_BD_MGMT_FPGA_OFFSET 			0x0000
 #define I2C_OPASW_PS_MGMT_FPGA_OFFSET 			0x0021
-#define I2C_OPASW_PRR_ASIC_TEMP_MGMT_FPGA_OFFSET 	0x00e6
-#define I2C_OPASW_MAX_QSFP_TEMP_MGMT_FPGA_OFFSET 	0x00e8
+#define I2C_OPASW_PRR_ASIC_TEMP_MGMT_FPGA_OFFSET 	0x00e8
+#define I2C_OPASW_MAX_QSFP_TEMP_MGMT_FPGA_OFFSET 	0x00e6
 #define I2C_OPASW_TEMP_SENSOR_COUNT                     3
 
 #define PSU1_MGMT_FPGA_BIT_PRESENT               0
@@ -154,6 +167,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PSU2_MGMT_FPGA_BIT_PWR_OK                3
 
 #define ASIC_VERSION_MEM_ADDR					0x000012D6
+#define QSFP_MGR_TEMPERATURE_MAX_DETECTED_MEM_ADDR		0x0002000E
 
 #define ASIC_ARCH_VERSION_MASK					0x00FF0000
 #define ASIC_ARCH_VERSION_SHFT					16
@@ -357,6 +371,7 @@ FSTATUS getFanSpeed(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad
 FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH]);
 FSTATUS getPowerSupplyStatus(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 psNum, uint32 *psStatus);
 FSTATUS getAsicVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 *asicVersion);
+FSTATUS getMaxQsfpTemperatureMaxDetected(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, boolean *maxDetected);
 FSTATUS getBoardID(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *boardID);
 FSTATUS doPingSwitch(struct oib_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad);
 FSTATUS getEMFWFileNames(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, char *fwFileName, char *inibinFileName);
@@ -383,5 +398,7 @@ uint16 getMadStatus(VENDOR_MAD *mad);
 void displayStatusMessage(uint16 madStatus);
 
 FSTATUS opaswEepromRW(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, int timeout, uint32 len, uint32 offset, uint8 *data, boolean writeData, boolean secondary);
+
+const char* StlPortLtpCrcModeVMAToText(uint16_t mode, char *str, size_t len);
 
 #endif /* _OPASW_COMMON_H_ */

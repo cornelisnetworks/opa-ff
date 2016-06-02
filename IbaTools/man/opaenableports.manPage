@@ -18,11 +18,7 @@ opaenableports
 Accepts a disabled ports input file and re-enables the specified ports. The input file can be /etc/sysconfig/opa/disabled*.csv or a user-created subset of such a file. After enabling the port, it is removed from /etc/sysconfig/opa/disabled*.csv.
 .SH Syntax 
 .NL
-opaenableports [-t \fIportsfile\fR] [-p \fIports\fR] < disabled.csv
-.PP
-or
-.br
-opaenableports --help
+opaenableports [-t \fIportsfile\fR] [-p \fIports\fR] #8217lt; disabled.csv
 .SH Options 
 .NL
 
@@ -39,7 +35,15 @@ File with list of local HFI ports used to access fabric for operation. Default i
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric for analysis. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+List of local HFI ports used to access fabric for operation. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+In this release, in multi-rail fabrics, this script does not work as expected when supplied with multiple egress ports. The script processes the entire input file against the first egress port specified, leaving no data to be applied against other egress ports. As a workaround, call the script once for each egress port.
 
 .IP
 Uses the format hfi:port, for example:
@@ -80,18 +84,20 @@ HFI  \fIx\fR, port  \fIy\fR.
 .RE
 
 .TP 10
-disable.csv 
+disabled.csv 
 .NL
-File listing the ports to enable. The list is of the form: NodeGUID;PortNum;NodeDesc.
+Input file listing the ports to enable. The list is of the form: NodeGUID;PortNum;NodeType;NodeDesc;Ignored.
 
 .IP
 An input file like this is generated in /etc/sysconfig/opa/disabled* by opadisableports.
 .SH Examples 
 .NL
-opaenableports < disabled.csv
+opaenableports #8217lt; disabled.csv
 .br
-opaenableports -p \'1:1 2:1\' < disabled.csv
-.SH Environment 
+opaenableports #8217lt; /etc/sysconfig/opa/disabled:0:0.csv
+.br
+opaenableports -p \[aq]1:1 1:2 2:1 2:2\[aq] #8217lt; disabled.csv
+.SH Environment Variables
 .NL
 
 .PP

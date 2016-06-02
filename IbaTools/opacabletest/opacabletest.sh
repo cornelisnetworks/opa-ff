@@ -32,10 +32,6 @@
 
 # start and stop HFI-SW and/or ISL cable Bit Error Rate tests
 
-tempfile="$(mktemp)"
-trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
-trap "rm -f $tempfile" EXIT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -45,6 +41,10 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+tempfile="$(mktemp)"
+trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $tempfile" EXIT
 
 Usage_full()
 {

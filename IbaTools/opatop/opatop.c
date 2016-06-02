@@ -210,8 +210,6 @@ STL_PA_VF_PORT_COUNTERS_DATA g_hiddenVfPortCounters;
 OPATOP_VF_FOCUS g_pPmVFFocus = {{0}};
 uint32 g_portCounterFlags;
 uint32 g_hiddenVfPortCounterFlags;
-uint32 g_grpInfoAmod;
-uint32 g_vfInfoAmod;
 int g_offset = 0;
 int g_group = -1;
 int g_vf	= -1;
@@ -552,19 +550,21 @@ int DisplayScreen_Util(STL_PA_PM_UTIL_STATS * p_PmUtilStats, char * p_title)
 {
 	printf( "%-4s  TotMBps  AvgMBps  MinMBps  MaxMBps      TotKPps  AvgKPps  MinKPps  MaxKPps\n",
 		p_title );
-	printf( "   %10" PRIu64 " %8u %8u %8u %12" PRIu64 " %8u %8u %8u\n\n",
+	printf( "   %10" PRIu64 " %8u %8u %8u %12" PRIu64 " %8u %8u %8u\n",
 		p_PmUtilStats->totalMBps, p_PmUtilStats->avgMBps,
 		p_PmUtilStats->minMBps != UINT_MAX ? p_PmUtilStats->minMBps : 0,
 		p_PmUtilStats->maxMBps, p_PmUtilStats->totalKPps, p_PmUtilStats->avgKPps,
 		p_PmUtilStats->minKPps != UINT_MAX ? p_PmUtilStats->minKPps : 0,
 		p_PmUtilStats->maxKPps );
-	printf(" Buckt 0+%%   10+%%   20+%%   30+%%   40+%%   50+%%   60+%%   70+%%   80+%%   90+%%\n");
-	printf( "    %6u %6u %6u %6u %6u %6u %6u %6u %6u %6u\n",
+	printf("     Buckt 0+%%   10+%%   20+%%   30+%%   40+%%   50+%%   60+%%   70+%%   80+%%   90+%%\n");
+	printf("        %6u %6u %6u %6u %6u %6u %6u %6u %6u %6u\n",
 		p_PmUtilStats->BWBuckets[0], p_PmUtilStats->BWBuckets[1],
 		p_PmUtilStats->BWBuckets[2], p_PmUtilStats->BWBuckets[3],
 		p_PmUtilStats->BWBuckets[4], p_PmUtilStats->BWBuckets[5],
 		p_PmUtilStats->BWBuckets[6], p_PmUtilStats->BWBuckets[7],
 		p_PmUtilStats->BWBuckets[8], p_PmUtilStats->BWBuckets[9] );
+	printf("     Failed %-.3s Ports: PMA: %6u  Topo: %6u\n", p_title,
+		p_PmUtilStats->pmaFailedPorts, p_PmUtilStats->topoFailedPorts);
 
 	return (5);
 
@@ -792,8 +792,8 @@ void DisplayScreen(void)
 	if (!fb_valid_pa_client)
 	{
 		if ( oib_pa_client_init( &g_portHandle, hfi, port,
-				(g_verbose & VERBOSE_PACLIENT ? stderr : NULL) ) ==
-				PACLIENT_OPERATIONAL )
+			(g_verbose & VERBOSE_PACLIENT ? stderr : NULL) ) ==
+			PACLIENT_OPERATIONAL )
 		{
 			fb_valid_pa_client = TRUE;
 		}
@@ -822,7 +822,7 @@ void DisplayScreen(void)
 	{
 		pa_client_release_group_list(g_portHandle, &g_PmGroupList.groupList);
 		if (pa_client_get_group_list(g_portHandle, &g_PmGroupList.numGroups,
-									     &g_PmGroupList.groupList) == FSUCCESS)
+			      &g_PmGroupList.groupList) == FSUCCESS)
 			fb_valid_group_list = TRUE;
 		else
 			fb_valid_group_list = FALSE;
@@ -833,7 +833,7 @@ void DisplayScreen(void)
 
 		pa_client_release_vf_list(g_portHandle, &g_PmVFList.vfList);
 		if (pa_client_get_vf_list(g_portHandle, &g_PmVFList.numVFs,
-									     &g_PmVFList.vfList) == FSUCCESS)
+			     &g_PmVFList.vfList) == FSUCCESS)
 			fb_valid_VF_list = TRUE;
 		else
 			fb_valid_VF_list = FALSE;	}
@@ -845,7 +845,7 @@ void DisplayScreen(void)
 	{
 		if ( fb_valid_group_list && ( pa_client_get_group_info( g_portHandle, g_imageIdQuery,
 				g_PmGroupList.groupList[g_group].groupName, &g_imageIdResp,
-				&g_PmGroupInfo, &g_grpInfoAmod ) == FSUCCESS ) )
+				&g_PmGroupInfo) == FSUCCESS ) )
 			fb_valid_group_info = TRUE;
 		else
 			fb_valid_group_info = FALSE;
@@ -863,7 +863,7 @@ void DisplayScreen(void)
 			query.OutputType = OutputTypePaTableRecord;
 
 			if (iba_pa_multi_mad_vf_info_response_query(g_portHandle, &query, g_PmVFList.vfList[g_vf].vfName,
-				&pQueryResults, &g_vfInfoAmod, NULL, &g_imageIdResp) == FSUCCESS) {
+				&pQueryResults, NULL, &g_imageIdResp) == FSUCCESS) {
 
 				g_PmVFInfo = ((STL_PA_VF_INFO_RESULTS*)pQueryResults->QueryResult)->VFInfoRecords[0];
 				fb_valid_VF_info = TRUE;
@@ -874,7 +874,7 @@ void DisplayScreen(void)
 	// Do default query to get g_imageIdResp
 	if ((g_group < 0) && fb_valid_group_list)
 		pa_client_get_group_info(g_portHandle, g_imageIdQuery, g_PmGroupList.groupList[0].groupName,
-			&g_imageIdResp, &g_PmGroupInfo, &g_grpInfoAmod );	
+			&g_imageIdResp, &g_PmGroupInfo);	
 
 	if (tb_menu[n_level_menu] == SCREEN_GROUP_CONFIG)
 	{
@@ -905,8 +905,8 @@ void DisplayScreen(void)
 	{
 		pa_client_release_group_focus(g_portHandle, &pg_PmGroupFocus.portList);
 		if ( fb_valid_group_list && ( pa_client_get_group_focus( g_portHandle, g_imageIdQuery,
-				g_PmGroupList.groupList[g_group].groupName, g_select, g_start, g_range,
-				&g_imageIdResp, &pg_PmGroupFocus.numPorts, &pg_PmGroupFocus.portList ) == FSUCCESS ) )
+                        g_PmGroupList.groupList[g_group].groupName, g_select, g_start, g_range,
+                        &g_imageIdResp, &pg_PmGroupFocus.numPorts, &pg_PmGroupFocus.portList ) == FSUCCESS ) )
 		{
 			fb_valid_group_focus = TRUE;
 			strcpy(pg_PmGroupFocus.groupName, g_PmGroupList.groupList[g_group].groupName);
@@ -923,8 +923,8 @@ void DisplayScreen(void)
 
 		pa_client_release_vf_focus(g_portHandle, &g_pPmVFFocus.portList);
 		if (fb_valid_VF_list && (pa_client_get_vf_focus(g_portHandle, g_imageIdQuery,
-				g_PmVFList.vfList[g_vf].vfName, g_select, g_start, g_range,
-				&g_imageIdResp, &g_pPmVFFocus.numPorts, &g_pPmVFFocus.portList) == FSUCCESS) )
+                        g_PmVFList.vfList[g_vf].vfName, g_select, g_start, g_range,
+                        &g_imageIdResp, &g_pPmVFFocus.numPorts, &g_pPmVFFocus.portList) == FSUCCESS) )
 		{
 			fb_valid_VF_focus = TRUE;
 			strcpy(g_pPmVFFocus.vfName, g_PmVFList.vfList[g_vf].vfName);
@@ -958,7 +958,14 @@ void DisplayScreen(void)
 	// Display header lines
 	if (fb_valid_image_info)
 	{
-		strcpy(bf_screen, ctime((time_t *)&g_PmImageInfo.sweepStart));
+		if (g_PmImageInfo.imageInterval) {
+			// Display ImageInterval if present
+			sprintf(bf_screen, " %us @ %s", g_PmImageInfo.imageInterval,
+				ctime((time_t *)&g_PmImageInfo.sweepStart));
+		} else {
+			sprintf(bf_screen, " %s", ctime((time_t *)&g_PmImageInfo.sweepStart));
+		}
+		// replace '\n' character with '\0'
 		bf_screen[strlen(bf_screen) - 1] = 0;
 	
 		if (g_imageIdQuery.imageNumber == PACLIENT_IMAGE_CURRENT)
@@ -983,7 +990,7 @@ void DisplayScreen(void)
 				sprintf( &bf_screen[strlen(bf_screen)], " (0x%016" PRIX64 ",%d)",
 					g_imageIdFreeze.imageNumber, g_imageIdFreeze.imageOffset );
 	
-			sprintf(&bf_screen[strlen(bf_screen)], "  Now:%s", ctime(&time_now));
+			sprintf(&bf_screen[strlen(bf_screen)], " Now:%s", ctime(&time_now));
 		}
 	
 		else if (g_imageIdBookmark.imageNumber != PACLIENT_IMAGE_CURRENT)
@@ -994,7 +1001,7 @@ void DisplayScreen(void)
 				sprintf( &bf_screen[strlen(bf_screen)], " (0x%016" PRIX64 ",%d)",
 					g_imageIdBookmark.imageNumber, g_imageIdBookmark.imageOffset );
 	
-			sprintf(&bf_screen[strlen(bf_screen)], "  Now:%s", ctime(&time_now));
+			sprintf(&bf_screen[strlen(bf_screen)], " Now:%s", ctime(&time_now));
 		}
 	
 		printf("%s" NAME_PROG ": Img:%s", bf_clear_screen, bf_screen);
@@ -1066,7 +1073,7 @@ void DisplayScreen(void)
 				{
 					if ( pa_client_get_group_info(g_portHandle, g_imageIdQuery,
 							g_PmGroupList.groupList[ix].groupName, &g_imageIdResp,
-							&g_PmGroupInfo, &g_grpInfoAmod ) == FSUCCESS )
+							&g_PmGroupInfo) == FSUCCESS )
 						ct_group_lines -= ScreenLines_Group(&g_PmGroupInfo, ix);
 						if (ct_group_lines >= 0)
 							g_scroll_summary_backward = ix;	// can go here
@@ -1080,7 +1087,7 @@ void DisplayScreen(void)
 				{
 					if ( pa_client_get_group_info(g_portHandle, g_imageIdQuery,
 							g_PmGroupList.groupList[ix].groupName, &g_imageIdResp,
-							&g_PmGroupInfo, &g_grpInfoAmod ) == FSUCCESS )
+							&g_PmGroupInfo) == FSUCCESS )
 					{
 						// only output if it will fit
 						ct_group_lines -= ScreenLines_Group(&g_PmGroupInfo, ix);
@@ -1149,7 +1156,7 @@ void DisplayScreen(void)
 					query.OutputType = OutputTypePaTableRecord;
 
 					if (iba_pa_multi_mad_vf_info_response_query(g_portHandle, &query, g_PmVFList.vfList[ix].vfName,
-							&pQueryResults, &g_vfInfoAmod, NULL, &g_imageIdResp) == FSUCCESS) {
+							&pQueryResults, NULL, &g_imageIdResp) == FSUCCESS) {
 						STL_PA_VF_INFO_DATA *p = &((STL_PA_VF_INFO_RESULTS*)pQueryResults->QueryResult)->VFInfoRecords[0];
 						ct_lines -= DisplayScreen_VFGroup(p, ix);
 					}
@@ -1190,29 +1197,29 @@ void DisplayScreen(void)
 			printf( "                 Security:       %4u  Routing:       %4u\n",
 				g_PmConfig.errorThresholds.securityErrors,
 				g_PmConfig.errorThresholds.routingErrors );
-			printf( " Integrity Wts:  Loc Link Integ: %4u  Rcv Errors:    %4u\n",
-				g_PmConfig.integrityWeights.LocalLinkIntegrityErrors,
-				g_PmConfig.integrityWeights.PortRcvErrors );
-			printf( "                 Link Err Reco:  %4u  Link Downed:   %4u\n",
-				g_PmConfig.integrityWeights.LinkErrorRecovery,
-				g_PmConfig.integrityWeights.LinkDowned );
-			printf( "                 Uncorrectable:  %4u  FM Config Err: %4u\n",
-				g_PmConfig.integrityWeights.UncorrectableErrors,
-				g_PmConfig.integrityWeights.FMConfigErrors );
-			printf( "                 Link Qual:      %4u  Lnk Wdth Dngd: %4u\n",
+			printf( " Integrity Wts:  Link Qual:      %4u  Uncorrectable: %4u\n",
 				g_PmConfig.integrityWeights.LinkQualityIndicator,
+				g_PmConfig.integrityWeights.UncorrectableErrors );
+			printf( "                 Link Downed:    %4u  Rcv Errors:    %4u\n",
+				g_PmConfig.integrityWeights.LinkDowned,
+				g_PmConfig.integrityWeights.PortRcvErrors);
+			printf( "                 Excs Bfr Ovrn:  %4u  FM Config Err: %4u\n",
+				g_PmConfig.integrityWeights.ExcessiveBufferOverruns,
+				g_PmConfig.integrityWeights.FMConfigErrors);
+			printf( "                 Link Err Reco:  %4u  Loc Link Integ:%4u\n",
+				g_PmConfig.integrityWeights.PortRcvErrors,
+				g_PmConfig.integrityWeights.LocalLinkIntegrityErrors);
+			printf( "                 Lnk Wdth Dngd:  %4u\n",
 				g_PmConfig.integrityWeights.LinkWidthDowngrade );
-			printf( "                 Excs Bfr Ovrn:  %4u\n",
-				g_PmConfig.integrityWeights.ExcessiveBufferOverruns);
-			printf( " Congest Wts:    Tx Wait:        %4u  Cong Discards: %4u\n",
-				g_PmConfig.congestionWeights.PortXmitWait,
-				g_PmConfig.congestionWeights.SwPortCongestion);
-			printf( "                 Rcv FECN:       %4u  Rcv BECN:      %4u\n",
-				g_PmConfig.congestionWeights.PortRcvFECN,
-				g_PmConfig.congestionWeights.PortRcvBECN);
-			printf( "                 Tx Time Cong:   %4u  Mark FECN:     %4u\n",
-				g_PmConfig.congestionWeights.PortXmitTimeCong,
+			printf( " Congest Wts:    Cong Discards:  %4u  Rcv FECN:      %4u\n",
+				g_PmConfig.congestionWeights.SwPortCongestion,
+				g_PmConfig.congestionWeights.PortRcvFECN);
+			printf( "                 Rcv BECN:       %4u  Mark FECN:     %4u\n",
+				g_PmConfig.congestionWeights.PortRcvBECN,
 				g_PmConfig.congestionWeights.PortMarkFECN);
+			printf( "                 Xmit Time Cong  %4u  Xmit Wait:     %4u\n",
+				g_PmConfig.congestionWeights.PortXmitTimeCong,
+				g_PmConfig.congestionWeights.PortXmitWait);
 			printf( " PM Memory Size: %"PRIu64" MB (%" PRIu64 " bytes)\n",
 				g_PmConfig.memoryFootprint/(1000*1000),
 				g_PmConfig.memoryFootprint );
@@ -1265,11 +1272,17 @@ void DisplayScreen(void)
 			printf(" Sweep Start: %s", ctime((time_t *)&g_PmImageInfo.sweepStart));
 
 			if (g_verbose & VERBOSE_SCREEN)
-				printf( " Sweep Duration: %8.6f Seconds\n\n",
+				printf( " Sweep Duration: %8.6f Seconds\n",
 					(float)g_PmImageInfo.sweepDuration / 1000000. );
 			else
-				printf( " Sweep Duration: %5.3f Seconds\n\n",
+				printf( " Sweep Duration: %5.3f Seconds\n",
 					(float)g_PmImageInfo.sweepDuration / 1000000. );
+
+			if (g_PmImageInfo.imageInterval) {
+				printf(" Image Interval: %u Seconds\n\n", g_PmImageInfo.imageInterval);
+			} else {
+				printf("\n\n");
+			}
 
 			printf( " Num SW-Ports: %7u  HFI-Ports: %7u\n",
 				g_PmImageInfo.numSwitchPorts, g_PmImageInfo.numHFIPorts);
@@ -1281,7 +1294,7 @@ void DisplayScreen(void)
 				g_PmImageInfo.numUnexpectedClearPorts);
 			printf( " Num Skip Nodes: %7u  Ports: %7u\n\n",
 				g_PmImageInfo.numSkippedNodes, g_PmImageInfo.numSkippedPorts );
-			ct_lines -= 9;
+			ct_lines -= 10;
 
 			ct_lines -= DisplayScreen_SMs();
 		}
@@ -1297,8 +1310,7 @@ void DisplayScreen(void)
 	case SCREEN_GROUP_INFO_SELECT:
 		if (fb_valid_group_info)
 		{
-			printf( "Group Info Sel: %s%s\n", g_PmGroupInfo.groupName,
-					(g_grpInfoAmod & STL_PA_INFO_COUNTER_FAILED_PORT)? " (Failed Port(s))" : "");
+			printf( "Group Info Sel: %s\n", g_PmGroupInfo.groupName);
 			if (g_PmGroupInfo.minInternalRate != IB_STATIC_RATE_DONTCARE
 				|| g_PmGroupInfo.maxInternalRate != IB_STATIC_RATE_DONTCARE)
 				printf( "Int NumPorts: %u  Rate Min: %4s  Max: %4s\n",
@@ -1331,8 +1343,7 @@ void DisplayScreen(void)
 		break;
 	case SCREEN_VF_INFO_SELECT:
 		if (fb_valid_VF_info) {
-			printf("VF Info Select: %s%s\n", g_PmVFInfo.vfName,
-					(g_vfInfoAmod & STL_PA_INFO_COUNTER_FAILED_PORT)? " (Failed Port(s))" : "");
+			printf("VF Info Select: %s\n", g_PmVFInfo.vfName);
 			if (g_PmVFInfo.minInternalRate != IB_STATIC_RATE_DONTCARE
 				|| g_PmVFInfo.maxInternalRate != IB_STATIC_RATE_DONTCARE)
 				printf( "NumPorts: %u  Rate Min: %4s  Max: %4s\n",
@@ -1384,13 +1395,11 @@ void DisplayScreen(void)
 
 			if (g_PmGroupInfo.numExternalPorts)
 			{
-				printf("\n");
-				ct_lines -= 1;
 				ct_lines -= DisplayScreen_Util(&g_PmGroupInfo.sendUtilStats, "Snd:");
-				printf("\n");
 				ct_lines -= 1;
 				ct_lines -= DisplayScreen_Util(&g_PmGroupInfo.recvUtilStats, "Rcv:");
 			}
+
 
 			if (g_PmGroupInfo.numInternalPorts == 0
 				&& g_PmGroupInfo.numExternalPorts == 0)
@@ -1398,6 +1407,32 @@ void DisplayScreen(void)
 				printf("\n");
 				printf( "No ports in group\n");
 				ct_lines -= 2;
+			} else {
+				printf("\n");
+			    printf("                      Max       0+%%      25+%%      50+%%      75+%%     100+%%\n");
+			    ct_lines-=2;
+
+			    if (g_PmGroupInfo.numInternalPorts) {
+			      printf( "Int Congestion %10u %9u %9u %9u %9u %9u\n",
+				    g_PmGroupInfo.internalErrors.errorMaximums.congestionErrors,
+				    g_PmGroupInfo.internalErrors.ports[0].congestionErrors,
+				    g_PmGroupInfo.internalErrors.ports[1].congestionErrors,
+				    g_PmGroupInfo.internalErrors.ports[2].congestionErrors,
+				    g_PmGroupInfo.internalErrors.ports[3].congestionErrors,
+				    g_PmGroupInfo.internalErrors.ports[4].congestionErrors );
+			      ct_lines-=1;
+			    }
+
+			    if (g_PmGroupInfo.numExternalPorts) {
+				  printf( "Ext Congestion %10u %9u %9u %9u %9u %9u\n",
+				    g_PmGroupInfo.externalErrors.errorMaximums.congestionErrors,
+				    g_PmGroupInfo.externalErrors.ports[0].congestionErrors,
+				    g_PmGroupInfo.externalErrors.ports[1].congestionErrors,
+				    g_PmGroupInfo.externalErrors.ports[2].congestionErrors,
+				    g_PmGroupInfo.externalErrors.ports[3].congestionErrors,
+				    g_PmGroupInfo.externalErrors.ports[4].congestionErrors );
+				  ct_lines -=1;
+			    }
 			}
 		}
 
@@ -1442,6 +1477,17 @@ void DisplayScreen(void)
 			}
 			else {
 				ct_lines -= DisplayScreen_Util(&g_PmVFInfo.internalUtilStats, "Int:");
+				printf("\n");
+			    printf("                      Max       0+%%      25+%%      50+%%      75+%%     100+%%\n");
+			    ct_lines -=2;
+			    printf( "Int Congestion %10u %9u %9u %9u %9u %9u\n",
+			    		  g_PmVFInfo.internalErrors.errorMaximums.congestionErrors,
+					  g_PmVFInfo.internalErrors.ports[0].congestionErrors,
+					  g_PmVFInfo.internalErrors.ports[1].congestionErrors,
+					  g_PmVFInfo.internalErrors.ports[2].congestionErrors,
+					  g_PmVFInfo.internalErrors.ports[3].congestionErrors,
+					  g_PmVFInfo.internalErrors.ports[4].congestionErrors );
+			    ct_lines-=1;
 			}
 		} else {
 			printf("VF BW Stats: VF INFO NOT AVAILABLE\n");
@@ -1639,6 +1685,11 @@ void DisplayScreen(void)
 	case SCREEN_GROUP_FOCUS:
 		if (fb_valid_group_focus)
 		{
+			char* status_color_local = bf_color_off;
+			char* status_symbol_local = " ";
+			char* status_color_neighbor = bf_color_off;
+			char* status_symbol_neighbor = " ";
+
 			if (pg_PmGroupFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH)
 				p_select = "UtlPkt-Hi";
 			else if (pg_PmGroupFocus.select == PACLIENT_SEL_UTIL_LOW)
@@ -1683,15 +1734,54 @@ void DisplayScreen(void)
 			for ( ix = g_scroll; (ix < pg_PmGroupFocus.numPorts) &&
 					((ix - g_scroll) < MAX_GROUPFOCUS_PORTS_PER_SCREEN); ix++ )
 			{
-				printf("%5u ", ix);
+				switch (pg_PmGroupFocus.portList[ix].localFlags) {
+				case STL_PA_FOCUS_FLAG_PMA_IGNORE:
+					status_color_local = bf_color_blue;
+					status_symbol_local = "~";
+					break;
+				case STL_PA_FOCUS_FLAG_PMA_FAILURE:
+					status_color_local = bf_color_yellow;
+					status_symbol_local = "!";
+					break;
+				case STL_PA_FOCUS_FLAG_TOPO_FAILURE:
+					status_color_local = bf_color_red;
+					status_symbol_local = "?";
+					break;
+				case STL_PA_FOCUS_FLAG_OK:
+				default:
+					status_color_local = bf_color_off;
+					status_symbol_local = " ";
+				}
+				switch (pg_PmGroupFocus.portList[ix].neighborFlags) {
+				case STL_PA_FOCUS_FLAG_PMA_IGNORE:
+					status_color_neighbor = bf_color_blue;
+					status_symbol_neighbor = "~";
+					break;
+				case STL_PA_FOCUS_FLAG_PMA_FAILURE:
+					status_color_neighbor = bf_color_yellow;
+					status_symbol_neighbor = "!";
+					break;
+				case STL_PA_FOCUS_FLAG_TOPO_FAILURE:
+					status_color_neighbor = bf_color_red;
+					status_symbol_neighbor = "?";
+					break;
+				case STL_PA_FOCUS_FLAG_OK:
+				default:
+					status_color_neighbor = bf_color_off;
+					status_symbol_neighbor = " ";
+				}
+				printf("%s%s%4u ", status_color_local, status_symbol_local, ix);
 
 				if ( ( (pg_PmGroupFocus.select >= PACLIENT_SEL_ERR_INTEG) &&
 						(pg_PmGroupFocus.select <= PACLIENT_SEL_ERR_ROUTING) ) ||
 						(pg_PmGroupFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH) )
-					printf("%9" PRIu64, pg_PmGroupFocus.portList[ix].value);
+					printf("%9" PRIu64 "%s",
+						pg_PmGroupFocus.portList[ix].value,
+						bf_color_off);
 				else
-					printf( "%9.1f",
-						(float)pg_PmGroupFocus.portList[ix].value / 10. );
+					printf( "%9.1f%s",
+						(float)pg_PmGroupFocus.portList[ix].value / 10.0,
+						bf_color_off);
 
 				printf( " %04X %3u  %016" PRIX64 " %-.36s%s\n",
 					pg_PmGroupFocus.portList[ix].nodeLid,
@@ -1702,16 +1792,19 @@ void DisplayScreen(void)
 
 				if (pg_PmGroupFocus.portList[ix].neighborLid)
 				{
-					printf("  <-> ");
+					printf("%s%s <-> ", status_color_neighbor,
+						status_symbol_neighbor);
 	
 					if ( ( (pg_PmGroupFocus.select >= PACLIENT_SEL_ERR_INTEG) &&
 							(pg_PmGroupFocus.select <= PACLIENT_SEL_ERR_ROUTING) ) ||
 							(pg_PmGroupFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH) )
-						printf( "%9" PRIu64,
-							pg_PmGroupFocus.portList[ix].neighborValue );
+						printf( "%9" PRIu64 "%s",
+							pg_PmGroupFocus.portList[ix].neighborValue,
+							bf_color_off);
 					else
-						printf( "%9.1f",
-							(float)pg_PmGroupFocus.portList[ix].neighborValue / 10. );
+						printf( "%9.1f%s",
+							(float)pg_PmGroupFocus.portList[ix].neighborValue / 10.0,
+							bf_color_off);
 	
 					// Truncate neighborNodeDesc to keep line at 80 columns
 					printf( " %04X %3u  %016" PRIX64 " %-.38s%s\n",
@@ -1721,9 +1814,9 @@ void DisplayScreen(void)
 						pg_PmGroupFocus.portList[ix].neighborNodeDesc,
 						strgetlaststr(pg_PmGroupFocus.portList[ix].neighborNodeDesc, 38) );
 				}
-
 				else
-					printf("  <-> none\n");
+					printf("%s%s <-> none%s\n", status_color_neighbor,
+						status_symbol_neighbor, bf_color_off);
 
 				ct_lines -= 2;
 			}
@@ -1743,6 +1836,11 @@ void DisplayScreen(void)
 	case SCREEN_VF_FOCUS:
 		if (fb_valid_VF_focus)
 		{
+			char* status_color_local = bf_color_off;
+			char* status_symbol_local = " ";
+			char* status_color_neighbor = bf_color_off;
+			char* status_symbol_neighbor = " ";
+
 			if (g_pPmVFFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH)
 				p_select = "UtlPkt-Hi";
 			else if (g_pPmVFFocus.select == PACLIENT_SEL_UTIL_LOW)
@@ -1787,15 +1885,53 @@ void DisplayScreen(void)
 			for ( ix = g_scroll; (ix < g_pPmVFFocus.numPorts) &&
 					((ix - g_scroll) < MAX_VFFOCUS_PORTS_PER_SCREEN); ix++ )
 			{
-				printf("%5u ", ix);
+				switch (g_pPmVFFocus.portList[ix].localFlags) {
+				case STL_PA_FOCUS_FLAG_PMA_IGNORE:
+					status_color_local = bf_color_blue;
+					status_symbol_local = "~";
+					break;
+				case STL_PA_FOCUS_FLAG_PMA_FAILURE:
+					status_color_local = bf_color_yellow;
+					status_symbol_local = "!";
+					break;
+				case STL_PA_FOCUS_FLAG_TOPO_FAILURE:
+					status_color_local = bf_color_red;
+					status_symbol_local = "?";
+					break;
+				case STL_PA_FOCUS_FLAG_OK:
+				default:
+					status_color_local = bf_color_off;
+					status_symbol_local = " ";
+				}
+				switch (g_pPmVFFocus.portList[ix].neighborFlags) {
+				case STL_PA_FOCUS_FLAG_PMA_IGNORE:
+					status_color_neighbor = bf_color_blue;
+					status_symbol_neighbor = "~";
+					break;
+				case STL_PA_FOCUS_FLAG_PMA_FAILURE:
+					status_color_neighbor = bf_color_yellow;
+					status_symbol_neighbor = "!";
+					break;
+				case STL_PA_FOCUS_FLAG_TOPO_FAILURE:
+					status_color_neighbor = bf_color_red;
+					status_symbol_neighbor = "?";
+					break;
+				case STL_PA_FOCUS_FLAG_OK:
+				default:
+					status_color_neighbor = bf_color_off;
+					status_symbol_neighbor = " ";
+				}
+				printf("%s%s%4u ", status_color_local, status_symbol_local, ix);
 
 				if ( ( (g_pPmVFFocus.select >= PACLIENT_SEL_ERR_INTEG) &&
 						(g_pPmVFFocus.select <= PACLIENT_SEL_ERR_ROUTING) ) ||
 						(g_pPmVFFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH) )
-					printf("%9" PRIu64, g_pPmVFFocus.portList[ix].value);
+					printf("%9" PRIu64 "%s",
+						 g_pPmVFFocus.portList[ix].value, bf_color_off);
 				else
-					printf( "%9.1f",
-						(float)g_pPmVFFocus.portList[ix].value / 10. );
+					printf( "%9.1f%s",
+						(float)g_pPmVFFocus.portList[ix].value / 10.0,
+						bf_color_off);
 
 				// Truncate nodeDesc to keep line at 80 columns
 				printf( " %04X %3u  %016" PRIX64 " %-.36s%s\n",
@@ -1807,16 +1943,19 @@ void DisplayScreen(void)
 
 				if (g_pPmVFFocus.portList[ix].neighborLid)
 				{
-					printf("  <-> ");
+					printf("%s%s <-> ", status_color_neighbor,
+						status_symbol_neighbor);
 	
 					if ( ( (g_pPmVFFocus.select >= PACLIENT_SEL_ERR_INTEG) &&
 							(g_pPmVFFocus.select <= PACLIENT_SEL_ERR_ROUTING) ) ||
 							(g_pPmVFFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH) )
-						printf( "%9" PRIu64,
-							g_pPmVFFocus.portList[ix].neighborValue );
+						printf( "%9" PRIu64 "%s",
+							g_pPmVFFocus.portList[ix].neighborValue,
+							bf_color_off);
 					else
-						printf( "%9.1f",
-							(float)g_pPmVFFocus.portList[ix].neighborValue / 10. );
+						printf( "%9.1f%s",
+							(float)g_pPmVFFocus.portList[ix].neighborValue / 10.0,
+							bf_color_off);
 	
 					// Truncate neighborNodeDesc to keep line at 80 columns
 					printf( " %04X %3u  %016" PRIX64 " %-.38s%s\n",
@@ -1826,9 +1965,9 @@ void DisplayScreen(void)
 						g_pPmVFFocus.portList[ix].neighborNodeDesc,
 						strgetlaststr(g_pPmVFFocus.portList[ix].neighborNodeDesc, 38) );
 				}
-
 				else
-					printf("  <-> none\n");
+					printf("%s%s <-> none%s\n", status_color_neighbor, 
+						status_symbol_neighbor, bf_color_off);
 
 				ct_lines -= 2;
 			}
@@ -2026,53 +2165,48 @@ void DisplayScreen(void)
 			printf( " Multicast: Xmit Pkts: %-10"PRIu64"  Recv Pkts: %-10"PRIu64"\n",
 				g_portCounters.portMulticastXmitPkts, g_portCounters.portMulticastRcvPkts );
 			printf( " Integrity:        %10c | Congestion:\n", ' ' );
-			printf( "  Link Quality:    %10u |  Cong Discards:    %10llu\n",
+			printf( "  Link Quality:    %10u |  Cong Discards:   %10llu\n",
 				g_portCounters.lq.s.linkQualityIndicator,
 				(unsigned long long)g_portCounters.swPortCongestion);
-			printf( "  Loc Lnk Integ:   %10llu |  Tx Wait:          %10llu\n",
-				(unsigned long long)g_portCounters.localLinkIntegrityErrors,
-				(unsigned long long)g_portCounters.portXmitWait);
-			printf( "  Rcv Errors:      %10llu |  Tx Time Cong:     %10llu\n",
-				(unsigned long long)g_portCounters.portRcvErrors,
-				(unsigned long long)g_portCounters.portXmitTimeCong);
-			printf( "  Excs Bfr Ovrn*:  %10llu |  Mark FECN:        %10llu\n",
-				(unsigned long long)g_portCounters.excessiveBufferOverruns,
-				(unsigned long long)g_portCounters.portMarkFECN);
-			printf( "  Lnk Err Recov:   %10llu |  Rcv FECN*:        %10llu\n",
-				(unsigned long long)g_portCounters.linkErrorRecovery,
+			printf( "  Uncorrectable:   %10llu |  Rcv FECN*:       %10llu\n",
+				(unsigned long long)g_portCounters.uncorrectableErrors,
 				(unsigned long long)g_portCounters.portRcvFECN);
-			printf( "  Link Downed:     %10llu |  Rcv BECN:         %10llu\n",
+			printf( "  Link Downed:     %10llu |  Rcv BECN:        %10llu\n",
 				(unsigned long long)g_portCounters.linkDowned,
 				(unsigned long long)g_portCounters.portRcvBECN);
-			printf( "  Uncorrectable:   %10llu | Discards:\n",
-				(unsigned long long)g_portCounters.uncorrectableErrors);
-			printf( "  FM Conf Err:     %10llu |  Tx Discards:      %10llu\n",
-				(unsigned long long)g_portCounters.fmConfigErrors,
-				(unsigned long long)g_portCounters.portXmitDiscards);
-			printf( "  Lanes Down:      %10u | Routing:\n",
-				g_portCounters.lq.s.numLanesDown);
-			printf( " Bubble:           %10c |  Rcv Sw Relay:     %10llu\n", ' ',
+			printf( "  Lanes Down:      %10u |  Mark FECN:       %10llu\n",
+				g_portCounters.lq.s.numLanesDown,
+				(unsigned long long)g_portCounters.portMarkFECN);
+			printf( "  Rcv Errors:      %10llu |  Xmit Time Cong:  %10llu\n",
+				(unsigned long long)g_portCounters.portRcvErrors,
+				(unsigned long long)g_portCounters.portXmitTimeCong);
+			printf( "  Excs Bfr Ovrn*:  %10llu |  Xmit Wait:       %10llu\n",
+				(unsigned long long)g_portCounters.excessiveBufferOverruns,
+				(unsigned long long)g_portCounters.portXmitWait);
+			printf( "  FM Conf Err:     %10llu | Routing and Others:\n",
+				(unsigned long long)g_portCounters.fmConfigErrors);
+			printf( "  Lnk Err Recov:   %10llu |  Rcv Sw Relay:    %10llu\n",
+				(unsigned long long)g_portCounters.linkErrorRecovery,
 				(unsigned long long)g_portCounters.portRcvSwitchRelayErrors);
-			printf( "  Tx Wasted BW:    %10llu | Security:\n",
+			printf( "  Loc Lnk Integ:   %10llu |  Xmit Discards:   %10llu\n",
+				(unsigned long long)g_portCounters.localLinkIntegrityErrors,
+				(unsigned long long)g_portCounters.portXmitDiscards);
+			printf( " Security:         %10c | Bubble: \n", ' ');
+			printf( "  Xmit Constrain:  %10llu |  Xmit Wasted BW:  %10llu\n",
+				(unsigned long long)g_portCounters.portXmitConstraintErrors,
 				(unsigned long long)g_portCounters.portXmitWastedBW);
-			printf( "  Tx Wait Data:    %10llu |  Tx Constrain:     %10llu\n",
-				(unsigned long long)g_portCounters.portXmitWaitData,
-				(unsigned long long)g_portCounters.portXmitConstraintErrors);
-			printf( "  Rcv Bubble*:     %10llu |  Rcv Constrain*:   %10llu\n",
-				(unsigned long long)g_portCounters.portRcvBubble,
-				(unsigned long long)g_portCounters.portRcvConstraintErrors);
+			printf( "  Rcv Constrain*:  %10llu |  Xmit Wait Data:  %10llu\n",
+				(unsigned long long)g_portCounters.portRcvConstraintErrors,
+				(unsigned long long)g_portCounters.portXmitWaitData);
+			printf( "                              |  Rcv Bubble*:     %10llu\n",
+				(unsigned long long)g_portCounters.portRcvBubble);
+
 			ct_lines -= 17;
 			if(fb_valid_vf_port_stats_hidden) {
 			printf( " SmaCongestion (VL15):%7c |\n", ' ');
-			printf( "  Tx Wait:         %10llu |  Cong Discards:    %10llu\n",
-				(unsigned long long)g_hiddenVfPortCounters.portVFXmitWait,
-				(unsigned long long)g_hiddenVfPortCounters.swPortVFCongestion);
-			printf( "  Mark FECN*:      %10llu |  Rcv FECN*:        %10llu\n",
-				(unsigned long long)g_hiddenVfPortCounters.portVFMarkFECN,
-				(unsigned long long)g_hiddenVfPortCounters.portVFRcvFECN);
-			printf( "  Rcv BECN:        %10llu |  Tx Time Cong:     %10llu\n",
-				(unsigned long long)g_hiddenVfPortCounters.portVFRcvBECN,
-				(unsigned long long)g_hiddenVfPortCounters.portVFXmitTimeCong);
+			printf( "  Cong Discards:   %10llu |  Xmit Wait:       %10llu\n",
+				(unsigned long long)g_hiddenVfPortCounters.swPortVFCongestion,
+				(unsigned long long)g_hiddenVfPortCounters.portVFXmitWait);
 				ct_lines -= 4;
 			} else {
 				printf( " SmaCongestion: VF PORT COUNTERS NOT AVAILABLE\n");

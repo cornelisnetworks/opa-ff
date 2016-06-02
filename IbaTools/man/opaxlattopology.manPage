@@ -13,7 +13,12 @@ opaxlattopology
 .NL
 
 .PP
-Generates a topology XML file of a cluster using topology.xlsx, linksum\(ulswd06.csv, and linksum\(ulswd24.csv as input. The topology file can be used to bring up and verify the cluster.
+Generates a topology XML file of a cluster using topology.csv, linksum\(ulswd06.csv, and linksum\(ulswd24.csv as input. The topology file can be used to bring up and verify the cluster.
+.PP
+
+.B NOTE:
+The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /opt/opa/samples directory.
+
 .SH Syntax
 .NL
 opaxlattopology [-d \fIlevel\fR-v \fIlevel\fR-i \fIlevel\fR-c \fIchar\fR-K -?]
@@ -122,36 +127,6 @@ NodeDesc concatenation character. Used when creating NodeDesc values (that is, N
 Does not clean temporary files. Prevents temporary files in each topology directory from being removed. Temporary files contain CSV formatted lists of links, HFIs, and switches used to create a topology XML file. Temporary files are not typically needed after a topology file is created, however they are used for creating linksum\(ulswd06.csv and linksum\(ulswd24.csv files, or can be retained for subsequent inspection or processing.
 
 .TP 10
-.BR
-
-.PP
-
-.B NOTE:
-The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone source files. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
-
-
-.IP 1) 4n 
-Save each of the following from the topology.xlsx file as individual .csv files:
-.RS
-
-.IP \(bu
-Internal SWD06 Links tab as linksum\(ulswd06.csv 
-.IP \(bu
-Internal SWD24 Links tab as linksum\(ulswd24.csv 
-.IP \(bu
-Fabric Links tab as topology.csv 
-
-.RE
-
-
-.IP 2) 4n 
-For each saved topology.csv file, run the script with the -K option.
-
-.IP 3) 4n 
-Upon completion of the script, save the top level linksum.csv file as linksum\(ulswd06.csv or linksum\(ulswd24.csv as appropriate.
-
-
-.TP 10
 -? 
 .NL
 Prints this output.
@@ -160,19 +135,158 @@ Prints this output.
 .NL
 
 .PP
-The opaxlattopology script reads the topology, linksum\(ulswd06, and linksum\(ulswd24 CSV files. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
+The opaxlattopology script reads the topology.csv file from the local directory, and reads the other files from /opt/opa/samples/linksum\(ulswd06.csv and /opt/opa/samples/linksum\(ulswd24.csv. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. A sample topology.xlsx is located in the /opt/opa/samples/ directory. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
 .PP
-The script outputs one or more topology files starting with topology.0:0.xml. Input files must be present in the same directory from which the script operates.
+The script outputs one or more topology files starting with topology.0:0.xml. The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /opt/opa/samples directory.
 .SH Example 
 .NL
 opaxlattopology
 .br
-# reads default input \'topology.csv\' and creates default
+# reads default input \[aq]topology.csv\[aq] and creates default
 .br
-# output \'topology.0:0.xml\'
+# output \[aq]topology.0:0.xml\[aq]
+.br
+
 .br
 opaxlattopology fabric\(ul2.csv
 .br
-# reads input \'fabric\(ul2.csv\' and creates default output
+# reads input \[aq]fabric\(ul2.csv\[aq] and creates default output
 .PP
 See topology.xlsx for examples of links between HFI and Edge SW (rows 4-7), HFI and Core SW (rows 8-11), and Edge SW and Core SW (rows 12-15).
+.SH Environment Variables
+.NL
+
+.PP
+The following environment variables allow user-specified MTU.
+.TP 10
+\fBMTU\(ulSW\(ulSW\fR 
+.NL
+If set, it overrides default MTU on switch-to-switch links. Default = 10240
+
+.TP 10
+\fBMTU\(ulSW\(ulHFI\fR 
+.NL
+If set, it overrides default MTU on switch-to-HFI links. Default = 8192
+
+.SH Creating linksum Files
+.NL
+
+.PP
+The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone files in the /opt/opa/samples directory. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
+
+.IP 1) 4n 
+Save each of the following from the topology.xlsx file as individual .csv files:
+.IP \(bu
+Internal SWD06 Links tab as linksum\(ulswd06.csv 
+.IP \(bu
+Internal SWD24 Links tab as linksum\(ulswd24.csv 
+.IP \(bu
+Fabric Links tab as topology.csv 
+
+.IP 2) 4n 
+For each saved topology.csv file, run the script with the -K option.
+
+.IP 3) 4n 
+Upon completion of the script, save the top level linksum.csv file as linksum\(ulswd06.csv or linksum\(ulswd24.csv as appropriate.
+
+.SH Including SM Blocks in Topology
+.NL
+
+.PP
+You must manually edit the /etc/sysconfig/opa/topology.0:0.xml file to include SM blocks for each SM in your fabric. opaxlattopology translates the topology.csv file which does not include SM blocks in the xml file by default. If manual edits are not completed, then the command opareport -o verifyall -T topology.0:0.xml fails with errors similar to the following:# opareport -o verifyall -T topology.0:0.xml
+.br
+SMs Topology Verification
+.br
+
+.br
+SMs Found with incorrect configuration:
+.br
+NodeGUID Port PortGUID Type Name
+.br
+0x0011750101671ed9 1 0x0011750101671ed9 FI phkp3un86 hfi1\(ul0
+.br
+NodeDetails: koplab
+.br
+Unexpected SM
+.br
+
+.br
+1 of 1 Fabric SMs Checked
+.br
+
+.br
+SMs Expected but Missing or Duplicate in input:
+.br
+0 of 0 Input SMs Checked
+.br
+
+.br
+Total of 1 Incorrect SMs found
+.br
+0 Missing, 1 Unexpected, 0 Duplicate, 0 Different
+.PP
+To retrieve the info for the SM block, use the command opareport -o nodes -F sm as shown in the following example.
+.br
+# opareport -o nodes -F sm
+.br
+Getting All Node Records...
+.br
+Done Getting All Node Records
+.br
+Done Getting All Link Records
+.br
+Done Getting All Cable Info Records
+.br
+Done Getting All SM Info Records
+.br
+Node Type Summary
+.br
+Focused on:
+.br
+Port: 1 0x0011750101671ed9
+.br
+in Node: 0x0011750101671ed9 FI phkp3un86 hfi1\(ul0
+.br
+
+.br
+3 Connected FIs in Fabric:
+.br
+Name: phkp3un86 hfi1\(ul0
+.br
+NodeGUID: 0x0011750101671ed9 Type: FI
+.br
+Ports: 1 PartitionCap: 16 SystemImageGuid: 0x0011750101671ed9
+.br
+BaseVer: 128 SmaVer: 128 VendorID: 0x1175 DeviceID: 0x24f0 Rev: 0x10
+.br
+1 Connected Ports:
+.br
+PortNum: 1 LID: 0x0001 GUID: 0x0011750101671ed9
+.br
+Neighbor: Name: phedfim20
+.br
+NodeGUID: 0x0011750102648205 Type: SW PortNum: 46
+.br
+Width: 4 Speed: 25Gb Downgraded? No
+.br
+1 Matching FIs Found
+.br
+
+.br
+1 Connected Switches in Fabric:
+.br
+0 Matching Switches Found
+.br
+
+.br
+1 Connected SMs in Fabric:
+.br
+State: Master Name: phkp3un86 hfi1\(ul0
+.br
+NodeGUID: 0x0011750101671ed9 Type: FI
+.br
+PortNum: 1 LID: 0x0001 PortGUID: 0x0011750101671ed9
+.br
+SM\(ulKey: 0x0000000000000000 Priority: 0 ActCount: 0x0000bcb2
+.br
+1 Matching SMs Found

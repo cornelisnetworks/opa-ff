@@ -221,6 +221,8 @@ do
 	fi
 done
 
+echo "Obtaining additional CPU info..."
+cpupower frequency-info > /$dir/cpupower-freq-info
 
 # Check if HFI driver debug data dir) is present; log only if present
 HFI_DEBUGDIR="/sys/kernel/debug/hfi1"
@@ -368,7 +370,7 @@ fi
 
 cd /
 files="$dir"
-for f in var/log/iba* var/log/ics_* var/log/messages* var/log/ksyms.* var/log/boot* etc/*release* etc/sysconfig/ipoib.cfg* etc/sysconfig/opa etc/modules.conf* etc/modprobe.conf* etc/sysconfig/network-scripts/ifcfg* etc/dapl/ibhosts etc/hosts etc/sysconfig/boot etc/sysconfig/firstboot etc/dat.conf etc/sysconfig/network/ifcfg* etc/infiniband etc/sysconfig/*config etc/security etc/sysconfig/opafm.xml etc/sysconfig/iview_fm.config var/log/fm* var/log/sm* var/log/bm* var/log/pm* var/log/fe* var/log/opensm* var/log/ipath* etc/rc.d/rc.local etc/modprobe.d boot/grub/menu.lst boot/grub/grub.conf boot/grub2/grub.cfg boot/grub2/grubenv boot/grub2/device.map etc/grub*.conf etc/udev* etc/opensm etc/sysconfig/opensm etc/rdma/* etc/modprobe.d/* etc/dracut.conf.d/* 
+for f in var/log/opa* var/log/ics_* var/log/messages* var/log/ksyms.* var/log/boot* etc/*release* etc/sysconfig/ipoib.cfg* etc/sysconfig/opa etc/modules.conf* etc/modprobe.conf* etc/sysconfig/network-scripts/ifcfg* etc/dapl/ibhosts etc/hosts etc/sysconfig/boot etc/sysconfig/firstboot etc/dat.conf etc/sysconfig/network/ifcfg* etc/infiniband etc/sysconfig/*config etc/security etc/sysconfig/opafm.xml etc/sysconfig/iview_fm.config var/log/fm* var/log/sm* var/log/bm* var/log/pm* var/log/fe* var/log/opensm* var/log/ipath* etc/rc.d/rc.local etc/modprobe.d boot/grub/menu.lst boot/grub/grub.conf boot/grub2/grub.cfg boot/grub2/grubenv boot/grub2/device.map etc/grub*.conf etc/udev* etc/opensm etc/sysconfig/opensm etc/rdma/* etc/modprobe.d/* etc/dracut.conf.d/* 
 do
 	if [ -e "$f" ]
 	then
@@ -428,7 +430,7 @@ rm -rf /$dir
 
 if [ $retval -ne 0 ]
 then
-	echo "WARN: tar exited with code $retval, may have failed to create $tar_file!" >&2
+	echo "tar encountered an issue while generating the tarball. Please verify the tarball was created successfully, files that have changed are acceptable." >&2
 fi
 
 echo "Done."

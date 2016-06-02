@@ -30,9 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
   \file dsap_module.c
  
-  $Author: aestrin $
-  $Revision: 1.5 $
-  $Date: 2015/01/27 23:00:24 $
+  $Revision: 1.6 $
+  $Date: 2016/04/06 10:49:28 $
 
   \brief Provider initialization and cleanup functions.
 */

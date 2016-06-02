@@ -114,24 +114,22 @@ Prints this output.
 
 .PP
 Each link contains source, destination, and cable fields with one link per row of the spreadsheet. Link fields must not contain commas. Source and Destination fields are each a concatenation of name and port information in the following forms. Names not of the form ib or C are assumed to be host names.
-.TP 10
-
+.PP
+The following lists the
 \fBNode Type\fR
-
-.NL
-
+:
 \fBSource/Destination\fR
-
+:
 .TP 10
-Host 
+Host : 
 .NL
 host \fIN\fR where N is a host number.
 .TP 10
-Edge Switch 
+Edge Switch : 
 .NL
 ib \fIN\fR p \fIN\fR where N is a switch/port number.
 .TP 10
-Core Leaf 
+Core Leaf : 
 .NL
 C \fIn\fR L \fInnn\fR p \fIN\fR where N/n is a host/switch/port number.
 .PP

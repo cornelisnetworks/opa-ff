@@ -149,7 +149,7 @@ uint16 getSessionID(struct oib_port *port, IB_PATH_RECORD *path)
 	uint16			sessionID;
 
 	status = sendSessionMgmtGetMad(port, path, &mad, &sessionID); 
-	if (status == FSUCCESS)
+	if ((status == FSUCCESS) && (sessionID != 0))
 		return(sessionID);
 	else
 		return((uint16)-1);
@@ -494,6 +494,7 @@ FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
 	FSTATUS status = FSUCCESS;
 	uint8 ErrorFlags = 0;
 	uint16 mgmtFpgaOffset = 0;
+	boolean maxDetected;
 	union {
 		uint8 u8[2];
 		uint16 u16;
@@ -512,19 +513,6 @@ FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
 			snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: %dC", ltc2974_L11_to_Celsius(value.u16));
 		}
 	}
-	{ // MAX QSFP
-		mgmtFpgaOffset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_MAX_QSFP_TEMP_MGMT_FPGA_OFFSET;
-		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
-			I2C_OPASW_MGMT_FPGA_ADDR, 1, mgmtFpgaOffset, &value.u8[0]);
-
-		if (status != FSUCCESS) {
-			//fprintf(stderr, "getTempReadings: Error sending MAD packet to switch to read MAX QSFP temp\n");
-			snprintf(tempStrs[1], TEMP_STR_LENGTH, "MAX QSFP: N/A");
-			ErrorFlags |= (1<<1);
-		} else {
-			snprintf(tempStrs[1], TEMP_STR_LENGTH, "MAX QSFP: %dC", value.u8[0]);
-		}
-	}
 	{ // PRR ASIC
 		mgmtFpgaOffset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_PRR_ASIC_TEMP_MGMT_FPGA_OFFSET;
 		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
@@ -532,12 +520,38 @@ FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
 
 		if (status != FSUCCESS) {
 			//fprintf(stderr, "getTempReadings: Error sending MAD packet to switch to read PRR ASIC temp\n");
-			snprintf(tempStrs[2], TEMP_STR_LENGTH, "PRR ASIC: N/A");
+			snprintf(tempStrs[1], TEMP_STR_LENGTH, "PRR ASIC: N/A");
 			ErrorFlags |= (1<<2);
 		} else {
-			snprintf(tempStrs[2], TEMP_STR_LENGTH, "PRR ASIC: %dC", value.u8[0]);
+			snprintf(tempStrs[1], TEMP_STR_LENGTH, "PRR ASIC: %dC", value.u8[0]);
 		}
 	}
+	{ // CHECK QSFPTemperatureMaxDetected
+	status = getMaxQsfpTemperatureMaxDetected(port, path, mad, sessionID, &maxDetected);
+		if (status != FSUCCESS) {
+			fprintf(stderr,"Error: getMaxQsfpTemperatureMaxDetected failed\n");
+			iba_fstatus_msg(status);
+		}
+	}
+
+	{ // MAX QSFP
+		if (maxDetected) {
+			mgmtFpgaOffset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_MAX_QSFP_TEMP_MGMT_FPGA_OFFSET;
+			status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
+				I2C_OPASW_MGMT_FPGA_ADDR, 1, mgmtFpgaOffset, &value.u8[0]);
+
+			if (status != FSUCCESS) {
+				//fprintf(stderr, "getTempReadings: Error sending MAD packet to switch to read MAX QSFP temp\n");
+				snprintf(tempStrs[2], TEMP_STR_LENGTH, "MAX QSFP: N/A");
+				ErrorFlags |= (1<<1);
+			} else {
+				snprintf(tempStrs[2], TEMP_STR_LENGTH, "MAX QSFP: %dC", value.u8[0]);
+			}
+		} else {
+				snprintf(tempStrs[2], TEMP_STR_LENGTH, "MAX QSFP: N/A");
+		}
+	}
+
 	return(status | (ErrorFlags << 8));
 
 }
@@ -584,6 +598,11 @@ FSTATUS getFanSpeed(struct oib_port *port,
 	// clear to me from the bsp code
 }
 
+int getNumPS() {
+	return 2;
+	//This function will always return 2 for now, but in the future this number may change based upon manufacturer or design.
+}
+
 FSTATUS getPowerSupplyStatus(struct oib_port *port, 
 							 IB_PATH_RECORD *path, 
 							 VENDOR_MAD *mad, 
@@ -598,7 +617,9 @@ FSTATUS getPowerSupplyStatus(struct oib_port *port,
 	uint8			dataBuffer[10];
 	uint8			*psPtr;
 	uint8			value;
+        int 			numPS;
 
+	numPS = getNumPS();
 	mgmtFpgaAddress = I2C_OPASW_MGMT_FPGA_ADDR;
 	mgmtFpgaOffset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_PS_MGMT_FPGA_OFFSET;
 
@@ -617,21 +638,28 @@ FSTATUS getPowerSupplyStatus(struct oib_port *port,
 			psPtr = dataBuffer;
  			value = *psPtr;
 			if (psNum == 1) {
-				powerSupplyStatus = ~((value >> PSU1_MGMT_FPGA_BIT_PRESENT) & 0x01);
+				powerSupplyStatus = ((value >> PSU1_MGMT_FPGA_BIT_PRESENT) & 0x01);
 				if (powerSupplyStatus) {
 					if ((value >> PSU1_MGMT_FPGA_BIT_PWR_OK) & 0x01)
-						*psStatus = 1;
+						*psStatus = PS_ONLINE;
 					else
-						*psStatus = 0;
+						*psStatus = PS_OFFLINE;
+				} else {
+					*psStatus = PS_NOT_PRESENT;
 				}
 			}
+			else if (numPS<2) {
+				*psStatus = PS_INVALID;
+			}
 			else {
-				powerSupplyStatus = ~((value >> PSU2_MGMT_FPGA_BIT_PRESENT) & 0x01);
+				powerSupplyStatus = ((value >> PSU2_MGMT_FPGA_BIT_PRESENT) & 0x01);
 				if (powerSupplyStatus) {
 					if ((value >> PSU2_MGMT_FPGA_BIT_PWR_OK) & 0x01)
-						*psStatus = 1;
+						*psStatus = PS_ONLINE;
 					else
-						*psStatus = 0;
+						*psStatus = PS_OFFLINE;
+				} else {
+					*psStatus = PS_NOT_PRESENT;
 				}
 			}
 		}
@@ -639,6 +667,41 @@ FSTATUS getPowerSupplyStatus(struct oib_port *port,
 
 	return(status);
 }
+
+FSTATUS getMaxQsfpTemperatureMaxDetected(struct oib_port *port, 
+					   IB_PATH_RECORD *path, 
+					   VENDOR_MAD *mad, 
+					   uint16 sessionID, 
+					   boolean *maxDetected)
+{
+
+	FSTATUS			status;
+	uint32			location = QSFP_MGR_TEMPERATURE_MAX_DETECTED_MEM_ADDR;
+	uint32			nextLocation;
+	uint32			result;
+	uint8			memoryData[4]; //32 bits
+
+	*maxDetected = FALSE;
+	status = sendMemAccessGetMad(port, path, mad, sessionID, location, (uint8)4, memoryData);
+	if (status == FSUCCESS) {
+		nextLocation = ntoh32(*(uint32 *)memoryData);
+	} else {
+		fprintf(stderr, "sendMemAccessGetMad error\n");
+		return(status);
+	}
+	status = sendMemAccessGetMad(port, path, mad, sessionID, nextLocation, (uint8)4, memoryData);
+	if (status == FSUCCESS) {
+		result = ntoh32(*(uint32 *)memoryData);
+		*maxDetected = !((0x80000000 & result) >> 31);
+		//If the 31st bit is 1 the value is NOT valid
+		//If the 31st bit is 0 the value is valid
+	} else {
+		fprintf(stderr, "sendMemAccessGetMad error\n");
+	}
+	
+	return(status);
+}
+
 
 FSTATUS getAsicVersion(struct oib_port *port, 
 					   IB_PATH_RECORD *path, 
@@ -667,17 +730,16 @@ FSTATUS getBoardID(struct oib_port *port,
 
 	FSTATUS			status;
 	uint32			boardIdAddress = I2C_BOARD_ID_ADDR;
-	uint8			*b;
 	uint16			offset;
-	uint8			dataBuffer[10];
+	uint8			dataBuffer;
 
 	offset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_BD_MGMT_FPGA_OFFSET;
 
 	status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME, 
-							  boardIdAddress, 2, offset, dataBuffer);
+							  boardIdAddress, 1, offset, &dataBuffer);
 	if (status == FSUCCESS) {
-		b = (uint8 *)dataBuffer;
-		*boardID = *b;
+		dataBuffer &= STL_PRR_BOARD_ID_MASK;
+		*boardID = dataBuffer;
 	}
 	return(status);
 }
@@ -774,5 +836,27 @@ FSTATUS opaswEepromRW(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessio
 		remainingLen -= xferLen;
 	}
 	return FSUCCESS;
+}
+
+const char*
+StlPortLtpCrcModeVMAToText(uint16_t mode, char *str, size_t len)
+{
+        size_t n = 0;
+        size_t i = 0;
+
+        str[0]='\0';
+
+        PRINT_OR_OUT(str, len, "16-bit,");
+        if (mode & STL_PRR_PORT_LTP_CRC_MODE_VMA_14)
+                PRINT_OR_OUT(str, len, "14-bit,");
+        if (mode & STL_PRR_PORT_LTP_CRC_MODE_VMA_48)
+                PRINT_OR_OUT(str, len, "48-bit,");
+        if (mode & STL_PRR_PORT_LTP_CRC_MODE_VMA_12_16_PER_LANE)
+                PRINT_OR_OUT(str, len, "12-16/lane,");
+
+        str[n-1] = 0; // Eliminate trailing comma
+
+out:
+        return str;
 }
 

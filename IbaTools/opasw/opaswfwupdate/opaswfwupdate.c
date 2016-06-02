@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 	uint8				hfi = 1;
 	uint8				port = -1;
 	IB_PATH_RECORD		path;
-	uint16				sessionID;
+	uint16				sessionID = 0;
 	uint32				*u;
 	uint32				crcEEPROM;
 	uint32				crc;
@@ -419,7 +419,7 @@ int main(int argc, char *argv[])
 	fwSize = loadFirmwareBuffer(oib_port_session, (char **)&fwBuffer, &path, sessionID);
 	if (fwSize == 0) {
 		fprintf(stderr, "%s: Error: Failed to load firmware file\n", cmdName);
-		releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 		status = FERROR;
 		goto err_exit;
 	}
@@ -452,6 +452,7 @@ int main(int argc, char *argv[])
 	}
 	if ((fwBuffer2 = malloc(fwSize + 1024)) == NULL) {
 		fprintf(stderr, "Error allocating memory for firmware read back buffer\n");
+		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 		goto err_exit;
     }
 
@@ -490,7 +491,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (!g_resetSwitch)
-		releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 
 	printf("opaswfwupdate completed\n");
 

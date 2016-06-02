@@ -23,6 +23,11 @@ opafequery [-v] [-a \fIipAddr\fR| -h \fIhostName\fR] [-E] [-T paramsfile] -o \fI
 .NL
 
 .TP 10
+--help 
+.NL
+Produce this help text.
+
+.TP 10
 -v / --verbose 
 .NL
 Verbose output.
@@ -106,19 +111,19 @@ Queries by multicast GID.
 .NL
 Queries by node name/description.
 .TP 10
--P / --guidpair \fI\'guid guid\'\fR 
+-P / --guidpair \fI\[aq]guid guid\[aq]\fR 
 .NL
 Queries by a pair of port GUIDs.
 .TP 10
--G / --gidpair \fI\'gid gid\'\fR 
+-G / --gidpair \fI\[aq]gid gid\[aq]\fR 
 .NL
 Queries by a pair of GIDs.
 .TP 10
--B / --guidlist \fI\'sguid ...;dguid ...\'\fR 
+-B / --guidlist \fI\[aq]sguid ...;dguid ...\[aq]\fR 
 .NL
 Queries by a list of port GUIDs.
 .TP 10
--A / --gidlist \fI\'sgid ...;dgid ...\'\fR 
+-A / --gidlist \fI\[aq]sgid ...;dgid ...\[aq]\fR 
 .NL
 Queries by a list of GIDs.
 .TP 10
@@ -151,221 +156,92 @@ User-controlled counters flag for portCounters query.
 .TP 10
 -e / --select 
 .NL
-32-bit select flag for clearing port counters select bits. 0 is least significant (rightmost):
-.RS
-.TP 10
-
-.sp
-0 
-XmitData
-.RE
+32-bit select flag for clearing port counters select bits. 0 is least significant (rightmost).Bit descriptions are listed below in the order "mask - bit - location":
 
 .RS
-.TP 10
 
-.sp
-1 
-RcvData
-.RE
+.IP \(bu
+0x80000000 - 31 - Transmit Data
 
-.RS
-.TP 10
+.IP \(bu
+0x40000000 - 30 - Receive Data
 
-.sp
-2 
-XmitPkts
-.RE
+.IP \(bu
+0x20000000 - 29 - Transmit Packets
 
-.RS
-.TP 10
+.IP \(bu
+0x10000000 - 28 - Receive Packets
 
-.sp
-3 
-RcvPkts
-.RE
+.IP \(bu
+0x08000000 - 27 - Multicast Transmit Packets
 
-.RS
-.TP 10
+.IP \(bu
+0x04000000 - 26 - Multicast Receive Packets
 
-.sp
-4 
-MulticastXmitPkts
-.RE
+.IP \(bu
+0x02000000 - 25 - Transmit Wait
 
-.RS
-.TP 10
+.IP \(bu
+0x01000000 - 24 - Congestion Discards
 
-.sp
-5 
-MulticastRcvPkts
-.RE
+.IP \(bu
+0x00800000 - 23 - Receive FECN
 
-.RS
-.TP 10
+.IP \(bu
+0x00400000 - 22 - Receive BECN
 
-.sp
-6 
-XmitWait
-.RE
+.IP \(bu
+0x00200000 - 21 - Transmit Time Cong.
 
-.RS
-.TP 10
+.IP \(bu
+0x00100000 - 20 - Transmit Time Wasted BW
 
-.sp
-7 
-CongDiscards
-.RE
+.IP \(bu
+0x00080000 - 19 - Transmit Time Wait Data
 
-.RS
-.TP 10
+.IP \(bu
+0x00040000 - 18 - Receive Bubble
 
-.sp
-8 
-RcvFECN
-.RE
+.IP \(bu
+0x00020000 - 17 - Mark FECN
 
-.RS
-.TP 10
+.IP \(bu
+0x00010000 - 16 - Receive Constraint Errors
 
-.sp
-9 
-RcvBECN
-.RE
+.IP \(bu
+0x00008000 - 15 - Receive Switch Relay
 
-.RS
-.TP 10
+.IP \(bu
+0x00004000 - 14 - Transmit Discards
 
-.sp
-10 
-XmitTimeCong
-.RE
+.IP \(bu
+0x00002000 - 13 - Transmit Constraint Errors
 
-.RS
-.TP 10
+.IP \(bu
+0x00001000 - 12 - Receive Remote Phys. Errors
 
-.sp
-11 
-XmitWastedBW
-.RE
+.IP \(bu
+0x00000800 - 11 - Local Link Integrity
 
-.RS
-.TP 10
+.IP \(bu
+0x00000400 - 10 - Receive Errors
 
-.sp
-12 
-XmitWaitData
-.RE
+.IP \(bu
+0x00000200 - 9 - Exc. Buffer Overrun
 
-.RS
-.TP 10
+.IP \(bu
+0x00000100 - 8 - FM Configuration Errors
 
-.sp
-13 
-RcvBubble
-.RE
+.IP \(bu
+0x00000080 - 7 - Link Error Recovery
 
-.RS
-.TP 10
+.IP \(bu
+0x00000040 - 6 - Link Error Downed
 
-.sp
-14 
-MarkFECN
-.RE
+.IP \(bu
+0x00000020 - 5 - Uncorrectable Errors
 
-.RS
-.TP 10
 
-.sp
-15 
-RcvConstraintErrors
-.RE
-
-.RS
-.TP 10
-
-.sp
-16 
-RcvSwitchRelayErrors
-.RE
-
-.RS
-.TP 10
-
-.sp
-17 
-XmitDiscards
-.RE
-
-.RS
-.TP 10
-
-.sp
-18 
-XmitConstraintErrors
-.RE
-
-.RS
-.TP 10
-
-.sp
-19 
-RcvRemotePhysicalErrors
-.RE
-
-.RS
-.TP 10
-
-.sp
-20 
-LocalLinkIntegrityErrors
-.RE
-
-.RS
-.TP 10
-
-.sp
-21 
-RcvErrors
-.RE
-
-.RS
-.TP 10
-
-.sp
-22 
-ExcessiveBufferOverruns
-.RE
-
-.RS
-.TP 10
-
-.sp
-23 
-FMConfigErrors
-.RE
-
-.RS
-.TP 10
-
-.sp
-24 
-LinkErrorRecovery
-.RE
-
-.RS
-.TP 10
-
-.sp
-25 
-LinkDowned
-.RE
-
-.RS
-.TP 10
-
-.sp
-26 
-UncorrectableErrors
 .RE
 
 .TP 10
@@ -376,7 +252,7 @@ Focus select value for getting focus ports. Values include:
 .TP 10
 
 .sp
-0x00020001 
+utilhigh 
 Sorted by utilization - highest first.
 .RE
 
@@ -384,7 +260,7 @@ Sorted by utilization - highest first.
 .TP 10
 
 .sp
-0x00020082 
+pktrate 
 Sorted by packet rate - highest first.
 .RE
 
@@ -392,7 +268,7 @@ Sorted by packet rate - highest first.
 .TP 10
 
 .sp
-0x00020101 
+utillow 
 Sorted by utilization - lowest first.
 .RE
 
@@ -400,7 +276,7 @@ Sorted by utilization - lowest first.
 .TP 10
 
 .sp
-0x00030001 
+integrity 
 Sorted by integrity errors - highest first.
 .RE
 
@@ -408,7 +284,7 @@ Sorted by integrity errors - highest first.
 .TP 10
 
 .sp
-0x00030002 
+congestion 
 Sorted by congestion errors - highest first.
 .RE
 
@@ -416,7 +292,7 @@ Sorted by congestion errors - highest first.
 .TP 10
 
 .sp
-0x00030003 
+smacongesion 
 Sorted by SMA congestion errors - highest first.
 .RE
 
@@ -424,7 +300,7 @@ Sorted by SMA congestion errors - highest first.
 .TP 10
 
 .sp
-0x00030004 
+bubbles 
 Sorted by bubble errors - highest first.
 .RE
 
@@ -432,7 +308,7 @@ Sorted by bubble errors - highest first.
 .TP 10
 
 .sp
-0x00030005 
+security 
 Sorted by security errors - highest first.
 .RE
 
@@ -440,7 +316,7 @@ Sorted by security errors - highest first.
 .TP 10
 
 .sp
-0x00030006 
+routing 
 Sorted by routing errors - highest first.
 .RE
 
@@ -570,10 +446,6 @@ linfdb
 .NL
 List of switch linear forwarding database (FDB) records.
 .TP 10
-ranfdb 
-.NL
-List of switch random FDB records.
-.TP 10
 mcfdb 
 .NL
 List of switch multicast FDB records.
@@ -679,11 +551,11 @@ Releases freeze frame for image ID. Requires -b \fIimgNum\fR.
 .TP 10
 renewImage 
 .NL
-Renews lease for freeze frame for image ID. Requires -b \fIimgNum\fR.
+Renews lease for freeze frame for image ID. Requires -b#8217#160; \fIimgNum\fR.
 .TP 10
 moveFreeze 
 .NL
-Moves freeze frame from image ID to new image ID. Requires -b \fIimgNum\fR and -F \fImoveImgNum\fR.
+Moves freeze frame from image ID to new image ID. Requires -b#8217#160; \fIimgNum\fR and -F \fImoveImgNum\fR.
 .TP 10
 focusPorts 
 .NL
@@ -718,11 +590,11 @@ clrVfPortCounters
 Clears VF port counters of fabric port. Requires -l \fIlid\fR, -N \fIport\fR, -e \fIselect\fR, and -V \fIvfName\fR options.
 .SH Examples 
 .NL
-opafequery -o classPortInfo
+opafequery -o saclassPortInfo
 .br
-opafequery -h stewie -o classPortInfo
+opafequery -h stewie -o paclassPortInfo
 .br
-opafequery -a 172.21.2.155 -o classPortInfo
+opafequery -a 172.21.2.155 -o saclassPortInfo
 .br
 opafequery -o groupList
 .br
@@ -734,20 +606,20 @@ opafequery -h stewie -o groupInfo -g All
 .br
 opafequery -a 172.21.2.155 -o groupInfo -g All
 .br
-opafequery -o portCounters -l 1 -P 1 -d 1
+opafequery -o portCounters -l 1 -N 1 -d 1
 .br
-opafequery -o portCounters -l 1 -P 1 -d 1 -n 0x20000000d02 -O 1
+opafequery -o portCounters -l 1 -N 1 -d 1 -e 0x20000000d02 -O 1
 .br
 opafequery -o pmConfig
 .br
-opafequery -o freezeImage -n 0x20000000d02
+opafequery -o freezeImage 0x20000000d02
 .br
-opafequery -o releaseImage -n 0xd01
+opafequery -o releaseImage -b 0xd01
 .br
-opafequery -o renewImage -n 0xd01
+opafequery -o renewImage -b 0xd01
 .br
-opafequery -o moveFreeze -n 0xd01 -m 0x20000000d02 -M -2
+opafequery -o moveFreeze -b 0xd01 -m 0x20000000d02 -M -2
 .br
-opafequery -o focusPorts -g All -f 0x00030001 -S 0 -r 20
+opafequery -o focusPorts -g All -f 0x00030001 -w 0 -r 20
 .br
-opafequery -o imageInfo -n 0x20000000d02
+opafequery -o imageInfo -b 0x20000000d02

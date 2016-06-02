@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 	uint8				hfi = 1;
 	uint8				port = -1;
 	IB_PATH_RECORD		path;
-	uint16				sessionID;
+	uint16				sessionID = 0;
 	int32				metaIndex = -1;
 	uint32				numPorts;
 	uint32				linkWidth;
@@ -453,7 +453,7 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "%s: Error: bad integer value %d; must be 0-16b, 1-14b/16b, 2-48b/16b, 3-48b/14b/16b, 4-per lane/16b, 5-per lane/14b/16b, 6-per lane/48b/16b, 7-per lane/48b/14b/16b\n", cmdName, integerParameter);
 				status = FERROR;
 			} else {
-				metaIndex = getMetaDataIndexByField(&portMetaData[0], portMetaDataSize, "CRC");
+				metaIndex = getMetaDataIndexByField(&portMetaData[0], portMetaDataSize, "LTP_CRC_MODE_SUPPORTED");
 				if (metaIndex < 0) {
 					fprintf(stderr, "%s: Error: can not find CRC in metaData table\n", cmdName);
 					status = FERROR;
@@ -536,6 +536,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 		default:
+			if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 			fprintf(stderr, "Error: Invalid configuration option number %d\n", g_configNum);
 			usage(cmdName);
 			break;
@@ -550,7 +551,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	releaseSession(oib_port_session, &path, sessionID);
+	if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 
 	printf("opaswconfigure completed\n");
 

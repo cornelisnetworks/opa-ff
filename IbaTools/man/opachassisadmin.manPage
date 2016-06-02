@@ -18,11 +18,7 @@ opachassisadmin
 Performs a number of multi-step chassis initialization and verification operations, including initial chassis setup, firmware upgrades, chassis reboot, and others.
 .SH Syntax 
 .NL
-opachassisadmin [-c] [-F \fIchassisfile\fR] [-H \'\fIchassis\fR\'] [-P \fIpackages\fR] [-a \fIaction\fR] [-I \fIfm\(ulbootstate\fR] [-S] [-d \fIupload\(uldir\fR] [-s \fIsecurityfiles\fR] \fIoperation\fR...
-.PP
-or
-.br
-opachassisadmin --help
+opachassisadmin [-c] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-P \fIpackages\fR] [-a \fIaction\fR] [-I \fIfm\(ulbootstate\fR] [-S] [-d \fIupload\(uldir\fR] [-s \fIsecurityfiles\fR] \fIoperation\fR...
 .SH Options 
 .NL
 
@@ -331,7 +327,7 @@ Fetches FM security files from all chassis.
 .RE
 
 For more information on the operations that can be performed, see
-\fIopachassisadmin operation Details\fR
+\fIOperation Details\fR
 .
 
 .SH Example 
@@ -340,11 +336,11 @@ opachassisadmin -c reboot
 .br
 opachassisadmin -P /root/ChassisFw4.2.0.0.1 upgrade
 .br
-opachassisadmin -H \'chassis1 chassis2\' reboot
+opachassisadmin -H \[aq]chassis1 chassis2\[aq] reboot
 .br
-CHASSIS=\'chassis1 chassis2\' opachassis\(uladmin reboot
+CHASSIS=\[aq]chassis1 chassis2\[aq] opachassis\(uladmin reboot
 .br
-opachassisadmin -a run -P \'*.pkg\' upgrade
+opachassisadmin -a run -P \[aq]*.pkg\[aq] upgrade
 .SH Environment Variables 
 .NL
 
@@ -377,7 +373,7 @@ Directory to upload to, used in absence of -d.
 
 .NL
 
-.SH opachassisadmin Operation Details
+.SH Operation Details
 .NL
 
 .PP
@@ -522,16 +518,7 @@ When performing operations against chassis, Intel recommends setting up SSH keys
 .NL
 
 .PP
-Results from opachassisadmin are grouped into
-\fItest suites\fR
-
-,
-\fItest cases\fR
-
-, and
-\fItest items\fR
-
-. A given run of opachassisadmin represents a single test suite. Within a test suite, multiple test cases occur; typically one test case per chassis being operated on. Some of the more complex operations may have multiple test items per test case. Each test item represents a major step in the overall test case.
+Results from opachassisadmin are grouped into test suites, test cases, and test items. A given run of opachassisadmin represents a single test suite. Within a test suite, multiple test cases occur; typically one test case per chassis being operated on. Some of the more complex operations may have multiple test items per test case. Each test item represents a major step in the overall test case.
 .PP
 Each opachassisadmin run appends to test.res and test.log, and creates temporary files in test\(ultmp$PID in the current directory. The test.res file provides an overall summary of operations performed and their results. The same information is also displayed while opachassisadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files that reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opachassisadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opachassisadmin.
 .PP

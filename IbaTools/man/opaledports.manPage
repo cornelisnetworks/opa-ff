@@ -1,0 +1,99 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaledports 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.SH NAME
+opaledports
+
+.NL
+
+.PP
+Toggles the beaconing LED state of HFIs, switches, and switch ports. opaledports is a useful aid for finding specific physical nodes in a crowded data center. It supports the CSV link format provided by opaextractsellinks.
+.SH Syntax 
+.NL
+opaledports [-h hfi] [-p port] [-C] [-s|-d] [on|off] #8217lt; portlist.csv
+.SH Options
+.NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+-h \fIhfi\fR 
+.NL
+HFI to send through/to. Default is first HFI.
+
+.TP 10
+-p \fIport\fR 
+.NL
+Port to send through/to. Default is first active port.
+
+.TP 10
+-C 
+.NL
+Clears beaconing LED on all ports.
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+If -C is entered, no other options are valid.
+
+.TP 10
+-s 
+.NL
+Affects source side (first node) of link only.
+
+.TP 10
+-d 
+.NL
+Affects destination side (second node) of link only.
+
+.TP 10
+on|off 
+.NL
+Action to perform. Options include:
+
+.RS
+.TP 10
+
+.sp
+on 
+Turns on beaconing LED.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+off 
+Turns off beaconing LED.
+
+.RE
+
+.TP 10
+portlist.csv 
+.NL
+File listing the links to process. The list is of the form:
+
+.IP
+NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID;PortNum;NodeType; NodeDesc;Dontcare 
+.SH Examples 
+.NL
+echo "0x001175010165ac1d;1;FI;phkpstl035 hfi1\(ul0"|opaledports on
+.br
+opaledports on #8217lt; portlist.csv
+.br
+opaextractsellinks -F led:on | opaledports off
+.br
+opaledports -C

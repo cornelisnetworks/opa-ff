@@ -153,17 +153,17 @@ First active port in system.
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR-p 0 
+-h \fIx\fR#8217#160;-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy \fR within system (no matter which ports are active).
+Port \fIy\fR#8217#160;within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR-p \fIy\fR 
+-h \fIx\fR#8217#160;-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR.
 
@@ -184,262 +184,98 @@ Port mask, in hexadecimal. Bits represent ports 63-0. For example: 0x2 for port 
 .TP 10
 -e \fImask\fR 
 .NL
-Counter/error select mask, in hexadecimal. Bit positions are in the following list. Default is all bits set (0xffffffe0).
+Counter/error select mask, in hexadecimal. The following lists "Mask - Bit - Location for Counters". Where applicable, location "for Error Info" is presented. The default is all bits set (0xffffffe0).
 
 .RS
-.TP 10
 
-.sp
-0x80000000
-For Counters: Xmit Data
+.IP \(bu
+0x80000000 - 31 - Transmit Data
+For Error Info: Receive Error Info
 
-.IP
-For Error Info: Rcv Error Info
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x40000000
-For Counters: Rcv Data
-
-.IP
+.IP \(bu
+0x40000000 - 30 - Receive Data
 For Error Info: Excessive Buffer Overrun
-.RE
 
-.RS
-.TP 10
+.IP \(bu
+0x20000000 - 29 - Transmit Packets
+For Error Info: Transmit Const Error Info
 
-.sp
-0x20000000
-For Counters: Xmit Pkts
+.IP \(bu
+0x10000000 - 28 - Receive Packets
+For Error Info: Receive Const Error Info
 
-.IP
-For Error Info: Xmit Const Error Info
-.RE
+.IP \(bu
+0x08000000 - 27 - Multicast Transmit Packets
+For Error Info: Receive Switch Relay Error Info
 
-.RS
-.TP 10
-
-.sp
-0x10000000
-For Counters: Rcv Pkts
-
-.IP
-For Error Info: Rcv Const Error Info
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x08000000
-For Counters: Multicast Xmit Pkts
-
-.IP
-For Error Info: Rcv Switch Relay Error Info
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x04000000
-For Counters: Multicast Rcv Pkts
-
-.IP
+.IP \(bu
+0x04000000 - 26 - Multicast Receive Packets
 For Error Info: Uncorrectable Error Info
-.RE
 
-.RS
-.TP 10
+.IP \(bu
+0x02000000 - 25 - Transmit Wait
+For Error Info: FM Configuration Error Info
 
-.sp
-0x02000000
-For Counters: Xmit Wait
+.IP \(bu
+0x01000000 - 24 - Congestion Discards
 
-.IP
-For Error Info: FM Config Error Info
-.RE
+.IP \(bu
+0x00800000 - 23 - Receive FECN
 
-.RS
-.TP 10
+.IP \(bu
+0x00400000 - 22 - Receive BECN
 
-.sp
-0x01000000
-For Counters: Congestion Discards
+.IP \(bu
+0x00200000 - 21 - Transmit Time Cong.
 
-.RE
+.IP \(bu
+0x00100000 - 20 - Transmit Time Wasted BW
 
-.RS
-.TP 10
+.IP \(bu
+0x00080000 - 19 - Transmit Time Wait Data
 
-.sp
-0x00800000
-For Counters: Rcv FECN
+.IP \(bu
+0x00040000 - 18 - Receive Bubble
 
-.RE
+.IP \(bu
+0x00020000 - 17 - Mark FECN
 
-.RS
-.TP 10
+.IP \(bu
+0x00010000 - 16 - Receive Constraint Errors
 
-.sp
-0x00400000
-For Counters: Rcv BECN
+.IP \(bu
+0x00008000 - 15 - Receive Switch Relay
 
-.RE
+.IP \(bu
+0x00004000 - 14 - Transmit Discards
 
-.RS
-.TP 10
+.IP \(bu
+0x00002000 - 13 - Transmit Constraint Errors
 
-.sp
-0x00200000
-For Counters: Xmit Time Cong.
+.IP \(bu
+0x00001000 - 12 - Receive Remote Physical Errors
 
-.RE
+.IP \(bu
+0x00000800 - 11 - Local Link Integrity
 
-.RS
-.TP 10
+.IP \(bu
+0x00000400 - 10 - Receive Errors
 
-.sp
-0x00100000
-For Counters: Xmit Time Wasted BW
+.IP \(bu
+0x00000200 - 9 - Exc. Buffer Overrun
 
-.RE
+.IP \(bu
+0x00000100 - 8 - FM Configuration Errors
 
-.RS
-.TP 10
+.IP \(bu
+0x00000080 - 7 - Link Error Recovery
 
-.sp
-0x00080000
-For Counters: Xmit Time Wait Data
+.IP \(bu
+0x00000040 - 6 - Link Error Downed
 
-.RE
+.IP \(bu
+0x00000020 - 5 - Uncorrectable Errors
 
-.RS
-.TP 10
-
-.sp
-0x00040000
-For Counters: Rcv Bubble
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00020000
-For Counters: Mark FECN
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00010000
-For Counters: Rcv Constraint Errors
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00008000
-For Counters: Rcv Switch Relay
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00004000
-For Counters: Xmit Discards
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00002000
-For Counters: Xmt Constraint Errors
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00001000
-For Counters: Rcv Rmt Phys. Errors
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00000800
-For Counters: Local Link Integrity
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00000400
-For Counters: Rcv Errors
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00000200
-For Counters: Exc. Buffer Overrun
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00000100
-For Counters: FM Config Errors
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00000080
-For Counters: Link Error Recovery
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00000040
-For Counters: Link Error Downed
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00000020
-For Counters: Uncorrectable Errors
 
 .RE
 
@@ -452,27 +288,37 @@ Virtual Lane Select Mask, in hexadecimal. Bits represent VL number 31-0. For exa
 .NL
 opapmaquery -o classportinfo
 .br
-# get PMA classportinfo
+
 .br
 opapmaquery -o getportstatus
 .br
 # get data and error counts, local port
 .br
+
+.br
 opapmaquery -o getdatacounters -n 0x2
 .br
 # get data counts, local port 1
+.br
+
 .br
 opapmaquery -o geterrorcounters -n 0x2
 .br
 # get error counts, local port 1
 .br
+
+.br
 opapmaquery -o clearportstatus -n 0x2
 .br
 # clear all counters local port 1
 .br
+
+.br
 opapmaquery -o geterrorinfo -n 0x2
 .br
 # get error info for local port 1
+.br
+
 .br
 opapmaquery -o clearerrorinfo -n 0x2
 .br
@@ -481,15 +327,19 @@ opapmaquery -o clearerrorinfo -n 0x2
 
 \fBAdditional Examples\fR
 
-.PP
-For device at LID 6, get data counters on ports 1-6, inclusive of VL 0 data:
 .br
 opapmaquery -o getdatacounters -l 6 -n 0x7e -w 0x1
-.PP
-For device at LID 6, on port 1, clear only error counters:
+.br
+# for device at LID 6, get data counters on ports 1-6, inclusive of VL 0 data
+.br
+
 .br
 opapmaquery -o clearportstatus -l 6 -n 0x2 -e 0x1ffff
-.PP
-For device at LID 6, on ports 1, clear uncorrectable error info:
+.br
+# for device at LID 6, on port 1, clear only error counters
+.br
+
 .br
 opapmaquery -o clearerrorinfo -l 6 -n 0x2 -e 0x04000000
+.br
+# for device at LID 6, on ports 1, clear uncorrectable error info

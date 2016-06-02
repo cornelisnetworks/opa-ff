@@ -707,9 +707,8 @@ void Usage(void)
 	fprintf(stderr, "    -l lid - destination lid, default is local port\n");
 	fprintf(stderr, "    -m dest_port - destination port, default is port with given lid\n");
 	fprintf(stderr, "                   useful to access switch ports\n");
-	fprintf(stderr, "    -h hfi - hfi, numbered 1..n, 0= -p port will be a\n");
-	fprintf(stderr, "             system wide port num (default is 0)\n");
-	fprintf(stderr, "    -p port - port, numbered 1..n (default is 1)\n");
+	fprintf(stderr, "    -h hfi - HFI to send through/to. Default is first HFI\n");
+	fprintf(stderr, "    -p port - Port to send through/to. Default is first port\n");
 	fprintf(stderr, "    -K mkey - SM management key to access remote ports\n");
 
 	if (cmd == portconfig)

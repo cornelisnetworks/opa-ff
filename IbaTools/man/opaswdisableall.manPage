@@ -12,13 +12,13 @@ opaswdisableall
 
 .NL
 
+.PP
+
+\fB(Linux)\fR
+Disables all unused switch ports.
 .SH Syntax
 .NL
 opaswdisableall [-t \fIportsfile\fR] [-p \fIports\fR] [-F \fIfocus\fR] [-K \fImkey\fR]
-.PP
-or
-.br
-opaswdisableall --help
 .SH Options
 .NL
 
@@ -89,7 +89,7 @@ SM management key to access remote ports.
 .NL
 opaswdisableall
 .br
-opaswdisableall -p \'1:1 2:1\'
+opaswdisableall -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .SH Environment Variables
 .NL
 

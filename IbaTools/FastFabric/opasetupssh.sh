@@ -31,8 +31,6 @@
 # [ICS VERSION STRING: unknown]
 # setup password-less ssh on a group of hosts
 
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -42,6 +40,8 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
 
 if [ x"$FF_IPOIB_SUFFIX" = xNONE ]
 then
@@ -561,13 +561,6 @@ process_chassis()
 			if [ $? -ne 0 ]
 			then
 				echo "Login to $tchassis failed for the $given_pwd password, skipping..."
-				continue
-			fi
-			# ensure that sshKey feature is supported in the chassis
-			$chassis_cmd $tchassis $user "sshKey show" 2>&1| grep -q 'FAILED'
-			if [ $? -eq 0 ]
-			then
-				echo "$tchassis does not have password-less ssh support, skipping..."
 				continue
 			fi
 			rm -f $tempfile $tempfile.2 2>/dev/null

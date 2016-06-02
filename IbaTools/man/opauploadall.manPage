@@ -18,14 +18,13 @@ opauploadall
 Copies one or more files from a group of hosts to this system. Since the file name is the same on each host, a separate directory on this system is created for each host and the file is copied to it. This is a convenient way to upload log files or configuration files for review. This tool can also be used in conjunction with opadownloadall to upload a host specific configuration file, edit it for each host, and download the new version to all the hosts.
 .PP
 
+.B NOTE:
+To copy files from this host to hosts in the cluster, use opascpall or opadownloadall. user@ style syntax cannot be used when specifying filenames.
+
 
 .SH Syntax 
 .NL
-opauploadall [-rp] [-f \fIhostfile\fR] [-d \fIupload\(uldir\fR] [-h \'\fIhosts\fR\'] [-u \fIuser\fR] \fIsource\(ulfile\fR... \fIdest\(ulfile\fR
-.PP
-or
-.br
-opauploadall --help
+opauploadall [-rp] [-f \fIhostfile\fR] [-d \fIupload\(uldir\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR] \fIsource\(ulfile\fR... \fIdest\(ulfile\fR
 .SH Options 
 .NL
 
@@ -69,7 +68,7 @@ Name of the file or directory on this system to copy to. It is relative to  \fIu
 .NL
 # upload two files from 2 hosts
 .br
-opauploadall -h \'arwen elrond\' capture.tgz /etc/init.d/ipoib.cfg.
+opauploadall -h \[aq]arwen elrond\[aq] capture.tgz /etc/init.d/ipoib.cfg.
 .br
 # upload two files from all hosts
 .br

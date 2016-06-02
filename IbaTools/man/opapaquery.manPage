@@ -22,7 +22,7 @@ for a description of the operation and client services of the PM/PA.
 .PP
 By default, opapaquery queries the most recent data. However, if an image number ( \fIimgNum\fR) and/or image offset ( \fIimgOff\fR) is provided, the query returns previous sweep data. Queries that access previous sweep data return with the absolute image number representing that data, and therefore have an image offset of zero.
 .PP
-opapaquery \'s operation is dependent on an Intel(R) Omni-Path Fabric Suite Fabric Manager version 6.0 or greater running as master SM/PM in the fabric.
+opapaquery #8217#8217;s operation is dependent on an Intel(R) Omni-Path Fabric Suite Fabric Manager version 6.0 or greater running as master SM/PM in the fabric.
 .PP
 By default, opapaquery uses the first active port on the local system. However, if the Fabric Management Node is connected to more than one fabric (for example, a subnet), the HFI and port may be specified to select the fabric whose PA is to be queried.
 .SH Syntax 
@@ -35,9 +35,6 @@ opapaquery [-v] [-h \fIhfi\fR] [-p \fIport\fR] -o \fItype\fR[-g \fIgroupName\fR]
 .br
 [-V vfName]
 .SH Options 
-.NL
-
-.SH Options
 .NL
 
 .TP 10
@@ -90,104 +87,144 @@ Delta flag for portCounters query - 0 or 1.
 .IP
 Select bits for clrPortCounters. 0 is least significant (rightmost).
 .IP
-clrPortCounters bit descriptions:
+clrPortCounters bit descriptions listed in the order "mask - bit - location":
 .RS
 
 .IP \(bu
-31 - XmitData
+0x80000000 - 31 - Transmit Data
+
 .IP \(bu
-30 - RcvData
+0x40000000 - 30 - Receive Data
+
 .IP \(bu
-29 - XmitPkts
+0x20000000 - 29 - Transmit Packets
+
 .IP \(bu
-28 - RcvPkts
+0x10000000 - 28 - Receive Packets
+
 .IP \(bu
-27 - MulticastXmitPkts
+0x08000000 - 27 - Multicast Transmit Packets
+
 .IP \(bu
-26 - MulticastRcvPkts
+0x04000000 - 26 - Multicast Receive Packets
+
 .IP \(bu
-25 - XmitWait
+0x02000000 - 25 - Transmit Wait
+
 .IP \(bu
-24 - CongDiscards
+0x01000000 - 24 - Congestion Discards
+
 .IP \(bu
-23 - RcvFECN
+0x00800000 - 23 - Receive FECN
+
 .IP \(bu
-22 - RcvBECN
+0x00400000 - 22 - Receive BECN
+
 .IP \(bu
-21 - XmitTimeCong
+0x00200000 - 21 - Transmit Time Cong.
+
 .IP \(bu
-20 - XmitWastedBW
+0x00100000 - 20 - Transmit Time Wasted BW
+
 .IP \(bu
-19 - XmitWaitData
+0x00080000 - 19 - Transmit Time Wait Data
+
 .IP \(bu
-18 - RcvBubble
+0x00040000 - 18 - Receive Bubble
+
 .IP \(bu
-17 - MarkFECN
+0x00020000 - 17 - Mark FECN
+
 .IP \(bu
-16 - RcvConstraintErrors
+0x00010000 - 16 - Receive Constraint Errors
+
 .IP \(bu
-15 - RcvSwitchRelayErrors
+0x00008000 - 15 - Receive Switch Relay
+
 .IP \(bu
-14 - XmitDiscards
+0x00004000 - 14 - Transmit Discards
+
 .IP \(bu
-13 - XmitConstraintErrors
+0x00002000 - 13 - Transmit Constraint Errors
+
 .IP \(bu
-12 - RcvRemotePhysicalErrors
+0x00001000 - 12 - Receive Remote Physical Errors
+
 .IP \(bu
-11 - LocalLinkIntegrityErrors
+0x00000800 - 11 - Local Link Integrity
+
 .IP \(bu
-10 - RcvErrors
+0x00000400 - 10 - Receive Errors
+
 .IP \(bu
-09 - ExcessiveBufferOverruns
+0x00000200 - 9 - Exc. Buffer Overrun
+
 .IP \(bu
-08 - FMConfigErrors
+0x00000100 - 8 - FM Configuration Errors
+
 .IP \(bu
-07 - LinkErrorRecovery
+0x00000080 - 7 - Link Error Recovery
+
 .IP \(bu
-06 - LinkDowned
+0x00000040 - 6 - Link Error Downed
+
 .IP \(bu
-05 - UncorrectableErrors
-.IP \(bu
-4-0 - reserved
+0x00000020 - 5 - Uncorrectable Errors
+
 
 .RE
 
 .IP
 Select bits for clrVfPortCounters. 0 is least significant (rightmost).
 .IP
-clrVfPortCounters bit descriptions:
+clrVfPortCounters bit descriptions listed in the order "mask - bit - location":
 .RS
 
 .IP \(bu
-31 - VLXmitData
+0x80000000 - 31 - VLXmitData
+
 .IP \(bu
-30 - VLRcvData
+0x40000000 - 30 - VLRcvData
+
 .IP \(bu
-29 - VLXmitPkts
+0x20000000 - 29 - VLXmitPkts
+
 .IP \(bu
-28 - VLRcvPkts
+0x10000000 - 28 - VLRcvPkts
+
 .IP \(bu
-27 - VLXmitDiscards
+0x08000000 - 27 - VLXmitDiscards
+
 .IP \(bu
-26 - VLCongDiscards
+0x04000000 - 26 - VLCongDiscards
+
 .IP \(bu
-25 - VLXmitWait
+0x02000000 - 25 - VLXmitWait
+
 .IP \(bu
-24 - VLRcvFECN
+0x01000000 - 24 - VLRcvFECN
+
 .IP \(bu
-23 - VLRcvBECN
+0x00800000 - 23 - VLRcvBECN
+
 .IP \(bu
-22 - VLXmitTimeCong
+0x00400000 - 22 - VLXmitTimeCong
+
 .IP \(bu
-21 - VLXmitWastedBW
+0x00200000 - 21 - VLXmitWastedBW
+
 .IP \(bu
-20 - VLXmitWaitData
+0x00100000 - 20 - VLXmitWaitData
+
 .IP \(bu
-19 - VLRcvBubble
+0x00080000 - 19 - VLRcvBubble
+
 .IP \(bu
-18 - VLMarkFECN
+0x00040000 - 18 - VLMarkFECN
+
 .IP \(bu
-17-0 - reserved
+Bits 17-0 reserved
+
 
 .RE
 
@@ -202,7 +239,7 @@ Focus select value for getting  \fIfocus\fR ports.
 .TP 10
 
 .sp
-0x00020001 
+utilhigh 
 Sorted by utilization - highest first.
 
 .RE
@@ -211,7 +248,7 @@ Sorted by utilization - highest first.
 .TP 10
 
 .sp
-0x00020081 
+pktrate 
 Sorted by packet rate - highest first.
 
 .RE
@@ -220,7 +257,7 @@ Sorted by packet rate - highest first.
 .TP 10
 
 .sp
-0x00020101 
+utillow 
 Sorted by utilization - lowest first.
 
 .RE
@@ -229,7 +266,7 @@ Sorted by utilization - lowest first.
 .TP 10
 
 .sp
-0x00030001 
+integrity 
 Sorted by integrity errors - highest first.
 
 .RE
@@ -238,16 +275,7 @@ Sorted by integrity errors - highest first.
 .TP 10
 
 .sp
-0x00030002 
-Sorted by SMA congestion errors - highest first.
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00030003 
+congestion 
 Sorted by congestion errors - highest first.
 
 .RE
@@ -256,7 +284,24 @@ Sorted by congestion errors - highest first.
 .TP 10
 
 .sp
-0x00030004 
+smacongestion 
+Sorted by SMA congestion errors - highest first.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+bubbles 
+Sorted by bubble errors - highest first.
+.RE
+
+.RS
+.TP 10
+
+.sp
+security 
 Sorted by security errors - highest first.
 
 .RE
@@ -265,17 +310,8 @@ Sorted by security errors - highest first.
 .TP 10
 
 .sp
-0x00030005 
+routing 
 Sorted by routing errors - highest first.
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-0x00030006 
-Sorted by adaptive routing - highest first.
 
 .RE
 
@@ -334,17 +370,17 @@ First active port in system.
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR-p 0 
+-h \fIx\fR#8217#160;-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy \fR within system (no matter which ports are active).
+Port \fIy\fR#8217#160;within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR-p \fIy\fR 
+-h \fIx\fR#8217#160;-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR.
 
@@ -379,7 +415,7 @@ Port counters of fabric port. Requires -l \fIlid\fR and -P \fIport\fR options, -
 .TP 10
 clrPortCounters 
 .NL
-Clears port counters of fabric port. Requires -l \fIlid\fR and -P \fIport\fR, and -s \fIselect\fR options.
+Clears port counters of fabric port. Requires -l \fIlid\fR and -P#8217#160; \fIport\fR, and -s \fIselect\fR options.
 
 .TP 10
 clrAllPortCounters 
@@ -409,17 +445,17 @@ Renews lease for freeze frame for image ID. Requires -n \fIimgNum\fR.
 .TP 10
 moveFreeze 
 .NL
-Moves freeze frame from image ID to new image ID. Requires -n \fIimgNum\fR and -m \fImoveImgNum\fR.
+Moves freeze frame from image ID to new image ID. Requires -n#8217#160; \fIimgNum\fR and -m \fImoveImgNum\fR.
 
 .TP 10
 focusPorts 
 .NL
-Gets sorted list of ports using utilization or error values (from group buckets).
+Gets sorted list of ports using utilization or error values (from group buckets). Requires -g \fIgroupname\fR, -f \fIfocus\fR, -S \fIstart\fR, -r \fIrange\fR.
 
 .TP 10
 imageInfo 
 .NL
-Gets configuration of a PA image (timestamps, etc.). Requires -n \fIimgNum\fR.
+Gets configuration of a PA image (timestamps, etc.). Requires -n#8217#160; \fIimgNum\fR.
 
 .TP 10
 vfList 
@@ -444,7 +480,7 @@ Port counters of fabric port. Requires -V \fIvfName\fR, -l \fIlid\fR and -P \fIp
 .TP 10
 vfFocusPorts 
 .NL
-Gets sorted list of virtual fabric ports using utilization or error values (from VF buckets). Requires -V \fIvfname\fR.
+Gets sorted list of virtual fabric ports using utilization or error values (from VF buckets). Requires -V \fIvfname\fR, -f \fIfocus\fR, -S \fIstart\fR, -r \fIrange\fR.
 
 .TP 10
 clrVfPortCounters 
@@ -467,11 +503,11 @@ opapaquery -o portCounters -l 1 -P 1 -d 1 -n 0x20000000d02 -O 1
 .br
 opapaquery -o clrPortCounters -l 1 -P 1 -s 0xC0000000
 .br
-   #clears XmitData & RcvData
+#8217#160;  #clears XmitData & RcvData
 .br
 opapaquery -o clrAllPortCounters -s 0xC0000000
 .br
-   #clears XmitData & RcvData on all ports
+#8217#160;  #clears XmitData & RcvData on all ports
 .br
 opapaquery -o PMConfig
 .br
@@ -497,6 +533,6 @@ opapaquery -o vfPortCounters -l 1 -P 1 -d 1 -V Default
 .br
 opapaquery -o clrVfPortCounters -l 1 -P 1 -s 0xC0000000
 .br
-   #clears VLXmitData & VLRcvData
+#8217#160;  #clears VLXmitData & VLRcvData
 .br
 opapaquery -o vfFocusPorts -V Default -f 0x00030001 -S 0 -r 20

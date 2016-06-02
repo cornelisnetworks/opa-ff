@@ -17,7 +17,11 @@ Generates sample topology verification XML. Provides an example of using opaxmlg
 .PP
 Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
 .PP
-LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:opaxmlgenerate -X /opt/opa/samples/opatopology\(ul1.txt -d \; -h Link -g Rate -g
+LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the #8217lt;Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:
+.PP
+
+.br
+opaxmlgenerate -X /opt/opa/samples/opatopology\(ul1.txt -d \; -h Link -g Rate -g
 .br
 Rate\(ulInt -g MTU -g LinkDetails -h Cable -g CableLength -g CableLabel -g
 .br
@@ -32,6 +36,9 @@ NodeDesc -g PortGUID -g NodeType -g NodeType\(ulInt -g PortDetails -e Port -e Li
 opaxmlgenerate -X /opt/opa/samples/opatopology\(ul2.txt -d \; -h Node -g NodeGUID -g
 .br
 NodeDesc -g NodeDetails -g HostName -g NodeType -g NodeType\(ulInt -g NumPorts -e Node
+
+.br
+
 .NL
 
 .SH opatopology\(ullinks.txt
@@ -53,187 +60,214 @@ The following example exceeds the available width of the page. For readability, 
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.0x0002c9020020e004;bender HFI-1;More details about node
+This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.
+.PP
+
+.br
+0x0002c9020020e004;bender HFI-1;More details about node
 .br
 0x0002c9020025a678;mindy2 HFI-1;Node details
+
+.br
+
 .NL
 
 .SH opatopology\(ulSWs.txt
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.0x0011750007000df6;Switch 1234 Leaf 4; 0x0011750007000e6d;Switch 2345 Leaf 5;
+This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.
+.PP
+
+.br
+0x0011750007000df6;Switch 1234 Leaf 4; 0x0011750007000e6d;Switch 2345 Leaf 5;
+
+.br
+
 .NL
 
 .SH opatopology\(ulSMs.txt
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only one node.0x0002c9020025a678;1;mindy2 HFI-1;0x0011750007000e6d;FI;details about SM
+This file can be found in /opt/opa/samples/ . For brevity, this sample shows only one node.
+.PP
+
+.br
+0x0002c9020025a678;1;mindy2 HFI-1;0x0011750007000e6d;FI;details about SM
+
+.br
+
 .SH Example 
 .NL
 
 .PP
-When run against the supplied topology input files, opagentopology produces:<?xml version="1.0" encoding="utf-8" ?>
+When run against the supplied topology input files, opagentopology produces:
+.PP
+
 .br
-<Topology>
+#8217lt;?xml version="1.0" encoding="utf-8" ?>
 .br
-<LinkSummary>
+#8217lt;Topology>
 .br
-<Link>
+#8217lt;LinkSummary>
 .br
-<Rate>25g</Rate>
+#8217lt;Link>
 .br
-<MTU>2048</MTU>
+#8217lt;Rate>25g</Rate>
 .br
-<Internal>0</Internal>
+#8217lt;MTU>2048</MTU>
 .br
-<LinkDetails>IO Server Link</LinkDetails>
+#8217lt;Internal>0</Internal>
 .br
-<Cable>
+#8217lt;LinkDetails>IO Server Link</LinkDetails>
 .br
-<CableLength>11m</CableLength>
+#8217lt;Cable>
 .br
-<CableLabel>S4567</CableLabel>
+#8217lt;CableLength>11m</CableLength>
 .br
-<CableDetails>cable model 456</CableDetails>
+#8217lt;CableLabel>S4567</CableLabel>
 .br
-</Cable>
+#8217lt;CableDetails>cable model 456</CableDetails>
 .br
-<Port>
+#8217lt;/Cable>
 .br
-<NodeGUID>0x0002c9020020e004</NodeGUID>
+#8217lt;Port>
 .br
-<PortNum>1</PortNum>
+#8217lt;NodeGUID>0x0002c9020020e004</NodeGUID>
 .br
-<NodeDesc>bender HFI-1</NodeDesc>
+#8217lt;PortNum>1</PortNum>
 .br
-<PortGUID>0x0002c9020020e004</PortGUID>
+#8217lt;NodeDesc>bender HFI-1</NodeDesc>
 .br
-<NodeType>FI</NodeType>
+#8217lt;PortGUID>0x0002c9020020e004</PortGUID>
 .br
-<PortDetails>Some info about port</PortDetails>
+#8217lt;NodeType>FI</NodeType>
 .br
-</Port>
+#8217lt;PortDetails>Some info about port</PortDetails>
 .br
-<Port>
+#8217lt;/Port>
 .br
-<NodeGUID>0x0011750007000df6</NodeGUID>
+#8217lt;Port>
 .br
-<PortNum>7</PortNum>
+#8217lt;NodeGUID>0x0011750007000df6</NodeGUID>
 .br
-<NodeDesc>Switch 1234 Leaf 4</NodeDesc>
+#8217lt;PortNum>7</PortNum>
 .br
-<NodeType>SW</NodeType>
+#8217lt;NodeDesc>Switch 1234 Leaf 4</NodeDesc>
 .br
-</Port>
+#8217lt;NodeType>SW</NodeType>
 .br
-</Link>
+#8217lt;/Port>
 .br
-<Link>
+#8217lt;/Link>
 .br
-<Rate>25g</Rate>
+#8217lt;Link>
 .br
-<Internal>0</Internal>
+#8217lt;Rate>25g</Rate>
 .br
-<Cable>
+#8217lt;Internal>0</Internal>
 .br
-</Cable>
+#8217lt;Cable>
 .br
-<Port>
+#8217lt;/Cable>
 .br
-<NodeGUID>0x0002c9020025a678</NodeGUID>
+#8217lt;Port>
 .br
-<PortNum>1</PortNum>
+#8217lt;NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
-<NodeDesc>mindy2 HFI-1</NodeDesc>
+#8217lt;PortNum>1</PortNum>
 .br
-<NodeType>FI</NodeType>
+#8217lt;NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
-</Port>
+#8217lt;NodeType>FI</NodeType>
 .br
-<Port>
+#8217lt;/Port>
 .br
-<NodeGUID>0x0011750007000e6d</NodeGUID>
+#8217lt;Port>
 .br
-<PortNum>4</PortNum>
+#8217lt;NodeGUID>0x0011750007000e6d</NodeGUID>
 .br
-<NodeDesc>Switch 2345 Leaf 5</NodeDesc>
+#8217lt;PortNum>4</PortNum>
 .br
-<NodeType>SW</NodeType>
+#8217lt;NodeDesc>Switch 2345 Leaf 5</NodeDesc>
 .br
-</Port>
+#8217lt;NodeType>SW</NodeType>
 .br
-</Link>
+#8217lt;/Port>
 .br
-</LinkSummary>
+#8217lt;/Link>
 .br
-<Nodes>
+#8217lt;/LinkSummary>
 .br
-<FIs>
+#8217lt;Nodes>
 .br
-<Node>
+#8217lt;FIs>
 .br
-<NodeGUID>0x0002c9020020e004</NodeGUID>
+#8217lt;Node>
 .br
-<NodeDesc>bender HFI-1</NodeDesc>
+#8217lt;NodeGUID>0x0002c9020020e004</NodeGUID>
 .br
-<NodeDetails>More details about node</NodeDetails>
+#8217lt;NodeDesc>bender HFI-1</NodeDesc>
 .br
-</Node>
+#8217lt;NodeDetails>More details about node</NodeDetails>
 .br
-<Node>
+#8217lt;/Node>
 .br
-<NodeGUID>0x0002c9020025a678</NodeGUID>
+#8217lt;Node>
 .br
-<NodeDesc>mindy2 HFI-1</NodeDesc>
+#8217lt;NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
-<NodeDetails>Node details</NodeDetails>
+#8217lt;NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
-</Node>
+#8217lt;NodeDetails>Node details</NodeDetails>
 .br
-</FIs>
+#8217lt;/Node>
 .br
-<Switches>
+#8217lt;/FIs>
 .br
-<Node>
+#8217lt;Switches>
 .br
-<NodeGUID>0x0011750007000df6</NodeGUID>
+#8217lt;Node>
 .br
-<NodeDesc>Switch 1234 Leaf 4</NodeDesc>
+#8217lt;NodeGUID>0x0011750007000df6</NodeGUID>
 .br
-</Node>
+#8217lt;NodeDesc>Switch 1234 Leaf 4</NodeDesc>
 .br
-<Node>
+#8217lt;/Node>
 .br
-<NodeGUID>0x0011750007000e6d</NodeGUID>
+#8217lt;Node>
 .br
-<NodeDesc>Switch 2345 Leaf 5</NodeDesc>
+#8217lt;NodeGUID>0x0011750007000e6d</NodeGUID>
 .br
-</Node>
+#8217lt;NodeDesc>Switch 2345 Leaf 5</NodeDesc>
 .br
-</Switches>
+#8217lt;/Node>
 .br
-<SMs>
+#8217lt;/Switches>
 .br
-<SM>
+#8217lt;SMs>
 .br
-<NodeGUID>0x0002c9020025a678</NodeGUID>
+#8217lt;SM>
 .br
-<PortNum>1</PortNum>
+#8217lt;NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
-<NodeDesc>mindy2 HFI-1</NodeDesc>
+#8217lt;PortNum>1</PortNum>
 .br
-<PortGUID>0x0011750007000e6d</PortGUID>
+#8217lt;NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
-<NodeType>FI</NodeType>
+#8217lt;PortGUID>0x0011750007000e6d</PortGUID>
 .br
-<SMDetails>details about SM</SMDetails>
+#8217lt;NodeType>FI</NodeType>
 .br
-</SM>
+#8217lt;SMDetails>details about SM</SMDetails>
 .br
-</SMs>
+#8217lt;/SM>
 .br
-</Nodes>
+#8217lt;/SMs>
 .br
-</Topology>
+#8217lt;/Nodes>
+.br
+#8217lt;/Topology>
+
+.br

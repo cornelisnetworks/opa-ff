@@ -33,8 +33,6 @@
 # or re-enable all presently unused (or disabled) switch ports
 # it uses opareport to gather the information from the SM
 
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -48,15 +46,21 @@ then
 	. /opt/opa/tools/ff_funcs
 fi
 
+trap "exit 1" SIGHUP SIGTERM SIGINT
+
 tool="/usr/sbin/opaportconfig"
 cmd=`basename $0`
 if [ "$cmd" == "opaswdisableall" ]
 then
   subcmd="disable"
+  capsubcmd="Disable"
+  extra=""
   operation="Disabling"
 elif [ "$cmd" == "opaswenableall" ]
 then
   subcmd="enable"
+  capsubcmd="Re-enable"
+  extra=" (or disabled)"
   operation="Enabling"
   cmd="opaswenableall"
 else
@@ -69,6 +73,7 @@ Usage_full()
 	echo "Usage: $cmd [-t portsfile] [-p ports] [-F focus] [-K mkey]" >&2
 	echo "              or" >&2
 	echo "       $cmd --help" >&2
+	echo "$capsubcmd all unused$extra switch ports" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -t portsfile - file with list of local HFI ports used to access" >&2
 	echo "                  fabric(s) for operation, default is $CONFIG_DIR/opa/ports" >&2
@@ -97,6 +102,7 @@ Usage()
 	echo "Usage: $cmd" >&2
 	echo "              or" >&2
 	echo "       $cmd --help" >&2
+	echo "$capsubcmd all unused$extra switch ports" >&2
 	echo "   --help - produce full help text" >&2
 	echo "for example:" >&2
 	echo "   $cmd" >&2
@@ -161,7 +167,7 @@ change_swports()
        /usr/sbin/opaxmlextract -d \; -e Switches.OtherPort.NodeGUID -e Switches.OtherPort.PortNum -e Switches.OtherPort.NodeDesc | \
        tail -n +2 | while read guid port nodedesc
   do
-    lid=`/usr/sbin/opasaquery -o lid -n $guid 2>/dev/null`
+    lid=`eval /usr/sbin/opasaquery $port_opts -o lid -n $guid 2>/dev/null`
     # silently skip node guids we can't find in SA anymore, may be tranisient
 	if [ "$?" -eq 0 -a "$lid" != "No Records Returned" ]
     then

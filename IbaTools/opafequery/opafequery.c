@@ -315,33 +315,46 @@ void Usage(void)
 	fprintf(stderr, "                                query\n");
 	fprintf(stderr, "    -e/--select               - 32-bit select flag for clearing port counters\n");
 	fprintf(stderr, "                                select bits (0 is least signficant (rightmost))\n");
-	fprintf(stderr, "       0 - XmitData               14 - MarkFECN\n");
-	fprintf(stderr, "       1 - RcvData                15 - RcvConstraintErrors\n");
-	fprintf(stderr, "       2 - XmitPkts               16 - RcvSwitchRelayErrors\n");
-	fprintf(stderr, "       3 - RcvPkts                17 - XmitDiscards\n");
-	fprintf(stderr, "       4 - MulticastXmitPkts      18 - XmitConstraintErrors\n");
-	fprintf(stderr, "       5 - MulticastRcvPkts       19 - RcvRemotePhysicalErrors\n");
-	fprintf(stderr, "       6 - XmitWait               20 - LocalLinkIntegrityErrors\n");
-	fprintf(stderr, "       7 - CongDiscards           21 - RcvErrors\n");
-	fprintf(stderr, "       8 - RcvFECN                22 - ExcessiveBufferOverruns\n");
-	fprintf(stderr, "       9 - RcvBECN                23 - FMConfigErrors\n");
-	fprintf(stderr, "      10 - XmitTimeCong           24 - LinkErrorRecovery\n");
-	fprintf(stderr, "      11 - XmitWastedBW           25 - LinkDowned\n");
-	fprintf(stderr, "      12 - XmitWaitData           26 - UncorrectableErrors\n");
-	fprintf(stderr, "      13 - RcvBubble\n");
+	fprintf(stderr, "           mask        bit location \n");
+	fprintf(stderr, "           0x80000000  31     Xmit Data\n");
+	fprintf(stderr, "           0x40000000  30     Rcv Data\n");
+	fprintf(stderr, "           0x20000000  29     Xmit Pkts\n");
+	fprintf(stderr, "           0x10000000  28     Rcv Pkts\n");
+	fprintf(stderr, "           0x08000000  27     Multicast Xmit Pkts\n");
+	fprintf(stderr, "           0x04000000  26     Multicast Rcv Pkts\n");
+	fprintf(stderr, "           0x02000000  25     Xmit Wait\n");
+	fprintf(stderr, "           0x01000000  24     Congestion Discards\n");
+	fprintf(stderr, "           0x00800000  23     Rcv FECN\n");
+	fprintf(stderr, "           0x00400000  22     Rcv BECN\n");
+	fprintf(stderr, "           0x00200000  21     Xmit Time Cong.\n");
+	fprintf(stderr, "           0x00100000  20     Xmit Time Wasted BW\n");
+	fprintf(stderr, "           0x00080000  19     Xmit Time Wait Data\n");
+	fprintf(stderr, "           0x00040000  18     Rcv Bubble\n");
+	fprintf(stderr, "           0x00020000  17     Mark FECN\n");
+	fprintf(stderr, "           0x00010000  16     Rcv Constraint Errors\n");
+	fprintf(stderr, "           0x00008000  15     Rcv Switch Relay\n");
+	fprintf(stderr, "           0x00004000  14     Xmit Discards\n");
+	fprintf(stderr, "           0x00002000  13     Xmit Constraint Errors\n");
+	fprintf(stderr, "           0x00001000  12     Rcv Rmt Phys. Errors\n");
+	fprintf(stderr, "           0x00000800  11     Local Link Integrity\n");
+	fprintf(stderr, "           0x00000400  10     Rcv Errors\n");
+	fprintf(stderr, "           0x00000200   9     Exc. Buffer Overrun\n");
+	fprintf(stderr, "           0x00000100   8     FM Config Errors\n");
+	fprintf(stderr, "           0x00000080   7     Link Error Recovery\n");
+	fprintf(stderr, "           0x00000040   6     Link Error Downed\n");
+	fprintf(stderr, "           0x00000020   5     Uncorrectable Errors\n");
+	fprintf(stderr, " \n");
 	fprintf(stderr, "    -c/--focus                - focus select value for getting focus ports\n");
-	fprintf(stderr, "                                focus select values:\n");
-	fprintf(stderr, "         0x00020001 - sorted by utilization - highest first\n");                  // STL_PA_SELECT_UTIL_HIGH         0x00020001
-//	fprintf(stderr, "         0x00020081 - sorted by mulicast pkt rate - highest first\n");            // STL_PA_SELECT_UTIL_MC_HIGH      0x00020081
-	fprintf(stderr, "         0x00020082 - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_UTIL_PKTS_HIGH    0x00020082
-	fprintf(stderr, "         0x00020101 - sorted by utilization - lowest first\n");                   // STL_PA_SELECT_UTIL_LOW          0x00020101
-//	fprintf(stderr, "         0x00020102 - sorted by mulicast pkt rate - lowest first\n");             // STL_PA_SELECT_UTIL_MC_LOW       0x00020102
-	fprintf(stderr, "         0x00030001 - sorted by integrity errors - highest first\n");             // STL_PA_SELECT_ERR_INTEG         0x00030001
-	fprintf(stderr, "         0x00030002 - sorted by congestion errors - highest first\n");            // STL_PA_SELECT_ERR_CONG          0x00030002
-	fprintf(stderr, "         0x00030003 - sorted by sma congestion errors - highest first\n");        // STL_PA_SELECT_ERR_SMA_CONG      0x00030003
-	fprintf(stderr, "         0x00030004 - sorted by bubble errors - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
-	fprintf(stderr, "         0x00030005 - sorted by security errors - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
-	fprintf(stderr, "         0x00030006 - sorted by routing errors - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
+    fprintf(stderr, "           focus select values:\n"); 
+	fprintf(stderr, "           utilhigh           - sorted by utilization - highest first\n");                  // STL_PA_SELECT_UTIL_HIGH         0x00020001
+	fprintf(stderr, "           pktrate            - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_UTIL_PKTS_HIGH    0x00020082
+	fprintf(stderr, "           utillow            - sorted by utilization - lowest first\n");                   // STL_PA_SELECT_UTIL_LOW          0x00020101
+	fprintf(stderr, "           integrity          - sorted by integrity errors - highest first\n");             // STL_PA_SELECT_ERR_INTEG         0x00030001
+	fprintf(stderr, "           congestion         - sorted by congestion errors - highest first\n");            // STL_PA_SELECT_ERR_CONG          0x00030002
+	fprintf(stderr, "           smacongestion      - sorted by sma congestion errors - highest first\n");        // STL_PA_SELECT_ERR_SMA_CONG      0x00030003
+	fprintf(stderr, "           bubbles            - sorted by bubble errors - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
+	fprintf(stderr, "           security           - sorted by security errors - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
+	fprintf(stderr, "           routing            - sorted by routing errors - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
 	fprintf(stderr, "    -w/--start                - start of window for focus ports - should always\n");
 	fprintf(stderr, "                                be 0 for now\n");
 	fprintf(stderr, "    -r/--range                - size of window for focus ports list\n");
@@ -438,6 +451,41 @@ void Usage(void)
 	fprintf(stderr, "                                options\n");
 
 	exit(2);
+}
+
+typedef struct OutputFocusMap {
+	char *string;
+	int32 focus;
+	} OutputFocusMap_t;
+
+OutputFocusMap_t OutputFocusTable[]= {
+	{"utilhigh",        STL_PA_SELECT_UTIL_HIGH },        // 0x00020001
+	{"pktrate",         STL_PA_SELECT_UTIL_PKTS_HIGH },   // 0x00020082
+	{"utillow",         STL_PA_SELECT_UTIL_LOW },         // 0x00020101
+	{"integrity",       STL_PA_SELECT_ERR_INTEG },        // 0x00030001
+	{"congestion",      STL_PA_SELECT_ERR_CONG },         // 0x00030002
+	{"smacongestion",   STL_PA_SELECT_ERR_SMA_CONG },     // 0x00030003
+	{"bubbles",         STL_PA_SELECT_ERR_BUBBLE },       // 0x00030004
+	{"security",        STL_PA_SELECT_ERR_SEC },          // 0x00030005
+	{"routing",         STL_PA_SELECT_ERR_ROUT },         // 0x00030006
+	{ NULL, 0},
+};
+
+
+FSTATUS StringToFocus (int32 *value, const char* str)
+{
+	int i;
+
+	i=0;
+	while (OutputFocusTable[i].string!=NULL) {
+		if (0 == strcmp(str,OutputFocusTable[i].string) ){
+			*value = OutputFocusTable[i].focus;
+			return FSUCCESS;
+		}
+		else i++;
+	}
+
+	return FERROR;
 }
 
 /**
@@ -1039,7 +1087,7 @@ int main (int argc, char *argv[])
 
 
     /* Process command line arguments */
-	while (-1 != (c = getopt_long(argc, argv, "va:h:o:l:Ik:i:S:L:t:s:n:p:u:m:d:P:G:a:A:g:N:f:Ue:c:w:r:b:O:F:M:x:V:T:E", options, &index))) {
+	while (-1 != (c = getopt_long(argc, argv, "va:h:o:l:Ik:i:S:L:t:s:n:p:u:m:d:P:G:B:A:g:N:f:Ue:c:w:r:b:O:F:M:x:V:T:E", options, &index))) {
         switch (c) {
 		/* (General) Verbose flag */
         case '$':
@@ -1396,7 +1444,7 @@ int main (int argc, char *argv[])
 
 		/* (PA) Focus */
         case 'c':
-            if (FSUCCESS != StringToInt32(&g_focus, optarg, NULL, 0, TRUE)) {
+            if (FSUCCESS !=  StringToFocus (&g_focus, optarg)) {
                 fprintf(stderr, "%s: Invalid Focus Number: %s\n", APP_NAME, optarg);
                 Usage();
             }
@@ -1440,7 +1488,7 @@ int main (int argc, char *argv[])
 		/* (General) Help & Usage */
         case '?':
             Usage();
-
+            break;
         default:
             fprintf(stderr, "%s: Invalid Option %c\n", APP_NAME, c);
             Usage();

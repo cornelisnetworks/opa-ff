@@ -13,7 +13,7 @@ opaextracterror
 .NL
 
 .PP
-Produces a CSV file listing all or some of the errors in the current fabric. opaextracterror.sh is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
+Produces a CSV file listing all or some of the errors in the current fabric. opaextracterror is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
 .SH Syntax 
 .NL
 opaextracterror [--help] [opareport \fIoptions\fR]
@@ -28,28 +28,30 @@ Produces full help text.
 .TP 10
 opareport \fIoptions\fR 
 .NL
-Options are passed to opareport.
+Options are passed to opareport. See
+\fIopareport\fR
+for the full set of options.
 
 .SH Examples 
 .NL
 # List all the link errors in the fabric:
 .br
-opaextracterror.sh
+opaextracterror
 .br
 
 .br
 # List all the link errors related to a switch named "OmniPth00117501ffffffff":
 .br
-opaextracterror.sh -F "node:OmniPth00117501ffffffff"
+opaextracterror -F "node:OmniPth00117501ffffffff"
 .br
 
 .br
 # List all the link errors for end-nodes:
 .br
-opaextracterror.sh -F "nodetype:FI"
+opaextracterror -F "nodetype:FI"
 .br
 
 .br
-# List all the link errors on the 2nd HFI\'s fabric of a multi-plane fabric:
+# List all the link errors on the 2nd HFI\[aq]s fabric of a multi-plane fabric:
 .br
-opaextracterror.sh -h 2
+opaextracterror -h 2

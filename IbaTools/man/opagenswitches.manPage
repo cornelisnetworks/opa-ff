@@ -17,10 +17,6 @@ Analyzes the present fabric and produces a list of Externally Managed switches i
 .SH Syntax 
 .NL
 opagenswitches [-t portsfile] [-p ports] [-R] [-L switches\(ulfile] [-o output\(ulfile] [-T topology\(ulfile] [-X snapshot\(ulfile] [-s] [-v level] [-K]
-.PP
-or
-.br
-opagenswitches --help
 .SH Options 
 .NL
 
@@ -95,7 +91,7 @@ Writes switches data to  \fIoutput\(ulfile\fR. Default is stdout.
 .TP 10
 -T \fItopology\(ulfile\fR 
 .NL
-Specifies  \fItopology\(ulfile\fR to use. May contain \'%P\' . Must also use -s.
+Specifies  \fItopology\(ulfile\fR to use. May contain \[aq]%P\[aq] . Must also use -s.
 
 .IP
 Link data in the topology file is compared to actual fabric link data (obtained by opareport -o links or opareport -X snapshot -o links). The data is also matched to a list of switch node GUIDs and the switch NodeDesc values are generated. This list is then applied to the switches data to update NodeDesc values. The comparison of topology link data to actual fabric link data starts with the host names. The host names in the actual fabric must match those in the topology file for the comparison to succeed. However, the comparison logic allows for some mismatches, which could be due to swapped or missing cables. Switch NodeDesc values are matched to GUIDs based on which switch has the greater number of matching links.
@@ -152,7 +148,7 @@ Reserved.
 .NL
 Does not clean temporary files. Temporary files are CSV format and contain lists of links used during script operation. The files are not normally needed after execution, but they can be retained for subsequent inspection or processing.
 
-.SH Environment 
+.SH Environment Variables
 .NL
 
 .TP 10
@@ -171,7 +167,7 @@ File containing topology XML data, used in absence of -T.
 .NL
 opagenswitches
 .br
-opagenswitches -p \'1:1 2:1\'
+opagenswitches -p \[aq]1:1 2:1\[aq]
 .br
 opagenswitches -o switches
 .br

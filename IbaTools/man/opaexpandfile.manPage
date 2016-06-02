@@ -19,10 +19,6 @@ Expands a Intel(R) Omni-Path Fabric Suite FastFabric hosts, chassis, or switches
 .SH Syntax
 .NL
 opaexpandfile \fIfile\fR
-.PP
-or
-.br
-opaexpandfile --help
 .SH Options
 .NL
 

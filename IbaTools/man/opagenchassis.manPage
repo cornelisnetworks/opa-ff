@@ -17,10 +17,6 @@ Generates a list of IPv4, IPv6, and/or TCP names in a format acceptable for incl
 .SH Syntax 
 .NL
 opagenchassis [-t \fIportsfile\fR] [-p \fIports\fR]
-.PP
-or 
-.br
-opagenchassis --help
 .SH Options 
 .NL
 
@@ -75,7 +71,7 @@ HFI  \fIx\fR, port  \fIy\fR.
 
 .RE
 
-.SH Environment 
+.SH Environment Variables
 .NL
 
 .TP 10
@@ -90,10 +86,4 @@ File containing list of ports, used in absence of -t and -p.
 .NL
 opagenchassis
 .br
-opagenchassis -p \'1:1 2:1\'
-.br
-opagenchassis >> /etc/sysconfig/opa/chassis
-.PP
-Or while editing the file, use a vi command to include its output, such as:
-.br
-:r! opagenchassis
+opagenchassis -p \[aq]1:1 1:2 2:1 2:2\[aq]

@@ -439,7 +439,6 @@ static FSTATUS GetGroupInfo(struct oib_port *port, char *groupName, uint64 image
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
 	STL_PA_IMAGE_ID_DATA	imageId = {0};
-	uint32 					amod;
 
 	memset(&query, 0, sizeof(query));	// initialize reserved fields
 	query.InputType 	= InputTypeNoInput;
@@ -454,7 +453,7 @@ static FSTATUS GetGroupInfo(struct oib_port *port, char *groupName, uint64 image
 					   		iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_group_stats_response_query(port, &query, groupName, &pQueryResults, &amod, NULL, &imageId);
+	status = iba_pa_multi_mad_group_stats_response_query(port, &query, groupName, &pQueryResults, NULL, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -477,9 +476,6 @@ static FSTATUS GetGroupInfo(struct oib_port *port, char *groupName, uint64 image
         	fprintf(stderr, "PA Multiple MAD Response for Group Info group name %s:\n", groupName);
 		}
 
-		if (amod & STL_PA_INFO_COUNTER_FAILED_PORT) {
-			fprintf(stderr, "Counter query failed on one or more ports in the Group..\n");
-		}
 		PrintStlPAGroupInfo(&g_dest, 1, p->GroupInfoRecords);
 	}
 
@@ -700,7 +696,6 @@ static FSTATUS GetVFInfo(struct oib_port *port, char *vfName, uint64 imageNumber
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
 	STL_PA_IMAGE_ID_DATA	imageId = {0};
-	uint32 					amod;
 
 	memset(&query, 0, sizeof(query));	// initialize reserved fields
 	query.InputType 	= InputTypeNoInput;
@@ -715,7 +710,7 @@ static FSTATUS GetVFInfo(struct oib_port *port, char *vfName, uint64 imageNumber
 					   		iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_vf_info_response_query(port, &query, vfName, &pQueryResults, &amod, NULL, &imageId);
+	status = iba_pa_multi_mad_vf_info_response_query(port, &query, vfName, &pQueryResults, NULL, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -737,9 +732,7 @@ static FSTATUS GetVFInfo(struct oib_port *port, char *vfName, uint64 imageNumber
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
         	fprintf(stderr, "PA Multiple MAD Response for VF Info VF name %s:\n", vfName);
 		}
-		if (amod & STL_PA_INFO_COUNTER_FAILED_PORT) {
-			fprintf(stderr, "Counter query failed on one or more ports in the VF..\n");
-		}
+
 		PrintStlPAVFInfo(&g_dest, 1, p->VFInfoRecords);
 	}
 
@@ -934,55 +927,76 @@ void usage(void)
 	fprintf(stderr, "    -d/--delta         - delta flag for portCounters query - 0 or 1\n");
 	fprintf(stderr, "    -U/--userCntrs     - user controlled counters flag for portCounters query\n");
 	fprintf(stderr, "    -s/--select        - 32-bit select flag for clearing port counters\n");
-	fprintf(stderr, "         select bits for clrPortCounters (0 is least signficant (rightmost))\n");
-	fprintf(stderr, "           31  - XmitData                        30 - RcvData\n");
-	fprintf(stderr, "           29  - XmitPkts                        28 - RcvPkts\n");
-	fprintf(stderr, "           27  - MulticastXmitPkts               26 - MulticastRcvPkts\n");
-	fprintf(stderr, "           25  - XmitWait                        24 - CongDiscards\n");
-	fprintf(stderr, "           23  - RcvFECN                         22 - RcvBECN\n");
-	fprintf(stderr, "           21  - XmitTimeCong                    20 - XmitWastedBW\n");
-	fprintf(stderr, "           19  - XmitWaitData                    18 - RcvBubble\n");
-	fprintf(stderr, "           17  - MarkFECN                        16 - RcvConstraintErrors\n");
-	fprintf(stderr, "           15  - RcvSwitchRelayErrors            14 - XmitDiscards\n");
-	fprintf(stderr, "           13  - XmitConstraintErrors            12 - RcvRemotePhysicalErrors\n");
-	fprintf(stderr, "           11  - LocalLinkIntegrityErrors        10 - RcvErrors\n");
-	fprintf(stderr, "            9  - ExcessiveBufferOverruns          8 - FMConfigErrors\n");
-	fprintf(stderr, "            7  - LinkErrorRecovery                6 - LinkDowned\n");
-	fprintf(stderr, "            5  - UncorrectableErrors             Bits 4-0 reserved\n");
+	fprintf(stderr, "         select bits for clrPortCounters (0 is least significant (rightmost))\n");
+	fprintf(stderr, "           mask        bit location \n");
+	fprintf(stderr, "           0x80000000  31     Xmit Data\n");
+	fprintf(stderr, "           0x40000000  30     Rcv Data\n");
+	fprintf(stderr, "           0x20000000  29     Xmit Pkts\n");
+	fprintf(stderr, "           0x10000000  28     Rcv Pkts\n");
+	fprintf(stderr, "           0x08000000  27     Multicast Xmit Pkts\n");
+	fprintf(stderr, "           0x04000000  26     Multicast Rcv Pkts\n");
+	fprintf(stderr, "           0x02000000  25     Xmit Wait\n");
+	fprintf(stderr, "           0x01000000  24     Congestion Discards\n");
+	fprintf(stderr, "           0x00800000  23     Rcv FECN\n");
+	fprintf(stderr, "           0x00400000  22     Rcv BECN\n");
+	fprintf(stderr, "           0x00200000  21     Xmit Time Cong.\n");
+	fprintf(stderr, "           0x00100000  20     Xmit Time Wasted BW\n");
+	fprintf(stderr, "           0x00080000  19     Xmit Time Wait Data\n");
+	fprintf(stderr, "           0x00040000  18     Rcv Bubble\n");
+	fprintf(stderr, "           0x00020000  17     Mark FECN\n");
+	fprintf(stderr, "           0x00010000  16     Rcv Constraint Errors\n");
+	fprintf(stderr, "           0x00008000  15     Rcv Switch Relay\n");
+	fprintf(stderr, "           0x00004000  14     Xmit Discards\n");
+	fprintf(stderr, "           0x00002000  13     Xmit Constraint Errors\n");
+	fprintf(stderr, "           0x00001000  12     Rcv Rmt Phys. Errors\n");
+	fprintf(stderr, "           0x00000800  11     Local Link Integrity\n");
+	fprintf(stderr, "           0x00000400  10     Rcv Errors\n");
+	fprintf(stderr, "           0x00000200   9     Exc. Buffer Overrun\n");
+	fprintf(stderr, "           0x00000100   8     FM Config Errors\n");
+	fprintf(stderr, "           0x00000080   7     Link Error Recovery\n");
+	fprintf(stderr, "           0x00000040   6     Link Error Downed\n");
+	fprintf(stderr, "           0x00000020   5     Uncorrectable Errors\n");
+	fprintf(stderr, " \n");
 	fprintf(stderr, "         select bits for clrVfPortCounters (0 is least signficant (rightmost))\n");
-	fprintf(stderr, "           31  - VLXmitData                      30 - VLRcvData\n");
-	fprintf(stderr, "           29  - VLXmitPkts                      28 - VLRcvPkts\n");
-	fprintf(stderr, "           27  - VLXmitDiscards                  26 - VLCongDiscards\n");
-	fprintf(stderr, "           25  - VLXmitWait                      24 - VLRcvFECN\n");
-	fprintf(stderr, "           23  - VLRcvBECN                       22 - VLXmitTimeCong\n");
-	fprintf(stderr, "           21  - VLXmitWastedBW                  20 - VLXmitWaitData\n");
-	fprintf(stderr, "           19  - VLRcvBubble                     18 - VLMarkFECN\n");
-	fprintf(stderr, "           Bits 17-0 reserved\n");
+	fprintf(stderr, "           mask        bit location \n");
+	fprintf(stderr, "           0x80000000  31     VLXmitData \n");
+	fprintf(stderr, "           0x40000000  30     VLRcvData \n");
+	fprintf(stderr, "           0x20000000  29     VLXmitPkts \n");
+	fprintf(stderr, "           0x10000000  28     VLRcvPkts \n");
+	fprintf(stderr, "           0x08000000  27     VLXmitDiscards \n");
+	fprintf(stderr, "           0x04000000  26     VLCongDiscards\n");
+	fprintf(stderr, "           0x02000000  25     VLXmitWait \n");
+	fprintf(stderr, "           0x01000000  24     VLRcvFECN\n");
+	fprintf(stderr, "           0x00800000  23     VLRcvBECN  \n");
+	fprintf(stderr, "           0x00400000  22     VLXmitTimeCong\n");
+	fprintf(stderr, "           0x00200000  21     VLXmitWastedBW \n");
+	fprintf(stderr,	"           0x00100000  20     VLXmitWaitData\n");
+	fprintf(stderr, "           0x00080000  19     VLRcvBubble \n");
+	fprintf(stderr, "           0x00040000  18     VLMarkFECN\n");
+	fprintf(stderr, "           Bits 17-0 reseved\n");
 	fprintf(stderr, "     -f/--focus         - focus select value for getting focus ports\n");
-	fprintf(stderr, "         focus select values:\n");
-	fprintf(stderr, "           0x00020001 - sorted by utilization - highest first\n");                  // STL_PA_SELECT_UTIL_HIGH         0x00020001
-//	fprintf(stderr, "           0x00020081 - sorted by mulicast pkt rate - highest first\n");            // STL_PA_SELECT_UTIL_MC_HIGH      0x00020081
-	fprintf(stderr, "           0x00020082 - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_UTIL_PKTS_HIGH    0x00020082
-	fprintf(stderr, "           0x00020101 - sorted by utilization - lowest first\n");                   // STL_PA_SELECT_UTIL_LOW          0x00020101
-//	fprintf(stderr, "           0x00020102 - sorted by mulicast pkt rate - lowest first\n");             // STL_PA_SELECT_UTIL_MC_LOW       0x00020102
-	fprintf(stderr, "           0x00030001 - sorted by integrity errors - highest first\n");             // STL_PA_SELECT_ERR_INTEG         0x00030001
-	fprintf(stderr, "           0x00030002 - sorted by congestion errors - highest first\n");            // STL_PA_SELECT_ERR_CONG          0x00030002
-	fprintf(stderr, "           0x00030003 - sorted by sma congestion errors - highest first\n");        // STL_PA_SELECT_ERR_SMA_CONG      0x00030003
-	fprintf(stderr, "           0x00030004 - sorted by bubble errors - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
-	fprintf(stderr, "           0x00030005 - sorted by security errors - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
-	fprintf(stderr, "           0x00030006 - sorted by routing errors - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
-	fprintf(stderr, "    -S/--start         - start of window for focus ports - should always be 0\n");
-	fprintf(stderr, "                         for now\n");
-	fprintf(stderr, "    -r/--range         - size of window for focus ports list\n");
-	fprintf(stderr, "    -n/--imgNum        - 64-bit image number - may be used with groupInfo,\n");
-	fprintf(stderr, "                         groupConfig, portCounters (delta)\n");
-	fprintf(stderr, "    -O/--imgOff        - image offset - may be used with groupInfo, groupConfig,\n");
-	fprintf(stderr, "                         portCounters (delta)\n");
-	fprintf(stderr, "    -m/--moveImgNum    - 64-bit image number - used with moveFreeze to move a\n");
-	fprintf(stderr, "                         freeze image\n");
-	fprintf(stderr, "    -M/--moveImgOff    - image offset - may be used with moveFreeze to move a\n");
-	fprintf(stderr, "                         freeze image\n");
-	fprintf(stderr, "    -V/--vfName        - VF name for vfInfo query\n");
+	fprintf(stderr, "           focus select values:\n");
+	fprintf(stderr, "           utilhigh      - sorted by utilization - highest first\n");                  // STL_PA_SELECT_UTIL_HIGH         0x00020001
+	fprintf(stderr, "           pktrate       - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_UTIL_PKTS_HIGH    0x00020082
+	fprintf(stderr, "           utillow       - sorted by utilization - lowest first\n");                   // STL_PA_SELECT_UTIL_LOW          0x00020101
+	fprintf(stderr, "           integrity     - sorted by integrity errors - highest first\n");             // STL_PA_SELECT_ERR_INTEG         0x00030001
+	fprintf(stderr, "           congestion    - sorted by congestion errors - highest first\n");            // STL_PA_SELECT_ERR_CONG          0x00030002
+	fprintf(stderr, "           smacongestion - sorted by sma congestion errors - highest first\n");        // STL_PA_SELECT_ERR_SMA_CONG      0x00030003
+	fprintf(stderr, "           bubbles       - sorted by bubble errors - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
+	fprintf(stderr, "           security      - sorted by security errors - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
+	fprintf(stderr, "           routing       - sorted by routing errors - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
+	fprintf(stderr, "    -S/--start           - start of window for focus ports - should always be 0\n");
+	fprintf(stderr, "                           for now\n");
+	fprintf(stderr, "    -r/--range           - size of window for focus ports list\n");
+	fprintf(stderr, "    -n/--imgNum          - 64-bit image number - may be used with groupInfo,\n");
+	fprintf(stderr, "                           groupConfig, portCounters (delta)\n");
+	fprintf(stderr, "    -O/--imgOff          - image offset - may be used with groupInfo, groupConfig,\n");
+	fprintf(stderr, "                           portCounters (delta)\n");
+	fprintf(stderr, "    -m/--moveImgNum      - 64-bit image number - used with moveFreeze to move a\n");
+	fprintf(stderr, "                           freeze image\n");
+	fprintf(stderr, "    -M/--moveImgOff      - image offset - may be used with moveFreeze to move a\n");
+	fprintf(stderr, "                           freeze image\n");
+	fprintf(stderr, "    -V/--vfName          - VF name for vfInfo query\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The -h and -p options permit a variety of selections:\n");
 	fprintf(stderr, "    -h 0       - 1st active port in system (this is the default)\n");
@@ -1046,7 +1060,7 @@ void usage(void)
 	fprintf(stderr, "    opapaquery -o releaseImage -n 0xd01\n");
 	fprintf(stderr, "    opapaquery -o renewImage -n 0xd01\n");
 	fprintf(stderr, "    opapaquery -o moveFreeze -n 0xd01 -m 0x20000000d02 -M -2\n");
-	fprintf(stderr, "    opapaquery -o focusPorts -g All -f 0x00030001 -S 0 -r 20\n");
+	fprintf(stderr, "    opapaquery -o focusPorts -g All -f integrity -S 0 -r 20\n");
 	fprintf(stderr, "    opapaquery -o imageInfo -n 0x20000000d02\n");
 	fprintf(stderr, "    opapaquery -o vfList\n");
 	fprintf(stderr, "    opapaquery -o vfInfo -V Default\n");
@@ -1054,9 +1068,44 @@ void usage(void)
 	fprintf(stderr, "    opapaquery -o vfPortCounters -l 1 -P 1 -d 1 -V Default\n");
 	fprintf(stderr, "    opapaquery -o clrVfPortCounters -l 1 -P 1 -s 0xC0000000\n");
 	fprintf(stderr, "        (clears VLXmitData & VLRcvData)\n");
-	fprintf(stderr, "    opapaquery -o vfFocusPorts -V Default -f 0x00030001 -S 0 -r 20\n");
+	fprintf(stderr, "    opapaquery -o vfFocusPorts -V Default -f integrity -S 0 -r 20\n");
 
 	exit(2);
+}
+
+typedef struct OutputFocusMap {
+	char *string;
+	int32 focus;
+	} OutputFocusMap_t;
+
+OutputFocusMap_t OutputFocusTable[]= {
+	{"utilhigh",        STL_PA_SELECT_UTIL_HIGH },        // 0x00020001
+	{"pktrate",         STL_PA_SELECT_UTIL_PKTS_HIGH },   // 0x00020082
+	{"utillow",         STL_PA_SELECT_UTIL_LOW },         // 0x00020101
+	{"integrity",       STL_PA_SELECT_ERR_INTEG },        // 0x00030001
+	{"congestion",      STL_PA_SELECT_ERR_CONG },         // 0x00030002
+	{"smacongestion",   STL_PA_SELECT_ERR_SMA_CONG },     // 0x00030003
+	{"bubbles",	        STL_PA_SELECT_ERR_BUBBLE },       // 0x00030004
+	{"security" ,       STL_PA_SELECT_ERR_SEC },          // 0x00030005
+	{"routing",	        STL_PA_SELECT_ERR_ROUT },         // 0x00030006
+	{ NULL, 0},
+};
+
+
+FSTATUS StringToFocus (int32 *value, const char* str)
+{
+	int i;
+
+	i=0;
+	while (OutputFocusTable[i].string!=NULL) {
+		if (0 == strcmp(str,OutputFocusTable[i].string) ){
+			*value = OutputFocusTable[i].focus;
+			return FSUCCESS;
+		}
+		else i++;
+	}
+
+	return FERROR;
 }
 
 int main(int argc, char ** argv)
@@ -1086,9 +1135,9 @@ int main(int argc, char ** argv)
 				if (g_verbose>2) umad_debug(g_verbose-2);
                 break;
 
-                case '$':
-                                usage();
-                                break;
+            case '$':
+                usage();
+                break;
 
 	    	case 'h':
 				if (FSUCCESS != StringToUint8(&hfi, optarg, NULL, 0, TRUE)) {
@@ -1188,7 +1237,7 @@ int main(int argc, char ** argv)
 				break;
 
 			case 'f':
-				if (FSUCCESS != StringToInt32(&g_focus, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToFocus (&g_focus, optarg)) {
 					fprintf(stderr, "opapaquery: Invalid Focus Number: %s\n", optarg);
 					usage();
 				}
@@ -1241,9 +1290,28 @@ int main(int argc, char ** argv)
 		usage();
 	}
 
-	if ((queryType == Q_GETFOCUSPORTS) && (!g_gotGroup)) {
-		fprintf(stderr, "opapaquery: Must provide a group name with output type focusPorts\n");
-		usage();
+	if (queryType == Q_GETFOCUSPORTS) {
+			if  ((!g_gotGroup) || (!g_gotFocus) || (!g_gotRange) || (!g_gotStart)) {
+				fprintf(stderr, "opapaquery: Must provide a group name(g), focus(f), range(r) and start(S) \n");
+				fprintf(stderr, "            with output type focusPorts. Image Number(n) and Image Offset(O) are optional.\n");
+				usage();
+			}
+			else if (g_deltaFlag || g_gotLid || g_gotPort || g_gotSelect || g_gotMoveImgNum ||
+					g_gotMoveImgOff ||g_userCntrsFlag || g_gotvfName)
+				fprintf(stderr, "opapaquery: for the selected output type only -g, -f, -r and -S options are required.\n");
+				fprintf(stderr, "Ignoring rest..\n");
+	}
+
+	if (queryType == Q_GETVFFOCUSPORTS) {
+		if ((!g_gotvfName) || (!g_gotFocus) || (!g_gotRange) || (!g_gotStart)) {
+				fprintf(stderr, "opapaquery: Must provide a vf_name(V), focus(f), range(r) and start(S) \n");
+				fprintf(stderr, "            with output type VFfocusPorts. Image Number and Image Offset are optional.\n");
+				usage();
+		}
+		else if (g_deltaFlag || g_gotLid || g_gotPort || g_gotSelect || g_gotMoveImgNum ||
+				g_gotMoveImgOff ||g_userCntrsFlag || g_gotGroup)
+				fprintf(stderr, "opapaquery: for the selected output type only -V, -f, -r and -S options are required.\n");
+				fprintf(stderr, "Ignoring rest..\n");
 	}
 
 	if ((queryType == Q_GETPORTCOUNTERS) && ((!g_gotLid) || (!g_gotPort))) {

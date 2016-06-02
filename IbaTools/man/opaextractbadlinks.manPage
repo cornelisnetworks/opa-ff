@@ -13,45 +13,43 @@ opaextractbadlinks
 .NL
 
 .PP
-Produces a CSV file listing all or some of the links that exceed opareport -o error thresholds. opaextractbadlinks.sh is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
+Produces a CSV file listing all or some of the links that exceed opareport -o error thresholds. opaextractbadlinks is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
 .SH Syntax 
 .NL
 opaextractbadlinks [--help] [opareport \fIoptions\fR]
-.PP
-or
-.br
-opaextractbadlinks --help
 .SH Options 
 .NL
 
 .TP 10
 opareport \fIoptions\fR 
 .NL
-Options are passed to opareport.
+Options are passed to opareport. See
+\fIopareport\fR
+for the full set of options.
 
 .SH Examples 
 .NL
 # List all the bad links in the fabric:
 .br
-opaextractbadlinks.sh
+opaextractbadlinks
 .br
 
 .br
 # List all the bad links to a switch named "OmniPth00117501ffffffff":
 .br
-opaextractbadlinks.sh -F "node:OmniPth00117501ffffffff"
+opaextractbadlinks -F "node:OmniPth00117501ffffffff"
 .br
 
 .br
 # List all the bad links to end-nodes:
 .br
-opaextractbadlinks.sh -F "nodetype:FI"
+opaextractbadlinks -F "nodetype:FI"
 .br
 
 .br
-# List all the bad links on the 2nd HFI\'s fabric of a multi-plane fabric:
+# List all the bad links on the 2nd HFI\[aq]s fabric of a multi-plane fabric:
 .br
-opaextractbadlinks.sh -h 2
+opaextractbadlinks -h 2
 .br
 
 .br

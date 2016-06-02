@@ -24,13 +24,9 @@ opareport and opareports are more powerful Intel(R) Omni-Path Fabric Suite FastF
 
 .SH Syntax
 .NL
-opashowallports [-C] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \'\fIhosts\fR\']
+opashowallports [-C] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-H \'\fIchassis\fR\'] [-S]
-.PP
-or
-.br
-opashowallports --help
+[-H \[aq]\fIchassis\fR\[aq]] [-S]
 .SH Options 
 .NL
 
@@ -101,15 +97,15 @@ Password for admin on all chassis. Used in absence of -S option.
 .NL
 opashowallports
 .br
-opashowallports -h \'elrond arwen\'
+opashowallports -h \[aq]elrond arwen\[aq]
 .br
-HOSTS=\'elrond arwen\' opashowallports
+HOSTS=\[aq]elrond arwen\[aq] opashowallports
 .br
 opashowallports -C
 .br
-opashowallports -H \'chassis1 chassis2\'
+opashowallports -H \[aq]chassis1 chassis2\[aq]
 .br
-CHASSIS=\'chassis1 chasssi2\' opashowallports
+CHASSIS=\[aq]chassis1 chasssi2\[aq] opashowallports
 .SH Notes
 .NL
 

@@ -205,7 +205,7 @@ export FF_CHASSIS_CMDS=${FF_CHASSIS_CMDS:-showAllConfig}
 export FF_CHASSIS_HEALTH=${FF_CHASSIS_HEALTH:-hwCheck}
 
 # list of CLI commands to issue during opaesmanalysis
-export FF_ESM_CMDS=${FF_ESM_CMDS:- }
+export FF_ESM_CMDS=${FF_ESM_CMDS:-smConfig}
 
 # list of analysis to perform during opaallanalysis
 # pick appropriate type of SM to analyze
@@ -253,4 +253,4 @@ export FF_SERIALIZE_OUTPUT=${FF_SERIALIZE_OUTPUT:-yes}
 
 # Directory name for location of hostverify.sh script and output target directory
 # on each host used by opaverifyhosts 
-export FF_HOSTVERIFY_DIR=${FF_HOSTVERIFY_DIR:-/root/}
+export FF_HOSTVERIFY_DIR=${FF_HOSTVERIFY_DIR:-/root}

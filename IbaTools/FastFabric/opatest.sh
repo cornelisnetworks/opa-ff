@@ -127,7 +127,7 @@ Usage_opachassisadmin_full()
 	echo "  -H chassis - list of chassis to execute operation against" >&2
 	echo "  -P packages - filenames/directories of firmware" >&2
 	echo "                   images to install.  For directories specified, all" >&2
-	echo "                   .pkg and .spkg files in directory tree will be used." >&2
+	echo "                   .pkg, .dpkg and .spkg files in directory tree will be used." >&2
 	echo "                   shell wildcards may also be used within quotes." >&2
 	echo "                or for fmconfig, filename of FM config file to use" >&2
 	echo "                or for fmgetconfig, filename to upload to (default" >&2
@@ -314,7 +314,7 @@ Usage_opachassisadmin()
 	echo "           default is $CONFIG_DIR/opa/chassis" >&2
 	echo "  -P packages - filenames/directories of firmware" >&2
 	echo "                   images to install.  For directories specified, all" >&2
-	echo "                   .pkg and .spkg files in directory tree will be used." >&2
+	echo "                   .pkg, .dpkg and .spkg files in directory tree will be used." >&2
 	echo "                   shell wildcards may also be used within quotes." >&2
 	echo "                or for fmconfig, filename of FM config file to use" >&2
 	echo "                or for fmgetconfig, filename to upload to (default" >&2
@@ -560,6 +560,14 @@ if [ $# -lt 1 ]
 then
 	Usage
 fi
+
+for tkn in $*
+do
+	if [[ $tkn == -* ]]
+	then
+		Usage
+	fi
+done
 # given optarg selections, this error should not be able to happen
 if [[ $(($chassis+$host+$opaswitch)) -gt 1 ]]
 then
@@ -678,7 +686,7 @@ then
 				export DST_START=`grep "Start DST" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
 				export DST_END=`grep "End DST" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
 				export LINKWIDTH_SETTING=`grep "Link Width Selection" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
-				export SET_NAME=`grep "Set IB Node Desc" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
+				export SET_NAME=`grep "Set OPA Node Desc" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
 				export LINKCRCMODE=`grep "Link CRC Mode" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
 				run_test chassis_$test_suite
 			else
@@ -701,13 +709,13 @@ then
 			CFG_FWFILES=""
 			for fwfile in $packages
 			do
-				# expand directory, also filters files without .pkg/.spkg suffix
+				# expand directory, also filters files without .pkg/.dpkg/.spkg suffix
 				# this also expands wildcards in "$packages"
 				fwfiles=`find $fwfile -type f -name '*.pkg'`
-				fwfiles="$fwfiles `find $fwfile -type f -name '*.spkg'`"
+				fwfiles="$fwfiles `find $fwfile -type f -name '*.[ds]pkg'`"
 				if [ $? != 0 -o x"$fwfiles" == x -o x"$fwfiles" == x" " ]
 				then
-					echo "$cmd: $fwfile: No .pkg nor .spkg files found" >&2
+					echo "$cmd: $fwfile: No .pkg nor .dpkg nor .spkg files found" >&2
 					Usage
 				fi
 				CFG_FWFILES="$CFG_FWFILES $fwfiles"
@@ -940,9 +948,6 @@ then
 
 			done
 			done
-
-			# remove temporary work directory
-			rm -rf $temp.*
 			;;
 		getconfig)
 			run_test switch_$test_suite;;

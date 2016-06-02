@@ -309,7 +309,6 @@ fail:
  * @param group_name                Group name 
  * @param pquery_result             Pointer to query result to be filled. The caller has to 
  *                                  to free the buffer. 
- * @param amod                      Pointer to error flags data member.
  * @param query_control_parameters  Optional query control parameters (retry, timeout). 
  * @param image_id                  Pointer to the image ID. 
  *
@@ -323,7 +322,6 @@ fe_pa_multi_mad_group_stats_response_query(
     IN PQUERY                       query,
     IN char                         *group_name,
     OUT PQUERY_RESULT_VALUES        *pquery_result,
-    OUT uint32_t                    *amod,
     IN COMMAND_CONTROL_PARAMETERS   *query_control_parameters OPTIONAL,
     IN STL_PA_IMAGE_ID_DATA                *image_id
     )
@@ -371,7 +369,6 @@ fe_pa_multi_mad_group_stats_response_query(
                 }
 
                 // translate the data.
-				*amod = ((SA_MAD *)rsp_mad)->common.AttributeModifier;
 				data = ((SA_MAD*) rsp_mad)->Data;
                 pa_result = (STL_PA_GROUP_INFO_RESULTS*)query_result->QueryResult;
                 pa_data = pa_result->GroupInfoRecords;
@@ -417,7 +414,6 @@ FSTATUS fe_GetGroupInfo(struct net_connection *connection, char *groupName, uint
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
-    uint32_t                amod=0;
 
 	memset(&query, 0, sizeof(query));	// initialize reserved fields
 	query.InputType 	= InputTypeNoInput;
@@ -432,7 +428,7 @@ FSTATUS fe_GetGroupInfo(struct net_connection *connection, char *groupName, uint
 					   		iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = fe_pa_multi_mad_group_stats_response_query(connection, &query, groupName, &pQueryResults, &amod, NULL, &imageId);
+	status = fe_pa_multi_mad_group_stats_response_query(connection, &query, groupName, &pQueryResults, NULL, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -455,9 +451,6 @@ FSTATUS fe_GetGroupInfo(struct net_connection *connection, char *groupName, uint
         	fprintf(stderr, "PA Multiple MAD Response for Group Info group name %s:\n", groupName);
 		}
 
-		if (amod & STL_PA_INFO_COUNTER_FAILED_PORT) {
-			fprintf(stderr, "Counter query failed on one or more ports in the Group...\n");
-		}
 		PrintStlPAGroupInfo(&g_dest, 1, p->GroupInfoRecords);
 	}
 
@@ -2011,7 +2004,6 @@ fail:
  * @param vf_name                	VF name 
  * @param pquery_result             Pointer to query result to be filled. The caller has to 
  *                                  to free the buffer. 
- * @param amod                      Pointer to error flags data member.
  * @param query_control_parameters  Optional query control parameters (retry, timeout). 
  * @param image_id                  Pointer to the image ID. 
  *
@@ -2025,7 +2017,6 @@ fe_pa_multi_mad_vf_info_response_query(
     IN PQUERY                       query,
     IN char                         *vf_name,
     OUT PQUERY_RESULT_VALUES        *pquery_result,
-    OUT uint32_t                    *amod,
     IN COMMAND_CONTROL_PARAMETERS   *query_control_parameters OPTIONAL,
     IN STL_PA_IMAGE_ID_DATA                *image_id
     )
@@ -2073,7 +2064,6 @@ fe_pa_multi_mad_vf_info_response_query(
                 }
 
                 // translate the data.
-				*amod = ((SA_MAD *)rsp_mad)->common.AttributeModifier;
 				data = ((SA_MAD*) rsp_mad)->Data;
                 pa_result = (STL_PA_VF_INFO_RESULTS*)query_result->QueryResult;
                 pa_data = pa_result->VFInfoRecords;
@@ -2119,7 +2109,6 @@ FSTATUS fe_GetVFInfo(struct net_connection *connection, char *vfName, uint64 ima
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
-    uint32_t                amod=0;
 
 	memset(&query, 0, sizeof(query));	// initialize reserved fields
 	query.InputType 	= InputTypeNoInput;
@@ -2134,7 +2123,7 @@ FSTATUS fe_GetVFInfo(struct net_connection *connection, char *vfName, uint64 ima
 					   		iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = fe_pa_multi_mad_vf_info_response_query(connection, &query, vfName, &pQueryResults, &amod, NULL, &imageId);
+	status = fe_pa_multi_mad_vf_info_response_query(connection, &query, vfName, &pQueryResults, NULL, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -2157,9 +2146,6 @@ FSTATUS fe_GetVFInfo(struct net_connection *connection, char *vfName, uint64 ima
         	fprintf(stderr, "PA Multiple MAD Response for VF Info VF name %s:\n", vfName);
 		}
 
-		if (amod & STL_PA_INFO_COUNTER_FAILED_PORT) {
-			fprintf(stderr, "Counter query failed on one or more ports in the VF...\n");
-		}
 		PrintStlPAVFInfo(&g_dest, 1, p->VFInfoRecords);
 	}
 

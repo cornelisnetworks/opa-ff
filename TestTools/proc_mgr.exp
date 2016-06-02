@@ -416,6 +416,7 @@ proc parallel { var list code } {
     global os_type
 	global qlgc_fork
 	global qlgc_wait
+	global orig_stdout
 
     if {  [ test_parallel ] } {
 	tools_clear_tmp_counters
@@ -440,9 +441,13 @@ proc parallel { var list code } {
 		if { $pid == 0 } {
 			# child process
 			if { $test_serialize_output } {
+				package require qlgc_fork
+				if { $orig_stdout == "" } {
+					set orig_stdout [qlgc_dup stdout]
+					fconfigure $orig_stdout -buffering line
+				}
 				close stdout
 				set fd [open $fname {WRONLY APPEND TRUNC} ]
-				package require qlgc_fork
 				close stderr
 				set fd1 [qlgc_dup stdout ]
 				fconfigure $fd -buffering line
@@ -455,6 +460,9 @@ proc parallel { var list code } {
 			if { $test_serialize_output } {
 				close $fd
 				close $fd1
+				if { $orig_stdout != "" } {
+					close $orig_stdout
+				}
 			}
 		    exit 0
 		} elseif { $pid == -1 } {

@@ -23,19 +23,32 @@ opainfo [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g] [-d \fIdetail\fR] [-
 .NL
 
 .TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
 -h \fIhfi\fR 
 .NL
-HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
+HFI, numbered 1..n. Default = 0 which specifies the first HFI that has the first active port.
 
 .TP 10
 -p \fIport\fR 
 .NL
-Port, numbered 1..n. If -h \fIhfi\fR is 0, then  \fIport\fR is a system-wide port number. Default is 1.
+Port, numbered 1..n. Using 0 specifies the first active port across all HFIs/ports. Default = 1 which indicates all ports. If selected, the tool returns information on all available ports if p is not defined.
 
 .TP 10
 -o \fItype\fR 
 .NL
-Specifies output type. Can be used more than once. Default is brief summary of portinfo, counters, and cableinfo. Options include:
+Output type specified and can appear more than once.
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+Behavior without -o gives a brief summary of portinfo, counters and cableinfo.
 
 .RS
 .TP 10
@@ -61,7 +74,60 @@ Output is displayed in line-by-line format. Default = summary format.
 .TP 10
 -d \fIdetail\fR 
 .NL
-Output detail level. Range = 0 - n. CableInfo only. Default = 0.
+Output detail level. Range = 0 - 4. CableInfo only. Default = 0.
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+-d option is ignored when used with -o type.
+
+.RS
+.TP 10
+
+.sp
+0
+Minimal crucial information (for example, cable length, vendor)
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+1
+Brief summary
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+2
+Extended brief summary
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+3
+Verbose output
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+4
+Verbose and debug output. Lists all settings both statically and dynamically configured in the cable.
+
+.RE
 
 .TP 10
 \fB-h and -p options permit a variety of selections:\fR
@@ -83,17 +149,17 @@ First active port in system.
 All active ports on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR-p 0 
+-h \fIx\fR#8217#160;-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy \fR within system (no matter which ports are active).
+Port \fIy\fR#8217#160;within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR-p \fIy\fR 
+-h \fIx\fR#8217#160;-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR
 
@@ -104,4 +170,30 @@ HFI \fIx\fR, port \fIy\fR
 .TP 10
 -v 
 .NL
-Verbose output. Additional invocations (-v -v ...) turn on debugging, openib debugging, and libibumad debugging.
+Verbose output. Additional invocations (#8217#8211;v -v ...) turn on debugging, openib debugging, and libibumad debugging.
+
+.SH Examples 
+.NL
+opainfo
+.br
+hfi1\(ul0:1 PortGID:0xfe80000000000000:001175010165b19c
+.br
+PortState: Active
+.br
+LinkSpeed Act: 25Gb En: 25Gb
+.br
+LinkWidth Act: 4 En: 4
+.br
+LinkWidthDnGrd ActTx: 4 Rx: 4 En: 3,4
+.br
+LCRC Act: 14-bit En: 14-bit,16-bit,48-bit Mgmt: True
+.br
+LID: 0x00000001-0x00000001 SM LID: 0x00000002 SL: 0
+.br
+QSFP: PassiveCu, 1m FCI Electronics P/N 10131941-2010LF Rev 5
+.br
+Xmit Data: 22581581 MB Pkts: 5100825193
+.br
+Recv Data: 18725619 MB Pkts: 4024569756
+.br
+Link Quality: 5 (Excellent)

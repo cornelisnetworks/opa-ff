@@ -1226,8 +1226,11 @@ sub fabricsetup_buildmpi
 	if (! valid_config_file("Host File", $FabricSetupHostsFile) ) {
 		return 1;
 	}
-	# do in two steps so user can see results of build before scp starts
-	return run_fabric_cmd("$BIN_DIR/opascpall -t -p -f $FabricSetupHostsFile $mpi_apps_dir $mpi_apps_dir");
+	my $fabric_cmd="$BIN_DIR/opascpall -t -p -f $FabricSetupHostsFile $mpi_apps_dir $mpi_apps_dir";
+	if (GetYesNo("About to run: $fabric_cmd\nAre you sure you want to proceed?","n") ) {
+        return run_fabric_cmd("$fabric_cmd");
+	}
+	return 0;
 }
 
 sub fabricsetup_buildshmem
@@ -1610,14 +1613,25 @@ sub fabricadmin_singlehost
 	my $verifyhosts_opts="-c"; # Always copy the hostverify.sh file.
 	my $verifyhosts_tests="";
 	my $result_dir = read_ffconfig_param("FF_RESULT_DIR");
-	my $hostverify = "/opt/opa/samples/hostverify.sh";
+	my $hostverify_sample = "/opt/opa/samples/hostverify.sh";
+	my $hostverify = read_ffconfig_param("FF_HOSTVERIFY_DIR") . "/hostverify.sh";
 	my $hostverify_res = "hostverify.res";
 	my $inp;
+	my $timelimit = 1;
 
 	if (! valid_config_file("Host File", $FabricAdminHostsFile) ) {
 		return 1;
 	}
 	while (GetYesNo("Would you like to edit $hostverify and copy to hosts?", "y") ) {
+		
+		if ( ! -e "$hostverify" ) {
+			copy_data_file("$hostverify_sample", "$hostverify");
+		} else {
+			if(GetYesNo("Would you like to copy $hostverify_sample to $hostverify ", "n")) {	
+				copy_data_file("$hostverify_sample", "$hostverify");
+			}
+		}
+
 		print "About to: $Editor $hostverify\n";
 		if ( HitKeyContAbortable() == 1) {
 			return 1;
@@ -1659,7 +1673,14 @@ sub fabricadmin_singlehost
 		$hostverify_res = $inp;
 	}
 
-	my $timelimit=GetNumericValue("Timelimit in minutes:", 1, 1, 100) * 60;
+	#Get timelimit, and suggest a higher default if HPL test is being run. 
+	if (index($verifyhosts_tests,"hpl") != -1) {
+		$timelimit=GetNumericValue("Timelimit in minutes:", 5, 1, 100) * 60;
+	} else {
+		$timelimit=GetNumericValue("Timelimit in minutes:", 1, 1, 100) * 60;
+	}
+
+
 	if (check_load($FabricAdminHostsFile, "", "prior to verification") ) {
 		return 1;
 	}
@@ -2296,7 +2317,7 @@ sub expand_pathnames
 	my $first=1;
 	foreach my $pathname (split(/[[:space:]]+/, "$pathnames")) {
 		# file or directory (can be wildcards)
-		# expand directory, also filters files without .spkg suffix
+		# expand directory, also filters files without .dpkg or .spkg suffix
 		my $expanded = `echo -n $pathname`;
 		if ( $expanded ne "" ) {
 			if ( $first ) {
@@ -2320,10 +2341,10 @@ sub chassis_expand_fwpackages
 	}
 	foreach my $package (split(/[[:space:]]+/, "$packages")) {
 		# file or directory (can be wildcards)
-		# expand directory, also filters files without .spkg suffix
-		my $expanded = `find $package -type f -name '*.spkg' 2>/dev/null`;
+		# expand directory, also filters files without .dpkg or .spkg suffix
+		my $expanded = `find $package -type f -name '*.[ds]pkg' 2>/dev/null`;
 		if ( $expanded eq "" ) {
-			print "$package: No .spkg files found\n";
+			print "$package: No .dpkg nor .spkg files found\n";
 			return "";
 		}
 		$all_packages="$all_packages$expanded";
@@ -2363,7 +2384,7 @@ QUERY:
 				do {
 					print "Multiple Firmware files and/or Directories may be space separated\n";
 					print "Shell wildcards may be used\n";
-					print "For Directories all .spkg files in the directory tree will be used\n";
+					print "For Directories all .dpkg or .spkg files in the directory tree will be used\n";
 					print "Enter Files/Directories to use (or none):";
 					chomp($packages = <STDIN>);
 					$packages=remove_whitespace($packages);

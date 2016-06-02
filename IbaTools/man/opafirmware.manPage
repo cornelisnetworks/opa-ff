@@ -16,11 +16,7 @@ opafirmware
 Returns firmware information.
 .SH Syntax
 .NL
-opafirmware --showVersion \fIfirmwareFile\fR
-.PP
-or
-.br
-opafirmware --showType \fIfirmwareFile\fR
+opafirmware --showVersion \fIfirmwareFile\fR|--showType \fIfirmwareFile\fR
 .SH Options
 .NL
 

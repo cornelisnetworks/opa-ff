@@ -31,8 +31,6 @@
 # [ICS VERSION STRING: unknown]
 # Analyze Embedded SMs for errors and/or changes relative to baseline
 
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -42,6 +40,8 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
 
 Usage_full()
 {
@@ -179,7 +179,13 @@ do
 
 		for cmd in $FF_ESM_CMDS
 		do
-			/usr/sbin/opacmdall -C -H "$ESM_CHASSIS" $cmd > $latest.$cmd 2>&1
+			if [ "$cmd" == "smConfig" ]
+			then
+				/usr/sbin/opacmdall -C -H "$ESM_CHASSIS" "smConfig query" > $latest.$cmd 2>&1
+			else
+				/usr/sbin/opacmdall -C -H "$ESM_CHASSIS" $cmd > $latest.$cmd 2>&1
+			fi
+
 			if [ $? != 0 ]
 			then
 				echo "opaesmanalysis: Error: Unable to issue chassis command. See $latest.$cmd" >&2

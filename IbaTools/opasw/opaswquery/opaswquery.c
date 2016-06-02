@@ -406,10 +406,23 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Error: Failed to get power supply status for ps %d - status %d\n", g_intParam, status);
 				break;
 			}
-			if (psStatus)
-				printf("PS %d: ONLINE\n", g_intParam);
-			else
-				printf("PS %d: OFFLINE\n", g_intParam);
+			switch (psStatus) {
+				case PS_ONLINE:
+					printf("PS %d: ONLINE\n", g_intParam);
+					break;
+				case PS_OFFLINE:
+					printf("PS %d: OFFLINE\n", g_intParam);
+					break;
+				case PS_NOT_PRESENT:
+					printf("PS %d: NOT PRESENT\n", g_intParam);
+					break;
+				case PS_INVALID:
+					printf("PS %d: INVALID\n", g_intParam);
+					break;
+				default:  
+					fprintf(stderr, "Error: Failed to get power supply status for ps %d\n", g_intParam); 
+					break;
+			}
 			break;
 
 		case 9:
@@ -487,7 +500,7 @@ int main(int argc, char *argv[])
 				portLinkWidthSupportedIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portMetaDataLen, "LINK_WIDTH_SUPPORTED");
 				portLinkSpeedSupportedIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portMetaDataLen, "LINK_SPEED_SUPPORTED");
 				portFMEnabledIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portMetaDataLen, "FM_ENABLED");
-				portLinkCRCModeIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portMetaDataLen, "CRC");
+				portLinkCRCModeIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portMetaDataLen, "LTP_CRC_MODE_SUPPORTED");
 				portvCUIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portMetaDataLen, "VCU");
 				portExternalLoopbackAllowedIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portMetaDataLen, "EXTERNAL_LOOPBACK_ALLOWED");
 
@@ -504,7 +517,7 @@ int main(int argc, char *argv[])
 				PRINT_REC("Link Width"," %s\n", portLinkWidthSupportedText);
 				PRINT_REC("Link Speed"," %s\n", portLinkSpeedSupportedText);
 				PRINT_REC("FM Enabled"," %s\n", portPtrs[portFMEnabledIndex].val.intVal ? "Yes" : "No");
-				PRINT_REC("Link CRC Mode"," %s\n", StlPortLtpCrcModeToText(portPtrs[portLinkCRCModeIndex].val.intVal,portLinkCRCModeValue,sizeof(portLinkCRCModeValue)));
+				PRINT_REC("Link CRC Mode"," %s\n", StlPortLtpCrcModeVMAToText(portPtrs[portLinkCRCModeIndex].val.intVal,portLinkCRCModeValue,sizeof(portLinkCRCModeValue)));
 				PRINT_REC("vCU"," %d\n", portPtrs[portvCUIndex].val.intVal);
 				PRINT_REC("External Loopback Allowed"," %s\n", portPtrs[portExternalLoopbackAllowedIndex].val.intVal ? "Yes" : "No");
 				PRINT_REC("Node Description"," %s\n", strlen((const char *)nodeDesc)==0?(const char *)"no description":(char *)nodeDesc);

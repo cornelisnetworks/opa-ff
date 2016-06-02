@@ -19,10 +19,6 @@ Performs Intel(R) Omni-Path Architecture-defined SMA queries and displays the re
 .SH Syntax
 .NL
 opasmaquery [-v] [-d \fIdetail\fR][-g] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR] [-o \fIotype\fR] [-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR] [hop hop ...]
-.PP
-or
-.br
-opasmaquery --help
 .SH Options
 .NL
 
@@ -30,10 +26,6 @@ opasmaquery --help
 --help 
 .NL
 Produces full help text.
-
-.TP 10
-\fBStandard Options\fR
-.NL
 
 .TP 10
 -v 
@@ -385,8 +377,9 @@ LED information.
 [-m dest\(ulport] 
 .RE
 
-.TP 10
-\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.SH -h and -p options permit a variety of selections:
 .NL
 
 .TP 10
@@ -405,22 +398,23 @@ First active port in system.
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR-p 0 
+-h \fIx\fR#8217#160;-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy \fR within system (no matter which ports are active).
+Port \fIy#8217#160;\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR-p \fIy\fR 
+-h \fIx\fR#8217#160;-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR
 
-.TP 10
-\fBotype options vary by report\fR
+.NL
+
+.SH otype Options Vary by Report
 .NL
 
 .TP 10
@@ -441,7 +435,7 @@ LID to look up in forwarding table to select which LFT or MFT block to display. 
 .TP 10
 -b \fIblock[,count]\fR 
 .NL
-Block number of either GUIDs, pkey, or RANFDB, and the number of blocks to display. Default is to show entire table.
+Block number of either GUIDs or pkey, and the number of blocks to display. Default is to show entire table.
 
 .IP
 For example:
@@ -478,51 +472,68 @@ Displays  \fIcount\fR blocks of data starting with block 0.
 .NL
 
 .PP
-opasmaquery -o nodedesc -l 6
+opasmaquery -o desc -l 6
 .br
 # get nodedesc via lid routed
+.br
+
 .br
 opasmaquery -o nodedesc 1 3
 .br
 # get nodedesc via directed route (2 dr hops)
 .br
+
+.br
 opasmaquery -o nodeinfo -l 2 3
 .br
-# get nodeinfo via a combination of lid routed and directed route (1 dr hop)
+# get nodeinfo via a combination of lid routed and # directed route (1 dr hop)
+.br
+
 .br
 opasmaquery -o portinfo
 .br
 # get local port info
 .br
+
+.br
 opasmaquery -o portinfo -l 6 -m 1
 .br
 # get port info of port 1 of lid 6
 .br
+
+.br
 opasmaquery -o pkey -l 2 3
 .br
-# get pkey table entries starting (lid routed to lid 2, then 1 dr hop to port 3
+# get pkey table entries starting (lid routed to lid 2,
 .br
-opasmaquery -o slvl -l 6
+# then 1 dr hop to port 3)
 .br
-# get slvl of CA at lid 6
+
 .br
 opasmaquery -o vlarb -l 6
 .br
 # get vlarb table entries from lid 6
 .br
+
+.br
 opasmaquery -o swinfo -l 2
 .br
 # get switch info
+.br
+
 .br
 opasmaquery -o sminfo -l 1
 .br
 # get SM info
 .br
+
+.br
 opasmaquery -o slsc -l 3
 .br
 # get sl2sc table entries from lid 3
 .br
+
+.br
 opasmaquery -o scsl -l 3
 .br
 # get sc2sl table entries from lid 3
-.br

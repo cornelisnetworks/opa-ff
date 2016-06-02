@@ -18,11 +18,7 @@ opareports
 opareports is a front end to opareport that provides many of the same options and capabilities. It can also run a report against multiple fabrics or subnets (for example, local host HFI ports). opareports can use an input file to augment the reports using additional details from the topology\(ulinput file.
 .SH Syntax
 .NL
-opareports [-t \fIportsfile\fR] [-p \fIports\fR] [opareport \fIarguments\fR] [-T \fItopology\(ulinput\fR]
-.PP
-or
-.br
-opareports --help
+opareports [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR] [opareport \fIarguments\fR]
 .SH Options 
 .NL
 
@@ -78,6 +74,10 @@ HFI  \fIx\fR, port  \fIy\fR.
 .RE
 
 .TP 10
+-T \fItopology\(ulinput\fR 
+.NL
+Name of a topology input file to use. The filename may have %P as a marker which is replaced with the hfi:port being operated on, such as 0:0 or 1:2. The default filename is specified by \fBFF\(ulTOPOLOGY\(ulFILE\fR as /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used.
+.TP 10
 opareport \fIarguments\fR 
 .NL
 Any of the other opareport arguments. The -h and -X options are not available. Note that the meaning of -p is different for opareports than opareport. When run against multiple fabrics, the -x and -o snapshot options are not available.
@@ -92,13 +92,9 @@ When run against multiple fabrics, the -F option is applied to all fabrics. See
 for more information.
 
 
-.TP 10
--T \fItopology\(ulinput\fR 
-.NL
-Name of a topology input file to use. The filename may have %P as a marker which is replaced with the hfi:port being operated on, such as 0:0 or 1:2. The default filename is specified by \fBFF\(ulTOPOLOGY\(ulFILE\fR as /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used.
 .SH Example 
 .NL
-opareports opareports -p \'1:1 2:1\'
+opareports opareports -p \[aq]1:1 2:1\[aq]
 .SH Environment Variables 
 .NL
 

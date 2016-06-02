@@ -45,9 +45,17 @@ Usage_full()
 	echo "   --help - produce full help text" >&2
 	echo "   -h/--hfi hfi              - hfi to send via, default is 1st hfi" >&2
 	echo "   -p/--port port            - port to send via, default is 1st active port" >&2
-	echo "   reason - text description of reason hosts are being diasabled," >&2
-	echo "            will be saved at end of any new lines in disabled file." >&2
-	echo "            For ports already in disabled file, this is ignored." >&2  
+	echo "   reason - text description of reason hosts are being disabled," >&2
+	echo "            will be saved in reason field of output file" >&2
+	echo  >&2
+	echo "Information about the links disabled will be written to a CSV file. By default">&2
+	echo "this file is named $CONFIG_DIR/opa/disabled:hfi:port.csv where the hfi:port">&2
+	echo "part of the file name is replaced by the HFI number and the port number being">&2
+	echo "operated on (such as 0:0 or 1:2).  This CSV file can be used as input to">&2
+	echo "opaenableports. It is of the form:" >&2
+	echo "  NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID;PortNum;NodeType;NodeDesc;Reason" >&2
+	echo "For each listed link, the switch port closer to this is the one that has been" >&2
+	echo "disabled." >&2
 	echo  >&2
 	echo "for example:" >&2
 	echo "   opadisablehosts 'bad DRAM' compute001 compute045" >&2
@@ -62,9 +70,8 @@ Usage()
 	echo "       opadisablehosts --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo  >&2
-	echo "   reason - text description of reason hosts are being diasabled," >&2
-	echo "            will be saved at end of any new lines in disabled file." >&2
-	echo "            For ports already in disabled file, this is ignored." >&2  
+	echo "   reason - text description of reason hosts are being disabled," >&2
+	echo "            will be saved in reason field of output file" >&2
 	echo >&2
 	echo "for example:" >&2
 	echo "   opadisablehosts 'bad DRAM' compute001 compute045" >&2

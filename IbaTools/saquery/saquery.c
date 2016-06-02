@@ -44,6 +44,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stl_print.h>
 #include <infiniband/umad.h>
 
+#define MAX_NUM_INPUT_ARGS 17
+
 uint8           g_IB            = 0;	// perform query in legacy InfiniBand format
 uint8           g_verbose       = 0;
 int				g_exitstatus	= 0;
@@ -120,15 +122,12 @@ struct option options[] = {
 
 void Usage_full(void)
 {
-	fprintf(stderr, "Usage: opasaquery [-v [-v] [-v]] [-I] [-h hfi] [-p port] [-o type]\n");
-	fprintf(stderr, "                   [-l lid] [-t type] [-s guid] [-n guid] [-g guid]\n");
-	fprintf(stderr, "                   [-k pkey] [-i vfIndex] [-S serviceId] [-L sl]\n");
-	fprintf(stderr, "                   [-u gid] [-m gid] [-d name]\n");
-	fprintf(stderr, "                   [-P 'guid guid'] [-G 'gid gid']\n");
-	fprintf(stderr, "                   [-a 'sguid...;dguid...'] [-A 'sgid...;dgid...']\n");
+	fprintf(stderr, "Usage: opasaquery [basic options] [SA options] -o type \n");
 	fprintf(stderr, "              or\n");
 	fprintf(stderr, "       opasaquery --help\n");
 	fprintf(stderr, "    --help - produce full help text\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Basic Options:\n");
 	fprintf(stderr, "    -v/--verbose              - verbose output. A second invocation will\n"
                     "                                activate openib debugging, a 3rd will\n"
  					"                                activate libibumad debugging.\n");
@@ -137,12 +136,14 @@ void Usage_full(void)
 	fprintf(stderr, "                                system wide port num (default is 0)\n");
 	fprintf(stderr, "    -p/--port port            - port, numbered 1..n, 0=1st active (default\n");
 	fprintf(stderr, "                                is 1st active)\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "SA Options:\n");
 	fprintf(stderr, "    -l/--lid lid              - query a specific lid\n");
 	fprintf(stderr, "    -k/--pkey pkey            - query a specific pkey\n");
 	fprintf(stderr, "    -i/--vfindex vfindex      - query a specific vfindex\n");
 	fprintf(stderr, "    -S/--serviceId serviceId  - query a specific service id\n");
 	fprintf(stderr, "    -L/--SL SL                - query by service level\n");
-	fprintf(stderr, "    -t/--type type            - query by node type\n");
+	fprintf(stderr, "    -t/--type nodetype        - query by node type\n");
 	fprintf(stderr, "    -s/--sysguid guid         - query by system image guid\n");
 	fprintf(stderr, "    -n/--nodeguid guid        - query by node guid\n");
 	fprintf(stderr, "    -g/--portguid guid        - query by port guid\n");
@@ -153,7 +154,6 @@ void Usage_full(void)
 	fprintf(stderr, "    -G/--gidpair 'gid gid'    - query by a pair of Gids\n");
 	fprintf(stderr, "    -a/--guidlist 'sguid ...;dguid ...' - query by a list of port Guids\n");
 	fprintf(stderr, "    -A/--gidlist 'sgid ...;dgid ...'    - query by a list of Gids\n");
-	fprintf(stderr, "    -o/--output type          - output type for query (default is node)\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The -h and -p options permit a variety of selections:\n");
 	fprintf(stderr, "    -h 0       - 1st active port in system (this is the default)\n");
@@ -163,16 +163,16 @@ void Usage_full(void)
 	fprintf(stderr, "    -h 0 -p y  - port y within system (irrespective of which ports are active)\n");
 	fprintf(stderr, "    -h x -p y  - HFI x, port y\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Node Types:\n");
+	fprintf(stderr, "nodetype:\n");
 	fprintf(stderr, "    fi  - fabric interface\n");
 	fprintf(stderr, "    sw  - switch\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Gids:\n");
+	fprintf(stderr, "gids:\n");
 	fprintf(stderr, "   specify 64 bit subnet and 64 bit interface id as:\n");
 	fprintf(stderr, "   	subnet:interface\n");
 	fprintf(stderr, "   such as: 0xfe80000000000000:0x00117501a0000380\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Output Types:\n");
+	fprintf(stderr, "type: (default is node)\n");
 	fprintf(stderr, "    classportinfo - classportinfo of the SA\n");
 	fprintf(stderr, "    systemguid    - list of system image guids\n");
 	fprintf(stderr, "    nodeguid      - list of node guids\n");
@@ -197,7 +197,6 @@ void Usage_full(void)
 	fprintf(stderr, "    mcmember      - list of multicast member records\n");
 	fprintf(stderr, "    inform        - list of inform info records\n");
 	fprintf(stderr, "    linfdb        - list of switch linear FDB records\n");
-	fprintf(stderr, "    ranfdb        - list of switch random FDB records\n");
 	fprintf(stderr, "    mcfdb         - list of switch multicast FDB records\n");
 	fprintf(stderr, "    trace         - list of trace records\n");
 	fprintf(stderr, "    vfinfo        - list of vFabrics\n");
@@ -214,21 +213,27 @@ void Usage_full(void)
 	fprintf(stderr ,"    cableinfo     - list of Cable Info records\n");
 	fprintf(stderr ,"    portgroup     - list of AR Port Group records\n");
 	fprintf(stderr ,"    portgroupfdb  - list of AR Port Group FWD records\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Usage examples:\n");
+	fprintf(stderr, "    opasaquery -o desc -t fi\n");
+	fprintf(stderr, "    opasaquery -o portinfo -l 2\n");
+	fprintf(stderr, "    opasaquery -o sminfo\n");
+	fprintf(stderr, "    opasaquery -o pkey\n");
+
 	exit(0);
 }
 
 void Usage(void)
 {
-	fprintf(stderr, "Usage: opasaquery [-v] [-o type] [-l lid] [-t type] [-s guid] [-n guid]\n");
-	fprintf(stderr, "                   [-k pkey] \n");
-	fprintf(stderr, "                   [-g guid] [-u gid] [-m gid] [-d name]\n");
+	fprintf(stderr, "Usage: opasaquery [-v] [-o type] [-l lid] [-t nodetype] [-s guid] [-n guid]\n");
+	fprintf(stderr, "                  [-k pkey] [-g guid] [-u gid] [-m gid] [-d name]\n");
 	fprintf(stderr, "              or\n");
 	fprintf(stderr, "       opasaquery --help\n");
 	fprintf(stderr, "    --help - produce full help text\n");
 	fprintf(stderr, "    -v/--verbose              - verbose output\n");
 	fprintf(stderr, "    -l/--lid lid              - query a specific lid\n");
 	fprintf(stderr, "    -k/--pkey pkey            - query a specific pkey\n");
-	fprintf(stderr, "    -t/--type type            - query by node type\n");
+	fprintf(stderr, "    -t/--type nodetype        - query by node type\n");
 	fprintf(stderr, "    -s/--sysguid guid         - query by system image guid\n");
 	fprintf(stderr, "    -n/--nodeguid guid        - query by node guid\n");
 	fprintf(stderr, "    -g/--portguid guid        - query by port guid\n");
@@ -236,16 +241,16 @@ void Usage(void)
 	fprintf(stderr, "    -d/--desc name            - query by node name/description\n");
 	fprintf(stderr, "    -o/--output type          - output type for query (default is node)\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Node Types:\n");
+	fprintf(stderr, "nodetype:\n");
 	fprintf(stderr, "    fi  - fabric interface\n");
 	fprintf(stderr, "    sw  - switch\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Gids:\n");
+	fprintf(stderr, "gids:\n");
 	fprintf(stderr, "   specify 64 bit subnet and 64 bit interface id as:\n");
 	fprintf(stderr, "   	subnet:interface\n");
 	fprintf(stderr, "   such as: 0xfe80000000000000:0x00117501a0000380\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Output Types (abridged):\n");
+	fprintf(stderr, "Output types (abridged):\n");
 	fprintf(stderr, "    systemguid  - list of system image guids\n");
 	fprintf(stderr, "    nodeguid    - list of node guids\n");
 	fprintf(stderr, "    portguid    - list of port guids\n");
@@ -262,6 +267,11 @@ void Usage(void)
 	fprintf(stderr, "    vfinfocsv   - list of vFabrics in CSV format\n");
 	fprintf(stderr, "    vfinfocsv2  - list of vFabrics in CSV format\n");
 	fprintf(stderr, "    bfrctrl     - list of buffer control tables\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Usage examples:\n");
+	fprintf(stderr, "    opasaquery -o desc -t fi\n");
+	fprintf(stderr, "    opasaquery -o portinfo -l 2\n");
+	fprintf(stderr, "    opasaquery -o sminfo\n");
 	exit(2);
 }
 
@@ -339,66 +349,92 @@ void multiInputCheck(int inputType) {
 	fprintf(stderr, "opasaquery: multiple selection criteria not supported, ignoring %s\n", typestr);
 }
 
+
+typedef struct InputFlags {
+	QUERY_INPUT_TYPE flags[MAX_NUM_INPUT_ARGS];
+} InputFlags_t;
+//last element must be zero
+InputFlags_t SystemGuidInput= {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
+		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t NodeGuidInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
+		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t PortGuidInput =  {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
+		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t LidInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
+		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t DescInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
+		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t NodeInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
+		InputTypeNodeDesc,0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t PathInput = {{InputTypeLid,InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeNodeDesc,InputTypePortGuidPair,
+		InputTypeGidPair,InputTypeServiceId,InputTypeSL,InputTypePortGuidList,InputTypeGidList,0,0,0,0,0,0,}};
+InputFlags_t ServiceInput = {{InputTypeLid,InputTypePortGuid,InputTypePortGid,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t McmemberInput = {{InputTypeLid, InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeMcGid,0,0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t InformInput = {{InputTypePortGuid,InputTypePortGid,InputTypeLid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,}};
+InputFlags_t TraceInput =  {{InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,InputTypeGidPair,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t VfinfoInput = {{InputTypePKey,InputTypeIndex,InputTypeMcGid,InputTypeServiceId,InputTypeSL,InputTypeNodeDesc,0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t MiscInput = {{InputTypeLid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+
 typedef struct OutputStringMap {
 	char *string;
 	QUERY_RESULT_TYPE stl_type;
 	QUERY_RESULT_TYPE ib_type;
+	InputFlags_t *valid_input_types;
 	int csv;
 } OutputStringMap_t;
 
 #define NO_OUTPUT_TYPE 0xffff
 OutputStringMap_t OutputTypeTable[] = {
-//--input string--------StlOutputType-----------------------IbOutputType--------csv-//
-	{"systemguid",      NO_OUTPUT_TYPE,                     OutputTypeSystemImageGuid, 0},
-	{"classportinfo",   OutputTypeStlClassPortInfo,         OutputTypeClassPortInfo, 0},
-	{"nodeguid",        NO_OUTPUT_TYPE,                     OutputTypeNodeGuid, 0},
-	{"portguid",        OutputTypeStlPortGuid,              OutputTypePortGuid, 0},
-	{"lid",             OutputTypeStlLid,                   NO_OUTPUT_TYPE, 0},
-	{"desc",            OutputTypeStlNodeDesc,              OutputTypeNodeDesc, 0},
-	{"path",            NO_OUTPUT_TYPE,                     OutputTypePathRecord, 0},
-	{"node",            OutputTypeStlNodeRecord,            OutputTypeNodeRecord, 0},
-	{"portinfo",        OutputTypeStlPortInfoRecord,        OutputTypePortInfoRecord, 0},
-	{"sminfo",          OutputTypeStlSMInfoRecord,          OutputTypeSMInfoRecord, 0},
-	{"link",            OutputTypeStlLinkRecord,            OutputTypeLinkRecord, 0},
+//--input string--------StlOutputType-----------------------IbOutputType------------------InputFlags----csv-//
+	{"systemguid",      NO_OUTPUT_TYPE,                     OutputTypeSystemImageGuid,	&SystemGuidInput,0},
+	{"classportinfo",   OutputTypeStlClassPortInfo,         OutputTypeClassPortInfo, 	NULL,			0},
+	{"nodeguid",        NO_OUTPUT_TYPE,                     OutputTypeNodeGuid, 		&NodeGuidInput,	0},
+	{"portguid",        OutputTypeStlPortGuid,              OutputTypePortGuid, 		&PortGuidInput,	0},
+	{"lid",             OutputTypeStlLid,                   NO_OUTPUT_TYPE, 			&LidInput,		0},
+	{"desc",            OutputTypeStlNodeDesc,              OutputTypeNodeDesc, 		&DescInput,		0},
+	{"path",            NO_OUTPUT_TYPE,                     OutputTypePathRecord, 		&PathInput,		0},
+	{"node",            OutputTypeStlNodeRecord,            OutputTypeNodeRecord, 		&NodeInput,		0},
+	{"portinfo",        OutputTypeStlPortInfoRecord,        OutputTypePortInfoRecord,	&MiscInput,		0},
+	{"sminfo",          OutputTypeStlSMInfoRecord,          OutputTypeSMInfoRecord, 	NULL,			0},
+	{"link",            OutputTypeStlLinkRecord,            OutputTypeLinkRecord, 		NULL,		0},
 #ifndef NO_STL_SERVICE_OUTPUT       // Don't output STL Service if defined
-	{"service",         OutputTypeStlServiceRecord,         OutputTypeServiceRecord, 0},
+	{"service",         OutputTypeStlServiceRecord,         OutputTypeServiceRecord, 	&ServiceInput,	0},
 #else
-	{"service",         OutputTypeServiceRecord,            OutputTypeServiceRecord, 0},
+	{"service",         OutputTypeServiceRecord,         	OutputTypeServiceRecord, 	&ServiceInput,	0},
 #endif
 #ifndef NO_STL_MCMEMBER_OUTPUT      // Don't output STL McMember (use IB format) if defined
-	{"mcmember",        OutputTypeStlMcMemberRecord,        OutputTypeMcMemberRecord, 0},
+	{"mcmember",        OutputTypeStlMcMemberRecord,        OutputTypeMcMemberRecord, 	&McmemberInput,	0},
 #else
-    {"mcmember",        OutputTypeMcMemberRecord,           OutputTypeMcMemberRecord, 0},
+	{"mcmember",        OutputTypeMcMemberRecord,        	OutputTypeMcMemberRecord, 	&McmemberInput,	0},
 #endif
-	{"inform",          OutputTypeStlInformInfoRecord,      OutputTypeInformInfoRecord, 0},
-	{"trace",           OutputTypeStlTraceRecord,           NO_OUTPUT_TYPE, 0},
-	{"scsc",            OutputTypeStlSCSCTableRecord,       NO_OUTPUT_TYPE, 0},
-	{"slsc",            OutputTypeStlSLSCTableRecord,       NO_OUTPUT_TYPE, 0},
-	{"scsl",            OutputTypeStlSCSLTableRecord,       NO_OUTPUT_TYPE, 0},
-	{"scvlt",           OutputTypeStlSCVLtTableRecord,      NO_OUTPUT_TYPE, 0},
-	{"scvlnt",          OutputTypeStlSCVLntTableRecord,     NO_OUTPUT_TYPE, 0},
-	{"swinfo",          OutputTypeStlSwitchInfoRecord,      OutputTypeSwitchInfoRecord, 0},
-	{"linfdb",          OutputTypeStlLinearFDBRecord,       NO_OUTPUT_TYPE, 0},
-	{"ranfdb",          NO_OUTPUT_TYPE,                     OutputTypeRandomFDBRecord, 0},
-	{"mcfdb",           OutputTypeStlMCastFDBRecord,        NO_OUTPUT_TYPE, 0},
-	{"vlarb",           OutputTypeStlVLArbTableRecord,      NO_OUTPUT_TYPE, 0},
-	{"pkey",            OutputTypeStlPKeyTableRecord,       NO_OUTPUT_TYPE, 0},
-	{"vfinfo",          OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE, 0},
-	{"vfinfocsv",       OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE, 1},
-	{"vfinfocsv2",      OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE, 2},
-	{"fabricinfo",      OutputTypeStlFabricInfoRecord,      NO_OUTPUT_TYPE, 0},
-	{"quarantine",      OutputTypeStlQuarantinedNodeRecord, NO_OUTPUT_TYPE, 0},
-	{"conginfo",        OutputTypeStlCongInfoRecord,        NO_OUTPUT_TYPE, 0},
-	{"swcongset",       OutputTypeStlSwitchCongRecord,      NO_OUTPUT_TYPE, 0},
-	{"swportcong",      OutputTypeStlSwitchPortCongRecord,  NO_OUTPUT_TYPE, 0},
-	{"hficongset",      OutputTypeStlHFICongRecord,         NO_OUTPUT_TYPE, 0},
-	{"hficongcon",      OutputTypeStlHFICongCtrlRecord,     NO_OUTPUT_TYPE, 0},
-	{"bfrctrl",         OutputTypeStlBufCtrlTabRecord,      NO_OUTPUT_TYPE, 0},
-	{"cableinfo",       OutputTypeStlCableInfoRecord,       NO_OUTPUT_TYPE, 0},
-	{"portgroup",       OutputTypeStlPortGroupRecord,       NO_OUTPUT_TYPE, 0},
-	{"portgroupfdb",    OutputTypeStlPortGroupFwdRecord,    NO_OUTPUT_TYPE, 0},
+	{"inform",          OutputTypeStlInformInfoRecord,      OutputTypeInformInfoRecord, &InformInput,	0},
+	{"trace",           OutputTypeStlTraceRecord,           NO_OUTPUT_TYPE,		&TraceInput,	0},
+	{"scsc",            OutputTypeStlSCSCTableRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"slsc",            OutputTypeStlSLSCTableRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"scsl",            OutputTypeStlSCSLTableRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"scvlt",           OutputTypeStlSCVLtTableRecord,      NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"scvlnt",          OutputTypeStlSCVLntTableRecord,     NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"swinfo",          OutputTypeStlSwitchInfoRecord,      OutputTypeSwitchInfoRecord, &MiscInput,	0},
+	{"linfdb",          OutputTypeStlLinearFDBRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"mcfdb",           OutputTypeStlMCastFDBRecord,        NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"vlarb",           OutputTypeStlVLArbTableRecord,      NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"pkey",            OutputTypeStlPKeyTableRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
+	{"vfinfo",          OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE,		&VfinfoInput,	0},
+	{"vfinfocsv",       OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE,		&VfinfoInput,	1},
+	{"vfinfocsv2",      OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE,		&VfinfoInput,	2},
+	{"fabricinfo",      OutputTypeStlFabricInfoRecord,      NO_OUTPUT_TYPE,		NULL,	0},
+	{"quarantine",      OutputTypeStlQuarantinedNodeRecord, NO_OUTPUT_TYPE,		NULL,	0},
+	{"conginfo",        OutputTypeStlCongInfoRecord,        NO_OUTPUT_TYPE,		&MiscInput,	0},
+	{"swcongset",       OutputTypeStlSwitchCongRecord,      NO_OUTPUT_TYPE,		&MiscInput,	0},
+	{"swportcong",      OutputTypeStlSwitchPortCongRecord,  NO_OUTPUT_TYPE,		&MiscInput,	0},
+	{"hficongset",      OutputTypeStlHFICongRecord,         NO_OUTPUT_TYPE,		&MiscInput,	0},
+	{"hficongcon",      OutputTypeStlHFICongCtrlRecord,     NO_OUTPUT_TYPE,		&MiscInput,	0},
+	{"bfrctrl",         OutputTypeStlBufCtrlTabRecord,      NO_OUTPUT_TYPE,		&MiscInput,	0},
+	{"cableinfo",       OutputTypeStlCableInfoRecord,       NO_OUTPUT_TYPE,		&MiscInput,	0},
+	{"portgroup",       OutputTypeStlPortGroupRecord,       NO_OUTPUT_TYPE,		&MiscInput,	0},
+	{"portgroupfdb",    OutputTypeStlPortGroupFwdRecord,    NO_OUTPUT_TYPE,		&MiscInput,	0},
 	//Last entry must be null, insert new attributes above here!
-	{NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, 0}
+	{NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, NULL, 0}
 };
 
 OutputStringMap_t *GetOutputTypeMap(const char* name) {
@@ -442,6 +478,79 @@ QUERY_RESULT_TYPE GetOutputType(OutputStringMap_t *in)
 	return res;
 }
 
+typedef struct InputStringMap {
+	char *string;
+	QUERY_INPUT_TYPE in_type;
+} InputStringMap_t;
+
+InputStringMap_t InputStrTable[] = {
+		{ "No Input", InputTypeNoInput },
+		{ "pkey", InputTypePKey },
+        { "index", InputTypeIndex},
+        { "serviceId", InputTypeServiceId },
+        { "lid", InputTypeLid },
+        { "SL", InputTypeSL },
+        { "NodeType", InputTypeNodeType },
+        { "SystemImageGuid", InputTypeSystemImageGuid },
+        { "NodeGuid", InputTypeNodeGuid },
+        { "PortGuid", InputTypePortGuid },
+        { "PortGid", InputTypePortGid },
+        { "McGid", InputTypeMcGid },
+        { "NodeDesc", InputTypeNodeDesc },
+        { "PortGuidPair", InputTypePortGuidPair },
+        { "GidPair", InputTypeGidPair },
+        { "PortGuidList", InputTypePortGuidList },
+        { "GidList", InputTypeGidList },
+		//Last entry must be null, insert new attributes above here!
+		{NULL, 0}
+};
+
+FSTATUS CheckInputOutput(QUERY *pQuery, OutputStringMap_t *in) {
+
+	int i=0;
+	int j=0;
+	boolean found;
+
+	if ( pQuery->InputType == InputTypeNoInput)
+		return FSUCCESS;
+
+	if (in->valid_input_types != NULL) {
+		while ( (j < MAX_NUM_INPUT_ARGS) && (in->valid_input_types->flags[j] != 0) ){
+			if (pQuery->InputType == in->valid_input_types->flags[j])
+					return FSUCCESS;
+			else j++;
+			} //end while
+		}
+		else {
+			fprintf(stderr, "opasaquery: This option (%s) does not require input. ",in->string);
+			fprintf(stderr, "Ignoring input argument\n");
+			pQuery->InputType = InputTypeNoInput;
+			return FSUCCESS;
+		}
+// output not found for a given input... then...
+	fprintf(stderr, "opasaquery: Invalid input-output pair\n");
+	j=0;
+	fprintf(stderr, "opasaquery: for the selected output option (%s), the following \n",in->string);
+	fprintf(stderr, "input types are valid: ");
+	while ((j < MAX_NUM_INPUT_ARGS) && (in->valid_input_types->flags[j] != 0)){
+			// look for the string corresponding to the flag
+		i=0;
+		found=FALSE;
+		while ((InputStrTable[i].string !=NULL) && !found){
+			if (in->valid_input_types->flags[j] == InputStrTable[i].in_type) {
+				fprintf(stderr,"%s ",InputStrTable[i].string);
+				found = TRUE;
+			}
+			else
+				i++;
+			}
+		j++;
+	}
+
+	fprintf(stderr, "\n");
+	return FERROR;
+
+}
 
 int main(int argc, char ** argv)
 {
@@ -674,7 +783,6 @@ int main(int argc, char ** argv)
 					}
 				}
                 break;
-
             case 'o':	// select output record desired
 				outputTypeMap = GetOutputTypeMap(optarg);
                 break;
@@ -689,9 +797,12 @@ int main(int argc, char ** argv)
 	{
 		Usage();
 	}
-
-	if (NULL != outputTypeMap)
-		query.OutputType = GetOutputType(outputTypeMap); 
+	if (NULL != outputTypeMap){
+		if  (CheckInputOutput(&query, outputTypeMap )!= 0)
+			Usage();
+		else
+			query.OutputType = GetOutputType(outputTypeMap); 
+		}
 
 	PrintDestInitFile(&g_dest, stdout);
 	if (g_verbose)
@@ -699,10 +810,11 @@ int main(int argc, char ** argv)
 	else
 		PrintDestInitNone(&g_dbgDest);
 
-	if(oib_open_port_by_num(&sa_oib_session,hfi,port) != 0)
-	{
-		fprintf(stderr, "opasaquery: Could not open oib session.\n");
-		return FERROR;
+	FSTATUS status;
+	status = oib_open_port_by_num(&sa_oib_session,hfi,port);
+	if (status != 0) {
+		fprintf(stderr, "opasaquery: Failed to open port hfi %d:%d: %s\n", hfi, port, strerror(status));
+		exit(1);
 	}
 
 	// perform the query and display output

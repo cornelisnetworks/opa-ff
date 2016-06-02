@@ -18,11 +18,7 @@ opahostadmin
 Performs a number of multi-step host initialization and verification operations, including upgrading software or firmware, rebooting hosts, and other operations. In general, operations performed by opahostadmin involve a login to one or more host systems.
 .SH Syntax 
 .NL
-opahostadmin [-c] [-i \fIipoib\(ulsuffix\fR] [-f \fIhostfile\fR] [-h \'\fIhosts\fR\'] [-r \fIrelease\fR] [-I \fIinstall\(uloptions\fR] [-U \fIupgrade\(uloptions\fR] [-d \fIdir\fR] [-T \fIproduct\fR] [-P \fIpackages\fR] [-m \fInetmask\fR] [-S] \fIoperation\fR...
-.PP
-or
-.br
-opahostadmin --help
+opahostadmin [-c] [-i \fIipoib\(ulsuffix\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r \fIrelease\fR] [-I \fIinstall\(uloptions\fR] [-U \fIupgrade\(uloptions\fR] [-d \fIdir\fR] [-T \fIproduct\fR] [-P \fIpackages\fR] [-m \fInetmask\fR] [-S] \fIoperation\fR...
 .SH Options 
 .NL
 
@@ -77,7 +73,7 @@ Software upgrade options.
 Product type to install. Default = IntelOPA-Basic.RHEL7-x86\(ul64 
 
 .IP
-Other options include: IntelOPA-Basic. \fI<distro>\fR, IntelOPA-IFS. \fI<distro>\fR where  \fI<distro>\fR is the distribution and CPU.
+Other options include: IntelOPA-Basic. \fI#8217lt;distro>\fR, IntelOPA-IFS. \fI<distro>\fR where  \fI<distro>\fR is the distribution and CPU.
 .TP 10
 -P \fIpackages\fR 
 .NL
@@ -176,45 +172,26 @@ opahostadmin -c reboot
 .br
 opahostadmin upgrade
 .br
-opahostadmin -h \'elrond arwen\' reboot
+opahostadmin -h \[aq]elrond arwen\[aq] reboot
 .br
-HOSTS=\'elrond arwen\' opahostadmin reboot
+HOSTS=\[aq]elrond arwen\[aq] opahostadmin reboot
 .SH Details 
 .NL
 
 .PP
 opahostadmin provides detailed logging of its results. During each run, the following files are produced:
-.TP 10
-test.res 
-.NL
-Appended with summary results of run.
-
-.TP 10
-test.log 
-.NL
-Appended with detailed results of run.
-
-.TP 10
-save\(ultmp/ 
-.NL
-Contains a directory per failed test with detailed logs.
-
-.TP 10
-test\(ultmp*/ 
-.NL
-Intermediate result files while test is running.
+.IP \(bu
+test.res : Appended with summary results of run.
+.IP \(bu
+test.log : Appended with detailed results of run.
+.IP \(bu
+save\(ultmp/ : Contains a directory per failed test with detailed logs.
+.IP \(bu
+test\(ultmp*/ : Intermediate result files while test is running.
+.PP
 The -c option removes all log files.
 .PP
-Results from opahostadmin are grouped into
-\fItest suites\fR
-
-,
-\fItest cases\fR
-
-, and
-\fItest items\fR
-
-. A given run of opahostadmin represents a single test suite. Within a test suite, multiple test cases occur; typically one test case per host being operated on. Some of the more complex operations may have multiple test items per test case. Each test item represents a major step in the overall test case.
+Results from opahostadmin are grouped into test suites, test cases, and test items. A given run of opahostadmin represents a single test suite. Within a test suite, multiple test cases occur; typically one test case per host being operated on. Some of the more complex operations may have multiple test items per test case. Each test item represents a major step in the overall test case.
 .PP
 Each opahostadmin run appends to test.res and test.log, and creates temporary files in test\(ultmp$PID in the current directory. test.res provides an overall summary of operations performed and their results. The same information is also displayed while opahostadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files which reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opahostadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opahostadmin.
 .PP
@@ -295,7 +272,7 @@ Reboots the given hosts and ensures they go down and come back up by pinging the
 .TP 10
 sacache 
 .NL
-Verifies the given hosts can properly communicate with the SA and any cached SA data that is up to date. To run this command, Intel(R) Omni-Path Fabric software must be installed and running on the given hosts. The subnet manager and switches must be up. If this test fails: opacmdall \'opasaquery -o desc\' can be run against any problem hosts.
+Verifies the given hosts can properly communicate with the SA and any cached SA data that is up to date. To run this command, Intel(R) Omni-Path Fabric software must be installed and running on the given hosts. The subnet manager and switches must be up. If this test fails: opacmdall \[aq]opasaquery -o desc\[aq] can be run against any problem hosts.
 
 .TP 10
 .BR
@@ -339,7 +316,7 @@ Enhanced version of mpiperf that verifies MPI performance. Can be used to verify
 .IP
 By default, concurrent mode is used to quickly analyze the fabric and host performance. Pairs that have 20% less bandwidth or 50% more latency than the average pair are reported as failures.
 .IP
-The tool can be run in a<term xmlns:ditaarch="http://dita.oasis-open.org/architecture/2005/" ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\' topic/image \') and not(parent::*/@conref)]" class="- topic/term ">sequential</term>or a<term xmlns:ditaarch="http://dita.oasis-open.org/architecture/2005/" ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\' topic/image \') and not(parent::*/@conref)]" class="- topic/term ">concurrent</term>mode. Sequential mode runs each host against a reference host. By default, the reference host is selected based on the best performance from a quick test of the first 40 hosts. In concurrent mode, hosts are paired up and all pairs are run concurrently. Since there may be fabric contention during such a run, any poor performing pairs are then rerun sequentially against the reference host.
+The tool can be run in a sequential or a concurrent mode. Sequential mode runs each host against a reference host. By default, the reference host is selected based on the best performance from a quick test of the first 40 hosts. In concurrent mode, hosts are paired up and all pairs are run concurrently. Since there may be fabric contention during such a run, any poor performing pairs are then rerun sequentially against the reference host.
 .IP
 Concurrent mode runs the tests in the shortest amount of time, however, the results could be slightly less accurate due to switch contention. In heavily oversubscribed fabric designs, if concurrent mode is producing unexpectedly low performance, try sequential mode.
 .TP 10
@@ -362,7 +339,11 @@ For more details about BIOS settings, consult the documentation from the server 
 .IP
 The deviation application supports a number of parameters which allow for more precise control over the mode, benchmark and pass/fail criteria. The parameters to use can be selected using the \fBFF\(ulDEVIATION\(ulARGS\fR configuration parameter in opafastfabric.conf 
 .IP
-Available parameters for deviation application:[-bwtol bwtol] [-bwdelta MBs] [-bwthres MBs]
+Available parameters for deviation application:
+.IP
+
+.br
+[-bwtol bwtol] [-bwdelta MBs] [-bwthres MBs]
 .br
 [-bwloop count] [-bwsize size] [-lattol latol]
 .br
@@ -371,6 +352,9 @@ Available parameters for deviation application:[-bwtol bwtol] [-bwdelta MBs] [-b
 [-latsize size][-c] [-b] [-v] [-vv]
 .br
 [-h reference\(ulhost]
+
+.br
+
 .RS
 .TP 10
 

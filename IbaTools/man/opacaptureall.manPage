@@ -16,31 +16,23 @@ opacaptureall
 
 \fB(Chassis and Host)\fR
 Captures supporting information for a problem report from all hosts or Intel(R) Omni-Path Chassis and uploads to this system.
-.IP \(bu
+.PP
 
-\fBFor Hosts\fR
-
+\fBFor Hosts :\fR
 When a host opacaptureall is performed, opacapture is run to create the specified capture file within ~root on each host (with the .tgz suffix added as needed). The files are uploaded and unpacked into a matching directory name within upload\(uldir/\fIhostname\fR/ on the local system. The default file name is hostcapture.
+.PP
 
-.IP \(bu
-
-\fBFor Chassis\fR
-
+\fBFor Chassis:\fR
 When a chassis opacaptureall is performed, opacapture is run on each chassis and its output is saved to upload\(uldir/\fIchassisname\fR/\fIfile\fR on the local system. The default file name is chassiscapture.
-
 .PP
 For both host and chassis capture, the uploaded captures are combined into a .tgz file with the file name specified and the suffix .all.tgz added.
 .SH Syntax
 .NL
 opacaptureall [-C] [-p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR]
 .br
-[-h \'\fIhosts\fR\']
+[-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-H \'\fIchassis\fR\'] [-t \fIportsfile\fR] [-d \fIupload\(uldir\fR] [-S] [-D \fIdetail\(ullevel\fR] [ \fIfile\fR]
-.PP
-or
-.br
-opacaptureall --help
+[-H \[aq]\fIchassis\fR\[aq]] [-t \fIportsfile\fR] [-d \fIupload\(uldir\fR] [-S] [-D \fIdetail\(ullevel\fR] [ \fIfile\fR]
 .SH Options
 .NL
 
@@ -104,7 +96,6 @@ Level of detail of the capture passed to host opacapture. (Only used for host ca
 .sp
 1 
 Local. Obtains local information from each host.
-
 .RE
 
 .RS
@@ -143,9 +134,9 @@ Analysis. In addition to \fIFabric+FDB\fR, also obtains opaallanalysis results. 
 .B NOTE:
 Detail levels 2-4 can be used when fabric operational problems occur. If the problem is node-specific, detail level 1 should be sufficient. Detail levels 2-4 require an operational Intel(R) Omni-Path Fabric Suite Fabric Manager. Typically your support representative requests a given detail level. If a given detail level takes excessively long or fails to be gathered, try a lower detail level.
 
-
-.IP
+.PP
 For detail levels 2-4, the additional information is only gathered on the node running the opacaptureall command. The information is gathered for every fabric specified in the /etc/sysconfig/opa/ports file.
+
 .TP 10
  \fIfile\fR 
 .NL
@@ -154,38 +145,54 @@ Name for capture file. The suffix .tgz is appended if it is not specified in the
 .SH Examples 
 .NL
 
-.PP
-
-\fBHost Capture Examples\fR
-opacaptureall
-.PP
-Creates a hostcapture directory in upload\(uldir/\fIhostname\fR/ for each host in /etc/sysconfig/opa/hosts file, then creates hostcapture.all.tgz.
-.br
-opacaptureall mycapture
-.PP
-Creates a mycapture directory in upload\(uldir/\fIhostname\fR/ for each host in /etc/sysconfig/opa/hosts file, then creates mycapture.all.tgz.
-.br
-opacaptureall -h \'arwen elrond\' 030127capture
-.PP
-Gets the list of hosts from arwen elrond file and creates 030127capture.tgz file.
-.PP
-
-\fBChassis Capture Examples\fR
-
-.br
-opacaptureall -C
-.PP
-Creates a chassiscapture file in upload\(uldir/\fIchassisname\fR/ for each chassis in /etc/sysconfig/opa/chassis file, then creates chassiscapture.all.tgz.
-.br
-opacaptureall -C mycapture
-.PP
-Creates a mycapture.tgz file in upload\(uldir/\fIchassisname\fR/ for each chassis in /etc/sysconfig/opa/chassis file, then creates mycapture.all.tgz.
-.br
-opacaptureall -C -H \'chassis1 chassis2\' 030127capture
-.PP
-Captures from chassis1 and chassis2, and creates 030127capture.tgz file.
 .NL
 
+.SH Host Capture Examples
+.NL
+opacaptureall
+.br
+# Creates a hostcapture directory in upload\(uldir/hostname/ for each host in
+.br
+/etc/sysconfig/opa/hosts file, then creates hostcapture.all.tgz.
+.br
+
+.br
+opacaptureall mycapture
+.br
+# Creates a mycapture directory in upload\(uldir/hostname/ for each host in
+.br
+/etc/sysconfig/opa/hosts file, then creates mycapture.all.tgz.
+.br
+
+.br
+opacaptureall -h #8217#180;arwen elrond\(aa 030127capture
+.br
+# Gets the list of hosts from arwen elrond file and creates 030127cap#8217#8208;
+.br
+ture.tgz file.
+.NL
+
+.SH Chassis Capture Examples
+.NL
+opacaptureall -C
+.br
+# Creates a chassiscapture file in upload\(uldir/chassisname/ for each chassis
+.br
+in /etc/sysconfig/opa/chassis file, then creates chassiscapture.all.tgz.
+.br
+
+.br
+opacaptureall -C mycapture
+.br
+# Creates a mycapture.tgz file in upload\(uldir/chassisname/ for each chassis
+.br
+in /etc/sysconfig/opa/chassis file, then creates mycapture.all.tgz.
+.br
+
+.br
+opacaptureall -C -H #8217#180;chassis1 chassis2\(aa 030127capture
+.br
+# Captures from chassis1 and chassis2, and creates 030127capture.tgz file.
 .SH Environment Variables
 .NL
 

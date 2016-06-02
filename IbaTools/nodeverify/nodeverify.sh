@@ -218,10 +218,7 @@ function skip()
 	exit 0
 }
 
-workdir="${workdir:=/var/tmp}"
-mkdir -p "${workdir}" || fail "Can't mkdir ${workdir}"
-cd "${workdir}" || fail "Can't cd ${workdir}"
-outdir="$workdir/$(mktemp -d test.XXXXXXXXXX)"
+outdir="$(mktemp --tmpdir -d hostverify.XXXXXXXXXX)" || fail "Cannot mktemp --tmpdir -d hostverify.XXXXXXXXXX"
 
 # verify basic PCIe configuration
 test_pcicfg()
@@ -236,12 +233,12 @@ test_pcicfg()
 	lspci="${lspci:-/sbin/lspci}"
 	[ ! -x "${lspci}" ] && fail "Can't find lspci"
 
-	# get Storm Lake Intel stand-alone WFR HFI
+	# get OmniPath Intel stand-alone WFR HFI
 	set -x
 	"${lspci}" -n -d 0x8086:0x24f0 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
 	set +x
 	[ -s pcicfg.stderr ] && fail "Error during run of lspci: $(cat pcicfg.stderr)"
-	# also get Storm Lake Intel integrated WFR HFI
+	# also get OmniPath Intel integrated WFR HFI
 	set -x
 	"${lspci}" -n -d 0x8086:0x24f1 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
 	set +x
@@ -249,7 +246,7 @@ test_pcicfg()
 
 
 	set -x
-	pci_id=$(grep -o -m1 "24f[01]" pcicfg.stdout)
+	pci_id=$(grep -o -m1 "24f[01]|HFI" pcicfg.stdout)
 	"${lspci}" -vvv -d 0x8086:$pci_id 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
 	set +x
 
@@ -299,12 +296,12 @@ test_pcispeed()
 	lspci="${lspci:-/sbin/lspci}"
 	[ ! -x "${lspci}" ] && fail "Can't find lspci"
 
-	# get Storm Lake Intel stand-alone WFR HFI
+	# get OmniPath Intel stand-alone WFR HFI
 	set -x
 	"${lspci}" -n -d 0x8086:0x24f0 2>pcispeed.stderr | tee -a pcispeed.stdout || fail "Error running lspci"
 	set +x
 	[ -s pcispeed.stderr ] && fail "Error during run of lspci: $(cat pcispeed.stderr)"
-	# also get Storm Lake Intel integrated WFR HFI
+	# also get OmniPath Intel integrated WFR HFI
 	set -x
 	"${lspci}" -n -d 0x8086:0x24f1 2>pcispeed.stderr | tee -a pcispeed.stdout || fail "Error running lspci"
 	set +x
@@ -487,18 +484,18 @@ test_hfi_pkt()
 	[ ! -x "${lspci}" ] && fail "Can't find lspci"
 	[ ! -x "${setpci}" ] && fail "Can't find setpci"
 
-	# get Storm Lake Intel stand-alone WFR HFI
+	# get OmniPath Intel stand-alone WFR HFI
 	set -x
 	"${lspci}" -n -d 0x8086:0x24f0 2>pciinfo.stderr | tee -a pciinfo.stdout || fail "Error running lspci"
 	set +x
 	[ -s pciinfo.stderr ] && fail "Error during run of lspci: $(cat pciinfo.stderr)"
-	# also get Storm Lake Intel integrated WFR HFI
+	# also get OmniPath Intel integrated WFR HFI
 	set -x
 	"${lspci}" -n -d 0x8086:0x24f1 2>pciinfo.stderr | tee -a pciinfo.stdout || fail "Error running lspci"
 	set +x
 	[ -s pciinfo.stderr ] && fail "Error during run of lspci: $(cat pciinfo.stderr)"
 
-	pci_id=$(grep -o -m1 "24f[01]" pciinfo.stdout)
+	pci_id=$(egrep -o -m1 "24f[01]|HFI" pciinfo.stdout)
 	if [ $HFI_COUNT -gt 0 ]
 	then
 		[ -z "$pci_id" ] && fail "No Intel HFI found"

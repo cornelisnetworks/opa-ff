@@ -15,4 +15,6 @@ opagetvf\(ulenv
 .PP
 Provides opagetvf\(ulfunc and opagetvf2\(ulfunc shell functions that query the parameters of a vFabric. Also exports values that indicate the PKEY, SL, MTU, and RATE associated with the vFabric. This script is designed to be sourced into bash scripts.
 .PP
-A usage example is provided in /opt/opa/src/mpi\(ulapps/ofed.openmpi.params 
+A usage example is provided in:
+.PP
+/opt/opa/src/mpi\(ulapps/ofed.openmpi.params 

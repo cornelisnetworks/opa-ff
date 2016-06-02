@@ -30,9 +30,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
   \file dsap_hca.h
  
-  $Author: mwheinz $
-  $Revision: 1.2 $
-  $Date: 2015/01/22 18:07:38 $
+  $Revision: 1.3 $
+  $Date: 2016/04/06 10:49:28 $
 
   \brief Routines for registering for notifications from the SM.
 */

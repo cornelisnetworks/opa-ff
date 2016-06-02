@@ -40,7 +40,7 @@ DS_SUBPROJECTS	=
 # name of executable or downloadable image
 EXECUTABLE		= # $(EXE_SUFFIX)
 # list of sub directories to build
-DIRS=opaswcommon opaswconfigure opaswfwupdate opaswfwverify opaswfwconfigure opaswping opaswquery opaswreset opaswscript
+DIRS=opaswcommon opaswconfigure opaswfwupdate opaswfwverify opaswfwconfigure opaswping opaswquery opaswreset 
 ifeq "$(BUILD_XEDGE_TEST)" "YES"
 DIRS+=opaswtest
 endif

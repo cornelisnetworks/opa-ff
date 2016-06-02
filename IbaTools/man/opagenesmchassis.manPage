@@ -17,10 +17,6 @@ Generates a list of chassis IPv4 and IPv6 addresses and/or TCP names where the E
 .SH Syntax 
 .NL
 opagenesmchassis [-u user] [-S] [-t \fIportsfile\fR] [-p \fIports\fR]
-.PP
-or
-.br
-opagenesmchassis --help
 .SH Options 
 .NL
 
@@ -83,7 +79,7 @@ HFI  \fIx\fR, port  \fIy\fR.
 
 .RE
 
-.SH Environment 
+.SH Environment Variables
 .NL
 
 .TP 10
@@ -102,7 +98,7 @@ File containing list of ports, used in absence of -t and -p.
 .NL
 opagenesmchassis
 .br
-opagenesmchassis -S -p \'1:1 2:1\'
+opagenesmchassis -S -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .PP
 Alternatively, while editing the file, use a vi command to include the output such as:
 .br

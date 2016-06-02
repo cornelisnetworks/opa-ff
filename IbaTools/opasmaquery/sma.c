@@ -1250,7 +1250,6 @@ static boolean get_vlarb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 			return FALSE;
 
 		pSwitchInfo = (STL_SWITCH_INFO *)stl_get_smp_data(smp);
-		BSWAP_STL_SWITCH_INFO(pSwitchInfo);
 		if ((pSwitchInfo->u2.s.EnhancedPort0 == 1) && (vlCap > 1))
 			startPort = 0;
 

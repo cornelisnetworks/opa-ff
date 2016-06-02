@@ -18,11 +18,7 @@ opacabletest
 Initiates or stops Cable Bit Error Rate stress tests for Intel(R) Omni-Path Host Fabric Interface (HFI)-to-switch links and/or ISLs.
 .SH Syntax
 .NL
-opacabletest [-C|-A] [-c \fIfile\fR] [-f \fIhostfile\fR] [-h \fI\'hosts\'\fR] [-n \fInumprocs\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi|stop\(ulisl]
-.PP
-or
-.br
-opacabletest --help
+opacabletest [-C|-A] [-c \fIfile\fR] [-f \fIhostfile\fR] [-h \fI\[aq]hosts\[aq]\fR] [-n \fInumprocs\fR] [-t#8217#160; \fIportsfile\fR] [-p \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi| stop\(ulisl] ...
 .SH Options
 .NL
 
@@ -149,9 +145,9 @@ opacabletest -A start
 .br
 opacabletest -f good -A start
 .br
-opacabletest -h \'arwen elrond\' start\(ulfi
+opacabletest -h \[aq]arwen elrond\[aq] start\(ulfi
 .br
-HOSTS=\'arwen elrond\' opacabletest stop
+HOSTS=\[aq]arwen elrond\[aq] opacabletest stop
 .br
 opacabletest -A
 .SH Environment Variables

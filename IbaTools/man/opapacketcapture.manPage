@@ -28,7 +28,7 @@ opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR] [-t
 .NL
 
 .TP 10
--h 
+-h/--help 
 .NL
 Produces full help text.
 
@@ -77,6 +77,18 @@ Number of blocks to allocate for ring buffer. Value is in Millions. Default = 2 
 .NL
 Produces verbose output.
 
-.SH Examples 
+.SH Example
 .NL
-TBD
+# opapacketcapture
+.br
+opapacketcapture: Capturing packets using 128 MiB buffer
+.br
+^C
+.br
+opapacketcapture: Triggered
+.br
+Number of packets stored is 100
+.PP
+In the example above, opapacketcapture operates until
+\fBCTRL+C\fR
+is entered.

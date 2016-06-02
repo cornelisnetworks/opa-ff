@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	uint8				hfi = 1;
 	uint8				port = -1;
 	IB_PATH_RECORD		path;
-	uint16				sessionID;
+	uint16				sessionID = 0;
 	uint8				sysTableIndex;
 	uint8				dataLen;
 	uint8				sysTableData[200];
@@ -377,6 +377,7 @@ int main(int argc, char *argv[])
 			status = sendSysTableAccessGetMad(oib_port_session, &path, &mad, sessionID, sysTableIndex, dataLen, sysTableData);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to access Sys table data - status %d\n", cmdName, status);
+				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			break;
@@ -394,6 +395,7 @@ int main(int argc, char *argv[])
 			status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
+				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			printf("Sys Meta Data               : addr 0x%08x len %d\n", tableDescriptors.sysMetaDataAddr, tableDescriptors.sysMetaDataLen);
@@ -466,6 +468,7 @@ int main(int argc, char *argv[])
 			status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
+				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			printf("Sys Meta Data               : addr 0x%08x len %d\n", tableDescriptors.sysMetaDataAddr, tableDescriptors.sysMetaDataLen);
@@ -514,6 +517,7 @@ int main(int argc, char *argv[])
 			status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
+				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			numPorts = getNumPorts(oib_port_session, &path, sessionID);
@@ -803,6 +807,7 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 			status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
+				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			printf("Sys Meta Data               : addr 0x%08x len %d\n", tableDescriptors.sysMetaDataAddr, tableDescriptors.sysMetaDataLen);
@@ -815,12 +820,14 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 			printf("portMTUMetaIndex is %d\n", portMTUMetaIndex);
 			if (portMTUMetaIndex < 0) {
 				fprintf(stderr, "%s: Error: can not find MTU in metaData table\n", cmdName);
+				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			portVLCAPMetaIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portDataLen, "VL_CAP");
 			printf("portVLCAPMetaIndex is %d\n", portVLCAPMetaIndex);
 			if (portVLCAPMetaIndex < 0) {
 				fprintf(stderr, "%s: Error: can not find VLCAP in metaData table\n", cmdName);
+				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 				goto err_exit;
 			}
 #if 1
@@ -837,6 +844,7 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 												   (uint8)portMTUMetaIndex, i, 4, (uint8 *)&mtuCap);
 				if (status != FSUCCESS) {
 					fprintf(stderr, "%s: Error: Failed to set port table - status %d\n", cmdName, status);
+					if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 					goto err_exit;
 				}
 			}
@@ -977,7 +985,7 @@ printf("TEST 16!!!\n");
 	opaswDisplayBuffer((char *)sysTableData, dataLen);
 #endif
 
-	releaseSession(oib_port_session, &path, sessionID);
+	if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 
 	printf("opaswtest completed\n");
 

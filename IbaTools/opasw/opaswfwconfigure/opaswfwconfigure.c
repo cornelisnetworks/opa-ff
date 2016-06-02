@@ -118,7 +118,7 @@ uint32					*oldPortDataTable;
 uint32					*oldPortMetaTable;
 IB_PATH_RECORD			path;
 VENDOR_MAD				mad;
-uint16					sessionID;
+uint16					sessionID = 0;
 uint32					max_data_table_type;
 
 #define DEBUG_USE_FILE	0
@@ -1236,6 +1236,7 @@ int main(int argc, char *argv[])
 	if (g_dirParam) {
 		if (chdir(dirName) < 0) {
 			fprintf(stderr, "Error: cannot change directory to %s: %s\n", dirName, strerror(errno));
+			if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 			goto err_exit;
 		}
 		strcpy(inibinFileName, PRR_INIBIN);
@@ -1244,7 +1245,7 @@ int main(int argc, char *argv[])
 				strcpy(inibinFileName, OPASW_INIBIN);
 			} else {
 				fprintf(stderr, "Error: cannot validate emfwMapFile: %s\n", strerror(errno));
-				releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 				status = FERROR;
 				goto err_exit;
 			}
@@ -1255,14 +1256,14 @@ int main(int argc, char *argv[])
 
 	if (strstr(inibinFileName, ".inibin") == NULL) {
 		fprintf(stderr, "Error: old style EMFW not valid with this release\n");
-		releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 		status = FERROR;
 		goto err_exit;
 	}
 
 	iniBinSize = readIniBinFile(inibinFileName, iniBinBuf);
 	if (iniBinSize < 0) {
-		releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 		goto err_exit;
 	}
 
@@ -1287,6 +1288,7 @@ int main(int argc, char *argv[])
 	status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
+		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 		goto err_exit;
 	}
 	oldNumPorts = getNumPorts(oib_port_session, &path, sessionID);
@@ -1317,6 +1319,7 @@ int main(int argc, char *argv[])
 								  eepromOffset, trailer);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: Error: Failed to get eeprom trailer - status %d\n", cmdName, status);
+			if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 			goto err_exit;
 		}
 		U32_t signature = ntoh32(*(U32_t *)&trailer[0]);
@@ -1452,7 +1455,7 @@ int main(int argc, char *argv[])
 	crcIn = crc32Calculate(eepromBuffer2, crcSize);
 	printf("%s: Config block in EEPROM is %s\n", cmdName, (crcOut == crcIn) ? "valid" : "invalid");
 
-	releaseSession(oib_port_session, &path, sessionID);
+	if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
 
 	printf("opaswfwconfigure completed\n");
 

@@ -22,10 +22,7 @@ opaportconfig [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\f
 .br
 [-S \fIstate\fR] [-P \fIphysstate\fR] [-s \fIspeed\fR] [-w \fIwidth\fR] [-c \fILTPCRC\fR] [-K \fImkey\fR]
 .br
-[-v] [-x] [-L \fIlid\fR] [< \fIsub command\fR>]
-.SH Options
-.NL
-
+[-v] [-x] [-L \fIlid\fR] [#8217lt; \fIsub command\fR>]
 .SH Options
 .NL
 
@@ -112,8 +109,9 @@ Turns port LED off.
 
 .RE
 
-.TP 10
-\fBConfiguration options\fR
+.NL
+
+.SH Configuration Options
 .NL
 
 .TP 10
@@ -182,7 +180,7 @@ New physical state. Default is 0.
 .PP
 
 .B NOTE:
-Note all transitions are valid.
+All transitions are valid.
 
 .RS
 .TP 10
@@ -342,8 +340,9 @@ No-op.
 
 .RE
 
-.TP 10
-\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.SH -h and -p options permit a variety of selections:
 .NL
 
 .TP 10
@@ -362,12 +361,13 @@ First port on HFI  \fIx\fR.
 Port  \fIy\fR within system.
 
 .TP 10
--h \fIx\fR-p \fIy\fR 
+-h \fIx\fR#8217#160;-p \fIy\fR 
 .NL
 HFI  \fIx\fR, port  \fIy\fR.
 
-.TP 10
-\fBDebug Options\fR
+.NL
+
+.SH Debug Options
 .NL
 
 .TP 10

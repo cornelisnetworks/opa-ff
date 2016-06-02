@@ -18,17 +18,7 @@ oparesolvehfiport
 Permits the Intel(R) Omni-Path Fabric Host Software style Intel(R) Omni-Path Host Fabric Interface (HFI) number and port number arguments to be converted to a Host Software style HFI name and physical port number.
 .SH Syntax
 .NL
-oparesolvehfiport \fIhfi\fR \fIport\fR or
-.PP
-
-.br
-oparesolvehfiport --help
-
-.br
-
-.SH Options
-.NL
-
+oparesolvehfiport \fIhfi\fR \fIport\fR
 .SH Options
 .NL
 
@@ -57,17 +47,17 @@ Port to send by. Numbered 1..n. 0 (default) is first active port.
 First active port in system.
 
 .TP 10
--h \fIx\fR-p 0 
+-h \fIx\fR#8217#160;-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy \fR within system (no matter which ports are active).
+Port \fIy\fR#8217#160;within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR-p \fIy\fR 
+-h \fIx\fR#8217#160;-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR
 
@@ -77,4 +67,4 @@ oparesolvehfiport 0 1
 .br
 Output:
 .br
-    hfi\(ul0:1
+#8217#160;   hfi\(ul0:1

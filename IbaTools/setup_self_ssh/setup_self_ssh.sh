@@ -31,7 +31,6 @@
 # [ICS VERSION STRING: unknown]
 # setup password-less ssh on a single host so it can ssh to itself
 # This is part of IntelOPA-Basic for use by opasetupssh in FastFabric
-# Authors:      Steve T. Pesini, Todd Rimmer
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 

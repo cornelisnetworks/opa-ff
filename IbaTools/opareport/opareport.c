@@ -2166,23 +2166,23 @@ void ShowPortCounters(STL_PortStatusData_t *pPortStatus, Format_t format, int in
 			pPortStatus->PortXmitWait);
 		printf("%*sPerformance: Bubbles\n",
 			indent, "");
-		printf("%*s    Rcv Bubble            %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvBubble);
 		printf("%*s    Xmit Wasted BW        %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->PortXmitWastedBW);
 		printf("%*s    Xmit Wait Data        %20"PRIu64"\n",
 			indent, "",
 			pPortStatus->PortXmitWaitData);
+		printf("%*s    Rcv Bubble            %20"PRIu64"\n",
+			indent, "",
+			pPortStatus->PortRcvBubble);
 
+
+		printf("%*sErrors: Signal Integrity\n",
+			indent, "");
 		printf("%*sLink Qual Indicator       %20u (%s)\n",
 			indent, "",
 			pPortStatus->lq.s.LinkQualityIndicator,
 			StlLinkQualToText(pPortStatus->lq.s.LinkQualityIndicator));
-
-		printf("%*sErrors: Signal Integrity\n",
-			indent, "");
 		printf("%*s    Uncorrectable Errors  %20u\n",	//8 bit
 			indent, "",
 			pPortStatus->UncorrectableErrors);
@@ -2217,7 +2217,7 @@ void ShowPortCounters(STL_PortStatusData_t *pPortStatus, Format_t format, int in
 			indent, "",
 			pPortStatus->PortRcvConstraintErrors);
 
-		printf("%*sErrors: Other\n",
+		printf("%*sErrors: Routing\n",
 			indent, "");
 		printf("%*s    Rcv Sw Relay Err      %20"PRIu64"\n",
 			indent, "",
@@ -2247,7 +2247,6 @@ void ShowPortCounters(STL_PortStatusData_t *pPortStatus, Format_t format, int in
 		XmlPrintDec64("RcvErrors", pPortStatus->PortRcvErrors, indent+4);
 		XmlPrintDec64("ExcessiveBufferOverruns", pPortStatus->ExcessiveBufferOverruns, indent+4);
 		XmlPrintDec64("FMConfigErrors", pPortStatus->FMConfigErrors, indent+4);
-
 		XmlPrintDec("LinkErrorRecovery", pPortStatus->LinkErrorRecovery, indent+4);	// 32 bit
 		XmlPrintDec64("LocalLinkIntegrityErrors", pPortStatus->LocalLinkIntegrityErrors, indent+4);
 		XmlPrintDec64("RcvRemotePhysicalErrors", pPortStatus->PortRcvRemotePhysicalErrors, indent+4);
@@ -10522,22 +10521,22 @@ void Usage_full(void)
 	fprintf(stderr, "   portguid:value             - value is numeric port guid\n");
 	fprintf(stderr, "   nodeguid:value             - value is numeric node guid\n");
 	fprintf(stderr, "   nodeguid:value1:port:value2\n");
-        fprintf(stderr, "                              - value1 is numeric node guid, value2 is port #\n");
+    fprintf(stderr, "                              - value1 is numeric node guid, value2 is port #\n");
 	fprintf(stderr, "   iocguid:value              - value is numeric IOC guid\n");
 	fprintf(stderr, "   iocguid:value1:port:value2 - value1 is numeric IOC guid, value2 is port #\n");
 	fprintf(stderr, "   systemguid:value           - value is numeric system image guid\n");
 	fprintf(stderr, "   systemguid:value1:port:value2\n");
-        fprintf(stderr, "                              - value1 is numeric system image guid\n");
+    fprintf(stderr, "                              - value1 is numeric system image guid\n");
 	fprintf(stderr, "                                value2 is port #\n");
 	fprintf(stderr, "   ioc:value                  - value is IOC Profile ID String (IOC Name)\n");
 	fprintf(stderr, "   ioc:value1:port:value2     - value1 is IOC Profile ID String (IOC Name)\n");
 	fprintf(stderr, "                                value2 is port #\n");
 	fprintf(stderr, "   iocpat:value               - value is glob pattern for IOC Profile ID String\n");
-        fprintf(stderr, "                                (IOC Name)\n");
+    fprintf(stderr, "                                (IOC Name)\n");
 	fprintf(stderr, "   iocpat:value1:port:value2  - value1 is glob pattern for IOC Profile ID String\n");
 	fprintf(stderr, "                                (IOC Name), value2 is port #\n");
-	fprintf(stderr, "   ioctype:value              - value is IOC type (SRP)\n");
-	fprintf(stderr, "   ioctype:value1:port:value2 - value1 is IOC type (SRP)\n");
+	fprintf(stderr, "   ioctype:value              - value is IOC type (SRP or OTHER)\n");
+	fprintf(stderr, "   ioctype:value1:port:value2 - value1 is IOC type (SRP or OTHER)\n");
 	fprintf(stderr, "                                value2 is port #\n");
 	fprintf(stderr, "   node:value                 - value is node description (node name)\n");
 	fprintf(stderr, "   node:value1:port:value2    - value1 is node description (node name)\n");
@@ -10548,11 +10547,11 @@ void Usage_full(void)
 	fprintf(stderr, "                                (node name), value2 is port #\n");
 	fprintf(stderr, "   nodedetpat:value           - value is glob pattern for node details\n");
 	fprintf(stderr, "   nodedetpat:value1:port:value2\n");
-        fprintf(stderr, "                              - value1 is glob pattern for node details,\n");
+    fprintf(stderr, "                              - value1 is glob pattern for node details,\n");
 	fprintf(stderr, "                                value2 is port #\n");
 	fprintf(stderr, "   nodetype:value             - value is node type (SW, FI or RT)\n");
 	fprintf(stderr, "   nodetype:value1:port:value2\n");
-        fprintf(stderr, "                              - value1 is node type (SW, FI or RT)\n");
+    fprintf(stderr, "                              - value1 is node type (SW, FI or RT)\n");
 	fprintf(stderr, "                                value2 is port #\n");
 	fprintf(stderr, "   rate:value                 - value is string for rate (25g, 50g, 75g, 100g)\n");
 	fprintf(stderr, "                                omits switch mgmt port 0\n");
@@ -10560,7 +10559,7 @@ void Usage_full(void)
 	fprintf(stderr, "                                active, notactive, initarmed)\n");
 	fprintf(stderr, "   portphysstate:value        - value is string for phys state (polling,\n");
 	fprintf(stderr, "                                disabled, training, linkup, recovery, offline,\n");
-        fprintf(stderr, "                                test)\n");
+    fprintf(stderr, "                                test)\n");
 	fprintf(stderr, "   mtucap:value               - value is MTU size (2048, 4096, 8192, 10240)\n");
 	fprintf(stderr, "                                omits switch mgmt port 0\n");
 	fprintf(stderr, "   labelpat:value             - value is glob pattern for cable label\n");
@@ -10571,12 +10570,15 @@ void Usage_full(void)
 	fprintf(stderr, "   cabinfvendpnpat:value      - value is glob pattern for cable info vendor PN\n");
 	fprintf(stderr, "   cabinfvendrevpat:value     - value is glob pattern for cable info vendor rev\n");
 	fprintf(stderr, "   cabinfvendsnpat:value      - value is glob pattern for cable info vendor SN\n");
+	fprintf(stderr, "   cabinftype:value           - value is either 'optical', 'passive_copper',\n");
+	fprintf(stderr, "                              - 'active_copper' or 'unknown'\n");
 	fprintf(stderr, "   linkdetpat:value           - value is glob pattern for link details\n");
 	fprintf(stderr, "   portdetpat:value           - value is glob pattern for port details\n");
 	fprintf(stderr, "   sm                         - master SM\n");
 	fprintf(stderr, "   smdetpat:value             - value is glob pattern for sm details\n");
 	fprintf(stderr, "   route:point1:point2        - all ports along the routes between the 2 given\n");
 	fprintf(stderr, "                                points\n");
+	fprintf(stderr, "   led:value                  - value is either 'on' or 'off' for LED port beacon\n");
 	fprintf(stderr, "   linkqual:value             - ports with a link quality equal to value\n");
 	fprintf(stderr, "   linkqualLE:value           - ports with a link quality less than or equal to\n");
 	fprintf(stderr, "                                value\n");
@@ -10597,6 +10599,8 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -o nodes -F nodetype:FI\n");
 	fprintf(stderr, "   opareport -o nodes -F nodetype:FI:port:1\n");
 	fprintf(stderr, "   opareport -o nodes -F lid:1\n");
+	fprintf(stderr, "   opareport -o nodes -F led:on\n");
+	fprintf(stderr, "   opareport -o nodes -F led:off\n");
 	fprintf(stderr, "   opareport -o nodes -F lid:1:node\n");
 	fprintf(stderr, "   opareport -o nodes -F lid:1:port:2\n");
 	fprintf(stderr, "   opareport -o nodes -F gid:0xfe80000000000000:0x00066a00a000447b\n");
@@ -11481,9 +11485,13 @@ int main(int argc, char ** argv)
 
 		if (route_src) {
 			char *p;
-			if (FSUCCESS != ParsePoint(&g_Fabric, route_src, &point1, &p) || *p != '\0') {
-				fprintf(stderr, "opareport: Invalid Source Point Syntax: '%s' at '%s'\n", route_src, p);
-				Usage_full();
+			if (FSUCCESS != (fstatus = ParsePoint(&g_Fabric, route_src, &point1, &p)) || *p != '\0') {
+                                if (fstatus == FINVALID_PARAMETER) {
+                                        fprintf(stderr, "opareport: Invalid Source Point Syntax: '%s' at '%s'\n", route_src, p);
+                                	Usage_full();
+                                }
+                                g_exitstatus = 1;
+                                goto done;
 			}
 		} else {
 			PortData *portp1 = FindPortGuid(&g_Fabric, g_portGuid);
@@ -11503,9 +11511,13 @@ int main(int argc, char ** argv)
 		}
 		if ((!skip) && route_dest) {
 			char *p;
-			if (FSUCCESS != ParsePoint(&g_Fabric, route_dest, &point2, &p) || *p != '\0') {
-				fprintf(stderr, "opareport: Invalid Dest Point Syntax: '%s' at '%s'\n", route_dest, p);
-				Usage_full();
+			if (FSUCCESS != (fstatus = ParsePoint(&g_Fabric, route_dest, &point2, &p)) || *p != '\0') {
+                                if (fstatus == FINVALID_PARAMETER) {
+                                        fprintf(stderr, "opareport: Invalid Dest Point Syntax: '%s' at '%s'\n", route_dest, p);
+                                        Usage_full();
+                                }
+                                g_exitstatus = 1;
+                                goto done;
 			}
 			ShowRoutesReport(g_portGuid, &point1, &point2, format, 0, detail);
 		}

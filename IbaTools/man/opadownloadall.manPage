@@ -24,17 +24,7 @@ The tool opadownloadall can only copy from this system to a group of hosts in th
 
 .SH Syntax 
 .NL
-opadownloadall [-rp] [-f \fIhostfile\fR] [-d \fIdownload\(uldir\fR] [-h \'
-\fIHOSTS\fR
-
-\'] [-u
-\fIuser\fR
-
-] source\(ulfile ... \fIdest\(ulfile\fR
-.PP
-or
-.br
-opadownloadall --help
+opadownloadall [-rp] [-f \fIhostfile\fR] [-d \fIdownload\(uldir\fR] [-h \[aq]\fIHOSTS\fR\[aq]] [-u \fIuser\fR] source\(ulfile ... \fIdest\(ulfile\fR
 .SH Options 
 .NL
 
@@ -96,9 +86,11 @@ The name of the file or directory on the destination hosts to copy to.
 If more than one source file is specified,  \fIdest\(ulfile\fR is treated as a directory name. The given directory must already exist on the destination host. The copy fails for hosts where the directory does not exist.
 .SH Example 
 .NL
-opadownloadall -h \'arwen elrond\' irqbalance vncservers /etc/sysconfig
+opadownloadall -h \[aq]arwen elrond\[aq] irqbalance vncservers /etc/sysconfig
 .br
 # Copies two files to 2 hosts
+.br
+
 .br
 opadownloadall -p irqbalance vncservers /etc/sysconfig
 .br

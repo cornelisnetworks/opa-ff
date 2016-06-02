@@ -358,6 +358,10 @@ set tools_suite_count 0
 set tools_suite_failed 0
 set log_disable 0
 
+# if we redirect stdout as part of serializing parallel output, we save
+# the original stdout here so we can still output some interactive messages
+set orig_stdout ""
+
 proc test_suite { tag name information startup cleanup code } {
 ##
 ## test_suite
@@ -720,6 +724,7 @@ proc test_case { tag name information startup cleanup code { failure_code "" }} 
 	global tools_item_full_tag_list
 	global tools_item_name_list
 	global tools_item_status_list
+	global orig_stdout
 
 	global env
 	# force spawn_id returned by any spawn's within $code to be global
@@ -750,7 +755,11 @@ proc test_case { tag name information startup cleanup code { failure_code "" }} 
 
 		log_redirect
 		if { [ show_start ] } {
-			puts "Executing TEST SUITE $tools_suite_name CASE ($full_tag) $name ... "
+			if { $orig_stdout != "" } {
+				puts $orig_stdout "Executing TEST SUITE $tools_suite_name CASE ($full_tag) $name ... "
+			} else {
+				puts "Executing TEST SUITE $tools_suite_name CASE ($full_tag) $name ... "
+			}
 		}
 		puts -nonewline "TEST SUITE $tools_suite_name CASE ($full_tag) $name "
 		log_message "TEST SUITE $tools_suite_name CASE ($full_tag) $name:"

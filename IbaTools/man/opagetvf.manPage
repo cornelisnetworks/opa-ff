@@ -15,17 +15,12 @@ opagetvf
 .PP
 Used for scripting application use of vFabrics, such as for mpirun parameters. You can query by VF Name, VF Index, Service ID, MGID, PKey, or SL. Fetches the Virtual Fabric info in a delimited format. Returns exactly one matching VF. When multiple VFs match the query, it prefers non-default VFs in which the calling server is a full member. If multiple choices remain, it returns the one with the lowest VF Index. Uses the same algorithm as the Distributed SA Plug-in (DSAP).
 .PP
-The tool can be used with additional scripts to help set PKey, SL, MTU, and Rate when running MPI jobs. Internally, this tool is based on the opasaquery -o vfinfocsv command.
+The tool can be used with additional scripts to help set PKey, SL, MTU, and Rate when running MPI jobs. Internally, this tool is based on the opasaquery -o vfinfocsv command. For more information, see
+\fIopasaquery\fR
+.
 .SH Syntax 
 .NL
 opagetvf [-h \fIhfi\fR] [-p \fIport\fR] [-e] [-d \fIvfname\fR|-S \fIserviceId\fR|-m \fImcgid\fR|-i \fIvfIndex\fR| -k \fIpkey\fR|-L \fIsl\fR]
-.PP
-or
-.br
-opagetvf --help
-
-.br
-
 .SH Options 
 .NL
 
@@ -44,7 +39,7 @@ Port to send by, default is first active port.
 .TP 10
 -e 
 .NL
-Output MTU and rate as enum values. 0 = unspecified.
+Output MTU and rate as enum values.
 .TP 10
 -d \fIvfname\fR 
 .NL
@@ -71,13 +66,29 @@ Queries by VirtualFabric PKey.
 Queries by VirtualFabric SL.
 .SH Examples 
 .NL
-opagetvf -d \'Compute\'
+opagetvf -d \[aq]Compute\[aq]
 .br
-opagetvf -h 2 -p 2 -d \'Compute\'
+opagetvf -h 2 -p 2 -d \[aq]Compute\[aq]
 .SH Sample Outputs 
 .NL
 
 .PP
-The output is of the form: name:index:pkey:sl:mtu:rate as shown in the following example.# opagetvf -d Default
+The output is of the form: name:index:pkey:sl:mtu:rate:optionflag as shown in the following example.
+.PP
+Option flag (bitmask) values include:
+.IP \(bu
+0x00 Indicates no bits are set. Specifically, no QOS, no Security, and no flow control disabled (which means flow control is enabled).
+.IP \(bu
+0x01 Security
+.IP \(bu
+0x02 QOS
+.IP \(bu
+0x04 Flow Control Disable
+.PP
+
 .br
-Default:0:0xffff:0:unlimited:unlimited
+# opagetvf -d Default
+.br
+Default:0:0xffff:0:unlimited:unlimited:0x0
+
+.br

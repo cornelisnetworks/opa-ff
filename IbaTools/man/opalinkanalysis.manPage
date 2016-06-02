@@ -21,10 +21,6 @@ In addition to being able to run assorted opareport link analysis reports, and g
 .SH Syntax
 .NL
 opalinkanalysis [-U] [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR] [-X \fIsnapshot\(ulinput\fR] [-x \fIsnapshot\(ulsuffix\fR] [-c \fIfile\fR] reports ...
-.PP
-or
-.br
-opalinkanalysis --help
 .SH Options
 .NL
 
@@ -89,7 +85,7 @@ HFI  \fIx\fR, port  \fIy\fR.
 .TP 10
 -T \fItopology\(ulinput\fR 
 .NL
-Name of a topology input file to use. Any  %P markers in this filename are replaced with the hfi:port being operated on (such as 0:0 or 1:2). Default is /etc/sysconfig/opa/topology.%P.xml. If NONE is specified, does not use any topology\(ulinput files. See
+Name of a topology input file to use. Any #8217#160; %P markers in this filename are replaced with the hfi:port being operated on (such as 0:0 or 1:2). Default is /etc/sysconfig/opa/topology.%P.xml. If NONE is specified, does not use any topology\(ulinput files. See
 \fIopareport\fR
 for more information on topology\(ulinput files.
 
@@ -264,7 +260,7 @@ opalinkanalysis errors
 .br
 opalinkanalysis errors clearerrors
 .br
-opalinkanalysis -p \'1:1 2:1\'
+opalinkanalysis -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .SH Environment Variables
 .NL
 

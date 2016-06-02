@@ -33,10 +33,6 @@
 
 # reenable the specified set of ports
 
-tempfile="$(mktemp)"
-trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
-trap "rm -f $tempfile" EXIT
-
 # optional override of defaults
 if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
 then
@@ -46,6 +42,11 @@ fi
 . /opt/opa/tools/opafastfabric.conf.def
 
 . /opt/opa/tools/ff_funcs
+
+tempfile="$(mktemp)"
+lidmap="$(mktemp --tmpdir lidmapXXXXXX)"
+trap "rm -f $tempfile; rm -f $lidmap; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $tempfile; rm -f $lidmap" EXIT
 
 Usage_full()
 {
@@ -64,16 +65,17 @@ Usage_full()
 	echo "                 x:y = HFI x, port y" >&2
 	echo "              The first HFI in the system is 1.  The first port on an HFI is 1." >&2
 	echo  >&2
-	echo "disabled.csv is a file listing the ports to enable." >&2
+	echo "disabled.csv is an input file listing the ports to enable." >&2
 	echo "It is of the form:" >&2
-	echo "   NodeGUID;PortNum;NodeDesc" >&2
-	echo "An input file such as this is generated in $CONFIG_DIR/opa/disabled*" >&2
+	echo "   NodeGUID;PortNum;NodeType;NodeDesc;Ignored" >&2
+	echo "An input file such as this is generated in $CONFIG_DIR/opa/disabled*.csv" >&2
 	echo "by opadisableports." >&2
 	echo " Environment:" >&2
 	echo "   PORTS - list of ports, used in absence of -t and -p" >&2
 	echo "   PORTS_FILE - file containing list of ports, used in absence of -t and -p" >&2
 	echo "for example:" >&2
 	echo "   opaenableports < disabled.csv" >&2
+	echo "   opaenableports < $CONFIG_DIR/opa/disabled:0:0.csv" >&2
 	echo "   opaenableports -p '1:1 1:2 2:1 2:2' < disabled.csv" >&2
 	exit 0
 }
@@ -87,8 +89,8 @@ Usage()
 	echo  >&2
 	echo "disabled.csv is a file listing the ports to enable." >&2
 	echo "It is of the form:" >&2
-	echo "   NodeGUID;PortNum;NodeDesc" >&2
-	echo "An input file such as this is generated in $CONFIG_DIR/opa/disabled*" >&2
+	echo "   NodeGUID;PortNum;NodeType;NodeDesc;Ignored" >&2
+	echo "An input file such as this is generated in $CONFIG_DIR/opa/disabled*.csv" >&2
 	echo "by opadisableports." >&2
 	echo "for example:" >&2
 	echo "   opaenableports < disabled.csv" >&2
@@ -142,7 +144,6 @@ enable_ports()
 		port_opts="-h $hfi -p $port"
 	fi
 	suffix=":$hfi:$port"
-	lidmap=$CONFIG_DIR/lidmap$suffix.csv
 
 	# generate lidmap
 	/usr/sbin/opaextractlids $port_opts > $lidmap
@@ -163,7 +164,7 @@ enable_ports()
 			skipped=$(( $skipped + 1))
 		else
 			echo "Enabling port: $desc:$port"
-			/usr/sbin/opaportconfig $port_opts -l $lid -m $port enable
+			eval /usr/sbin/opaportconfig $port_opts -l $lid -m $port enable
 
 			if [ $? = 0 ]
 			then

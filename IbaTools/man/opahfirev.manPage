@@ -15,29 +15,37 @@ opahfirev
 .PP
 
 \fB(Linux)\fR
-Reports hardware and firmware information about the Intel(R) Omni-Path Host Fabric Interface (HFI)s.
+Scans the system and reports hardware and firmware information about all the HFIs in the system.
 .SH Syntax
 .NL
 opahfirev 
 .SH Options
 .NL
 
-.PP
-None.
+.TP 10
+no option
+.NL
+Returns information about all of the HFIs in the system.
+
+.TP 10
+--help 
+.NL
+Produces full help text.
+
 .SH Example 
 .NL
 # opahfirev
 .br
 ######################
 .br
-server.intel.com  - HFI 02:00.0
+server.intel.com#8217#160; - HFI 02:00.0
 .br
-Board: ChipABI 3.0, WFR\(ulID 0x1, ChipRev 7.0 patch 0x00000003, SW Compat 3
+Board:#8217#160;ChipABI 3.0, WFR\(ulID 0x1, ChipRev 7.0 patch 0x00000003, SW Compat 3
 .br
-SN:    0x0057501a
+SN:#8217#160;   0x0057501a
 .br
-Bus:   PCIe,8000MHz,x16
+Bus:#8217#160;  PCIe,8000MHz,x16
 .br
-GUID:  0011:7501:0157:501a
+GUID:#8217#160; 0011:7501:0157:501a
 .br
 ######################

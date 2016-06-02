@@ -36,10 +36,6 @@ and
 .SH Syntax
 .NL
 opafabricinfo [-t \fIportsfile\fR] [-p \fIports\fR]
-.PP
-or
-.br
-opafabricinfo --help
 .SH Options 
 .NL
 
@@ -125,13 +121,11 @@ Using the ports\(ulfile configuration option in opafastfabric.conf.
 
 .IP
 If the specified port does not exist or is empty, the first active port on the local system is used. In more complex configurations, you must specify the exact ports to use for all fabrics to be analyzed.
-.IP
-
 .SH Example 
 .NL
 opafabricinfo
 .br
-opafabricinfo -p \'1:1 2:1\'
+opafabricinfo -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .PP
 
 \fBOutput example\fR

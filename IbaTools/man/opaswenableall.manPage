@@ -12,13 +12,13 @@ opaswenableall
 
 .NL
 
+.PP
+
+\fB(Linux)\fR
+Re-enables all unused (or disabled) switch ports.
 .SH Syntax
 .NL
 opaswenableall [-t \fIportsfile\fR] [-p \fIports\fR] [-F \fIfocus\fR] [-K \fImkey\fR]
-.PP
-or
-.br
-opaswenableall --help
 .SH Options
 .NL
 
@@ -89,7 +89,7 @@ SM management key to access remote ports.
 .NL
 opaswenableall
 .br
-opaswenableall -p \'1:1 2:1\'
+opaswenableall -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .SH Environment Variables
 .NL
 

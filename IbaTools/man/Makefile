@@ -70,6 +70,7 @@ MAN_PAGE_8_FILES = \
 				opadisableports.8 \
 				opadownloadall.8 \
 				opaenableports.8 \
+				opaledports.8 \
 				opaesmanalysis.8 \
 				opaexpandfile.8 \
 				opaextractbadlinks.8 \
@@ -85,6 +86,8 @@ MAN_PAGE_8_FILES = \
 				opafequery.8 \
 				opafindgood.8 \
 				opafirmware.8 \
+				opafmconfigcheck.8 \
+				opafmconfigdiff.8 \
 				opagenchassis.8 \
 				opagenesmchassis.8 \
 				opagenswitches.8 \

@@ -18,7 +18,7 @@ opaallanalysis
 opaallanalysis command performs the set of analysis specified in FF\(ulALL\(ulANALYSIS and can be specified for fabric, chassis, esm, or hostsm.
 .SH Syntax
 .NL
-opaallanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [-F \fIchassisfile\fR] [-H \'\fIchassis\fR\'] [-G \fIesmchassisfile\fR] [-E \fIesmchassis\fR] [-T \fItopology\(ulinput\fR]
+opaallanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [-F#8217#160; \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-G \fIesmchassisfile\fR] [-E \fIesmchassis\fR] [-T \fItopology\(ulinput\fR]
 .SH Options
 .NL
 
@@ -87,11 +87,11 @@ HFI  \fIx\fR, port  \fIy\fR.
 .RE
 
 .TP 10
--F \fIchassisfile\fR 
+-F#8217#160; \fIchassisfile\fR 
 .NL
 File with a chassis in a cluster. Default = /etc/sysconfig/opa/chassis 
 .TP 10
--H \'\fIchassis\fR\' 
+-H \[aq]\fIchassis\fR\[aq] 
 .NL
 List of chassis on which to execute the command.
 .TP 10
@@ -110,7 +110,9 @@ Name of topology input file to use. Any %P markers in this filename are replaced
 for more information.
 .SH Example 
 .NL
-opaallanalysis opaallanalysis -p \'1:1 2:1\'
+opaallanalysis
+.br
+opaallanalysis -p \[aq]1:1 2:1\[aq]
 .SH Environment Variables
 .NL
 

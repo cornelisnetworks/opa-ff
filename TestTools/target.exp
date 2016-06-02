@@ -38,7 +38,7 @@
 
 # pattern to match for unix prompts (both local and on target)
 global target_unix_prompt
-set target_unix_prompt {[$#] }
+set target_unix_prompt {[$#][\033 ]}
 
 # pattern to match for chassis prompts
 # since it starts with a -, -gl must be passed to expect

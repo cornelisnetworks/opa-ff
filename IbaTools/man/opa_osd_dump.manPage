@@ -32,4 +32,4 @@ Specifies the logging level to perform. Range = 1 - 7.
 
 .SH Example 
 .NL
-opa\(ulosd\(uldump >opasadb\(ulcontents
+opa\(ulosd\(uldump #8217gt;opasadb\(ulcontents

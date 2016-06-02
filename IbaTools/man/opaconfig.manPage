@@ -18,7 +18,7 @@ opaconfig
 Configures the Intel(R) Omni-Path Fabric Suite FastFabric.
 .SH Syntax
 .NL
-opaconfig [-r \fIroot\fR] [-v|-vv] [-u|-s|-e \fIcomp\fR] [-E \fIcomp\fR] [-D \fIcomp\fR]
+opaconfig [-r \fIroot\fR] [-v|-vv] [-u|-s|-e \fIcomp\fR] [-E#8217#160; \fIcomp\fR] [-D \fIcomp\fR]
 .br
 [--user\(ulqueries|--no\(uluser\(ulqueries] [--answer \fIkeyword=value\fR]
 .PP
@@ -112,7 +112,9 @@ Prohibits non-root users from querying the fabric.
 Provides an answer to a question that may occur during the operation. Answers to questions not asked are ignored. Invalid answers result in prompting for interactive installs, or using default options for non-interactive installs.
 
 .IP
-Possible questions ( \fIkeyword=value\fR):
+
+\fBPossible Questions\fR
+( \fIkeyword=value\fR):
 .RS
 .TP 10
 
@@ -120,6 +122,22 @@ Possible questions ( \fIkeyword=value\fR):
 UserQueries 
 Allow non-root users to access the UMAD interface?
 
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+Allowing access to UMAD device files may present a security risk. However, this allows tools such as opasaquery and opaportinfo to be used by non-root users.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+IrqBalance 
+Set IrqBalance to Exact?
 
 .RE
 
@@ -131,18 +149,18 @@ Intel OPA \fIx.x.x.x.x\fR Software
 .br
 
 .br
-   1) Show Installed Software
+#8217#160;  1) Show Installed Software
 .br
-   2) Reconfigure OFED IP over IB
+#8217#160;  2) Reconfigure OFED IP over IB
 .br
-   3) Reconfigure Driver Autostart
+#8217#160;  3) Reconfigure Driver Autostart
 .br
-   4) Generate Supporting Information for Problem Report
+#8217#160;  4) Generate Supporting Information for Problem Report
 .br
-   5) FastFabric (Host/Chassis/Switch Setup/Admin)
+#8217#160;  5) FastFabric (Host/Chassis/Switch Setup/Admin)
 .br
-   6) Uninstall Software
+#8217#160;  6) Uninstall Software
 .br
 
 .br
-   X) Exit
+#8217#160;  X) Exit

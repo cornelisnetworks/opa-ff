@@ -25,10 +25,6 @@ The resulting host capture file can require significant amounts of space on the 
 .SH Syntax
 .NL
 opacapture [-d \fIdetail\fR] \fIoutput\(ultgz\(ulfile\fR
-.PP
-or
-.br
-opacapture --help
 .SH Options
 .NL
 
@@ -84,10 +80,10 @@ In addition to \fIFabric+FDB\fR, also obtains opaallanalysis results. If opaalla
 .PP
 
 .B NOTE:
-Detail levels 2 - 4 can be used when fabric operational problems occur. If the problem is node-specific, detail level 1 should be sufficient. Detail levels 2 - 4 require an operational Fabric Manager. Typically your support representative requests a given detail level. If a given detail level takes excessively long or fails to be gathered, try a lower detail level.
+Detail levels 2 #8217#8211; 4 can be used when fabric operational problems occur. If the problem is node-specific, detail level 1 should be sufficient. Detail levels 2 - 4 require an operational Fabric Manager. Typically your support representative requests a given detail level. If a given detail level takes excessively long or fails to be gathered, try a lower detail level.
 
 .PP
-For detail levels 2 - 4, the additional information is only available on a node with Intel(R) Omni-Path Fabric Suite FastFabric Toolset installed. The information is gathered for every fabric specified in the /etc/sysconfig/opa/ports file.
+For detail levels 2 #8217#8211; 4, the additional information is only available on a node with Intel(R) Omni-Path Fabric Suite FastFabric Toolset installed. The information is gathered for every fabric specified in the /etc/sysconfig/opa/ports file.
 
 .TP 10
  \fIoutput\(ultgz\(ulfile\fR 

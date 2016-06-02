@@ -152,7 +152,7 @@ FSTATUS doFwUpdate()
 	uint32_t fwLength;
 	struct stat fileInfo;
 	uint32_t counter = 0;
-	uint16_t readLen = 0;
+	int readLen = 0;
 	FSTATUS status = FSUCCESS;
 
 	ret = fstat(fileFd, &fileInfo);
@@ -314,7 +314,7 @@ boolean checkWritable() // 1 if the otp is fully writable (unlocked), 0 otherwis
 	if (!write_status && partial) { // write_status = 0 means at least one sector is locked, partial = 1 means at least one sector is unlocked
 		fprintf(stderr, "opatmmtool: Warning: One-Time Programmable region is partially unlocked\n");
 		for (i = 0; i < 16; i++) {
-			fprintf(stderr, "\tsector[%d] = %s\n", i, *(locks + i)?"locked":"unlocked");
+			fprintf(stderr, "\tsector[%d] = %s\n", i, *(locks + i)?"unlocked":"locked");
 		}
 	}
 	return write_status;
@@ -367,7 +367,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'f':
-			strncpy(file_name, optarg, sizeof(file_name));
+			strncpy(file_name, optarg, sizeof(file_name) - 1);
 			gotFile = 1;
 			break;
 		default:
@@ -416,10 +416,12 @@ int main(int argc, char *argv[])
 		i2cFd = open(i2cFile, O_RDWR);
 		if (i2cFd < 0) {
 			fprintf(stderr, "opatmmtool: Unable to open driver interface\n");
+			free(i2cFile);
 			return -1;
 		}
 
 		if (verbose) printf("opatmmtool: Opened the driver interface\n");
+		free(i2cFile);
 	}
 
 	// open the file

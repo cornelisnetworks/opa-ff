@@ -13,10 +13,29 @@ opaextractstat2
 .NL
 
 .PP
-Performs an error analysis of a fabric and provides augmented information from a topology\(ulinput file. The report is similar to opaextractstat, with the addition of extracting all error counters. Error counter names are context-sensitive.
+Performs an error analysis of a fabric and provides augmented information from a topology\(ulfile including all error counters. The output is in a CSV format suitable for importing into a spreadsheet or parsed by other scripts. opaextractstat2 is a front end to the opareport and opaxmlextract tools.
 .SH Syntax
 .NL
+opaextractstat2 topology\(ulfile [ \fIopareport options\fR]
+.SH Options
+.NL
 
+.TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
+topology\(ulfile 
+.NL
+Specifies topology\(ulfile to use.
+
+.TP 10
+ \fIopareport options\fR 
+.NL
+ \fIoptions\fR are passed to opareport. See 
+\fIopareport\fR
+for the full set of options.
 .PP
 The portion of the script that calls opareport and opaxmlextract follows:opareport -x -d 10 -s -o errors -T $@ | opaxmlextract -d \;
 .br
@@ -37,3 +56,10 @@ The portion of the script that calls opareport and opaxmlextract follows:oparepo
 -e PortXmitConstraintErrors.Value -e PortRcvConstraintErrors.Value
 .br
 -e LocalLinkIntegrityErrors.Value -e ExcessiveBufferOverrunErrors.Value
+.SH Example
+.NL
+opaextractstat2 topology\(ulfile
+.br
+
+.br
+opaextractstat2 topology\(ulfile -c my\(ulopamon.conf

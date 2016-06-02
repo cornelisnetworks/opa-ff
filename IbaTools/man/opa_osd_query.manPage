@@ -108,7 +108,7 @@ Specifies the port to use. Default = first port.
 .TP 10
 
 .sp
--H/--help \fI\fR 
+-H/--help 
 Provides this help text.
 .RE
 
