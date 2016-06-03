@@ -5,7 +5,7 @@ OPA tools and Fast Fabric
 
   1. mkdir -p $HOME/rpmbuild/{SOURCES,RPMS,SRPMS}
   2. tar czf $HOME/rpmbuild/SOURCES/opa.tgz --exclude-vcs .
-  3. rpmbuild -ba ./fast-fabric.spec
+  3. rpmbuild -ba ./opa-ff.spec
 
   This will build the opa-basic-tools, opa-fastfabric, and opa-address-resolution
   RPMs in $HOME/rpmbuild/RPMS/(architecture)/

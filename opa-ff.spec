@@ -1,60 +1,46 @@
 Name: opa
 Version: 10.1.0.0
-Release: 126
+Release: 126%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
-Group: System Environment/Libraries
-License: GPLv2/BSD 
-Url: http://www.intel.com/
+License: GPLv2 or BSD 
+Url: https://github.com/01org/opa-ff
+# tarball created by:
+# git clone https://github.com/01org/opa-ff.git
+# cd opa-ff
+# tar czf opa-ff.tar.gz --exclude-vcs .
 Source: opa.tgz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-
-%if 0%{?suse_version} >= 1110
-%debug_package
-%endif
+ExclusiveArch: x86_64
+# The Intel(R) OPA product line is only available on x86_64 platforms at this time.
 
 %description
-Basic package
+This package contains the tools necessary to manage an Intel(R) Omni-Path Architecture fabric.
 
 %package basic-tools
-Summary: Managment level tools and scripts.
-Group: System Environment/Libraries
-AutoReq: no
+Summary: Management level tools and scripts.
 
 Requires: rdma bc
 
-%if 0%{?rhel} || 0%{?fedora}
-Requires: expat, libibmad, libibumad, libibverbs, expect, tcl, openssl
 BuildRequires: expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel
-%else
-Requires: libexpat1, libibmad5, libibumad, libibverbs1, openssl
-BuildRequires: libexpat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel
-%endif
+BuildRequires: ibacm-devel, %{?BuildRequires}
 
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.
 
 %package fastfabric
 Summary: Management level tools and scripts.
-Group: System Environment/Libraries
-AutoReq: no
 Requires: opa-basic-tools
-
-%if 0%{?rhel}
-Requires: atlas
-%endif
 
 %description fastfabric
 Contains tools for managing fabric on a managment node.
 
 %package address-resolution
 Summary: Contains Address Resolution manager
-Group: System Environment/Libraries
-AutoReq: no
 Requires: opa-basic-tools
 
 %description address-resolution
-This is to be filled out more concisely later.
+This package contains the ibacm distributed SA provider (dsap) for name and address resolution on OPA platform.
+It also contains the library and tools to access the shared memory database exported by dsap.
 
 %prep
 #rm -rf %{_builddir}/*
@@ -197,8 +183,8 @@ echo "/opt/opa/tools/%{basic_tools_opt}" > %{_builddir}/basic_opt_file.list
 sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/basic_opt_file.list 
 
 #Basic man pages
-echo "/usr/share/man/man1/%{basic_mans}" > %{_builddir}/basic_mans.list
-sed -i 's;[ ];\n/usr/share/man/man1/;g' %{_builddir}/basic_mans.list
+echo "%{_mandir}/man1/%{basic_mans}" > %{_builddir}/basic_mans.list
+sed -i 's;[ ];\n%{_mandir}/man1/;g' %{_builddir}/basic_mans.list
 sed -i 's;\.1;\.1*;g' %{_builddir}/basic_mans.list
 
 #FF tools opt
@@ -226,8 +212,8 @@ echo "/opt/opa/fm_tools/%{ff_tools_fm}" > %{_builddir}/ff_tools_fm.list
 sed -i 's;[ ];\n/opt/opa/fm_tools/;g' %{_builddir}/ff_tools_fm.list 
 
 #FF man pages
-echo "/usr/share/man/man8/%{ff_mans}" > %{_builddir}/ff_mans.list
-sed -i 's;[ ];\n/usr/share/man/man8/;g' %{_builddir}/ff_mans.list
+echo "%{_mandir}/man8/%{ff_mans}" > %{_builddir}/ff_mans.list
+sed -i 's;[ ];\n%{_mandir}/man8/;g' %{_builddir}/ff_mans.list
 sed -i 's;\.8;\.8*;g' %{_builddir}/ff_mans.list
 
 #Final file listing for 'basic'
@@ -250,8 +236,6 @@ sed -i 's;[ ];\n/opt/opa/src/shmem_apps/;g' %{_builddir}/ff_shmem_apps.list
 cat %{_builddir}/ff_shmem_apps.list %{_builddir}/ff_sbin_file.list %{_builddir}/ff_help_file.list %{_builddir}/ff_tools_exp.list %{_builddir}/ff_tools_misc.list %{_builddir}/ff_libs_misc.list %{_builddir}/ff_iba_samples.list %{_builddir}/ff_mans.list %{_builddir}/ff_tools_fm.list %{_builddir}/ff_opt_file.list > %{_builddir}/ff_file.list
 
 
-%clean
-rm -rf $RPM_BUILD_ROOT
 
 %post address-resolution -p /sbin/ldconfig
 %postun address-resolution -p /sbin/ldconfig
@@ -261,10 +245,8 @@ cd /opt/opa/src/mpi_apps >/dev/null 2>&1
 make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from the make clean.
 
 %files basic-tools -f %{_builddir}/basic_file.list
-%defattr(-,root,root,-)
 
 %files fastfabric -f %{_builddir}/ff_file.list
-%defattr(-,root,root,-)
 %{_sysconfdir}/sysconfig/opa/opamon.si.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/opafastfabric.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/opamon.conf
@@ -281,17 +263,19 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 
 
 %files address-resolution
-%defattr(-,root,root,-)
-#Everything under the bin directory belongs exclusively to opasadb at this time.
-%{_bindir}/*
-%{_libdir}/*
-%{_includedir}/*
-/usr/share/man/man1/opa_osd_dump.1*
-/usr/share/man/man1/opa_osd_exercise.1*
-/usr/share/man/man1/opa_osd_perf.1*
-/usr/share/man/man1/opa_osd_query.1*
+%{_bindir}/opa_osd_dump
+%{_bindir}/opa_osd_exercise
+%{_bindir}/opa_osd_perf
+%{_bindir}/opa_osd_query
+%{_libdir}/ibacm
+%{_libdir}/libopasadb.so.*
+%{_includedir}/infiniband
+%{_mandir}/man1/opa_osd_dump.1*
+%{_mandir}/man1/opa_osd_exercise.1*
+%{_mandir}/man1/opa_osd_perf.1*
+%{_mandir}/man1/opa_osd_query.1*
 %config(noreplace) %{_sysconfdir}/rdma/dsap.conf
 
 %changelog
-* Fri Oct 10 2014 Erik E. Kahn <erik.kahn@intel.com> - 1.0.0-ifs
-- Initial version
+* Thu Jun 2 2016 Scott Breyer <scott.j.breyer@intel.com> - 10.1.0-ifs
+- Update to latest from build 10.1.0.0.145 (FF 10.1.0.0.126)
