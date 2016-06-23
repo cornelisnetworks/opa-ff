@@ -1,20 +1,20 @@
 Name: opa
 Version: 10.1.0.0
 Release: 126%{?dist}
-Summary: Intel Omni-Path basic tools and libraries for fabric managment.
+Summary: Intel Omni-Path basic tools and libraries for fabric management
 
 License: GPLv2 or BSD 
 Url: https://github.com/01org/opa-ff
 # tarball created by:
-# git clone https://github.com/01org/opa-ff.git
+# git clone -b v1.2 https://github.com/01org/opa-ff.git
 # cd opa-ff
 # tar czf opa-ff.tar.gz --exclude-vcs .
 Source: opa.tgz
 ExclusiveArch: x86_64
-# The Intel(R) OPA product line is only available on x86_64 platforms at this time.
+# The Intel OPA product line is only available on x86_64 platforms at this time.
 
 %description
-This package contains the tools necessary to manage an Intel(R) Omni-Path Architecture fabric.
+This package contains the tools necessary to manage an Intel Omni-Path Architecture fabric.
 
 %package basic-tools
 Summary: Management level tools and scripts.
@@ -22,21 +22,21 @@ Summary: Management level tools and scripts.
 Requires: rdma bc
 
 BuildRequires: expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel
-BuildRequires: ibacm-devel, %{?BuildRequires}
+BuildRequires: ibacm-devel
 
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.
 
 %package fastfabric
 Summary: Management level tools and scripts.
-Requires: opa-basic-tools
+Requires: opa-basic-tools%{?_isa} >= %{version}-%{release}
 
 %description fastfabric
 Contains tools for managing fabric on a managment node.
 
 %package address-resolution
 Summary: Contains Address Resolution manager
-Requires: opa-basic-tools
+Requires: opa-basic-tools%{?_isa} >= %{version}-%{release}
 
 %description address-resolution
 This package contains the ibacm distributed SA provider (dsap) for name and address resolution on OPA platform.
@@ -48,12 +48,7 @@ It also contains the library and tools to access the shared memory database expo
 %setup -q -c
 
 %build
-if [ -d OpenIb_Host ]
-then
-	cd OpenIb_Host && ./ff_build.sh %{_builddir} $FF_BUILD_ARGS
-else
-	./ff_build.sh %{_builddir} $FF_BUILD_ARGS
-fi
+./ff_build.sh %{_builddir} $FF_BUILD_ARGS
 
 
 %install
