@@ -1,6 +1,6 @@
 A sample use of opaxmlgenerate is provided in the script opagentopology,
 which is in /sbin.  The script invokes opaxmlgenerate, directing it to
-read the following CSV input files which are in /opt/opa/samples:
+read the following CSV input files which are in /usr/lib/opa-ff/samples:
 
 opatopology_links.txt contains the text CSV values for LinkSummary information.
 opatopology_FIs.txt contains the text CSV values for HFI Nodes information.

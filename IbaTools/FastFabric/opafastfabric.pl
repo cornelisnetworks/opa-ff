@@ -59,7 +59,7 @@ $BRAND =~ s/%.*//;
 # this is patched by Makefile to be IBACCESS or OPENIB
 my $IB_STACK_TYPE="THIS_IS_THE_IB_STACK_TYPE";
 # runtime alternative to get_local_stack_type IBACCESS or OPENIB
-#my $IB_STACK_TYPE=`/opt/opa/tools/tcl_proc get_local_stack_type 2>/dev/null`;
+#my $IB_STACK_TYPE=`/usr/lib/opa-ff/tools/tcl_proc get_local_stack_type 2>/dev/null`;
 #chomp($LocalStackType);
 #if ( "$LocalStackType" eq "" ) {
 #	die "Unable to determine which IB stack type is installed";
@@ -82,12 +82,12 @@ $SYS_CONFIG_DIR="/etc/sysconfig";
 $OPA_CONFIG_DIR = "$SYS_CONFIG_DIR/opa";
 $LIB_DIR = "/lib";
 $USRLOCALLIB_DIR = "/usr/local/lib";
-$OPTIBALIB_DIR = "/opt/opa/lib";
+$OPTIBALIB_DIR = "/usr/lib/opa-ff/lib";
 if ( "$BIN_DIR" eq "" ) {
 	$BIN_DIR = "/usr/sbin";
 }
 if ( "$TOOLS_DIR" eq "" ) {
-	$TOOLS_DIR = "/opt/opa/tools";
+	$TOOLS_DIR = "/usr/lib/opa-ff/tools";
 }
 $FF_CONF_FILE = "$OPA_CONFIG_DIR/opafastfabric.conf";
 $OWNER = "root";
@@ -326,7 +326,7 @@ sub set_libdir
 	{
 		$LIB_DIR = "/lib64";
 		$USRLOCALLIB_DIR = "/usr/local/lib64";
-		$OPTIBALIB_DIR = "/opt/opa/lib64";
+		$OPTIBALIB_DIR = "/usr/lib/opa-ff/lib64";
 	}
 }
 
@@ -730,11 +730,11 @@ sub installed_shmem
 sub installed_mpisrc
 {
 	#return (-e "$ROOT/usr/local/src/InfiniServMPI/.mpisrc" ||
-	#	-e "$ROOT/opt/opa/src/InfiniServMPI/.mpisrc");
+	#	-e "$ROOT/usr/lib/opa-ff/src/InfiniServMPI/.mpisrc");
 	if ( "$IB_STACK_TYPE" eq "IBACCESS" ) {
-		return (-e "$ROOT/opt/opa/src/InfiniServMPI/mpich/do_build");
+		return (-e "$ROOT/usr/lib/opa-ff/src/InfiniServMPI/mpich/do_build");
 	} else {
-		return (-e "$ROOT/opt/opa/src/MPI/do_build");
+		return (-e "$ROOT/usr/lib/opa-ff/src/MPI/do_build");
 	}
 }
 
@@ -829,7 +829,7 @@ sub setup_ffports
 	do {
 		if ( ! -e "$file" ) {
 			# replace missing file
-			copy_data_file("/opt/opa/tools/ports", "$file");
+			copy_data_file("/usr/lib/opa-ff/tools/ports", "$file");
 		}
 		print "You will now have a chance to edit/review the FastFabric PORTS_FILE:\n";
 		print "$file\n";
@@ -1366,7 +1366,7 @@ sub fabricsetup_rebuildmpi
 		return;
 	}
 	if ( "$IB_STACK_TYPE" eq "IBACCESS" ) {
-		if (run_fabric_cmd("cd $ROOT/opt/opa/src/InfiniServMPI/mpich; ./do_build")) {
+		if (run_fabric_cmd("cd $ROOT/usr/lib/opa-ff/src/InfiniServMPI/mpich; ./do_build")) {
 			return 1;
 		}
 		if (! valid_config_file("Host File", $FabricSetupHostsFile) ) {
@@ -1376,7 +1376,7 @@ sub fabricsetup_rebuildmpi
 		# do in two steps so user can see results of build before scp starts
 		return run_fabric_cmd("$BIN_DIR/opascpall -r -p -f $FabricSetupHostsFile $USRLOCALLIB_DIR/libtvmpich* $USRLOCALLIB_DIR/shared $USRLOCALLIB_DIR");
 	} else {	# OFED
-		if (run_fabric_cmd("cd $ROOT/opt/opa/src/MPI; ./do_build")) {
+		if (run_fabric_cmd("cd $ROOT/usr/lib/opa-ff/src/MPI; ./do_build")) {
 			return 1;
 		}
 		if (! valid_config_file("Host File", $FabricSetupHostsFile) ) {
@@ -1384,11 +1384,11 @@ sub fabricsetup_rebuildmpi
 		}
 		# do in two steps so user can see results of build before scp starts
 		# determine where MPI was built and copy needed files to all nodes
-		my $mpich_prefix= read_simple_config_param("$ROOT/opt/opa/src/MPI/.mpiinfo", "MPICH_PREFIX");
+		my $mpich_prefix= read_simple_config_param("$ROOT/usr/lib/opa-ff/src/MPI/.mpiinfo", "MPICH_PREFIX");
 		# instead of copy, copy the actual rpms and install them
 		#return run_fabric_cmd("$BIN_DIR/opascpall -t -p -f $FabricSetupHostsFile $mpich_prefix $mpich_prefix");
-		my $mpi_rpms= read_simple_config_param("$ROOT/opt/opa/src/MPI/.mpiinfo", "MPI_RPMS");
-		if (run_fabric_cmd("cd /opt/opa/src/MPI && $BIN_DIR/opascpall -p -f $FabricSetupHostsFile $mpi_rpms /var/tmp")) {
+		my $mpi_rpms= read_simple_config_param("$ROOT/usr/lib/opa-ff/src/MPI/.mpiinfo", "MPI_RPMS");
+		if (run_fabric_cmd("cd /usr/lib/opa-ff/src/MPI && $BIN_DIR/opascpall -p -f $FabricSetupHostsFile $mpi_rpms /var/tmp")) {
 			return 1;
 		}
 		# need force for reinstall case
@@ -1613,7 +1613,7 @@ sub fabricadmin_singlehost
 	my $verifyhosts_opts="-c"; # Always copy the hostverify.sh file.
 	my $verifyhosts_tests="";
 	my $result_dir = read_ffconfig_param("FF_RESULT_DIR");
-	my $hostverify_sample = "/opt/opa/samples/hostverify.sh";
+	my $hostverify_sample = "/usr/lib/opa-ff/samples/hostverify.sh";
 	my $hostverify = read_ffconfig_param("FF_HOSTVERIFY_DIR") . "/hostverify.sh";
 	my $hostverify_res = "hostverify.res";
 	my $inp;
@@ -2499,8 +2499,8 @@ sub chassis_fmconfig
 	if (! valid_config_file("Chassis File", $FabricChassisFile) ) {
 		return 1;
 	}
-	if ( -e "/opt/opa/fm_tools" ) {
-		$tooldir="/opt/opa/fm_tools";
+	if ( -e "/usr/lib/opa-ff/fm_tools" ) {
+		$tooldir="/usr/lib/opa-ff/fm_tools";
 	} else {
 		my $IFS_FM_BASE= read_simple_config_param("$ROOT/etc/sysconfig/opa/opafm.info", "IFS_FM_BASE");
 		$tooldir="$IFS_FM_BASE/etc";

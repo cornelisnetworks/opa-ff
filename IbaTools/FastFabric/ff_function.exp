@@ -39,7 +39,7 @@ proc ff_function { func_name arg } {
 									then
 										. /etc/sysconfig/opa/opafastfabric.conf
 									fi
-									. /opt/opa/tools/opafastfabric.conf.def
+									. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 									if \[ x\"\$FF_IPOIB_SUFFIX\" = xNONE \]
 									then
 										export FF_IPOIB_SUFFIX=\"\"

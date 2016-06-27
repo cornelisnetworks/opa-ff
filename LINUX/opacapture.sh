@@ -66,9 +66,9 @@ then
 fi
 
 
-if [ -f /opt/opa/tools/ff_funcs ]
+if [ -f /usr/lib/opa-ff/tools/ff_funcs ]
 then
-	. /opt/opa/tools/ff_funcs
+	. /usr/lib/opa-ff/tools/ff_funcs
 	ff_available=y
 else
 	ff_available=n
@@ -81,7 +81,7 @@ then
 		. $CONFIG_DIR/opa/opafastfabric.conf
 	fi
 	
-	. /opt/opa/tools/opafastfabric.conf.def
+	. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 fi
 
 detail=1
@@ -281,10 +281,10 @@ then
 	cp -r /sys/module /$dir/sys 2>/dev/null 
 fi
 
-if [ -f /opt/opafm/bin/fm_capture ]
+if [ -f /usr/lib/opa-fm/bin/fm_capture ]
 then
     echo "Gathering Host FM Information ..."
-    (cd /$dir; /opt/opafm/bin/fm_capture)
+    (cd /$dir; /usr/lib/opa-fm/bin/fm_capture)
 fi
 
 if [ -f /usr/bin/opa_osd_dump ]

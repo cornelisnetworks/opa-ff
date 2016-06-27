@@ -174,7 +174,7 @@ proc install_uninstall { {uninstall 1} {remove_config 0} { dir "" } } {
 ##	0 - success
 ##	-code error on failure
 
-	set toolsdir /opt/opa/tools
+	set toolsdir /usr/lib/opa-ff/tools
 
 	if { $uninstall } {
 		# use ics_ib to remove if possible

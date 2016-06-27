@@ -110,7 +110,7 @@ export FF_TIMEOUT_MULT=${FF_TIMEOUT_MULT:-2}
 export FF_RESULT_DIR=${FF_RESULT_DIR:-$HOME}
 
 # IntelOPA product to install during opahostadmin load and upgrade
-export FF_PRODUCT=${FF_PRODUCT:-IntelOPA-Basic.`cat /opt/opa/tools/osid_wrapper`}
+export FF_PRODUCT=${FF_PRODUCT:-IntelOPA-Basic.`cat /usr/lib/opa-ff/tools/osid_wrapper`}
 
 # IntelOPA product version to install during opahostadmin load and upgrade
 export FF_PRODUCT_VERSION=${FF_PRODUCT_VERSION:-`cat /etc/sysconfig/opa/version_wrapper 2>/dev/null`}
@@ -138,7 +138,7 @@ export DOWNLOADS_DIR=${DOWNLOADS_DIR:-./downloads}
 
 # where to save history and baselines for cluster analysis and health checks
 # [-d option]
-export FF_ANALYSIS_DIR=${FF_ANALYSIS_DIR:-/var/opt/opa/analysis}
+export FF_ANALYSIS_DIR=${FF_ANALYSIS_DIR:-/var/usr/lib/opa-ff/analysis}
 
 # topology input file(s) to use for opafabricanalysis, opaallanalysis and
 # opareports operations.  The %P marker will be replaced with the
@@ -220,10 +220,10 @@ export FF_DIFF_CMD=${FF_DIFF_CMD:-diff -C 1}
 # location to find fastfabric mpi_apps for use by assorted fastfabric tools
 # As needed they can be copied to a global filesystem and adjust this variable
 # This MUST be a absolute path which exists on all nodes
-export FF_MPI_APPS_DIR=${FF_MPI_APPS_DIR:-/opt/opa/src/mpi_apps}
+export FF_MPI_APPS_DIR=${FF_MPI_APPS_DIR:-/usr/lib/opa-ff/src/mpi_apps}
 
 # env variables to set within each rank of MPI runs done by fastfabric directly
-# alternatively the /opt/opa/src/mpi_apps/ofed.*.param files can be edited
+# alternatively the /usr/lib/opa-ff/src/mpi_apps/ofed.*.param files can be edited
 # with appropriate values.
 # example of PSM selection of vFabric by PKEY/SL
 #export FF_MPI_ENV=${FF_MPI_ENV:-PSM_PKEY=0xffff IPATH_SL=0 PSM_MTU=2048}
@@ -234,7 +234,7 @@ export FF_MPI_APPS_DIR=${FF_MPI_APPS_DIR:-/opt/opa/src/mpi_apps}
 export FF_MPI_ENV=${FF_MPI_ENV:-}
 
 # configuration of arguments for MPI performance deviation testing
-# via /opt/opa/src/mpi_apps/deviation/deviation
+# via /usr/lib/opa-ff/src/mpi_apps/deviation/deviation
 # The defaults should work for most fabrics.  This can be made stricter
 # and/or specific to the fabric by using arguments such as -h hostname
 # -bwthres and -latthres.  See run_deviation or the user's guide for more
@@ -246,7 +246,7 @@ export FF_DEVIATION_ARGS=${FF_DEVIATION_ARGS:--bwtol 20 -lattol 50 -c}
 # location to find fastfabric shmem_apps for use by assorted fastfabric tools
 # As needed they can be copied to a global filesystem and adjust this variable
 # This MUST be a absolute path which exists on all nodes
-export FF_SHMEM_APPS_DIR=${FF_SHMEM_APPS_DIR:-/opt/opa/src/shmem_apps}
+export FF_SHMEM_APPS_DIR=${FF_SHMEM_APPS_DIR:-/usr/lib/opa-ff/src/shmem_apps}
 
 #Serialize output of operations running in parallel
 export FF_SERIALIZE_OUTPUT=${FF_SERIALIZE_OUTPUT:-yes}

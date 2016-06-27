@@ -17,4 +17,4 @@ Provides opagetvf\(ulfunc and opagetvf2\(ulfunc shell functions that query the p
 .PP
 A usage example is provided in:
 .PP
-/opt/opa/src/mpi\(ulapps/ofed.openmpi.params 
+/usr/lib/opa-ff/src/mpi\(ulapps/ofed.openmpi.params 

@@ -29,7 +29,7 @@
 
 # [ICS VERSION STRING: @(#) ./fastfabric/tools/configipoib.exp 0mwhe.20150409 [04/09/15 10:26]
 
-source "/opt/opa/tools/ff_function.exp"
+source "/usr/lib/opa-ff/tools/ff_function.exp"
 
 #=============================================================================#
 # Test Suite Description:
@@ -91,7 +91,7 @@ proc case_cleanup { failed } {
 
 test_suite "configipoib" "configure IPoIB" "Configure IPoIB based on /etc/hosts
 creates ifcfg-ib<x> file
-File: /opt/opa/tools/configipoib.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/configipoib.exp" suite_setup noop {
 	global host
 
 	# Global Initializations for Test Suite:
@@ -129,7 +129,7 @@ File: /opt/opa/tools/configipoib.exp" suite_setup noop {
 		set ipoib_base_dev_num "[ ff_ipoib_base_dev_num $host]"
 
 		test_case "$host.config" "config ipoib on $host" "Configure $host IPoIB
-File: /opt/opa/tools/configipoib.exp" case_setup case_cleanup {
+File: /usr/lib/opa-ff/tools/configipoib.exp" case_setup case_cleanup {
 			global env
 			upvar host host
 			upvar number number
@@ -172,7 +172,7 @@ fi"
 
 			if { [ string equal "$mode" "static"] } {
 				# verify we have found an IP address for $host's $ipoib_name
-				unix_cmd 60 0 {if [ -x /opt/opa/tools/opaipcalc ]; then opaipcalc=/opt/opa/tools/opaipcalc; else opaipcalc=/sbin/opaipcalc; fi }
+				unix_cmd 60 0 {if [ -x /usr/lib/opa-ff/tools/opaipcalc ]; then opaipcalc=/usr/lib/opa-ff/tools/opaipcalc; else opaipcalc=/sbin/opaipcalc; fi }
 				unix_cmd 60 0 "echo \"IPADDR=\$tmp\"; \[ \"\$tmp\" != '' \]"
 				if { [ info exists env(CFG_IPOIB_NETMASK) ] && "$env(CFG_IPOIB_NETMASK)" != "" } {
 					unix_cmd 60 0 "mask='$env(CFG_IPOIB_NETMASK)'"

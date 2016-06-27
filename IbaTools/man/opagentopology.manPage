@@ -21,7 +21,7 @@ LinkSummary information includes Link, Cable, and Port information. Note that op
 .PP
 
 .br
-opaxmlgenerate -X /opt/opa/samples/opatopology\(ul1.txt -d \; -h Link -g Rate -g
+opaxmlgenerate -X /usr/lib/opa-ff/samples/opatopology\(ul1.txt -d \; -h Link -g Rate -g
 .br
 Rate\(ulInt -g MTU -g LinkDetails -h Cable -g CableLength -g CableLabel -g
 .br
@@ -33,7 +33,7 @@ NodeDesc -g PortGUID -g NodeType -g NodeType\(ulInt -g PortDetails -e Port -e Li
 .br
 
 .br
-opaxmlgenerate -X /opt/opa/samples/opatopology\(ul2.txt -d \; -h Node -g NodeGUID -g
+opaxmlgenerate -X /usr/lib/opa-ff/samples/opatopology\(ul2.txt -d \; -h Node -g NodeGUID -g
 .br
 NodeDesc -g NodeDetails -g HostName -g NodeType -g NodeType\(ulInt -g NumPorts -e Node
 
@@ -45,7 +45,7 @@ NodeDesc -g NodeDetails -g HostName -g NodeType -g NodeType\(ulInt -g NumPorts -
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
+This file can be found in /usr/lib/opa-ff/samples/ . For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
 .PP
 
 .B NOTE:
@@ -60,7 +60,7 @@ The following example exceeds the available width of the page. For readability, 
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.
+This file can be found in /usr/lib/opa-ff/samples/ . For brevity, this sample shows only two nodes.
 .PP
 
 .br
@@ -76,7 +76,7 @@ This file can be found in /opt/opa/samples/ . For brevity, this sample shows onl
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.
+This file can be found in /usr/lib/opa-ff/samples/ . For brevity, this sample shows only two nodes.
 .PP
 
 .br
@@ -90,7 +90,7 @@ This file can be found in /opt/opa/samples/ . For brevity, this sample shows onl
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only one node.
+This file can be found in /usr/lib/opa-ff/samples/ . For brevity, this sample shows only one node.
 .PP
 
 .br

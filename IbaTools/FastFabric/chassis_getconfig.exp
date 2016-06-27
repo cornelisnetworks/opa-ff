@@ -89,7 +89,7 @@ proc case_cleanup { failed } {
 }
 
 test_suite "getconfig" "getconfig" "getconfig all chassis
-File: /opt/opa/tools/chassis_getconfig.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/chassis_getconfig.exp" suite_setup noop {
 	global chassis
 
 	# Global Initializations for Test Suite:
@@ -123,7 +123,7 @@ File: /opt/opa/tools/chassis_getconfig.exp" suite_setup noop {
 	# type of config
 	catch { close $fd }
 	catch {
-		set summary [exec cat $fname | egrep -v {^[[:space:]]*$|Node Description} | /opt/opa/tools/show_counts 2>@1 ]
+		set summary [exec cat $fname | egrep -v {^[[:space:]]*$|Node Description} | /usr/lib/opa-ff/tools/show_counts 2>@1 ]
 		show_message "Summary:\ncount - configuration\n$summary"
 	}
 	catch { exec rm -f $fname }

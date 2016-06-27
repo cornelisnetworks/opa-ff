@@ -88,7 +88,7 @@ proc case_cleanup { failed } {
 }
 
 test_suite "switchcapture" "capture switch state" "capture switch firmware and hardware state of all externally managed switch nodes
-File: /opt/opa/tools/switch_capture.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/switch_capture.exp" suite_setup noop {
 	global opaswitch
 
 	# Global Initializations for Test Suite:

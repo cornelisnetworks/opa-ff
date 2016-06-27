@@ -38,9 +38,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa-ff/tools/ff_funcs
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 

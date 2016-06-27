@@ -91,7 +91,7 @@ It also contains the library and tools to access the shared memory database expo
 #rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{_bindir}
 mkdir -p $RPM_BUILD_ROOT%{_sbindir}
-mkdir -p $RPM_BUILD_ROOT/opt/opa/{tools,fm_tools,help,samples,src/mpi_apps,src/shmem_apps}
+mkdir -p $RPM_BUILD_ROOT/usr/lib/opa-ff/{tools,fm_tools,help,samples,src/mpi_apps,src/shmem_apps}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/ibacm
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/rdma
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/opa
@@ -107,7 +107,7 @@ cd $(cat %{_builddir}/RELEASE_PATH)
 
 cd bin
 cp -t $RPM_BUILD_ROOT%{_sbindir} %basic_tools_sbin 
-cp -t $RPM_BUILD_ROOT/opt/opa/tools/ %basic_tools_opt
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/tools/ %basic_tools_opt
 ln -s ./opaportinfo $RPM_BUILD_ROOT%{_sbindir}/opaportconfig
 ln -s ./opasmaquery $RPM_BUILD_ROOT%{_sbindir}/opapmaquery
 
@@ -116,26 +116,26 @@ cp -t $RPM_BUILD_ROOT%{_bindir} %opasadb_bin
 cp -t $RPM_BUILD_ROOT%{_includedir}/infiniband %opasadb_header
 
 cd ../bin
-cp -t $RPM_BUILD_ROOT/opt/opa/tools/ %ff_tools_opt
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/tools/ %ff_tools_opt
 
 cd ../fastfabric
 cp -t $RPM_BUILD_ROOT%{_sbindir} %ff_tools_sbin
-cp -t $RPM_BUILD_ROOT/opt/opa/tools/ %ff_tools_misc
-cp -t $RPM_BUILD_ROOT/opt/opa/help %help_doc
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/tools/ %ff_tools_misc
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/help %help_doc
 
 cd ../etc
-cp -t $RPM_BUILD_ROOT/opt/opa/fm_tools/ %ff_tools_fm
-ln -s /opt/opa/fm_tools/config_check $RPM_BUILD_ROOT%{_sbindir}/opafmconfigcheck 
-ln -s /opt/opa/fm_tools/config_diff $RPM_BUILD_ROOT%{_sbindir}/opafmconfigdiff
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/fm_tools/ %ff_tools_fm
+ln -s /usr/lib/opa-ff/fm_tools/config_check $RPM_BUILD_ROOT%{_sbindir}/opafmconfigcheck 
+ln -s /usr/lib/opa-ff/fm_tools/config_diff $RPM_BUILD_ROOT%{_sbindir}/opafmconfigdiff
 
 cd ../fastfabric/samples
-cp -t $RPM_BUILD_ROOT/opt/opa/samples %ff_iba_samples
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/samples %ff_iba_samples
 cd ..
 
 cd ../fastfabric/tools
-cp -t $RPM_BUILD_ROOT/opt/opa/tools/ %ff_tools_exp
-cp -t $RPM_BUILD_ROOT/opt/opa/tools/ %ff_libs_misc
-cp -t $RPM_BUILD_ROOT/opt/opa/tools/ osid_wrapper
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/tools/ %ff_tools_exp
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/tools/ %ff_libs_misc
+cp -t $RPM_BUILD_ROOT/usr/lib/opa-ff/tools/ osid_wrapper
 cp -t $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/opa allhosts chassis esm_chassis hosts ports switches opaff.xml
 cd ..
 
@@ -148,7 +148,7 @@ cd ..
 
 
 cd ../src/shmem/shmem_apps
-tar -xzf shmem_apps.tgz -C $RPM_BUILD_ROOT/opt/opa/src/shmem_apps/
+tar -xzf shmem_apps.tgz -C $RPM_BUILD_ROOT/usr/lib/opa-ff/src/shmem_apps/
 cd ../../
 
 #Config files
@@ -165,7 +165,7 @@ cp -t $RPM_BUILD_ROOT%{_libdir}/ibacm libdsap.so.*
 # Now that we've put everything in the buildroot, copy any default config files to their expected location for user
 # to edit. To prevent nuking existing user configs, the files section of this spec file will reference these as noreplace
 # config files.
-cp $RPM_BUILD_ROOT/opt/opa/tools/opafastfabric.conf.def $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/opa/opafastfabric.conf
+cp $RPM_BUILD_ROOT/usr/lib/opa-ff/tools/opafastfabric.conf.def $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/opa/opafastfabric.conf
 
 #Now we do a bunch of work to build the file listing of what belongs to each RPM
 
@@ -174,8 +174,8 @@ echo "%{_sbindir}/%{basic_tools_sbin} %{basic_tools_sbin_sym}" > %{_builddir}/ba
 sed -i 's;[ ];\n%{_sbindir}/;g' %{_builddir}/basic_sbin_file.list 
 
 #Basic tools opt
-echo "/opt/opa/tools/%{basic_tools_opt}" > %{_builddir}/basic_opt_file.list
-sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/basic_opt_file.list 
+echo "/usr/lib/opa-ff/tools/%{basic_tools_opt}" > %{_builddir}/basic_opt_file.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/tools/;g' %{_builddir}/basic_opt_file.list 
 
 #Basic man pages
 echo "%{_mandir}/man1/%{basic_mans}" > %{_builddir}/basic_mans.list
@@ -183,28 +183,28 @@ sed -i 's;[ ];\n%{_mandir}/man1/;g' %{_builddir}/basic_mans.list
 sed -i 's;\.1;\.1*;g' %{_builddir}/basic_mans.list
 
 #FF tools opt
-echo "/opt/opa/tools/%{ff_tools_opt}" > %{_builddir}/ff_opt_file.list
-sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_opt_file.list
+echo "/usr/lib/opa-ff/tools/%{ff_tools_opt}" > %{_builddir}/ff_opt_file.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/tools/;g' %{_builddir}/ff_opt_file.list
 
 #FF exp files opt
-echo "/opt/opa/tools/%{ff_tools_exp}" > %{_builddir}/ff_tools_exp.list
-sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_tools_exp.list 
+echo "/usr/lib/opa-ff/tools/%{ff_tools_exp}" > %{_builddir}/ff_tools_exp.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/tools/;g' %{_builddir}/ff_tools_exp.list 
 
 #FF misc files opt
-echo "/opt/opa/tools/%{ff_tools_misc}" > %{_builddir}/ff_tools_misc.list
-sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_tools_misc.list 
+echo "/usr/lib/opa-ff/tools/%{ff_tools_misc}" > %{_builddir}/ff_tools_misc.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/tools/;g' %{_builddir}/ff_tools_misc.list 
 
 #FF libs misc
-echo "/opt/opa/tools/%{ff_libs_misc}" > %{_builddir}/ff_libs_misc.list
-sed -i 's;[ ];\n/opt/opa/tools/;g' %{_builddir}/ff_libs_misc.list 
+echo "/usr/lib/opa-ff/tools/%{ff_libs_misc}" > %{_builddir}/ff_libs_misc.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/tools/;g' %{_builddir}/ff_libs_misc.list 
 
 #FF iba samples
-echo "/opt/opa/samples/%{ff_iba_samples}" > %{_builddir}/ff_iba_samples.list
-sed -i 's;[ ];\n/opt/opa/samples/;g' %{_builddir}/ff_iba_samples.list 
+echo "/usr/lib/opa-ff/samples/%{ff_iba_samples}" > %{_builddir}/ff_iba_samples.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/samples/;g' %{_builddir}/ff_iba_samples.list 
 
 #FF tools to FM configuration
-echo "/opt/opa/fm_tools/%{ff_tools_fm}" > %{_builddir}/ff_tools_fm.list
-sed -i 's;[ ];\n/opt/opa/fm_tools/;g' %{_builddir}/ff_tools_fm.list 
+echo "/usr/lib/opa-ff/fm_tools/%{ff_tools_fm}" > %{_builddir}/ff_tools_fm.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/fm_tools/;g' %{_builddir}/ff_tools_fm.list 
 
 #FF man pages
 echo "%{_mandir}/man8/%{ff_mans}" > %{_builddir}/ff_mans.list
@@ -216,16 +216,16 @@ cat %{_builddir}/basic_sbin_file.list %{_builddir}/basic_opt_file.list > %{_buil
 
 
 #FF tools help doc
-echo "/opt/opa/help/%{help_doc}" > %{_builddir}/ff_help_file.list
-sed -i 's;[ ];\n/opt/opa/help/;g' %{_builddir}/ff_help_file.list 
+echo "/usr/lib/opa-ff/help/%{help_doc}" > %{_builddir}/ff_help_file.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/help/;g' %{_builddir}/ff_help_file.list 
 
 #FF tools sbin
 echo "%{_sbindir}/%{ff_tools_sbin}" > %{_builddir}/ff_sbin_file.list
 sed -i 's;[ ];\n%{_sbindir}/;g' %{_builddir}/ff_sbin_file.list
 
 #ShmemApps
-echo "/opt/opa/src/shmem_apps/%{shmem_apps_files}" > %{_builddir}/ff_shmem_apps.list
-sed -i 's;[ ];\n/opt/opa/src/shmem_apps/;g' %{_builddir}/ff_shmem_apps.list 
+echo "/usr/lib/opa-ff/src/shmem_apps/%{shmem_apps_files}" > %{_builddir}/ff_shmem_apps.list
+sed -i 's;[ ];\n/usr/lib/opa-ff/src/shmem_apps/;g' %{_builddir}/ff_shmem_apps.list 
 
 #Final file listing for 'ff'
 cat %{_builddir}/ff_shmem_apps.list %{_builddir}/ff_sbin_file.list %{_builddir}/ff_help_file.list %{_builddir}/ff_tools_exp.list %{_builddir}/ff_tools_misc.list %{_builddir}/ff_libs_misc.list %{_builddir}/ff_iba_samples.list %{_builddir}/ff_mans.list %{_builddir}/ff_tools_fm.list %{_builddir}/ff_opt_file.list > %{_builddir}/ff_file.list
@@ -236,7 +236,7 @@ cat %{_builddir}/ff_shmem_apps.list %{_builddir}/ff_sbin_file.list %{_builddir}/
 %postun address-resolution -p /sbin/ldconfig
 
 %preun fastfabric
-cd /opt/opa/src/mpi_apps >/dev/null 2>&1
+cd /usr/lib/opa-ff/src/mpi_apps >/dev/null 2>&1
 make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from the make clean.
 
 %files basic-tools -f %{_builddir}/basic_file.list
@@ -252,7 +252,7 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/ports
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/switches
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/opaff.xml
-%config(noreplace) /opt/opa/tools/osid_wrapper
+%config(noreplace) /usr/lib/opa-ff/tools/osid_wrapper
 %{_sbindir}/opafmconfigcheck
 %{_sbindir}/opafmconfigdiff
 

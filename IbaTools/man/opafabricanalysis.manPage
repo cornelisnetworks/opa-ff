@@ -41,7 +41,7 @@ Save history of failures (errors/differences).
 .TP 10
 -d dir 
 .NL
-Top-level directory for saving baseline and history of failed checks. Default = /var/opt/opa/analysis 
+Top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa-ff/analysis 
 .TP 10
 -c file 
 .NL

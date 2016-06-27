@@ -89,7 +89,7 @@ proc case_cleanup { failed } {
 test_suite "upgrade" "upgrade firmware" "upgrade all chassis
 Firmware Files: $env(CFG_FWFILES)
 Action: $env(CFG_FWACTION)
-File: /opt/opa/tools/chassis_upgrade.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/chassis_upgrade.exp" suite_setup noop {
 	global env
 
 	# Global Initializations for Test Suite:
@@ -110,7 +110,7 @@ File: /opt/opa/tools/chassis_upgrade.exp" suite_setup noop {
 
 	if { [ test_case "check" "check firmware files" "check firmware to be pushed to all chassis
 Firmware Files: $env(CFG_FWFILES)
-File: /opt/opa/tools/chassis_upgrade.exp" case_setup case_cleanup {
+File: /usr/lib/opa-ff/tools/chassis_upgrade.exp" case_setup case_cleanup {
 			upvar num_fw num_fw
 			upvar fw_files fw_files
 			upvar fw_versions fw_versions

@@ -37,9 +37,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-TOOLSDIR=${TOOLSDIR:-/opt/opa/tools}
+TOOLSDIR=${TOOLSDIR:-/usr/lib/opa-ff/tools}
 BINDIR=${BINDIR:-/usr/sbin}
 
 . $TOOLSDIR/ff_funcs

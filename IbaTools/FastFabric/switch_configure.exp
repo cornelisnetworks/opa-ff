@@ -149,7 +149,7 @@ NODEDESC:  [sw_get_array_entry sw_config_nodedesc $env(NODEDESC_SETTING)]
 FMENABLED: [sw_get_array_entry sw_config_fmenabled $env(FMENABLED_SETTING)]
 LINKCRCMODE:	[sw_get_array_entry sw_config_linkcrcmode $env(LINKCRCMODE_SETTING)]
 
-File: /opt/opa/tools/switch_configure.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/switch_configure.exp" suite_setup noop {
 	global opaswitch
 
 	# Global Initializations for Test Suite:

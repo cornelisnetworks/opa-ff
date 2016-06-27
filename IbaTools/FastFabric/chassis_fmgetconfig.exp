@@ -88,7 +88,7 @@ proc case_cleanup { failed } {
 
 test_suite "fmgetconfig" "get FM config" "get all chassis FM config file
 Destination Filename: $env(CFG_FMFILE)
-File: /opt/opa/tools/chassis_fmgetconfig.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/chassis_fmgetconfig.exp" suite_setup noop {
 	global env
 
 	# Global Initializations for Test Suite:

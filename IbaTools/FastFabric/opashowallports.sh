@@ -36,9 +36,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa-ff/tools/ff_funcs
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
@@ -145,7 +145,7 @@ then
 	do
 		echo "--------------------------------------------------------------------"
 		echo "$hostname:"
-		/opt/opa/tools/tcl_proc hosts_run_cmd "$hostname" "root" '/usr/sbin/opainfo' 1
+		/usr/lib/opa-ff/tools/tcl_proc hosts_run_cmd "$hostname" "root" '/usr/sbin/opainfo' 1
 	done
 else
 
@@ -167,6 +167,6 @@ else
 		chassis=`strip_chassis_slots "$chassis"`
 		echo "--------------------------------------------------------------------"
 		echo "$chassis:"
-		/opt/opa/tools/tcl_proc chassises_run_cmd "$chassis" "admin" 'ismPortStats -noprompt' 1 2>&1|egrep 'FAIL|Port State|Link Qual|Link Width|Link Speed|^[[:space:]]|^Name' | egrep -v 'Tx|Rx'
+		/usr/lib/opa-ff/tools/tcl_proc chassises_run_cmd "$chassis" "admin" 'ismPortStats -noprompt' 1 2>&1|egrep 'FAIL|Port State|Link Qual|Link Width|Link Speed|^[[:space:]]|^Name' | egrep -v 'Tx|Rx'
 	done
 fi

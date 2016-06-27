@@ -89,7 +89,7 @@ proc case_cleanup { failed } {
 
 test_suite "fmgetsecurityfiles" "get FM security files" "get chassis FM security files
 Security Files: $env(CFG_SECFILE)
-File: /opt/opa/tools/chassis_fmgetsecurityfiles.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/chassis_fmgetsecurityfiles.exp" suite_setup noop {
 	global env
 
 	# Global Initializations for Test Suite:

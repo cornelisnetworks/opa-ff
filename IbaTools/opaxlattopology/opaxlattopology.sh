@@ -87,8 +87,8 @@
 ## Defines:
 XML_GENERATE="/usr/sbin/opaxmlgenerate"
 FILE_TOPOLOGY_LINKS="topology.csv"
-FILE_LINKSUM_SWD06="/opt/opa/samples/linksum_swd06.csv"
-FILE_LINKSUM_SWD24="/opt/opa/samples/linksum_swd24.csv"
+FILE_LINKSUM_SWD06="/usr/lib/opa-ff/samples/linksum_swd06.csv"
+FILE_LINKSUM_SWD24="/usr/lib/opa-ff/samples/linksum_swd24.csv"
 FILE_LINKSUM="linksum.csv"
 FILE_LINKSUM_NOCORE="linksum_nocore.csv"
 FILE_LINKSUM_NOCABLE="linksum_nocable.csv"

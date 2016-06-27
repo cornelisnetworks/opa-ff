@@ -37,9 +37,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa-ff/tools/ff_funcs
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
@@ -53,7 +53,7 @@ Usage_full()
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "            default is /var/opt/opa/analysis" >&2
+	echo "            default is /var/usr/lib/opa-ff/analysis" >&2
 	echo " Environment:" >&2
 	echo "   FF_ANALYSIS_DIR - top level directory for baselines and failed health checks" >&2
 	echo "for example:" >&2
@@ -178,7 +178,7 @@ do
 		# check SM health/running
 		mkdir -p $latest_dir
 
-		/opt/opafm/bin/fm_cmd smShowCounters > $latest.smstatus 2>&1
+		/usr/lib/opa-fm/bin/fm_cmd smShowCounters > $latest.smstatus 2>&1
 		r=$?
 
 		if [ $r != 0 ]

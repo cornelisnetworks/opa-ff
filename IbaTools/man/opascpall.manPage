@@ -81,7 +81,7 @@ opascpall MPI-PMB /root/MPI-PMB
 .br
 # efficiently copy an entire directory tree
 .br
-opascpall -t -p /opt/opa/src/mpi\(ulapps /opt/opa/src/mpi\(ulapps
+opascpall -t -p /usr/lib/opa-ff/src/mpi\(ulapps /usr/lib/opa-ff/src/mpi\(ulapps
 .br
 # copy a group of files
 .br

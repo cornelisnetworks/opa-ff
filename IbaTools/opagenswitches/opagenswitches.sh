@@ -45,16 +45,16 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa-ff/tools/ff_funcs
 
 ## Defines:
 OPAEXPAND_FILE="/usr/sbin/opaexpandfile"
 OPA_REPORT="/usr/sbin/opareport"
 OPASAQUERY="/usr/sbin/opasaquery"
 XML_EXTRACT="/usr/sbin/opaxmlextract"
-GEN_OPASWITCHES_HELPER="/opt/opa/tools/opagenswitcheshelper"
+GEN_OPASWITCHES_HELPER="/usr/lib/opa-ff/tools/opagenswitcheshelper"
 FILE_OPASWITCHES=$(mktemp "opagensw-file_switches-XXXX")
 FILE_OPASWITCHES2=$(mktemp "opagensw-file_switches2-XXXX")
 FILE_LINKSUM_LEAF_EDGE=$(mktemp "opagensw-linksum_leaf_edge-XXXX.csv")

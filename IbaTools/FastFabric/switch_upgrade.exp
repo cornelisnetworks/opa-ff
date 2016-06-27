@@ -91,7 +91,7 @@ test_suite "upgrade" "upgrade firmware" "upgrade all externally managed switch n
 Firmware package File: $env(CFG_FWFILE)
 Firmware Files: $env(CFG_FWBINFILES)
 Action: $env(CFG_FWACTION)
-File: /opt/opa/tools/switch_upgrade.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/switch_upgrade.exp" suite_setup noop {
 	global env
 	global opaswitch
 
@@ -115,7 +115,7 @@ File: /opt/opa/tools/switch_upgrade.exp" suite_setup noop {
 Firmware package File: $env(CFG_FWFILE)
 Firmware Files: $env(CFG_FWBINFILES)
 Firmware Release Info: $env(CFG_FWRELINFO)
-File: /opt/opa/tools/switch_upgrade.exp" case_setup case_cleanup {	
+File: /usr/lib/opa-ff/tools/switch_upgrade.exp" case_setup case_cleanup {	
 			set fw_version ""
 			set fw_type ""
 			set fw_speed ""

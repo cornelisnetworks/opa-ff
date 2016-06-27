@@ -36,7 +36,7 @@ end_test=0
 inject=0
 redundancy=0
 length=0
-SM_DIAG_PATH=/opt/opafm/bin/fm_cmd
+SM_DIAG_PATH=/usr/lib/opa-fm/bin/fm_cmd
 MIN_ISL_REDUNDANCY=4
 PATH_LENGTH=4
 

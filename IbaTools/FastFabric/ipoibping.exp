@@ -29,8 +29,8 @@
 
 # [ICS VERSION STRING: unknown]
 
-source /opt/opa/tools/ibtools.exp
-source "/opt/opa/tools/ff_function.exp"
+source /usr/lib/opa-ff/tools/ibtools.exp
+source "/usr/lib/opa-ff/tools/ff_function.exp"
 
 #=============================================================================#
 # Test Suite Description:
@@ -93,7 +93,7 @@ proc case_cleanup { failed } {
 }
 
 test_suite "ipoibping" "ipoib ping" "Ping test to each host via IPoIB
-File: /opt/opa/tools/ipoibping.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/ipoibping.exp" suite_setup noop {
 
 	# Global Initializations for Test Suite:
 	# --------------------------------------

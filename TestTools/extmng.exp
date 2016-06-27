@@ -482,7 +482,7 @@ proc get_switch_getportconfig { ibnode } {
 
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		set out_msg ""
 
@@ -530,7 +530,7 @@ proc get_switch_info { ibnode } {
 
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		set out_msg ""
 
@@ -783,7 +783,7 @@ proc get_switch_hwvpd { ibnode } {
 ##	
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		local_sh
 
@@ -835,7 +835,7 @@ proc get_switch_ping { ibnode { hfi_port ""} { report "1" } { ignore_pass "0" } 
 ##	
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		local_sh
 
@@ -899,7 +899,7 @@ proc get_switch_fwverify { ibnode } {
 ##	
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		local_sh
 
@@ -965,7 +965,7 @@ proc get_switch_capture { ibnode upload_file } {
 ##	
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		local_sh
 
@@ -1040,7 +1040,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
 		local_sh_exit
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		set brand [get_switch_brand "$ibnode"]
 		if { [ string equal "$brand" "OPA"] } {
@@ -1198,7 +1198,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		local_sh
 
@@ -1456,7 +1456,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
         upvar args args
         upvar norecords norecords
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa-ff/tools
 
 		local_sh
 

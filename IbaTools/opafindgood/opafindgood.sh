@@ -45,9 +45,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa-ff/tools/ff_funcs
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
@@ -200,7 +200,7 @@ function to_canon()
 
 function mycomm12()
 {
-	/opt/opa/tools/comm12 $1 $2
+	/usr/lib/opa-ff/tools/comm12 $1 $2
 }
 
 echo "$(ff_var_filter_dups_to_stdout "$HOSTS"|wc -l) hosts will be checked"

@@ -89,7 +89,7 @@ proc case_cleanup { failed } {
 test_suite "fmcontrol" "FM control" "control FM on all chassis
 Action: $env(CFG_FWACTION)
 Bootstate: $env(CFG_INSTALL_OPTIONS)
-File: /opt/opa/tools/chassis_fmcontrol.exp" suite_setup noop {
+File: /usr/lib/opa-ff/tools/chassis_fmcontrol.exp" suite_setup noop {
 	global env
 
 	# Global Initializations for Test Suite:

@@ -37,9 +37,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa-ff/tools/ff_funcs
 
 temp="$(mktemp --tmpdir "opascpall.XXXXXX")"
 trap "rm -f $temp; exit 1" SIGHUP SIGTERM SIGINT
@@ -73,7 +73,7 @@ Usage_full()
 	echo "   FF_MAX_PARALLEL - when -p option is used, maximum concurrent operations" >&2
 	echo "example:">&2
 	echo "   opascpall MPI-PMB /root/MPI-PMB" >&2
-	echo "   opascpall -t -p /opt/opa/src/mpi_apps /opt/opa/src/mpi_apps" >&2
+	echo "   opascpall -t -p /usr/lib/opa-ff/src/mpi_apps /usr/lib/opa-ff/src/mpi_apps" >&2
 	echo "   opascpall a b c /root/tools/" >&2
 	echo "   opascpall -h 'arwen elrond' a b c /root/tools" >&2
 	echo "   HOSTS='arwen elrond' opascpall a b c /root/tools" >&2
@@ -102,7 +102,7 @@ Usage()
 	echo "   dest_dir - destination for copy.  If omitted current directory name is used" >&2
 	echo "example:">&2
 	echo "   opascpall MPI-PMB /root/MPI-PMB" >&2
-	echo "   opascpall -t -p /opt/opa/src/mpi_apps /opt/opa/src/mpi_apps" >&2
+	echo "   opascpall -t -p /usr/lib/opa-ff/src/mpi_apps /usr/lib/opa-ff/src/mpi_apps" >&2
 	echo "   opascpall a b c /root/tools/" >&2
 	echo "user@ syntax cannot be used in filenames specified" >&2
 	echo "To copy from hosts in the cluster to this host, use opauploadall" >&2

@@ -351,7 +351,7 @@ set qlgc_fork exp_fork
 set qlgc_wait exp_wait
 if { ! [ catch { set thread_tcl $tcl_platform(threaded) } result] } {
 	# Our own TCL extension to work around fork issues
-	#load /opt/opa/tools/libqlgc_fork.so
+	#load /usr/lib/opa-ff/tools/libqlgc_fork.so
 	package require qlgc_fork
 	set qlgc_fork qlgc_fork
 	set qlgc_wait qlgc_wait

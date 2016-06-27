@@ -37,9 +37,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa-ff/tools/ff_funcs
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
@@ -56,7 +56,7 @@ Usage_full()
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "            default is /var/opt/opa/analysis" >&2
+	echo "            default is /var/usr/lib/opa-ff/analysis" >&2
 	echo "   -c file - error thresholds config file" >&2
 	echo "             default is $CONFIG_DIR/opa/opamon.conf" >&2
 	echo "   -t portsfile - file with list of local HFI ports used to access" >&2

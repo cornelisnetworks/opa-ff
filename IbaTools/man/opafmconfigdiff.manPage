@@ -47,8 +47,8 @@ Names of the configuration files to be compared.
 
 .SH Example 
 .NL
-opafmconfigdiff /etc/sysconfig/opafm.xml /opt/opafm/etc/opafm.xml
+opafmconfigdiff /etc/sysconfig/opafm.xml /usr/lib/opa-fm/etc/opafm.xml
 .br
-opafmconfigdiff -f /etc/sysconfig/opafm.xml /opt/opafm/etc/opafm.xml
+opafmconfigdiff -f /etc/sysconfig/opafm.xml /usr/lib/opa-fm/etc/opafm.xml
 .br
-opafmconfigdiff #8217#8211;d -uw /etc/sysconfig/opafm.xml /opt/opafm/etc/ opafm.xml
+opafmconfigdiff #8217#8211;d -uw /etc/sysconfig/opafm.xml /usr/lib/opa-fm/etc/ opafm.xml

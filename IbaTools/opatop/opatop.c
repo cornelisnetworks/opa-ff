@@ -116,7 +116,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUG_IMGID			0x0002			// Display single image ID
 #define DEBUG_IMGID_2		0x0004			// Display multiple image IDs
 
-#define PATH_HELP		"/opt/opa/help/"
+#define PATH_HELP		"/usr/lib/opa-ff/help/"
 // if help files are bigger than this, extra will be silently ignored
 #define MAX_HELP_CHARS	10240	// allows for about 10x growth
 #define MAX_HELP_LINES	999	// allows for about 10x growth

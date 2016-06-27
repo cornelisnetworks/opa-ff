@@ -178,8 +178,8 @@ proc chassis_wait_reboot_done { chassis } {
 	# use a local shell for ping to verify chassis comes back
 	# it reboots too fast for us to observe it go away
 	local_sh
-	if { [ auto_execok /opt/opa/tools/opagetipaddrtype ] != "" } {
-		send_unix_cmd "/opt/opa/tools/opagetipaddrtype $chassis"
+	if { [ auto_execok /usr/lib/opa-ff/tools/opagetipaddrtype ] != "" } {
+		send_unix_cmd "/usr/lib/opa-ff/tools/opagetipaddrtype $chassis"
 		set out [expect_any 60 {"ipv6" "ipv4" } {"Error:" "Usage:"}]
 		regexp {([ip]+)([A-Za-z0-9]+)} $out iptype 
 	} else {

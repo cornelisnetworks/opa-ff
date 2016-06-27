@@ -81,7 +81,7 @@ File: TestTools/network.exp" case_setup case_cleanup {
 			# allow ping of self
 			test_item "$desthost" "$host to $desthost" "simple ping from $host to $desthost" noop noop {
 				set netdest "[ host_basename $desthost ]$suffix"
-				send_unix_cmd "/opt/opa/tools/opagetipaddrtype $netdest"
+				send_unix_cmd "/usr/lib/opa-ff/tools/opagetipaddrtype $netdest"
 				set out [expect_any 60 {"ipv6" "ipv4" } {"Error:" "Usage:"}]
 				regexp {([ip]+)([A-Za-z0-9]+)} $out iptype
 				if { $iptype == "ipv4" } {

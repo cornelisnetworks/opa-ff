@@ -31,7 +31,7 @@
 # [ICS VERSION STRING: unknown]
 
 # verify hosts basic single node configuration and performance via hostverify.sh
-# prior to using this, copy /opt/opa/samples/hostverify.sh to FF_HOSTVERIFY_DIR,
+# prior to using this, copy /usr/lib/opa-ff/samples/hostverify.sh to FF_HOSTVERIFY_DIR,
 # and edit to set proper expectations for node configuration and performance, 
 
 # optional override of defaults
@@ -40,9 +40,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa-ff/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa-ff/tools/ff_funcs
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
@@ -71,11 +71,11 @@ Usage_full()
 	echo "   -T timelimit - timelimit in seconds for host to complete tests" >&2
 	echo "                  default of 300 seconds (5 minutes)" >&2
 	echo "	 test - one or more specific tests to run" >&2
-	echo "	        see /opt/opa/samples/hostverify.sh for a list of available tests" >&2
+	echo "	        see /usr/lib/opa-ff/samples/hostverify.sh for a list of available tests" >&2
 	echo "This verifies basic node configuration and performance by running" >&2
 	echo "FF_HOSTVERIFY_DIR/hostverify.sh on all specified hosts" >&2
 	echo >&2
-	echo "Prior to using this, copy /opt/opa/samples/hostverify.sh to FF_HOSTVERIFY_DIR" >&2
+	echo "Prior to using this, copy /usr/lib/opa-ff/samples/hostverify.sh to FF_HOSTVERIFY_DIR" >&2
 	echo "and edit to set proper expectations for node configuration and performance" >&2
 	echo "Then be sure to use the -c option on first run for a given node" >&2
 	echo "so that hostverify.sh gets copied to each node." >&2
@@ -116,7 +116,7 @@ Usage()
 	echo "This verifies basic node configuration and performance by running" >&2
 	echo "FF_HOSTVERIFY_DIR/hostverify.sh on all specified hosts" >&2
 	echo >&2
-	echo "Prior to using this, copy /opt/opa/samples/hostverify.sh to FF_HOSTVERIFY_DIR" >&2
+	echo "Prior to using this, copy /usr/lib/opa-ff/samples/hostverify.sh to FF_HOSTVERIFY_DIR" >&2
 	echo "and edit to set proper expectations for node configuration and performance" >&2
 	echo "Then be sure to use the -c option on first run for a given node" >&2
 	echo "so that hostverify.sh gets copied to each node." >&2
