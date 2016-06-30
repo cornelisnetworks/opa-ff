@@ -136,7 +136,18 @@ void XmlPrintStrLen(const char *tag, const char* value, int len, int indent)
 			printf("&apos;");
 		else if (*value == '"')
 			printf("&quot;");
-		else if (iscntrl(*value))
+		else if (iscntrl(*value)) {
+			if ((unsigned char)*value <= 0x08
+				|| ((unsigned char)*value >= 0x0b
+						 && (unsigned char)*value <= 0x0c)
+				|| ((unsigned char)*value >= 0x0e
+						 && (unsigned char)*value <= 0x1f)) {
+				// characters which XML does not permit in character fields
+				printf("!");
+			} else {
+				printf("&#x%x;", (unsigned)(unsigned char)*value);
+			}
+		} else if ((unsigned char)*value > 0x7f)
 			printf("&#x%x;", (unsigned)(unsigned char)*value);
 		else
 			putchar((int)(unsigned)(unsigned char)*value);

@@ -338,7 +338,18 @@ void IXmlOutputPrintStrLen(IXmlOutputState_t *state, const char* value, int len)
 			IXmlOutputPrint(state, "&apos;");
 		else if (*value == '"')
 			IXmlOutputPrint(state, "&quot;");
-		else if (*value != '\n' && iscntrl(*value))
+		else if (*value != '\n' && iscntrl(*value)) {
+			if ((unsigned char)*value <= 0x08
+				|| ((unsigned char)*value >= 0x0b
+						 && (unsigned char)*value <= 0x0c)
+				|| ((unsigned char)*value >= 0x0e
+						 && (unsigned char)*value <= 0x1f)) {
+				// characters which XML does not permit in character fields
+				IXmlOutputPrint(state, "!");
+			} else {
+				IXmlOutputPrint(state, "&#x%x;", (unsigned)(unsigned char)*value);
+			}
+		} else if ((unsigned char)*value > 0x7f)
 			IXmlOutputPrint(state, "&#x%x;", (unsigned)(unsigned char)*value);
 		else
 			fputc((int)(unsigned)(unsigned char)*value, state->file);
