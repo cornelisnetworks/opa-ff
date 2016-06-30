@@ -115,8 +115,7 @@ typedef struct _pcapRecHdr_s {
 } pcapRecHdr_t;
 
 typedef struct extHeader_s {
-	uint32				tv_nsec;
-	uint32				tv_sec;
+	uint64				ts;
 	uint8				linkType;		/* Lyink Type 26 = STL; 21 = IB */
 	uint8				flags;			/* ERF flags */
 	uint16				length;			/* Record Length in Bytes */
