@@ -859,6 +859,7 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 	WFR_SnC_HDR			*snc = (WFR_SnC_HDR *)pkt;
 	WFR_SnC_HDR			wfrLiteSnc = {0};
 	int i;
+	int erfRecordLen;
 
 	/* Adjust to keep 'nsec' less than 1 second */
 	while (nsec >= 1E9L) {
@@ -868,11 +869,15 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 
 	pcapRec.ts_sec =			sec;
 	pcapRec.ts_nsec =			nsec;
-	ext.tv_sec =				sec;
-	ext.tv_nsec =				nsec;
-	ext.flags =					4;
+	ext.flags =				4;		/* set variable length bit */
 	ext.lossCtr = 				0;
 	ext.linkType =				ERF_TYPE_OPA_SNC;
+
+	/* The high 32 bits of the timestamp contain the integer number of seconds
+	 * while the lower 32 bits contain the binary fraction of the second.
+	 * Unlike the rest of the ERF header this is little endian
+	 */
+	StoreLeU64((uint8*)&ext.ts, ((uint64) sec << 32) + (((uint64) nsec << 32) / 1000 / 1000 / 1000));
 
 	if (verbose > 1 && mode == WFR_MODE) {
 		fprintf(stderr, "Direction:  %u\n", snc->Direction);
@@ -888,10 +893,18 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 		wfrLiteSnc.PortNumber = 1;
 		pktLen += sizeof(WFR_SnC_HDR);
 	}
-	
-	pcapRec.packetSize = 		pktLen + sizeof(pcapRecHdr_t);
-	pcapRec.packetOrigSize = 	pcapRec.packetSize;
-	ext.length =				hton16(pktLen);
+
+	erfRecordLen = pktLen + sizeof(extHeader_t);
+	/* PCAP record length, including pseudoheaders (e.g. ERF) but not PCAP header */
+	pcapRec.packetSize =			erfRecordLen;
+	/* Technically should be wire length + erf header length but no
+	 * difference for OPA. Usually both set to ERF record length
+	 * because packetSize < packetOrigSize should be true
+	 */
+	pcapRec.packetOrigSize =		erfRecordLen;
+	/* Total ERF record length including header and any padding */
+	ext.length =				hton16(erfRecordLen);
+	/* Packet wire length */
 	ext.realLength =			hton16(pktLen);
 
 	if (write(fd, &pcapRec, sizeof(pcapRec)) < 0) {
