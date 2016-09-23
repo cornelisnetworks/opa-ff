@@ -287,5 +287,5 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 %config(noreplace) %{_sysconfdir}/rdma/dsap.conf
 
 %changelog
-* Thu Jun 2 2016 Scott Breyer <scott.j.breyer@intel.com> - 10.1.0-ifs
-- Update to latest from build 10.1.0.0.145 (FF 10.1.0.0.126)
+* Fri Sep 23 2016 Anton Bodner <anton.bodner@intel.com> - 10.3.0-ifs
+- Update to latest from build 10.3.0.0.58 (FF 10.3.0.0.53)
