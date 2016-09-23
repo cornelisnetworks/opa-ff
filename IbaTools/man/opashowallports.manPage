@@ -41,19 +41,19 @@ Performs operation against chassis. Default = host.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with list of hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file containing the list of hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-File with list of chassis in cluster. Default is /etc/sysconfig/opa/chassis file.
+Specifies the file containing the list of chassis in cluster. Default is /etc/sysconfig/opa/chassis file.
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts for which to show ports.
+Specifies the list of hosts for which to show ports.
 .TP 10
 -H \fIchassis\fR 
 .NL
-List of chassis for which to show ports.
+Specifies the list of chassis for which to show ports.
 .TP 10
 -S 
 .NL

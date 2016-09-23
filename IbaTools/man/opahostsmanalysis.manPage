@@ -37,7 +37,7 @@ Produces full help text.
 .TP 10
 -b 
 .NL
-Baseline mode. Default is the compare/check mode.
+Specifies the baseline mode. Default is the compare/check mode.
 .TP 10
 -e 
 .NL
@@ -49,7 +49,7 @@ Saves history of failures (errors/differences).
 .TP 10
 -d \fIdir\fR 
 .NL
-Top-level directory for saving baseline and history of failed checks. Default = /var/opt/opa/analysis 
+Specifies the top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa/analysis 
 .SH Example 
 .NL
 opahostsmanalysis
@@ -82,15 +82,15 @@ The opahostsmanalysis tool generates files such as the following within FF\(ulAN
 \fBHealth Check\fR
 
 .IP \(bu
-latest/hostsm.smstatus #8217#8211; Output of the sm\(ulquery smShowStatus command.
+latest/hostsm.smstatus - Output of the sm\(ulquery smShowStatus command.
 .PP
 
 \fBBaseline\fR
 
 .IP \(bu
-baseline/hostsm.smver #8217#8211; Host SM version.
+baseline/hostsm.smver - Host SM version.
 .IP \(bu
-baseline/hostsm.smconfig #8217#8211; Copy of opafm.config.
+baseline/hostsm.smconfig - Copy of opafm.config.
 .PP
 During a baseline run, the files are also created in FF\(ulANALYSIS\(ulDIR/latest.
 .PP
@@ -98,14 +98,14 @@ During a baseline run, the files are also created in FF\(ulANALYSIS\(ulDIR/lates
 \fBFull Analysis\fR
 
 .IP \(bu
-latest/hostsm.smstatus #8217#8211; Output of the sm\(ulquery smShowStatus command.
+latest/hostsm.smstatus - Output of the sm\(ulquery smShowStatus command.
 .IP \(bu
-latest/hostsm.smver #8217#8211; Host SM version. latest/hostsm.smver.diff - diff of the baseline and latest host SM version.
+latest/hostsm.smver - Host SM version. latest/hostsm.smver.diff - diff of the baseline and latest host SM version.
 
 .IP \(bu
-latest/hostsm.smconfig #8217#8211; Copy of opafm.xml.
+latest/hostsm.smconfig - Copy of opafm.xml.
 .IP \(bu
-latest/hostsm.smconfig.diff #8217#8211; diff of the baseline and the latest opafm.xml.
+latest/hostsm.smconfig.diff - diff of the baseline and the latest opafm.xml.
 .PP
 The .diff files are only created if differences are detected.
 .PP

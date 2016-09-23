@@ -35,12 +35,12 @@ Produces verbose output.
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI, numbered 1..n. Default = 1.
+Specifies the HFI, numbered 1..n. Default = 1.
 
 .TP 10
 -f \fIfile\fR 
 .NL
-File parameter for  \fIfileversion\fR,  \fIupdate\fR, and  \fIdumpotp\fR operations.
+Specifies the firmware file or output file.
 
 .TP 10
  \fIoperation\fR 

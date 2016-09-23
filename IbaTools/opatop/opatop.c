@@ -116,7 +116,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUG_IMGID			0x0002			// Display single image ID
 #define DEBUG_IMGID_2		0x0004			// Display multiple image IDs
 
-#define PATH_HELP		"/opt/opa/help/"
+#define PATH_HELP		"/usr/lib/opa/help/"
 // if help files are bigger than this, extra will be silently ignored
 #define MAX_HELP_CHARS	10240	// allows for about 10x growth
 #define MAX_HELP_LINES	999	// allows for about 10x growth
@@ -143,8 +143,8 @@ uint32          g_debug = DEBUG_NONE;
 int				g_quiet = 0;			// omit progress output
 int				g_expr_funct = 0;		// Experimental functionality (undocumented)
 
-uint8	hfi = 1;
-uint8	port = -1;
+uint8	hfi = 0;
+uint8	port = 0;
 
 uint32	ct_interval = 0;
 uint8	n_level_menu = 0;
@@ -2198,19 +2198,21 @@ void DisplayScreen(void)
 			printf( "  Rcv Constrain*:  %10llu |  Xmit Wait Data:  %10llu\n",
 				(unsigned long long)g_portCounters.portRcvConstraintErrors,
 				(unsigned long long)g_portCounters.portXmitWaitData);
-			printf( "                              |  Rcv Bubble*:     %10llu\n",
-				(unsigned long long)g_portCounters.portRcvBubble);
 
-			ct_lines -= 17;
+			ct_lines -= 16;
 			if(fb_valid_vf_port_stats_hidden) {
-			printf( " SmaCongestion (VL15):%7c |\n", ' ');
-			printf( "  Cong Discards:   %10llu |  Xmit Wait:       %10llu\n",
-				(unsigned long long)g_hiddenVfPortCounters.swPortVFCongestion,
-				(unsigned long long)g_hiddenVfPortCounters.portVFXmitWait);
-				ct_lines -= 4;
+				printf( " SmaCongestion (VL15):%7c |  Rcv Bubble*:     %10llu\n", ' ',
+						(unsigned long long)g_portCounters.portRcvBubble);
+				printf( "  Cong Discards:   %10llu\n",
+						(unsigned long long)g_hiddenVfPortCounters.swPortVFCongestion);
+				printf( "  Xmit Wait:       %10llu\n",
+						(unsigned long long)g_hiddenVfPortCounters.portVFXmitWait);
+				ct_lines -= 3;
 			} else {
+				printf( "                              |  Rcv Bubble*:     %10llu\n",
+					(unsigned long long)g_portCounters.portRcvBubble);
 				printf( " SmaCongestion: VF PORT COUNTERS NOT AVAILABLE\n");
-				ct_lines -= 1;
+				ct_lines -= 2;
 			}
 		}
 		else
@@ -2301,15 +2303,12 @@ void DisplayScreen(void)
 			tb_menu[n_level_menu - 1] == SCREEN_VF_FOCUS )
 		{
 			if (fb_port_has_neighbor)
-				printf("Neighbor\n");
-			else
-				printf("\n");
-			break;
+				printf("Neighbor |");
 		}
-		// Intentional fall-through to default case
-
+		 fflush(stdout);
+		break;
 	default:
-		printf("\n");
+		printf("\n ");
 		break;
 
 	}	// End of switch (tb_menu[n_level_menu])
@@ -2458,15 +2457,6 @@ int main(int argc, char ** argv)
 	{
 		Usage();
 	}
-
-	// find portGuid for hfi/port specified
-	if (! port) {
-		fprintf(stderr, NAME_PROG ": Invalid port number, First Port is 1\n");
-		g_exitstatus = 1;
-		goto done;
-	}
-	if (port == (uint8)-1)
-		port = 0;	// first active port
 
 	printf(NAME_PROG " Initializing...(%d seconds)\n", g_interval);
 	tb_menu[0] = SCREEN_SUMMARY;

@@ -39,14 +39,25 @@ trap "rm -f $tempfile" EXIT
 
 Usage_full()
 {
-	echo "Usage: opadisablehosts [-h hfi] [-p port] reason host ..." >&2
+	echo "Usage: opadisablehosts [-h hfi] [-p port] reason host" >&2
 	echo "              or" >&2
 	echo "       opadisablehosts --help" >&2
-	echo "   --help - produce full help text" >&2
-	echo "   -h/--hfi hfi              - hfi to send via, default is 1st hfi" >&2
-	echo "   -p/--port port            - port to send via, default is 1st active port" >&2
-	echo "   reason - text description of reason hosts are being disabled," >&2
-	echo "            will be saved in reason field of output file" >&2
+	echo " " >&2
+	echo "   --help         - produce full help text" >&2
+	echo "   -h hfi         - hfi, numbered 1..n, 0= -p port will be" >&2
+	echo "                    a system wide port num (default is 0)" >&2
+	echo "   -p port        - port, numbered 1..n, 0=1st active" >&2
+	echo "                    (default is 1st active)" >&2
+	echo "   reason         - text description of reason hosts are being disabled," >&2
+	echo "                    will be saved in reason field of output file" >&2
+	echo  >&2
+	echo "The -h and -p options permit a variety of selections:" >&2
+	echo "   -h 0       - 1st active port in system (this is the default)" >&2
+	echo "   -h 0 -p 0  - 1st active port in system " >&2
+	echo "   -h x       - 1st active port on HFI x" >&2
+	echo "   -h x -p 0  - 1st active port on HFI x" >&2
+	echo "   -h 0 -p y  - port y within system (irrespective of which ports are active)" >&2
+	echo "   -h x -p y  - HFI x, port y" >&2
 	echo  >&2
 	echo "Information about the links disabled will be written to a CSV file. By default">&2
 	echo "this file is named $CONFIG_DIR/opa/disabled:hfi:port.csv where the hfi:port">&2
@@ -65,13 +76,17 @@ Usage_full()
 
 Usage()
 {
-	echo "Usage: opadisablehosts reason host ..." >&2
+	echo "Usage: opadisablehosts [-h hfi] [-p port] reason host" >&2
 	echo "              or" >&2
 	echo "       opadisablehosts --help" >&2
-	echo "   --help - produce full help text" >&2
-	echo  >&2
-	echo "   reason - text description of reason hosts are being disabled," >&2
-	echo "            will be saved in reason field of output file" >&2
+	echo " " >&2
+	echo "   --help         - produce full help text" >&2
+	echo "   -h hfi         - hfi, numbered 1..n, 0= -p port will be" >&2
+	echo "                    a system wide port num (default is 0)" >&2
+	echo "   -p port        - port, numbered 1..n, 0=1st active" >&2
+	echo "                    (default is 1st active)" >&2
+	echo "   reason         - text description of reason hosts are being disabled," >&2
+	echo "                    will be saved in reason field of output file" >&2
 	echo >&2
 	echo "for example:" >&2
 	echo "   opadisablehosts 'bad DRAM' compute001 compute045" >&2
@@ -127,7 +142,7 @@ do
 		echo "opadisablehosts: Unable to find host: $i" >&2
 		res=1
 	else
-		/usr/sbin/opadisableports -p "$hfi:$port" "$reason" < $tempfile
+		/usr/sbin/opadisableports -h $hfi -p $port "$reason" < $tempfile
 	fi
 	rm -f $tempfile
 done

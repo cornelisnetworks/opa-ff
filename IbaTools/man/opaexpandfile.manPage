@@ -30,7 +30,7 @@ Produces full help text.
 .TP 10
  \fIfile\fR 
 .NL
-FastFabric file to be processed.
+Specifies the FastFabric file to be processed.
 
 .SH Example 
 .NL

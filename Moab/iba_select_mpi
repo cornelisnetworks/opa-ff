@@ -73,10 +73,10 @@ find_mpi()
 # defaults we use for MPI (QuickSilver, openmpi, mvapich1, mvapich2)
 if [ -z "$MPICH_PREFIX" ]
 then
-	if test -f /opt/opa/bin/mpirun_rsh && ! rpm -q kernel-ib >/dev/null 2>&1
+	if test -f /usr/lib/opa/bin/mpirun_rsh && ! rpm -q kernel-ib >/dev/null 2>&1
 	then
 		# QuickSilver MPI
-		MPICH_PREFIX=/opt/opa
+		MPICH_PREFIX=/usr/lib/opa
 	fi
 	# by default MPI gets installed using same stack prefix as OFED
 	prefix=$(/etc/infiniband/info 2>/dev/null|grep '^prefix='|cut -f2 -d=)

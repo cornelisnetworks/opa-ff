@@ -89,7 +89,7 @@ proc case_cleanup { failed } {
 }
 
 test_suite "switchinfo" "report switch info" "report firmware version and capability of all externally managed switch nodes
-File: /opt/opa/tools/switch_info.exp" suite_setup noop {
+File: /usr/lib/opa/tools/switch_info.exp" suite_setup noop {
 	global opaswitch
 
 	# Global Initializations for Test Suite:
@@ -123,7 +123,7 @@ File: /opt/opa/tools/switch_info.exp" suite_setup noop {
 	# type of config
 	catch { close $fd }
 	catch {
-		set summary [exec cat $fname | egrep -v {^[[:space:]]*$} | /opt/opa/tools/show_counts 2>@1 ]
+		set summary [exec cat $fname | egrep -v {^[[:space:]]*$} | /usr/lib/opa/tools/show_counts 2>@1 ]
 		show_message "Summary:\ncount - info\n$summary"
 	}
 	catch { exec rm -f $fname }

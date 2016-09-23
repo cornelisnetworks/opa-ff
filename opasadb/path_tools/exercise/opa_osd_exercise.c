@@ -209,7 +209,7 @@ usage(char **argv)
 	fprintf(stderr, "Stress test SM and Distributed SA query system\n");
 	fprintf(stderr, "\toptions include:\n");
 	fprintf(stderr, "\t--help\n");
-	fprintf(stderr, "\t\tProvide this help text.");
+	fprintf(stderr, "\t\tProvide this help text.\n");
 	fprintf(stderr, "\t-d <debug level>\n");
 	fprintf(stderr, "\t\t set debugging level.\n");
 	fprintf(stderr, "\t-s <seconds>\n");
@@ -240,7 +240,17 @@ usage(char **argv)
 	fprintf(stderr,
 			"'guidlist' is a text file that lists the source and destination\n");
 	fprintf(stderr,
-			"guids and lids (i.e., from build_table.pl)\n");
+			"guids and lids \n");
+	fprintf(stderr,
+                        "guidlist format is\n");
+	fprintf(stderr,
+                        "lid_0;guid_0;node_desc_0\n");
+	fprintf(stderr,
+                        "lid_1;guid_1;node_desc_1\n");
+	fprintf(stderr,
+                        ".\n");
+	fprintf(stderr,
+                        ".\n");
 	fprintf(stderr,
 			"\nExample:\t%s -p 0x9001  guidtable\n", argv[0]);
 }

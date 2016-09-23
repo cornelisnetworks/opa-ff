@@ -18,7 +18,9 @@ opaswitchadmin
 Performs a number of multi-step initialization and verification operations against one or more externally managed Intel(R) Omni-Path switches. The operations include initial switch setup, firmware upgrades, chassis reboot, and others.
 .SH Syntax 
 .NL
-opaswitchadmin [-c] [-N \[aq]\fInodes\fR\[aq]] [-L \fInodefile\fR] [-O] [-P \fIpackages\fR] [-a \fIaction\fR] [-t \fIportsfile\fR] [-p \fIports\fR] \fIoperation\fR...
+opaswitchadmin [-c] [-N \[aq]\fInodes\fR\[aq]] [-L \fInodefile\fR] [-O] [-P \fIpackages\fR]
+.br
+[-a \fIaction\fR] [-t \fIportsfile\fR] [-p \fIports\fR] \fIoperation\fR...
 .SH Options 
 .NL
 
@@ -30,52 +32,37 @@ Produces full help text.
 .TP 10
 -c 
 .NL
-Clobbers result files from any previous run before starting this run.
+Overwrites result files from any previous run before starting this run.
 
 .TP 10
 -N \fInodes\fR 
 .NL
-List of nodes to execute the operation against.
+Specifies the list of nodes to execute the operation against.
 
 .TP 10
 -L \fInodefile\fR 
 .NL
-File with nodes in the cluster. Default is /etc/sysconfig/opa/switches file.
+Specifies the file with nodes in the cluster. Default is /etc/sysconfig/opa/switches file.
 
 .TP 10
 -P \fIpackages\fR 
 .NL
-
-.RS
-.TP 10
-
-.sp
-For upgrades
-File name or directory where the firmware image is to install. For the directory specified, .emfw file in the directory tree is used. shell wild cards may also be used within quotes.
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-For capture
-File name to upload to. Default is switchcapture file.
-
-.RE
+For upgrades: Specifies the file name or directory where the firmware image is to install. For the directory specified, .emfw file in the directory tree is used. shell wild cards may also be used within quotes.
 
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabrics for switch access. Default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabrics for switch access. Default is /etc/sysconfig/opa/ports file.
 
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabrics for switch access. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+Specifies the list of local HFI ports used to access fabrics for switch access.
 
 .IP
-Uses the format hfi:port, for example:
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 
@@ -115,7 +102,7 @@ HFI  \fIx\fR, port  \fIy\fR.
 .TP 10
 -a \fIaction\fR 
 .NL
-Action for firmware file for switch upgrade. The action argument can be one or more of the following:
+Specifies an action for firmware file for switch upgrade. The action argument can be one or more of the following:
 
 .RS
 .TP 10
@@ -138,7 +125,7 @@ Ensures firmware is in primary and running.
 .TP 10
 -O 
 .NL
-Override for firmware upgrades, bypasses the previous firmware version checks, and forces the update unconditionally.
+Specifies the override for firmware upgrades, bypasses the previous firmware version checks, and forces the update unconditionally.
 
 .TP 10
  \fIoperation\fR 
@@ -219,7 +206,7 @@ Gets port configurations of an externally managed switch.
 
 .PP
 For more information on operations, see
-\fIopachassisadmin Operation Details\fR
+\fIOperation Details\fR
 .
 .SH Example 
 .NL
@@ -276,7 +263,7 @@ Each opaswitchadmin run appends to test.res and test.log and creates temporary f
 opaswitchadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. Twenty (20) parallel operations is the default.
 .NL
 
-.SH opaswitchadmin Operation Details
+.SH Operation Details
 .NL
 
 .PP
@@ -317,11 +304,9 @@ Runs the switch setup wizard, which asks a series of questions. Once the wizard 
 .RS
 
 .IP \(bu
-MTU
+FM Enabled
 .IP \(bu
-VL Capability
-.IP \(bu
-VL credit distribution
+Link CRC Mode
 .IP \(bu
 Link Width Supported
 .IP \(bu

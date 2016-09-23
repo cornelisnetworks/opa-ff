@@ -88,7 +88,7 @@ proc case_cleanup { failed } {
 }
 
 test_suite "dump" "dump firmware" "dump firmware of all externally managed switch nodes
-File: /opt/opa/tools/switch_dump.exp" suite_setup noop {
+File: /usr/lib/opa/tools/switch_dump.exp" suite_setup noop {
 	global opaswitch
 
 	# Global Initializations for Test Suite:

@@ -138,6 +138,10 @@ uint32					max_data_table_type;
 #define PORT_TABLE_FIELD_CRC										22
 #define PORT_TABLE_FIELD_FM_ENABLED									17
 #define PORT_TABLE_FIELD_VCU										28
+#if defined(PRODUCT_STL2)
+#define PORT_TABLE_FIELD_PORT_MODE_SUPPORTED								15
+#define PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED							21
+#endif
 #define PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED					30
 
 // INI TABLE types
@@ -766,6 +770,12 @@ int buildNewIniBin(U8_t *binBuffer)
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_CRC));
 		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_VCU,
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_VCU));
+#if defined(PRODUCT_STL2)
+		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_PORT_MODE_SUPPORTED,
+				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_PORT_MODE_SUPPORTED));
+		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED,
+				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED));
+#endif
 		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED,
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED));
 		oldPortBaseIdx += oldPortEntrySize;
@@ -1045,8 +1055,8 @@ int main(int argc, char *argv[])
 	char				*p;
 	EUI64				destPortGuid = -1;
 	int					c;
-	uint8				hfi = 1;
-	uint8				port = -1;
+	uint8				hfi = 0;
+	uint8				port = 0;
 	FSTATUS				status;
 
 	int					iniBinSize;
@@ -1192,18 +1202,10 @@ int main(int argc, char *argv[])
 
 	locationDescriptor = primary ? STL_PRR_PRI_EEPROM1_ADDR : STL_PRR_SEC_EEPROM1_ADDR;
 
-	if (!port) {
-		fprintf(stderr, "%s: Error: Invalid port number, First Port is 1\n", cmdName);
-		exit(1);
-	}
-
-	if (port == (uint8)-1)
-		port = 0;			// first active port
-
 	// Get the path
 
 	status = oib_open_port_by_num(&oib_port_session, hfi, port);
-	if (status != FSUCCESS) {
+	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}

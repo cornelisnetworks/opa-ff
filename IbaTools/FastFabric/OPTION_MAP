@@ -6,6 +6,7 @@ List of command line options used in various Fast Fabric tools
 -a action		Action for specified chassis firmware upgrade (push, select, run)
 -a 'sguid ..;dguid..'   query by a list of port guids
 -b			Take a baseline without a health check
+-b date_time	begin time for performance stats interval query
 -c			clobber previous result files before run
 -c			copy files before run (opaverifyhosts)
 -c			focus select value
@@ -23,6 +24,7 @@ List of command line options used in various Fast Fabric tools
 -e			output mtu & rate as eunm values (opagenvf)
 -e flag			32 bit selection flag for clearing port counters
 -e element		name of XML element to extract, name of header XML element to end
+-e date_time	end time for performance stats interval query
 -f 			delta flag for portCounters query (0 or 1)
 -f value		focus select value for getting focus ports
 -f hostfile		hosts to act on (or HOSTS_FILE)
@@ -38,6 +40,7 @@ List of command line options used in various Fast Fabric tools
 -i seconds		Obtain performance stats over interval seconds
 -i vfindex		query a specific vfindex
 -i level		output indent level (0-15)
+-j time			begin time in opa[pa|fe]query pa queries
 -k			kill any previous jobs (opaverifyhosts)
 -k			in XML tags with newlines, keep newlines as is
 -k pkey			query a specific pkey
@@ -61,6 +64,7 @@ List of command line options used in various Fast Fabric tools
 -p ports		list of HFI ports to use (or PORTS)
 -p guid			query by port guid
 -q 			quiet mode
+-q time     end time in opa[pa|fe]query pa queries
 -r			size of window for focus ports list
 -r			recursive download/upload of directories
 -r 			reverse output (least busy hosts) (opachassisanalysis)
@@ -95,6 +99,7 @@ List of command line options used in various Fast Fabric tools
 -x			exclude libs, kernel, module samples (oparchive)
 -x snapshot_suffix  	suffix for snapshot file created (opalinkanalysis)
 -x gid			specify a source gid for query
+-y time		image time in opa[pa|fe]query pa queries
 -z			do not get port info first, clear port attributes (opaportconfig)
 
 -A			skip "active" test (opafindgood)
@@ -181,6 +186,7 @@ may not support all output types.
    comps	      - Summary of all systems & SMs in fabric
    desc               - list of node descriptions/names
    errors	      - summary of links whose errors exceed counts in config file
+   extislinks	      - summary of all inter-switch links external to system
    extlinks	      - summary of all links external to system
    fabricinfo	      - summary of fabric devices
    focusPorts	      - get sorted list of ports
@@ -194,10 +200,12 @@ may not support all output types.
    getportstatus      - list of port status records
    hficongcon         - list of HFI Congesting Control Settings
    hficongset         - list of HFI Congestion Settings
+   filinks	      		- summary of all FI links
    ibnodeinfo         - list of IB generic node data records (opasmaquery)
    imageInfo	      - get information about a PA image
    inform             - list of inform info records
    ious		      - summary of all IO units in fabric
+   islinks	      		- summary of all inter-switch links
    lid                - list of lids
    lids		      - summary of all LIDs in fabric
    linear	      - summary of linear fowarding database (FDB) for each switch
@@ -263,8 +271,11 @@ may not support all output types.
    validateroute      - validate all routes in fabric
    validateroutes     - validate all routes in fabric
    verifyall	      - verifyfis, verifysws, verifysms, verifylinks reports
+   verifyextislinks	  - compare fabric external inter-switch links to supplied topology
    verifyextlinks     - compare fabric links to supplied topology (external links only)
    verifyfis	      - compare fabric FIs to supplied topology
+   verifyfilinks	      - compare fabric FI links to supplied topology
+   verifyislinks	  - compare fabric inter-switch links to supplied topology
    verifylinks	      - compare fabric links to supplied topology
    verifynodes	      - verifyfis and verifysws reports
    verifysms	      - compare fabric SMs to supplied topology

@@ -18,7 +18,7 @@ oparesolvehfiport
 Permits the Intel(R) Omni-Path Fabric Host Software style Intel(R) Omni-Path Host Fabric Interface (HFI) number and port number arguments to be converted to a Host Software style HFI name and physical port number.
 .SH Syntax
 .NL
-oparesolvehfiport \fIhfi\fR \fIport\fR
+oparesolvehfiport [-o \fIoutput\fR] [ \fIhfi\fR] [ \fIport\fR]
 .SH Options
 .NL
 
@@ -28,43 +28,80 @@ oparesolvehfiport \fIhfi\fR \fIport\fR
 Produces full help text.
 
 .TP 10
+-o \fIoutput\fR 
+.NL
+Specifies the output type.
+
+.RS
+.TP 10
+
+.sp
+devname 
+Prints the device name, in the format hfiname:portnum (default).
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+hfinum 
+Prints the hfi number.
+
+.RE
+
+.TP 10
  \fIhfi\fR 
 .NL
-HFI to send by. Numbered 1..n. 0 = system-wide port num. Default is first HFI.
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p port port is a system-wide port number. (Default is 0.)
 
 .TP 10
  \fIport\fR 
 .NL
-Port to send by. Numbered 1..n. 0 (default) is first active port.
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
 
+.IP
+The HFI and port permit a variety of selections:
+.RS
 .TP 10
-\fB-h and -p options permit a variety of selections:\fR
-.NL
 
-.TP 10
--h 0 -p 0 
-.NL
+.sp
+0 0 
 First active port in system.
 
+.RE
+
+.RS
 .TP 10
--h \fIx\fR#8217#160;-p 0 
-.NL
+
+.sp
+ \fIx\fR 0 
 First active port on HFI \fIx\fR.
 
-.TP 10
--h 0 -p \fIy\fR 
-.NL
-Port \fIy\fR#8217#160;within system (no matter which ports are active).
+.RE
 
+.RS
 .TP 10
--h \fIx\fR#8217#160;-p \fIy\fR 
-.NL
+
+.sp
+0 \fIy\fR 
+Port \fIy\fR within system (no matter which ports are active).
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+ \fIx y\fR 
 HFI \fIx\fR, port \fIy\fR
+
+.RE
 
 .SH Examples 
 .NL
-oparesolvehfiport 0 1
+oparesolvehfiport 0 1 #Output: hfi1\(ul0:1
 .br
-Output:
+oparesolvehfiport -o devname 0 1 #Output: hfi1\(ul0:1
 .br
-#8217#160;   hfi\(ul0:1
+oparesolvehfiport -o hfinum 0 1 #Output: 1

@@ -29,7 +29,7 @@
 
 # [ICS VERSION STRING: unknown]
 
-source /opt/opa/tools/ibtools.exp
+source /usr/lib/opa/tools/ibtools.exp
 
 #=============================================================================#
 # Test Suite Description:
@@ -90,7 +90,7 @@ proc case_cleanup { failed } {
 }
 
 test_suite "reboot" "reboot" "reboot all hosts
-File: /opt/opa/tools/reboot.exp" suite_setup noop {
+File: /usr/lib/opa/tools/reboot.exp" suite_setup noop {
 	global host
 
 	# Global Initializations for Test Suite:

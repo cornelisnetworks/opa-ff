@@ -286,10 +286,10 @@ void ShowExpectedLinkBriefSummaryHeader(Format_t format, int indent, int detail)
 		if (detail && (g_Fabric.flags & FF_CABLEDATA)) {
 			//printf("%*sPortDetails\n", indent+4, "");
 			//printf("%*sLinkDetails\n", indent+4, "");
-			printf("%*sCable: %-*s %-*s %s\n", indent+4, "",
+			printf("%*sCable: %-*s %-*s\n", indent+4, "",
 							CABLE_LABEL_STRLEN, "CableLabel",
-							CABLE_LENGTH_STRLEN, "CableLen",
-							"CableDetails");
+							CABLE_LENGTH_STRLEN, "CableLen");
+			printf("%*s%s\n", indent+4, "", "CableDetails");
 		}
 		break;
 	case FORMAT_XML:
@@ -422,8 +422,8 @@ void ShowExpectedLinkVerifySummary(ExpectedLink *elinkp, Format_t format, int in
 		printf("%*s</Link>\n", indent-4, "");
 }
 
-// Verify ports in fabric against specified topology
-void ShowVerifyLinksReport(Point *focus, boolean extOnly, Format_t format, int indent, int detail)
+// Verify links in fabric against specified topology
+void ShowVerifyLinksReport(Point *focus, report_t report, Format_t format, int indent, int detail)
 {
 	LIST_ITEM *p;
 	uint32 counts[LINK_VERIFY_MAX+1] = {0};
@@ -431,10 +431,40 @@ void ShowVerifyLinksReport(Point *focus, boolean extOnly, Format_t format, int i
 	uint32 link_errors = 0;
 	uint32 fabric_checked = 0;
 	uint32 input_checked = 0;
-	char *xml_prefix = extOnly?"Ext":"";
-	char *prefix = extOnly?"External ":"";
+	char *xml_prefix = "";
+	char *prefix = "";
+	char *report_name = "";
 	LinkVerifyResult_t res;
 
+	switch (report) {
+	default:	// should not happen, but just in case
+		ASSERT(0);
+	case REPORT_VERIFYLINKS:
+		report_name = "verifylinks";
+		xml_prefix = "";
+		prefix = "";
+		break;
+	case REPORT_VERIFYEXTLINKS:
+		report_name = "verifyextlinks";
+		xml_prefix = "Ext";
+		prefix = "External ";
+		break;
+	case REPORT_VERIFYFILINKS:
+		report_name = "verifyfilinks";
+		xml_prefix = "FI";
+		prefix = "FI ";
+		break;
+	case REPORT_VERIFYISLINKS:
+		report_name = "verifyislinks";
+		xml_prefix = "IS";
+		prefix = "Inter-Switch ";
+		break;
+	case REPORT_VERIFYEXTISLINKS:
+		report_name = "verifyextislinks";
+		xml_prefix = "ExtIS";
+		prefix = "External Inter-Switch ";
+		break;
+	}
 	// intro for report
 	switch (format) {
 	case FORMAT_TEXT:
@@ -473,8 +503,9 @@ void ShowVerifyLinksReport(Point *focus, boolean extOnly, Format_t format, int i
 		}
 		goto done;
 	}
-	if (! extOnly && ((g_Fabric.flags & (FF_EXPECTED_LINKS|FF_EXPECTED_EXTLINKS)) == FF_EXPECTED_EXTLINKS)) {
-		fprintf(stderr, "opareport: Warning: verifylinks requested, but only ExternalLinkSummary information provided\n");
+	if (0 == (report & (REPORT_VERIFYEXTLINKS|REPORT_VERIFYEXTISLINKS))
+		&& ((g_Fabric.flags & (FF_EXPECTED_LINKS|FF_EXPECTED_EXTLINKS)) == FF_EXPECTED_EXTLINKS)) {
+		fprintf(stderr, "opareport: Warning: %s requested, but only ExternalLinkSummary information provided\n", report_name);
 	}
 
 	ShowPointFocus(focus, format, indent, detail);
@@ -497,8 +528,32 @@ void ShowVerifyLinksReport(Point *focus, boolean extOnly, Format_t format, int i
 		// to avoid duplicated processing, only process "from" ports in link
 		if (! portp1->from)
 			continue;
-		if (extOnly && isInternalLink(portp1))
-			continue;
+
+		switch (report) {
+		default:	// should not happen, but just in case
+		case REPORT_VERIFYLINKS:
+			// process all links
+			break;
+		case REPORT_VERIFYEXTLINKS:
+			if (isInternalLink(portp1))
+				continue;
+			break;
+		case REPORT_VERIFYFILINKS:
+			if (! isFILink(portp1))
+				continue;
+			break;
+		case REPORT_VERIFYISLINKS:
+			if (! isISLink(portp1))
+				continue;
+			break;
+		case REPORT_VERIFYEXTISLINKS:
+			if (isInternalLink(portp1))
+				continue;
+			if (! isISLink(portp1))
+				continue;
+			break;
+		}
+
 		portp2 = portp1->neighbor;
 		if (! ComparePortPoint(portp1, focus) && ! ComparePortPoint(portp2, focus))
 			continue;
@@ -549,17 +604,33 @@ void ShowVerifyLinksReport(Point *focus, boolean extOnly, Format_t format, int i
 	for (p=QListHead(&g_Fabric.ExpectedLinks); p != NULL; p = QListNext(&g_Fabric.ExpectedLinks, p)) {
 		ExpectedLink *elinkp = (ExpectedLink *)QListObj(p);
 
-		if (extOnly && elinkp->internal)
-			continue;
-		// do our best to filter out internal links
-		// however if input file doesn't specify internal links
-		// we can't filter out links where only 1 side resolved and happened
-		// to be internal, because the user could have misinput the data
-		// and done something like expecting an HFI connected to a Spine
-		// in which case we should include that error in this report
-		if (extOnly && (elinkp->portp1 && isInternalLink(elinkp->portp1))
-			&& (elinkp->portp2 && isInternalLink(elinkp->portp2)))
-			continue;
+		// do our best to filter expected links
+		// the is*ExpectedLink functions are purposely generously inclusive
+		switch (report) {
+		default:	// should not happen, but just in case
+		case REPORT_VERIFYLINKS:
+			// process all links
+			break;
+		case REPORT_VERIFYEXTLINKS:
+			if (! isExternalExpectedLink(elinkp))
+				continue;
+			break;
+		case REPORT_VERIFYFILINKS:
+			if (! isFIExpectedLink(elinkp))
+				continue;
+			break;
+		case REPORT_VERIFYISLINKS:
+			if (! isISExpectedLink(elinkp))
+				continue;
+			break;
+		case REPORT_VERIFYEXTISLINKS:
+			if (! isExternalExpectedLink(elinkp))
+				continue;
+			if (! isISExpectedLink(elinkp))
+				continue;
+			break;
+		}
+
 		if (elinkp->portp1 && ! ComparePortPoint(elinkp->portp1, focus))
 			continue;
 		if (elinkp->portp2 && ! ComparePortPoint(elinkp->portp2, focus))

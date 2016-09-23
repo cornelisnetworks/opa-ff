@@ -101,9 +101,18 @@ static void usage()
 {
 	fprintf(stderr, "Usage: opachassisip [-v][-h][-p]\n");
 	fprintf(stderr, "	 -v/--verbose		   - verbose output\n");
-	fprintf(stderr, "	 -h/--hfi hfi		   - hfi to send via, default is 1st hfi\n");
-	fprintf(stderr, "	 -p/--port port		   - port to send via, default is 1st active port\n");
+	fprintf(stderr, "	 -h/--hfi hfi		   - hfi to send via, numbered 1..n, 0= -p port will be\n");
+	fprintf(stderr, "                            a system wide port num (default is 0)\n");
+	fprintf(stderr, "	 -p/--port port		   - port to send via, numbered 1..n, 0=1st active\n");
+	fprintf(stderr, "                            (default is 1st active)\n");
 	fprintf(stderr, "	 ?/--help			   - produce full help text\n");
+	fprintf(stderr, "The -h and -p options permit a variety of selections:\n");
+	fprintf(stderr, "    -h 0       - 1st active port in system (this is the default)\n");
+	fprintf(stderr, "    -h 0 -p 0  - 1st active port in system\n");
+	fprintf(stderr, "    -h x       - 1st active port on HFI x\n");
+	fprintf(stderr, "    -h x -p 0  - 1st active port on HFI x\n");
+	fprintf(stderr, "    -h 0 -p y  - port y within system (irrespective of which ports are active)\n");
+	fprintf(stderr, "    -h x -p y  - HFI x, port y\n");
 
 	exit(2);
 }

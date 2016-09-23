@@ -87,8 +87,8 @@
 ## Defines:
 XML_GENERATE="/usr/sbin/opaxmlgenerate"
 FILE_TOPOLOGY_LINKS="topology.csv"
-FILE_LINKSUM_SWD06="/opt/opa/samples/linksum_swd06.csv"
-FILE_LINKSUM_SWD24="/opt/opa/samples/linksum_swd24.csv"
+FILE_LINKSUM_SWD06="/usr/lib/opa/samples/linksum_swd06.csv"
+FILE_LINKSUM_SWD24="/usr/lib/opa/samples/linksum_swd24.csv"
 FILE_LINKSUM="linksum.csv"
 FILE_LINKSUM_NOCORE="linksum_nocore.csv"
 FILE_LINKSUM_NOCABLE="linksum_nocable.csv"
@@ -123,13 +123,16 @@ CORE_RACK="Core Rack:"
 CORE_NAME="Core Name:"
 CORE_SIZE="Core Size:"
 CORE_FULL="Core Full:"
-HFI_SUFFIX="hfi1_0"
 CAT_CHAR_CORE=" "
+HFI_SUFFIX_REGEX="hfi[1-9]_[0-9]+$"
+HOST_HFI_REGEX="^[a-zA-Z0-9_-]+[ ]hfi[1-9]_[0-9]+$"
+CAT_CHAR=" "
 
 MTU_SW_SW=${MTU_SW_SW:-10240}
 MTU_SW_HFI=${MTU_SW_HFI:-8192}
 
 ## Global variables:
+hfi_suffix="hfi1_0"
 
 # Parsing tokens:
 t_00=""
@@ -183,7 +186,6 @@ fl_output_edge_leaf=1
 fl_output_spine_leaf=1
 n_verbose=2
 indent=""
-cat_char=" "
 fl_clean=1
 ix_srcgroup=0
 ix_srcrack=0
@@ -240,34 +242,45 @@ functout=
 # Output usage information
 usage_full()
 {
-  echo "Usage: opaxlattopology [-d level -v level -i level -c char -K -?]"
-  echo "                          [source [dest]]"
-  echo "       -d level  -  output detail level (default 0)"
-  echo "                    values are additive"
-  echo "                     1 - edge switch topology files"
-  echo "                     2 - rack topology files"
-  echo "                     4 - rack group topology files"
+  echo "Usage: opaxlattopology [-d level -v level -i level -K]" >&2
+  echo "                          [-s hfi_suffix] [source [dest]]" >&2
+  echo "           or" >&2
+  echo "       opaxlattopology --help" >&2
+  echo "       --help        -  produce full help text" >&2
+  echo "       -d level      -  output detail level (default 0)" >&2
+  echo "                        values are additive" >&2
+  echo "                         1 - edge switch topology files" >&2
+  echo "                         2 - rack topology files" >&2
+  echo "                         4 - rack group topology files" >&2
 # TBD - these options are disabled for now
-#  echo "                     8 - DO NOT output edge-to-leaf links"
-#  echo "                    16 - DO NOT output spine-to-leaf links"
-  echo "       -v level  -  verbose level (0-8, default 2)"
-  echo "                    0 - no output"
-  echo "                    1 - progress output"
-  echo "                    2 - reserved"
-  echo "                    4 - time stamps"
-  echo "                    8 - reserved"
-  echo "       -i level  -  output indent level (0-15, default 0)"
-  echo "       -c char   -  NodeDesc concatenation char (default SPACE)"
-  echo "       -K        -  DO NOT clean temporary files"
-  echo "       -?        -  print this output"
-  echo ""
-  echo "   The following environment variables allow user-specified MTU"
-  echo "      MTU_SW_SW  -  If set will override default MTU on switch<->switch links"
-  echo "                       (default is 10240)" 
-  echo "      MTU_SW_HFI -  If set will override default MTU on switch<->HFI links"
-  echo "                       (default is 8192)" 
+#  echo "                     8 - DO NOT output edge-to-leaf links" >&2
+#  echo "                    16 - DO NOT output spine-to-leaf links" >&2
+  echo "       -v level      -  verbose level (0-8, default 2)" >&2
+  echo "                         0 - no output" >&2
+  echo "                         1 - progress output" >&2
+  echo "                         2 - reserved" >&2
+  echo "                         4 - time stamps" >&2
+  echo "                         8 - reserved" >&2
+  echo "       -i level      -  output indent level (0-15, default 0)" >&2
+  echo "       -K            -  DO NOT clean temporary files" >&2
+  echo "       -s hfi_suffix -  Used on Multi-Rail or Multi-Plane fabrics" >&2
+  echo "                        Can be used to override the default hfi1_0." >&2
+  echo "                        For Multi-Plane fabric, use the tool multiple" >&2
+  echo "                        times with different hfi-suffix. For Multi-Rail" >&2
+  echo "                        specify HostName as \"HostName HfiName\" in spreadsheet" >&2
+  echo "" >&2
+  echo "   The following environment variables allow user-specified MTU" >&2
+  echo "      MTU_SW_SW  -  If set will override default MTU on switch<->switch links" >&2
+  echo "                       (default is 10240)" >&2
+  echo "      MTU_SW_HFI -  If set will override default MTU on switch<->HFI links" >&2
+  echo "                       (default is 8192)" >&2
   exit $1
 }  # End of usage_full()
+
+if [ x"$1" = "x--help" ]
+then
+  usage_full "0"
+fi
 
 # Convert general node types to standard node types
 # Inputs:
@@ -362,7 +375,7 @@ gen_topology()
     rm -f $FILE_TEMP
     mv $FILE_NODEFIS $FILE_TEMP
     sort -u $FILE_TEMP > $FILE_NODEFIS
-    cut -d ';' -f 1 $FILE_NODEFIS | sed -e "s/$cat_char$HFI_SUFFIX//" > $FILE_HOSTS
+    cut -d ';' -f 1 $FILE_NODEFIS | sed -e "s/$CAT_CHAR$HFI_SUFFIX_REGEX//" > $FILE_HOSTS
   fi
 
   if [ -f $FILE_NODESWITCHES ]
@@ -434,7 +447,7 @@ generate_linksum_nocable()
   if ! [ -z "$1" ]
   then
     IFS=";"
-    cat $1|sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$cat_char/g" | grep -E "$leaves"| while read t_00 t_01 t_02 t_03 t_04 t_05 t_06 t_07 t_08 t_09 t_10 t_11 
+    cat $1|sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$CAT_CHAR/g" | grep -E "$leaves"| while read t_00 t_01 t_02 t_03 t_04 t_05 t_06 t_07 t_08 t_09 t_10 t_11 
     do
       if [ $t_07 == "SW" ] && [ $t_10 == "SW" ]; then	
         IFS="|" link="${t_00};${MTU_SW_SW};${t_02};${t_03};${t_04};${t_05};${t_06};${t_07};${t_08};${t_09};${t_10};${t_11}"
@@ -623,17 +636,20 @@ proc_switch()
 
 }  # End of proc_switch()
 
+# Function to trim the trailing whitespace which
+# a user may enter by mistake
+trim_trailing_whitespace()
+{
+  echo "$(echo -e "${1}" | sed -e 's/[[:space:]]*$//')"
+}
+
 
 ## Main function:
 
 # Get options
-while getopts c:d:i:Kv:? option
+while getopts d:i:Kv:s: option
 do
   case $option in
-  c)
-    cat_char=$OPTARG
-    ;;
-
   d)
     n_detail=$OPTARG
     if [ $((n_detail & OUTPUT_EDGE_LEAF_LINKS)) != 0 ]
@@ -658,8 +674,12 @@ do
     n_verbose=$OPTARG
     ;;
 
+  s)
+    hfi_suffix=$OPTARG
+    ;;
+  
   *)
-    usage_full "0"
+    usage_full "2"
     ;;
   esac
 done
@@ -704,49 +724,49 @@ do
   1)
     if [ -n "$t_00" ]
       then
-      t_srcgroup=$t_00
+      t_srcgroup=`trim_trailing_whitespace "$t_00"`
     fi
     if [ -n "$t_01" ]
       then
-      t_srcrack=$t_01
+      t_srcrack=`trim_trailing_whitespace "$t_01"`
     fi
-    t_srcname=$t_02
-    t_srcname2=$t_03
+    t_srcname=`trim_trailing_whitespace "$t_02"`
+    t_srcname2=`trim_trailing_whitespace "$t_03"`
     if [ -n "$t_05" ]
       then
-      t_srctype=$t_05
+      t_srctype=`trim_trailing_whitespace "$t_05"`
     fi
     if [ -z "$t_04" -a "$t_srctype" == "$NODETYPE_HFI" ]
       then
       t_srcport=1
     else
-      t_srcport=$t_04
+      t_srcport=`trim_trailing_whitespace "$t_04"`
     fi
 
     if [ -n "$t_06" ]
       then
-      t_dstgroup=$t_06
+      t_dstgroup=`trim_trailing_whitespace "$t_06"`
     fi
     if [ -n "$t_07" ]
       then
-      t_dstrack=$t_07
+      t_dstrack=`trim_trailing_whitespace "$t_07"`
     fi
-    t_dstname=$t_08
-    t_dstname2=$t_09
+    t_dstname=`trim_trailing_whitespace "$t_08"`
+    t_dstname2=`trim_trailing_whitespace "$t_09"`
     if [ -n "$t_11" ]
       then
-      t_dsttype=$t_11
+      t_dsttype=`trim_trailing_whitespace "$t_11"`
     fi
     if [ -z "$t_10" -a "$t_dsttype" == "$NODETYPE_HFI" ]
       then
       t_dstport=1
     else
-      t_dstport=$t_10
+      t_dstport=`trim_trailing_whitespace "$t_10"`
     fi
 
-    t_cablelabel=$t_12
-    t_cablelength=$t_13
-    t_cabledetails=$t_14
+    t_cablelabel=`trim_trailing_whitespace "$t_12"`
+    t_cablelength=`trim_trailing_whitespace "$t_13"`
+    t_cabledetails=`trim_trailing_whitespace "$t_14"`
 
     if [ "$t_srctype" == "$NODETYPE_SPINE" ]
       then
@@ -785,20 +805,22 @@ do
       nodedesc1="${t_srcname}"
       if [ "$t_srctype" == "$NODETYPE_HFI" ]
         then
-        nodedesc1="${nodedesc1}${cat_char}${HFI_SUFFIX}"
+        if ! [[ "$nodedesc1" =~ $HOST_HFI_REGEX ]]; then
+          nodedesc1="${nodedesc1}${CAT_CHAR}${hfi_suffix}"
+        fi
         nodedetails1="${t_srcname2}"
       else
         nodedetails1=""
         if [ "$t_srctype" != "$NODETYPE_EDGE" ]
           then
-          nodedesc1="${nodedesc1}${cat_char}${t_srcname2}"
+          nodedesc1="${nodedesc1}${CAT_CHAR}${t_srcname2}"
         fi
       fi
 
       nodedesc2="${t_dstname}"
       if [ "$t_dsttype" != "$NODETYPE_EDGE" ]
         then
-        nodedesc2="${nodedesc2}${cat_char}${t_dstname2}"
+        nodedesc2="${nodedesc2}${CAT_CHAR}${t_dstname2}"
       fi
 
       nodetype1=`cvt_nodetype "$t_srctype"`
@@ -1049,7 +1071,7 @@ do
       fi
       cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> ${FILE_NODESWITCHES}
       cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> ${FILE_NODESWITCHES}
-      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$cat_char" -f 1 | sort -u >> ${FILE_NODECHASSIS}
+      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> ${FILE_NODECHASSIS}
 
       if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
         then
@@ -1067,7 +1089,7 @@ do
         fi
         cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> $core_group/${FILE_NODESWITCHES}
         cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> $core_group/${FILE_NODESWITCHES}
-        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$cat_char" -f 1 | sort -u >> $core_group/${FILE_NODECHASSIS}
+        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> $core_group/${FILE_NODECHASSIS}
       fi
 
       if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
@@ -1086,7 +1108,7 @@ do
         fi
         cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> $core_group/$core_rack/${FILE_NODESWITCHES}
         cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> $core_group/$core_rack/${FILE_NODESWITCHES}
-        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$cat_char" -f 1 | sort -u >> $core_group/$core_rack/${FILE_NODECHASSIS}
+        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> $core_group/$core_rack/${FILE_NODECHASSIS}
       fi
 
     # End of core switch information

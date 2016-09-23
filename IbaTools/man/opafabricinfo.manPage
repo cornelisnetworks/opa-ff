@@ -46,14 +46,16 @@ Produces full help text.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports file.
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric(s) for analysis. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+Specifies the list of local HFI ports used to access fabrics for analysis.
 
 .IP
-Uses the format hfi:port, for example:
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 
@@ -150,3 +152,47 @@ Number of ISLs: 0 (Internal: 0 External: 0)
 Number of Degraded Links: 0 (HFI Links: 0 ISLs: 0)
 .br
 Number of Omitted Links: 0 (HFI Links: 0 ISLs: 0)
+.SH Output Definitions
+.NL
+
+.TP 10
+SM 
+.NL
+Each subnet manger (SM) running in the fabric is listed along with its node name, port GUID, and present SM state (Master, Standby, etc.).
+.TP 10
+Number of HFIs 
+.NL
+Number of unique host fabric interfaces (HFIs) in the fabric. An FI with two connected ports is counted as a single FI.
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+Fabric Interfaces include HFIs in servers as well as HFIs within I/O Modules, Native Storage, etc.
+
+
+.TP 10
+Number of Switches 
+.NL
+Number of connected switches in the fabric.
+.TP 10
+Number of Links 
+.NL
+Number of links in the fabric. Note that a large switch may have internal links.
+.TP 10
+Number of HFI Links 
+.NL
+Number of HFI links (Internal and External) in the fabric.
+.TP 10
+Number of ISLs 
+.NL
+Number of Interswitch Links (Internal and External) in the fabric.
+.TP 10
+Number of Degraded Links 
+.NL
+Number of degraded links (HSI and ISL) in the fabric.
+.TP 10
+Number of Omitted Links 
+.NL
+Number of omitted links (HSI and ISL) in the fabric.

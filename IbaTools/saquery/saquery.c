@@ -102,6 +102,7 @@ struct option options[] = {
 		{ "pkey", required_argument, NULL, 'k' },
 		{ "vfindex", required_argument, NULL, 'i' },
 		{ "serviceId", required_argument, NULL, 'S' },
+		{ "SL", required_argument, NULL, 'L' },
 		{ "type", required_argument, NULL, 't' },
 		{ "sysguid", required_argument, NULL, 's' },
 		{ "nodeguid", required_argument, NULL, 'n' },
@@ -366,8 +367,8 @@ InputFlags_t DescInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGu
 		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t NodeInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
 		InputTypeNodeDesc,0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t PathInput = {{InputTypeLid,InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeNodeDesc,InputTypePortGuidPair,
-		InputTypeGidPair,InputTypeServiceId,InputTypeSL,InputTypePortGuidList,InputTypeGidList,0,0,0,0,0,0,}};
+InputFlags_t PathInput = {{InputTypeLid,InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,
+		InputTypeGidPair,InputTypeServiceId,InputTypeSL,InputTypePortGuidList,InputTypeGidList,0,0,0,0,0,0,0,}};
 InputFlags_t ServiceInput = {{InputTypeLid,InputTypePortGuid,InputTypePortGid,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t McmemberInput = {{InputTypeLid, InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeMcGid,0,0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t InformInput = {{InputTypePortGuid,InputTypePortGid,InputTypeLid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,}};
@@ -555,7 +556,7 @@ FSTATUS CheckInputOutput(QUERY *pQuery, OutputStringMap_t *in) {
 int main(int argc, char ** argv)
 {
     int                 c;
-    uint8               hfi         = 1;
+    uint8               hfi         = 0;
     uint8               port        = 0;
 	int					index;
 	QUERY				query;

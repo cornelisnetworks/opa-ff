@@ -27,7 +27,7 @@ Produces full help text.
 .TP 10
 -u \fIuser\fR 
 .NL
-User to perform command as. For chassis, the default is admin.
+Performs command as user. For chassis, the default is admin.
 .TP 10
 -S 
 .NL
@@ -35,14 +35,18 @@ Securely prompts for password for user on chassis.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with a list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports 
+Specifies the file with a list of local HFI ports used to access fabric(s) for analysis.
+.br
+Default is /etc/sysconfig/opa/ports 
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric(s). Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+Specifies the list of local HFI ports used to access fabrics.
 
 .IP
-Uses the format hfi:port, for example:
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 
@@ -82,6 +86,8 @@ HFI  \fIx\fR, port  \fIy\fR.
 .SH Environment Variables
 .NL
 
+.PP
+The following environment variables are also used by this command:
 .TP 10
 \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR 
 .NL

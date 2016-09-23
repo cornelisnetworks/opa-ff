@@ -224,6 +224,7 @@ int main(int argc, char** argv)
 				fprintf(stderr, "%s: Invalid error select mask: %s\n", g_cmdname, optarg);
 				Usage(FALSE);
 			}
+			args.eflag = TRUE;
 			break;
 		case 'n':
 			if (FSUCCESS != StringToUint64(&g_portSelectMask, optarg, NULL, 0, TRUE)) {
@@ -273,6 +274,10 @@ int main(int argc, char** argv)
 
 	if (args.bflag && ! g_optypes[otype].bflag) {
 		fprintf(stderr, "%s: -b ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
+	}
+
+	if(args.eflag && !g_optypes[otype].eflag) {
+		fprintf(stderr, "%s: -e ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
 	}
 
 	if (args.mflag) {

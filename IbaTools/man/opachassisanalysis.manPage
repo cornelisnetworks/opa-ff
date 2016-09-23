@@ -24,9 +24,7 @@ Chassis configuration (as reported by the chassis commands specified in \fBFF\(u
 Chassis health (as reported by the chassis command specified in \fBFF\(ulCHASSIS\(ulHEALTH\fR in opafastfabric.conf).
 .SH Syntax
 .NL
-opachassisanalysis [-b|-e] [-s] [-d \fIdir\fR]
-.br
-[-F \fIchassisfile\fR] [-H#8217#160;\[aq]\fIchassis\fR\[aq]]
+opachassisanalysis [-b|-e] [-s] [-d \fIdir\fR] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]]
 .SH Options
 .NL
 
@@ -37,7 +35,7 @@ Produces full help text.
 .TP 10
 -b 
 .NL
-Baseline mode. Default is the compare/check mode.
+Specifies the baseline mode. Default is the compare/check mode.
 .TP 10
 -e 
 .NL
@@ -49,15 +47,15 @@ Saves history of failures (errors/differences).
 .TP 10
 -d \fIdir\fR 
 .NL
-Top-level directory for saving baseline and history of failed checks. Default = /var/opt/opa/analysis 
+Specifies the top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa/analysis 
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-File with the chassis in the cluster. Default = /etc/sysconfig/opa/chassis 
+Specifies the file with the chassis in the cluster. Default = /etc/sysconfig/opa/chassis 
 .TP 10
 -H \[aq]\fIchassis\fR\[aq] 
 .NL
-List of chassis on which to execute the command.
+Specifies the list of chassis on which to execute the command.
 .SH Example 
 .NL
 opachassisanalysis
@@ -78,6 +76,16 @@ File containing list of chassis, used if -F and -H options are not supplied.
 \fBFF\(ulANALYSIS\(ulDIR\fR 
 .NL
 Top-level directory for baselines and failed health checks.
+.TP 10
+\fBFF\(ulCHASSIS\(ulCMDS\fR 
+.NL
+List of commands to issue during analysis, unused if -e option supplied.
+
+.TP 10
+\fBFF\(ulCHASSIS\(ulHEALTH\fR 
+.NL
+Single command to issue to check overall health during analysis, unused if -b option supplied.
+
 .SH Details
 .NL
 

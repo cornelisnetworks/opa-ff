@@ -1,0 +1,309 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# Might want to tune this later.
+NBs=168
+
+# Generate some reasonable defaults based on the current node.
+default_numcores=$(lscpu | grep "^CPU(s):" | awk '{print $2}')
+bytesram=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')
+default_megsram=$(( $bytesram / 1024 ))
+default_pressure=0.3
+
+# If we have an mpi_hosts file, use that for the default # of hosts.
+if [ -e /usr/lib/opa/src/mpi_hosts ]; then 
+	default_numnodes=$(sort -u mpi_hosts | wc -l)
+else
+	default_numnodes=1
+fi
+
+numcores=$default_numcores
+megsram=$default_megsram
+pressure=$default_pressure
+numnodes=$default_numnodes
+
+USAGE() {
+	echo >&2
+	echo >&2 "Usage:"
+	echo >&2 "	./hpl_dat_gen.sh [-2|-1][-n <nodes>][-c <cores>][-r <ram>][-p <pressure>][-d]"
+	echo >&2 
+	echo >&2 "  This tool generates an HPL.dat file and copies it to the appropriate hpl"
+	echo >&2 "  executable directory (hpl-2.0/bin/ICS.Linux.*)"
+	echo >&2 
+	echo >&2 "  The HPL.dat file can be tuned for different numbers of nodes, cores per node,"
+	echo >&2 "  and the approximate amount of RAM per node to use. The script chooses"
+	echo >&2 "  defaults based on the characteristics of the node the script is run on, but"
+	echo >&2 "  these values can be overridden either by command line options or by"
+	echo >&2 "  prompting the user to enter new values."
+	echo >&2 
+	echo >&2 "Options:"
+	echo >&2 
+	echo >&2 "	--nodes <nodes>"
+	echo >&2 "	-n <nodes>      # of nodes in the fabric."
+	echo >&2 
+	echo >&2 "	--cores <cores>" 
+	echo >&2 "	-c <cores>      # of cores per node."
+	echo >&2 
+	echo >&2 "	--ram <ram>"
+	echo >&2 "	-r <ram>        Amount of RAM per node in MB."
+	echo >&2 
+	echo >&2 "	--pressure <p>"
+	echo >&2 "	-p <p>          Total memory pressure, expressed as a number"
+	echo >&2 "	                between 0.1 and 0.9. This value scales the"
+	echo >&2 "	                problem size against the amount of RAM available."
+	echo >&2 "	                (For example, a pressure of 0.5 will use about"
+	echo >&2 "	                half the available RAM on each node.)"
+	echo >&2 
+	echo >&2 "	--use-defaults"
+	echo >&2 "	-d              Use defaults for unspecified values."
+	echo >&2 "	                (otherwise prompt for the missing values.)"
+	echo >&2 
+	echo >&2 "Defaults for this system are:"
+	echo >&2 " 	-2"
+	echo >&2 " 	-n $default_numnodes"
+	echo >&2 "	-c $default_numcores"
+	echo >&2 "	-r $default_megsram"
+	echo >&2 "	-p $default_pressure"
+}
+
+P=0
+Q=0
+HPL_PQ() {
+	local cores=$1
+	local pp
+	local qq
+
+	# Find values of P and Q that use every available core and are as close
+	# in value as possible, with Q being slightly larger than P.
+	# For example, if the # of cores is 36, the optimal (P,Q) is (4,9) rather
+	# than (6,6).
+	for pp in $(seq 1 $cores); do
+		qq=$(( $cores / $pp))
+		ll=$(( $pp * $qq))
+		if [ $pp -ge $qq ]; then
+			 break
+		fi
+		if [ $ll -eq $cores ]; then 
+			P=$pp;
+			Q=$qq;
+		fi
+	done
+}
+
+Ns=""
+CALC_NS() {
+	local numnodes=$1
+	local megspernode=$2
+	local pressure=$3
+
+	# This calculation adjusts the size of the HPL problem to a percentage
+	# of the available RAM. The formula is:
+	#
+	# "Take the square root of the total amount of memory in the cluster
+	# divided by the number of bytes in a double precision number, then 
+	# multiply by the requested memory pressure and round up to a multiple
+	# of the block size."
+	Ns=$(echo "sqrt($megspernode * 1024 * 1024 * $numnodes / 8) * $pressure / $NBs * $NBs" | bc)
+}
+
+inputval=""
+GET_INPUT() {
+	local defval=""
+	local prompt="Input"
+	local value=""
+
+	if [ $# -ge 1 ]; then
+		prompt=$1
+	fi
+
+	if [ $# -ge 2 ]; then
+		defval=$2
+	fi
+
+	while [ -z $value ]; do
+		if [ ! -z $defval ]; then
+			echo -n "$prompt [$defval]? "
+		else
+			echo -n "$prompt? "
+		fi
+		read value
+		if [ -z $value ]; then
+			value=$defval
+		fi
+	done
+	
+	inputval=$value
+}
+
+TEMP_FILE="$(mktemp)"
+trap "rm -rf $TEMP_FILE; exit 1" SIGINT SIGHUP SIGTERM
+trap "rm -rf $TEMP_FILE" EXIT
+
+arch=ICS.`uname -s`.`./get_mpi_cc.sh`
+
+got_nodes=0
+got_cores=0
+got_ram=0
+got_pressure=0
+use_defaults=0
+
+OPTIONS=$(getopt -o "n:c:r:p:hd12" --long "nodes:,cores:,ram:,pressure:,help,use-defaults" -- "$@")
+
+if [ $? -ne 0 ]; then
+	USAGE; exit 1
+fi
+
+eval set -- "$OPTIONS"
+
+while true; do
+	case "$1" in
+		-n | --nodes ) 
+			numnodes=$2; got_nodes=1;
+			shift; shift;;
+		-c | --cores ) 
+			numcores=$2; got_cores=1;
+			shift; shift;;
+		-r | --ram ) 
+			megsram=$2; got_ram=1;
+			shift; shift;;
+		-p | --pressure ) 
+			pressure=$2; got_pressure=1;
+			shift; shift;;
+		-d | --use-defaults ) 
+			use_defaults=1;
+			shift;;
+		-- ) 
+			# End of arguments list.
+			break;;
+		-h | --help ) 
+			USAGE; exit 0;;
+		* )
+			USAGE; exit 1;;
+	esac
+done
+
+if ! [[ $numnodes =~ ^[0-9]+$ ]]; then
+	echo >&2 "\"$numnodes\" is not a valid # of nodes"
+	USAGE; exit 1
+elif ! [[ $numcores =~ ^[0-9]+$ ]]; then
+	echo >&2 "\"$numcores\" is not a valid # of cores"
+	USAGE; exit 1
+elif ! [[ $megsram =~ ^[0-9]+$ ]]; then
+	echo >&2 "\"$megsram\" is not a valid amount of RAM"
+	USAGE; exit 1
+elif ! [[ $pressure =~ ^0\.[1-9][0-9]*$ ]]; then
+	echo >&2 "\"$pressure\" is not a valid amount memory pressure."
+	USAGE; exit 1
+fi
+
+while [ $got_nodes -eq 0 -a $use_defaults -eq 0 ]
+do
+	GET_INPUT "# of compute nodes" $default_numnodes
+	numnodes=$inputval
+	if [[ $numnodes =~ ^[0-9]+$ ]]; then
+		got_nodes=1
+	fi
+done
+
+while [ $got_cores -eq 0 -a $use_defaults -eq 0 ]
+do
+	GET_INPUT "# of cores per node" $default_numcores
+	numcores=$inputval
+	if [[ $numcores =~ ^[0-9]+$ ]]; then
+		got_cores=1
+	fi
+done
+
+while [ $got_ram -eq 0 -a $use_defaults -eq 0 ]
+do
+	GET_INPUT "# of RAM per node (in MB)" $default_megsram
+	megsram=$inputval
+	if [[ $megsram =~ ^[0-9]+$ ]]; then
+		got_ram=1
+	fi
+done
+
+while [ $got_pressure -eq 0 -a $use_defaults -eq 0 ]
+do
+	GET_INPUT "Memory pressure (range between 0.1 and 0.9)" $default_pressure
+	pressure=$inputval
+	if [[ $pressure =~ ^0\.[1-9][0-9]*$ ]]; then
+		got_pressure=1
+	fi
+done
+
+totnumcores=$(( $numcores * $numnodes ))
+
+HPL_PQ $totnumcores
+
+CALC_NS $numnodes $megsram $pressure
+
+echo
+echo "Use \"./run_hpl2 $totnumcores\" to use this configuration."
+echo
+echo
+
+DATFILE=$PWD/hpl-2.0/bin/$arch/HPL.dat
+
+cat <<EOF | tee $TEMP_FILE $DATFILE
+HPLinpack benchmark input file - $totnumcores processes, $pressure memory size
+Generated by hpl_dat_gen.sh.
+HPL.out		output file name (if any)
+6		device out (6=stdout,7=stderr,file)
+1		# of problems sizes (N)
+$Ns		Ns
+1		# of NBs
+$NBs		NBs
+0		PMAP process mapping (0=Row-,1=Column-major)
+1		# of process grids (P x Q)
+$P		Ps
+$Q		Qs
+16.0		threshold
+1		# of panel fact
+1		PFACTs (0=left, 1=Crout, 2=Right)
+1		# of recursive stopping criterium
+4		NBMINs (>= 1)
+1		# of panels in recursion
+2		NDIVs
+1		# of recursive panel fact.
+2		RFACTs (0=left, 1=Crout, 2=Right)
+1		# of broadcast
+1		BCASTs (0=1rg,1=1rM,2=2rg,3=2rM,4=Lng,5=LnM)
+1		# of lookahead depth
+1		DEPTHs (>=0)
+2		SWAP (0=bin-exch,1=long,2=mix)
+$NBs		swapping threshold
+0		L1 in (0=transposed,1=no-transposed) form
+0		U  in (0=transposed,1=no-transposed) form
+1		Equilibration (0=no,1=yes)
+8		memory alignment in double (> 0)
+EOF

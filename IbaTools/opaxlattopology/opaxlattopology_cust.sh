@@ -109,6 +109,7 @@ CORE_NAME="Core Name:"
 CORE_SIZE="Core Size:"
 CORE_FULL="Core Full:"
 HFI_SUFFIX="hfi1_0"
+CAT_CHAR=" "
 
 
 ## Global variables:
@@ -152,7 +153,6 @@ cts_parse=0
 ix=0
 n_verbose=2
 indent=""
-cat_char=" "
 fl_clean=1
 max_coreswitch=0
 file_topology_in=""
@@ -188,23 +188,29 @@ trap 'clean_tempfiles' EXIT
 # Output usage information
 usage_full()
 {
-	echo "Usage: $PROGRAM_NAME -t topology_prime [-s topology_second]"
-	echo "                     -T topology_out [-v level] [-i level] [-c char] [-K] [-?]"
-	echo "  -t topology_prime  - primary topology CSV input file"
-	echo "  -s topology_second - secondary topology CSV input file"
-	echo "  -T topology_out    - topology CSV output file"
-	echo "  -v level  -  verbose level (0-8, default 2)"
-	echo "               0 - no output"
-	echo "               1 - progress output"
-	echo "               2 - reserved"
-	echo "               4 - time stamps"
-	echo "               8 - reserved"
-	echo "  -i level  -  screen output indent level (0-15, default 0)"
-	echo "  -c char   -  concatenation char (default SPACE)"
-	echo "  -K        -  DO NOT clean temporary files"
-	echo "  -?        -  print this output"
+	echo "Usage: $PROGRAM_NAME -t topology_prime [-s topology_second]" >&2
+	echo "                     -T topology_out [-v level] [-i level] [-K]" >&2
+	echo "           or" >&2
+	echo "       $PROGRAM_NAME --help" >&2
+	echo "  --help - produce full help text" >&2
+	echo "  -t topology_prime  - primary topology CSV input file" >&2
+	echo "  -s topology_second - secondary topology CSV input file" >&2
+	echo "  -T topology_out    - topology CSV output file" >&2
+	echo "  -v level  -  verbose level (0-8, default 2)" >&2
+	echo "               0 - no output" >&2
+	echo "               1 - progress output" >&2
+	echo "               2 - reserved" >&2
+	echo "               4 - time stamps" >&2
+	echo "               8 - reserved" >&2
+	echo "  -i level  -  screen output indent level (0-15, default 0)" >&2
+	echo "  -K        -  DO NOT clean temporary files" >&2
 	exit $1
 }	# End of usage_full()
+
+if [ x"$1" = "x--help" ]
+then
+        usage_full "0"
+fi
 
 # Convert node name from custom encoded forms to standard CSV.  The following
 # conversions are performed:
@@ -269,13 +275,9 @@ proc_coreswitch()
 ## Main function:
 
 # Get options
-while getopts c:i:Ks:t:T:v:? option
+while getopts i:Ks:t:T:v: option
 do
 	case $option in
-	c)
-		cat_char=$OPTARG
-		;;
-
 	i)
 		indent=`echo "                    " | cut -b -$OPTARG`
 		;;
@@ -289,7 +291,7 @@ do
 		if [ ! -f $file_topology_in2 ]
 			then
 			echo "$PROGRAM_NAME: File $file_topology_in2 does not exist"
-			Usage
+			usage_full "2"
 		fi
 		;;
 	t)
@@ -297,7 +299,7 @@ do
 		if [ ! -f $file_topology_in ]
 			then
 			echo "$PROGRAM_NAME: File $file_topology_in does not exist"
-			Usage
+			usage_full "2"
 		fi
 		;;
 	T)
@@ -309,7 +311,7 @@ do
 		;;
 
 	*)
-		usage_full "0"
+		usage_full "2"
 		;;
 	esac
 done
@@ -419,7 +421,7 @@ do
 				proc_coreswitch "$dstname"
 			fi
 
-			cablelabel="$t_srcname$cat_char$t_dstname"
+			cablelabel="$t_srcname$CAT_CHAR$t_dstname"
 			cablelength="$t_cablelength"
 			cabledetails="$t_cabledetails"
 

@@ -1,0 +1,44 @@
+HPL has a large number of tunable parameters.
+These configuration files should be considered a starting point
+and guideline for the problem size and parameters to start with.
+From there additional tuning of HPL and MPI parameters can be done
+to get the best performance for a given cluster.
+
+For each cluster size there are multiple configs:
+	t = a very small test config
+	s = on the low side of a 1G/process cluster
+	m = in the middle of a 1G/process cluster
+	l = on the high side of a 1G/process cluster
+Main difference is problem size (N)
+
+The config_hpl2 script can be used to transfer the HPL.dat file to all
+nodes specified in mpi_hosts
+
+A very critical HPL parameter is the problem size (N).
+These files assume 1G of memory per processor in the cluster
+(hence a 2G dual proc box would be typical).  For alternate
+memory configurations the problem size should be approximated by
+	SQRT(total Mem/8)*0.80
+	Where total mem is the number of bytes of memory in the fabric.
+	8 is the size of a double floating point number
+	and 0.80 allows 80% for application data and 20% for OS, fabric, code, etc
+
+Another important value is NB.  For the goto library supplied an NB value of
+104 or 112 is recommended.
+
+While running hpl monitor a few systems with top.  There should be no swapping
+if you observe swapping reduce the problem size or reduce the memory
+for MPI.
+
+A few critical parameters in MPI (/etc/sysconfig/mpi.param) to tune:
+VIADEV_SQ_SIZE - values in the 100-200 range are best.  If too low additional
+	code overheads occur, if too high excessive memory is used.
+VIADEV_MEM_REG_MAX - controls how much memory can be dynamically locked for
+	RPUT/RDMA Write transfers, a value of 5-10 works best
+VIADEV_NUM_RDMA_BUFFER - how many buffers for RDMA fast path, this consumes
+	extra memory and can hurt scalability, for MPI runs over 16 processes,
+	set this to 0
+VIADEV_INITIAL_PREPOST_DEPTH - how many receive buffers to prepost on each QP,
+	since HPL uses very few of the possible paths a value of 15 is best.
+
+For additional information see hpl/TUNING and hpl/www/faq.html

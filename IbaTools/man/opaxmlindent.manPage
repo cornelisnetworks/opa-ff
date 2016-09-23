@@ -23,6 +23,11 @@ opaxmlindent [-t|-k] [-i \fIindent\fR] [ \fIinput\(ulfile\fR]
 .NL
 
 .TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
 -t 
 .NL
 Trims leading and trailing whitespace in tag contents.
@@ -30,7 +35,7 @@ Trims leading and trailing whitespace in tag contents.
 .TP 10
 -k 
 .NL
-In tags with purely whitespace that contain newlines, keep newlines as-is. Default is to format as an empty list.
+In tags with purely whitespace that contain newlines, keeps newlines as-is. Default is to format as an empty list.
 
 .TP 10
 -i \fIindent\fR 
@@ -40,4 +45,4 @@ Sets indentation to use per level. Default is 4.
 .TP 10
  \fIinput\(ulfile\fR 
 .NL
-XML file to read. Default is stdin.
+Specifies the XML file to read. Default is stdin.

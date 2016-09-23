@@ -13,14 +13,14 @@ opasorthosts
 .NL
 
 .PP
-Sorts its standard input in a typical host name order and sorts to standard output. Hosts are sorted alphabetically (case-insensitively) by any alpha-numeric prefix, and then sorted numerically by any numeric suffix. Host names may end in a numeric field which may optionally have leading zeros. Unlike a pure alphabetic sort, this command results in intuitive sequencing of host names such as: host1, host2, host10
+Sorts its standard input in a typical host name order and sorts to standard output. Hosts are sorted alphabetically (case-insensitively) by any alpha-numeric prefix, and then sorted numerically by any numeric suffix. Host names may end in a numeric field which may optionally have leading zeros. Unlike a pure alphabetic sort, this command results in intuitive sequencing of host names such as: host1, host2, host10.
 .PP
 This command does not remove duplicates; any duplicates are listed in adjacent lines.
 .PP
 Use this command to build mpi\(ulhosts input files for applications or cable tests that place hosts in order by name.
 .SH Syntax
 .NL
-opasorthosts #8217lt; \fIhostlist\fR> \fIoutput\(ulfile\fR
+opasorthosts < \fIhostlist\fR> \fIoutput\(ulfile\fR
 .SH Options
 .NL
 
@@ -32,16 +32,16 @@ Produces full help text.
 .TP 10
  \fIhostlist\fR 
 .NL
-List of host names.
+Specifies the list of host names.
 
 .TP 10
  \fIoutput\(ulfile\fR 
 .NL
-Sorted list output.
+Specifies the sorted list output.
 
 .SH Examples 
 .NL
-opasorthosts #8217lt; host.xml > Sorted\(ulhost
+opasorthosts < host.xml > Sorted\(ulhost
 .TP 10
 \fBStandard Input\fR
 .NL

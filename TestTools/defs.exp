@@ -38,7 +38,7 @@ set g_xml_file_loc {/etc/sysconfig/opafm.xml}
 set g_default_xml_file test_run_default.xml
 set ibtools_dir {/opt/iba/ib_tools}
 
-set g_sample_xml_file_loc {/opt/opafm/etc/opafm.xml}
+set g_sample_xml_file_loc {/usr/lib/opa-fm/etc/opafm.xml}
 #set g_sample_xml_file_loc [ append g_sample_xml_file_loc $g_xml_file_loc -sample ]
 set g_saved_xml_file_loc {}
 set g_saved_xml_file_loc [ append g_saved_xml_file_loc $g_xml_file_loc .saved ]

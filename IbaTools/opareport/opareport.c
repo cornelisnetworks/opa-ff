@@ -40,6 +40,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arpa/inet.h>
 #include <stl_helper.h>
 #include <umad.h>
+#include <time.h>
+#include <string.h>
 
 // libmad debugging.
 void madrpc_show_errors(int set);
@@ -80,11 +82,13 @@ STL_CLEAR_PORT_STATUS g_CounterSelectMask;
 EUI64			g_portGuid		= -1;	// local port to use to access fabric
 IB_PORT_ATTRIBUTES	*g_portAttrib = NULL;// attributes for our local port
 int				g_quietfocus	= 0;	// do not include focus desc in report
-int				g_quiet = 0;			// omit progress output
+int				g_quiet         = 0;	// omit progress output
+uint32          g_begin         = 0;	// begin time for interval
+uint32          g_end           = 0;	// end time for interval
+int		g_use_scsc	= 0; // should validatecreditloops use scsc tables
 
 // All the information about the fabric
 FabricData_t g_Fabric;
-
 
 void XmlPrintHex64(const char *tag, uint64 value, int indent)
 {
@@ -136,8 +140,23 @@ void XmlPrintStrLen(const char *tag, const char* value, int len, int indent)
 			printf("&apos;");
 		else if (*value == '"')
 			printf("&quot;");
-		else if (iscntrl(*value))
-			printf("&#x%x;", (unsigned)(unsigned char)*value);
+		else if (iscntrl(*value)) {
+			//table in asciitab.h indiciates character codes permitted in XML strings
+			//Only 3 control characters below 0x1f are permitted:
+			//0x9 (BT_S), 0xa (BT_LRF), and 0xd (BT_CR)
+			if ((unsigned char)*value <= 0x08
+				|| ((unsigned char)*value >= 0x0b
+						 && (unsigned char)*value <= 0x0c)
+				|| ((unsigned char)*value >= 0x0e
+						 && (unsigned char)*value <= 0x1f)) {
+				// characters which XML does not permit in character fields
+				printf("!");
+			} else {
+				printf("&#x%x;", (unsigned)(unsigned char)*value);
+			}
+		} else if ((unsigned char)*value > 0x7f)
+			// permitted but generate 2 characters back after parsing, so omit
+			printf("!");
 		else
 			putchar((int)(unsigned)(unsigned char)*value);
 	}
@@ -240,15 +259,57 @@ void XmlPrintTagHeader(const char *tag, int indent)
 { 
    printf("%*s<%s>\n", indent, "", tag);
 }
-
 void XmlPrintTagFooter(const char *tag, int indent) 
 { 
    printf("%*s</%s>\n", indent, "", tag); 
 }
 
+void XMLPrintGroupRecord (McMemberData *pMcMemberRecord, int indent, int detail)
+{
+	char buf[8];
+	XmlPrintGID("MGID",pMcMemberRecord->MGID,indent+8);
+	XmlPrintLID("MLID",pMcMemberRecord->MLID, indent+8);
+	XmlPrintPKey("P_Key", pMcMemberRecord->MemberInfo.P_Key, indent+8);
+	XmlPrintDec("Mtu", GetBytesFromMtu(pMcMemberRecord->MemberInfo.Mtu), indent+8);
+	XmlPrintRate(pMcMemberRecord->MemberInfo.Rate,indent+8);
+	FormatTimeoutMult(buf, pMcMemberRecord->MemberInfo.PktLifeTime);
+	XmlPrintStr("PktLifeTime", buf, indent+8);
+	XmlPrintHex16("PktLifeTime_Int", pMcMemberRecord->MemberInfo.PktLifeTime, indent+8);
+	XmlPrintHex32("Q_Key", pMcMemberRecord->MemberInfo.Q_Key, indent+8);
+	XmlPrintDec("SL", pMcMemberRecord->MemberInfo.u1.s.SL, indent+8);
+	XmlPrintHex8("HopLimit", pMcMemberRecord->MemberInfo.u1.s.HopLimit, indent+8);
+	XmlPrintHex("FlowLabel", pMcMemberRecord->MemberInfo.u1.s.FlowLabel, indent+8);
+	XmlPrintHex8("TClass", pMcMemberRecord->MemberInfo.TClass, indent+8);
+
+}
+
 void DisplaySeparator(void)
 {
 	printf("-------------------------------------------------------------------------------\n");
+
+}
+
+void DisplayGroupRecord(McMemberData *pMcMemberRecord, int indent, int detail)
+{
+	char buf[8];
+	printf("%*sMGID: 0x%016"PRIx64":0x%016"PRIx64"\n",
+				indent, "",
+				pMcMemberRecord->MGID.AsReg64s.H,
+				pMcMemberRecord->MGID.AsReg64s.L);
+	FormatTimeoutMult(buf, pMcMemberRecord->MemberInfo.PktLifeTime);
+	printf("%*sMLID: 0x%04x PKey: 0x%04x Mtu: %5s Rate: %4s PktLifeTime: %s\n",
+				indent, "",
+				pMcMemberRecord->MLID,
+				pMcMemberRecord->MemberInfo.P_Key,
+				IbMTUToText(pMcMemberRecord->MemberInfo.Mtu),
+				StlStaticRateToText(pMcMemberRecord->MemberInfo.Rate), 
+				buf);
+	printf("%*sQKey: 0x%08x SL: %2d FlowLabel: 0x%05x  HopLimit: 0x%02x  TClass:  0x%02x\n",
+				indent, "",
+				pMcMemberRecord->MemberInfo.Q_Key,
+				pMcMemberRecord->MemberInfo.u1.s.SL,
+				pMcMemberRecord->MemberInfo.u1.s.FlowLabel, pMcMemberRecord->MemberInfo.u1.s.HopLimit,
+				pMcMemberRecord->MemberInfo.TClass);
 }
 
 void ShowPathRecord(IB_PATH_RECORD *pPathRecord, Format_t format,
@@ -356,10 +417,10 @@ void ShowLinkBriefSummaryHeader(Format_t format, int indent, int detail)
 		if (detail && (g_Fabric.flags & FF_CABLEDATA)) {
 			//printf("%*sPortDetails\n", indent+4, "");
 			//printf("%*sLinkDetails\n", indent+4, "");
-			printf("%*sCable: %-*s %-*s %s\n", indent+4, "",
+			printf("%*sCable: %-*s %-*s\n", indent+4, "",
 							CABLE_LABEL_STRLEN, "CableLabel",
-							CABLE_LENGTH_STRLEN, "CableLen",
-							"CableDetails");
+							CABLE_LENGTH_STRLEN, "CableLen");
+			printf("%*s%s\n", indent+4, "", "CableDetails");
 		}
 		break;
 	case FORMAT_XML:
@@ -746,11 +807,12 @@ void ShowExpectedLinkBriefSummary(ExpectedLink *elinkp,
 		if (elinkp->CableData.length || elinkp->CableData.label
 			|| elinkp->CableData.details) {
 			// TBD should g_noname suppress some of this?
-			printf("%*sCable: %-*s %-*s %s\n",
+			printf("%*sCable: %-*s %-*s\n",
 				indent, "",
 				CABLE_LABEL_STRLEN, OPTIONAL_STR(elinkp->CableData.label),
-				CABLE_LENGTH_STRLEN, OPTIONAL_STR(elinkp->CableData.length),
-				OPTIONAL_STR(elinkp->CableData.details));
+				CABLE_LENGTH_STRLEN, OPTIONAL_STR(elinkp->CableData.length));
+			if (elinkp->CableData.details)
+				printf("%*s%s\n", indent, "", elinkp->CableData.details);
 		}
 		break;
 	case FORMAT_XML:
@@ -1201,11 +1263,10 @@ FSTATUS ShowPortsTraceRoutes(EUI64 portGuid, PortData *portp1, PortData *portp2,
 		break;
 	}
 
-	status = oib_open_port_by_guid(&oib_port_session, portGuid);
-	if (FSUCCESS != status)
-		goto done;
-
 	if (! g_snapshot_in_file) {
+		status = oib_open_port_by_guid(&oib_port_session, portGuid);
+		if (FSUCCESS != status)
+			goto done;
 		status = GetPaths(oib_port_session, portp1, portp2, &pQueryResults);
 		if (FSUCCESS != status)
 			goto done;
@@ -2616,8 +2677,12 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				printf("%*sPortErrorActions: 0x%x: %s\n", indent+4, "", pPortInfo->PortErrorAction.AsReg32, buf1);
 			}
 
-			printf("%*sReplayDepth Buffer 0x%02x; Wire 0x%02x\n", indent+4, "",
-				pPortInfo->ReplayDepth.BufferDepth, pPortInfo->ReplayDepth.WireDepth);
+			if (!g_persist && !g_hard)
+				printf("%*sReplayDepth Buffer 0x%02x; Wire 0x%02x\n", indent+4, "",
+					pPortInfo->ReplayDepth.BufferDepth, pPortInfo->ReplayDepth.WireDepth);
+			else
+				printf("%*sReplayDepth Buffer 0x%02x; Wire xxxx\n", indent+4, "",
+					pPortInfo->ReplayDepth.BufferDepth);
 			if (g_hard)
 				printf( "%*sDiagCode: xxxxxx\n", indent+4, "");
 			else
@@ -2965,7 +3030,8 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 			XmlPrintHex8("CreditAck", pPortInfo->BufferUnits.s.CreditAck, indent+4);
 			XmlPrintHex8("BufferAlloc", pPortInfo->BufferUnits.s.BufferAlloc, indent+4);
 			XmlPrintHex8("ReplayDepthBuffer", pPortInfo->ReplayDepth.BufferDepth, indent+4);
-			XmlPrintHex8("ReplayDepthWire", pPortInfo->ReplayDepth.WireDepth, indent+4);
+			if (!g_persist && !g_hard)
+				XmlPrintHex8("ReplayDepthWire", pPortInfo->ReplayDepth.WireDepth, indent+4);
 			
 			if (! g_hard) {
 				XmlPrintHex8("VL15CreditRate", pPortInfo->BufferUnits.s.VL15CreditRate, indent+4);
@@ -3109,7 +3175,7 @@ void ShowNodeSummary(NodeData *nodep, Point *focus, Format_t format, int indent,
 					pSwitchInfo->CapabilityMask.s.IsAdaptiveRoutingSupported?"AR ":"");
 
 			if (! (g_persist || g_hard)) {
-				printf("%*sRouting Mode: Suported: 0x%x Enabled 0x%x\n",
+				printf("%*sRouting Mode: Supported: 0x%x Enabled 0x%x\n",
 					indent+4, "",
 					pSwitchInfo->RoutingMode.Supported,
 					pSwitchInfo->RoutingMode.Enabled);
@@ -4958,18 +5024,19 @@ void ShowSlowLinkPortSummaryHeader(LinkReport_t report, Format_t format, int ind
 		case FORMAT_TEXT:
 		 	switch (report) {
 			case LINK_EXPECTED_REPORT:
-				printf("%*s Active                            Enabled\n", indent+4, "");
-				printf("%*s Lanes, Used(Tx), Used(Rx), Rate,  Lanes,   DownTo,  Rates\n", indent+4, "");
+				printf("%*s Active                              Enabled\n", indent+4, "");
+				printf("%*s Lanes, Used(Tx), Used(Rx), Rate,    Lanes,    DownTo,  Rates\n", indent+4, "");
 			break;
 			case LINK_CONFIG_REPORT:
-				printf("%*s Enabled                      Supported\n", indent+4, "");
-				printf("%*s Lanes,   Used,   Rate,       Lanes,   DownTo,  Rates\n", indent+4, "");
+				printf("%*s Enabled                        Supported\n", indent+4, "");
+				printf("%*s Lanes,   Used,   Rate,         Lanes,    DownTo,  Rates\n", indent+4, "");
 				break;
 			case LINK_CONN_REPORT:
 				printf("%*s Supported\n", indent+4, "");
 				printf("%*s Lanes,       DownTo,      Rate\n", indent+4, "");
 				break;
 			}
+			DisplaySeparator();
 			break;
 		case FORMAT_XML:
 			break;
@@ -4988,7 +5055,7 @@ void ShowSlowLinkReasonSummary(LinkReport_t report, PortData *portp, Format_t fo
 	case FORMAT_TEXT:
 		switch (report) {
 		case LINK_EXPECTED_REPORT:
-			printf("%*s %-6s %-9s %-9s %-6s %-8s %-8s %-12s\n", indent, "",
+			printf("%*s %-6s %-9s %-9s %-8s %-9s %-8s %-12s\n", indent, "",
 				StlLinkWidthToText(portp->PortInfo.LinkWidth.Active, buf1, sizeof(buf1)),
                 StlLinkWidthToText(portp->PortInfo.LinkWidthDowngrade.TxActive, buf5, sizeof(buf5)),
 				StlLinkWidthToText(portp->PortInfo.LinkWidthDowngrade.RxActive, buf7, sizeof(buf7)),
@@ -4998,7 +5065,7 @@ void ShowSlowLinkReasonSummary(LinkReport_t report, PortData *portp, Format_t fo
 				StlLinkSpeedToText(portp->PortInfo.LinkSpeed.Enabled, buf4, sizeof(buf4)));
 			break;
 		case LINK_CONFIG_REPORT:
-			printf("%*s %-8s %-7s %-11s %-8s %-8s %-12s\n", indent, "",
+			printf("%*s %-8s %-7s %-13s %-9s %-8s %-12s\n", indent, "",
 				StlLinkWidthToText(portp->PortInfo.LinkWidth.Enabled, buf1, sizeof(buf1)),
                 StlLinkWidthToText(portp->PortInfo.LinkWidthDowngrade.Enabled, buf5, sizeof(buf5)),
 				StlLinkSpeedToText(portp->PortInfo.LinkSpeed.Enabled, buf2, sizeof(buf2)),
@@ -5091,30 +5158,82 @@ void ShowLinkErrorSummary(PortData *portp1, Format_t format, int indent, int det
 	ShowLinkToBriefSummary(portp1->neighbor, "<-> ", TRUE, 0, ShowLinkPortErrorSummaryCallback, format, indent, detail);
 }
 
-// output summary of all IB Links
-void ShowAllLinkReport(Point *focus, Format_t format, int indent, int detail)
+// output summary of Links for given report
+void ShowLinksReport(Point *focus, report_t report, Format_t format, int indent, int detail)
 {
 	LIST_ITEM *p;
 	uint32 count = 0;
+	char *xml_prefix = "";
+	char *prefix = "";
+
+	switch (report) {
+	default:	// should not happen, but just in case
+		ASSERT(0);
+	case REPORT_LINKS:
+		xml_prefix = "";
+		prefix = "";
+		break;
+	case REPORT_EXTLINKS:
+		xml_prefix = "Ext";
+		prefix = "External ";
+		break;
+	case REPORT_FILINKS:
+		xml_prefix = "FI";
+		prefix = "FI ";
+		break;
+	case REPORT_ISLINKS:
+		xml_prefix = "IS";
+		prefix = "Inter-Switch ";
+		break;
+	case REPORT_EXTISLINKS:
+		xml_prefix = "ExtIS";
+		prefix = "External Inter-Switch ";
+		break;
+	}
 
 	switch (format) {
 	case FORMAT_TEXT:
-		printf("%*sLink Summary\n", indent, "");
+		printf("%*s%sLink Summary\n", indent, "", prefix);
 		break;
 	case FORMAT_XML:
-		printf("%*s<LinkSummary>\n", indent, "");
+		printf("%*s<%sLinkSummary>\n", indent, "", xml_prefix);
 		indent+=4;
 		break;
 	default:
 		break;
 	}
+
 	ShowPointFocus(focus, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
-		printf("%*s%u Links in Fabric%s\n", indent, "", g_Fabric.LinkCount, detail?":":"");
+		switch (report) {
+		default:	// should not happen, but just in case
+		case REPORT_LINKS:
+			printf("%*s%u Links in Fabric%s\n", indent, "", g_Fabric.LinkCount, detail?":":""); break;
+		case REPORT_EXTLINKS:
+			printf("%*s%u External Links in Fabric%s\n", indent, "", g_Fabric.ExtLinkCount, detail?":":""); break;
+		case REPORT_FILINKS:
+			printf("%*s%u FI Links in Fabric%s\n", indent, "", g_Fabric.FILinkCount, detail?":":""); break;
+		case REPORT_ISLINKS:
+			printf("%*s%u Inter-Switch Links in Fabric%s\n", indent, "", g_Fabric.ISLinkCount, detail?":":""); break;
+		case REPORT_EXTISLINKS:
+			printf("%*s%u External Inter-Switch Links in Fabric%s\n", indent, "", g_Fabric.ExtISLinkCount, detail?":":""); break;
+		}
 		break;
 	case FORMAT_XML:
-		XmlPrintDec("LinkCount", g_Fabric.LinkCount, indent);
+		switch (report) {
+		default:	// should not happen, but just in case
+		case REPORT_LINKS:
+			XmlPrintDec("LinkCount", g_Fabric.LinkCount, indent); break;
+		case REPORT_EXTLINKS:
+			XmlPrintDec("ExternalLinkCount", g_Fabric.ExtLinkCount, indent); break;
+		case REPORT_FILINKS:
+			XmlPrintDec("FILinkCount", g_Fabric.FILinkCount, indent); break;
+		case REPORT_ISLINKS:
+			XmlPrintDec("ISLinkCount", g_Fabric.ISLinkCount, indent); break;
+		case REPORT_EXTISLINKS:
+			XmlPrintDec("ExternalISLinkCount", g_Fabric.ExtISLinkCount, indent); break;
+		}
 		break;
 	default:
 		break;
@@ -5127,12 +5246,38 @@ void ShowAllLinkReport(Point *focus, Format_t format, int indent, int detail)
 		// to avoid duplicated processing, only process "from" ports in link
 		if (! portp1->from)
 			continue;
+
+		switch (report) {
+		default:	// should not happen, but just in case
+		case REPORT_LINKS:
+			break;	// always show
+		case REPORT_EXTLINKS:
+			if (isInternalLink(portp1))
+				continue;
+			break;
+		case REPORT_FILINKS:
+			if (! isFILink(portp1))
+				continue;
+			break;
+		case REPORT_ISLINKS:
+			if (! isISLink(portp1))
+				continue;
+			break;
+		case REPORT_EXTISLINKS:
+			if (isInternalLink(portp1))
+				continue;
+			if (! isISLink(portp1))
+				continue;
+			break;
+		}
+
 		if (! ComparePortPoint(portp1, focus) && ! ComparePortPoint(portp1->neighbor, focus))
 			continue;
 		count++;
 		if (detail)
 			ShowLinkBriefSummary(portp1, "<-> ", format, indent, detail-1);
 	}
+
 	switch (format) {
 	case FORMAT_TEXT:
 		if (focus->Type != POINT_TYPE_NONE)
@@ -5143,68 +5288,7 @@ void ShowAllLinkReport(Point *focus, Format_t format, int indent, int detail)
 		if (focus->Type != POINT_TYPE_NONE)
 			XmlPrintDec("MatchingLinks", count, indent);
 		indent-=4;
-		printf("%*s</LinkSummary>\n", indent, "");
-		break;
-	default:
-		break;
-	}
-}
-
-// output summary of all external IB Links
-void ShowExtLinkReport(Point *focus, Format_t format, int indent, int detail)
-{
-	LIST_ITEM *p;
-	uint32 count = 0;
-
-	switch (format) {
-	case FORMAT_TEXT:
-		printf("%*sExternal Link Summary\n", indent, "");
-		break;
-	case FORMAT_XML:
-		printf("%*s<ExternalLinkSummary>\n", indent, "");
-		indent+=4;
-		break;
-	default:
-		break;
-	}
-	ShowPointFocus(focus, format, indent, detail);
-	switch (format) {
-	case FORMAT_TEXT:
-		printf("%*s%u External Links in Fabric%s\n", indent, "", g_Fabric.ExtLinkCount, detail?":":"");
-		break;
-	case FORMAT_XML:
-		XmlPrintDec("ExternalLinkCount", g_Fabric.ExtLinkCount, indent);
-		break;
-	default:
-		break;
-	}
-
-	if (detail)
-		ShowLinkBriefSummaryHeader(format, indent, detail-1);
-	for (p=QListHead(&g_Fabric.AllPorts); p != NULL; p = QListNext(&g_Fabric.AllPorts, p)) {
-		PortData *portp1 = (PortData *)QListObj(p);
-		// to avoid duplicated processing, only process "from" ports in link
-		if (! portp1->from)
-			continue;
-		if (isInternalLink(portp1))
-			continue;
-		if (! ComparePortPoint(portp1, focus) && ! ComparePortPoint(portp1->neighbor, focus))
-			continue;
-		count++;
-		if (detail)
-			ShowLinkBriefSummary(portp1, "<-> ", format, indent, detail-1);
-	}
-	switch (format) {
-	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
-			printf("%*s%u Matching Links Found\n", indent, "", count);
-		DisplaySeparator();
-		break;
-	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
-			XmlPrintDec("MatchingLinks", count, indent);
-		indent-=4;
-		printf("%*s</ExternalLinkSummary>\n", indent, "");
+		printf("%*s</%sLinkSummary>\n", indent, "", xml_prefix);
 		break;
 	default:
 		break;
@@ -5468,7 +5552,7 @@ void ShowSlowLinkReport(LinkReport_t report, boolean one_report, Point *focus, F
 					/* The highest supported width should be what is configured as enabled */
 					(StlBestLinkWidth(pi1->LinkWidth.Enabled) == StlExpectedLinkWidth( 
 					   pi1->LinkWidth.Supported, pi2->LinkWidth.Supported)) && 
-					(StlBestLinkWidth(pi2->LinkWidth.Supported) == StlExpectedLinkWidth( 
+					(StlBestLinkWidth(pi2->LinkWidth.Enabled) == StlExpectedLinkWidth( 
 					   pi1->LinkWidth.Supported, pi2->LinkWidth.Supported)) ) {
 
 					/* configured matches the best supported, config is good */
@@ -7713,6 +7797,7 @@ void ShowValidatePGReport(Point *focus, Format_t format, int indent, int detail)
 			if (detail>2) switch (format) {
 			case FORMAT_XML:
 				printf("%*s</AdaptiveRoutes>\n",indent+4,"");
+				break;
 			case FORMAT_TEXT:
 				break;
 			}
@@ -7733,6 +7818,157 @@ void ShowValidatePGReport(Point *focus, Format_t format, int indent, int detail)
 	}
 
 }
+
+FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int indent)
+{
+	LIST_ITEM *n1, *p1, *p;
+	int nodecount;
+
+	if (detail >= 0)
+	  switch (format) {
+	  case FORMAT_TEXT:
+		printf("Number of MC Groups: %d\n", fabricp->NumOfMcGroups);
+		if (detail > 0 ) printf("\n");
+		break;
+	  case FORMAT_XML:
+		printf("%*s<NumMcGroups>%d</NumMcGroups>\n",indent+4,"",fabricp->NumOfMcGroups);
+		break;
+	  default:
+		break;
+	  }
+
+	n1 = QListHead (&fabricp->AllMcMembers);
+
+// collecting information about M
+	for (n1 = QListHead (&fabricp->AllMcMembers); n1 != NULL; n1 = QListNext(&fabricp->AllMcMembers, n1)) {
+		McMemberData *pmcmember = (McMemberData *)QListObj(n1);
+		//for this PortGID get member group information
+		// do not get info on empty groups
+		 McGroupData *pMCGH = (McGroupData *)QListObj(QListHead(&pmcmember->AllMcGroupMembers));
+		if ((pMCGH->PortGID.AsReg64s.H ==0) && (pMCGH->PortGID.AsReg64s.L==0))
+			continue;
+		if (detail > 0 )
+			switch (format) {
+			case FORMAT_TEXT:
+				DisplayGroupRecord (pmcmember, indent, detail);
+				printf("Number of Group Members: %d\n", pmcmember->NumOfMembers);
+				break;
+			case FORMAT_XML:
+				printf("%*s<%s id=\"0x%016"PRIx64":0X%016"PRIx64"\">\n", indent+4, "", "MulticastGroup",
+					pmcmember->MGID.AsReg64s.H, pmcmember->MGID.AsReg64s.L);
+				printf("%*s<NumMcGMembers>%d</NumMcGMembers>\n",indent+8,"", pmcmember->NumOfMembers);
+				XMLPrintGroupRecord (pmcmember, indent, detail);
+				break;
+			default:
+				break;
+			}
+
+		if (detail > 1 ) {
+			//if the list is not empty)
+		    for (p1=QListHead(&pmcmember->AllMcGroupMembers), nodecount=0; p1 != NULL;
+		    			p1 = QListNext(&pmcmember->AllMcGroupMembers, p1), nodecount++) {
+			  McGroupData *pMCGG = (McGroupData *)QListObj(p1);
+
+				if ((pMCGG->PortGID.AsReg64s.H !=0) || (pMCGG->PortGID.AsReg64s.L!=0)){
+				  switch (format) { // do not print "zero" members
+				  case FORMAT_TEXT:
+					  printf("PortGid: 0x%016"PRIx64":0X%016"PRIx64"\n",
+							  pMCGG->PortGID.AsReg64s.H,
+							  pMCGG->PortGID.AsReg64s.L);
+				  break;
+				  case FORMAT_XML:
+					  printf("%*s<%s id=\"0x%016"PRIx64":0X%016"PRIx64"\">\n", indent+8, "", "McMembers",
+							  pMCGG->PortGID.AsReg64s.H,  pMCGG->PortGID.AsReg64s.L);
+					  XmlPrintGID("PortGID",pMCGG->PortGID,indent+12);
+				  break;
+				  default:
+				  break;
+			      }// case end
+
+				// this list is sorted/keyed by NodeGUID
+				for (p=QListHead(&fabricp->AllPorts); p != NULL; p = QListNext(&fabricp->AllPorts,p)) {
+					PortData *portp = (PortData *) QListObj(p);
+					if (portp->PortGUID == pMCGG->PortGID.AsReg64s.L) {
+			  			switch (format) {
+			  			case FORMAT_TEXT:
+					    	  printf("Name: %.*s \n",  NODE_DESCRIPTION_ARRAY_SIZE,
+								  g_noname?g_name_marker:(char*)portp->nodep->NodeDesc.NodeString);
+						break;
+			  			case FORMAT_XML:
+			  				  XmlPrintNodeDesc((char*)portp->nodep->NodeDesc.NodeString, indent+12);
+			  				// print end tag
+						break;
+			  			default:
+						break;
+			  			}// end case	
+					} //end if
+				 } //end for p
+				if (format == FORMAT_XML) printf("%*s</McMembers>\n", indent+8, "");
+			    }
+		    }	// end for p1
+		  } //end if detail
+		if (detail > 0)
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("\n");
+				break;
+			case FORMAT_XML:
+				printf("%*s</MulticastGroup>\n", indent+4, "");
+				break;
+			}
+	} //end for n1
+
+
+	return FSUCCESS;
+
+} //end of ShowMcGroups
+
+
+
+//output multicast groups
+void ShowMulticastGroupsReport(Point *focus, Format_t format, int indent, int detail)
+{
+	FSTATUS status;
+
+
+	if (g_hard) {
+		fprintf(stderr, "opareport -H -o mcgroups: No report provided for -H\n" );
+		g_exitstatus=1;
+	}
+
+	switch (format) {
+	case FORMAT_TEXT:
+			printf("%*sMulticast Group Summary\n",indent, "");
+		break;
+	case FORMAT_XML:
+			printf("%*s<MCGroupSummary>\n",indent,"");
+		indent+=4;
+		break;
+	default:
+		break;
+	}
+
+	status = ShowMcGroups(&g_Fabric,format, detail, indent);
+
+	if (status != FSUCCESS) {
+		fprintf(stderr, "opareport -o mcgroups: Unable to find multicast group members (status=0x%x): %s\n", status, iba_fstatus_msg(status));
+		g_exitstatus=1;
+	}
+
+	switch (format) {
+	case FORMAT_TEXT:
+		DisplaySeparator();
+		break;
+	case FORMAT_XML:
+		indent-=4;
+		printf("%*s</MCGroupSummary>\n",indent, "");
+		break;
+	default:
+		break;
+	}
+
+	return;
+} //end of ShowMulticastGroupsReport
 
 // output multicast FDB
 void ShowMulticastFDBReport(Point *focus, Format_t format, int indent, int detail)
@@ -8883,7 +9119,7 @@ struct ValidateRoutesContext {
 	int detail;
 };
 
-void ValidateRouteCallback(PortData *portp1, PortData *portp2, IB_LID dlid, boolean isBaseLid, void *context)
+void ValidateRouteCallback(PortData *portp1, PortData *portp2, IB_LID dlid, boolean isBaseLid, uint8 SL, void *context)
 {
 	struct ValidateRoutesContext *ValidateRoutesContext = (struct ValidateRoutesContext*)context;
 	int indent = ValidateRoutesContext->indent;
@@ -8895,17 +9131,21 @@ void ValidateRouteCallback(PortData *portp1, PortData *portp2, IB_LID dlid, bool
 	case FORMAT_TEXT:
 		// output portp1 
 		// output -> dlid portp2
-		printf("%*s          0x%016"PRIx64" %3u %s %.*s\n",
+		printf("%*s          0x%016"PRIx64" %3u  ",
 			indent, "",
 			portp1->nodep->NodeInfo.NodeGUID,
-			portp1->PortNum,
+			portp1->PortNum);
+			if (g_use_scsc) printf("%2u", SL);
+			printf("   %s  %.*s\n",
 			StlNodeTypeToText(portp1->nodep->NodeInfo.NodeType),
 			NODE_DESCRIPTION_ARRAY_SIZE,
 			g_noname?g_name_marker:(char*)portp1->nodep->NodeDesc.NodeString);
-		printf("%*s-> 0x%04x 0x%016"PRIx64" %3u %s %.*s\n",
+		printf("%*s-> 0x%04x 0x%016"PRIx64" %3u   ",
 			indent, "", dlid,
 			portp2->nodep->NodeInfo.NodeGUID,
-			portp2->PortNum,
+			portp2->PortNum);
+			if (g_use_scsc) printf("  ");
+			printf("  %s  %.*s\n",
 			StlNodeTypeToText(portp2->nodep->NodeInfo.NodeType),
 			NODE_DESCRIPTION_ARRAY_SIZE,
 			g_noname?g_name_marker:(char*)portp2->nodep->NodeDesc.NodeString);
@@ -8943,6 +9183,7 @@ void ValidateRouteCallback(PortData *portp1, PortData *portp2, IB_LID dlid, bool
 						indent+8);
 			XmlPrintNodeDesc((char*)portp2->nodep->NodeDesc.NodeString, indent+8);
 			printf("%*s</Port>\n", indent+4, "");
+			if (g_use_scsc) XmlPrintDec("SL", SL, indent+4);
 		if (ValidateRoutesContext->detail >= 2)
 			printf("%*s<IncompletePath>\n", indent+4, "");
 		else
@@ -9062,7 +9303,8 @@ void ShowValidateRoutesReport(Point *focus, Format_t format, int indent, int det
 		switch (format) {
 		case FORMAT_TEXT:
 			printf("%*sIncomplete Paths:\n", indent, "");
-			printf("%*s    DLID  NodeGUID         Port Type Name\n", indent, "");
+			if (g_use_scsc) printf("%*s    DLID  NodeGUID          Port  SL Type Name\n", indent, "");
+			else printf("%*s    DLID  NodeGUID             Port Type Name\n", indent, "");
 			break;
 		case FORMAT_XML:
 			printf( "%*s<IncompletePaths>\n", indent, "");
@@ -9074,10 +9316,10 @@ void ShowValidateRoutesReport(Point *focus, Format_t format, int indent, int det
 	}
 
 	ValidateRoutesContext.indent = indent;
-	status = ValidateAllRoutes(&g_Fabric, &totalPaths, &badPaths, 
+	status = ValidateAllRoutes(&g_Fabric, g_portGuid, &totalPaths, &badPaths,
 					ValidateRouteCallback, &ValidateRoutesContext,
 					detail >=2 ?ValidateRouteCallback2:NULL,
-					&ValidateRoutesContext);
+					&ValidateRoutesContext, ((g_Fabric.flags & FF_QOSDATA) && g_use_scsc));
 	if (status != FSUCCESS) {
 		fprintf(stderr, "opareport: -o validateroutes: Unable to validate routes (status=0x%x): %s\n", status, iba_fstatus_msg(status));
 		g_exitstatus = 1;
@@ -9167,7 +9409,8 @@ void ShowValidateCreditLoopsReport(Point *focus, Format_t format, int indent, in
                                         ValidateCLPathSummaryCallback,
                                         ValidateCLTimeGetCallback,
                                         &ValidateCreditLoopRoutesContext, 
-                                        ((g_Fabric.flags & FF_ROUTES) && g_snapshot_in_file)); 
+                                        ((g_Fabric.flags & FF_ROUTES) && g_snapshot_in_file),
+					((g_Fabric.flags & FF_QOSDATA) && g_use_scsc)); 
    if (status != FSUCCESS) {
       fprintf(stderr, "opareport: -o validateroutes: Unable to validate credit loop routes (status=0x%x): %s\n", status, iba_fstatus_msg(status)); 
       g_exitstatus = 1;
@@ -9515,9 +9758,12 @@ void ShowBCTForPortText(PortData *port, Format_t format, int indent, int detail)
 			port->PortInfo.ReplayDepth.BufferDepth,
 			port->PortInfo.ReplayDepth.BufferDepth * BYTES_PER_LTP);
 
-	printf("%*sWire Depth          (LTP/B):  %6u/%8u\n", indent, "",
-			port->PortInfo.ReplayDepth.WireDepth,
-			port->PortInfo.ReplayDepth.WireDepth * BYTES_PER_LTP);
+	if (!g_persist && !g_hard)
+		printf("%*sWire Depth          (LTP/B):  %6u/%8u\n", indent, "",
+				port->PortInfo.ReplayDepth.WireDepth,
+				port->PortInfo.ReplayDepth.WireDepth * BYTES_PER_LTP);
+	else
+		printf("%*sWire Depth          (LTP/B):  xxxxxx/xxxxxxxx\n", indent, "");
 
 	printf("%*sTxOverallSharedLimit (AU/B):  %6u/", indent, "",
 			port->pBufCtrlTable->TxOverallSharedLimit);
@@ -9583,10 +9829,12 @@ void ShowBCTForPortXML(PortData *port, Format_t format, int indent, int detail)
 	printf("%*s<ReplayDepthBufferDepthBytes>%u</ReplayDepthBufferDepthBytes>\n", indent, "",
 			port->PortInfo.ReplayDepth.BufferDepth * BYTES_PER_LTP);
 
-	printf("%*s<ReplayDepthWireDepth>%u</ReplayDepthWireDepth>\n", indent, "",
-			port->PortInfo.ReplayDepth.WireDepth);
-	printf("%*s<ReplayDepthWireDepthBytes>%u</ReplayDepthWireDepthBytes>\n", indent, "",
-			port->PortInfo.ReplayDepth.WireDepth * BYTES_PER_LTP);
+	if (!g_persist && !g_hard) {
+		printf("%*s<ReplayDepthWireDepth>%u</ReplayDepthWireDepth>\n", indent, "",
+				port->PortInfo.ReplayDepth.WireDepth);
+		printf("%*s<ReplayDepthWireDepthBytes>%u</ReplayDepthWireDepthBytes>\n", indent, "",
+				port->PortInfo.ReplayDepth.WireDepth * BYTES_PER_LTP);
+	}
 
 	if (bytesPerAU) {
 		printf("%*s<OverallBufferSpace>%u</OverallBufferSpace>\n", indent, "", remLim);
@@ -9965,7 +10213,7 @@ void ShowPortVFMembershipXML(PortData *port, int indent, int detail, STL_VFINFO_
 		sl = pR->s1.sl;
 		if (!PortIsVFMember(port, sl)) 
 			continue;
-		printf("%*s<VirtualFabric>\n", indent, "");
+		printf("%*s<VirtualFabric id=\"%d\">\n", indent, "", pR->vfIndex);
 		indent+=4;
 		XmlPrintStr("Name", (char *)pR->vfName, indent);
 		XmlPrintDec("Index", pR->vfIndex, indent);
@@ -10365,6 +10613,8 @@ struct option options[] = {
 		{ "quietfocus", no_argument, NULL, 'Q' },
 		{ "vltables", no_argument, NULL, 'V' },
 		{ "allports", no_argument, NULL, 'A' },
+		{ "begin", required_argument, NULL, 'b'},
+		{ "end", required_argument, NULL, 'e'},
 		{ "help", no_argument, NULL, '$' },	// use an invalid option character
 
 		{ 0 }
@@ -10374,8 +10624,9 @@ void Usage_full(void)
 {
 	fprintf(stderr, "Usage: opareport [-v][-q] [-h hfi] [-p port] [-o report] [-d detail]\n"
 	                "                    [-P|-H] [-N] [-x] [-X snapshot_input] [-T topology_input]\n"
-	                "                    [-s] [-r] [-V] [-i seconds] [-C] [-a] [-m] [-K mkey] [-M]\n"
-	                "                    [-A] [-c file] [-L] [-F point] [-S point] [-D point] [-Q]\n");
+	                "                    [-s] [-r] [-V] [-i seconds] [-b date_time] [-e date_time]\n"
+	                "                    [-C] [-a] [-m] [-K mkey] [-M] [-A] [-c file] [-L] [-F point]\n"
+	                "                    [-S point] [-D point] [-Q]\n");
 	fprintf(stderr, "              or\n");
 	fprintf(stderr, "       opareport --help\n");
 	fprintf(stderr, "    --help - produce full help text\n");
@@ -10383,8 +10634,8 @@ void Usage_full(void)
 	fprintf(stderr, "    -q/--quiet                - disable progress reports\n");
 	fprintf(stderr, "    -h/--hfi hfi              - hfi, numbered 1..n, 0= -p port will be a\n");
 	fprintf(stderr, "                                system wide port num (default is 0)\n");
-	fprintf(stderr, "    -p/--port port            - port, numbered 1..n, 0=1st active (default\n");
-	fprintf(stderr, "                                is 1st active)\n");
+	fprintf(stderr, "    -p/--port port            - port, numbered 1..n, 0=1st active\n");
+	fprintf(stderr, "                                (default is 1st active)\n");
 	fprintf(stderr, "    -o/--output report        - report type for output\n");
 	fprintf(stderr, "    -d/--detail level         - level of detail 0-n for output, default is 2\n");
 	fprintf(stderr, "    -P/--persist              - only include data persistent across reboots\n");
@@ -10409,6 +10660,15 @@ void Usage_full(void)
 	fprintf(stderr, "    -i/--interval seconds     - obtain performance stats over interval seconds\n");
 	fprintf(stderr, "                                clears all stats, waits interval seconds,\n");
 	fprintf(stderr, "                                then generates report.  Implies -s\n");
+	fprintf(stderr, "    -b/--begin date_time      - obtain past performance stats over interval\n");
+	fprintf(stderr, "                                beginning at date_time. Implies -s\n");
+	fprintf(stderr, "    -e/--end date_time        - obtain past performance stats over interval\n");
+	fprintf(stderr, "                                ending at date_time. Implies -s\n");
+	fprintf(stderr, "                                For both -b and -e, date_time may be a time\n");
+	fprintf(stderr, "                                entered as HH:MM[:SS] or date as mm/dd/YYYY,\n");
+	fprintf(stderr, "                                dd.mm.YYYY, YYYY-mm-dd or date followed by time\n");
+	fprintf(stderr, "                                e.g. \"2016-07-04 14:40\". Relative times are\n");
+	fprintf(stderr, "                                taken as \"x [second|minute|hour|day](s) ago.\"\n");
 	fprintf(stderr, "    -C/--clear                - clear performance stats for all ports\n");
 	fprintf(stderr, "                              - only stats with error thresholds are cleared\n");
 	fprintf(stderr, "                              - clear occurs after generating report\n");
@@ -10444,7 +10704,8 @@ void Usage_full(void)
 	fprintf(stderr, "    -h x -p y                 - HFI x, port y\n");
 	fprintf(stderr, "Snapshot specific Options:\n");
 	fprintf(stderr, "    -r/--routes               - get routing tables for all switches\n");
-	fprintf(stderr, "    -V/--vltables             - get QOS VL-related tables for all ports\n");
+	fprintf(stderr, "    -V/--vltables             - get the P-Key tables for all nodes and\n");
+	fprintf(stderr, "                                QOS VL-related tables for all ports\n");
 	fprintf(stderr, "Report Types:\n");
 	fprintf(stderr, "    comps                     - summary of all systems and SMs in fabric\n");
 	fprintf(stderr, "    brcomps                   - brief summary of all systems and SMs in fabric\n");
@@ -10455,6 +10716,9 @@ void Usage_full(void)
 	fprintf(stderr, "    lids                      - summary of all LIDs in fabric\n");
 	fprintf(stderr, "    links                     - summary of all links\n");
 	fprintf(stderr, "    extlinks                  - summary of links external to systems\n");
+	fprintf(stderr, "    filinks                   - summary of links to FIs\n");
+	fprintf(stderr, "    islinks                   - summary of inter-switch links\n");
+	fprintf(stderr, "    extislinks                - summary of inter-switch links external to systems\n");
 	fprintf(stderr, "    slowlinks                 - summary of links running slower than expected\n");
 	fprintf(stderr, "    slowconfiglinks           - summary of links configured to run slower than\n");
 	fprintf(stderr, "                                supported includes slowlinks\n");
@@ -10470,6 +10734,7 @@ void Usage_full(void)
 	fprintf(stderr, "    linear                    - summary of linear forwarding data base (FDB) for\n");
         fprintf(stderr, "                                each Switch\n");
 	fprintf(stderr, "    mcast                     - summary of multicast FDB for each Switch\n");
+	fprintf(stderr, "    mcgroups                  - summary of multicast groups\n");
 	fprintf(stderr, "    portusage                 - summary of ports referenced in linear FDB for\n");
         fprintf(stderr, "                                each Switch, broken down by NodeType of DLID\n");
 	fprintf(stderr, "    pathusage                 - summary of number of FI to FI paths routed\n");
@@ -10480,9 +10745,14 @@ void Usage_full(void)
 	fprintf(stderr, "                                Switch\n");
 	fprintf(stderr, "    quarantinednodes          - summary of quarantined nodes\n");
 	fprintf(stderr, "    validateroutes            - validate all routes in the fabric\n");
+	fprintf(stderr, "    validatevlroutes          - validate all routes in the fabric using SLSC,\n");
+	fprintf(stderr, "                                SCSC, and SCVL tables\n");
 	fprintf(stderr, "    validatepgs               - validate all port groups in the fabric\n");
 	fprintf(stderr, "    validatecreditloops       - validate topology configuration of the fabric to\n");
 	fprintf(stderr, "                                identify any existing credit loops\n");
+	fprintf(stderr, "    validatevlcreditloops     - validate topology configuration of the fabric\n");
+	fprintf(stderr, "                                including SLSC, SCSC, and SCVL tables to identify\n");
+	fprintf(stderr, "                                any existing credit loops\n");
 	fprintf(stderr, "    vfinfo                    - summary of vFabric information\n");
 	fprintf(stderr, "    vfmember                  - summary of vFabric membership information\n");
 	fprintf(stderr, "    verifyfis                 - compare fabric (or snapshot) FIs to supplied\n");
@@ -10498,6 +10768,16 @@ void Usage_full(void)
 	fprintf(stderr, "    verifyextlinks            - compare fabric (or snapshot) links to supplied\n");
 	fprintf(stderr, "                                topology and identify differences and omissions\n");
 	fprintf(stderr, "                                limit analysis to links external to systems\n");
+	fprintf(stderr, "    verifyfilinks             - compare fabric (or snapshot) links to supplied\n");
+	fprintf(stderr, "                                topology and identify differences and omissions\n");
+	fprintf(stderr, "                                limit analysis to links to FIs\n");
+	fprintf(stderr, "    verifyislinks             - compare fabric (or snapshot) links to supplied\n");
+	fprintf(stderr, "                                topology and identify differences and omissions\n");
+	fprintf(stderr, "                                limit analysis to inter-switch links\n");
+	fprintf(stderr, "    verifyextislinks          - compare fabric (or snapshot) links to supplied\n");
+	fprintf(stderr, "                                topology and identify differences and omissions\n");
+	fprintf(stderr, "                                limit analysis to inter-switch links external to\n");
+	fprintf(stderr, "                                systems\n");
 	fprintf(stderr, "    verifyall                 - verifyfis, verifysws, verifysms and verifylinks\n");
 	fprintf(stderr, "                                reports\n");
 	fprintf(stderr, "    all                       - comp, nodes, ious, links, extlinks,\n");
@@ -10631,12 +10911,15 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -s -o snapshot > file\n");
 	fprintf(stderr, "   opareport -o topology > topology.xml\n");
 	fprintf(stderr, "   opareport -o errors -X file\n");
+	fprintf(stderr, "   opareport -s --begin \"2 days ago\"\n");
+	fprintf(stderr, "   opareport -s --begin \"12:30\" --end \"14:00\"\n");
 	exit(0);
 }
 
 void Usage(void)
 {
 	fprintf(stderr, "Usage: opareport [-v][-q] [-o report] [-d detail] [-x] [-s] [-i seconds] [-C]\n");
+	fprintf(stderr, "                 [-b date_time] [-e date_time]\n");
 	fprintf(stderr, "              or\n");
 	fprintf(stderr, "       opareport --help\n");
 	fprintf(stderr, "    --help - produce full help text\n");
@@ -10649,6 +10932,10 @@ void Usage(void)
 	fprintf(stderr, "    -i/--interval seconds     - obtain performance stats over interval seconds\n");
 	fprintf(stderr, "                                clears all stats, waits interval seconds,\n");
 	fprintf(stderr, "                                then generates report.  Implies -s\n");
+	fprintf(stderr, "    -b/--begin date_time      - obtain past performance stats over interval\n");
+	fprintf(stderr, "                                beginning at date_time. Implies -s\n");
+	fprintf(stderr, "    -e/--end date_time        - obtain past performance stats over interval\n");
+	fprintf(stderr, "                                ending at date_time. Implies -s\n");
 	fprintf(stderr, "    -C/--clear                - clear performance stats for all ports\n");
 	fprintf(stderr, "                              - only stats with error thresholds are cleared\n");
 	fprintf(stderr, "                              - clear occurs after generating report\n");
@@ -10817,50 +11104,6 @@ int parse(const char* filename)
 	return 0;
 }
 
-typedef enum {
-	REPORT_NONE		=0x00,
-	REPORT_COMP		=0x01,
-	REPORT_BRCOMP	=0x02,
-	REPORT_NODES	=0x04,
-	REPORT_BRNODES	=0x08,
-	REPORT_IOUS		=0x10,
-	REPORT_SLOWLINKS=0x20,
-	REPORT_SLOWCONFIGLINKS=0x40,
-	REPORT_SLOWCONNLINKS=0x80,
-	REPORT_MISCONFIGLINKS=0x100,
-	REPORT_MISCONNLINKS=0x200,
-	REPORT_LINKS	=0x400,
-	REPORT_EXTLINKS	=0x800,
-	REPORT_ERRORS	=0x1000,
-	REPORT_OTHERPORTS=0x2000,
-	REPORT_ROUTE	=0x4000,
-	REPORT_SKIP		=0x8000,
-	REPORT_SIZES	=0x10000,	// undocumented report for sizeof structures
-	REPORT_SNAPSHOT	=0x20000,
-	REPORT_VERIFYLINKS	=0x40000,
-	REPORT_VERIFYEXTLINKS	=0x80000,
-	REPORT_VERIFYFIS	=0x100000,
-	REPORT_VERIFYSWS	=0x200000,
-	//RESERVED          =0x400000,
-	REPORT_VERIFYSMS	=0x800000,
-	REPORT_LIDS			=0x1000000,
-	REPORT_LINEARFDBS	=0x2000000,
-	REPORT_MCASTFDBS	=0x4000000,
-	REPORT_PORTUSAGE	=0x8000000,
-	REPORT_LIDUSAGE		=0x10000000,	// undocumented report LinearFDB LID usage
-	REPORT_VFINFO		=0x20000000,
-	REPORT_PATHUSAGE	=0x40000000,
-	REPORT_TREEPATHUSAGE=0x80000000,
-	REPORT_VALIDATEROUTES=0x100000000L,
-	REPORT_VALIDATECREDITLOOPS=0x200000000L,
-	REPORT_BUFCTRLTABLES=0x400000000L,
-	REPORT_PORTGROUPS=0x800000000L,
-	REPORT_VERIFYPGS=0x1000000000L,
-	REPORT_VFMEMBER=0x2000000000L,
-	REPORT_QUARANTINE_NODES=0x4000000000L,
-	REPORT_TOPOLOGY=0x8000000000L,
-} report_t;
-
 // convert a output type argument to the proper constant
 report_t checkOutputType(const char* name)
 {
@@ -10878,6 +11121,12 @@ report_t checkOutputType(const char* name)
 		return REPORT_LINKS;
 	} else if (0 == strcmp(optarg, "extlinks")) {
 		return REPORT_EXTLINKS;
+	} else if (0 == strcmp(optarg, "filinks")) {
+		return REPORT_FILINKS;
+	} else if (0 == strcmp(optarg, "islinks")) {
+		return REPORT_ISLINKS;
+	} else if (0 == strcmp(optarg, "extislinks")) {
+		return REPORT_EXTISLINKS;
 	} else if (0 == strcmp(optarg, "slowlinks")) {
 		return REPORT_SLOWLINKS;
 	} else if (0 == strcmp(optarg, "slowconfiglinks")) {
@@ -10896,6 +11145,12 @@ report_t checkOutputType(const char* name)
 		return REPORT_VERIFYLINKS;
 	} else if (0 == strcmp(optarg, "verifyextlinks")) {
 		return REPORT_VERIFYEXTLINKS;
+	} else if (0 == strcmp(optarg, "verifyfilinks")) {
+		return REPORT_VERIFYFILINKS;
+	} else if (0 == strcmp(optarg, "verifyislinks")) {
+		return REPORT_VERIFYISLINKS;
+	} else if (0 == strcmp(optarg, "verifyextislinks")) {
+		return REPORT_VERIFYEXTISLINKS;
 	} else if (0 == strcmp(optarg, "verifynodes")) {
 		return REPORT_VERIFYFIS|REPORT_VERIFYSWS;
 	} else if (0 == strcmp(optarg, "verifyfis")) {
@@ -10905,6 +11160,8 @@ report_t checkOutputType(const char* name)
 	} else if (0 == strcmp(optarg, "verifysms")) {
 		return REPORT_VERIFYSMS;
 	} else if (0 == strcmp(optarg, "verifyall")) {
+		/* verifylinks is a superset of verifyextlinks, verifyfilinks, */
+		/* verifyislinks, verifyextislinks */
 		return REPORT_VERIFYFIS|REPORT_VERIFYSWS|REPORT_VERIFYLINKS|REPORT_VERIFYSMS;
 	} else if (0 == strcmp(optarg, "route")) {
 		return REPORT_ROUTE;
@@ -10920,6 +11177,8 @@ report_t checkOutputType(const char* name)
 		return REPORT_LINEARFDBS;
 	} else if (0 == strcmp(optarg, "mcast")) {
 		return REPORT_MCASTFDBS;
+	} else if (0 == strcmp(optarg, "mcgroups")) {
+		return REPORT_MCGROUPS;
 	} else if (0 == strcmp(optarg, "vfinfo")) {
 		return REPORT_VFINFO;
 	} else if (0 == strcmp(optarg, "portusage")) {
@@ -10932,8 +11191,12 @@ report_t checkOutputType(const char* name)
 		return REPORT_TREEPATHUSAGE;
 	} else if (0 == strcmp(optarg, "validateroutes")) {
 		return REPORT_VALIDATEROUTES;
+	} else if (0 == strcmp(optarg, "validatevlroutes")) {
+		return REPORT_VALIDATEVLROUTES;
         } else if (0 == strcmp(optarg, "validatecreditloops")) {
-           return REPORT_VALIDATECREDITLOOPS;
+		return REPORT_VALIDATECREDITLOOPS;
+	} else if (0 == strcmp(optarg, "validatevlcreditloops")) {
+		return REPORT_VALIDATEVLCREDITLOOPS;
 	} else if (0 == strcmp(optarg, "bfrctrl")) {
 		return REPORT_BUFCTRLTABLES;
 	} else if (0 == strcmp(optarg, "portgroups")) {
@@ -10948,6 +11211,7 @@ report_t checkOutputType(const char* name)
 		return REPORT_TOPOLOGY;
 	} else if (0 == strcmp(optarg, "all")) {
 		/* note we omit brcomp and brnodes since comp and nodes is superset */
+		/* similarly links is a suprset of filinks, islinks, extislinks */
 		/* omit snapshot */
 		return REPORT_COMP|REPORT_NODES|REPORT_IOUS|REPORT_LINKS
 				|REPORT_EXTLINKS|REPORT_SLOWCONNLINKS|REPORT_ERRORS;
@@ -10963,8 +11227,8 @@ int main(int argc, char ** argv)
 {
     FSTATUS             fstatus;
     int                 c;
-    uint8               hfi         = 1;
-    uint8               port        = -1;
+    uint8               hfi         = 0;
+    uint8               port        = 0;
 	boolean				gothfi=FALSE, gotport=FALSE;
 	Format_t			format = FORMAT_TEXT;
     int					detail = 2;
@@ -10974,6 +11238,7 @@ int main(int argc, char ** argv)
 	int					routes = 0;	// get routing FDB
 	int					fl_vlqos = 0;	// get QOS VL-related tables
 	int					bfrctrl = 0;	// get Buffer Control Tables
+	int					mcgroups = 0;	// get multicast group members
 	char *config_file = CONFIG_FILE;
 	char *route_src = NULL;
 	char *route_dest = NULL;
@@ -10988,7 +11253,7 @@ int main(int argc, char ** argv)
 	g_quiet = ! isatty(2);	// disable progress if stderr is not tty
 	
 	// process command line arguments
-	while (-1 != (c = getopt_long(argc,argv, "vVAqh:p:o:d:PHNsri:CamK:MLc:S:D:F:xX:T:Q",
+	while (-1 != (c = getopt_long(argc,argv, "vVAqh:p:o:d:PHNsri:CamK:MLc:S:D:F:xX:T:Qb:e:",
 									options, &index)))
     {
         switch (c)
@@ -11023,14 +11288,21 @@ int main(int argc, char ** argv)
 				report = (report_t) report | checkOutputType(optarg);
 				if (report & REPORT_ERRORS)
 					stats = 1;
-				if ( report & ( REPORT_LINEARFDBS | REPORT_MCASTFDBS    |
+				if (report & (REPORT_MCGROUPS | REPORT_SNAPSHOT))
+					mcgroups = 1;
+				if ( report & ( REPORT_LINEARFDBS | REPORT_MCASTFDBS |
 						REPORT_PORTUSAGE | REPORT_LIDUSAGE      |
 						REPORT_PATHUSAGE | REPORT_TREEPATHUSAGE |
 						REPORT_VALIDATEROUTES | REPORT_VALIDATECREDITLOOPS |
-						REPORT_PORTGROUPS | REPORT_VERIFYPGS) )
+						REPORT_PORTGROUPS | REPORT_VERIFYPGS |
+						REPORT_VALIDATEVLCREDITLOOPS | REPORT_VALIDATEVLROUTES ) )
 					routes = 1;
 				if (report & REPORT_BUFCTRLTABLES)
 					bfrctrl = 1;
+				if (report & (REPORT_VALIDATEVLCREDITLOOPS | REPORT_VALIDATEVLROUTES )) {
+					fl_vlqos = 1;
+					g_use_scsc = 1;
+				}
                 break;
             case 'd':	// detail level
 				if (FSUCCESS != StringToUint32(&temp, optarg, NULL, 0, TRUE)) {
@@ -11125,6 +11397,20 @@ int main(int argc, char ** argv)
 			case 'Q':	// do not include focus description in report
 				g_quietfocus = 1;
 				break;
+			case 'b':
+				if (FSUCCESS != StringToDateTime(&temp, optarg)) {
+					fprintf(stderr, "opareport: Invalid Date/Time: %s\n", optarg);
+					Usage();
+				}
+				g_begin = temp;
+				break;
+			case 'e':
+				if (FSUCCESS != StringToDateTime(&temp, optarg)) {
+					fprintf(stderr, "opareport: Invalid Date/Time: %s\n", optarg);
+					Usage();
+				}
+				g_end = temp;
+				break;
             default:
                 fprintf(stderr, "opareport: Invalid option -%c\n", c);
                 Usage();
@@ -11158,6 +11444,12 @@ int main(int argc, char ** argv)
 		Usage();
 	}
 
+	// check for incompatible arguments
+	if (g_begin && g_end && (g_begin > g_end)){
+		fprintf(stderr, "opareport: begin time must be before end time\n");
+		Usage();
+	}	
+
 	// Warn for extraneous arguments and ignore them
 	if ((route_dest || route_src) && ! (report & REPORT_ROUTE)) {
 		fprintf(stderr, "opareport: -S or -D option given without -o route, ignoring -S and -D\n");
@@ -11186,11 +11478,19 @@ int main(int argc, char ** argv)
 		g_hard = 0;
 		g_persist = 0;
 	}
-	if (g_snapshot_in_file && (g_interval || g_clearstats || g_clearallstats)) {
-		fprintf(stderr, "opareport: -i, -C, and -a ignored for -X\n");
+	if ((report & REPORT_MCGROUPS) && (g_hard || g_persist)) {
+		fprintf(stderr, "opareport: -H and -P ignored for -o mcgroups\n");
+		g_hard = 0;
+		g_persist = 0;
+	}
+
+	if (g_snapshot_in_file && (g_interval || g_clearstats || g_clearallstats || g_begin || g_end)) {
+		fprintf(stderr, "opareport: -i, -C, -a, -b, and -e ignored for -X\n");
 		g_interval = 0;
 		g_clearstats = 0;
 		g_clearallstats = 0;
+		g_begin = 0;
+		g_end = 0;
 	}
 	if (g_snapshot_in_file) {
 		if (sweepFlags & FF_SMADIRECT)
@@ -11216,7 +11516,8 @@ int main(int argc, char ** argv)
 	}
 	if (g_snapshot_in_file && routes) {
 		if ( ! ( report & ( REPORT_LINEARFDBS | REPORT_MCASTFDBS |
-				REPORT_PORTUSAGE | REPORT_LIDUSAGE | REPORT_PATHUSAGE | REPORT_TREEPATHUSAGE | REPORT_VALIDATEROUTES | REPORT_VALIDATECREDITLOOPS) ) ) {
+				REPORT_PORTUSAGE | REPORT_LIDUSAGE | REPORT_PATHUSAGE | REPORT_TREEPATHUSAGE | REPORT_VALIDATEROUTES | REPORT_VALIDATECREDITLOOPS
+				| REPORT_VALIDATEVLCREDITLOOPS | REPORT_VALIDATEVLROUTES ) ) ) {
 			// -r must have been explicitly specified
 			fprintf(stderr, "opareport: -r ignored for -X\n");
 		}
@@ -11233,7 +11534,7 @@ int main(int argc, char ** argv)
 	// check for unignored arguments which imply need to get stats
 	if (! g_snapshot_in_file && focus_arg && NULL != ComparePrefix(focus_arg, "linkqual")) 
 		stats = 1; // using the linkqual focus option implies -s
-	if (g_interval)
+	if (g_interval || g_begin | g_end)
 		stats = 1;
 
 	// now that we have final value for "stats" option, make sure consistent
@@ -11274,14 +11575,6 @@ int main(int argc, char ** argv)
 #endif
 
 		// find portGuid for hfi/port specified
-		if (! port) {
-			fprintf(stderr, "opareport: Invalid port number, First Port is 1\n");
-			g_exitstatus = 1;
-			goto done;
-		}
-		if (port == (uint8)-1)
-			port = 0;	// first active port
-
 		{
 			uint32 caCount, portCount;
 
@@ -11379,7 +11672,7 @@ int main(int argc, char ** argv)
 
 	if (!g_snapshot_in_file && stats && ! g_hard && ! g_persist) {
 		if (FSUCCESS != GetAllPortCounters(g_portGuid, g_portAttrib->GIDTable[0],
-				&g_Fabric, &focus, g_limitstats, g_quiet)) {
+				&g_Fabric, &focus, g_limitstats, g_quiet, g_begin, g_end)) {
 			g_exitstatus = 1;
 			goto done;
 		}
@@ -11416,7 +11709,7 @@ int main(int argc, char ** argv)
 	}
 
 	if (!g_snapshot_in_file && fl_vlqos && ! g_hard && ! g_persist) {
-		if (FSUCCESS != GetAllPortVLInfo(g_portGuid, &g_Fabric, &focus, g_quiet)) {
+		if (FSUCCESS != GetAllPortVLInfo(g_portGuid, &g_Fabric, &focus, g_quiet, &g_use_scsc)) {
 			g_exitstatus = 1;
 			goto done;
 		}
@@ -11424,6 +11717,13 @@ int main(int argc, char ** argv)
 
 	if (!g_snapshot_in_file && bfrctrl && ! g_hard && ! g_persist) {
 		if (FSUCCESS != GetAllBCTs(g_portGuid, &g_Fabric, &focus, g_quiet)) {
+			g_exitstatus = 1;
+			goto done;
+		}
+	}
+
+	if (!g_snapshot_in_file && mcgroups && ! g_hard && ! g_persist) {
+		if (FSUCCESS != GetAllMCGroups(g_portGuid, &g_Fabric, &focus, g_quiet)) {
 			g_exitstatus = 1;
 			goto done;
 		}
@@ -11452,9 +11752,15 @@ int main(int argc, char ** argv)
 	if (report & REPORT_IOUS)
 		ShowAllIOUReport(&focus, format, 0, detail);
 	if (report & REPORT_LINKS)
-		ShowAllLinkReport(&focus, format, 0, detail);
+		ShowLinksReport(&focus, REPORT_LINKS, format, 0, detail);
 	if (report & REPORT_EXTLINKS)
-		ShowExtLinkReport(&focus, format, 0, detail);
+		ShowLinksReport(&focus, REPORT_EXTLINKS, format, 0, detail);
+	if (report & REPORT_FILINKS)
+		ShowLinksReport(&focus, REPORT_FILINKS, format, 0, detail);
+	if (report & REPORT_ISLINKS)
+		ShowLinksReport(&focus, REPORT_ISLINKS, format, 0, detail);
+	if (report & REPORT_EXTISLINKS)
+		ShowLinksReport(&focus, REPORT_EXTISLINKS, format, 0, detail);
 	if (report & REPORT_SLOWLINKS)
 		ShowSlowLinkReport(LINK_EXPECTED_REPORT, FALSE, &focus, format, 0, detail);
 	if (report & REPORT_SLOWCONFIGLINKS)
@@ -11476,9 +11782,15 @@ int main(int argc, char ** argv)
 	if (report & REPORT_VERIFYSMS)
 		ShowVerifySMsReport(&focus, format, 0, detail);
 	if (report & REPORT_VERIFYLINKS)
-		ShowVerifyLinksReport(&focus, FALSE, format, 0, detail);
+		ShowVerifyLinksReport(&focus, REPORT_VERIFYLINKS, format, 0, detail);
 	if (report & REPORT_VERIFYEXTLINKS)
-		ShowVerifyLinksReport(&focus, TRUE, format, 0, detail);
+		ShowVerifyLinksReport(&focus, REPORT_VERIFYEXTLINKS, format, 0, detail);
+	if (report & REPORT_VERIFYFILINKS)
+		ShowVerifyLinksReport(&focus, REPORT_VERIFYFILINKS, format, 0, detail);
+	if (report & REPORT_VERIFYISLINKS)
+		ShowVerifyLinksReport(&focus, REPORT_VERIFYISLINKS, format, 0, detail);
+	if (report & REPORT_VERIFYEXTISLINKS)
+		ShowVerifyLinksReport(&focus, REPORT_VERIFYEXTISLINKS, format, 0, detail);
 	if (report & REPORT_ROUTE) {
 		Point point1, point2;
 		int skip = 0;
@@ -11530,6 +11842,7 @@ int main(int argc, char ** argv)
 		info.fabricp = &g_Fabric;
 		info.argc = argc;
 		info.argv = argv;
+
 		// info.focus = &focus;
 		Xml2PrintSnapshot(stdout, &info);
 	}
@@ -11543,6 +11856,9 @@ int main(int argc, char ** argv)
 	if (report & REPORT_MCASTFDBS)
 		ShowMulticastFDBReport(&focus, format, 0, detail);
 
+	if (report & REPORT_MCGROUPS)
+		ShowMulticastGroupsReport(&focus, format, 0, detail);
+	
 	if (report & REPORT_PORTUSAGE)
 		ShowPortUsageReport(&focus, format, 0, detail);
 
@@ -11552,10 +11868,10 @@ int main(int argc, char ** argv)
 	if (report & REPORT_TREEPATHUSAGE)
 		ShowTreePathUsageReport(&focus, format, 0, detail);
 
-	if (report & REPORT_VALIDATEROUTES)
+	if (report & REPORT_VALIDATEROUTES || report & REPORT_VALIDATEVLROUTES)
 		ShowValidateRoutesReport(&focus, format, 0, detail);
 
-	if (report & REPORT_VALIDATECREDITLOOPS) 
+	if (report & REPORT_VALIDATECREDITLOOPS || report & REPORT_VALIDATEVLCREDITLOOPS) 
 		ShowValidateCreditLoopsReport(&focus, format, 0, detail); 
 
 	if (report & REPORT_VFINFO)

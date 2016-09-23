@@ -59,10 +59,10 @@ typedef enum {
 #define I2C_FILE_1 "/sys/kernel/debug/hfi1/hfi1_"
 #define I2C_FILE_2 "/i2c1"
 #define I2C_FILE_SIZE 40
-#define FNAME_SIZE 64
 #define RETRIES 3
 #define OTP_SIZE 528
 #define BYTES_OFFSET 1
+#define	I2C_RETRIES 5
 
 // TODO: find out the actual values
 #define SYS_STATUS_NONE -1

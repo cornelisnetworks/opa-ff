@@ -1,0 +1,160 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location, 
+# either edit this line or set MPICH_PREFIX in your environment.
+# see select_mpi for the set of default MPI selections
+# default to MPI used for build
+MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
+
+APP=mpi_allhfilatency
+LOGFILE=
+
+NUM_PROCESSES=2
+SIZE=0
+MINUTES=1
+VERBOSE=
+CSV=
+
+function usage {
+	echo
+	echo "$0 is a specialized stress test for large fabrics. It iterates through"
+	echo "every possible pairing of HCAs and performs a latency test on each"
+	echo "pair. At the end of each round of testing, the fastest and slowest"
+	echo "pairs are reported."
+	echo
+	echo "This has no real value as a performance benchmark but is"
+	echo "extremely useful for checking for cabling problems in the fabric."
+	echo
+	echo "$0 requires no arguments, but can take three optional arguments."
+	echo
+	echo "$0 nn dd ss"
+	echo
+	echo "Where nn is the number of ranks, dd is the duration in minutes and ss"
+	echo "is the message size, in bytes."
+	echo
+	echo "For example, to run a 30 minute test on 64 nodes with 4 kilobyte messages:"
+	echo
+	echo "$0 64 30 4096"
+	echo
+	echo "Once 30 minutes has elapsed, the test will complete as soon"
+	echo "as the current round of testing has completed."
+	echo 
+	echo "If you want the tests to repeat indefinitely, use 'infinite' as"
+	echo "the duration:"
+	echo
+	echo "$0 64 infinite 4096"
+	echo
+	echo "The nn argument may be 'all' in which case one rank will be started for"
+	echo "every process in the mpi_hosts file"
+	echo
+	echo "Finally, there are three optional arguments, -c, -h and -v."
+	echo
+	echo "-h (--help) provides this help text."
+	echo "-c (--csv) prints all raw test results in CSV file format, into the"
+	echo "   application logfile. Useful for analyzing the raw results with"
+	echo "   a spreadsheet application."
+	echo "-v (--verbose) runs the test in a verbose mode that shows more"
+	echo "   information."
+	echo
+	echo "To use the results of this, look for nodes that are often listed as"
+	echo "the slowest at the end of the round.  One of those nodes may have"
+	echo "a cabling problem, or there may be a congested interswitch link"
+	echo "causing those nodes to experience degraded performance."
+	exit
+}
+
+ARGS=`getopt --name=$0 -o "hvc" -l "help,verbose,csv" -- $@`
+if [ $? -ne 0 ]; then
+	usage
+fi
+eval set -- $ARGS
+while [ $1 != -- ]; do
+    case $1 in
+        -h|--help)
+            usage
+            shift;;
+        -v|--verbose)
+            VERBOSE="-v"
+            shift;;
+		-c|--csv)
+            CSV="-c"
+            shift;;
+    esac
+done
+shift # remove the --
+
+if [ $# -ge 1 ]; then
+	if [ "$1" = "all" ] || [ $1 -eq $1 ]; then
+		NUM_PROCESSES=$1
+	else
+		usage
+	fi
+fi
+shift
+if [ $# -ge 1 ]; then
+	if [ $1 == "infinite" ]; then
+		MINUTES=0
+	elif [ $1 -eq $1 ]; then
+		MINUTES=$1
+	else
+		usage
+	fi
+fi
+shift
+if [ $# -ge 1 ]; then
+	if [ $1 -eq $1 ]; then
+		SIZE=$1
+	else
+		usage
+	fi
+fi
+
+. ./prepare_run
+
+CMD="groupstress/mpi_latencystress -s $SIZE -t $MINUTES $VERBOSE $CSV"
+
+if [ ! -z "$CSV" ]; then
+	echo " CSV output in $LOGFILE"
+	echo
+fi
+(
+	echo " Running All HCA Latency Test..."
+	show_mpi_hosts
+	set -x
+	$MPI_RUN_CMD $CMD
+	set +x
+) 2>&1 | tee -i -a $LOGFILE
+
+echo "########################################### " >> $LOGFILE

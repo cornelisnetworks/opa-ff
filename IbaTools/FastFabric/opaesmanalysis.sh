@@ -37,9 +37,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa/tools/ff_funcs
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
@@ -54,7 +54,7 @@ Usage_full()
 	echo "   -e - evaluate health only, default is compare/check mode" >&2
 	echo "   -s - save history of failures (errors/differences)" >&2
 	echo "   -d dir - top level directory for saving baseline and history of failed checks" >&2
-	echo "           default is /var/opt/opa/analysis" >&2
+	echo "           default is /var/usr/lib/opa/analysis" >&2
 	echo "   -G esmchassisfile - file with SM chassis in cluster" >&2
 	echo "           default is $CONFIG_DIR/opa/esm_chassis" >&2
 	echo "   -E esmchassis - list of SM chassis to analyze" >&2

@@ -16,72 +16,48 @@ opa\(ulosd\(ulexercise
 Performs stress test on SM and distributed SA query system.
 .SH Syntax
 .NL
-opa\(ulosd\(ulexercise [ \fIopts\fR] \fIguidlist\fR
+opa\(ulosd\(ulexercise [-d | -s | -r | -x | -X | -D | -p | -S | -t | -e] \fIguidlist\fR
 .SH Options
 .NL
 
 .TP 10
- \fIopts\fR 
+--help 
 .NL
-Options. Values include:
+Produces full help text.
 
-.RS
 .TP 10
-
-.sp
 -d \fIdebug level\fR 
+.NL
 Sets debugging level.
 
-.RE
-
-.RS
 .TP 10
-
-.sp
 -s \fIseconds\fR 
+.NL
 Specifies running for at least  \fIseconds\fR seconds.
-.RE
-
-.RS
 .TP 10
-
-.sp
 -r \fIremote\fR 
+.NL
 Specifies the host running the fabric simulator.
-.RE
-
-.RS
 .TP 10
-
-.sp
 -x \fIcount\fR 
-Number of destinations to toggle up or down after each pass. Maximum = MAX\(ulTOGGLES.
-.RE
-
-.RS
+.NL
+Number of destinations to toggle up or down after each pass.
+.br
+Maximum = MAX\(ulTOGGLES.
 .TP 10
-
-.sp
 -X \fIcount\fR 
-Specifies how often to toggle a source port up or down (in seconds).
-.RE
-
-.RS
+.NL
+Specifies how often to toggle a source port up or down
+.br
+(in seconds).
 .TP 10
-
-.sp
 -D \fIseconds\fR 
+.NL
 Specifies how long to sleep after each pass. This value gives the Subnet Manager time to process port events.
-.RE
-
-.RS
 .TP 10
-
-.sp
 -p \fIpkey\fR 
+.NL
 Specifies to include  \fIpkey\fR in the searches. Can be specified up to 8 times.
-.RE
-
 .TP 10
 -S \fIsid\fR 
 .NL

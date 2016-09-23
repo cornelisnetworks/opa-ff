@@ -1,0 +1,75 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+#
+# Sample MPI pgfile
+# [ICS VERSION STRING: unknown]
+#
+# File format: blank lines and lines beginning with a # character
+# are ignored. Other lines are assumed to have the form
+#
+# hostname command arg1 arg2 arg3....argN
+#
+# NOTE THAT THE PGFILE OVERRIDES ANY -NP PARAMETER
+# Every node in the pgfile will be included in the test.
+# 
+
+#
+# Simple example using the bandwith benchmark:
+#
+# host1_ib /usr/lib/opa/src/mpi_apps/bandwidth/bw 16384 65536
+# host2_ib /usr/lib/opa/src/mpi_apps/bandwidth/bw 16384 65536
+
+#
+# To use multiple cpus on a single node, specify the single node 
+# more than once:
+#
+# host1_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host1_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host1_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host1_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host2_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host2_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host2_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host2_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+#
+
+#
+#
+# There is no requirement to run the same application on all nodes,
+# or for all nodes to accept the same arguments. For example:
+# 
+# host1_ib /home/jsmith/mpi/xxx1
+# host1_ib /home/jsmith/mpi/xxx2 a b c
+# host2_ib /home/jsmith/mpi/xxx2 d e f
+# host3_ib /home/jsmith/mpi/xxx2 g h i 
+# host4_ib /home/jsmith/mpi/xxx2 x y z
+#
+

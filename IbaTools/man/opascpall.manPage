@@ -28,7 +28,9 @@ user@ style syntax cannot be used when specifying filenames.
 
 .SH Syntax 
 .NL
-opascpall [-p] [-r] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR] source\(ulfile ... dest\(ulfile opascpall -t [-p] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR] [ \fIsource\(uldir\fR[ \fIdest\(uldir\fR]]
+opascpall [-p] [-r] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR] source\(ulfile ... dest\(ulfile opascpall [-t] [-p] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR]
+.br
+[ \fIsource\(uldir\fR[ \fIdest\(uldir\fR]]
 .SH Options 
 .NL
 
@@ -52,40 +54,49 @@ Performs optimized recursive copy of directories using tar.  \fIdest\(uldir\fR i
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts to copy to.
+Specifies the list of hosts to copy to.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file with hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
 .TP 10
 -u \fIuser\fR 
 .NL
-User to perform copy to. Default is current user code.
+Specifies the user to perform copy to. Default is current user code.
 .TP 10
  \fIsource\(ulfile\fR 
 .NL
-Name of files to copy from this system, relative to the current directory. Multiple files may be listed.
+Specifies the a file or list of source files to copy.
+
 .TP 10
  \fIsource\(uldir\fR 
 .NL
-Name of directory to copy from this system, relative to the current directory.
+Specifies the name of the source directory to copy. If omitted. is used.
+
 .TP 10
  \fIdest\(ulfile\fR or  \fIdest\(uldir\fR 
 .NL
-Name of the file or directory on the destination system to copy to, relative to the home directory of the specified user. An absolute path name may be specified.
+Specifies the name of the destination file or directory to copy to. If more than one source file, this must be a directory. If omitted current directory name is used.
+
 .SH Example 
 .NL
 # copy a single file
 .br
 opascpall MPI-PMB /root/MPI-PMB
 .br
+
+.br
 # efficiently copy an entire directory tree
 .br
-opascpall -t -p /opt/opa/src/mpi\(ulapps /opt/opa/src/mpi\(ulapps
+opascpall -t -p /usr/lib/opa/src/mpi\(ulapps /usr/lib/opa/src/mpi\(ulapps
+.br
+
 .br
 # copy a group of files
 .br
 opascpall a b c /root/tools/
+.br
+
 .br
 # copy to an explitly specified set of hosts
 .br

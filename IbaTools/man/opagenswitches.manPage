@@ -16,7 +16,9 @@ opagenswitches
 Analyzes the present fabric and produces a list of Externally Managed switches in the required format for the /etc/sysconfig/opa/switches file.
 .SH Syntax 
 .NL
-opagenswitches [-t portsfile] [-p ports] [-R] [-L switches\(ulfile] [-o output\(ulfile] [-T topology\(ulfile] [-X snapshot\(ulfile] [-s] [-v level] [-K]
+opagenswitches [-t portsfile] [-p ports] [-R] [-L switches\(ulfile]
+.br
+[-o output\(ulfile] [-T topology\(ulfile] [-X snapshot\(ulfile] [-s] [-v level] [-K]
 .SH Options 
 .NL
 
@@ -27,14 +29,18 @@ Produces full help text.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis.
+.br
+Default is /etc/sysconfig/opa/ports file.
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabrics for counter clear. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+Specifies the list of local HFI ports used to access fabrics for counter clear.
 
 .IP
-Uses the format hfi:port, for example:
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 
@@ -82,7 +88,7 @@ Updates/resolves switch names using topology XML data.
 .TP 10
 -L \fIswitches\(ulfile\fR 
 .NL
-Specifies the name of a pre-existing  \fIswitches\(ulfile\fR to be used as input in conjunction with a topology file. When specified, the file is used instead of switches data obtained from the actual fabric. The updated switches data is output to stdout (common to all opagenswitches operations). Does not generate switches data; must also use -s option.
+Specifies the name of a pre-existing  \fIswitches\(ulfile\fR to be used as input in conjunction with a topology file. When specified, the file is used instead of switches data obtained from the actual fabric. The updated switches data is output to stdout (common to all opagenswitches operations). Does not generate switches data. Must also use -s option.
 
 .TP 10
 -o \fIoutput\(ulfile\fR 
@@ -99,10 +105,12 @@ Link data in the topology file is compared to actual fabric link data (obtained 
 -X \fIsnapshot\(ulfile\fR 
 .NL
 Uses  \fIsnapshot\(ulfile\fR XML for fabric link information.
+.br
+May contain \[aq]%P\[aq] . Must also use -s.
 .TP 10
 -v \fIlevel\fR 
 .NL
-Verbose level. Default = 0. Values include:
+Specifies the verbose level. Default = 0. Values include:
 .RS
 .TP 10
 
@@ -151,6 +159,8 @@ Does not clean temporary files. Temporary files are CSV format and contain lists
 .SH Environment Variables
 .NL
 
+.PP
+The following environment variables are also used by this command:
 .TP 10
 \fBPORTS\fR 
 .NL

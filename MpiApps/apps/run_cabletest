@@ -1,0 +1,179 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location, 
+# either edit this line or set MPICH_PREFIX in your environment.
+# see select_mpi for the set of default MPI selections
+# default to MPI used for build
+MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
+
+APP=mpi_groupstress
+LOGFILE=
+
+MPI_GROUP_HOSTS=${MPI_GROUP_HOSTS:-$PWD/mpi_group_hosts}
+if [ $(echo $MPI_GROUP_HOSTS|cut -c1) != '/' ]
+then
+    MPI_GROUP_HOSTS="$PWD/$MPI_GROUP_HOSTS"
+fi
+
+MINUTES=60
+MINSIZE=4194304
+MAXSIZE=4194304
+VERBOSE=
+
+function usage {
+	echo
+	echo "$0 is a specialized stress test for large fabrics. It groups"
+	echo "MPI ranks into sets which are tested against other members of the set."
+	echo
+	echo "This has no real value as a performance benchmark but is"
+	echo "extremely useful for checking for cabling problems in the fabric."
+	echo
+	echo "$0 requires no arguments, but does require the user to generate a"
+	echo "group hosts file.  This is done with the gen_group_hosts script."
+	echo "The name of the group hosts file is specified by the MPI_GROUP_HOSTS"
+	echo "variable, and defaults to \"mpi_group_hosts\"."
+	echo 
+	echo "By default, run_cabletest will run for 60 minutes, and uses 4"
+	echo "megabyte messages, but these settings can be changed by using the"
+	echo "three optional arguments: duration, smallest message size, and "
+	echo "largest message size. The arguments are specified in order:"
+	echo
+	echo "$0 dd ss ll"
+	echo
+	echo "Where dd is the duration in minutes, ss is the smallest message"
+	echo "size and ll is the largest message size."
+	echo
+	echo "For example, to run a one minute test, with 4 megabyte messages:"
+	echo
+	echo "$0 1"
+	echo
+	echo "Once 1 minute has elapsed, the test will complete when the current"
+	echo "round of testing completes."
+	echo
+	echo "If you want the tests to repeat indefinitely, use 'infinite' as"
+	echo "the duration:"
+	echo
+	echo "$0 infinite"
+	echo
+	echo "In addition to the duration, you can specify"
+	echo "the smallest and largest messages to send."
+	echo "Messages must be between 16384 and 4194304 (4 megabytes)."
+	echo "This example will test message sizes between 1 and 4"
+	echo "megabytes, and will run for 24 hours:"
+	echo
+	echo "$0 1440 1048576 4194304"
+	echo 
+	echo "Finally, there are two optional arguments, -h and -v."
+	echo
+	echo "-h (--help) provides this help text."
+	echo "-v (--verbose) runs the test in a verbose mode that shows you how"
+	echo "   the nodes were grouped."
+	exit
+}
+
+ARGS=`getopt --name=$0 -o "hv" -l "help,verbose" -- $@`
+if [ $? -ne 0 ]; then
+    usage
+fi
+eval set -- $ARGS
+while [ $1 != -- ]; do
+	case $1 in
+		-h|--help)
+			usage
+			shift;;
+		-v|--verbose)
+			VERBOSE="-v"
+			shift;;
+	esac
+done
+shift # remove the --
+
+if [ ! -f "$MPI_GROUP_HOSTS" ]
+then
+	echo "Could not find the group hosts file \"$MPI_GROUP_HOSTS\"."
+	echo "Please use ./gen_group_hosts before using this"
+	echo "application."
+	exit
+fi
+
+# skip comment and blank lines
+NUM_PROCESSES=$(cat $MPI_GROUP_HOSTS|egrep -v '^[[:space:]]*#'|egrep -v '^[[:space:]]*$'|wc -l)
+MIN_PROCESSES=2
+MULT_PROCESSES=2
+HEADER=`head -1 $MPI_GROUP_HOSTS | sed -e 's/# DO NOT DELETE THIS LINE: //'`
+GROUP_SIZE=`echo $HEADER | cut -d\  -f1`
+PROCS_PER_NODE=`echo $HEADER | cut -d\  -f2`
+GROUP_SIZE=$((GROUP_SIZE * PROCS_PER_NODE))
+export MPI_HOSTS=$MPI_GROUP_HOSTS
+
+if [ $# -ge 1 ] ; then 
+	if [ $1 == "infinite" ]; then
+		MINUTES=0
+	elif [ $1 -eq $1 ]; then
+		MINUTES=$1
+	else
+		usage
+	fi
+fi
+shift
+if [ $# -ge 1 ]; then
+	if [ $1 -eq $1 ]; then
+		MINSIZE=$1
+	else
+		usage
+	fi
+fi
+shift
+if [ $# -ge 1 ]; then
+	if [ $1 -eq $1 ]; then
+		MAXSIZE=$1
+	else
+		usage
+	fi
+fi
+
+. ./prepare_run
+
+CMD="groupstress/mpi_groupstress -g $GROUP_SIZE -t $MINUTES -l $MINSIZE -u $MAXSIZE $VERBOSE"
+
+(
+	echo " Running $APP ..."
+	show_mpi_hosts
+	set -x
+	$MPI_RUN_CMD $CMD
+	set +x
+) 2>&1 | tee -i -a $LOGFILE
+
+echo "########################################### " >> $LOGFILE

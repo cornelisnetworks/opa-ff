@@ -1,0 +1,125 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+#!/bin/bash
+
+# PURPOSE:
+#
+# This file sets environment variables for an openmpi job.
+# Note that there are many, many such variables.
+# See http://www.open-mpi.org/faq/?category=openfabrics for details, or use
+# the command:
+#
+# $ ompi_info
+#
+# to get a list of all current settings.
+
+# SYNTAX:
+#
+# This file must be a valid BASH script. In general, anything that's valid
+# in BASH is valid here. To pass variables to openmpi, however, they
+# should take this form:
+#
+# export OMPI_VARIABLE_NAME=variablevalue
+#
+# For non-OMPI variables (such as PSM or application environment) use this form:
+# export MPI_CMD_ARGS="$MPI_CMD_ARGS -x MY_VARIABLE_NAME=variablevalue"
+#
+
+# SAMPLE Tuning variables:
+#
+# Uncomment the following lines to enable them.
+#
+. /usr/sbin/opagetvf_env	# defines bash function opagetvf_func
+export MPI_CMD_ARGS=
+
+# These 4 lines select a Virtual Fabric by name and configure PKEY, SL, MTU
+# opagetvf2_func "-d 'Compute'" OMPI_MCA_btl_openib_pkey OMPI_MCA_btl_openib_ib_service_level OMPI_MCA_btl_openib_mtu
+#export OMPI_MCA_mtl_psm_ib_pkey=$OMPI_MCA_btl_openib_pkey
+#export OMPI_MCA_mtl_psm_ib_service_level=$OMPI_MCA_btl_openib_ib_service_level
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_MTU=$OMPI_MCA_btl_openib_mtu"
+
+# These 4 lines select a Virtual Fabric by ServiceId and configure PKEY, SL, MTU
+# opagetvf2_func "-S '0x1000117500000000'" OMPI_MCA_btl_openib_pkey OMPI_MCA_btl_openib_ib_service_level OMPI_MCA_btl_openib_mtu
+#export OMPI_MCA_mtl_psm_ib_pkey=$OMPI_MCA_btl_openib_pkey
+#export OMPI_MCA_mtl_psm_ib_service_level=$OMPI_MCA_btl_openib_ib_service_level
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_MTU=$OMPI_MCA_btl_openib_mtu"
+
+# These 2 lines select a Virtual Fabric by ServiceId and uses dist_sa
+# to directly fetch the PathRecord at job startup.  This approach is
+# required when using Mesh/Torus fabrics and optional for other topologies
+# This mechanism is only supported for Intel HFIs when using PSM (-hfi MPIs)
+#export OMPI_MCA_mtl_psm_path_query=opp
+#export OMPI_MCA_mtl_psm_ib_service_id=0x1000117500000000
+
+# This line can enable dispersive routing. The following choices are allowed:
+#    adaptive, static_src, static_dest, static_base
+# If LMC is enabled in the SM, adaptive will automatically be used.
+# This mechanism is only supported for Intel HFIs when using PSM (-hfi MPIs)
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_PATH_SELECTION=adaptive"
+
+# Use this to explicitly specify a pkey (for virtual fabrics)
+#export OMPI_MCA_btl_openib_pkey=0x8002
+#export OMPI_MCA_mtl_psm_ib_pkey=$OMPI_MCA_btl_openib_pkey
+
+# Use this to explicitly specify a service level (for virtual fabrics)
+#export OMPI_MCA_btl_openib_ib_service_level=0
+#export OMPI_MCA_mtl_psm_ib_service_level=$OMPI_MCA_btl_openib_ib_service_level
+
+# Use this to explicitly specify a mtu (for virtual fabrics)
+# 1=256, 2=512, 3=1024, 4=2048, 5=4096
+#export OMPI_MCA_btl_openib_mtu=4
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_MTU=$OMPI_MCA_btl_openib_mtu"
+
+# By default, if openmpi for verbs cannot find a working connection to a target
+# node, it will automatically fall back to using Ethernet. If this is not
+# what you want, you can use this setting to force openmpi to fail if
+# it cannot connect over verbs.
+#export OMPI_MCA_btl=openib,self
+
+# Use this to cause openmpi to dump the state of all its configuration
+# variables
+#export OMPI_MCA_mpi_show_mca_params=1
+
+# Normally Congestion Control is completely configured in the SM config file.
+# However, if desired, the fabric interface settings can be overridden for
+# the given job.
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_DISABLE_CCA=0 -x PSM_CCTI_INCREMENT=1 -x PSM_CCTI_TIMER=1 -x PSM_CCTI_TABLE_SIZE=128"
+
+# These values can enable and control PSM Multi-Rail
+# The sample shown is for Dual HFI server with port 1 per HFI connected
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_MULTIRAIL=1 -x PSM_MULTIRAIL_MAP=0:1,1:1"
+
+# This can be enabled to force benchmarks to run on selected CPU cores
+#export MPI_TASKSET="${MPI_TASKSET:- -c 1-7}"
+
+# This disables openmpi tree spawn, hence avoiding need for compute nodes to be
+# able to ssh into eachother
+export MPI_CMD_ARGS="$MPI_CMD_ARGS -mca plm_rsh_no_tree_spawn 1"

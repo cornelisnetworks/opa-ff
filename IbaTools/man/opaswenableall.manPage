@@ -30,15 +30,17 @@ Produces full help text.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabrics for operation. Default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabrics for operation. Default is /etc/sysconfig/opa/ports file.
 
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabrics for operation. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+Specifies the list of local HFI ports used to access fabrics for operation.
 
 .IP
-Uses the format hfi:port, for example:
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 
@@ -78,12 +80,12 @@ HFI  \fIx\fR, port  \fIy\fR.
 .TP 10
 -F \fIfocus\fR 
 .NL
-An opareport -style focus argument to limit the scope of operation.
+Specifies an opareport -style focus argument to limit the scope of operation.
 
 .TP 10
 -K \fImkey\fR 
 .NL
-SM management key to access remote ports.
+Specifies the SM management key to access remote ports.
 
 .SH Examples 
 .NL

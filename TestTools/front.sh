@@ -76,7 +76,7 @@ if { [ file exists $env(TL_DIR)/TestTools/ibtools.exp ] } {
 	# HostTests
 	source $env(TL_DIR)/TestTools/ibtools.exp
 } else {
-	# Fast Fabric, TL_DIR is set to /opt/opa/tools
+	# Fast Fabric, TL_DIR is set to /usr/lib/opa/tools
 	source $env(TL_DIR)/ibtools.exp
 }
 

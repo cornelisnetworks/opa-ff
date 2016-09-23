@@ -41,56 +41,86 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iba/ibt.h>
 #include <oib_utils.h>
 
+extern int oib_get_hfiNum (IN char * hfiName);
+
 void Usage(int exitcode)
 {
-	fprintf(stderr, "Usage: oparesolvehfiport hfi port\n");
+	fprintf(stderr, "Usage: oparesolvehfiport [-o output] [hfi] [port]\n");
 	fprintf(stderr, "            or\n");
 	fprintf(stderr, "       oparesolvehfiport --help\n");
-	fprintf(stderr, "    hfi     - hfi, numbered 1..n, 0 = system wide port num\n");
-	fprintf(stderr, "              (default is 1)\n");
-	fprintf(stderr, "    port    - port, numbered 1..n, 0 = 1st active\n");
- 	fprintf(stderr, "              (default is 0)\n");
+	fprintf(stderr, "    hfi         - hfi, numbered 1..n, 0 = system wide port num\n");
+	fprintf(stderr, "                  (default is 0)\n");
+	fprintf(stderr, "    port        - port, numbered 1..n, 0 = 1st active\n");
+ 	fprintf(stderr, "                  (default is 0)\n");
+	fprintf(stderr, "    -o/--output - output type\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "The host and port permit a variety of selections:\n");
+	fprintf(stderr, "Output Type:\n");
+	fprintf(stderr, "    devname - prints the device name, in the format hfiname:portnum\n");
+	fprintf(stderr, "              (default)\n");
+        fprintf(stderr, "    hfinum  - prints the hfi number\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "The hfi and port permit a variety of selections:\n");
 	fprintf(stderr, "  0 0     - 1st active port in system\n");
 	fprintf(stderr, "  x 0     - 1st active port on HFI x\n");
 	fprintf(stderr, "  0 y     - port y within system (irrespective of which ports are active)\n");
 	fprintf(stderr, "  x y     - HFI x, port y\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Example:\n");
-	fprintf(stderr, "    oparesolvehfiport 0 1\n");
-	fprintf(stderr, "Output:\n");
-	fprintf(stderr, "    hfi_0:1\n");
+	fprintf(stderr, "    oparesolvehfiport 0 1                #Output: hfi1_0:1\n");
+	fprintf(stderr, "    oparesolvehfiport -o devname 0 1     #Output: hfi1_0:1\n");
+	fprintf(stderr, "    oparesolvehfiport -o hfinum 0 1      #Output: 1\n");
+
 	exit(exitcode);
 }
 
 int main(int argc, char ** argv)
 {
-    FSTATUS             fstatus;
-    uint8               hfi         = 1;
-    uint8               port        = 0;
-    EUI64               portGuid    = -1;
+	FSTATUS             fstatus;
+	uint8               hfi         = 0;
+	uint8               port        = 0;
+	EUI64               portGuid    = -1;
+	int c;
+	int devName_out = 1; //default output
+	int hfiNum, hfiNum_out = 0;
+	const char *options = "o:";
+	const struct option longopts[] = {{"help", 0, 0, '$'},
+						{"output", required_argument, 0, 'o'},
+						{0, 0, 0, 0}};
 	uint32 caCount, portCount;
 	char fiName[255];
 	int caPort;
 
-	if (argc > 3)
-	{
-		fprintf(stderr, "oparesolvehfiport: Too many arguments\n");
-		Usage(2);
-	}
-	if (argc >= 2) {
-		if (strcmp(argv[1], "--help") == 0) {
+	while (-1 != (c = getopt_long(argc, argv, options, longopts, NULL))) {
+		switch (c) {
+		case '$':
 			Usage(0);
-		}
-		if (FSUCCESS != StringToUint8(&hfi, argv[1], NULL, 0, TRUE)) {
-			fprintf(stderr, "oparesolvehfiport: Invalid HFI Number: %s\n", argv[1]);
+			break;
+		case 'o':
+			if (strcmp(optarg, "hfinum") == 0) {
+				hfiNum_out = 1;
+			}
+			else if (strcmp(optarg, "devname") == 0) {
+				devName_out = 1;
+			}
+			else {
+				fprintf(stderr, "oparesolvehfiport: Invalid Output Type\n");
+				Usage(2);
+			}
+			break;
+		default:
 			Usage(2);
 		}
 	}
-	if (argc == 3) {
-		if (FSUCCESS != StringToUint8(&port, argv[2], NULL, 0, TRUE)) {
-			fprintf(stderr, "oparesolvehfiport: Invalid Port Number: %s\n", argv[2]);
+
+	if (argc > optind) {
+		if (FSUCCESS != StringToUint8(&hfi, argv[optind], NULL, 0, TRUE)) {
+			fprintf(stderr, "oparesolvehfiport: Invalid HFI Number: %s\n", argv[optind]);
+			Usage(2);
+		}
+	}
+	if (argc > optind+1) {
+		if (FSUCCESS != StringToUint8(&port, argv[optind+1], NULL, 0, TRUE)) {
+			fprintf(stderr, "oparesolvehfiport: Invalid Port Number: %s\n", argv[optind+1]);
 			Usage(2);
 		}
 	}
@@ -109,7 +139,13 @@ int main(int argc, char ** argv)
 	}
     //printf("PORT GUID 0x%016"PRIx64"\n",portGuid);
 
-	printf("%s:%d\n", fiName, caPort);
+	if(hfiNum_out) {
+		hfiNum = oib_get_hfiNum(fiName);
+		printf("%d\n", hfiNum);
+	}
+	else if(devName_out) {
+		printf("%s:%d\n", fiName, caPort);
+	}
 
 	return 0;
 }

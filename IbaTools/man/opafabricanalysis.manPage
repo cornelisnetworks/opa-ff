@@ -18,78 +18,91 @@ opafabricanalysis
 Performs analysis of the fabric.
 .SH Syntax
 .NL
-opafabricanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR]
+opafabricanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR]
+.br
+[-p \fIports\fR] [-T \fItopology\(ulinput\fR]
 .SH Options
 .NL
 
 .TP 10
 -- help 
 .NL
-Produce full help text.
+Produces full help text.
 .TP 10
 -b 
 .NL
-Baseline mode, default is compare/check mode.
+Specifies the baseline mode, default is compare/check mode.
 .TP 10
 -e 
 .NL
-Evaluate health only, default is compare/check mode.
+Evaluates health only, default is compare/check mode.
 .TP 10
 -s 
 .NL
-Save history of failures (errors/differences).
+Saves history of failures (errors/differences).
 .TP 10
 -d dir 
 .NL
-Top-level directory for saving baseline and history of failed checks. Default = /var/opt/opa/analysis 
+Specifies the top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa/analysis 
 .TP 10
 -c file 
 .NL
-Error thresholds config file. Default = /etc/sysconfig/opa/opamon.conf 
+Specifies the error thresholds config file. Default = /etc/sysconfig/opa/opamon.conf 
 .TP 10
 -t portsfile 
 .NL
-File with list of local HFI ports used to access fabric(s) for analysis. Default = /etc/sysconfig/opa/ports 
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default = /etc/sysconfig/opa/ports 
 .TP 10
 -p ports 
 .NL
-List of local HFI ports used to access fabric(s) for analysis. Default is the first active port. Specified as HFI:port as follows:
+Specifies the list of local HFI ports used to access fabrics for analysis.
+
+.IP
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 
 .sp
 0:0 
-First active port in system
+First active port in system.
+
 .RE
 
 .RS
 .TP 10
 
 .sp
-0: \fIy\fR 
-Port  \fIy\fR within system
+0:y 
+Port  \fIy\fR within system.
+
 .RE
 
 .RS
 .TP 10
 
 .sp
- \fIx\fR:0 
-First active port on HFI  \fIx\fR 
+x:0 
+First active port on HFI  \fIx\fR.
+
 .RE
 
 .RS
 .TP 10
 
 .sp
- \fIx\fR: \fIy\fR 
-HFI  \fIx\fR, port  \fIy\fR 
+x:y 
+HFI  \fIx\fR, port  \fIy\fR.
+
 .RE
 
 .TP 10
 -T \fItopology\(ulinput\fR 
 .NL
-Name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on (such as 0:0 or 1:2). Default = /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
+Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on (such as 0:0 or 1:2). Default = /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
+\fIDetails\fR
+and
 \fIopareport\fR
 for more information.
 .SH Example 
@@ -130,7 +143,7 @@ File containing topology\(ulinput (may have %P marker in filename), used in abse
 .TP 10
 \fBFF\(ulANALYSIS\(ulDIR\fR 
 .NL
-Top level directory for baselines and failed health checks.
+Top-level directory for baselines and failed health checks.
 .SH Details
 .NL
 
@@ -145,7 +158,7 @@ Through the environment variables \fBPORTS\fR or \fBPORTS\(ulFILE\fR.
 .IP \(bu
 Using the \fBPORTS\(ulFILE\fR configuration option in opafastfabric.conf.
 .PP
-If the specified port does not exist or is empty, the first active port on the local system is used. In more complex configurations, you must specify the exact ports to use for all fabrics to be analyzed. For more information, refer to.
+If the specified port does not exist or is empty, the first active port on the local system is used. In more complex configurations, you must specify the exact ports to use for all fabrics to be analyzed. .
 .PP
 You can specify the topology\(ulinput file to be used with one of the following methods:
 .IP \(bu
@@ -161,7 +174,7 @@ For more information, refer to
 \fIopareport\fR
 .
 .PP
-By default, the error analysis includes PMA counters and slow links (that is, links running below enabled speeds). You can change this using the \fBFF\(ulFABRIC\(ulHEALTH\fR configuration parameter in opafastfabric.conf. This parameter specifies the opareport options and reports to be used for the health analysis. It also can specify the PMA counter clearing behavior (-I \fIseconds\fR, -C, or none at all). See \fIAppendix#8217#160;A\fR in the 
+By default, the error analysis includes PMA counters and slow links (that is, links running below enabled speeds). You can change this using the \fBFF\(ulFABRIC\(ulHEALTH\fR configuration parameter in opafastfabric.conf. This parameter specifies the opareport options and reports to be used for the health analysis. It also can specify the PMA counter clearing behavior (-I \fIseconds\fR, -C, or none at all). See \fIAppendix A\fR in the 
 \fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
 
 for more information.
@@ -305,7 +318,7 @@ May also identify transient congestion, depending on the counters that are monit
 .IP \(bu
 Link active speed/width as compared to Enabled speed.
 .IP \(bu
-Identifies links whose active speed/width is #8217lt; min (enabled speed/width on each side of link).
+Identifies links whose active speed/width is < min (enabled speed/width on each side of link).
 .IP \(bu
 This typically reflects bad cables or bad ports or poor connections.
 .IP \(bu

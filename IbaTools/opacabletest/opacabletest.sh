@@ -38,9 +38,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa/tools/ff_funcs
 
 tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
@@ -204,7 +204,7 @@ get_fmconfig()
 {
 	FM_CONFIG_DIR=/etc/sysconfig
 	FM_CONFIG_FILE=$CONFIG_DIR/opafm.xml
-	IFS_FM_BASE=/opt/opafm # default
+	IFS_FM_BASE=/usr/lib/opa-fm # default
 	if [ -s $FM_CONFIG_DIR/opa/opafm.info ]
 	then
 	    # get IFS_FM_BASE

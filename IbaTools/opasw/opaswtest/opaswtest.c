@@ -125,8 +125,8 @@ int main(int argc, char *argv[])
 	int					c;
 	uint32				moduleType;
 	uint32				numPorts;
-	uint8				hfi = 1;
-	uint8				port = -1;
+	uint8				hfi = 0;
+	uint8				port = 0;
 	IB_PATH_RECORD		path;
 	uint16				sessionID = 0;
 	uint8				sysTableIndex;
@@ -306,13 +306,6 @@ int main(int argc, char *argv[])
 #endif
 #endif
 
-	if (!port) {
-		fprintf(stderr, "%s: Error: Invalid port number, First Port is 1\n", cmdName);
-		exit(1);
-	}
-	if (port == (uint8)-1)
-		port = 0;			// first active port
-
 #if 0
 	if (g_promptForPassword) {
 		c = vkey_prompt_user(vendorKey, 0);
@@ -335,7 +328,7 @@ int main(int argc, char *argv[])
 	// Get the LID
 
 	status = oib_open_port_by_num(&oib_port_session, hfi, port);
-	if (status != FSUCCESS) {
+	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}

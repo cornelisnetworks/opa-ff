@@ -38,14 +38,14 @@ Produces full help text.
 .br
 ######################
 .br
-server.intel.com#8217#160; - HFI 02:00.0
+server.intel.com  - HFI 02:00.0
 .br
-Board:#8217#160;ChipABI 3.0, WFR\(ulID 0x1, ChipRev 7.0 patch 0x00000003, SW Compat 3
+Board: ChipABI 3.0, WFR\(ulID 0x1, ChipRev 7.0 patch 0x00000003, SW Compat 3
 .br
-SN:#8217#160;   0x0057501a
+SN:    0x0057501a
 .br
-Bus:#8217#160;  PCIe,8000MHz,x16
+Bus:   PCIe,8000MHz,x16
 .br
-GUID:#8217#160; 0011:7501:0157:501a
+GUID:  0011:7501:0157:501a
 .br
 ######################

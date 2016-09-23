@@ -18,7 +18,9 @@ opahostadmin
 Performs a number of multi-step host initialization and verification operations, including upgrading software or firmware, rebooting hosts, and other operations. In general, operations performed by opahostadmin involve a login to one or more host systems.
 .SH Syntax 
 .NL
-opahostadmin [-c] [-i \fIipoib\(ulsuffix\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r \fIrelease\fR] [-I \fIinstall\(uloptions\fR] [-U \fIupgrade\(uloptions\fR] [-d \fIdir\fR] [-T \fIproduct\fR] [-P \fIpackages\fR] [-m \fInetmask\fR] [-S] \fIoperation\fR...
+opahostadmin [-c] [-i \fIipoib\(ulsuffix\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r \fIrelease\fR] [-I \fIinstall\(uloptions\fR] [-U \fIupgrade\(uloptions\fR] [-d \fIdir\fR] [-T \fIproduct\fR]
+.br
+[-P \fIpackages\fR] [-m \fInetmask\fR] [-S] \fIoperation\fR...
 .SH Options 
 .NL
 
@@ -30,59 +32,59 @@ Produces full help text.
 .TP 10
 -c 
 .NL
-Clobbers result files from any previous run before starting this run.
+Overwrites the result files from any previous run before starting this run.
 
 .TP 10
 -i \fIipoib\(ulsuffix\fR 
 .NL
-Suffix to apply to host names to create ipoib host names. Default is -opa.
+Specifies the suffix to apply to host names to create IPoIB host names. Default is -opa.
 
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with the names of hosts in a cluster. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file with the names of hosts in a cluster. Default is /etc/sysconfig/opa/hosts file.
 
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts to execute the operation against.
+Specifies the list of hosts to execute the operation against.
 
 .TP 10
 -r \fIrelease\fR 
 .NL
-Software version to load/upgrade to. Default is the version of Intel(R) Omni-Path Software presently being run on the server.
+Specifies the software version to load/upgrade to. Default is the version of Intel(R) Omni-Path Software presently being run on the server.
 
 .TP 10
 -d \fIdir\fR 
 .NL
-Directory to retrieve  \fIproduct\fR. \fIrelease\fR.tgz for load or upgrade.
+Specifies the directory to retrieve  \fIproduct\fR. \fIrelease\fR.tgz for load or upgrade.
 
 .TP 10
 -I \fIinstall\(uloptions\fR 
 .NL
-Software install options.
+Specifies the software install options.
 
 .TP 10
 -U \fIupgrade\(uloptions\fR 
 .NL
-Software upgrade options.
+Specifies the software upgrade options.
 
 .TP 10
 -T \fIproduct\fR 
 .NL
-Product type to install. Default = IntelOPA-Basic.RHEL7-x86\(ul64 
+Specifies the product type to install. Default = IntelOPA-Basic.RHEL7-x86\(ul64 
 
 .IP
-Other options include: IntelOPA-Basic. \fI#8217lt;distro>\fR, IntelOPA-IFS. \fI<distro>\fR where  \fI<distro>\fR is the distribution and CPU.
+Other options include: IntelOPA-Basic. \fI<distro>\fR, IntelOPA-IFS. \fI<distro>\fR where  \fI<distro>\fR is the distribution and CPU.
 .TP 10
 -P \fIpackages\fR 
 .NL
-Packages to install. Default = oftools ipoib mpi 
+Specifies the packages to install. Default = oftools ipoib mpi 
 
 .TP 10
 -m \fInetmask\fR 
 .NL
-IPoIB netmask to use for configipoib operation.
+Specifies the IPoIB netmask to use for configipoib operation.
 
 .TP 10
 -S 
@@ -311,7 +313,7 @@ Note that BIOS settings and differences between server models can account for 10
 .TP 10
 mpiperfdeviation 
 .NL
-Enhanced version of mpiperf that verifies MPI performance. Can be used to verify switch latency/hops, PCI bandwidth, and overall MPI performance. It performs assorted pair-wise bandwidth and latency tests, and reports pairs outside an acceptable tolerance range. The tool identifies specific nodes that have problems and provides a concise summary of results. The test.res file contains the results of each pair of nodes tested.
+Specifies the enhanced version of mpiperf that verifies MPI performance. Can be used to verify switch latency/hops, PCI bandwidth, and overall MPI performance. It performs assorted pair-wise bandwidth and latency tests, and reports pairs outside an acceptable tolerance range. The tool identifies specific nodes that have problems and provides a concise summary of results. The test.res file contains the results of each pair of nodes tested.
 
 .IP
 By default, concurrent mode is used to quickly analyze the fabric and host performance. Pairs that have 20% less bandwidth or 50% more latency than the average pair are reported as failures.
@@ -360,7 +362,7 @@ Available parameters for deviation application:
 
 .sp
 -bwtol 
-Percent of bandwidth degradation allowed below average value.
+Specifies the percent of bandwidth degradation allowed below average value.
 
 .RE
 
@@ -387,7 +389,7 @@ Performs a unidirectional bandwidth test (default).
 
 .sp
 -bwdelta 
-Limit in MB/s of bandwidth degradation allowed below average value.
+Specifies the limit in MB/s of bandwidth degradation allowed below average value.
 
 .RE
 
@@ -396,7 +398,7 @@ Limit in MB/s of bandwidth degradation allowed below average value.
 
 .sp
 -bwthres 
-Lower limit in MB/s of bandwidth allowed.
+Specifies the lower limit in MB/s of bandwidth allowed.
 
 .RE
 
@@ -405,7 +407,7 @@ Lower limit in MB/s of bandwidth allowed.
 
 .sp
 -bwloop 
-Number of loops to execute each bandwidth test.
+Specifies the number of loops to execute each bandwidth test.
 
 .RE
 
@@ -414,7 +416,7 @@ Number of loops to execute each bandwidth test.
 
 .sp
 -bwsize 
-Size of message to use for bandwidth test.
+Specifies the size of message to use for bandwidth test.
 
 .RE
 
@@ -423,7 +425,7 @@ Size of message to use for bandwidth test.
 
 .sp
 -lattol 
-Percent of latency degradation allowed above average value.
+Specifies the percent of latency degradation allowed above average value.
 
 .RE
 
@@ -432,7 +434,7 @@ Percent of latency degradation allowed above average value.
 
 .sp
 -latdelta 
-Limit in usec of latency degradation allowed above average value.
+Specifies the imit in &#181;sec of latency degradation allowed above average value.
 
 .RE
 
@@ -441,7 +443,7 @@ Limit in usec of latency degradation allowed above average value.
 
 .sp
 -latthres 
-Lower limit in usec of latency allowed.
+Specifies the lower limit in &#181;sec of latency allowed.
 
 .RE
 
@@ -450,7 +452,7 @@ Lower limit in usec of latency allowed.
 
 .sp
 -latloop 
-Number of loops to execute each latency test.
+Specifies the number of loops to execute each latency test.
 
 .RE
 
@@ -459,7 +461,7 @@ Number of loops to execute each latency test.
 
 .sp
 -latsize 
-Size of message to use for latency test.
+Specifies the size of message to use for latency test.
 
 .RE
 
@@ -486,7 +488,7 @@ When comparing results against tolerance and delta, uses best instead of average
 
 .sp
 -v 
-Verbose output.
+Specifies the verbose output.
 
 .RE
 
@@ -495,7 +497,7 @@ Verbose output.
 
 .sp
 -vv 
-Very verbose output.
+Specifies the very verbose output.
 
 .RE
 
@@ -504,7 +506,7 @@ Very verbose output.
 
 .sp
 -h 
-Reference host to use for sequential pairing.
+Specifies the reference host to use for sequential pairing.
 
 .RE
 

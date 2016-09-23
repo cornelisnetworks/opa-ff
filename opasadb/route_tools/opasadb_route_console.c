@@ -386,8 +386,10 @@ void err_usage(void)
 	fprintf(stderr, "                                [-N app_name][-i pid][-I uid][-t timeless][-T timemore]\n");
 	fprintf(stderr, "                                [-a][-f][-c][-s][-u][-S index][-v]\n");
 	fprintf(stderr, "  -g/--portguid portguid    - port GUID to connect via (multiple entries)\n");
-	fprintf(stderr, "  -h/--hfi hfi              - hfi to connect via, default is 0 (1st hfi)\n");
-	fprintf(stderr, "  -p/--port port            - port to connect via, default is 0 (1st active port)\n");
+	fprintf(stderr, "  -h/--hfi hfi              - hfi to connect via, numbered 1..n, 0= -p port will\n");
+	fprintf(stderr, "                              be a system wide port num (default is 0)\n");
+	fprintf(stderr, "  -p/--port port            - port to connect via, numbered 1..n, 0=1st active\n");
+	fprintf(stderr, "                              (default is 1st active)\n");
 	fprintf(stderr, "  -j/--jobid job_id         - show/clear job job_id (multiple)\n");
 	fprintf(stderr, "  -J/--jobname job_name     - show/clear job job_name (multiple)\n");
 	fprintf(stderr, "  -N/--appname app_name     - show/clear job app_name (multiple)\n");
@@ -402,6 +404,14 @@ void err_usage(void)
 	fprintf(stderr, "  -u/--use                  - show use matrix for job(s)\n");
 	fprintf(stderr, "  -S/--index index          - switch index for show cost matrix, default is 0\n");
 	fprintf(stderr, "  -v/--verbose              - verbose output (show jobs)\n");
+	fprintf(stderr, "
+	fprintf(stderr, "The -h and -p options permit a variety of selections:\n");
+	fprintf(stderr, "    -h 0       - 1st active port in system (this is the default)\n");
+	fprintf(stderr, "    -h 0 -p 0  - 1st active port in system\n");
+	fprintf(stderr, "    -h x       - 1st active port on HFI x\n");
+	fprintf(stderr, "    -h x -p 0  - 1st active port on HFI x\n");
+	fprintf(stderr, "    -h 0 -p y  - port y within system (irrespective of which ports are active)\n");
+	fprintf(stderr, "    -h x -p y  - HFI x, port y\n");
 
 	exit(2);
 
@@ -1115,13 +1125,18 @@ int main(int argc, char ** argv)
 		fstatus = iba_get_portguid( hfi, port, NULL,
 			(uint64_t *)param_port_guid.p_params->bf_data, NULL, NULL,
 			NULL, NULL );
-
-		if (fstatus != FSUCCESS)
+		if (FNOT_FOUND == fstatus) {
+			fprintf(stderr, NAME_PROG ": %s\n",
+					iba_format_get_portguid_error(hfi, port, caCount, portCount));
+			//err_usage();
+			exit(1);
+		} else if (fstatus != FSUCCESS)
 		{
 			fprintf( stderr, NAME_PROG
 				": can't get port GUID from hfi:%u port:%u fstatus:%d (%s)\n",
 				hfi, port, (int)fstatus, iba_fstatus_msg(fstatus) );
-			err_usage();
+			//err_usage();
+			exit(1);
 		}
 
 		p_param_port_guid = (struct op_route_param_alloc_port_guid_entry *)

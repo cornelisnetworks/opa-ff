@@ -18,31 +18,33 @@ opafequery
 Used for testing or debugging performance administration (PA) operations to the Fabric Executive (FE). This tool performs custom PA client/server queries. The output formats and arguments are very similar to opapaquery.
 .SH Syntax 
 .NL
-opafequery [-v] [-a \fIipAddr\fR| -h \fIhostName\fR] [-E] [-T paramsfile] -o \fItype\fR[SA options | PA options]
+opafequery [-v] [-a \fIipAddr\fR| -h \fIhostName\fR] [-E] [-T paramsfile] -o \fItype\fR
+.br
+[SA options | PA options]
 .SH General Options 
 .NL
 
 .TP 10
 --help 
 .NL
-Produce this help text.
+Produces full help text.
 
 .TP 10
 -v / --verbose 
 .NL
-Verbose output.
+Specifies the verbose output.
 .TP 10
 -a / --ipAddr \fIipAddr\fR 
 .NL
-IP address of node running the FE.
+Specifies the IP address of node running the FE.
 .TP 10
 -h / --hostName \fIhostName\fR 
 .NL
-Host name of node running the FE.
+Specifies the host name of node running the FE.
 .TP 10
 -o / --output \fIoutput\fR 
 .NL
-Output type. See
+Specifies the output type. See
 \fISA Output Types\fR
 and
 \fIPA Output Types\fR
@@ -50,11 +52,11 @@ for details.
 .TP 10
 -E / --feEsm \fIESMName\fR 
 .NL
-ESM FE name.
+Specifies the ESM FE name.
 .TP 10
 -T / --sslParmsFile \fIfilename\fR 
 .NL
-SSL/TLS parameters XML file. Default = /etc/sysconfig/opa/opaff.xml 
+Specifies the SSL/TLS parameters XML file. Default = /etc/sysconfig/opa/opaff.xml 
 .SH SA Specific Options
 .NL
 
@@ -136,110 +138,122 @@ Specifies a source GID for certain queries.
 .TP 10
 -g / --groupName \fIgroupName\fR 
 .NL
-Group name for groupInfo query.
+Queries by group name for groupInfo.
 .TP 10
 -l / --lid \fIlid\fR 
 .NL
-LID of node for portCounters query.
+Queries by LID of node for portCounters.
 .TP 10
 -N / --portNumber 
 .NL
-Port number for portCounters query.
+Queries by port number for portCounters.
 .TP 10
 -f / --delta 
 .NL
-Delta flag for portCounters query. Values include: 0 or 1.
+Queries by delta flag for portCounters. Values include: 0 or 1.
+.TP 10
+-j / --begin \fIdate\(ultime\fR 
+.NL
+Obtains portCounters over an interval beginning at  \fIdate\(ultime\fR.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+
+.TP 10
+-q / --end \fIdate\(ultime\fR 
+.NL
+Obtains portCounters over an interval ending at  \fIdate\(ultime\fR.
+
+.IP
+ \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 .TP 10
 -U / --userCntrs 
 .NL
-User-controlled counters flag for portCounters query.
+Queries by user-controlled counters flag for portCounters.
 .TP 10
 -e / --select 
 .NL
-32-bit select flag for clearing port counters select bits. 0 is least significant (rightmost).Bit descriptions are listed below in the order "mask - bit - location":
+Specifies the 32-bit select flag for clearing port counters select bits. 0 is least significant (rightmost).Bit descriptions are listed below in the order "mask - bit - location":
 
 .RS
 
 .IP \(bu
-0x80000000 - 31 - Transmit Data
+0x80000000 - 31 - Transmit Data (XmitData)
 
 .IP \(bu
-0x40000000 - 30 - Receive Data
+0x40000000 - 30 - Receive Data (RcvData)
 
 .IP \(bu
-0x20000000 - 29 - Transmit Packets
+0x20000000 - 29 - Transmit Packets (XmitPkts)
 
 .IP \(bu
-0x10000000 - 28 - Receive Packets
+0x10000000 - 28 - Receive Packets (RcvPkts)
 
 .IP \(bu
-0x08000000 - 27 - Multicast Transmit Packets
+0x08000000 - 27 - Multicast Transmit Packets (MulticastXmitPkts)
 
 .IP \(bu
-0x04000000 - 26 - Multicast Receive Packets
+0x04000000 - 26 - Multicast Receive Packets (MulticastRcvPkts)
 
 .IP \(bu
-0x02000000 - 25 - Transmit Wait
+0x02000000 - 25 - Transmit Wait (XmitWait)
 
 .IP \(bu
-0x01000000 - 24 - Congestion Discards
+0x01000000 - 24 - Congestion Discards (CongDiscards)
 
 .IP \(bu
-0x00800000 - 23 - Receive FECN
+0x00800000 - 23 - Receive FECN (RcvFECN)
 
 .IP \(bu
-0x00400000 - 22 - Receive BECN
+0x00400000 - 22 - Receive BECN (RcvBECN)
 
 .IP \(bu
-0x00200000 - 21 - Transmit Time Cong.
+0x00200000 - 21 - Transmit Time Congestion (XmitTimeCong)
 
 .IP \(bu
-0x00100000 - 20 - Transmit Time Wasted BW
+0x00100000 - 20 - Transmit Time Wasted BW (XmitWastedBW)
 
 .IP \(bu
-0x00080000 - 19 - Transmit Time Wait Data
+0x00080000 - 19 - Transmit Time Wait Data (XmitWaitData)
 
 .IP \(bu
-0x00040000 - 18 - Receive Bubble
+0x00040000 - 18 - Receive Bubble (RcvBubble)
 
 .IP \(bu
-0x00020000 - 17 - Mark FECN
+0x00020000 - 17 - Mark FECN (MarkFECN)
 
 .IP \(bu
-0x00010000 - 16 - Receive Constraint Errors
+0x00010000 - 16 - Receive Constraint Errors (RcvConstraintErrors)
 
 .IP \(bu
-0x00008000 - 15 - Receive Switch Relay
+0x00008000 - 15 - Receive Switch Relay (RcvSwitchRelayErrors)
 
 .IP \(bu
-0x00004000 - 14 - Transmit Discards
+0x00004000 - 14 - Transmit Discards (XmitDiscards)
 
 .IP \(bu
-0x00002000 - 13 - Transmit Constraint Errors
+0x00002000 - 13 - Transmit Constraint Errors (XmitConstraintErrors)
 
 .IP \(bu
-0x00001000 - 12 - Receive Remote Phys. Errors
+0x00001000 - 12 - Receive Remote Physical Errors (RcvRemotePhysicalErrors)
 
 .IP \(bu
-0x00000800 - 11 - Local Link Integrity
+0x00000800 - 11 - Local Link Integrity (LocalLinkIntegrityErrors)
 
 .IP \(bu
-0x00000400 - 10 - Receive Errors
+0x00000400 - 10 - Receive Errors (RcvErrors)
 
 .IP \(bu
-0x00000200 - 9 - Exc. Buffer Overrun
+0x00000200 - 9 - Excessive Buffer Overrun (ExcessiveBufferOverruns)
 
 .IP \(bu
-0x00000100 - 8 - FM Configuration Errors
+0x00000100 - 8 - FM Configuration Errors (FMConfigErrors)
 
 .IP \(bu
-0x00000080 - 7 - Link Error Recovery
+0x00000080 - 7 - Link Error Recovery (LinkErrorRecovery)
 
 .IP \(bu
-0x00000040 - 6 - Link Error Downed
+0x00000040 - 6 - Link Error Downed (LinkDowned)
 
 .IP \(bu
-0x00000020 - 5 - Uncorrectable Errors
+0x00000020 - 5 - Uncorrectable Errors (UncorrectableErrors)
 
 
 .RE
@@ -247,7 +261,7 @@ User-controlled counters flag for portCounters query.
 .TP 10
 -c / --focus \fIfocus\fR 
 .NL
-Focus select value for getting focus ports. Values include:
+Specifies the focus select value for getting focus ports. Values include:
 .RS
 .TP 10
 
@@ -323,31 +337,36 @@ Sorted by routing errors - highest first.
 .TP 10
 -w / --start 
 .NL
-Start of window for focus ports - should always be 0.
+Specifies the start of window for focus ports - should always be 0.
 .TP 10
 -r / --range \fIrange\fR 
 .NL
-Size of window for focus ports list.
+Specifies the size of window for focus ports list.
 .TP 10
 -b / --imgNum 
 .NL
-64-bit image number. May be used with groupInfo, groupConfig, portCounters (delta) outputs.
+Specifies the 64-bit image number. May be used with groupInfo, groupConfig, portCounters (delta) outputs.
 .TP 10
 -O / --imgOff 
 .NL
-Image offset. May be used with groupInfo, groupConfig, portCounters (delta) outputs.
+Specifies the image offset. May be used with groupInfo, groupConfig, portCounters (delta) outputs.
+.TP 10
+-y / --imgTime 
+.NL
+Specifies the image time. May be used with imageinfo. Will return closest image within image interval if possible. See --begin/--end above for format.
+
 .TP 10
 -F / --moveImgNum 
 .NL
-64-bit image number. Used with moveFreeze output to move a freeze image.
+Specifies the 64-bit image number. Used with moveFreeze output to move a freeze image.
 .TP 10
 -M / --moveImgOff \fIImgOff\fR 
 .NL
-Image offset. May be used with moveFreeze output to move a freeze image.
+Specifies the image offset. May be used with moveFreeze output to move a freeze image.
 .TP 10
 -V / --vfName 
 .NL
-VF name for vfInfo query.
+Queries by VF name for vfInfo.
 .SH SA Output Types 
 .NL
 
@@ -356,178 +375,180 @@ Output types include:
 .TP 10
 saclassPortInfo 
 .NL
-Class port info.
+Specifies the class port info.
 .TP 10
 systemguid 
 .NL
-List of system image GUIDs.
+Lists the system image GUIDs.
 .TP 10
 nodeguid 
 .NL
-List of node GUIDs.
+Lists the node GUIDs.
 .TP 10
 portguid 
 .NL
-List of port GUIDs.
+Lists the port GUIDs.
 .TP 10
 lid 
 .NL
-List of LIDs.
+Lists the LIDs.
 .TP 10
 desc 
 .NL
-List of node descriptions/names.
+Lists the node descriptions/names.
 .TP 10
 path 
 .NL
-List of path records.
+Lists the path records.
 .TP 10
 node 
 .NL
-List of node records.
+Lists the node records.
 .TP 10
 portinfo 
 .NL
-List of port info records.
+Lists the port info records.
 .TP 10
 sminfo 
 .NL
-List of SM info records.
+Lists the SM info records.
 .TP 10
 swinfo 
 .NL
-List of switch info records.
+Lists the switch info records.
 .TP 10
 link 
 .NL
-List of link records.
+Lists the link records.
 .TP 10
 scsc 
 .NL
-List of SC to SC mapping table records.
+Lists the SC to SC mapping table records.
 .TP 10
 slsc 
 .NL
-List of SL to SC mapping table records.
+Lists the SL to SC mapping table records.
 .TP 10
 scsl 
 .NL
-List of SC to SL mapping table records.
+Lists the SC to SL mapping table records.
 .TP 10
 scvlt 
 .NL
-List of SC to VLt table records.
+Lists the SC to VLt table records.
 .TP 10
 scvlnt 
 .NL
-List of SC to VLnt table records.
+Lists the SC to VLnt table records.
 .TP 10
 vlarb 
 .NL
-List of VL arbitration table records.
+Lists the VL arbitration table records.
 .TP 10
 pkey 
 .NL
-List of PKey table records.
+Lists the PKey table records.
 .TP 10
 service 
 .NL
-List of service records.
+Lists the service records.
 .TP 10
 mcmember 
 .NL
-List of multicast member records.
+Lists the multicast member records.
 .TP 10
 inform 
 .NL
-List of inform info records.
+Lists the inform info records.
 .TP 10
 linfdb 
 .NL
-List of switch linear forwarding database (FDB) records.
+Lists the switch linear forwarding database (FDB) records.
 .TP 10
 mcfdb 
 .NL
-List of switch multicast FDB records.
+Lists the switch multicast FDB records.
 .TP 10
 trace 
 .NL
-List of trace records.
+Lists the trace records.
 .TP 10
 vfinfo 
 .NL
-List of vFabrics.
+Lists the vFabrics.
 .TP 10
 vfinfocsv 
 .NL
-List of vFabrics in CSV format.
+Lists the vFabrics in CSV format.
 .TP 10
 vfinfocsv2 
 .NL
-List of vFabrics in CSV format with enums.
+Lists the vFabrics in CSV format with enums.
 .TP 10
 fabricinfo 
 .NL
-Summary of fabric devices.
+Provides a summary of fabric devices.
 .TP 10
 quarantine 
 .NL
-List of quarantined nodes.
+Lists the quarantined nodes.
 .TP 10
 conginfo 
 .NL
-List of Congestion Info Records.
+Lists the Congestion Info Records.
 .TP 10
 swcongset 
 .NL
-List of Switch Congestion Settings.
+Lists the Switch Congestion Settings.
 .TP 10
 hficongset 
 .NL
-List of HFI Congestion Settings.
+Lists the HFI Congestion Settings.
 .TP 10
 hficongcon 
 .NL
-List of HFI Congestion Control Settings.
+Lists the HFI Congestion Control Settings.
 .TP 10
 bfrctrl 
 .NL
-List of buffer control tables.
+Lists the buffer control tables.
 .TP 10
 cableinfo 
 .NL
-List of Cable Info records.
+Lists the Cable Info records.
 .TP 10
 portgroup 
 .NL
-List of AR Port Group records.
+Lists the AR Port Group records.
 .TP 10
 portgroupfdb 
 .NL
-List of AR Port Group FWD records.
+Lists the AR Port Group FWD records.
 .SH PA Output Types 
 .NL
 
+.PP
+Output types include:
 .TP 10
 paclassPortInfo 
 .NL
-Class port info.
+Specifies the class port info.
 .TP 10
 groupList 
 .NL
-List of PA groups.
+Lists the PA groups.
 .TP 10
 groupInfo 
 .NL
-Summary statistics of a PA group. Requires -g option for  \fIgroupName\fR.
+Provides a summary statistics of a PA group. Requires -g option for  \fIgroupName\fR.
 .TP 10
 groupConfig 
 .NL
-Configuration of a PA group. Requires -g option for  \fIgroupName\fR.
+Specifies the configuration of a PA group. Requires -g option for  \fIgroupName\fR.
 .TP 10
 portCounters 
 .NL
-Port counters of fabric port. Requires -l \fIlid\fR and -N \fIport\fR options. Optionally, use the -f \fIdelta\fR option.
+Specifies the port counters of fabric port. Requires -l \fIlid\fR and -N \fIport\fR options. Optionally, use the -f \fIdelta\fR option.
 .TP 10
 clrPortCounters 
 .NL
@@ -551,11 +572,11 @@ Releases freeze frame for image ID. Requires -b \fIimgNum\fR.
 .TP 10
 renewImage 
 .NL
-Renews lease for freeze frame for image ID. Requires -b#8217#160; \fIimgNum\fR.
+Renews lease for freeze frame for image ID. Requires -b \fIimgNum\fR.
 .TP 10
 moveFreeze 
 .NL
-Moves freeze frame from image ID to new image ID. Requires -b#8217#160; \fIimgNum\fR and -F \fImoveImgNum\fR.
+Moves freeze frame from image ID to new image ID. Requires -b \fIimgNum\fR and -F \fImoveImgNum\fR.
 .TP 10
 focusPorts 
 .NL
@@ -567,19 +588,19 @@ Gets information about a PA image (timestamps and other details). Requires -b \f
 .TP 10
 vfList 
 .NL
-List of virtual fabrics.
+Lists the virtual fabrics.
 .TP 10
 vfInfo 
 .NL
-Summary statistics of a virtual fabric. Requires -V \fIvfName\fR option.
+Provides a summary statistics of a virtual fabric. Requires -V \fIvfName\fR option.
 .TP 10
 vfConfig 
 .NL
-Configuration of a virtual fabric. Requires -V \fIvfName\fR option.
+Specifies the configuration of a virtual fabric. Requires -V \fIvfName\fR option.
 .TP 10
 vfPortCounters 
 .NL
-Port counters of fabric port. Requires -V \fIvfName\fR, -l \fIlid\fR, and -N \fIport\fR options. Optionally, use the -f \fIdelta\fR option.
+Specifies the port counters of fabric port. Requires -V \fIvfName\fR, -l \fIlid\fR, and -N \fIport\fR options. Optionally, use the -f \fIdelta\fR option.
 .TP 10
 vfFocusPorts 
 .NL

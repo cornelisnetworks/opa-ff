@@ -89,7 +89,7 @@ proc case_cleanup { failed } {
 test_suite "upgrade" "upgrade FM security files" "upgrade all chassis
 Security Files: $env(CFG_SECFILES)
 Action: $env(CFG_SECACTION)
-File: /opt/opa/tools/chassis_fmsecurityfiles.exp" suite_setup noop {
+File: /usr/lib/opa/tools/chassis_fmsecurityfiles.exp" suite_setup noop {
 	global env
 
 	# Global Initializations for Test Suite:
@@ -110,7 +110,7 @@ File: /opt/opa/tools/chassis_fmsecurityfiles.exp" suite_setup noop {
 
 	if { [ test_case "check" "check FM security files" "check FM security files to be pushed to all chassis
 Firmware Files: $env(CFG_SECFILES)
-File: /opt/opa/tools/chassis_fmsecurityfiles.exp" case_setup case_cleanup {
+File: /usr/lib/opa/tools/chassis_fmsecurityfiles.exp" case_setup case_cleanup {
 			upvar num_secfiles num_secfiles
 			upvar sec_files sec_files
 	

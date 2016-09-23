@@ -18,34 +18,34 @@ opaportinfo
 Displays configuration and state of a specified Intel(R) Omni-Path Host Fabric Interface (HFI) port on the local host or a remote switch.
 .SH Syntax
 .NL
-opaportinfo [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR] [-v] 
+opaportinfo [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR] [-v]
 .SH Options
 .NL
 
 .TP 10
 -l \fIlid\fR 
 .NL
-Destination LID. Default is local port.
+Specifies the destination LID. Default is local port.
 
 .TP 10
 -m \fIdest\(ulport\fR 
 .NL
-Destination port. Default is port with given LID. Useful to access switch ports.
+Specifies the destination port. Default is port with given LID. Useful to access switch ports.
 
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI to send through/to. Default is first HFI.
+Specifies the HFI to send through/to. Default is first HFI.
 
 .TP 10
 -p \fIport\fR 
 .NL
-Port to send through/to. Default is first port.
+Specifies the port to send through/to. Default is first port.
 
 .TP 10
 -K \fImkey\fR 
 .NL
-SM management key to access remote ports.
+Specifies the SM management key to access remote ports.
 
 .NL
 
@@ -55,22 +55,32 @@ SM management key to access remote ports.
 .TP 10
 -h 0 
 .NL
-First port in system (default).
+First active port in system (default).
+
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
 
 .TP 10
 -h \fIx\fR 
 .NL
-First port on HFI   \fIx\fR.
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h \fIx\fR \fI\fR-p 0 
+.NL
+First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port  \fIy\fR within system.
+Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR#8217#160;-p \fIy\fR 
+-h \fIx\fR \fI\fR-p \fIy\fR 
 .NL
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .NL
 
@@ -80,7 +90,7 @@ HFI  \fIx\fR, port  \fIy\fR.
 .TP 10
 -v 
 .NL
-Verbose output. Additional invocations (#8217#8211;v -v ...) turn on debugging, openib debugging, and libibumad debugging.
+Specifies the verbose output. Additional invocations (-v -v ...) turn on debugging, openib debugging, and libibumad debugging.
 
 .SH Examples 
 .NL

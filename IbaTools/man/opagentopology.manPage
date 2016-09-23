@@ -17,11 +17,11 @@ Generates sample topology verification XML. Provides an example of using opaxmlg
 .PP
 Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
 .PP
-LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the #8217lt;Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:
+LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:
 .PP
 
 .br
-opaxmlgenerate -X /opt/opa/samples/opatopology\(ul1.txt -d \; -h Link -g Rate -g
+opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul1.txt -d \; -h Link -g Rate -g
 .br
 Rate\(ulInt -g MTU -g LinkDetails -h Cable -g CableLength -g CableLabel -g
 .br
@@ -33,7 +33,7 @@ NodeDesc -g PortGUID -g NodeType -g NodeType\(ulInt -g PortDetails -e Port -e Li
 .br
 
 .br
-opaxmlgenerate -X /opt/opa/samples/opatopology\(ul2.txt -d \; -h Node -g NodeGUID -g
+opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul2.txt -d \; -h Node -g NodeGUID -g
 .br
 NodeDesc -g NodeDetails -g HostName -g NodeType -g NodeType\(ulInt -g NumPorts -e Node
 
@@ -45,7 +45,7 @@ NodeDesc -g NodeDetails -g HostName -g NodeType -g NodeType\(ulInt -g NumPorts -
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
+This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
 .PP
 
 .B NOTE:
@@ -60,7 +60,7 @@ The following example exceeds the available width of the page. For readability, 
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.
+This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows only two nodes.
 .PP
 
 .br
@@ -76,7 +76,7 @@ This file can be found in /opt/opa/samples/ . For brevity, this sample shows onl
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only two nodes.
+This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows only two nodes.
 .PP
 
 .br
@@ -90,7 +90,7 @@ This file can be found in /opt/opa/samples/ . For brevity, this sample shows onl
 .NL
 
 .PP
-This file can be found in /opt/opa/samples/ . For brevity, this sample shows only one node.
+This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows only one node.
 .PP
 
 .br
@@ -106,168 +106,168 @@ When run against the supplied topology input files, opagentopology produces:
 .PP
 
 .br
-#8217lt;?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 .br
-#8217lt;Topology>
+<Topology>
 .br
-#8217lt;LinkSummary>
+<LinkSummary>
 .br
-#8217lt;Link>
+<Link>
 .br
-#8217lt;Rate>25g</Rate>
+<Rate>25g</Rate>
 .br
-#8217lt;MTU>2048</MTU>
+<MTU>2048</MTU>
 .br
-#8217lt;Internal>0</Internal>
+<Internal>0</Internal>
 .br
-#8217lt;LinkDetails>IO Server Link</LinkDetails>
+<LinkDetails>IO Server Link</LinkDetails>
 .br
-#8217lt;Cable>
+<Cable>
 .br
-#8217lt;CableLength>11m</CableLength>
+<CableLength>11m</CableLength>
 .br
-#8217lt;CableLabel>S4567</CableLabel>
+<CableLabel>S4567</CableLabel>
 .br
-#8217lt;CableDetails>cable model 456</CableDetails>
+<CableDetails>cable model 456</CableDetails>
 .br
-#8217lt;/Cable>
+</Cable>
 .br
-#8217lt;Port>
+<Port>
 .br
-#8217lt;NodeGUID>0x0002c9020020e004</NodeGUID>
+<NodeGUID>0x0002c9020020e004</NodeGUID>
 .br
-#8217lt;PortNum>1</PortNum>
+<PortNum>1</PortNum>
 .br
-#8217lt;NodeDesc>bender HFI-1</NodeDesc>
+<NodeDesc>bender HFI-1</NodeDesc>
 .br
-#8217lt;PortGUID>0x0002c9020020e004</PortGUID>
+<PortGUID>0x0002c9020020e004</PortGUID>
 .br
-#8217lt;NodeType>FI</NodeType>
+<NodeType>FI</NodeType>
 .br
-#8217lt;PortDetails>Some info about port</PortDetails>
+<PortDetails>Some info about port</PortDetails>
 .br
-#8217lt;/Port>
+</Port>
 .br
-#8217lt;Port>
+<Port>
 .br
-#8217lt;NodeGUID>0x0011750007000df6</NodeGUID>
+<NodeGUID>0x0011750007000df6</NodeGUID>
 .br
-#8217lt;PortNum>7</PortNum>
+<PortNum>7</PortNum>
 .br
-#8217lt;NodeDesc>Switch 1234 Leaf 4</NodeDesc>
+<NodeDesc>Switch 1234 Leaf 4</NodeDesc>
 .br
-#8217lt;NodeType>SW</NodeType>
+<NodeType>SW</NodeType>
 .br
-#8217lt;/Port>
+</Port>
 .br
-#8217lt;/Link>
+</Link>
 .br
-#8217lt;Link>
+<Link>
 .br
-#8217lt;Rate>25g</Rate>
+<Rate>25g</Rate>
 .br
-#8217lt;Internal>0</Internal>
+<Internal>0</Internal>
 .br
-#8217lt;Cable>
+<Cable>
 .br
-#8217lt;/Cable>
+</Cable>
 .br
-#8217lt;Port>
+<Port>
 .br
-#8217lt;NodeGUID>0x0002c9020025a678</NodeGUID>
+<NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
-#8217lt;PortNum>1</PortNum>
+<PortNum>1</PortNum>
 .br
-#8217lt;NodeDesc>mindy2 HFI-1</NodeDesc>
+<NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
-#8217lt;NodeType>FI</NodeType>
+<NodeType>FI</NodeType>
 .br
-#8217lt;/Port>
+</Port>
 .br
-#8217lt;Port>
+<Port>
 .br
-#8217lt;NodeGUID>0x0011750007000e6d</NodeGUID>
+<NodeGUID>0x0011750007000e6d</NodeGUID>
 .br
-#8217lt;PortNum>4</PortNum>
+<PortNum>4</PortNum>
 .br
-#8217lt;NodeDesc>Switch 2345 Leaf 5</NodeDesc>
+<NodeDesc>Switch 2345 Leaf 5</NodeDesc>
 .br
-#8217lt;NodeType>SW</NodeType>
+<NodeType>SW</NodeType>
 .br
-#8217lt;/Port>
+</Port>
 .br
-#8217lt;/Link>
+</Link>
 .br
-#8217lt;/LinkSummary>
+</LinkSummary>
 .br
-#8217lt;Nodes>
+<Nodes>
 .br
-#8217lt;FIs>
+<FIs>
 .br
-#8217lt;Node>
+<Node>
 .br
-#8217lt;NodeGUID>0x0002c9020020e004</NodeGUID>
+<NodeGUID>0x0002c9020020e004</NodeGUID>
 .br
-#8217lt;NodeDesc>bender HFI-1</NodeDesc>
+<NodeDesc>bender HFI-1</NodeDesc>
 .br
-#8217lt;NodeDetails>More details about node</NodeDetails>
+<NodeDetails>More details about node</NodeDetails>
 .br
-#8217lt;/Node>
+</Node>
 .br
-#8217lt;Node>
+<Node>
 .br
-#8217lt;NodeGUID>0x0002c9020025a678</NodeGUID>
+<NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
-#8217lt;NodeDesc>mindy2 HFI-1</NodeDesc>
+<NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
-#8217lt;NodeDetails>Node details</NodeDetails>
+<NodeDetails>Node details</NodeDetails>
 .br
-#8217lt;/Node>
+</Node>
 .br
-#8217lt;/FIs>
+</FIs>
 .br
-#8217lt;Switches>
+<Switches>
 .br
-#8217lt;Node>
+<Node>
 .br
-#8217lt;NodeGUID>0x0011750007000df6</NodeGUID>
+<NodeGUID>0x0011750007000df6</NodeGUID>
 .br
-#8217lt;NodeDesc>Switch 1234 Leaf 4</NodeDesc>
+<NodeDesc>Switch 1234 Leaf 4</NodeDesc>
 .br
-#8217lt;/Node>
+</Node>
 .br
-#8217lt;Node>
+<Node>
 .br
-#8217lt;NodeGUID>0x0011750007000e6d</NodeGUID>
+<NodeGUID>0x0011750007000e6d</NodeGUID>
 .br
-#8217lt;NodeDesc>Switch 2345 Leaf 5</NodeDesc>
+<NodeDesc>Switch 2345 Leaf 5</NodeDesc>
 .br
-#8217lt;/Node>
+</Node>
 .br
-#8217lt;/Switches>
+</Switches>
 .br
-#8217lt;SMs>
+<SMs>
 .br
-#8217lt;SM>
+<SM>
 .br
-#8217lt;NodeGUID>0x0002c9020025a678</NodeGUID>
+<NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
-#8217lt;PortNum>1</PortNum>
+<PortNum>1</PortNum>
 .br
-#8217lt;NodeDesc>mindy2 HFI-1</NodeDesc>
+<NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
-#8217lt;PortGUID>0x0011750007000e6d</PortGUID>
+<PortGUID>0x0011750007000e6d</PortGUID>
 .br
-#8217lt;NodeType>FI</NodeType>
+<NodeType>FI</NodeType>
 .br
-#8217lt;SMDetails>details about SM</SMDetails>
+<SMDetails>details about SM</SMDetails>
 .br
-#8217lt;/SM>
+</SM>
 .br
-#8217lt;/SMs>
+</SMs>
 .br
-#8217lt;/Nodes>
+</Nodes>
 .br
-#8217lt;/Topology>
+</Topology>
 
 .br

@@ -197,7 +197,7 @@ int main(int argc, char **argv)
 	 */
 	if ((context=op_path_open(device,port)) == NULL) {
 		fprintf(stderr, "Could not access the Distributed SA. This may mean that\n"
-			"the dist_sa has not been started, or that it has not been able\n"
+			"the ibacm/dsap has not been started, or that it has not been able\n"
 			"to contact the SA.\n");
 		return -1;
 	}

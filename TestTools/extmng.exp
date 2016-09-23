@@ -482,7 +482,7 @@ proc get_switch_getportconfig { ibnode } {
 
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		set out_msg ""
 
@@ -530,7 +530,7 @@ proc get_switch_info { ibnode } {
 
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		set out_msg ""
 
@@ -568,8 +568,8 @@ proc get_switch_info { ibnode } {
 			append_punchlist "$ibnode" "Not an Intel OPA device"
 			fail_test "$ibnode: Not an Intel OPA device"
 		}
-		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD [A-Za-z0-9]+,[A-Za-z0-9 -]+,[A-Za-z0-9/-]+,[A-Za-z0-9.-]+" } { "Error"}]
-		regexp {([VPD]+) ([A-Za-z0-9]+),([A-Za-z0-9 -]+),([A-Za-z0-9/-]+),([A-Za-z0-9.-]+)} $out p1 p2 p3 partnumber p4 hwversion
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\"" } { "Error"}]
+		regexp {([VPD]+) "([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)"} $out p1 p2 p3 partnumber p4 hwversion
 
         # use verbose option so we have a predictable output to expect
 		if { [ string equal "$brand" "OPA"] } {
@@ -783,7 +783,7 @@ proc get_switch_hwvpd { ibnode } {
 ##	
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		local_sh
 
@@ -799,8 +799,8 @@ proc get_switch_hwvpd { ibnode } {
 			append_punchlist "$ibnode" "Not an OPA series device"
 			fail_test "$ibnode: Not an Intel OPA device"
 		}
-		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD [A-Za-z0-9]+,[A-Za-z0-9 -]+,[A-Za-z0-9/-]+,[A-Za-z0-9.-]+,[A-Za-z0-9 ._-]+,[A-Za-z0-9 /._-]+,[A-Za-z0-9 ]+,[0-9-]+,[0-9:]+" } { "Error" }]
-		regexp {([VPD]+) ([A-Za-z0-9]+),([A-Za-z0-9 -]+),([A-Za-z0-9/-]+),([A-Za-z0-9.-]+),([A-Za-z0-9 ._-]+),([A-Za-z0-9 /._-]+),([A-Za-z0-9 ]+),([0-9-]+),([0-9:]+)} $out p1 p2 serialnumber partnumber model hwversion mfgname proddesc mfgid date time
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\"" } { "Error" }]
+		regexp {([VPD]+) "([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)"} $out p1 p2 serialnumber partnumber model hwversion mfgname proddesc mfgid date time
 		local_sh_exit
 
 		# report the results
@@ -835,7 +835,7 @@ proc get_switch_ping { ibnode { hfi_port ""} { report "1" } { ignore_pass "0" } 
 ##	
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		local_sh
 
@@ -899,7 +899,7 @@ proc get_switch_fwverify { ibnode } {
 ##	
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		local_sh
 
@@ -965,7 +965,7 @@ proc get_switch_capture { ibnode upload_file } {
 ##	
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		local_sh
 
@@ -1040,7 +1040,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 		set trimmed_ibnode [ trim_opaswitch_hfi_port "$ibnode" ]
 		local_sh_exit
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		set brand [get_switch_brand "$ibnode"]
 		if { [ string equal "$brand" "OPA"] } {
@@ -1198,7 +1198,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 
 		global env
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		local_sh
 
@@ -1456,7 +1456,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
         upvar args args
         upvar norecords norecords
 
-		set toolsdir /opt/opa/tools
+		set toolsdir /usr/lib/opa/tools
 
 		local_sh
 

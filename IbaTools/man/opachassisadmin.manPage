@@ -18,7 +18,11 @@ opachassisadmin
 Performs a number of multi-step chassis initialization and verification operations, including initial chassis setup, firmware upgrades, chassis reboot, and others.
 .SH Syntax 
 .NL
-opachassisadmin [-c] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-P \fIpackages\fR] [-a \fIaction\fR] [-I \fIfm\(ulbootstate\fR] [-S] [-d \fIupload\(uldir\fR] [-s \fIsecurityfiles\fR] \fIoperation\fR...
+opachassisadmin [-c] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-P \fIpackages\fR]
+.br
+[-a \fIaction\fR] [-I \fIfm\(ulbootstate\fR] [-S] [-d \fIupload\(uldir\fR] [-s \fIsecurityfiles\fR]
+.br
+\fIoperation\fR...
 .SH Options 
 .NL
 
@@ -30,27 +34,38 @@ Produces full help text.
 .TP 10
 -c 
 .NL
-Clobbers result files from any previous run before starting this run.
+Overwrites the result files from any previous run before starting this run.
 
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-File with chassis in cluster. The default is /etc/sysconfig/opa/chassis.
+Specifies the file with chassis in cluster. The default is /etc/sysconfig/opa/chassis.
 
 .TP 10
 -H \fIchassis\fR 
 .NL
-List of chassis to execute the operation against.
+Specifies the list of chassis to execute the operation against.
 
 .TP 10
 -P \fIpackages\fR 
 .NL
-Filenames and directories of firmware images to install. For directories specified, all .pkg files in directory tree are used. shell wild cards may also be used within quotes, or for fmconfig, filename of FM config file to use, or for fmgetconfig, filename to upload to (default opafm.xml).
+Specifies the filenames and directories of firmware images to install.
+
+.RS
+
+.IP \(bu
+For directories specified, all .pkg, .dpkg, and .spkg files in directory tree are used. shell wild cards may also be used within quotes.
+.IP \(bu
+For fmconfig, filename of FM config file is used.
+.IP \(bu
+For fmgetconfig, filename to upload to (default opafm.xml) is used.
+
+.RE
 
 .TP 10
 -a \fIaction\fR 
 .NL
-Action for supplied file. The default is push.
+Specifies the action for the supplied file. The default is push.
 .RS
 .TP 10
 
@@ -190,12 +205,30 @@ Ensures FM security files are in chassis.
 
 .RE
 
+.RS
+.TP 10
+
+.sp
+restart 
+After push, restarts FM on master, stop on slave.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+restartall 
+After push, restarts FM on all MM
+
+.RE
+
 .RE
 
 .TP 10
 -I \fIfm\(ulbootstate\fR 
 .NL
-fmconfig and fmcontrol install options.
+Specifies the fmconfig and fmcontrol install options.
 .RS
 .TP 10
 
@@ -227,7 +260,7 @@ Enables FM start on all MM at chassis boot.
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Directory to upload FM configuration files to; default is uploads.
+Specifies the directory to upload FM configuration files to; default is uploads.
 
 .TP 10
 -S 
@@ -237,14 +270,14 @@ Securely prompts for password for user on chassis.
 .TP 10
 -s \fIsecurityFiles\fR 
 .NL
-Security files to install. Default is *.pem. For Chassis  \fIfmsecurityfiles\fR, filenames/directories of security files to install. For directories specified, all security files in directory tree are used. Shell wildcards may also be used within quotes.
+Specifies the security files to install. Default is *.pem. For Chassis  \fIfmsecurityfiles\fR, filenames/directories of security files to install. For directories specified, all security files in directory tree are used. Shell wildcards may also be used within quotes.
 
 .IP
 For Chassis  \fIfmgetsecurityfiles\fR, filename to upload to. Default is *.pem 
 .TP 10
  \fIoperation\fR 
 .NL
-Operation to perform. Can be one or more of:
+Specifies the operation to perform. Can be one or more of:
 .RS
 .TP 10
 
@@ -410,35 +443,22 @@ Runs the chassis setup wizard, which asks a series of questions. Once the wizard
 .RS
 
 .IP \(bu
-syslog server IP address, TCP/UDP port number, syslog facility code, and the chassis LogMode.
+Syslog server IP address, TCP/UDP port number, syslog facility code, and the chassis LogMode.
 
 .IP \(bu
 NTP server
 
 .IP \(bu
-local time zone
+Local time zone
 
 .IP \(bu
-maximum packet MTU
+Link CRC Mode
 
 .IP \(bu
-VL capability
+Link width supported
 
 .IP \(bu
-VL credit distribution
-
-.IP \(bu
-link width supported
-
-.IP \(bu
-IB node description
-
-.IP \(bu
-IB node description format
-
-.IP \(bu
-disable chassis auto clear of port counters
-
+Node description
 
 
 .RE
@@ -453,7 +473,7 @@ By selecting the proper \fBFF\(ulMAX\(ulPARALLEL\fR value, a rolling reboot or a
 .TP 10
 getconfig 
 .NL
-Retrieves basic information from a chassis such as syslog, NTP configuration, timezone info, MTU Capability, VL Capability, VL Credit Distribution, Link Width, and node description.
+Retrieves basic information from a chassis such as syslog, NTP configuration, timezone info, Link CRC Mode, Link Width, and node description.
 
 .TP 10
 fmconfig 
@@ -490,22 +510,22 @@ opachassisadmin provides detailed logging of its results. During each run, the f
 .TP 10
 test.res 
 .NL
-Appended with summary results of run.
+This file is appended with summary results of run.
 
 .TP 10
 test.log 
 .NL
-Appended with detailed results of run.
+This file is appended with detailed results of run.
 
 .TP 10
 save\(ultmp/ 
 .NL
-Contains a directory per failed test with detailed logs.
+This file is contains a directory per failed test with detailed logs.
 
 .TP 10
 test\(ultmp*/ 
 .NL
-Intermediate result files while test is running.
+This file contains the intermediate results while the test is running.
 
 .PP
 The -c option removes all log files.

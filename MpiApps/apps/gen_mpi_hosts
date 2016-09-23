@@ -1,0 +1,99 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+
+usage()
+{
+	echo "Usage: ./gen_mpi_hosts [-s] host_list rank_per_host [num_hosts] > somefile" >&2
+   	echo  >&2
+	echo "generate a hosts file using the 1st num_hosts from host_list input file" >&2
+	echo "and putting rank_per_host ranks per host.  Ranks are listed as:" >&2
+	echo "   host1 host2 host3 host1 host2 host3 ..." >&2
+	echo  >&2
+	echo "when the -s option is used, the ranks are listed as:" >&2
+	echo "   host1 host1 host1 host2 host2 host2 ..." >&2
+	echo "with the hosts in the exact order given as input" >&2
+   	echo  >&2
+	echo "as needed, output can be piped into an appropriate sort routine" >&2
+	echo "to convert ordering into:" >&2
+   	echo "   host1 host1 ...  host2 host2 ... " >&2
+   	echo  >&2
+	echo "This tool can be helpful when generating mpi_hosts files to run" >&2
+	echo "a specific number of ranks per host" >&2
+	exit 2
+}
+
+sopt=n
+while getopts s param
+do
+	case $param in
+	s)	sopt=y;;
+	?)	usage;;
+	esac
+done
+shift $(( OPTIND-1))
+
+if [ $# -lt 2 -o $# -gt 3 ]
+then
+	usage
+fi
+
+infile="$1"
+if [ ! -e "$infile" ]
+then
+	echo "Not Found: $infile"
+	usage
+fi
+ranks="$2"
+if [ ! -z "$3" ]
+then
+	nodes=$3
+else
+	nodes=$(cat $infile|wc -l)
+fi
+
+if [ "$sopt" = "n" ]
+then
+	for i in $(seq 1 $ranks)
+	do
+		head -$nodes < $infile
+	done 
+else
+	head -$nodes < $infile | while read node
+	do
+		for i in $(seq 1 $ranks)
+		do
+			echo $node
+		done
+	done
+fi
+
+exit 0

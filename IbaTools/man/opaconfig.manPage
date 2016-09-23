@@ -18,7 +18,7 @@ opaconfig
 Configures the Intel(R) Omni-Path Fabric Suite FastFabric.
 .SH Syntax
 .NL
-opaconfig [-r \fIroot\fR] [-v|-vv] [-u|-s|-e \fIcomp\fR] [-E#8217#160; \fIcomp\fR] [-D \fIcomp\fR]
+opaconfig [-r \fIroot\fR] [-v|-vv] [-u|-s|-e \fIcomp\fR] [-E \fIcomp\fR] [-D \fIcomp\fR]
 .br
 [--user\(ulqueries|--no\(uluser\(ulqueries] [--answer \fIkeyword=value\fR]
 .PP
@@ -35,7 +35,7 @@ opaconfig -V
 .TP 10
 No option
 .NL
-Starts the Intel(R) OP Software TUI.
+Starts the Intel(R) Omni-Path Software TUI.
 
 .TP 10
 --help 
@@ -50,12 +50,12 @@ Specifies alternate root directory; default is /.
 .TP 10
 -v 
 .NL
-Verbose logging.
+Specifies verbose logging.
 
 .TP 10
 -vv 
 .NL
-Very verbose debug logging.
+Specifies very verbose debug logging.
 
 .TP 10
 -u 
@@ -149,18 +149,18 @@ Intel OPA \fIx.x.x.x.x\fR Software
 .br
 
 .br
-#8217#160;  1) Show Installed Software
+   1) Show Installed Software
 .br
-#8217#160;  2) Reconfigure OFED IP over IB
+   2) Reconfigure OFED IP over IB
 .br
-#8217#160;  3) Reconfigure Driver Autostart
+   3) Reconfigure Driver Autostart
 .br
-#8217#160;  4) Generate Supporting Information for Problem Report
+   4) Generate Supporting Information for Problem Report
 .br
-#8217#160;  5) FastFabric (Host/Chassis/Switch Setup/Admin)
+   5) FastFabric (Host/Chassis/Switch Setup/Admin)
 .br
-#8217#160;  6) Uninstall Software
+   6) Uninstall Software
 .br
 
 .br
-#8217#160;  X) Exit
+   X) Exit

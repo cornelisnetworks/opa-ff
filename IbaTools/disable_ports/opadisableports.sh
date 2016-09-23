@@ -40,9 +40,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa/tools/ff_funcs
 
 lidmap="$(mktemp --tmpdir lidmapXXXXXX)"
 trap "rm -f $lidmap; exit 1" SIGHUP SIGTERM SIGINT
@@ -50,25 +50,27 @@ trap "rm -f $lidmap" EXIT
 
 Usage_full()
 {
-	echo "Usage: opadisableports [-R] [-t portsfile] [-p ports] [reason] < disable.csv" >&2
+	echo "Usage: opadisableports [-R] [-h hfi] [-p port] [reason] < disable.csv" >&2
 	echo "              or" >&2
 	echo "       opadisableports --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -R - do not attempt to get routes for computation of distance" >&2
 	echo "        instead just disable switch port with lower LID assuming" >&2
 	echo "        that will be closer to this node" >&2
-	echo "   -t portsfile - file with list of local HFI ports used to access" >&2
-	echo "                  fabric(s) for operation, default is $CONFIG_DIR/opa/ports" >&2
-	echo "   -p ports - list of local HFI ports used to access fabric(s) for operation" >&2
-	echo "              default is 1st active port" >&2
-	echo "              This is specified as hfi:port" >&2
-	echo "                 0:0 = 1st active port in system" >&2
-	echo "                 0:y = port y within system" >&2
-	echo "                 x:0 = 1st active port on HFI x" >&2
-	echo "                 x:y = HFI x, port y" >&2
-	echo "              The first HFI in the system is 1.  The first port on an HFI is 1." >&2
+	echo "   -h hfi - hfi, numbered 1..n, 0= -p port will be a system wide port num" >&2
+	echo "            (default is 0)" >&2
+	echo "   -p port - port, numbered 1..n, 0=1st active (default is 1st active)" >&2
 	echo "   reason - optional text description of reason ports are being disabled," >&2
 	echo "            will be saved in the reason field of the output file" >&2
+	echo  >&2
+	echo "The -h and -p options permit a variety of selections:" >&2
+	echo "   -h 0       - 1st active port in system (this is the default)" >&2
+	echo "   -h 0 -p 0  - 1st active port in system" >&2
+	echo "   -h x       - 1st active port on HFI x" >&2
+	echo "   -h x -p 0  - 1st active port on HFI x" >&2
+	echo "   -h 0 -p y  - port y within system (irrespective of which ports are active)" >&2
+	echo "   -h x -p y  - HFI x, port y" >&2
+
 	echo  >&2
 	echo "The disable.csv is an input file listing the links to disable.  It is of the" >&2 
 	echo "form:" >&2
@@ -84,24 +86,26 @@ Usage_full()
 	echo "number being operated on (such as 0:0 or 1:2).  This CSV file can be used as">&2
         echo "input to opaenableports." >&2
 	echo >&2
-	echo " Environment:" >&2
-	echo "   PORTS - list of ports, used in absence of -t and -p" >&2
-	echo "   PORTS_FILE - file containing list of ports, used in absence of -t and -p" >&2
 	echo "for example:" >&2
 	echo "   opadisableports 'bad cable' < disable.csv" >&2
-	echo "   opadisableports -p '1:1 1:2 2:1 2:2' 'dead servers' < disable.csv" >&2
+	echo "   opadisableports -h 1 -p 1 'dead servers' < disable.csv" >&2
+	echo "   opaextractsellinks -F lid:3 | opadisableports 'bad server'" >&2
+	echo "   opaextractmissinglinks -T /etc/sysconfig/opa/topology.0:0.xml | opadisableports" >&2
 	exit 0
 }
 
 Usage()
 {
-	echo "Usage: opadisableports [-R] [reason] < disable.csv" >&2
+	echo "Usage: opadisableports [-R] [-h hfi] [-p port] [reason] < disable.csv" >&2
 	echo "              or" >&2
 	echo "       opadisableports --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -R - do not attempt to get routes for computation of distance" >&2
 	echo "        instead just disable switch port with lower LID assuming" >&2
 	echo "        that will be closer to this node" >&2
+	echo "   -h hfi - hfi, numbered 1..n, 0= -p port will be a system wide port num" >&2
+	echo "            (default is 0)" >&2
+	echo "   -p port - port, numbered 1..n, 0=1st active (default is 1st active)" >&2
 	echo "   reason - optional text description of reason ports are being disabled," >&2
 	echo "            will be saved in the reason field of the output file" >&2
 	echo  >&2
@@ -132,13 +136,15 @@ res=0
 reason=
 reason_csv=
 use_distance=y
+hfi_input=0
+port_input=0
 
-while getopts Rp:t: param
+while getopts Rh:p: param
 do
 	case $param in
 	R)	use_distance=n;;
-	p)	export PORTS="$OPTARG";;
-	t)	export PORTS_FILE="$OPTARG";;
+	p)	port_input="$OPTARG";;
+	h)	hfi_input="$OPTARG";;
 	?)	Usage;;
 	esac
 done
@@ -154,51 +160,57 @@ then
 	Usage
 fi
 
-check_ports_args opadisableports
+/usr/sbin/oparesolvehfiport $hfi_input $port_input &>/dev/null
+if [ $? -ne 0 -o "$hfi_input" = "" -o "$port_input" = "" ]
+then
+	echo "opadisableports: Error: Invalid port specification: $hfi_input:$port_input" >&2
+	exit 1
+fi
 
-lookup_lid()
+hfi=$(/usr/sbin/oparesolvehfiport $hfi_input $port_input -o hfinum)
+port=`echo $(/usr/sbin/oparesolvehfiport $hfi_input $port_input | cut -f 2 -d ':')`
+port_opts="-h $hfi -p $port"
+
+lookup_lid_by_guid_port()
 {
 	local nodeguid="$1"
 	local portnum="$2"
-	local guid port type desc lid
+	local guid dport type desc lid
 
-	grep "^$nodeguid;$portnum;" < $lidmap|while read guid port type desc lid
+	grep "^$nodeguid;$portnum;" < $lidmap|while read guid dport type desc lid
 	do
 		echo -n $lid
+	done
+}
+lookup_guid_by_desc_port()
+{
+	local nodedesc="$1"
+	local portnum="$2"
+
+	local guid dport type desc lid
+
+	grep "^[^;]*;$portnum;[^;]*;$nodedesc;[^;]*" < $lidmap | while read guid dport type desc lid
+	do
+		echo -n $guid
 	done
 }
 
 get_distance()
 {
 	local lid=$1
-	local port_opts
 	local portguid
 
 	if [ "$use_distance" = n ]
 	then
 		echo "0"
 	else
-		if [ "$port" -eq 0 ]
-		then
-			port_opts="-h $hfi" # default port to 1st active
-		else
-			port_opts="-h $hfi -p $port"
-		fi
-
 		portguid=$(eval opasaquery $port_opts -o portguid -l $lid)
-		eval opasaquery $port_opts -o trace -g $portguid|grep GID|wc -l
+		eval opasaquery $port_opts -o trace -g $portguid|grep -c "NodeType:"
 	fi
 }
-	
 
 disable_ports()
 {
-	if [ "$port" -eq 0 ]
-	then
-		port_opts="-h $hfi"	# default port to 1st active
-	else
-		port_opts="-h $hfi -p $port"
-	fi
 	suffix=":$hfi:$port"
 
 	# generate lidmap
@@ -219,18 +231,34 @@ disable_ports()
 		# For non ISLs pick the switch side, so we can reenable later
 		if [ "$type1" = SW -a "$type2" != SW ]
 		then
-			lid=$(lookup_lid $nodeguid1 0)
+			if [ -z "$nodeguid1" ]
+			then
+				nodeguid1=$(lookup_guid_by_desc_port "$desc1" 0)
+			fi
+			lid=$(lookup_lid_by_guid_port $nodeguid1 0)
 			distance=$(get_distance $lid)
 			echo "$distance;$lid;$nodeguid1;$port1;$type1;$desc1;$nodeguid2;$port2;$type2;$desc2;$rest"
 		elif [ "$type1" != SW -a "$type2" = SW ]
 		then
-			lid=$(lookup_lid $nodeguid2 0)
+			if [ -z "$nodeguid2" ]
+			then
+				nodeguid2=$(lookup_guid_by_desc_port "$desc2" 0)
+			fi
+			lid=$(lookup_lid_by_guid_port $nodeguid2 0)
 			distance=$(get_distance $lid)
 			echo "$distance;$lid;$nodeguid2;$port2;$type2;$desc2;$nodeguid1;$port1;$type1;$desc1;$rest"
 		else
 			# determine which side of ISL to disable
-			lid1=$(lookup_lid $nodeguid1 0)
-			lid2=$(lookup_lid $nodeguid2 0)
+			if [ -z "$nodeguid1" ]
+			then
+				nodeguid1=$(lookup_guid_by_desc_port "$desc1" 0)
+			fi
+			if [ -z "$nodeguid2" ]
+			then
+				nodeguid2=$(lookup_guid_by_desc_port "$desc2" 0)
+			fi
+			lid1=$(lookup_lid_by_guid_port $nodeguid1 0)
+			lid2=$(lookup_lid_by_guid_port $nodeguid2 0)
 			if [ x"$lid1" != x -a x"$lid2" = x ]
 			then
 				# might be a re-disable case, use the LID we can still resolve
@@ -288,7 +316,7 @@ disable_ports()
 		cat	# do in order of input file
 	fi	|
 	{
-	while read distance lid guid port type desc lguid lport ltype ldesc rest
+	while read distance lid guid dport type desc lguid lport ltype ldesc rest
 	do
 		if [ x"$rest" != x ]
 		then
@@ -297,25 +325,25 @@ disable_ports()
 
 		if [ x"$lid" = x ]
 		then
-			echo "Skipping link: $desc:$port -> $ldesc:$lport"
+			echo "Skipping link: $desc:$dport -> $ldesc:$lport"
 			skipped=$(( $skipped + 1))
 		else
-			echo "Disabling link: $desc:$port -> $ldesc:$lport"
-			eval /usr/sbin/opaportconfig $port_opts -l $lid -m $port disable
+			echo "Disabling link: $desc:$dport -> $ldesc:$lport"
+			eval /usr/sbin/opaportconfig $port_opts -l $lid -m $dport disable
 
 			if [ $? = 0 ]
 			then
-				logger -p user.err "Disabled link: $desc:$port -> $ldesc:$lport due to: $reason"
+				logger -p user.err "Disabled link: $desc:$dport -> $ldesc:$lport due to: $reason"
 				disabled=$(( $disabled + 1))
 				if [ ! -e $CONFIG_DIR/opa/disabled$suffix.csv ] || ! grep "^$guid;$port;" < $CONFIG_DIR/opa/disabled$suffix.csv > /dev/null 2>&1
 				then
-					# keep a disabled file per local HFI:port
+					# keep a disabled file per local hfi:port
 					# same format as our input but 1st port
 					# indicates which one was disabled and
 					# second port is only for info
 					# if fed back into this tool will select
 					# same port to disable
-					echo "$guid;$port;$type;$desc;$lguid;$lport;$ltype;$ldesc$rest$reason_csv" >> $CONFIG_DIR/opa/disabled$suffix.csv
+					echo "$guid;$dport;$type;$desc;$lguid;$lport;$ltype;$ldesc$rest$reason_csv" >> $CONFIG_DIR/opa/disabled$suffix.csv
 				fi
 			else
 				failed=$(( $failed + 1))
@@ -333,26 +361,10 @@ disable_ports()
 	}
 }
 
-
-for hfi_port in $PORTS
-do
-	hfi=$(expr $hfi_port : '\([0-9]*\):[0-9]*')
-	port=$(expr $hfi_port : '[0-9]*:\([0-9]*\)')
-	/usr/sbin/oparesolvehfiport $hfi $port >/dev/null
-	if [ $? -ne 0 -o "$hfi" = "" -o "$port" = "" ]
-	then
-		echo "opadisableports: Error: Invalid port specification: $hfi_port" >&2
-		res=1
-		continue
-	fi
-
-	echo "Processing fabric: $hfi:$port..."
-	echo "--------------------------------------------------------"
-	disable_ports "$hfi" "$port"
-	if [ $? -ne 0 ]
-	then
-		res=1
-	fi
-done
+disable_ports "$hfi" "$port"
+if [ $? -ne 0 ]
+then
+	res=1
+fi
 
 exit $res

@@ -37,9 +37,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa/tools/ff_funcs
 
 if [ x"$FF_IPOIB_SUFFIX" = xNONE ]
 then
@@ -466,7 +466,7 @@ export TEST_TIMEOUT_MULT="$FF_TIMEOUT_MULT"
 export TEST_RESULT_DIR="$FF_RESULT_DIR"
 export TEST_MAX_PARALLEL="$FF_MAX_PARALLEL"
 export TEST_CONFIG_FILE="/dev/null"
-export TL_DIR=/opt/opa/tools
+export TL_DIR=/usr/lib/opa/tools
 export TEST_IDENTIFY=no
 export TEST_SHOW_CONFIG=no
 export TEST_SHOW_START=yes
@@ -675,7 +675,7 @@ then
 			trap "rm -rf $CFG_CFGTEMPDIR; exit 1" 1 2 3 9 15
 			trap "rm -rf $CFG_CFGTEMPDIR" EXIT
 
-			/opt/opa/tools/chassis_setup $CFG_CFGTEMPDIR $CFG_CHASSIS
+			/usr/lib/opa/tools/chassis_setup $CFG_CFGTEMPDIR $CFG_CHASSIS
 			if [ $? = 0 ]
 			then
 				export SYSLOG_SERVER=`grep "Syslog Server IP_Address" $CFG_CFGTEMPDIR/.chassisSetup.out | cut -d : -f 2`
@@ -831,7 +831,7 @@ then
 			# Update traps to delete all temporary directories.
 			trap "rm -rf $CFG_CFGTEMPDIR; exit 1" 1 2 3 9 15
 			trap "rm -rf $CFG_CFGTEMPDIR" EXIT
-			/opt/opa/tools/switch_setup $CFG_CFGTEMPDIR
+			/usr/lib/opa/tools/switch_setup $CFG_CFGTEMPDIR
 			if [ $? = 0 ]
 			then
 				export LINKWIDTH_SETTING=`grep "Link Width Selection" $CFG_CFGTEMPDIR/.switchSetup.out | cut -d : -f 2`

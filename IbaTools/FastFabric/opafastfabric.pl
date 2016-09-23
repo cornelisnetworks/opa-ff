@@ -59,7 +59,7 @@ $BRAND =~ s/%.*//;
 # this is patched by Makefile to be IBACCESS or OPENIB
 my $IB_STACK_TYPE="THIS_IS_THE_IB_STACK_TYPE";
 # runtime alternative to get_local_stack_type IBACCESS or OPENIB
-#my $IB_STACK_TYPE=`/opt/opa/tools/tcl_proc get_local_stack_type 2>/dev/null`;
+#my $IB_STACK_TYPE=`/usr/lib/opa/tools/tcl_proc get_local_stack_type 2>/dev/null`;
 #chomp($LocalStackType);
 #if ( "$LocalStackType" eq "" ) {
 #	die "Unable to determine which IB stack type is installed";
@@ -82,12 +82,12 @@ $SYS_CONFIG_DIR="/etc/sysconfig";
 $OPA_CONFIG_DIR = "$SYS_CONFIG_DIR/opa";
 $LIB_DIR = "/lib";
 $USRLOCALLIB_DIR = "/usr/local/lib";
-$OPTIBALIB_DIR = "/opt/opa/lib";
+$OPTIBALIB_DIR = "/usr/lib/opa/lib";
 if ( "$BIN_DIR" eq "" ) {
 	$BIN_DIR = "/usr/sbin";
 }
 if ( "$TOOLS_DIR" eq "" ) {
-	$TOOLS_DIR = "/opt/opa/tools";
+	$TOOLS_DIR = "/usr/lib/opa/tools";
 }
 $FF_CONF_FILE = "$OPA_CONFIG_DIR/opafastfabric.conf";
 $OWNER = "root";
@@ -326,7 +326,7 @@ sub set_libdir
 	{
 		$LIB_DIR = "/lib64";
 		$USRLOCALLIB_DIR = "/usr/local/lib64";
-		$OPTIBALIB_DIR = "/opt/opa/lib64";
+		$OPTIBALIB_DIR = "/usr/lib/opa/lib64";
 	}
 }
 
@@ -730,11 +730,11 @@ sub installed_shmem
 sub installed_mpisrc
 {
 	#return (-e "$ROOT/usr/local/src/InfiniServMPI/.mpisrc" ||
-	#	-e "$ROOT/opt/opa/src/InfiniServMPI/.mpisrc");
+	#	-e "$ROOT/usr/lib/opa/src/InfiniServMPI/.mpisrc");
 	if ( "$IB_STACK_TYPE" eq "IBACCESS" ) {
-		return (-e "$ROOT/opt/opa/src/InfiniServMPI/mpich/do_build");
+		return (-e "$ROOT/usr/lib/opa/src/InfiniServMPI/mpich/do_build");
 	} else {
-		return (-e "$ROOT/opt/opa/src/MPI/do_build");
+		return (-e "$ROOT/usr/lib/opa/src/MPI/do_build");
 	}
 }
 
@@ -776,6 +776,10 @@ sub process_args
 				$setdir=1;
 			} elsif ( "$arg" eq "-r" ) {
 				$setroot=1;
+			}
+			else {
+				printf STDERR "Invalid option: $arg\n";
+				Usage;
 			}
 			$last_arg=$arg;
 		}
@@ -829,7 +833,7 @@ sub setup_ffports
 	do {
 		if ( ! -e "$file" ) {
 			# replace missing file
-			copy_data_file("/opt/opa/tools/ports", "$file");
+			copy_data_file("/usr/lib/opa/tools/ports", "$file");
 		}
 		print "You will now have a chance to edit/review the FastFabric PORTS_FILE:\n";
 		print "$file\n";
@@ -1366,7 +1370,7 @@ sub fabricsetup_rebuildmpi
 		return;
 	}
 	if ( "$IB_STACK_TYPE" eq "IBACCESS" ) {
-		if (run_fabric_cmd("cd $ROOT/opt/opa/src/InfiniServMPI/mpich; ./do_build")) {
+		if (run_fabric_cmd("cd $ROOT/usr/lib/opa/src/InfiniServMPI/mpich; ./do_build")) {
 			return 1;
 		}
 		if (! valid_config_file("Host File", $FabricSetupHostsFile) ) {
@@ -1376,7 +1380,7 @@ sub fabricsetup_rebuildmpi
 		# do in two steps so user can see results of build before scp starts
 		return run_fabric_cmd("$BIN_DIR/opascpall -r -p -f $FabricSetupHostsFile $USRLOCALLIB_DIR/libtvmpich* $USRLOCALLIB_DIR/shared $USRLOCALLIB_DIR");
 	} else {	# OFED
-		if (run_fabric_cmd("cd $ROOT/opt/opa/src/MPI; ./do_build")) {
+		if (run_fabric_cmd("cd $ROOT/usr/lib/opa/src/MPI; ./do_build")) {
 			return 1;
 		}
 		if (! valid_config_file("Host File", $FabricSetupHostsFile) ) {
@@ -1384,11 +1388,11 @@ sub fabricsetup_rebuildmpi
 		}
 		# do in two steps so user can see results of build before scp starts
 		# determine where MPI was built and copy needed files to all nodes
-		my $mpich_prefix= read_simple_config_param("$ROOT/opt/opa/src/MPI/.mpiinfo", "MPICH_PREFIX");
+		my $mpich_prefix= read_simple_config_param("$ROOT/usr/lib/opa/src/MPI/.mpiinfo", "MPICH_PREFIX");
 		# instead of copy, copy the actual rpms and install them
 		#return run_fabric_cmd("$BIN_DIR/opascpall -t -p -f $FabricSetupHostsFile $mpich_prefix $mpich_prefix");
-		my $mpi_rpms= read_simple_config_param("$ROOT/opt/opa/src/MPI/.mpiinfo", "MPI_RPMS");
-		if (run_fabric_cmd("cd /opt/opa/src/MPI && $BIN_DIR/opascpall -p -f $FabricSetupHostsFile $mpi_rpms /var/tmp")) {
+		my $mpi_rpms= read_simple_config_param("$ROOT/usr/lib/opa/src/MPI/.mpiinfo", "MPI_RPMS");
+		if (run_fabric_cmd("cd /usr/lib/opa/src/MPI && $BIN_DIR/opascpall -p -f $FabricSetupHostsFile $mpi_rpms /var/tmp")) {
 			return 1;
 		}
 		# need force for reinstall case
@@ -1449,8 +1453,10 @@ sub fabric_setup
 	}
 DO_SETUP:
 	system "clear";
+	print color("bold");
 	printf ("FastFabric OPA Host Setup Menu\n");
-	printf ("Host File: $FabricSetupHostsFile\n\n");
+	printf ("Host File: $FabricSetupHostsFile\n");
+	print color("reset");
 	for($i=0; $i < scalar(@FabricSetupSteps); $i++)
 	{
 		$step = $FabricSetupSteps[$i];
@@ -1613,7 +1619,7 @@ sub fabricadmin_singlehost
 	my $verifyhosts_opts="-c"; # Always copy the hostverify.sh file.
 	my $verifyhosts_tests="";
 	my $result_dir = read_ffconfig_param("FF_RESULT_DIR");
-	my $hostverify_sample = "/opt/opa/samples/hostverify.sh";
+	my $hostverify_sample = "/usr/lib/opa/samples/hostverify.sh";
 	my $hostverify = read_ffconfig_param("FF_HOSTVERIFY_DIR") . "/hostverify.sh";
 	my $hostverify_res = "hostverify.res";
 	my $inp;
@@ -1728,7 +1734,8 @@ sub fabricadmin_showallports
 	print "file using opaxlattopology, opaxlattopology_cust or a customized variation.\n";
 	print "If this step has been done and a topology file has been placed in the\n";
 	print "location specified by the FF_TOPOLOGY_FILE in opafastfabric.conf then\n";
-	print "a topology verification can be performed.\n\n";
+	print "a topology verification can be performed.\n";
+	print "Refer to the FastFabric CLI reference guide for more info.\n\n";
 	if (GetYesNo("Would you like to verify fabric topology?", "y") ) {
 		# TBD - check for presence of topology files
 		if (GetYesNo("Verify all aspects of topology (links, nodes, SMs)?", "y") ) {
@@ -1736,14 +1743,37 @@ sub fabricadmin_showallports
 			$topology=1;
 			$linkanalysis_reports="$linkanalysis_reports verifyall";
 		} else {
+			# given venn diagram of types of links checked in verify*links
+			# reasonable choices are:
+			# verifylinks
+			#     or
+			# verifyextlinks
+			#     or
+			# verfyfilinks and/or ( verifyislinks or verifyextislinks)
+			# Note we do not have a verifyextfilinks since most fi links are ext
 			if (GetYesNo("Verify all link topology (backplanes and cables)?", "y") ) {
 				$linkanalysis=1;
 				$topology=1;
 				$linkanalysis_reports="$linkanalysis_reports verifylinks";
-			} elsif (GetYesNo("Verify cable link topology?", "y") ) {
+			} elsif (GetYesNo("Verify cable link topology (HFIs and switches)?", "y") ) {
 				$linkanalysis=1;
 				$topology=1;
 				$linkanalysis_reports="$linkanalysis_reports verifyextlinks";
+			} else {
+				if (GetYesNo("Verify inter-switch link topology (backplanes and cables)?", "y") ) {
+					$linkanalysis=1;
+					$topology=1;
+					$linkanalysis_reports="$linkanalysis_reports verifyislinks";
+				} elsif (GetYesNo("Verify cable inter-switch link topology?", "y") ) {
+					$linkanalysis=1;
+					$topology=1;
+					$linkanalysis_reports="$linkanalysis_reports verifyextislinks";
+				}
+				if (GetYesNo("Verify FI link topology?", "y") ) {
+					$linkanalysis=1;
+					$topology=1;
+					$linkanalysis_reports="$linkanalysis_reports verifyfilinks";
+				}
 			}
 			if (GetYesNo("Verify all nodes?", "y") ) {
 				$linkanalysis=1;
@@ -1954,8 +1984,10 @@ sub fabric_admin
 	}
 DO_SETUP:
 	system "clear";
+	print color("bold");
 	printf ("FastFabric OPA Host Verification/Admin Menu\n");
-	printf ("Host File: $FabricAdminHostsFile\n\n");
+	printf ("Host File: $FabricAdminHostsFile\n");
+	print color("reset");
 	for($i=0; $i < scalar(@FabricAdminSteps); $i++)
 	{
 		$step = $FabricAdminSteps[$i];
@@ -2030,7 +2062,9 @@ sub fabric_monitor
 	}
 DO_SETUP:
 	system "clear";
+	print color("bold");
 	printf ("FastFabric OPA Fabric Monitoring Menu\n\n");
+	print color("reset");
 	for($i=0; $i < scalar(@FabricMonitorSteps); $i++)
 	{
 		$step = $FabricMonitorSteps[$i];
@@ -2499,8 +2533,8 @@ sub chassis_fmconfig
 	if (! valid_config_file("Chassis File", $FabricChassisFile) ) {
 		return 1;
 	}
-	if ( -e "/opt/opa/fm_tools" ) {
-		$tooldir="/opt/opa/fm_tools";
+	if ( -e "/usr/lib/opa/fm_tools" ) {
+		$tooldir="/usr/lib/opa/fm_tools";
 	} else {
 		my $IFS_FM_BASE= read_simple_config_param("$ROOT/etc/sysconfig/opa/opafm.info", "IFS_FM_BASE");
 		$tooldir="$IFS_FM_BASE/etc";
@@ -2793,8 +2827,10 @@ sub chassis_admin
 	}
 DO_SETUP:
 	system "clear";
+	print color("bold");
 	printf ("FastFabric OPA Chassis Setup/Admin Menu\n");
-	printf ("Chassis File: $FabricChassisFile\n\n");
+	printf ("Chassis File: $FabricChassisFile\n");
+	print color("reset");
 	for($i=0; $i < scalar(@FabricChassisSteps); $i++)
 	{
 		$step = $FabricChassisSteps[$i];
@@ -3145,8 +3181,10 @@ sub ext_mgmt_sw_admin
 	}
 DO_SETUP:
 	system "clear";
+	print color("bold");
 	printf ("FastFabric OPA Switch Setup/Admin Menu\n");
-	printf ("Externally Managed Switch File: $FabricExtMgmtSwFile\n\n");
+	printf ("Externally Managed Switch File: $FabricExtMgmtSwFile\n");
+	print color("reset");
 	for($i=0; $i < scalar(@FabricExtMgmtSwSteps); $i++)
 	{
 		$step = $FabricExtMgmtSwSteps[$i];
@@ -3209,8 +3247,10 @@ sub show_menu
 
 START:	
 	system "clear";
+	print color("bold");
 	printf ("$BRAND FastFabric OPA Tools\n");
 	printf ("Version: $VERSION\n\n");
+	print color("reset");
 	printf ("   1) Chassis Setup/Admin\n");
 	printf ("   2) Externally Managed Switch Setup/Admin\n");
 	printf ("   3) Host Setup\n");

@@ -90,7 +90,7 @@ test_suite "fmconfig" "update FM config" "update all chassis FM config
 FM config File: $env(CFG_FMFILE)
 Action: $env(CFG_FWACTION)
 Bootstate: $env(CFG_INSTALL_OPTIONS)
-File: /opt/opa/tools/chassis_fmconfig.exp" suite_setup noop {
+File: /usr/lib/opa/tools/chassis_fmconfig.exp" suite_setup noop {
 	global env
 
 	# Global Initializations for Test Suite:
@@ -111,7 +111,7 @@ File: /opt/opa/tools/chassis_fmconfig.exp" suite_setup noop {
 
 	if { [ test_case "check" "check config file" "check config to be pushed to all chassis
 Config File: $env(CFG_FMFILE)
-File: /opt/opa/tools/chassis_fmconfig.exp" case_setup case_cleanup {
+File: /usr/lib/opa/tools/chassis_fmconfig.exp" case_setup case_cleanup {
 			puts ""
 			set config_file $env(CFG_FMFILE)
 			check_esm_config "$config_file"

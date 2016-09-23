@@ -28,12 +28,12 @@ Produces full help text.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts to check. Default = /etc/sysconfig/opa/hosts 
+Specifies the file with hosts to check. Default = /etc/sysconfig/opa/hosts 
 
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts to check.
+Specifies the list of hosts to check.
 
 .TP 10
 -r 
@@ -42,7 +42,7 @@ Reverses output to show the least busy hosts. Default is busiest hosts.
 .TP 10
 -n \fInumprocs\fR 
 .NL
-Shows top  \fInumprocs\fR hosts. Default is 10.
+Shows the specified number of top  \fInumprocs\fR hosts. Default is 10.
 .TP 10
 -a 
 .NL
@@ -51,7 +51,7 @@ Shows all hosts. Default is 10.
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Directory to upload loadavg to. Default is uploads.
+Specifies the target directory to upload loadavg. Default is uploads.
 
 .SH Examples 
 .NL
@@ -59,6 +59,8 @@ opacheckload opacheckload -h \[aq]arwen elrond\[aq] HOSTS=\[aq]arwen elrond\[aq]
 .SH Environment Variables
 .NL
 
+.PP
+The following environment variables are also used by this command:
 .TP 10
 \fBHOSTS\fR 
 .NL

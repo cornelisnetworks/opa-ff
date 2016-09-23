@@ -30,17 +30,17 @@ Produces full help text.
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI, numbered 1..n. Default = 0 which specifies the first HFI that has the first active port.
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
 
 .TP 10
 -p \fIport\fR 
 .NL
-Port, numbered 1..n. Using 0 specifies the first active port across all HFIs/ports. Default = 1 which indicates all ports. If selected, the tool returns information on all available ports if p is not defined.
+Specifies the port, numbered 1 to n. Using 0 specifies the first active port across all HFIs/ports. Default = 1 which indicates all ports. If selected, the tool returns information on all available ports if p is not defined.
 
 .TP 10
 -o \fItype\fR 
 .NL
-Output type specified and can appear more than once.
+Specifies the output type and can appear more than once.
 
 .TP 10
 .BR
@@ -129,14 +129,15 @@ Verbose and debug output. Lists all settings both statically and dynamically con
 
 .RE
 
-.TP 10
-\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.SH -h and -p options permit a variety of selections:
 .NL
 
 .TP 10
 -h 0 
 .NL
-All ports on all HFIs (default).
+First active port in system (default).
 
 .TP 10
 -h 0 -p 0 
@@ -146,31 +147,32 @@ First active port in system.
 .TP 10
 -h \fIx\fR 
 .NL
-All active ports on HFI \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR#8217#160;-p 0 
+-h \fIx\fR \fI\fR-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy\fR#8217#160;within system (no matter which ports are active).
+Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR#8217#160;-p \fIy\fR 
+-h \fIx\fR \fI\fR-p \fIy\fR 
 .NL
-HFI \fIx\fR, port \fIy\fR
+HFI \fIx\fR, port \fIy\fR.
 
-.TP 10
-\fBDebug Options\fR
+.NL
+
+.SH Debug Options
 .NL
 
 .TP 10
 -v 
 .NL
-Verbose output. Additional invocations (#8217#8211;v -v ...) turn on debugging, openib debugging, and libibumad debugging.
+Specifies the verbose output. Additional invocations (-v -v ...) turn on debugging, openib debugging, and libibumad debugging.
 
 .SH Examples 
 .NL

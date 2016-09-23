@@ -37,9 +37,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa/tools/ff_funcs
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
@@ -432,7 +432,7 @@ process_host()
 
 	thost=`ff_host_basename $hostname`
 	thost_ib=`ff_host_basename_to_ipoib $thost`
-	#setup_self_ssh='[ -x /opt/opa/tools/setup_self_ssh ] && /opt/opa/tools/setup_self_ssh'
+	#setup_self_ssh='[ -x /usr/lib/opa/tools/setup_self_ssh ] && /usr/lib/opa/tools/setup_self_ssh'
 	setup_self_ssh='/tmp/setup_self_ssh'
 	if [ "$thost" != "$thost_ib" ]
 	then
@@ -488,7 +488,7 @@ process_host()
 			fi
 			if [ "$Ropt" = "n" ]
 			then
-				run_host_cmd $copycmd /opt/opa/tools/setup_self_ssh $user@$bracket$thost$close_bracket:/tmp/setup_self_ssh
+				run_host_cmd $copycmd /usr/lib/opa/tools/setup_self_ssh $user@$bracket$thost$close_bracket:/tmp/setup_self_ssh
 				run_host_cmd $shellcmd -l $user $thost "$setup_self_ssh"
 				run_host_cmd $shellcmd -l $user $thost "rm -f /tmp/setup_self_ssh"
 			fi
@@ -502,7 +502,7 @@ process_host()
 			fi
 			if [ "$Ropt" = "n" ]
 			then
-				run_host_cmd $copycmd /opt/opa/tools/setup_self_ssh $user@$bracket$thost$close_bracket:/tmp/setup_self_ssh
+				run_host_cmd $copycmd /usr/lib/opa/tools/setup_self_ssh $user@$bracket$thost$close_bracket:/tmp/setup_self_ssh
 				run_host_cmd $shellcmd -l $user $thost "$setup_self_ssh -U"
 				run_host_cmd $shellcmd -l $user $thost "rm -f /tmp/setup_self_ssh"
 			fi
@@ -564,14 +564,14 @@ process_chassis()
 				continue
 			fi
 			rm -f $tempfile $tempfile.2 2>/dev/null
-			/opt/opa/tools/tcl_proc chassis_sftp_cmd "sftp $user@\[${tchassis}\]" "get /firmware/$user/authorized_keys $tempfile" 2>&1| grep -q 'FAILED'
+			/usr/lib/opa/tools/tcl_proc chassis_sftp_cmd "sftp $user@\[${tchassis}\]" "get /firmware/$user/authorized_keys $tempfile" 2>&1| grep -q 'FAILED'
 			if [ $? -eq 0 ] || [ ! -f $tempfile ]
 			then
 				echo "Unable to configure $tchassis for password-less ssh, skipping..."
 				continue
 			fi
 			cat ~/.ssh/id_rsa.pub $tempfile | sort -u > $tempfile.2
-			/opt/opa/tools/tcl_proc chassis_sftp_cmd "sftp $user@\[${tchassis}\]" "put $tempfile.2 /firmware/$user/authorized_keys" 2>&1| grep -q 'FAILED'
+			/usr/lib/opa/tools/tcl_proc chassis_sftp_cmd "sftp $user@\[${tchassis}\]" "put $tempfile.2 /firmware/$user/authorized_keys" 2>&1| grep -q 'FAILED'
 			if [ $? -eq 0 ]
 			then
 				echo "$tchassis password-less ssh config failed, skipping..."
@@ -660,7 +660,7 @@ then
 		fi
 	done
 else
-	chassis_cmd='/opt/opa/tools/tcl_proc chassis_run_cmd'
+	chassis_cmd='/usr/lib/opa/tools/tcl_proc chassis_run_cmd'
 	for chassisname in $CHASSIS
 	do
 		if [ "$popt" = y ]

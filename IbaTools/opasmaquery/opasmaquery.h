@@ -74,6 +74,7 @@ typedef struct _argrec {
 	IB_LID				dlid;	//dest lid (-l)
 	IB_LID				flid;	// -f lid to lookup in fwd table to select block
 	boolean				bflag;	// was -b option supplied
+	boolean				eflag;  // was -e option used
 	uint16				block;	// block specified via -b
 	uint8				bcount;	// optional count specified via -b
 	uint8				drpaths;// additional SMA command line arguments

@@ -17,7 +17,7 @@ Generates a topology XML file of a cluster using topology.csv, linksum\(ulswd06.
 .PP
 
 .B NOTE:
-The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /opt/opa/samples directory.
+The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/lib/opa/samples directory.
 
 .SH Syntax
 .NL
@@ -28,9 +28,14 @@ opaxlattopology [-d \fIlevel\fR-v \fIlevel\fR-i \fIlevel\fR-c \fIchar\fR-K -?]
 .NL
 
 .TP 10
+-- help 
+.NL
+Produces full help text.
+
+.TP 10
 -d \fIlevel\fR 
 .NL
-Output detail level. Default = 0. Levels are additive.
+Specifies the output detail level. Default = 0. Levels are additive.
 
 .IP
 By default, the top level is always produced. Switch, rack, and rack group topology files can be added to the output by choosing the appropriate level. If the output at the group or rack level is specified, then group or rack names must be provided in the spreadsheet. Detailed output can be specified in any combination. A directory for each topology XML file is created hierarchically, with group directories (if specified) at the highest level, followed by rack and switch directories (if specified).
@@ -64,7 +69,7 @@ Rack group topology files.
 .TP 10
 -v \fIlevel\fR 
 .NL
-Verbose level. Range = 0 - 8. Default = 2.
+Specifies the verbose level. Range = 0 - 8. Default = 2.
 
 .RS
 .TP 10
@@ -114,12 +119,12 @@ Reserved.
 .TP 10
 -i \fIlevel\fR 
 .NL
-Output indent level. Range = 0 - 15. Default = 0.
+Specifies the output indent level. Range = 0 - 15. Default = 0.
 
 .TP 10
 -c \fIchar\fR 
 .NL
-NodeDesc concatenation character. Used when creating NodeDesc values (that is, Name to Name-2, Name to HFI-1, and so on). A space is used by default, but another character, such as underscore, can be specified.
+Specifies the NodeDesc concatenation character. Used when creating NodeDesc values (that is, Name to Name-2, Name to HFI-1, and so on). A space is used by default, but another character, such as underscore, can be specified.
 
 .TP 10
 -K 
@@ -135,9 +140,9 @@ Prints this output.
 .NL
 
 .PP
-The opaxlattopology script reads the topology.csv file from the local directory, and reads the other files from /opt/opa/samples/linksum\(ulswd06.csv and /opt/opa/samples/linksum\(ulswd24.csv. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. A sample topology.xlsx is located in the /opt/opa/samples/ directory. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
+The opaxlattopology script reads the topology.csv file from the local directory, and reads the other files from /usr/lib/opa/samples/linksum\(ulswd06.csv and /usr/lib/opa/samples/linksum\(ulswd24.csv. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. A sample topology.xlsx is located in the /usr/lib/opa/samples/ directory. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
 .PP
-The script outputs one or more topology files starting with topology.0:0.xml. The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /opt/opa/samples directory.
+The script outputs one or more topology files starting with topology.0:0.xml. The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/lib/opa/samples directory.
 .SH Example 
 .NL
 opaxlattopology
@@ -172,7 +177,7 @@ If set, it overrides default MTU on switch-to-HFI links. Default = 8192
 .NL
 
 .PP
-The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone files in the /opt/opa/samples directory. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
+The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone files in the /usr/lib/opa/samples directory. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
 
 .IP 1) 4n 
 Save each of the following from the topology.xlsx file as individual .csv files:

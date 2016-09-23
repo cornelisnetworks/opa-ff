@@ -1948,6 +1948,11 @@ static boolean get_hfi_congcont_table(argrec *args, uint8_t *mad, size_t mad_len
 
 	if (mad_len < sizeof(STL_SMP))
 		return FALSE;
+
+	if (args->bcount > 14) { // 14 blocks is approximately the maximum number of blocks per MAD
+		fprintf(stderr, "get_hfi_congcont_table failed: Requested number of blocks for this query is too large. Maximum of 14 blocks.\n");
+		return FALSE;
+	}
 	
 	if (args->bflag) amod = (args->bcount<<24 | (args->block & 0xff));
 

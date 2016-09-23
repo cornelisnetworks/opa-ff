@@ -1,2 +1,0 @@
-0x0002c9020020e004;bender HFI-1;More details about node
-0x0002c9020025a678;mindy2 HFI-1;Node details

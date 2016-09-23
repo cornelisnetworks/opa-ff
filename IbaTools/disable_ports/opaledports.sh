@@ -37,9 +37,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa/tools/ff_funcs
 
 #Temporary lidmap setup
 lidmap="$(mktemp --tmpdir lidmapXXXXXX)"
@@ -55,8 +55,9 @@ Usage_full()
 	echo "       opaledports --help" >&2
 	echo  >&2
 	echo "   --help - produce full help text" >&2
-	echo "   -h hfi - hfi to send via, default is 1st hfi" >&2
-	echo "   -p port - port to send via, default is 1st active port" >&2
+	echo "   -h hfi - hfi, numbered 1..n, 0= -p port will be a system wide port num" >&2
+	echo "            (default is 0)" >&2 
+	echo "   -p port - port, numbered 1..n, 0=1st active (default is 1st active)" >&2
 	echo "   -s - Affect source side (first node) of link only." >&2
 	echo "   -d - Affect dest side (second node) of link only." >&2
 	echo "   -C - This option clears beaconing LED on all ports.">&2
@@ -85,8 +86,9 @@ Usage()
 	echo "       opaledports --help" >&2
 	echo  >&2
 	echo "   --help - produce full help text" >&2
-	echo "   -h hfi - hfi to send via, default is 1st hfi" >&2
-	echo "   -p port - port to send via, default is 1st active port" >&2
+	echo "   -h hfi - hfi, numbered 1..n, 0= -p port will be a system wide port num" >&2
+	echo "            (default is 0)" >&2 
+	echo "   -p port - port, numbered 1..n, 0=1st active (default is 1st active)" >&2
 	echo "   -s - Affect source side (first node) of link only." >&2
 	echo "   -d - Affect dest side (second node) of link only." >&2
 	echo "   on|off - action to perform" >&2
@@ -134,7 +136,7 @@ set_led()
 	IFS=';'
 	while read nodeguid1 port1 type1 desc1 nodeguid2 port2 type2 desc2 rest
 	do
-		if [ "$DSTONLY" -eq 0 ]; then	#we are processing first port 
+		if [ "$dstonly" -eq 0 ]; then	#we are processing first port 
 			if [ $type1 = "SW" ]; then
 				lid1=$(lookup_lid $nodeguid1 0)
 			else
@@ -142,7 +144,7 @@ set_led()
 			fi
 			echo "$lid1;$nodeguid1;$port1;$type1;$desc1"
 		fi
-		if [ "$SRCONLY" -eq 0 ]; then	#we are processing second port
+		if [ "$srconly" -eq 0 ]; then	#we are processing second port
 			if [ -n "$nodeguid2" ]; then
 				if [ $type2 = "SW" ]; then	
 					lid2=$(lookup_lid $nodeguid2 0)
@@ -163,10 +165,12 @@ set_led()
 		else
 			if [ "$enable_disable" == "on" ]; then
 				echo "Turning on LED beaconing: $guid:$desc:$lid:$port"
-				/usr/sbin/opaportconfig $PORT_OPTS -l $lid -m $port ledon
+				eval /usr/sbin/opaportconfig $port_opts -l $lid -m $port ledon
+				if [ $? -ne 0 ]; then failed=$((failed+1)); fi
 			else
 				echo "Turning off LED beaconing: $guid:$desc:$lid:$port"
-				/usr/sbin/opaportconfig $PORT_OPTS -l $lid -m $port ledoff
+				eval /usr/sbin/opaportconfig $port_opts -l $lid -m $port ledoff
+				if [ $? -ne 0 ]; then failed=$((failed+1)); fi
 			fi
 			processed=$(( $processed + 1))
 		fi
@@ -189,42 +193,47 @@ then
 fi
 
 res=0
-export SRCONLY=0
-export DSTONLY=0
-export CLEARALL=0
-export HFI=0
-export PORT=1
+export srconly=0
+export dstonly=0
+export clearall=0
+export hfi_input=0
+export port_input=0
 
 while getopts sdCh:p:t: param
 do
 	case $param in
-	p)	export PORT="$OPTARG";;
-	h)	export HFI="$OPTARG";;
-	C)	export CLEARALL=1;;
-	s)	export SRCONLY=1;;
-	d)	export DSTONLY=1;;
+	p)	export port_input="$OPTARG";;
+	h)	export hfi_input="$OPTARG";;
+	C)	export clearall=1;;
+	s)	export srconly=1;;
+	d)	export dstonly=1;;
 	?)	Usage;;
 	esac
 done
 
-if [ "$PORT" -eq 1 ]; then
-	export PORT_OPTS="-h $HFI"
-else
-	export PORT_OPTS="-h $HFI -p $PORT"
+/usr/sbin/oparesolvehfiport $hfi_input $port_input &>/dev/null
+if [ $? -ne 0 -o "$hfi_input" = "" -o "$port_input" = "" ]
+then
+	echo "opaledports: Error: Invalid port specification: $hfi_input:$port_input" >&2
+	exit 1
 fi
 
-if [ "$CLEARALL" -eq 1 ]; then
-	if [ $SRCONLY -eq 1 ] || [ $DSTONLY -eq 1 ]; then
+hfi=$(/usr/sbin/oparesolvehfiport $hfi_input $port_input -o hfinum)
+port=`echo $(/usr/sbin/oparesolvehfiport $hfi_input $port_input | cut -f 2 -d ':')`
+port_opts="-h $hfi -p $port"
+
+if [ "$clearall" -eq 1 ]; then
+	if [ $srconly -eq 1 ] || [ $dstonly -eq 1 ]; then
 		echo "ERROR: -d/-s incompatible with -C option" >&2
 		Usage
 		exit 1
 	fi
-	export CLEARALL=0
-	/usr/sbin/opaextractsellinks $PORT_OPTS -F led:on  | $0 $PORT_OPTS off
+	export clearall=0
+	/usr/sbin/opaextractsellinks $port_opts -F led:on  | $0 $port_opts off
 	exit $?
 fi
 
-if [ $SRCONLY -eq 1 ] && [ $DSTONLY -eq 1 ]; then
+if [ $srconly -eq 1 ] && [ $dstonly -eq 1 ]; then
 	echo "ERROR: -d and -s options mutually exclusive.  Choose only one." >&2
 	Usage
 fi
@@ -247,7 +256,7 @@ if [ "$enable_disable" != "on" ] && [ "$enable_disable" != "off" ]; then
   Usage
 fi
   
-suffix=":$HFI:$PORT"
+suffix=":$hfi:$port"
 generate_lidmap
 
 echo "Processing fabric: ${suffix}..."

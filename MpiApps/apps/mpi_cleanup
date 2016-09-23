@@ -1,0 +1,115 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+
+# This script can help to cleanup manually launched jobs
+# the focus is on apps often run during cluster verification or
+# microbenchmarking
+set -x
+# $1 is hosts to cleanup
+#hosts=alive
+#hosts=good
+hosts=${1:-running}
+
+export FF_MAX_PARALLEL=1700
+
+pkill -f mvapich
+pkill -f run_cabletest
+pkill -9 -f run_many_pmb
+pkill -9 -f mvapich
+pkill -9 -f deviation
+pkill -9 -f mpiBench
+pkill -9 -f openmpi
+pkill -9 -f xhpl
+pkill -9 -f PMB-MPI
+pkill -9 -f IMB-MPI
+pkill -9 -f mpi_groupstress
+pkill -9 -f run_cabletest
+
+cat > $workdir/cleanup.tmp <<EOF
+pkill -f PMB-MPI
+pkill -f IMB-MPI
+pkill -9 -f PMB-MPI
+pkill -9 -f IMB-MPI
+pkill -f  openmpi
+pkill -9 -f  openmpi
+pkill -f  deviation 
+pkill -9 -f  deviation 
+pkill -f  mpiBench 
+pkill -9 -f  mpiBench 
+pkill -f mpispawn 
+pkill -9 -f mpispawn 
+pkill -f hpcc 
+pkill -9 -f hpcc 
+pkill -f xhpl
+pkill -9 -f xhpl
+pkill -f latencystress
+pkill -9 -f latencystress
+pkill -9 stream_omp
+pkill -9 nodeperf
+pkill -9 nodescript
+pkill -9 usemem
+pkill -9 -f stream_omp
+pkill -9 -f nodeperf
+pkill -9 -f nodescript
+pkill -9 -f usemem
+pkill -9 -f mpi_groupstress
+#service ipmi stop
+#service ntpd stop
+#service crond stop
+mount -all
+EOF
+
+opascpall -p -f $hosts $workdir/cleanup.tmp /root
+opacmdall -p -f $hosts 'bash cleanup.tmp'
+
+#for app in mvapich stress deviation openmpi PMB-MPI IMB-MPI
+#for app in openmpi
+#for app in PMB-MPI IMB-MPI openmpi deviation mpispawn hpcc xhpl
+#for app in PMB-MPI IMB-MPI openmpi mpispawn 
+#do
+#	echo "Killing $app..."
+#	# use an echo at end so exit status is good
+#	opacmdall -p -f $hosts "pkill -f $app; echo -n" >/dev/null 2>&1
+#	opacmdall -p -f $hosts "pkill -9 -f $app; echo -n" >/dev/null 2>&1
+#done
+sleep 10
+## use an echo at end so exit status is good
+#opacmdall -p -f $hosts 'pkill -9 -f stress; echo -n'
+#opacmdall -p -f $hosts 'pkill -9 -f deviation; echo -n'
+
+opacmdall -p -f $hosts 'bash cleanup.tmp'
+
+#opacmdall -p -f $hosts 'service ipmi stop'
+#opacmdall -p -f $hosts 'service nptd stop'
+#opacmdall -p -f $hosts 'service crond stop'
+#opacmdall -p -f $hosts 'mount -all'
+

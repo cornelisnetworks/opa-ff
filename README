@@ -13,14 +13,8 @@ OPA tools and Fast Fabric
   This will also create a opa-debuginfo RPM, which by default contains basic symbol
   information - see below on how to build with full debugging information.
 
-* To build in this directory:
-
- 1. ./ff_build.sh .
-
-
-
 * How to include debugging symbols:
 
   export BUILD_CONFIG=debug
 
-  prior to either of the aforementioned build procedures.
+  prior to the aforementioned build procedure.

@@ -22,39 +22,44 @@ opaportconfig [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\f
 .br
 [-S \fIstate\fR] [-P \fIphysstate\fR] [-s \fIspeed\fR] [-w \fIwidth\fR] [-c \fILTPCRC\fR] [-K \fImkey\fR]
 .br
-[-v] [-x] [-L \fIlid\fR] [#8217lt; \fIsub command\fR>]
+[-v] [-x] [-L \fIlid\fR] [< \fIsub command\fR>]
 .SH Options
 .NL
 
 .TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
 -l \fIlid\fR 
 .NL
-Destination LID. Default is local port.
+Specifies the destination LID. Default is local port.
 
 .TP 10
 -m \fIdest\(ulport\fR 
 .NL
-Destination port. Default is port with given LID. Used to access switch ports.
+Specifies the destination port. Default is port with given LID. Used to access switch ports.
 
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI to send through/to. Default is first HFI.
+Specifies the HFI to send through/to. Default is first HFI.
 
 .TP 10
 -p \fIport\fR 
 .NL
-Port to send through/to. Default is first port.
+Specifies the port to send through/to. Default is first port.
 
 .TP 10
 -K \fImkey\fR 
 .NL
-SM management key to access remote ports.
+Specifies the SM management key to access remote ports.
 
 .TP 10
  \fIsub command\fR 
 .NL
-One of the following choices:
+Specifies the one of the following choices:
 
 .RS
 .TP 10
@@ -122,7 +127,7 @@ Repeats to keep the port down for the specified amount of seconds.
 .TP 10
 -S \fIstate\fR 
 .NL
-New state. Default is 0.
+Specifies the new state. Default is 0.
 
 .RS
 .TP 10
@@ -172,7 +177,7 @@ Active.
 .TP 10
 -P \fIphysstate\fR 
 .NL
-New physical state. Default is 0.
+Specifies the new physical state. Default is 0.
 
 .TP 10
 .BR
@@ -221,7 +226,7 @@ Phy-Test. Current physstate must be disabled.
 .TP 10
 -s \fIspeed\fR 
 .NL
-New link speeds enabled. Default is 0. To enable multiple speeds, use the sum of the desired speeds.
+Specifies the new link speeds enabled. Default is 0. To enable multiple speeds, use the sum of the desired speeds.
 
 .RS
 .TP 10
@@ -244,7 +249,7 @@ No-op.
 .TP 10
 -w \fIwidth\fR 
 .NL
-New link widths enabled. Default is 0. To enable multiple widths, use sum of desired widths.
+Specifies the new link widths enabled. Default is 0. To enable multiple widths, use sum of desired widths.
 
 .RS
 .TP 10
@@ -294,7 +299,9 @@ No-op.
 .TP 10
 -c \fILTPCRC\fR 
 .NL
-New LTP CRCs enabled. Default is 0. To enable multiple LTP CRCs, use sum of desired LTP CRCs.
+Specifies the new LTP CRCs enabled. Default is 0.
+.br
+To enable multiple LTP CRCs, use sum of desired LTP CRCs.
 
 .RS
 .TP 10
@@ -348,22 +355,32 @@ No-op.
 .TP 10
 -h 0 
 .NL
-First port in system (default).
+First active port in system (default).
+
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
 
 .TP 10
 -h \fIx\fR 
 .NL
-First port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p  \fIy\fR  
+-h \fIx\fR \fI\fR-p 0 
 .NL
-Port  \fIy\fR within system.
+First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR#8217#160;-p \fIy\fR 
+-h 0 -p \fIy\fR 
 .NL
-HFI  \fIx\fR, port  \fIy\fR.
+Port \fIy\fR within system (no matter which ports are active).
+
+.TP 10
+-h \fIx\fR \fI\fR-p \fIy\fR 
+.NL
+HFI \fIx\fR, port \fIy\fR.
 
 .NL
 
@@ -378,7 +395,7 @@ Verbose output. Additional invocations turn on debugging, openib debugging, and 
 .TP 10
 -z 
 .NL
-Does not get port info first, clears most port attributes.
+Does not get port information first; clears most port attributes.
 
 .TP 10
 -L \fIlid\fR 

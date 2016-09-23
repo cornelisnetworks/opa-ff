@@ -52,12 +52,13 @@ PCI_MINREADREQ=512          # expected value for PCI min read req size
 PCI_MAXREADREQ=4096         # expected value for PCI max read req size
 PCI_SPEED="8GT/s"           # expected value for PCI speed on Intel WFR HFI
 PCI_WIDTH="x16"             # expected value for PCI width on Intel WFR HFI
-MPI_APPS=/opt/opa/src/mpi_apps/ # where to find mpi_apps for HPL test
+MPI_APPS=/usr/lib/opa/src/mpi_apps/ # where to find mpi_apps for HPL test
 MIN_FLOPS="115"             # minimum flops expected from HPL test
 IPOIB_IF="ib0"              # IPoIB interface to check
 IPOIB_MTU=65520             # IPoIB required MTU
 outputdir=/root             # default outputdir is root -d $DIR overrides
-
+CPU_DRIVER="intel_pstate"	# power scaling driver for CPU
+CPU_GOVERNOR="performance"  # scaling governor for CPU
 
 # If desired, single node HPL can be run, using the parameters defined below.
 #
@@ -94,7 +95,7 @@ HPL_PRESSURE=0.3
 
 # can adjust default list of tests below
 #TESTS="pcicfg pcispeed initscripts irqbalance hfi_pkt memsize cpu_consist cpu cstates turbo hton htoff ipoib hpl"
-TESTS="pcicfg pcispeed initscripts memsize cpu hfi_pkt hton ipoib irqbalance turbo cstates vtd"
+TESTS="pcicfg pcispeed initscripts memsize cpu hfi_pkt hton ipoib irqbalance turbo cstates vtd srp"
 
 
 Usage()
@@ -121,21 +122,34 @@ Usage()
 	echo "  vtd - verify that Intel VT-d is disabled" >&2
 	echo "  hpl - perform a single node HPL test," >&2
 	echo "        useful to determine if all hosts perform consistently" >&2
+	echo "  pstates_on - check if Intel P-States are enabled and optimally configured" >&2
+	echo "  pstates_off - check if Intel P-States are disabled" >&2
+	echo "  driver_on - check if power scaling driver (default isintel_pstates) enabled" >&2
+	echo "				generalized version of pstates_on" >&2
+	echo "  driver_off - check if power scaling driver (default is intel_pstates)" >&2
+	echo "				 generalized version of pstates_off" >&2 
+	echo "  governor - verify proper governor enabled for CPU (default 'performance')" >&2
+	echo "  cpu_pinned - verify CPU operating at max frequency" >&2
+	echo "  cpu_unpinned - verify CPU not pinned to max operating frequency" >&2
+	echo "  pmodules_off - verify other power management modules aren't loaded" >&2
 	echo "  cpu - check if CPU parameters are configured for optimal performance" >&2
+	echo "        includes pstates_on and governor tests" >&2
 	echo "  cpu_consist - check if CPU parameters are configured for most consistant performance" >&2
+	echo "                includes pstates_off, pmodules_off, governor, and cpu_pinned tests" >&2
 	echo "  turbo - check if Intel Turbo Boost is enabled" >&2
 	echo "  cstates - check if Intel C-States are enabled and optimally configured." >&2
 	echo "  hton - verify that Hyper Threading is enabled" >&2
 	echo "  htoff - verify that Hyper Threading is disabled" >&2
 	echo "  ipoib - verify IPoIB is properly configured" >&2
 	echo "  irqbalance - verify irqbalance is running with proper configuration" >&2
+	echo "  srp - verify srp daemon is not running" >&2
 	echo "  default - run all tests selected in TESTS" >&2
 	echo >&2
 	echo "Detailed output is written to stdout and appended to" >&2
 	echo "  OUTPUTDIR/hostverify.res" >&2
 	echo "egrep 'PASS|FAIL' OUTPUTDIR/hostverify.res for a brief summary" >&2
 	echo >&2
-	echo "A Intel HFI is required for pcicfg, pcispeed and ipath_pkt tests" >&2
+	echo "A Intel HFI is required for pcicfg, pcispeed and hfi_pkt tests" >&2
 	exit 0
 }
 
@@ -156,7 +170,7 @@ do
 	case $param in
 	v) filter=cat;;
 	d) outputdir="$OPTARG";;
-	?)	Usage;;
+	?) Usage;;
 	esac
 done
 shift $((OPTIND -1))
@@ -176,7 +190,7 @@ then
 	done
 fi
 
-USEMEM=/opt/opa/tools/usemem	# where to find usemem tool
+USEMEM=/usr/lib/opa/tools/usemem	# where to find usemem tool
 if [ -n "${debug}" ]; then
 	set -x
 	set -v
@@ -244,9 +258,14 @@ test_pcicfg()
 	set +x
 	[ -s pcicfg.stderr ] && fail "Error during run of lspci: $(cat pcicfg.stderr)"
 
-
 	set -x
-	pci_id=$(grep -o -m1 "24f[01]|HFI" pcicfg.stdout)
+	pci_id=$(egrep -o -m1 "24f[01]" pcicfg.stdout)
+	if [ -z ${pci_id} ]
+	then
+		fail "Error identifying HFI's on the PCI bus"
+	fi
+	
+	
 	"${lspci}" -vvv -d 0x8086:$pci_id 2>pcicfg.stderr | tee -a pcicfg.stdout || fail "Error running lspci"
 	set +x
 
@@ -308,7 +327,12 @@ test_pcispeed()
 	[ -s pcispeed.stderr ] && fail "Error during run of lspci: $(cat pcispeed.stderr)"
 
 	set -x
-	pci_id=$(grep -o -m1 "24f[01]" pcicfg.stdout)
+	pci_id=$(egrep -o -m1 "24f[01]" pcispeed.stdout)
+	if [ -z ${pci_id} ]
+	then
+		fail "Error identifying HFI's on the PCI bus"
+	fi
+	
 	"${lspci}" -vvv -d 0x8086:$pci_id 2>pcispeed.stderr | tee -a pcispeed.stdout || fail "Error running lspci"
 	set +x
 
@@ -495,7 +519,7 @@ test_hfi_pkt()
 	set +x
 	[ -s pciinfo.stderr ] && fail "Error during run of lspci: $(cat pciinfo.stderr)"
 
-	pci_id=$(egrep -o -m1 "24f[01]|HFI" pciinfo.stdout)
+	pci_id=$(egrep -o -m1 "24f[01]" pciinfo.stdout)
 	if [ $HFI_COUNT -gt 0 ]
 	then
 		[ -z "$pci_id" ] && fail "No Intel HFI found"
@@ -535,40 +559,40 @@ test_hfi_pkt()
 		set +x
 		[ -s hfi_pkt_test.stderr ] && { fail_msg "Error during run of hfi_pkt_test: HFI $hfi: $(cat hfi_pkt_test.stderr)"; failure=1; continue; }
 
-		# Check the PCI-Express Device Status register (offset 0xA into PCI-E capability structure).
-		# Lower 4 bits used to indicate if any problems occoured on the bus PCI-E bus.
-		# Error reports range from simple retry to fatal PCI-E errors. From our perspective, any of these should indicate
+		# Check the PCI-Express Device Status register (offset 0xA into PCIe capability structure).
+		# Lower 4 bits used to indicate if any problems occoured on the bus PCIe bus.
+		# Error reports range from simple retry to fatal PCIe errors. From our perspective, any of these should indicate
 		# a problem with the card or the interface, so we declare a problem if this field is non-zero.
 		# See: PCI-Express Base Spec v 3.1, sec 7.8.5.
 
 		# First check the HFI device itself
 		set -x
-		"${setpci}" -s $pci_bus -d 0x8086:$pci_id CAP_EXP+0xa.w 2>pciiset.stderr | tee pciiset.stdout || fail "Error running setpci"
+		"${setpci}" -s $pci_bus -d 0x8086:$pci_id CAP_EXP+0xa.w 2>pciiset.stderr | tee pciiset.stdout || fail "Error running setpci for HFI device 0x8086:$pci_id"
 		set +x
-		[ -s pciiset.stderr ] && fail "Error running setpci: $(cat pciiset.stderr)"
+		[ -s pciiset.stderr ] && fail "Error running setpci for HFI device 0x8086:$pci_id: $(cat pciiset.stderr)"
 
 		result="0x"
 		result="$result$(cat pciiset.stdout)"
 		let "result&=0x000f"
-		[ "${result}" != "0" ] && { fail_msg "HFI $hfi: PCI-E bus problems detected during packet test!"; failure=1; continue; }
+		[ "${result}" != "0" ] && { fail_msg "HFI $hfi: PCIe bus problems detected during packet test!"; failure=1; continue; }
 
-		# Now let's check the PCI-E root port the HFI device is attatched to, as it may report errors on it's side independently
+		# Now let's check the PCIe root port the HFI device is attatched to, as it may report errors on it's side independently
 		# of the HFI.
 		set -x
 		pci_root_port="$(${lspci} -M 2> /dev/null | grep "$pci_bus Entered via" | cut -d' ' -f4)"
 		set +x
 
 		set -x
-		"${setpci}" -s $pci_root_port CAP_EXP+0xa.w 2>pciiset.stderr | tee pciiset.stdout || fail "Error running setpci"
+		"${setpci}" -s $pci_root_port CAP_EXP+0xa.w 2>pciiset.stderr | tee pciiset.stdout || fail "Error running setpci for PCIe root port $pci_root_port"
 		set +x
-		[ -s pciiset.stderr ] && fail "Error running setpci: $(cat pciiset.stderr)"
+		[ -s pciiset.stderr ] && fail "Error running setpci for PCIe root port $pci_root_port: $(cat pciiset.stderr)"
 
 		result="0x"
 		result="$result$(cat pciiset.stdout)"
 		let "result&=0x000f"
-		[ "${result}" != "0" ] && { fail_msg "HFI $hfi: PCI-E bus problems detected during packet test!"; failure=1; continue; }
+		[ "${result}" != "0" ] && { fail_msg "HFI $hfi: PCIe bus problems detected during packet test!"; failure=1; continue; }
 
-		pass_msg ": HFI $hfi: No PCI-E bus issues detected during buffer test"
+		pass_msg ": HFI $hfi: No PCIe bus issues detected during buffer test"
 	done
 	[ $failure -ne 0 ] && exit 1
 
@@ -601,46 +625,29 @@ test_vtd()
 	TEST="vtd"
 	echo "Checking for correct VT-D setting ..."
 	date
-	if [ -e /sys/firmware/acpi/tables/DMAR ];
+	dmar_interrupts=`grep -i DMAR /proc/interrupts|wc -l`
+	if [ -e /sys/firmware/acpi/tables/DMAR ] && [ $dmar_interrupts -ne 0 ];
 	then
-		fail "/sys/firmware/acpi/tables/DMAR file exists. VT-D should be disabled."
+		fail ": VT-D should be disabled."
 	else
-		pass ": No /sys/firmware/acpi/tables/DMAR file detected."
+		pass ": VT-D appears to be disabled."
 	fi
 }
 
 
 # Confirm CPU will not do frequency throttling or boosting. This test is good for running
-# benchmarks  or jobs that require consistancy. Such a configuration does not
+# benchmarks  or jobs that require consistency. Such a configuration does not
 # necessarily offer best CPU performance.
 test_cpu_consist()
 {
 	TEST="cpu_consist"
-	echo "CPU consistancy test ..."
+	echo "CPU consistency test ..."
 	date
-	driver=$(cpupower -c 0 frequency-info -d | tail -1)
-	if [ "${driver}" = "intel_pstate" ]
-	then
-		fail "intel_pstate enabled in kernel. Set intel_pstate=disable on kernel cmdline."
-	fi
 	
-	result=$(cpupower -c 0 frequency-info -p | tail -1)
-	gov=$(echo ${result} |cut -f 3 -d ' ')
-	if [ "${gov}" != "performance" ]
-	then
-		fail "cpupower governor is set to ${gov}. Should be 'performance'."
-	fi
-
-	lo_freq=$(echo ${result} | cut -f 1 -d ' ')
-	hi_freq=$(echo ${result} | cut -f 2 -d ' ')
-	max_freq=$(cpupower -c -0 frequency-info -l | tail -1 | cut -f 2 -d ' ')
-
-	if [ $hi_freq -ne $lo_freq ] || [ $hi_freq -ne $max_freq ]
-	then
-		fail "CPU frequency not pinned to ${max_freq} KHz. Current operating in range of ${lo_freq} - ${hi_freq} KHz."
-	fi
-
-	pass ": CPU is operating at max frequency of ${max_freq} KHz."
+	(test_pstates_off)
+	(test_pmodules_off)
+	(test_governor)	
+	(test_cpu_pinned)
 }
 
 # Confirm CPU has enabled Intel P-States, favoring performance. 
@@ -648,20 +655,163 @@ test_cpu()
 {
 	TEST="cpu"
 	echo "CPU test ..."
+		
+	(test_pstates_on)
+	(test_governor)
+}
+
+# Return whether or not P-States enabled
+function pstates_enabled()
+{
+	echo "pstates test ..."
 	date
+
 	set -x
 	driver=$(cpupower -c 0 frequency-info -d | tail -1)
-	[ "${driver}" != "intel_pstate" ] && fail "intel_pstate disabled in kernel. Load module or check kernel cmdline."
-
-	result=$(cpupower -c 0 frequency-info -p | tail -1)
-	gov=$(echo ${result} |cut -f 3 -d ' ')
-	if [ "${gov}" != "performance" ]
-	then
-		fail "cpupower governor is set to ${gov}. Should be 'performance'."
-	fi
 	set +x
 
-	pass ": CPU is operating with recommended P-State and TurboStep configuration."
+	return $([ "${driver}" = "intel_pstate" ])
+}
+
+
+# Confirm CPU has enabled P-States, favoring performance.
+test_pstates_on()
+{
+	TEST="pstates_on"
+	(pstates_enabled) || fail "intel_pstate disabled in kernel. Load module or check kernel cmdline."
+	pass ": CPU is operating with recommended P-State configuration"
+}
+
+# Confirm CPU has disabled P-States
+test_pstates_off()
+{
+	TEST="pstates_off"
+	(pstates_enabled) && fail "intel_pstate enabled in kernel. Set intel_pstate=disable on kernel cmdline."
+	pass ": CPU is operating with recommended P-State configuration"
+}
+
+
+# Return whether or not default driver loaded
+function driver_loaded()
+{
+	echo "CPU default driver(${CPU_DRIVER}) test ..."
+	date
+
+	set -x
+	driver=$(cpupower -c 0 frequency-info -d | tail -1)
+	set +x
+
+	return $([ "${driver}" = ${CPU_DRIVER} ])
+}
+
+# Confirm desired CPU Driver loaded
+test_driver_on()
+{
+	TEST="driver_on"
+	driver_loaded || fail "CPU driver not set to ${CPU_DRIVER}."
+	pass ": CPU is operating with recommend ${CPU_DRIVER} configuration"
+}
+
+# Confirm CPU Driver not loaded
+test_driver_off()
+{
+	TEST="driver_off"
+	driver_loaded && fail "CPU driver set to ${CPU_DRIVER}."
+	pass ": CPU is operating with recommended ${CPU_DRIVER} configuration"
+}
+
+# Confirm CPU has no other power management module besides the desired loaded
+test_pmodules_off()
+{
+	TEST="pmodules_off"
+	echo "power management modules off test ..."
+	date
+
+	set -x
+	mod_dir=/lib/modules/$(uname -r)/kernel/drivers/cpufreq/ 
+	if [ -e ${mod_dir} ]
+	then 
+		modules=$(ls ${mod_dir} | egrep *.ko | while read line; do basename ${line} .ko; done)
+	fi
+	
+	ldmodules=
+	for mod in ${modules}
+	do 
+		tmp=$(lsmod | grep ${mod})
+		[ -n "${tmp}" ] && [ ${mod} != ${CPU_DRIVER} ] && ldmodules=${mod}' '${ldmodules} 
+	done
+
+	if [ -n "${ldmodules}" ]
+	then
+		fail "${ldmodules}loaded in kernel."
+	fi
+
+	# check if pstates on if it is not the desired driver
+	[ ${CPU_DRIVER} != "intel_pstate" ] && pstates_enabled && fail "intel_pstates enabled in kernel."
+
+	pass ": No other power management kernel modules loaded."
+	set +x
+}
+
+# Confirm CPU governor is set properly
+test_governor()
+{
+	TEST="governor"
+	echo "governor test ..."
+	date
+	
+	set -x
+	result=$(cpupower -c 0 frequency-info -p | tail -1)
+	gov=$(echo ${result} | cut -f 3 -d ' ')
+	if [ "${gov}" != ${CPU_GOVERNOR} ]
+	then
+		fail "cpupower governor is set to ${gov}. Should be ${CPU_GOVERNOR}."
+	fi
+	pass ": CPU governor set to ${CPU_GOVERNOR}"
+	set +x
+}
+
+
+# Return whether or not CPU frequency pinned
+lo_freq=
+hi_freq=
+max_freq=
+function cpu_pinned()
+{
+	echo "CPU frequency test"
+	date
+
+	set -x
+	value=$1
+	result=$(cpupower -c 0 frequency-info -p | tail -1)
+	lo_freq=$(echo ${result} | cut -f 1 -d ' ')
+	hi_freq=$(echo ${result} | cut -f 2 -d ' ')
+	max_freq=$(cpupower -c -0 frequency-info -l | tail -1 | cut -f 2 -d ' ')
+
+	set +x
+	
+	if [ "$1" = "max" ]
+	then
+		return $([ $hi_freq -eq $lo_freq ] && [ $hi_freq -eq $max_freq ])
+	else
+		return $([ $hi_freq -eq $lo_freq ])
+	fi
+}
+
+# Confirm CPU operating at max frequency
+test_cpu_pinned()
+{
+	TEST="cpu_pinned"
+	cpu_pinned "max" || fail "CPU frequency not pinned to ${max_freq} KHz. Current operating in range of ${lo_freq} - ${hi_freq} KHz."
+	pass ": CPU is operating at max frequency of ${max_freq} KHz."
+}
+
+# Confirm CPU not pinned to specific frequency
+test_cpu_unpinned()
+{
+	TEST="cpu_unpinned"
+	cpu_pinned && fail "CPU operating frequency pinned to ${hi_freq} KHz."
+	pass ": CPU operating frequency not pinned. Current operating in range of ${lo_freq} - ${hi_freq} KHz."
 }
 
 test_cstates()
@@ -720,7 +870,7 @@ test_hton()
 test_htoff()
 {
 	TEST="htoff"
-	check_ht && fail "HypterThreading is enabled"
+	check_ht && fail "HyperThreading is enabled"
 	pass ": Hyperthreading is disabled"
 }
 
@@ -782,6 +932,24 @@ test_hpl()
 	pass ": $flops Flops"
 }
 
+test_srp()
+{
+        TEST="srp"
+        echo "srp daemon..."
+        date
+
+        set -x
+
+        pid=$(pgrep srp_daemon)
+        [ -n "$pid" ] && fail "SRP process is running"
+
+	autostart=$(lsmod | grep ib_srp)
+	[ -n "$autostart" ] && fail "SRP service is configured to start at boot."
+
+        set +x
+
+        pass
+}
 
 
 

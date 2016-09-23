@@ -36,7 +36,7 @@
 ## tcl procedures to support testing:
 ## =============================================
 
-proc test_case_ping1 { host desthosts ulp suffix mtu } {
+proc test_case_ping1 { host desthosts ulp suffix mtu { punchlist 0 } } {
 ##
 ## test_case_ping1
 ## -------------------
@@ -44,7 +44,7 @@ proc test_case_ping1 { host desthosts ulp suffix mtu } {
 ## from host to each of desthosts
 ##
 ## Usage:
-##	test_cases_ping1 host desthosts ulp suffix mtu
+##	test_cases_ping1 host desthosts ulp suffix mtu [punchlist]
 ## Arguments:
 ##	host - host to initiate ping from
 ##	desthosts - list of hosts to send to
@@ -53,6 +53,7 @@ proc test_case_ping1 { host desthosts ulp suffix mtu } {
 ##			or $env(CFG_INIC_SUFFIX) or "")
 ##			Only used for integration tests, when used by FastFabric, set to ""
 ##	mtu - MTU for network
+##  punchlist - should punchlist be updated on failure (default=0=no)
 ## Returns:
 ##	nothing
 ## Additional Information:
@@ -70,18 +71,21 @@ proc test_case_ping1 { host desthosts ulp suffix mtu } {
 to $desthosts
 File: TestTools/network.exp" case_setup case_cleanup {
 		upvar host host
+		upvar ulp ulp
 		upvar suffix suffix
 		upvar ping_size ping_size
 		upvar desthosts desthosts
+		upvar punchlist punchlist
 
 		target_root_sh $host
 		set target_os_type [target_get_os_type]
 
 		foreach desthost $desthosts {
 			# allow ping of self
+		  if { [ catch { set res [
 			test_item "$desthost" "$host to $desthost" "simple ping from $host to $desthost" noop noop {
 				set netdest "[ host_basename $desthost ]$suffix"
-				send_unix_cmd "/opt/opa/tools/opagetipaddrtype $netdest"
+				send_unix_cmd "/usr/lib/opa/tools/opagetipaddrtype $netdest"
 				set out [expect_any 60 {"ipv6" "ipv4" } {"Error:" "Usage:"}]
 				regexp {([ip]+)([A-Za-z0-9]+)} $out iptype
 				if { $iptype == "ipv4" } {
@@ -99,6 +103,10 @@ File: TestTools/network.exp" case_setup case_cleanup {
 				expect_any 60 { "time " "round-trip" } { "unknown" "refused" "error" "timeout" " 0 packets received" " 0 received" "nreachable" "duplicates" }
 
 				check_exit_status 60 0
+			} ] } err_str2 ] != 0  || $res != 0 } {
+				if { $punchlist } {
+					append_punchlist "$desthost" "unable to ping via $ulp"
+				}
 			}
 		}
 

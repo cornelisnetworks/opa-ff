@@ -63,6 +63,58 @@ typedef enum {
 	FORMAT_XML,
 } Format_t;
 
+// list of reports which may be selected, bitmask so can select more than one
+typedef enum {
+	REPORT_NONE					=0x0,
+	REPORT_COMP					=0x1,
+	REPORT_BRCOMP				=0x2,
+	REPORT_NODES				=0x4,
+	REPORT_BRNODES				=0x8,
+	REPORT_IOUS					=0x10,
+	REPORT_SLOWLINKS			=0x20,
+	REPORT_SLOWCONFIGLINKS		=0x40,
+	REPORT_SLOWCONNLINKS		=0x80,
+	REPORT_MISCONFIGLINKS		=0x100,
+	REPORT_MISCONNLINKS			=0x200,
+	REPORT_LINKS				=0x400,
+	REPORT_EXTLINKS				=0x800,
+	REPORT_FILINKS				=0x1000,
+	REPORT_ISLINKS				=0x2000,
+	REPORT_EXTISLINKS			=0x4000,
+	REPORT_ERRORS				=0x8000,
+	REPORT_OTHERPORTS			=0x10000,
+	REPORT_ROUTE				=0x20000,
+	REPORT_SKIP					=0x40000,
+	REPORT_SIZES				=0x80000,	// undocumented report for sizeof structures
+	REPORT_SNAPSHOT				=0x100000,
+	REPORT_VERIFYLINKS			=0x200000,
+	REPORT_VERIFYEXTLINKS		=0x400000,
+	REPORT_VERIFYFILINKS		=0x800000,
+	REPORT_VERIFYISLINKS		=0x1000000,
+	REPORT_VERIFYEXTISLINKS		=0x2000000,
+	REPORT_VERIFYFIS			=0x4000000,
+	REPORT_VERIFYSWS			=0x8000000,
+	REPORT_VERIFYSMS			=0x10000000,
+	REPORT_LIDS					=0x20000000,
+	REPORT_LINEARFDBS			=0x40000000,
+	REPORT_MCASTFDBS			=0x80000000,
+	REPORT_PORTUSAGE			=0x100000000,
+	REPORT_LIDUSAGE				=0x200000000,	// undocumented report LinearFDB LID usage
+	REPORT_VFINFO				=0x400000000,
+	REPORT_PATHUSAGE			=0x800000000,
+	REPORT_TREEPATHUSAGE		=0x1000000000ULL,
+	REPORT_VALIDATEROUTES		=0x2000000000ULL,
+	REPORT_VALIDATECREDITLOOPS	=0x4000000000ULL,
+	REPORT_BUFCTRLTABLES		=0x8000000000ULL,
+	REPORT_PORTGROUPS			=0x10000000000ULL,
+	REPORT_VERIFYPGS			=0x20000000000ULL,
+	REPORT_VFMEMBER				=0x40000000000ULL,
+	REPORT_QUARANTINE_NODES		=0x80000000000ULL,
+	REPORT_TOPOLOGY				=0x100000000000ULL,
+	REPORT_MCGROUPS				=0x200000000000ULL,
+	REPORT_VALIDATEVLCREDITLOOPS		=0x400000000000ULL,
+	REPORT_VALIDATEVLROUTES			=0x800000000000ULL,
+} report_t;
 
 extern char *g_name_marker;					// what to output when g_noname set
 extern uint8			g_verbose;
@@ -138,7 +190,7 @@ extern void ShowExpectedSMBriefSummary(ExpectedSM *esmp,
 extern void ShowPointFocus(Point* focus, Format_t format, int indent, int detail);
 
 // Verify ports in fabric against specified topology
-extern void ShowVerifyLinksReport(Point *focus, boolean extOnly, Format_t format, int indent, int detail);
+extern void ShowVerifyLinksReport(Point *focus, report_t report, Format_t format, int indent, int detail);
 
 // Verify nodes in fabric against specified topology
 extern void ShowVerifyNodesReport(Point *focus, uint8 NodeType, Format_t format, int indent, int detail);

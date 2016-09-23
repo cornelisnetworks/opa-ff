@@ -51,6 +51,7 @@ extern "C" {
 #include "fe_pa.h"
 #include "fe_ssl.h"
 
+#include "stl_print.h"
 #include "iba/ipublic.h"
 #include "ibprint.h"
 
@@ -68,8 +69,7 @@ extern "C" {
 
 /* FE login related macro definitions */
 #define DEFAULT_HOST            "127.0.0.1" /* localhost */
-#define VALID_HOST              g_ipAdr
-#define VALID_PORT              3245
+#define DEFAULT_PORT			3245
 
 /* Request manager types */
 #define Q_UNDEFINED_QUERY 		-1
@@ -160,6 +160,9 @@ uint32_t g_userCntrsFlag = 0;
 uint32_t g_selectFlag = 0;
 uint64_t g_imageNumber = 0;
 int g_imageOffset = 0;
+uint32_t g_imageTime = 0;
+uint32_t g_beginTime = 0;
+uint32_t g_endTime = 0;
 uint64_t g_moveImageNumber = 0;
 int g_moveImageOffset = 0;
 int g_focus = 0;
@@ -173,6 +176,9 @@ uint32_t g_gotPort = 0;
 uint32_t g_gotSelect	= 0;
 uint32_t g_gotImgNum	= 0;
 uint32_t g_gotImgOff	= 0;
+uint32_t g_gotImgTime	= 0;
+uint32_t g_gotBegTime	= 0;
+uint32_t g_gotEndTime	= 0;
 uint32_t g_gotMoveImgNum	= 0;
 uint32_t g_gotMoveImgOff	= 0;
 uint32_t g_gotFocus = 0;
@@ -185,7 +191,8 @@ void *g_SDHandle = NULL;
 char* g_sslParmsFile = "/etc/sysconfig/opa/opaff.xml";
 sslParametersData_t g_sslParmsData;
 
-static char g_ipAdr[16] = {DEFAULT_HOST};
+static char g_ipAdr[48] = {DEFAULT_HOST};
+static uint16 g_port = DEFAULT_PORT;
 
 static void *sslParmsXmlParserStart(IXmlParserState_t *state, void *parent, const char **attr);
 static void sslParmsXmlParserEnd(IXmlParserState_t *state, const IXML_FIELD *field, void *object, void *parent, XML_Char *content, unsigned len, boolean valid);
@@ -242,10 +249,13 @@ struct option options[] = {
 		{ "groupName", required_argument, NULL, 'g' },
 		{ "portNumber", required_argument, NULL, 'N' },
 		{ "delta", required_argument, NULL, 'f' },
+		{ "begin", required_argument, NULL, 'j'},
+		{ "end", required_argument, NULL, 'q'},
 		{ "userCntrs", no_argument, NULL, 'U' },
 		{ "select", required_argument, NULL, 'e' },
 		{ "imgNum", required_argument, NULL, 'b' },
 		{ "imgOff", required_argument, NULL, 'O' },
+		{ "imgTime", required_argument, NULL, 'y'},
 		{ "moveImgNum", required_argument, NULL, 'F' },
 		{ "moveImgOff", required_argument, NULL, 'M' },
 		{ "focus", required_argument, NULL, 'c' },
@@ -280,7 +290,10 @@ void Usage(void)
 	fprintf(stderr, "    --help                    - produce this help text\n");
 	fprintf(stderr, "    -v/--verbose              - verbose output\n");
 	fprintf(stderr, "    -a/--ipAdr                - IP address of node running the FE\n");
+	fprintf(stderr, "                              Supports IPv4 and IPv6 addresses with port number\n");
+	fprintf(stderr, "                                e.g. 127.0.0.1:3245 or [::1]:3245\n");
 	fprintf(stderr, "    -h/--hostName             - host name of node running the FE\n");
+	fprintf(stderr, "                              Supports port number, e.g. localhost:3245\n");
 	fprintf(stderr, "    -o/--output               - output type\n");
 	fprintf(stderr, "    -E/--feEsm                - ESM FE\n");
 	fprintf(stderr, "    -T/--sslParmsFile         - SSL/TLS parameters XML file\n");
@@ -311,6 +324,15 @@ void Usage(void)
 	fprintf(stderr, "    -l/--lid                  - lid of node for portCounters query\n");
 	fprintf(stderr, "    -N/--portNumber           - port number for portCounters query\n");
 	fprintf(stderr, "    -f/--delta                - delta flag for portCounters query - 0 or 1\n");
+	fprintf(stderr, "    -j/--begin date_time      - obtain portCounters over interval\n");
+	fprintf(stderr, "                                beginning at date_time.\n");
+	fprintf(stderr, "    -q/--end date_time        - obtain portCounters over interval\n");
+	fprintf(stderr, "                                ending at date_time.\n");
+	fprintf(stderr, "                                For both -j and -q, date_time may be a time\n");
+	fprintf(stderr, "                                entered as HH:MM[:SS] or date as mm/dd/YYYY,\n");
+	fprintf(stderr, "                                dd.mm.YYYY, YYYY-mm-dd or date followed by time\n");
+	fprintf(stderr, "                                e.g. \"2016-07-04 14:40\". Relative times are\n");
+	fprintf(stderr, "                                taken as \"x [second|minute|hour|day](s) ago.\"\n");
 	fprintf(stderr, "    -U/--userCntrs            - user controlled counters flag for portCounters\n");
 	fprintf(stderr, "                                query\n");
 	fprintf(stderr, "    -e/--select               - 32-bit select flag for clearing port counters\n");
@@ -362,6 +384,11 @@ void Usage(void)
 	fprintf(stderr, "                                groupInfo, groupConfig, portCounters (delta)\n");
 	fprintf(stderr, "    -O/--imgOff               - image offset - may be used with groupInfo,\n");
 	fprintf(stderr, "                                groupConfig, portCounters (delta)\n");
+	fprintf(stderr, "    -y/--imgTime              - image time - may be used with imageinfo, groupInfo,\n");
+	fprintf(stderr, "                                groupInfo, groupConfig, freezeImage, focusPorts,\n");
+	fprintf(stderr, "                                vfInfo, vfConfig, and vfFocusPorts. Will return\n");
+	fprintf(stderr, "                                closest image within image interval if possible.\n");
+	fprintf(stderr, "                                See --begin/--end above for format.\n");
 	fprintf(stderr, "    -F/--moveImgNum           - 64-bit image number - used with moveFreeze to\n");
 	fprintf(stderr, "                                move a freeze image\n");
 	fprintf(stderr, "    -M/--moveImgOff           - image offset - may be used with moveFreeze to\n");
@@ -843,7 +870,25 @@ int fe_getSAOutputTypeFromQueryType(int queryType)
 
 FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connection)
 {
-	FSTATUS fstatus;
+	FSTATUS fstatus = FERROR;
+	STL_CLASS_PORT_INFO *portInfo;
+
+	//verify PA has necessary capabilities
+	if ((portInfo = fe_GetClassPortInfo(connection)) == NULL){
+		fprintf(stderr, "%s: failed to determine PA capabilities\n", APP_NAME);
+		return fstatus;
+	}
+	STL_PA_CLASS_PORT_INFO_CAPABILITY_MASK paCap;
+	memcpy(&paCap, &portInfo->CapMask, sizeof(STL_PA_CLASS_PORT_INFO_CAPABILITY_MASK));
+
+	//if trying to query by time, check if feature available
+	if (g_imageTime || g_beginTime || g_endTime){
+			if (!(paCap.s.IsAbsTimeQuerySupported)){
+				fprintf(stderr, "PA does not support time queries\n");
+				MemoryDeallocate(portInfo);
+				return fstatus;
+			}
+	}
 
 	switch (queryType)
 	{
@@ -855,21 +900,21 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 			break;
 
 		case Q_PA_GETGROUPINFO:
-			fstatus = fe_GetGroupInfo(connection, g_groupName, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetGroupInfo(connection, g_groupName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get group info\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETGROUPCONFIG:
-			fstatus = fe_GetGroupConfig(connection, g_groupName, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetGroupConfig(connection, g_groupName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get group configuration\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETPORTCOUNTERS:
-			fstatus = fe_GetPortCounters(connection, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetPortCounters(connection, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_imageNumber, g_imageOffset, g_beginTime, g_endTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get port counters\n", APP_NAME);
 			}
@@ -897,7 +942,7 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 			break;
 
 		case Q_PA_FREEZEIMAGE:
-			fstatus = fe_FreezeImage(connection, g_imageNumber, g_imageOffset);
+			fstatus = fe_FreezeImage(connection, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to freeze image\n", APP_NAME);
 			}
@@ -925,24 +970,21 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 			break;
 
 		case Q_PA_GETFOCUSPORTS:
-			fstatus = fe_GetFocusPorts(connection, g_groupName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetFocusPorts(connection, g_groupName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get focus ports\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETIMAGECONFIG:
-			fstatus = fe_GetImageInfo(connection, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetImageInfo(connection, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get image info\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_CLASSPORTINFO:
-			fstatus = fe_GetClassPortInfo(connection);
-			if (fstatus != FSUCCESS) {
-				fprintf(stderr, "%s: failed to get class port info\n", APP_NAME);
-			}
+			PrintStlClassPortInfo(&g_dest, 0, portInfo, MCLASS_VFI_PM);
 			break;
 
 		case Q_PA_GETVFLIST:
@@ -953,21 +995,21 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 			break;
 
 		case Q_PA_GETVFINFO:
-			fstatus = fe_GetVFInfo(connection, g_vfName, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetVFInfo(connection, g_vfName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get VF info\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETVFCONFIG:
-			fstatus = fe_GetVFConfig(connection, g_vfName, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetVFConfig(connection, g_vfName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get vf configuration\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETVFPORTCOUNTERS:
-			fstatus = fe_GetVFPortCounters(connection, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_vfName, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetVFPortCounters(connection, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_vfName, g_imageNumber, g_imageOffset, g_beginTime, g_endTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get vf port counters\n", APP_NAME);
 			}
@@ -981,7 +1023,7 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 			break;
 
 		case Q_PA_GETVFFOCUSPORTS:
-			fstatus = fe_GetVFFocusPorts(connection, g_vfName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset);
+			fstatus = fe_GetVFFocusPorts(connection, g_vfName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get VF focus ports\n", APP_NAME);
 			}
@@ -992,7 +1034,7 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 			fstatus = FERROR;
 			break;
 	}
-
+	MemoryDeallocate(portInfo);
 	return fstatus;
 }
 
@@ -1031,8 +1073,8 @@ FSTATUS fe_processQuery(int queryType, PQUERY saQuery)
 	int queryManager = fe_getManagerFromQueryType(queryType); /* The manager this request goes to */
 	struct net_connection *connection = NULL; /* Our connection to the FE */
 	struct login_attr attr; /* Login information */
-	attr.host = VALID_HOST;
-	attr.port = VALID_PORT;
+	attr.host = g_ipAdr;
+	attr.port = g_port;
 
 	/* Connect to the FE */
 	if(fe_oob_connect(&attr, &connection) != FSUCCESS)
@@ -1074,6 +1116,7 @@ int main (int argc, char *argv[])
 {
     FSTATUS fstatus = FERROR;
     int c, index;
+	char *tmp;
 	char outputType[64];
 	int queryType = 0;
 	uint32_t temp32;
@@ -1087,7 +1130,7 @@ int main (int argc, char *argv[])
 
 
     /* Process command line arguments */
-	while (-1 != (c = getopt_long(argc, argv, "va:h:o:l:Ik:i:S:L:t:s:n:p:u:m:d:P:G:B:A:g:N:f:Ue:c:w:r:b:O:F:M:x:V:T:E", options, &index))) {
+	while (-1 != (c = getopt_long(argc, argv, "va:h:o:l:Ik:i:S:L:t:s:n:p:u:m:d:P:G:B:A:g:N:f:Ue:c:w:r:b:O:F:M:x:V:T:Ej:q:y:", options, &index))) {
         switch (c) {
 		/* (General) Verbose flag */
         case '$':
@@ -1101,13 +1144,39 @@ int main (int argc, char *argv[])
         case 'a':
             memset(g_ipAdr, 0, sizeof(g_ipAdr));
             memcpy(g_ipAdr, optarg, min(strlen(optarg),sizeof(g_ipAdr)-1));
+			if (strchr(g_ipAdr, ':') != strrchr(g_ipAdr, ':')) {
+				//IPv6
+				if (strchr(optarg, '[') && strrchr(optarg, ']')){
+					//IPv6 in brackets
+					tmp = strchr(optarg, '[');
+					++tmp;
+					snprintf(g_ipAdr, sizeof(g_ipAdr), "%s", tmp);
+					tmp = strchr(g_ipAdr, ']');
+					if (tmp != NULL)
+						*tmp = 0;
+					if ((tmp = strrchr(optarg, ':')) > strrchr(optarg, ']')) {
+						//IPv6 in brackets w/ port
+						g_port = atoi(++tmp);
+					}
+				}
+			} else if ((tmp = strchr(g_ipAdr, ':')) != NULL) {
+				//IPv4 w/ port
+				*tmp = 0; //Null terminate at the port number
+				g_port = atoi(++tmp);
+			}
             break;
 
 		/* (General) Hostname */
         case 'h':
             {
-                struct hostent * hp = gethostbyname(optarg);
+                struct hostent * hp;
                 struct in_addr * sin_addr;
+
+				if ((tmp = strchr(optarg, ':')) != NULL) {
+					*tmp = 0; //Null terminate at the port number
+					g_port = atoi(++tmp);
+				}
+				hp = gethostbyname(optarg);
 
                 if (hp == NULL) {
                     fprintf(stderr, "%s: Unknown host\n", APP_NAME);
@@ -1391,6 +1460,24 @@ int main (int argc, char *argv[])
             }
             break;
 
+		/* (PA) Begin time */
+        case 'j':
+            if (FSUCCESS != StringToDateTime(&g_beginTime, optarg)) {
+                fprintf(stderr, "%s: Invalid Date/Time %s\n", APP_NAME, optarg);
+                Usage();
+            }
+			g_gotBegTime = TRUE;
+            break;
+
+		/* (PA) End time */
+        case 'q':
+            if (FSUCCESS != StringToDateTime(&g_endTime, optarg)) {
+                fprintf(stderr, "%s: Invalid Date/Time %s\n", APP_NAME, optarg);
+                Usage();
+            }
+			g_gotEndTime = TRUE;
+            break;
+
 		/* (PA) User Counters flag */
         case 'U':
             g_userCntrsFlag = 1;
@@ -1404,7 +1491,6 @@ int main (int argc, char *argv[])
             }
             g_gotSelect = TRUE;
             break;
-
 
 		/* (PA) Image number */
         case 'b':
@@ -1422,6 +1508,15 @@ int main (int argc, char *argv[])
                 Usage();
             }
             g_gotImgOff = TRUE;
+            break;
+
+		/* (PA) Image time */
+        case 'y':
+            if (FSUCCESS != StringToDateTime(&g_imageTime, optarg)) {
+                fprintf(stderr, "%s: Invalid Date/Time %s\n", APP_NAME, optarg);
+                Usage();
+            }
+			g_gotImgTime = TRUE;
             break;
 
 		/* (PA) Move image number */
@@ -1537,11 +1632,16 @@ int main (int argc, char *argv[])
 		Usage();
 	}
 
-    if (((queryType == Q_PA_FREEZEIMAGE) || (queryType == Q_PA_RELEASEIMAGE) || (queryType == Q_PA_RENEWIMAGE) || (queryType == Q_PA_MOVEFREEZE))   &&
+    if (((queryType == Q_PA_RELEASEIMAGE) || (queryType == Q_PA_RENEWIMAGE) || (queryType == Q_PA_MOVEFREEZE))   &&
         (!g_gotImgNum)) {
-        fprintf(stderr, "%s: Must provide an imgNum with freezeImage/releaseImage/renewImage/moveFreeze\n", APP_NAME);
+        fprintf(stderr, "%s: Must provide an imgNum with releaseImage/renewImage/moveFreeze\n", APP_NAME);
         Usage();
     }
+
+	if ((queryType == Q_PA_FREEZEIMAGE) && !(g_gotImgNum || g_gotImgTime)){
+		fprintf(stderr, "%s: Must provide an imgNum or imgTime with freezeImage\n", APP_NAME);
+		Usage();
+	}
 
     if ((queryType == Q_PA_MOVEFREEZE) && !g_gotMoveImgNum) {
         fprintf(stderr, "%s: Must provide a moveImgNum with output type moveFreeze\n", APP_NAME);
@@ -1557,6 +1657,11 @@ int main (int argc, char *argv[])
         fprintf(stderr, "%s: delta value and image offset must be 0 when querying User Counters\n", APP_NAME);
         Usage();
     }
+
+	if (g_gotBegTime && g_gotEndTime && (g_beginTime > g_endTime)){
+		fprintf(stderr, "opapaquery: begin time must be before end time\n");
+		Usage();
+	}
 
 	if ((queryType == Q_PA_GETVFINFO) && (!g_gotvfName)) {
 		fprintf(stderr, "%s: Must provide a VF name with output type vfInfo\n", APP_NAME);

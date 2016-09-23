@@ -39,9 +39,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa/tools/ff_funcs
 
 tempfile="$(mktemp)"
 lidmap="$(mktemp --tmpdir lidmapXXXXXX)"
@@ -50,42 +50,43 @@ trap "rm -f $tempfile; rm -f $lidmap" EXIT
 
 Usage_full()
 {
-	echo "Usage: opaenableports [-t portsfile] [-p ports] < disabled.csv" >&2
+	echo "Usage: opaenableports [-h hfi] [-p port] < disabled.csv" >&2
 	echo "              or" >&2
 	echo "       opaenableports --help" >&2
 	echo "   --help - produce full help text" >&2
-	echo "   -t portsfile - file with list of local HFI ports used to access" >&2
-	echo "                  fabric(s) for operation, default is $CONFIG_DIR/opa/ports" >&2
-	echo "   -p ports - list of local HFI ports used to access fabric(s) for operation" >&2
-	echo "              default is 1st active port" >&2
-	echo "              This is specified as hfi:port" >&2
-	echo "                 0:0 = 1st active port in system" >&2
-	echo "                 0:y = port y within system" >&2
-	echo "                 x:0 = 1st active port on HFI x" >&2
-	echo "                 x:y = HFI x, port y" >&2
-	echo "              The first HFI in the system is 1.  The first port on an HFI is 1." >&2
+	echo "   -h hfi - hfi, numbered 1..n, 0= -p port will be a system wide port num" >&2
+	echo "            (default is 0)" >&2
+	echo "   -p port - port, numbered 1..n, 0=1st active (default is 1st active)" >&2
+	echo  >&2
+	echo "The -h and -p options permit a variety of selections:" >&2
+	echo "   -h 0       - 1st active port in system (this is the default)" >&2
+	echo "   -h 0 -p 0  - 1st active port in system" >&2
+	echo "   -h x       - 1st active port on HFI x" >&2
+	echo "   -h x -p 0  - 1st active port on HFI x" >&2
+	echo "   -h 0 -p y  - port y within system (irrespective of which ports are active)" >&2
+	echo "   -h x -p y  - HFI x, port y" >&2
 	echo  >&2
 	echo "disabled.csv is an input file listing the ports to enable." >&2
 	echo "It is of the form:" >&2
 	echo "   NodeGUID;PortNum;NodeType;NodeDesc;Ignored" >&2
 	echo "An input file such as this is generated in $CONFIG_DIR/opa/disabled*.csv" >&2
 	echo "by opadisableports." >&2
-	echo " Environment:" >&2
-	echo "   PORTS - list of ports, used in absence of -t and -p" >&2
-	echo "   PORTS_FILE - file containing list of ports, used in absence of -t and -p" >&2
 	echo "for example:" >&2
 	echo "   opaenableports < disabled.csv" >&2
 	echo "   opaenableports < $CONFIG_DIR/opa/disabled:0:0.csv" >&2
-	echo "   opaenableports -p '1:1 1:2 2:1 2:2' < disabled.csv" >&2
+	echo "   opaenableports -h 1 -p 1 < disabled.csv" >&2
 	exit 0
 }
 
 Usage()
 {
-	echo "Usage: opaenableports < disabled.csv" >&2
+	echo "Usage: opaenableports [-h hfi] [-p port] < disabled.csv" >&2
 	echo "              or" >&2
 	echo "       opaenableports --help" >&2
 	echo "   --help - produce full help text" >&2
+	echo "   -h hfi - hfi, numbered 1..n, 0= -p port will be a system wide port num" >&2
+	echo "            (default is 0)" >&2
+	echo "   -p port - port, numbered 1..n, 0=1st active (default is 1st active)" >&2
 	echo  >&2
 	echo "disabled.csv is a file listing the ports to enable." >&2
 	echo "It is of the form:" >&2
@@ -103,11 +104,14 @@ then
 fi
 
 res=0
-while getopts p:t: param
+hfi_input=0
+port_input=0
+
+while getopts h:p: param
 do
 	case $param in
-	p)	export PORTS="$OPTARG";;
-	t)	export PORTS_FILE="$OPTARG";;
+	p)	port_input="$OPTARG";;
+	h)	hfi_input="$OPTARG";;
 	?)	Usage;;
 	esac
 done
@@ -117,15 +121,24 @@ then
 	Usage
 fi
 
-check_ports_args opaenableports
+/usr/sbin/oparesolvehfiport $hfi_input $port_input &>/dev/null
+if [ $? -ne 0 -o "$hfi_input" = "" -o "$port_input" = "" ]
+then
+	echo "opaenableports: Error: Invalid port specification: $hfi_input:$port_input" >&2
+	exit 1
+fi
+
+hfi=$(/usr/sbin/oparesolvehfiport $hfi_input $port_input -o hfinum)
+port=`echo $(/usr/sbin/oparesolvehfiport $hfi_input $port_input | cut -f 2 -d ':')`
+port_opts="-h $hfi -p $port"
 
 lookup_lid()
 {
 	local nodeguid="$1"
 	local portnum="$2"
-	local guid port type desc lid
+	local guid dport type desc lid
 
-	grep "^$nodeguid;$portnum;" < $lidmap|while read guid port type desc lid
+	grep "^$nodeguid;$portnum;" < $lidmap|while read guid dport type desc lid
 	do
 		echo -n $lid
 	done
@@ -137,12 +150,6 @@ enable_ports()
 	enabled=0
 	failed=0
 	skipped=0
-	if [ "$port" -eq 0 ]
-	then
-		port_opts="-h $hfi"	# default port to 1st active
-	else
-		port_opts="-h $hfi -p $port"
-	fi
 	suffix=":$hfi:$port"
 
 	# generate lidmap
@@ -155,24 +162,24 @@ enable_ports()
 	fi
 
 	IFS=';'
-	while read nodeguid port type desc rest
+	while read nodeguid dport type desc rest
 	do
 		lid=$(lookup_lid $nodeguid 0)
 		if [ x"$lid" = x ]
 		then
-			echo "Skipping port: $desc:$port"
+			echo "Skipping port: $desc:$dport"
 			skipped=$(( $skipped + 1))
 		else
-			echo "Enabling port: $desc:$port"
-			eval /usr/sbin/opaportconfig $port_opts -l $lid -m $port enable
+			echo "Enabling port: $desc:$dport"
+			eval /usr/sbin/opaportconfig $port_opts -l $lid -m $dport enable
 
 			if [ $? = 0 ]
 			then
-				logger -p user.err "Enabled port: $desc:$port"
+				logger -p user.err "Enabled port: $desc:$dport"
 				if [ -e $CONFIG_DIR/opa/disabled$suffix.csv ]
 				then
 					# remove from disabled ports
-					grep -v "^$nodeguid;$port;" < $CONFIG_DIR/opa/disabled$suffix.csv > $tempfile
+					grep -v "^$nodeguid;$dport;" < $CONFIG_DIR/opa/disabled$suffix.csv > $tempfile
 					mv $tempfile $CONFIG_DIR/opa/disabled$suffix.csv
 				fi
 				enabled=$(( $enabled + 1))
@@ -191,26 +198,10 @@ enable_ports()
 	fi
 }
 
-
-for hfi_port in $PORTS
-do
-	hfi=$(expr $hfi_port : '\([0-9]*\):[0-9]*')
-	port=$(expr $hfi_port : '[0-9]*:\([0-9]*\)')
-	/usr/sbin/oparesolvehfiport $hfi $port >/dev/null
-	if [ $? -ne 0 -o "$hfi" = "" -o "$port" = "" ]
-	then
-		echo "opaenableports: Error: Invalid port specification: $hfi_port" >&2
-		res=1
-		continue
-	fi
-
-	echo "Processing fabric: $hfi:$port..."
-	echo "--------------------------------------------------------"
-	enable_ports "$hfi" "$port"
-	if [ $? -ne 0 ]
-	then
-		res=1
-	fi
-done
+enable_ports "$hfi" "$port"
+if [ $? -ne 0 ]
+then
+	res=1
+fi
 
 exit $res

@@ -16,9 +16,16 @@ opaxmlfilter
 Processes an XML file and removes all specified XML tags. The remaining tags are output and indentation can also be reformatted. opaxmlfilter is the opposite of opaxmlextract.
 .SH Syntax
 .NL
-opaxmlfilter [-t|-k] [-l] [-i \fIindent\fR] [-s \fIelement\fR] [-P \fIparam\(ulfile\fR] [ \fIinput\(ulfile\fR]
+opaxmlfilter [-t|-k] [-l] [-i \fIindent\fR] [-s \fIelement\fR] [-P \fIparam\(ulfile\fR]
+.br
+[ \fIinput\(ulfile\fR]
 .SH Options 
 .NL
+
+.TP 10
+--help 
+.NL
+Produces full help text.
 
 .TP 10
 -t 
@@ -28,7 +35,7 @@ Trims leading and trailing whitespace in tag contents.
 .TP 10
 -k 
 .NL
-In tags with purely whitespace that contain newlines, keep newlines as-is. Default is to format as an empty list.
+In tags with purely whitespace that contain newlines, keeps newlines as-is. Default is to format as an empty list.
 
 .TP 10
 -l 
@@ -43,7 +50,7 @@ Sets indentation to use per level. Default is 4.
 .TP 10
 -s \fIelement\fR 
 .NL
-Name of the XML element to suppress. Can be used multiple times (in any order).
+Specifies the name of the XML element to suppress. Can be used multiple times (in any order).
 
 .TP 10
 -P \fIparam\(ulfile\fR 
@@ -53,4 +60,4 @@ Uses input command line options (parameters) from param\(ulfile.
 .TP 10
  \fIinput\(ulfile\fR 
 .NL
-XML file to read. Default is stdin.
+Specifies the XML file to read. Default is stdin.

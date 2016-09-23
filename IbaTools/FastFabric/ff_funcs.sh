@@ -322,9 +322,9 @@ ping_host()
 	#$1 is the destination to ping
 	#return 1 if dest doesn't respond: unknown host or unreachable
 
-	if type /opt/opa/tools/opagetipaddrtype >/dev/null 2>&1
+	if type /usr/lib/opa/tools/opagetipaddrtype >/dev/null 2>&1
 	then
-		iptype=`/opt/opa/tools/opagetipaddrtype $1 2>/dev/null`
+		iptype=`/usr/lib/opa/tools/opagetipaddrtype $1 2>/dev/null`
 		if [ x"$iptype" = x ]
 		then
 			iptype='ipv4'

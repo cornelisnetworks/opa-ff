@@ -18,7 +18,7 @@ opacabletest
 Initiates or stops Cable Bit Error Rate stress tests for Intel(R) Omni-Path Host Fabric Interface (HFI)-to-switch links and/or ISLs.
 .SH Syntax
 .NL
-opacabletest [-C|-A] [-c \fIfile\fR] [-f \fIhostfile\fR] [-h \fI\[aq]hosts\[aq]\fR] [-n \fInumprocs\fR] [-t#8217#160; \fIportsfile\fR] [-p \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi| stop\(ulisl] ...
+opacabletest [-C|-A] [-c \fIfile\fR] [-f \fIhostfile\fR] [-h \fI\[aq]hosts\[aq]\fR] [-n \fInumprocs\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi| stop\(ulisl] ...
 .SH Options
 .NL
 
@@ -35,40 +35,42 @@ Clears error counters.
 .TP 10
 -A 
 .NL
-Forces clear of hardware error counters. Implies -C.
+Forces the system to clear hardware error counters. Implies -C.
 
 .TP 10
 -c \fIfile\fR 
 .NL
-Error thresholds configuration file. Default is /etc/sysconfig/opa/opamon.si.conf file. Only used if -C or -A specified.
+Specifies the error thresholds configuration file. Default is /etc/sysconfig/opa/opamon.si.conf file. Only used if -C or -A specified.
 
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts to include in HFI -to-SW test. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file with hosts to include in HFI -to-SW test. Default is /etc/sysconfig/opa/hosts file.
 
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts to include in HFI -SW test.
+Specifies the list of hosts to include in HFI -SW test.
 
 .TP 10
 -n \fInumprocs\fR 
 .NL
-Number of processes per host for HFI -SW test.
+Specifies the number of processes per host for HFI -SW test.
 
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabrics when clearing counters. Default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabrics when clearing counters. Default is /etc/sysconfig/opa/ports file.
 
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabrics for counter clear. Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+Specifies the list of local HFI ports used to access fabrics for counter clear.
 
 .IP
-Uses the format hfi:port, for example:
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 

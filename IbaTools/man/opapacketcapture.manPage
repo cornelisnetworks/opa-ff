@@ -28,49 +28,53 @@ opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR] [-t
 .NL
 
 .TP 10
--h/--help 
+--help/-h 
 .NL
 Produces full help text.
 
 .TP 10
 -o \fIoutfile\fR 
 .NL
-Output file for captured packets. Default = packetDump.pcap 
+Specifies the output file for captured packets.
+.br
+Default = packetDump.pcap 
 
 .TP 10
 -d \fIdevfile\fR 
 .NL
-Device file for capturing packets. Default = /dev/hfi1\(uldiagpkt0 
+Specifies the device file for capturing packets.
+.br
+Default = /dev/hfi1\(uldiagpkt0 
 
 .TP 10
 -f \fIfilterfile\fR 
 .NL
-File used for filtering. If absent, no filtering is done.
+Specifies the file used for filtering. If absent, no filtering is done.
 
 .TP 10
 -t \fItriggerfile\fR 
 .NL
-File used for triggering a stop capture. If absent, normal triggering is performed.
+Specifies the file used for triggering a stop capture. If absent, normal triggering is performed.
 
 .TP 10
 -l \fItriggerlag\fR 
 .NL
-Number of packets to collect after trigger condition is met, before dumping data and exiting. Default = 10.
+Specifies the number of packets to collect after trigger condition is met, before dumping data and exiting. Default = 10.
 
 .TP 10
 -a \fIalarm\fR 
 .NL
-Number of seconds for alarm trigger to dump capture and exit.
+Specifies the number of seconds for alarm trigger to dump capture and exit.
 
 .TP 10
 -p \fIpackets\fR 
 .NL
-Number of packets for alarm trigger to dump capture and exit.
+Specifies the number of packets for alarm trigger to dump capture and exit.
 
 .TP 10
 -s \fImaxblocks\fR 
 .NL
-Number of blocks to allocate for ring buffer. Value is in Millions. Default = 2 which corresponds to 128 MiB because 1 block = 64 Bytes.
+Specifies the number of blocks to allocate for ring buffer. Value is in Millions. Default = 2 which corresponds to 128 MiB because 1 block = 64 Bytes.
 
 .TP 10
 -v 

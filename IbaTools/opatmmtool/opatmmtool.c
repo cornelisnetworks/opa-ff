@@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "opatmmtool.h"
 
 tmmOps_t op = OP_TMM_FWVER;
-char file_name[FNAME_SIZE];
+char *file_name;
 int gotFile = 0;
 uint8_t hfi = 1;
 int i2cFd = 0;
@@ -85,10 +85,9 @@ FSTATUS doReboot()
 }
 
 // Search the binary find to find 'VERSION=x.x.x.x.x'
-FSTATUS getVersionFile()
+FSTATUS getVersionFile(char *version)
 {
 	unsigned char buffer[8];
-	unsigned char version[25]; // Is this a big enough buffer for version?
 	const unsigned char key[8] = {"VERSION="};
 
 	while(read(fileFd, &buffer[0], sizeof(buffer)) == sizeof(buffer))
@@ -96,14 +95,13 @@ FSTATUS getVersionFile()
 		// check to see if we have found the version string
 		if (memcmp(&buffer[0], &key[0], sizeof(buffer)) == 0) {
 			// found the version string
-			if (read(fileFd, &version[0], sizeof(version)) < 0) return FERROR;
+			if (read(fileFd, &version[0], VERSION_LEN) < 0) return FERROR;
 
 			// the buffer now contains the version - but possibly some other junk on the end as well
 			int i;
-			for (i = 0; i < (sizeof(version)-1) && (isdigit(version[i]) || version[i] == '.'); i++) ;
+			for (i = 0; i < (VERSION_LEN-1) && (isdigit(version[i]) || version[i] == '.'); i++) ;
 			version[i] = '\0';
 
-			printf("File Firmware Version=%s\n", version);
 			return FSUCCESS;
 		}
 		// keep looking, seek back -7
@@ -111,12 +109,11 @@ FSTATUS getVersionFile()
 	}
 
 	// never found the version
-	fprintf(stderr, "opatmmtool: Unable to read firmware version from file %s\n", file_name);
 	return FERROR;
 }
 
 
-FSTATUS getVersionFW(boolean silent)
+FSTATUS getVersionFW(boolean silent, char *version)
 {
 	uint8_t buffer[VERSION_LEN] = {0};
 	uint32_t *major, *minor, *maint, *patch, *build;
@@ -140,6 +137,8 @@ FSTATUS getVersionFW(boolean silent)
 	build = version_ptr;
 
 	printf("Current Firmware Version=%d.%d.%d.%d.%d\n", *major, *minor, *maint, *patch, *build);
+	if(version)
+		snprintf(version, VERSION_LEN,"%d.%d.%d.%d.%d", *major, *minor, *maint, *patch, *build);
 
 	return status;
 }
@@ -154,6 +153,7 @@ FSTATUS doFwUpdate()
 	uint32_t counter = 0;
 	int readLen = 0;
 	FSTATUS status = FSUCCESS;
+	
 
 	ret = fstat(fileFd, &fileInfo);
 	if (ret != 0) {
@@ -180,6 +180,13 @@ FSTATUS doFwUpdate()
 	if (verbose) printf("opatmmtool: Waiting for device to erase flash...\n");
 	sleep(2);
 	if (verbose) printf("opatmmtool: Transmitting firmware\n");
+
+	//file may have already been read to extract version, reset pointer to start of file. 
+	ret = lseek(fileFd, 0, SEEK_SET);
+	if (ret != 0) {
+		fprintf(stderr, "opatmmtool: Unable to seek firmware file\n");
+		return FERROR;
+	}
 
 	// Transmit firmware
 	while (counter < fwLength) {
@@ -320,7 +327,7 @@ boolean checkWritable() // 1 if the otp is fully writable (unlocked), 0 otherwis
 	return write_status;
 }
 
-static void Usage()
+static void Usage(int exitcode)
 {
 	fprintf(stderr, "Usage: opatmmtool [-v] [-h hfi] [-f file] <operation>\n");
 	fprintf(stderr, "          or\n");
@@ -339,14 +346,14 @@ static void Usage()
 //	fprintf(stderr, "    writeotp - write to the one-time programmable region, requires -f input_file\n");
 	fprintf(stderr, "    lockotp - lock the one-time programmable region\n");
 	fprintf(stderr, "    status - display the current GPIO pin status\n");
-
-	exit(2);
+	free(file_name);
+	exit(exitcode);
 }
 
 int main(int argc, char *argv[])
 {
 	const char	*opts="vh:f:";
-	static struct option longopts[] = {{"help", 0, 0, 1}, {0, 0, 0, 0}};
+	static struct option longopts[] = {{"help", 0, 0, '$'}, {0, 0, 0, 0}};
 	int opt_idx;
 	int c;
 	int ret;
@@ -355,23 +362,28 @@ int main(int argc, char *argv[])
 	// prase options and paramemters
 	while (-1 != (c = getopt_long(argc, argv, opts, &longopts[0], &opt_idx))) {
 		switch (c) {
-		case 1:
-			Usage();
+		case '$':
+			Usage(0);
 		case 'v':
 			verbose = 1;
 			break;
 		case 'h':
 			if (StringToUint8(&hfi, optarg, NULL, 0, TRUE) != FSUCCESS || hfi <= 0) {
 				fprintf(stderr, "opatmmtool: Invalid HFI Number: %s\n", optarg);
-				Usage();
+				Usage(2);
 			}
 			break;
 		case 'f':
-			strncpy(file_name, optarg, sizeof(file_name) - 1);
+			file_name = strdup(optarg);
+			if(file_name == 0) {
+				fprintf(stderr, "opatmmtool: Process Out of Memory\n");
+				free(file_name);
+				exit(2);
+			}
 			gotFile = 1;
 			break;
 		default:
-			Usage();
+			Usage(2);
 		}
 	}
 
@@ -389,8 +401,7 @@ int main(int argc, char *argv[])
 		else if (!strcmp(operation, "status")) op = OP_TMM_STATUS;
 		else {
 			fprintf(stderr, "Invalid operation: %s\n", operation);
-			Usage();
-			exit(2);
+			Usage(2);
 		}
 	}
 
@@ -401,8 +412,7 @@ int main(int argc, char *argv[])
 		 op == OP_TMM_WRITE) 
 		&& !gotFile) {
 		fprintf(stderr, "opatmmtool: Operation requires -f fwFile\n");
-		Usage();
-		exit(2);
+		Usage(2);
 	}
 
 	// open the i2c driver interface
@@ -414,8 +424,13 @@ int main(int argc, char *argv[])
 		}
 		snprintf(i2cFile, I2C_FILE_SIZE, "%s%d%s", I2C_FILE_1, --hfi, I2C_FILE_2); // the actual number is offset by one, so 1st hfi -> 0, 2nd hfi -> 1
 		i2cFd = open(i2cFile, O_RDWR);
+		int i = 0;
+		while (i2cFd < 0 && errno == EBUSY && i++ < I2C_RETRIES) {
+			sleep(1);
+			i2cFd = open(i2cFile, O_RDWR);
+		}
 		if (i2cFd < 0) {
-			fprintf(stderr, "opatmmtool: Unable to open driver interface\n");
+			fprintf(stderr, "opatmmtool: Unable to open driver interface: %s\n", strerror(errno));
 			free(i2cFile);
 			return -1;
 		}
@@ -444,7 +459,7 @@ int main(int argc, char *argv[])
 	}
 
 	// use get FW version to see if board has tmm
-	status = getVersionFW(1);
+	status = getVersionFW(1, NULL);
 	if (status != FSUCCESS && errno == EIO) {
 		fprintf(stderr, "opatmmtool: Thermal Management Microchip sensor either not installed or not responding\n");
 		return 3;
@@ -466,7 +481,7 @@ int main(int argc, char *argv[])
 
 	case OP_TMM_FWVER:
 	{
-		status = getVersionFW(0);
+		status = getVersionFW(0, NULL);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "opatmmtool: Unable to read current firmware version\n");
 			goto err_exit;
@@ -476,16 +491,29 @@ int main(int argc, char *argv[])
 
 	case OP_TMM_FILEVER:
 	{
-		status = getVersionFile();
+		char version[VERSION_LEN];
+		status = getVersionFile(version);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "opatmmtool: Unable to read version from firmware file '%s'\n", file_name);
 			goto err_exit;
+		} else {
+			printf("File Firmware Version=%s\n", version);
 		}
 		break;
 	}
 
 	case OP_TMM_UPDATE:
 	{
+		char file_version[VERSION_LEN];
+		char fw_version[VERSION_LEN];
+		status = getVersionFile(file_version);
+		if (status != FSUCCESS) {
+			fprintf(stderr, "opatmmtool: Unable to read version from firmware file '%s'\n", file_name);
+			goto err_exit;
+		} else {
+			printf("File Firmware Version=%s\n", file_version);
+		}
+
 		status = doFwUpdate();
 		if (status != FSUCCESS) {
 			fprintf(stderr, "opatmmtool: Unable to update the firmware\n");
@@ -496,13 +524,19 @@ int main(int argc, char *argv[])
 
 		sleep(5);
 		// check that update was successful by trying to get the new firmware version
-		status = getVersionFW(0);
+		status = getVersionFW(0, fw_version);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "opatmmtool: Unable to validate firmware update success\n");
 			goto err_exit;
 		}
 
-		printf("Firmware Update Complete\n");
+		if(strcmp(file_version, fw_version))
+			printf("Firmware Update Failed\n");
+		else 
+			printf("Firmware Update Completed\n");
+	
+
+
 
 		break;
 	}
@@ -581,6 +615,8 @@ int main(int argc, char *argv[])
 err_exit:
 	if (i2cFd > 0) close(i2cFd);
 	if (fileFd > 0) close(fileFd);
+
+	free(file_name);
 
 	if (status == FSUCCESS)
 		exit(0);

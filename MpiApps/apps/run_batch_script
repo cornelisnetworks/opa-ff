@@ -1,0 +1,179 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+temp1="$(mktemp)"
+temp2="$(mktemp)"
+tmpdir=$PWD/tmp
+
+trap "rm -f $temp1 $temp2; exit 1" SIGHUP SIGTERM SIGINT
+trap "rm -f $temp1 $temp2" EXIT
+
+BATCH_SIZE=${BATCH_SIZE:-18}	# now many hosts per mpi job
+MIN_BATCH_SIZE=${MIN_BATCH_SIZE:-2}	# now many hosts per mpi job
+
+# start the given run_* script as a series of small BATCH_SIZE node jobs.
+# This approach limits the impact should a few hosts
+# crash and also allows for quicker job startup.
+
+# jobs are nohup'ed so they can run for long duration in the background
+
+Usage() {
+	echo "Usage: ./run_batch_script [-e] run_script [args]" >&2
+	echo "           or" >&2
+	echo "       ./run_batch_script --help" >&2
+	echo "    -e - force an even number of hosts in final batch by skipping the last one" >&2
+  	echo "    run_script - a run_* script from this directory" >&2
+  	echo "    args - arguments for the run_script" >&2
+  	echo "           if the 1st arg is 'NP' it will be replaced with the process count" >&2
+	echo >&2
+	echo "    This will build a set of mpi_hosts.# files with no" >&2
+	echo "    more than BATCH_SIZE hosts each. If -e is specified and an odd number of" >&2
+  	echo "    hosts appear in mpi_hosts, the last one is skipped" >&2
+	echo "    Each run_script MPI job will have its output saved to a corresponding" >&2
+	echo "    ./tmp/nohup.#.out file" >&2
+	echo >&2
+	echo "    This may only used for scripts which do use MPI_HOSTS." >&2
+	echo "    To run run_cabletest use run_batch_cabletest" >&2
+	echo "Environment:" >&2
+	echo "    MPI_HOSTS - mpi_hosts file to use, default is mpi_hosts" >&2
+	echo "    BATCH_SIZE - max hosts per MPI job, default is 18, if -e must be even" >&2
+	echo "    MIN_BATCH_SIZE - min hosts per MPI job, default is 2, if -e must be even" >&2
+	echo "Examples:" >&2
+	echo "    ./run_batch_script run_deviation NP ff" >&2
+	echo "    BATCH_SIZE=2 MPI_HOSTS=good ./run_batch_script run_lat2" >&2
+	echo "    BATCH_SIZE=16 MPI_HOSTS=good ./run_batch_script run_deviation ff" >&2
+	echo "    MIN_BATCH_SIZE=16 BATCH_SIZE=16 ./run_batch_script run_hpl2 16" >&2
+	exit 2
+}
+
+if [ x"$1" = x"--help" ]
+then
+	Usage
+fi
+
+even=n
+if [ x"$1" = x"-e" ]
+then
+	even=y
+	shift
+fi
+
+if [ $# -lt 1 ]
+then
+	Usage
+fi
+script=$1
+shift
+
+if [ $(basename $script) = 'run_cabletest' ]
+then
+	echo "To execute run_cabletest use run_batch_cabletest instead" >&2
+	exit 1
+fi
+
+np=n
+if [ x"$1" = x"NP" ]
+then
+	np=y
+	shift
+fi
+
+
+export MPI_HOSTS=${MPI_HOSTS:-mpi_hosts}
+if [ ! -e $MPI_HOSTS ]
+then
+	echo "MPI_HOSTS='$MPI_HOSTS': Not Found" >&2
+	Usage
+fi
+
+if ! [ $BATCH_SIZE -gt 0 ] 2>/dev/null
+then
+	echo "Invalid BATCH_SIZE='$BATCH_SIZE': must be a number > 0" >&2
+	Usage
+fi
+if [ $even = y -a $(($BATCH_SIZE % 2)) -eq 1 ]
+then
+	echo "Invalid BATCH_SIZE='$BATCH_SIZE': must be an even number" >&2
+	Usage
+fi
+if ! [ $MIN_BATCH_SIZE -gt 0 ] 2>/dev/null
+then
+	echo "Invalid MIN_BATCH_SIZE='$MIN_BATCH_SIZE': must be a number > 0" >&2
+	Usage
+fi
+if [ $even = y -a $(($MIN_BATCH_SIZE % 2)) -eq 1 ]
+then
+	echo "Invalid MIN_BATCH_SIZE='$MIN_BATCH_SIZE': must be an even number" >&2
+	Usage
+fi
+if [ $MIN_BATCH_SIZE -gt $BATCH_SIZE ] 2>/dev/null
+then
+	echo "Invalid MIN_BATCH_SIZE='$MIN_BATCH_SIZE': must be < BATCH_SIZE of $BATCH_SIZE" >&2
+	Usage
+fi
+
+# ignore blank and comment lines in mpi_hosts
+cat $MPI_HOSTS|egrep -v '^[[:space:]]*#'|egrep -v '^[[:space:]]*$' > $temp1
+echo "Starting $script jobs using $MPI_HOSTS: $(cat $temp1|wc -l) hosts"
+echo "  Max batch size $BATCH_SIZE, Min batch size $MIN_BATCH_SIZE"
+
+#set -x
+mkdir -p $tmpdir
+loop=1
+while [ $(cat $temp1|wc -l) -ge $MIN_BATCH_SIZE ]
+do
+	head -$BATCH_SIZE $temp1 > $tmpdir/mpi_hosts.$loop
+	if [ $even = y -a $(($(cat $tmpdir/mpi_hosts.$loop|wc -l) % 2)) -eq 1 ]
+	then
+		# need an even number, drop the last one
+		echo "Skipping odd host:" `tail -1 $temp1`
+		head -$(($(cat $temp1|wc -l) - 1)) $temp1 > $tmpdir/mpi_hosts.$loop
+	fi
+	tail -n +$(($BATCH_SIZE + 1)) $temp1 > $temp2; mv $temp2 $temp1
+	NP=$(cat $tmpdir/mpi_hosts.$loop|wc -l)
+	echo "starting $script job $loop on $NP hosts"
+	[ $np = n ] && NP=	# don't insert process count
+	export MPI_HOSTS=$tmpdir/mpi_hosts.$loop
+	export LOGSUFFIX=".$loop"
+	nohup ./$script $NP "$@" > $tmpdir/nohup.$loop.out 2>&1 &
+	loop=$(($loop + 1))
+	#echo "Enter to Continue"
+	#read trash
+done
+
+if [ $(cat $temp1|wc -l) -gt 0 ]
+then
+	echo "Skipping odd hosts:" `cat $temp1`
+fi
+rm -f $temp1 $temp2
+
+echo "Started $(($loop - 1 )) MPI $script jobs"

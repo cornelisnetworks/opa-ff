@@ -28,8 +28,8 @@ Produces full help text.
 .TP 10
 --verbose/-v \fIarg\fR 
 .NL
-Specifies the logging level to perform. Range = 1 - 7.
+Specifies the Kernel logging level to perform. Range = 1 - 7.
 
 .SH Example 
 .NL
-opa\(ulosd\(uldump #8217gt;opasadb\(ulcontents
+opa\(ulosd\(uldump >opasadb\(ulcontents

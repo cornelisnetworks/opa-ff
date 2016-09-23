@@ -20,7 +20,9 @@ Encapsulates the capabilities for link analysis. Additionally, this tool include
 In addition to being able to run assorted opareport link analysis reports, and generate human-readable output, this tool additionally analyzes the results and appends a concise summary of issues found to the FF\(ulRESULT\(ulDIR/punchlist.csv file.
 .SH Syntax
 .NL
-opalinkanalysis [-U] [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR] [-X \fIsnapshot\(ulinput\fR] [-x \fIsnapshot\(ulsuffix\fR] [-c \fIfile\fR] reports ...
+opalinkanalysis [-U] [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR]
+.br
+[-X \fIsnapshot\(ulinput\fR] [-x \fIsnapshot\(ulsuffix\fR] [-c \fIfile\fR] reports ...
 .SH Options
 .NL
 
@@ -37,15 +39,17 @@ Omits unexpected devices and links in punchlist file from verify reports.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for analysis, default is /etc/sysconfig/opa/ports.
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis, default is /etc/sysconfig/opa/ports.
 
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric(s) for analysis. The default is the first active port. The first HFI in the system is 1. The first port on an HFI is 1.
+Specifies the list of local HFI ports used to access fabrics for analysis.
 
 .IP
-Uses the format hfi:port, for example:
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 
@@ -85,7 +89,7 @@ HFI  \fIx\fR, port  \fIy\fR.
 .TP 10
 -T \fItopology\(ulinput\fR 
 .NL
-Name of a topology input file to use. Any #8217#160; %P markers in this filename are replaced with the hfi:port being operated on (such as 0:0 or 1:2). Default is /etc/sysconfig/opa/topology.%P.xml. If NONE is specified, does not use any topology\(ulinput files. See
+Specifies the name of a topology input file to use. Any  %P markers in this filename are replaced with the hfi:port being operated on (such as 0:0 or 1:2). Default is /etc/sysconfig/opa/topology.%P.xml. If NONE is specified, does not use any topology\(ulinput files. See
 \fIopareport\fR
 for more information on topology\(ulinput files.
 
@@ -102,18 +106,18 @@ Creates a snapshot file per selected port. The files are created in FF\(ulRESULT
 .TP 10
 -c \fIfile\fR 
 .NL
-Error thresholds configuration file. The default is /etc/sysconfig/opa/opamon.si.conf.
+Specifies the error thresholds configuration file. The default is /etc/sysconfig/opa/opamon.si.conf.
 
 .TP 10
  \fIreports\fR 
 .NL
-The following reports are supported:
+Supports the following reports:
 .RS
 .TP 10
 
 .sp
 errors 
-Link error analysis.
+Specifies link error analysis.
 
 .RE
 
@@ -122,7 +126,7 @@ Link error analysis.
 
 .sp
 slowlinks 
-Links running slower than expected.
+Specifies links running slower than expected.
 
 .RE
 
@@ -131,7 +135,7 @@ Links running slower than expected.
 
 .sp
 misconfiglinks 
-Links configured to run slower than supported.
+Specifies links configured to run slower than supported.
 
 .RE
 
@@ -140,7 +144,7 @@ Links configured to run slower than supported.
 
 .sp
 misconnlinks 
-Links connected with mismatched speed potential.
+Specifies links connected with mismatched speed potential.
 
 .RE
 
@@ -186,6 +190,7 @@ Verifies FIs against topology input.
 .sp
 verifysws 
 Verifies switches against topology input.
+
 .RE
 
 .RS

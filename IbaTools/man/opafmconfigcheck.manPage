@@ -28,12 +28,14 @@ Produces full help text.
 .TP 10
 -s 
 .NL
-Enables strict check mode. This option points out inconsistencies or invalid settings in VF and multicast configurations.
+Enables strict check mode; validates multicast and VF settings. This option points out inconsistencies or invalid settings in VF and multicast configurations.
 
 .TP 10
 -c \fIconfig\(ulfile\fR 
 .NL
-Specifies configuration file. Default = /etc/sysconfig/opafm.xml 
+Specifies configuration file.
+.br
+Default = /etc/sysconfig/opafm.xml 
 
 .TP 10
 -v 

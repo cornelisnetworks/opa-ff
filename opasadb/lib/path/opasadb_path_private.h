@@ -77,7 +77,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // The shared table uses a "well known" name, all others have
 // unique suffixes that change with each update.
-#define SHM_TABLE_NAME "QLOGIC_SA_DSC" // In honor of Gary...
+#define SHM_TABLE_NAME "INTEL_SA_DSC"
 #define SUBNET_TABLE_NAME "_SUB_"
 #define VFAB_TABLE_NAME "_VFAB_"
 #define PORT_TABLE_NAME "_PORT_"

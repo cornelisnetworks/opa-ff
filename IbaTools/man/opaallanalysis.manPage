@@ -18,7 +18,7 @@ opaallanalysis
 opaallanalysis command performs the set of analysis specified in FF\(ulALL\(ulANALYSIS and can be specified for fabric, chassis, esm, or hostsm.
 .SH Syntax
 .NL
-opaallanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [-F#8217#160; \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-G \fIesmchassisfile\fR] [-E \fIesmchassis\fR] [-T \fItopology\(ulinput\fR]
+opaallanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-G \fIesmchassisfile\fR] [-E \fIesmchassis\fR] [-T \fItopology\(ulinput\fR]
 .SH Options
 .NL
 
@@ -29,7 +29,7 @@ Produces full help text.
 .TP 10
 -b 
 .NL
-Baseline mode. Default is compare/check mode.
+Sets the baseline mode. Default is compare/check mode.
 .TP 10
 -e 
 .NL
@@ -41,19 +41,19 @@ Saves history of failures (errors/differences).
 .TP 10
 -d \fIdir\fR 
 .NL
-Top-level directory for saving baseline and history of failed checks. Default = /var/opt/opa/analysis 
+Identifies the top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa/analysis 
 .TP 10
 -c \fIfile\fR 
 .NL
-Error thresholds configuration file. Default = /etc/sysconfig/opa/opamon.conf 
+Specifies the error thresholds configuration file. Default = /etc/sysconfig/opa/opamon.conf 
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for analysis. Default = /etc/sysconfig/opa/ports 
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default = /etc/sysconfig/opa/ports 
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric(s) for analysis. Default is the first active port. Specified as HFI:port as follows:
+Specifies the list of local HFI ports used to access fabric(s) for analysis. Default is the first active port. Specified as HFI:port as follows:
 .RS
 .TP 10
 
@@ -87,25 +87,25 @@ HFI  \fIx\fR, port  \fIy\fR.
 .RE
 
 .TP 10
--F#8217#160; \fIchassisfile\fR 
+-F \fIchassisfile\fR 
 .NL
-File with a chassis in a cluster. Default = /etc/sysconfig/opa/chassis 
+Specifies the file with a chassis in a cluster. Default = /etc/sysconfig/opa/chassis 
 .TP 10
 -H \[aq]\fIchassis\fR\[aq] 
 .NL
-List of chassis on which to execute the command.
+Specifies the list of chassis on which to execute the command.
 .TP 10
 -G \fIesmchassisfile\fR 
 .NL
-File with embedded SM chassis in the cluster. Default = /etc/sysconfig/opa/esm\(ulchassis 
+Specifies the file with embedded SM chassis in the cluster. Default = /etc/sysconfig/opa/esm\(ulchassis 
 .TP 10
 -E \fIesmchassis\fR 
 .NL
-List of embedded SM chassis to analyze.
+Specifies the list of embedded SM chassis to analyze.
 .TP 10
 -T \fItopology\(ulinput\fR 
 .NL
-Name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on, such as 0:0 or 1:2. Default = /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
+Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on, such as 0:0 or 1:2. Default = /etc/sysconfig/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
 \fIopareport\fR
 for more information.
 .SH Example 

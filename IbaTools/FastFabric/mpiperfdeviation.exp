@@ -29,7 +29,7 @@
 
 # [ICS VERSION STRING: unknown]
 
-source "/opt/opa/tools/ff_function.exp"
+source "/usr/lib/opa/tools/ff_function.exp"
 
 #=============================================================================#
 # Test Suite Description:
@@ -93,7 +93,7 @@ proc case_cleanup { failed } {
 
 test_suite "mpiperfdeviation" "mpi lat/bw deviation" "Quick tests of mpi lat/bw deviation pairs
 of hosts
-File: /opt/opa/tools/mpiperfdeviation.exp" suite_setup noop {
+File: /usr/lib/opa/tools/mpiperfdeviation.exp" suite_setup noop {
 	global env
 
 	# Global Initializations for Test Suite:

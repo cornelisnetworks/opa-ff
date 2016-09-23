@@ -17,7 +17,7 @@ Verifies basic node configuration and performance by running FF\(ulHOSTVERIFY\(u
 .PP
 
 .B NOTE:
-Prior to using opaverifyhosts, copy the sample file /opt/opa/samples/hostverify.sh to FF\(ulHOSTVERIFY\(ulDIR and edit it to appropriate configuration and performance expectations and select which tests to run by default. On the first run for a given node, use the -c option so that hostverify.sh gets copied to each node.
+Prior to using opaverifyhosts, copy the sample file /usr/lib/opa/samples/hostverify.sh to FF\(ulHOSTVERIFY\(ulDIR and edit it to set the appropriate configuration and performance expectations and select which tests to run by default. On the first run for a given node, use the -c option so that hostverify.sh gets copied to each node.
 
 .PP
 FF\(ulHOSTVERIFY\(ulDIR defines both the location of hostverify.sh and the destination of the hostverify.res output file. FF\(ulHOSTVERIFY\(ulDIR is configured in the /etc/sysconfig/opa/opafastfabric.conf file.
@@ -50,32 +50,36 @@ Copies hostverify.sh to hosts first, useful if you have edited it.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster. Default is /etc/sysconfig/opa/hosts. 
+Specifies the file with hosts in cluster.
+.br
+Default is /etc/sysconfig/opa/hosts. 
 
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts to ping.
+Specifies the list of hosts to ping.
 
 .TP 10
 -u \fIupload\(ulfile\fR 
 .NL
-Filename to upload hostverify.res to after verification to allow backup and review of the detailed results for each node. The default upload destination file is hostverify.res. If -u \[aq]\[aq] is specified, no upload occurs.
+Specifies the filename to upload hostverify.res to after verification to allow backup and review of the detailed results for each node. The default upload destination file is hostverify.res. If -u \[aq]\[aq] is specified, no upload occurs.
 
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Directory to upload result from each host to. Default is uploads.
+Specifies the directory to upload result from each host to. Default is uploads.
 
 .TP 10
 -T \fItimelimit\fR 
 .NL
-Time limit in seconds for host to complete tests. Default is 300 seconds (5 minutes).
+Specifies the time limit in seconds for host to complete tests. Default is 300 seconds (5 minutes).
 
 .TP 10
  \fItest\fR 
 .NL
-One or more specific tests to run. See /opt/opa/samples/hostverify.sh for a list of available tests.
+Specifies one or more specific tests to run. See
+.br
+/usr/lib/opa/samples/hostverify.sh for a list of available tests.
 
 .SH Examples 
 .NL

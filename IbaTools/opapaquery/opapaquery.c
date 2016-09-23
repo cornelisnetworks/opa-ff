@@ -81,6 +81,9 @@ uint32					g_userCntrsFlag		= 0;
 uint32					g_selectFlag		= 0;
 uint64					g_imageNumber		= 0;
 int32					g_imageOffset		= 0;
+uint32					g_imageTime			= 0;
+uint32					g_beginTime			= 0;
+uint32					g_endTime			= 0;
 uint64					g_moveImageNumber	= 0;
 int32					g_moveImageOffset	= 0;
 int32					g_focus				= 0;
@@ -93,6 +96,9 @@ uint32					g_gotPort			= 0;
 uint32					g_gotSelect			= 0;
 uint32					g_gotImgNum			= 0;
 uint32					g_gotImgOff			= 0;
+uint32					g_gotImgTime		= 0;
+uint32					g_gotBegTime		= 0;
+uint32					g_gotEndTime		= 0;
 uint32					g_gotMoveImgNum		= 0;
 uint32					g_gotMoveImgOff		= 0;
 uint32					g_gotFocus			= 0;
@@ -104,6 +110,7 @@ char					g_vfName[MAX_VFABRIC_NAME];
 void					*g_SDHandle			= NULL;
 PrintDest_t				g_dest;
 struct oib_port 		*g_portHandle		= NULL;
+STL_CLASS_PORT_INFO		*g_portInfo			= NULL;
 
 struct option options[] = {
 		// basic controls
@@ -117,10 +124,13 @@ struct option options[] = {
 		{ "lid", required_argument, NULL, 'l' },
 		{ "portNumber", required_argument, NULL, 'P' },
 		{ "delta", required_argument, NULL, 'd' },
+		{ "begin", required_argument, NULL, 'j'},
+		{ "end", required_argument, NULL, 'q'},
 		{ "userCntrs", no_argument, NULL, 'U' },
 		{ "select", required_argument, NULL, 's' },
 		{ "imgNum", required_argument, NULL, 'n' },
 		{ "imgOff", required_argument, NULL, 'O' },
+		{ "imgTime", required_argument, NULL, 'y'},
 		{ "moveImgNum", required_argument, NULL, 'm' },
 		{ "moveImgOff", required_argument, NULL, 'M' },
 		{ "focus", required_argument, NULL, 'f' },
@@ -133,14 +143,6 @@ struct option options[] = {
 static FSTATUS opa_pa_init(uint8 hfi, uint8 port)
 {
     FSTATUS				fstatus = FERROR;
-
-    // find portGuid for hfi/port specified
-    if (!port) {
-        fprintf(stderr, "opapaquery: Invalid port number, First Port is 1\n");
-        return fstatus;
-    }
-    if (port == (uint8)-1)
-        port = 0;   // first active port
 
 	// Open the port
     if ( oib_pa_client_init( &g_portHandle, (int)hfi, port,
@@ -204,34 +206,59 @@ int getQueryType(char *outputString)
 	return(q);
 }
 
-static FSTATUS GetClassPortInfo(struct oib_port *port)
+static STL_CLASS_PORT_INFO * GetClassPortInfo(struct oib_port *port)
 {
-	FSTATUS					status= FERROR;
-	STL_CLASS_PORT_INFO		*response;
+	STL_CLASS_PORT_INFO		*response = NULL;
 
-    fprintf(stderr, "Getting Class Port Info...\n");
-    if ((response = iba_pa_classportinfo_response_query(port)) != NULL) {
-        status = FSUCCESS;
-		PrintStlClassPortInfo(&g_dest, 0, response);
-    } else {
+    if ((response = iba_pa_classportinfo_response_query(port)) == NULL) {
         fprintf(stderr, "Failed to receive GetClassPortInfo response: %s\n", iba_pa_mad_status_msg(port));
     }
 
-	if (response)
-		MemoryDeallocate(response);
-    return status;
+    return response;
 }
 
-static FSTATUS GetPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, uint64 imageNumber, int32 imageOffset, uint32 begin, uint32 end)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
-    STL_PORT_COUNTERS_DATA		*response;
+    STL_PORT_COUNTERS_DATA		*response = NULL;
 
-    fprintf(stderr, "Getting Port Counters...\n");
-	imageId.imageNumber = imageNumber;
+	fprintf(stderr, "Getting Port Counters...\n");
+	imageId.imageNumber = end ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
-    if ((response = iba_pa_single_mad_port_counters_response_query(port, nodeLid, portNumber, deltaFlag, userCntrsFlag, &imageId)) != NULL) {
+	imageId.imageTime.absoluteTime = end;
+
+	if (begin){
+		STL_PA_IMAGE_ID_DATA beginQuery = {0}, endQuery = {0};
+
+		beginQuery.imageNumber = PACLIENT_IMAGE_TIMED;
+		beginQuery.imageTime.absoluteTime = begin;
+
+		endQuery.imageNumber = end ? PACLIENT_IMAGE_TIMED : PACLIENT_IMAGE_CURRENT;
+		endQuery.imageTime.absoluteTime = end;
+
+		STL_PORT_COUNTERS_DATA *beginCounters = NULL, *endCounters = NULL;
+
+		if ((beginCounters = iba_pa_single_mad_port_counters_response_query(port, nodeLid, portNumber, deltaFlag, userCntrsFlag, &beginQuery)) != NULL
+				&& (endCounters = iba_pa_single_mad_port_counters_response_query(port, nodeLid, portNumber, deltaFlag, userCntrsFlag, &endQuery)) != NULL){
+
+			CounterSelectMask_t clearedCounters = DiffPACounters(endCounters, beginCounters, endCounters);
+			if (clearedCounters.AsReg32){
+				char counterBuf[128];
+				FormatStlCounterSelectMask(counterBuf, clearedCounters);
+				fprintf(stderr, "Counters reset, reporting latest count: %s\n", counterBuf);
+			}
+			status = FSUCCESS;
+			PrintStlPAPortCounters(&g_dest, 0, endCounters, (uint32)nodeLid, (uint32)portNumber, 0);
+		} else{
+        	fprintf(stderr, "Failed to receive GetPortCounters response: %s\n", iba_pa_mad_status_msg(port));
+		}
+
+		if (endCounters)
+			MemoryDeallocate(endCounters);
+		if (beginCounters)
+			MemoryDeallocate(beginCounters);
+	} else if ((response = iba_pa_single_mad_port_counters_response_query(port, nodeLid, portNumber, deltaFlag, userCntrsFlag, &imageId)) != NULL) {
         status = FSUCCESS;
 		PrintStlPAPortCounters(&g_dest, 0, response, (uint32)nodeLid, (uint32)portNumber, response->flags);
     } else {
@@ -294,15 +321,16 @@ static FSTATUS GetPMConfig(struct oib_port *port)
     return status;
 }
 
-static FSTATUS FreezeImage(struct oib_port *port, uint64 imageNumber, int32 imageOffset)
+static FSTATUS FreezeImage(struct oib_port *port, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			request = {0};
     STL_PA_IMAGE_ID_DATA			*response;
 
     fprintf(stderr, "Freezing image...\n");
-	request.imageNumber = imageNumber;
+	request.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	request.imageOffset = imageOffset;
+	request.imageTime.absoluteTime = imageTime;
     if ((response = iba_pa_single_mad_freeze_image_response_query(port, &request)) != NULL) {
         status = FSUCCESS;
 		PrintStlPAImageId(&g_dest, 0, response);
@@ -433,7 +461,7 @@ fail:
 	goto done;
 }
 
-static FSTATUS GetGroupInfo(struct oib_port *port, char *groupName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetGroupInfo(struct oib_port *port, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
 	FSTATUS					status;
@@ -445,8 +473,11 @@ static FSTATUS GetGroupInfo(struct oib_port *port, char *groupName, uint64 image
 	query.OutputType 	= OutputTypePaTableRecord;
 
 	fprintf(stderr, "Getting Group Info...\n");
-	imageId.imageNumber = imageNumber;
+
+	imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
+	imageId.imageTime.absoluteTime = imageTime;
+
 	if (g_verbose)
 		printf("Query: Input=%s, Output=%s\n",
 				   			iba_sd_query_input_type_msg(query.InputType),
@@ -493,7 +524,7 @@ fail:
 	goto done;
 }
 
-static FSTATUS GetGroupConfig(struct oib_port *port, char *groupName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetGroupConfig(struct oib_port *port, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -505,8 +536,10 @@ static FSTATUS GetGroupConfig(struct oib_port *port, char *groupName, uint64 ima
 	query.OutputType 	= OutputTypePaTableRecord;
 
 	fprintf(stderr, "Getting Group Config...\n");
-	imageId.imageNumber = imageNumber;
+
+	imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
+	imageId.imageTime.absoluteTime = imageTime;
 	if (g_verbose)
 		printf("Query: Input=%s, Output=%s\n",
 							iba_sd_query_input_type_msg(query.InputType),
@@ -553,7 +586,7 @@ fail:
 	goto done;
 }
 
-static FSTATUS GetFocusPorts(struct oib_port *port, char *groupName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetFocusPorts(struct oib_port *port, char *groupName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -565,8 +598,9 @@ static FSTATUS GetFocusPorts(struct oib_port *port, char *groupName, uint32 sele
 	query.OutputType 	= OutputTypePaTableRecord;
 
 	fprintf(stderr, "Getting Focus Ports...\n");
-	imageId.imageNumber = imageNumber;
+	imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
+	imageId.imageTime.absoluteTime = imageTime;
 	if (g_verbose)
 		printf("Query: Input=%s, Output=%s\n",
 							iba_sd_query_input_type_msg(query.InputType),
@@ -613,16 +647,17 @@ fail:
 	goto done;
 }
 
-static FSTATUS GetImageInfo(struct oib_port *port, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetImageInfo(struct oib_port *port, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_INFO_DATA		request = {{0}};
-    STL_PA_IMAGE_INFO_DATA		*response;;
+    STL_PA_IMAGE_INFO_DATA		*response;
 
     fprintf(stderr, "Getting image info...\n");
-	request.imageId.imageNumber = imageNumber;
+	request.imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	request.imageId.imageOffset = imageOffset;
-    if ((response = iba_pa_multi_mad_get_image_info_response_query(port, &request)) != NULL) {
+	request.imageId.imageTime.absoluteTime = imageTime;
+	if ((response = iba_pa_multi_mad_get_image_info_response_query(port, &request)) != NULL) {
         status = FSUCCESS;
 		PrintStlPAImageInfo(&g_dest, 0, response);
     } else {
@@ -690,7 +725,7 @@ fail:
 	goto done;
 }
 
-static FSTATUS GetVFInfo(struct oib_port *port, char *vfName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetVFInfo(struct oib_port *port, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
 	FSTATUS					status;
@@ -702,8 +737,9 @@ static FSTATUS GetVFInfo(struct oib_port *port, char *vfName, uint64 imageNumber
 	query.OutputType 	= OutputTypePaTableRecord;
 
 	fprintf(stderr, "Getting VF Info...\n");
-	imageId.imageNumber = imageNumber;
+	imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
+	imageId.imageTime.absoluteTime = imageTime;
 	if (g_verbose)
 		printf("Query: Input=%s, Output=%s\n",
 				   			iba_sd_query_input_type_msg(query.InputType),
@@ -750,7 +786,7 @@ fail:
 	goto done;
 }
 
-static FSTATUS GetVFConfig(struct oib_port *port, char *vfName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetVFConfig(struct oib_port *port, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -762,8 +798,9 @@ static FSTATUS GetVFConfig(struct oib_port *port, char *vfName, uint64 imageNumb
 	query.OutputType 	= OutputTypePaTableRecord;
 
 	fprintf(stderr, "Getting VF Config...\n");
-	imageId.imageNumber = imageNumber;
+	imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
+	imageId.imageTime.absoluteTime = imageTime;
 	if (g_verbose)
 		printf("Query: Input=%s, Output=%s\n",
 							iba_sd_query_input_type_msg(query.InputType),
@@ -810,25 +847,57 @@ fail:
 	goto done;
 }
 
-static FSTATUS GetVFPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, char *vfName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetVFPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 begin, uint32 end)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
-    STL_PA_VF_PORT_COUNTERS_DATA		*response;
+    STL_PA_VF_PORT_COUNTERS_DATA		*response = NULL;
 
     fprintf(stderr, "Getting Port Counters...\n");
-	imageId.imageNumber = imageNumber;
+	imageId.imageNumber = end ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
-    if ((response = iba_pa_single_mad_vf_port_counters_response_query(port, nodeLid, portNumber, deltaFlag, userCntrsFlag, vfName, &imageId)) != NULL) {
+	imageId.imageTime.absoluteTime = end;
+
+	if (begin){
+		STL_PA_IMAGE_ID_DATA beginQuery = {0}, endQuery = {0};
+
+		beginQuery.imageNumber = PACLIENT_IMAGE_TIMED;
+		beginQuery.imageTime.absoluteTime = begin;
+
+		endQuery.imageNumber = end ? PACLIENT_IMAGE_TIMED : PACLIENT_IMAGE_CURRENT;
+		endQuery.imageTime.absoluteTime = end;
+
+		STL_PA_VF_PORT_COUNTERS_DATA *beginCounters = NULL, *endCounters = NULL;
+
+		if ((beginCounters = iba_pa_single_mad_vf_port_counters_response_query(port, nodeLid, portNumber, 0, 0, vfName, &beginQuery)) != NULL
+				&& (endCounters = iba_pa_single_mad_vf_port_counters_response_query(port, nodeLid, portNumber, 0, 0, vfName, &endQuery)) != NULL){
+
+			CounterSelectMask_t clearedCounters = DiffPAVFCounters(endCounters, beginCounters, endCounters);
+			if (clearedCounters.AsReg32){
+				char counterBuf[128];
+				FormatStlCounterSelectMask(counterBuf, clearedCounters);
+				fprintf(stderr, "Counters reset, reporting latest count: %s", counterBuf);
+			}
+			status = FSUCCESS;
+			PrintStlPAVFPortCounters(&g_dest, 0, endCounters, (uint32)nodeLid, (uint32)portNumber, 0);
+		} else{
+        	fprintf(stderr, "Failed to receive GetVFPortCounters response: %s\n", iba_pa_mad_status_msg(port));
+		}
+
+		if (endCounters)
+		    MemoryDeallocate(endCounters);
+	    if (beginCounters)
+		    MemoryDeallocate(beginCounters);
+     }else if ((response = iba_pa_single_mad_vf_port_counters_response_query(port, nodeLid, portNumber, deltaFlag, userCntrsFlag, vfName, &imageId)) != NULL) {
         status = FSUCCESS;
 		PrintStlPAVFPortCounters(&g_dest, 0, response, (uint32)nodeLid, (uint32)portNumber, response->flags);
     } else {
-        fprintf(stderr, "Failed to receive GetVFPortCounters response: %s\n", iba_pa_mad_status_msg(port));
+        fprintf(stderr, "Failed to receive GetPortCounters response: %s\n", iba_pa_mad_status_msg(port));
     }
 
 	if (response)
 		MemoryDeallocate(response);
-    return status;
+	return status;
 }
 
 static FSTATUS ClrVFPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t selectFlag, char *vfName)
@@ -848,7 +917,7 @@ static FSTATUS ClrVFPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_
     return status;
 }
 
-static FSTATUS GetVFFocusPorts(struct oib_port *port, char *vfName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetVFFocusPorts(struct oib_port *port, char *vfName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -860,8 +929,9 @@ static FSTATUS GetVFFocusPorts(struct oib_port *port, char *vfName, uint32 selec
 	query.OutputType 	= OutputTypePaTableRecord;
 
 	fprintf(stderr, "Getting VF Focus Ports...\n");
-	imageId.imageNumber = imageNumber;
+	imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
+	imageId.imageTime.absoluteTime = imageTime;
 	if (g_verbose)
 		printf("Query: Input=%s, Output=%s\n",
 							iba_sd_query_input_type_msg(query.InputType),
@@ -911,9 +981,10 @@ fail:
 void usage(void)
 {
 	fprintf(stderr, "Usage: opapaquery [-v] [-h hfi] [-p port] -o type [-g groupName] [-l nodeLid]\n");
-	fprintf(stderr, "                   [-P portNumber] [-d delta] [-U] [-s select] [-f focus]\n");
-	fprintf(stderr, "                   [-S start] [-r range] [-n imgNum] [-O imgOff] [-m moveImgNum]\n");
-	fprintf(stderr, "                   [-M moveImgOff] [-V vfName]\n");
+	fprintf(stderr, "                   [-P portNumber] [-d delta] [-j date_time] [-q date_time] [-U]\n");
+	fprintf(stderr, "                   [-s select] [-f focus] [-S start] [-r range] [-n imgNum]\n");
+	fprintf(stderr, "                   [-O imgOff] [-y imgTime] [-m moveImgNum] [-M moveImgOff]\n");
+	fprintf(stderr, "                   [-V vfName]\n");
 	fprintf(stderr, "    --help             - display this help text\n");
 	fprintf(stderr, "    -v/--verbose       - verbose output\n");
 	fprintf(stderr, "    -h/--hfi hfi       - hfi, numbered 1..n, 0= -p port will be a system wide\n");
@@ -925,6 +996,15 @@ void usage(void)
 	fprintf(stderr, "    -l/--lid           - lid of node for portCounters query\n");
 	fprintf(stderr, "    -P/--portNumber    - port number for portCounters query\n");
 	fprintf(stderr, "    -d/--delta         - delta flag for portCounters query - 0 or 1\n");
+	fprintf(stderr, "    -j/--begin date_time - obtain portCounters over interval\n");
+	fprintf(stderr, "                           beginning at date_time.\n");
+	fprintf(stderr, "    -q/--end date_time   - obtain portCounters over interval\n");
+	fprintf(stderr, "                           ending at date_time.\n");
+	fprintf(stderr, "                           For both -j and -q, date_time may be a time\n");
+	fprintf(stderr, "                           entered as HH:MM[:SS] or date as mm/dd/YYYY,\n");
+	fprintf(stderr, "                           dd.mm.YYYY, YYYY-mm-dd or date followed by time\n");
+	fprintf(stderr, "                           e.g. \"2016-07-04 14:40\". Relative times are\n");
+	fprintf(stderr, "                           taken as \"x [second|minute|hour|day](s) ago.\"\n");
 	fprintf(stderr, "    -U/--userCntrs     - user controlled counters flag for portCounters query\n");
 	fprintf(stderr, "    -s/--select        - 32-bit select flag for clearing port counters\n");
 	fprintf(stderr, "         select bits for clrPortCounters (0 is least significant (rightmost))\n");
@@ -992,6 +1072,11 @@ void usage(void)
 	fprintf(stderr, "                           groupConfig, portCounters (delta)\n");
 	fprintf(stderr, "    -O/--imgOff          - image offset - may be used with groupInfo, groupConfig,\n");
 	fprintf(stderr, "                           portCounters (delta)\n");
+	fprintf(stderr, "    -y/--imgTime         - image time - may be used with imageinfo, groupInfo,\n");
+	fprintf(stderr, "                           groupInfo, groupConfig, freezeImage, focusPorts,\n");
+	fprintf(stderr, "                           vfInfo, vfConfig, and vfFocusPorts. Will return\n");
+	fprintf(stderr, "                           closest image within image interval if possible.\n");
+	fprintf(stderr, "                           See --begin/--end above for format.\n");
 	fprintf(stderr, "    -m/--moveImgNum      - 64-bit image number - used with moveFreeze to move a\n");
 	fprintf(stderr, "                           freeze image\n");
 	fprintf(stderr, "    -M/--moveImgOff      - image offset - may be used with moveFreeze to move a\n");
@@ -1051,6 +1136,7 @@ void usage(void)
 	fprintf(stderr, "    opapaquery -o groupConfig -g All\n");
 	fprintf(stderr, "    opapaquery -o portCounters -l 1 -P 1 -d 1\n");
 	fprintf(stderr, "    opapaquery -o portCounters -l 1 -P 1 -d 1 -n 0x20000000d02 -O 1\n");
+	fprintf(stderr, "    opapaquery -o portCounters -l 1 -P 1 -d 1 -j 13:30 -q 14:20\n");
 	fprintf(stderr, "    opapaquery -o clrPortCounters -l 1 -P 1 -s 0xC0000000\n");
 	fprintf(stderr, "        (clears XmitData & RcvData)\n");
 	fprintf(stderr, "    opapaquery -o clrAllPortCounters -s 0xC0000000\n");
@@ -1062,6 +1148,7 @@ void usage(void)
 	fprintf(stderr, "    opapaquery -o moveFreeze -n 0xd01 -m 0x20000000d02 -M -2\n");
 	fprintf(stderr, "    opapaquery -o focusPorts -g All -f integrity -S 0 -r 20\n");
 	fprintf(stderr, "    opapaquery -o imageInfo -n 0x20000000d02\n");
+	fprintf(stderr, "    opapaquery -o imageInfo -y \"1 hour ago\"\n");
 	fprintf(stderr, "    opapaquery -o vfList\n");
 	fprintf(stderr, "    opapaquery -o vfInfo -V Default\n");
 	fprintf(stderr, "    opapaquery -o vfConfig -V Default\n");
@@ -1108,12 +1195,24 @@ FSTATUS StringToFocus (int32 *value, const char* str)
 	return FERROR;
 }
 
+void opapaquery_exit(FSTATUS status)
+{
+	oib_close_port(g_portHandle);
+	g_portHandle = NULL;
+
+	if (g_portInfo){
+		MemoryDeallocate(g_portInfo);
+	}
+	fprintf(stderr, "opapaquery completed: %s\n", (status == FSUCCESS) ? "OK" : "FAILED");
+	exit((status == FSUCCESS) ? 0 : -1);
+}
+
 int main(int argc, char ** argv)
 {
     FSTATUS fstatus;
     int c, index;
-    uint8 hfi = 1;
-    uint8 port = -1;
+    uint8 hfi = 0;
+    uint8 port = 0;
 	char outputType[64];
 	uint16 temp16;
 	uint8 temp8;
@@ -1125,7 +1224,7 @@ int main(int argc, char ** argv)
 
 	Top_setcmdname("opapaquery");
 
-	while (-1 != (c = getopt_long(argc,argv, "vh:p:o:g:l:P:d:Us:n:O:f:S:r:m:M:V:", options, &index)))
+	while (-1 != (c = getopt_long(argc,argv, "vh:p:o:g:l:P:d:Us:n:O:f:S:r:m:M:V:j:q:y:", options, &index)))
     {
         switch (c)
         {
@@ -1192,6 +1291,22 @@ int main(int argc, char ** argv)
 				}
 				break;
 
+			case 'j':
+				if (FSUCCESS != StringToDateTime(&g_beginTime, optarg)){
+					fprintf(stderr, "opapaquery: Invalid Date/Time: %s\n", optarg);
+					usage();
+				}
+				g_gotBegTime = TRUE;
+				break;
+
+			case 'q':
+				if (FSUCCESS != StringToDateTime(&g_endTime, optarg)){
+					fprintf(stderr, "opapaquery: Invalid Date/Time: %s\n", optarg);
+					usage();
+				}
+				g_gotEndTime = TRUE;
+				break;
+
 			case 'U':
 				g_userCntrsFlag = 1;
 				break;
@@ -1218,6 +1333,14 @@ int main(int argc, char ** argv)
 					usage();
 				}
 				g_gotImgOff = TRUE;
+				break;
+
+			case 'y':
+				if (FSUCCESS != StringToDateTime(&g_imageTime, optarg)){
+					fprintf(stderr, "opapaquery: Invalid Date/Time: %s\n", optarg);
+					usage();
+				}
+				g_gotImgTime = TRUE;
 				break;
 
 			case 'm':
@@ -1329,9 +1452,14 @@ int main(int argc, char ** argv)
 		usage();
 	}
 
-	if (((queryType == Q_FREEZEIMAGE) || (queryType == Q_RELEASEIMAGE) || (queryType == Q_RENEWIMAGE) || (queryType == Q_MOVEFREEZE))	&&
-		(!g_gotImgNum)) {
-		fprintf(stderr, "opapaquery: Must provide an imgNum with freezeImage/releaseImage/renewImage/moveFreeze\n");
+	if ((((queryType == Q_RELEASEIMAGE) || (queryType == Q_RENEWIMAGE) || (queryType == Q_MOVEFREEZE))	&&
+		(!g_gotImgNum))) {
+		fprintf(stderr, "opapaquery: Must provide an imgNum with releaseImage/renewImage/moveFreeze\n");
+		usage();
+	}
+
+	if ((queryType == Q_FREEZEIMAGE) && !(g_gotImgNum || g_gotImgTime)){
+		fprintf(stderr, "opapaquery: Must provide an imgNum or imgTime with freezeImage\n");
 		usage();
 	}
 
@@ -1349,6 +1477,11 @@ int main(int argc, char ** argv)
         fprintf(stderr, "opapaquery: delta value and image offset must be 0 when querying User Counters\n");
         usage();
     }
+
+	if (g_gotBegTime && g_gotEndTime && (g_beginTime >= g_endTime)){
+		fprintf(stderr, "opapaquery: begin time must be before end time\n");
+		usage();
+	}
 
 	if ((queryType == Q_GETVFINFO) && (!g_gotvfName)) {
 		fprintf(stderr, "opapaquery: Must provide a VF name with output type vfInfo\n");
@@ -1385,7 +1518,8 @@ int main(int argc, char ** argv)
 		// only -h, -p and -v options are valid. Rest are ignored.
 		if (g_deltaFlag || g_gotGroup || g_gotLid || g_gotPort || g_gotSelect ||
 			g_gotImgNum || g_gotImgOff || g_gotMoveImgNum || g_gotMoveImgOff ||
-			g_gotFocus || g_gotStart || g_gotRange || g_userCntrsFlag || g_gotvfName) {
+			g_gotFocus || g_gotStart || g_gotRange || g_userCntrsFlag || g_gotvfName
+			|| g_gotImgTime || g_gotBegTime || g_gotEndTime) {
 			fprintf(stderr, "opapaquery: for the selected output type only -h, -p and -v options are valid. Ignoring rest..\n");
 		}
 	}
@@ -1393,16 +1527,18 @@ int main(int argc, char ** argv)
 		// only certain options are valid. Rest are ignored.
 		if (g_deltaFlag || g_gotLid || g_gotPort || g_gotSelect ||
 			g_gotMoveImgNum || g_gotMoveImgOff || g_gotFocus || g_gotStart ||
-			g_gotRange || g_userCntrsFlag || g_gotvfName) {
-			fprintf(stderr, "opapaquery: for the selected output type only -[hpvgnO] options are valid. Ignoring rest..\n");
+			g_gotRange || g_userCntrsFlag || g_gotvfName ||
+			g_gotBegTime || g_gotEndTime) {
+			fprintf(stderr, "opapaquery: for the selected output type only -[hpvgnOt] options are valid. Ignoring rest..\n");
 		}
 	}
 	else if (queryType == Q_GETVFINFO || queryType == Q_GETVFCONFIG) {
 		// only certain options are valid. Rest are ignored.
 		if (g_deltaFlag || g_gotGroup || g_gotLid || g_gotPort || g_gotSelect ||
 			g_gotMoveImgNum || g_gotMoveImgOff || g_gotFocus || g_gotStart ||
-			g_gotRange || g_userCntrsFlag) {
-			fprintf(stderr, "opapaquery: for the selected output type only -[hpvnOV] options are valid. Ignoring rest..\n");
+			g_gotRange || g_userCntrsFlag || g_gotBegTime ||
+			g_gotEndTime) {
+			fprintf(stderr, "opapaquery: for the selected output type only -[hpvnOVt] options are valid. Ignoring rest..\n");
 		}
 	}
 
@@ -1426,6 +1562,22 @@ int main(int argc, char ** argv)
         exit(-1);
 	}
 
+	// verify PA has necessary capabilities
+	STL_CLASS_PORT_INFO *portInfo;
+	if ((portInfo = GetClassPortInfo(g_portHandle)) == NULL){
+		fprintf(stderr, "opapaquery: failed to determine PA capabilities\n");
+		opapaquery_exit(FERROR);
+	}
+	STL_PA_CLASS_PORT_INFO_CAPABILITY_MASK paCap;
+	memcpy(&paCap, &portInfo->CapMask, sizeof(STL_PA_CLASS_PORT_INFO_CAPABILITY_MASK));
+	//if trying to query by time, check if feature available
+	if (g_imageTime || g_beginTime || g_endTime){
+			if (!(paCap.s.IsAbsTimeQuerySupported)){
+				fprintf(stderr, "PA does not support time queries\n");
+				opapaquery_exit(FERROR);
+			}
+	}
+
 	switch (queryType)
 	{
 		case Q_GETGROUPLIST:
@@ -1436,21 +1588,21 @@ int main(int argc, char ** argv)
 			break;
 
 		case Q_GETGROUPINFO:
-			fstatus = GetGroupInfo(g_portHandle, g_groupName, g_imageNumber, g_imageOffset);
+			fstatus = GetGroupInfo(g_portHandle, g_groupName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get group info\n");
 			}
 			break;
 
 		case Q_GETGROUPCONFIG:
-			fstatus = GetGroupConfig(g_portHandle, g_groupName, g_imageNumber, g_imageOffset);
+			fstatus = GetGroupConfig(g_portHandle, g_groupName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get group configuration\n");
 			}
 			break;
 
 		case Q_GETPORTCOUNTERS:
-			fstatus = GetPortCounters(g_portHandle, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_imageNumber, g_imageOffset);
+			fstatus = GetPortCounters(g_portHandle, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_imageNumber, g_imageOffset, g_beginTime, g_endTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get port counters\n");
 			}
@@ -1478,7 +1630,7 @@ int main(int argc, char ** argv)
 			break;
 
 		case Q_FREEZEIMAGE:
-			fstatus = FreezeImage(g_portHandle, g_imageNumber, g_imageOffset);
+			fstatus = FreezeImage(g_portHandle, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to freeze image\n");
 			}
@@ -1506,24 +1658,22 @@ int main(int argc, char ** argv)
 			break;
 
 		case Q_GETFOCUSPORTS:
-			fstatus = GetFocusPorts(g_portHandle, g_groupName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset);
+			fstatus = GetFocusPorts(g_portHandle, g_groupName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get focus ports\n");
 			}
 			break;
 
 		case Q_GETIMAGECONFIG:
-			fstatus = GetImageInfo(g_portHandle, g_imageNumber, g_imageOffset);
+			fstatus = GetImageInfo(g_portHandle, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get image info\n");
 			}
 			break;
 
 		case Q_CLASSPORTINFO:
-			fstatus = GetClassPortInfo(g_portHandle);
-			if (fstatus != FSUCCESS) {
-				fprintf(stderr, "opapaquery: failed to get class port info\n");
-			}
+			PrintStlClassPortInfo(&g_dest, 0, portInfo, MCLASS_VFI_PM);
+			fstatus = FSUCCESS;
 			break;
 
 		case Q_GETVFLIST:
@@ -1534,20 +1684,20 @@ int main(int argc, char ** argv)
 			break;
 
 		case Q_GETVFINFO:
-			fstatus = GetVFInfo(g_portHandle, g_vfName, g_imageNumber, g_imageOffset);
+			fstatus = GetVFInfo(g_portHandle, g_vfName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get VF info\n");
 			}
 			break;
 		case Q_GETVFCONFIG:
-			fstatus = GetVFConfig(g_portHandle, g_vfName, g_imageNumber, g_imageOffset);
+			fstatus = GetVFConfig(g_portHandle, g_vfName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get vf configuration\n");
 			}
 			break;
 
 		case Q_GETVFPORTCOUNTERS:
-			fstatus = GetVFPortCounters(g_portHandle, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_vfName, g_imageNumber, g_imageOffset);
+			fstatus = GetVFPortCounters(g_portHandle, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_vfName, g_imageNumber, g_imageOffset, g_beginTime, g_endTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get vf port counters\n");
 			}
@@ -1561,7 +1711,7 @@ int main(int argc, char ** argv)
 			break;
 
 		case Q_GETVFFOCUSPORTS:
-			fstatus = GetVFFocusPorts(g_portHandle, g_vfName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset);
+			fstatus = GetVFFocusPorts(g_portHandle, g_vfName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "opapaquery: failed to get VF focus ports\n");
 			}
@@ -1570,11 +1720,7 @@ int main(int argc, char ** argv)
 		default:
 			break;
 	}
-
-	oib_close_port(g_portHandle);
-	g_portHandle = NULL;
-
-	fprintf(stderr, "opapaquery completed: %s\n", (fstatus == FSUCCESS) ? "OK" : "FAILED");
-
-	exit(0);
+	opapaquery_exit(fstatus);
+	//shouldn't reach here
+	exit(-1);
 }

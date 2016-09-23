@@ -1,0 +1,38 @@
+IntelOPA Open Fabrics FastFabric Tools Host Software
+
+The majority of this source is best viewed with tabstops set at 4 spaces.
+
+In order to build this source:
+	cd to this directory
+	./do_build
+
+The build will create installation packages into the release/ tree.
+These can be used to install on a destination system.
+Typically the IntelOPA-Tools-FF.*.tgz is the only file you will require.
+As it contains all the tools including fast fabric.
+IntelOPA-Tools.*.tgz will not contain the fast fabric specific items.
+IntelOPA-Tests.*.tgz will contain some test programs.
+
+To build a debug version:
+	export BUILD_CONFIG=debug
+To build a release version
+	export BUILD_CONFIG=release
+default is a release version.
+The debug version has additional error checks, and logging.
+However performance is slightly less than the release version.
+Production systems should run the release version.
+
+The majority of directories include README files which indicate
+what the given directory implements as well as some other information.
+
+Build options which can be set in CENV:
+	TBD
+
+The following command (run as root) allows the GPL source to compile on Suse releases:
+
+	ln -s /usr/src/linux-`uname -r`/drivers /lib/modules/`uname -r`/build/drivers
+
+The following commands (run as root) allow the GPL source to compile on Fedora releases:
+
+	cd /usr/src/linux-`uname -r`/drivers/scsi
+	cp scsi.h scsi_obsolete.h scsi_typedefs.h /lib/modules/`uname -r`/build/drivers/scsi

@@ -88,7 +88,7 @@ proc case_cleanup { failed } {
 }
 
 test_suite "reboot" "reboot" "reboot all chassis
-File: /opt/opa/tools/chassis_reboot.exp" suite_setup noop {
+File: /usr/lib/opa/tools/chassis_reboot.exp" suite_setup noop {
 	global chassis
 
 	# Global Initializations for Test Suite:

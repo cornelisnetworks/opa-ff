@@ -30,6 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* [ICS VERSION STRING: unknown] */
 
 #include <stdio.h>
+#include <getopt.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -891,7 +892,7 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 	
 	pcapRec.packetSize = 		pktLen + sizeof(pcapRecHdr_t);
 	pcapRec.packetOrigSize = 	pcapRec.packetSize;
-	ext.length =				hton16(pktLen);
+	ext.length =				hton16(pktLen + sizeof(extHeader_t));
 	ext.realLength =			hton16(pktLen);
 
 	if (write(fd, &pcapRec, sizeof(pcapRec)) < 0) {
@@ -1006,10 +1007,13 @@ void writePacketData()
 	return;
 }
 
-static void Usage()
+static void Usage(int exitcode)
 {
 	fprintf(stderr, "Usage: opapacketcapture [-o outfile] [-d devfile] [-f filterfile] [-t triggerfile] [-l triggerlag]\n");
-	fprintf(stderr, "                          [-a alarm] [-p packets] [-s maxblocks] [-v [-v]] [-h]\n");
+	fprintf(stderr, "                          [-a alarm] [-p packets] [-s maxblocks] [-v [-v]]\n");
+	fprintf(stderr, "            or\n");
+	fprintf(stderr, "       opapacketcapture --help\n");
+	fprintf(stderr, "   --help - produce full help text\n");
 	fprintf(stderr, "   -o - output file for captured packets - default is "PACKET_OUT_FILE"\n");
 	fprintf(stderr, "   -d - device file for capturing packets - default is "WFR_CAPTURE_FILE"\n");
 	fprintf(stderr, "   -f - filter file used for filtering - if absent, no filtering\n");
@@ -1026,12 +1030,11 @@ static void Usage()
 		fprintf(stderr, "        Level 3: HEX Dump of packet going into output file\n");
 		fprintf(stderr, "        Level 4: HEX Dump of data coming over snoop device\n");
 	}
-	fprintf(stderr, "   -h - Print this output\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "To stop capture and trigger dump, kill with SIGINT or SIGUSR1.\n");
 	fprintf(stderr, "Program will dump packets to file and exit\n");
 
-	return;
+	exit(exitcode);
 }
 
 
@@ -1042,7 +1045,9 @@ int main (int argc, char *argv[])
 	int		    c;
 	packet	    *newPacket;
 	char	    strArg[64] = {0};
-	const char  *opts="o:d:f:t:l:a:p:s:m:vh";
+	const char  *opts="o:d:f:t:l:a:p:s:m:v";
+	const struct option longopts[] = {{"help", 0, 0, '$'},
+						{0, 0, 0, 0}};
 	FILE	    *fp = NULL;
 	int		    fd = 0;
 #if __GNUC_PREREQ(4,8)
@@ -1053,7 +1058,7 @@ int main (int argc, char *argv[])
 	uint64      numblocks = DEFAULT_NUMBLOCKS;
 	unsigned    lasttime=0;
 
-	while (-1 != (c = getopt(argc, argv, opts))) {
+	while (-1 != (c = getopt_long(argc, argv, opts, longopts, NULL))) {
 		switch (c) {
 		case 'a':
 			strncpy(strArg, optarg, sizeof(strArg)-1);
@@ -1063,13 +1068,13 @@ int main (int argc, char *argv[])
 		case 'p':
 			if (FSUCCESS != StringToUint64(&numPacketsMax, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "opapacketcapture: Invalid size: %s\n", optarg);
-				Usage();
+				Usage(2);
 			}
 			break;
 		case 'm':
 			if (FSUCCESS != StringToUint8(&mode, optarg, NULL, 0, TRUE)) {
-				fprintf(stderr, "opapacketcapture: Invalid size: %s\n", optarg);
-				Usage();
+				fprintf(stderr, "opapacketcapture: Invalid mode: %s\n", optarg);
+				Usage(2);
 			}
 			gotModeArg = 1;
 			break;
@@ -1100,20 +1105,18 @@ int main (int argc, char *argv[])
 		case 's':
 			if (FSUCCESS != StringToUint64(&numblocks, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "opapacketcapture: Invalid size: %s\n", optarg);
-				Usage();
+				Usage(2);
 			}
 			numblocks *= (1024 * 1024);
 			break;
 		case 'v':
 			verbose++;
 			break;
-		case 'h':
-			Usage();
-			exit(0);
+		case '$':
+			Usage(0);
 		default:
 			fprintf(stderr, "opapacketcapture: Invalid option -%c\n", c);
-			Usage();
-			exit(2);
+			Usage(2);
 		}
 	}
 
@@ -1141,8 +1144,7 @@ int main (int argc, char *argv[])
 		else {
 			fprintf(stderr, "opapacketcapture: Error device string [%s] does not match expected string [%s]\n",
 				devfile, WFR_CAPTURE_FILE);
-			Usage();
-			exit(3);
+			Usage(3);
 		}
 	}
 	

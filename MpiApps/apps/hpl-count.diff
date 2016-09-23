@@ -1,0 +1,67 @@
+This patch can be applied to the HPL program to provide a simple progress output
+Every 8 NB values the present progress (0-N) will be displayed by rank 0.
+When making large HPL runs this can be useful to get a feeling as to how far the
+run has progressed and how fast it is running.
+
+To apply this patch:
+	cd /usr/lib/opa/src/mpi_apps
+	patch -p0 < hpl-count.diff
+	make clean
+	make quick
+To remove this patch:
+	cd /usr/lib/opa/src/mpi_apps
+	patch -R -p0 < hpl-count.diff
+	make clean
+	make quick
+Note rebuilding HPL will replace the HPL.dat file.  Also after rebuilding
+HPL you need to copy the new executable to all the nodes (or in the case of this
+patch to at least rank 0)
+
+diff -c -r hpl/src/pgesv/HPL_pdgesv0.c ./HPL_pdgesv0.c
+*** hpl/src/pgesv/HPL_pdgesv0.c	Tue Jan 13 19:51:40 2004
+--- hpl/src/pgesv/HPL_pdgesv0.c	Tue Jan 13 20:03:50 2004
+***************
+*** 118,123 ****
+   */
+     for( j = 0; j < N; j += nb )
+     {
+        n = N - j; jb = Mmin( n, nb );
+  /*
+   * Release panel resources - re-initialize panel data structure
+--- 118,125 ----
+   */
+     for( j = 0; j < N; j += nb )
+     {
++ 		if (GRID->myrow == 0 && GRID->mycol == 0 && (j/nb & 7) == 0)
++ 				fprintf(stderr, "%d\n", j);
+        n = N - j; jb = Mmin( n, nb );
+  /*
+   * Release panel resources - re-initialize panel data structure
+diff -c -r hpl/src/pgesv/HPL_pdgesvK1.c ./HPL_pdgesvK1.c
+*** hpl/src/pgesv/HPL_pdgesvK1.c	Tue Jan 13 19:51:40 2004
+--- hpl/src/pgesv/HPL_pdgesvK1.c	Tue Jan 13 20:03:56 2004
+***************
+*** 157,162 ****
+--- 157,164 ----
+   */
+     for( j = jstart; j < N; j += nb )
+     {
++ 		if (GRID->myrow == 0 && GRID->mycol == 0 && (j/nb & 7) == 0)
++ 				fprintf(stderr, "%d\n", j);
+        n = N - j; jb = Mmin( n, nb );
+  /*
+   * Allocate current panel resources - Finish latest update - Factor and
+diff -c -r hpl/src/pgesv/HPL_pdgesvK2.c ./HPL_pdgesvK2.c
+*** hpl/src/pgesv/HPL_pdgesvK2.c	Tue Jan 13 19:51:40 2004
+--- hpl/src/pgesv/HPL_pdgesvK2.c	Tue Jan 13 20:04:00 2004
+***************
+*** 163,168 ****
+--- 163,170 ----
+   */
+     for( j = jstart; j < N; j += nb )
+     {
++ 		if (GRID->myrow == 0 && GRID->mycol == 0 && (j/nb & 7) == 0)
++ 				fprintf(stderr, "%d\n", j);
+        n = N - j; jb = Mmin( n, nb );
+  /*
+   * Initialize current panel - Finish latest update, Factor and broadcast

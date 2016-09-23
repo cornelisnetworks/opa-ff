@@ -16,7 +16,7 @@ opaledports
 Toggles the beaconing LED state of HFIs, switches, and switch ports. opaledports is a useful aid for finding specific physical nodes in a crowded data center. It supports the CSV link format provided by opaextractsellinks.
 .SH Syntax 
 .NL
-opaledports [-h hfi] [-p port] [-C] [-s|-d] [on|off] #8217lt; portlist.csv
+opaledports [-h hfi] [-p port] [-C] [-s|-d] [on|off] < portlist.csv
 .SH Options
 .NL
 
@@ -28,12 +28,12 @@ Produces full help text.
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI to send through/to. Default is first HFI.
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
 
 .TP 10
 -p \fIport\fR 
 .NL
-Port to send through/to. Default is first active port.
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
 
 .TP 10
 -C 
@@ -61,7 +61,7 @@ Affects destination side (second node) of link only.
 .TP 10
 on|off 
 .NL
-Action to perform. Options include:
+Turns on or off the beaconing LED. Options include:
 
 .RS
 .TP 10
@@ -84,15 +84,17 @@ Turns off beaconing LED.
 .TP 10
 portlist.csv 
 .NL
-File listing the links to process. The list is of the form:
+Specifies the file listing the links to process. The list is of the form:
 
 .IP
-NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID;PortNum;NodeType; NodeDesc;Dontcare 
+NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID;PortNum;NodeType;
+.br
+NodeDesc;Dontcare 
 .SH Examples 
 .NL
 echo "0x001175010165ac1d;1;FI;phkpstl035 hfi1\(ul0"|opaledports on
 .br
-opaledports on #8217lt; portlist.csv
+opaledports on < portlist.csv
 .br
 opaextractsellinks -F led:on | opaledports off
 .br

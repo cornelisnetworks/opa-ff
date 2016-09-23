@@ -38,9 +38,9 @@ then
 	. /etc/sysconfig/opa/opafastfabric.conf
 fi
 
-. /opt/opa/tools/opafastfabric.conf.def
+. /usr/lib/opa/tools/opafastfabric.conf.def
 
-. /opt/opa/tools/ff_funcs
+. /usr/lib/opa/tools/ff_funcs
 
 tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
@@ -97,6 +97,12 @@ Usage_full()
 	echo "         verifylinks - verify links against topology input" >&2
 	echo "         verifyextlinks - verify links against topology input" >&2
 	echo "                     limit analysis to links external to systems" >&2
+	echo "         verifyfilinks - verify links against topology input" >&2
+	echo "                     limit analysis to FI links" >&2
+	echo "         verifyislinks - verify links against topology input" >&2
+	echo "                     limit analysis to inter-switch links" >&2
+	echo "         verifyextislinks - verify links against topology input" >&2
+	echo "                     limit analysis to inter-switch links external to systems" >&2
 	echo "         verifyfis - verify FIs against topology input" >&2
 	echo "         verifysws - verify Switches against topology input" >&2
 	echo "         verifynodes - verify FIs, Switches and against topology input" >&2
@@ -303,18 +309,16 @@ append_verify_punchlist()
 
 }
 
-gen_verifylinks_punchlist()
-# $@ =  snapshot, port and/or topology selection options for opareport
+process_links_csv()
+# stdin is a csv with all the bad links from a verify*links report
 {
 	(
-	# TBD - is cable information available?
 	export IFS=';'
 	port1=
 	port2=
 	foundPort=
 	prob=
-	#eval opareport -q "$@" -o verifylinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeGUID -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.NodeType -e VerifyLinks.Link.Port.NodeDesc|while read line
-	eval opareport -q "$@" -o verifylinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeDesc -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.Problem -e VerifyLinks.Link.Problem|while read desc port portprob linkprob
+	while read desc port portprob linkprob
 	do
 		if [ x"$port1" = x ]
 		then
@@ -365,66 +369,39 @@ gen_verifylinks_punchlist()
 	)
 }
 
+gen_verifylinks_punchlist()
+# $@ =  snapshot, port and/or topology selection options for opareport
+{
+	# TBD - is cable information available?
+	eval opareport -q "$@" -o verifylinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyLinks.Link.Port.NodeDesc -e VerifyLinks.Link.Port.PortNum -e VerifyLinks.Link.Port.Problem -e VerifyLinks.Link.Problem|process_links_csv
+}
+
 gen_verifyextlinks_punchlist()
 # $@ =  snapshot, port and/or topology selection options for opareport
 {
-	(
 	# TBD - is cable information available?
-	export IFS=';'
-	port1=
-	port2=
-	foundPort=
-	prob=
-	#eval opareport -q "$@" -o verifyextlinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeGUID -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.NodeType -e VerifyExtLinks.Link.Port.NodeDesc|while read line
-	eval opareport -q "$@" -o verifyextlinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeDesc -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.Problem -e VerifyExtLinks.Link.Problem|while read desc port portprob linkprob
-	do
-		if [ x"$port1" = x ]
-		then
-			port1="$desc p$port"
-			prob="$portprob"
-			if [ x"$prob" = x ]
-			then
-				prob=$linkprob	# unlikely to occur here
-			fi
-		elif [ x"$port2" = x ]
-		then
-			port2="$desc p$port"
-			if [ x"$prob" = x ]
-			then
-				prob=$portprob
-			fi
-			if [ x"$prob" = x ]
-			then
-				prob=$linkprob	# unlikely to occur here
-			fi
-		fi
-			
-		if [ x"$linkprob" != x ]
-		then
-			if [ x"$prob" = x ]
-			then
-				prob=$linkprob
-			fi		
-	
-			# more port information available	
-			if [ x"$desc" != x ]
-			then 
-				foundPort="$desc p$port"
-			fi
+	eval opareport -q "$@" -o verifyextlinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyExtLinks.Link.Port.NodeDesc -e VerifyExtLinks.Link.Port.PortNum -e VerifyExtLinks.Link.Port.Problem -e VerifyExtLinks.Link.Problem|process_links_csv
+}
 
-			append_verify_punchlist "$port1 $port2" "$prob $foundPort"
-			port1=
-			port2=
-			foundPort=
-			prob=
-		fi
-		
-		if [ x"$port" != x ] && [ x"$desc" != x ]
-		then
-			set_beaconing_led "$desc" $port
-		fi
-	done
-	)
+gen_verifyfilinks_punchlist()
+# $@ =  snapshot, port and/or topology selection options for opareport
+{
+	# TBD - is cable information available?
+	eval opareport -q "$@" -o verifyfilinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyFILinks.Link.Port.NodeDesc -e VerifyFILinks.Link.Port.PortNum -e VerifyFILinks.Link.Port.Problem -e VerifyFILinks.Link.Problem|process_links_csv
+}
+
+gen_verifyislinks_punchlist()
+# $@ =  snapshot, port and/or topology selection options for opareport
+{
+	# TBD - is cable information available?
+	eval opareport -q "$@" -o verifyislinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyISLinks.Link.Port.NodeDesc -e VerifyISLinks.Link.Port.PortNum -e VerifyISLinks.Link.Port.Problem -e VerifyISLinks.Link.Problem|process_links_csv
+}
+
+gen_verifyextislinks_punchlist()
+# $@ =  snapshot, port and/or topology selection options for opareport
+{
+	# TBD - is cable information available?
+	eval opareport -q "$@" -o verifyextislinks -x | /usr/sbin/opaxmlextract -H -d \; -e VerifyExtISLinks.Link.Port.NodeDesc -e VerifyExtISLinks.Link.Port.PortNum -e VerifyExtISLinks.Link.Port.Problem -e VerifyExtISLinks.Link.Problem|process_links_csv
 }
 
 gen_verifyfis_punchlist()
@@ -483,6 +460,9 @@ misconfiglinks=n
 misconnlinks=n
 verifylinks=n
 verifyextlinks=n
+verifyfilinks=n
+verifyislinks=n
+verifyextislinks=n
 verifyfis=n
 verifysws=n
 verifysms=n
@@ -523,6 +503,9 @@ do
 	all) errors=y; slowlinks=y; misconfiglinks=y; misconnlinks=y;;
 	verifylinks) verifylinks=y;;
 	verifyextlinks) verifyextlinks=y;;
+	verifyfilinks) verifyfilinks=y;;
+	verifyislinks) verifyislinks=y;;
+	verifyextislinks) verifyextislinks=y;;
 	verifyfis) verifyfis=y;;
 	verifysws) verifysws=y;;
 	verifynodes)  verifyfis=y; verifysws=y;;
@@ -538,7 +521,7 @@ do
 	shift
 done
 
-for report in errors slowlinks misconfiglinks misconnlinks verifylinks verifyextlinks verifyfis verifysws verifysms
+for report in errors slowlinks misconfiglinks misconnlinks verifylinks verifyextlinks verifyfilinks verifyislinks verifyextislinks verifyfis verifysws verifysms
 do
 	yes=$(eval echo \$$report)
 	if [ $yes = y ]
@@ -672,6 +655,9 @@ do
 		misconnlinks) gen_misconnlinks_punchlist -X $snapshot_input;;
 		verifylinks) [ "$TOPOLOGY_FILE" != "" ] && gen_verifylinks_punchlist -X $snapshot_input $topt;;
 		verifyextlinks) [ "$TOPOLOGY_FILE" != "" ] && gen_verifyextlinks_punchlist -X $snapshot_input $topt;;
+		verifyfilinks) [ "$TOPOLOGY_FILE" != "" ] && gen_verifyfilinks_punchlist -X $snapshot_input $topt;;
+		verifyislinks) [ "$TOPOLOGY_FILE" != "" ] && gen_verifyislinks_punchlist -X $snapshot_input $topt;;
+		verifyextislinks) [ "$TOPOLOGY_FILE" != "" ] && gen_verifyextislinks_punchlist -X $snapshot_input $topt;;
 		verifyfis) [ "$TOPOLOGY_FILE" != "" ] && gen_verifyfis_punchlist -X $snapshot_input $topt;;
 		verifysws) [ "$TOPOLOGY_FILE" != "" ] && gen_verifysws_punchlist -X $snapshot_input $topt;;
 		verifysms) [ "$TOPOLOGY_FILE" != "" ] && gen_verifysms_punchlist -X $snapshot_input $topt;;

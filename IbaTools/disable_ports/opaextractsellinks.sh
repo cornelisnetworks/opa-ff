@@ -90,8 +90,10 @@ then
 	do
 		if [ x"$line1" = x ]
 		then
+			# 1st port in given link
 			line1="$line"
 		else
+			# 2nd port in given link, output a single line for given link
 			echo "$line1;$line"
 			line1=
 		fi

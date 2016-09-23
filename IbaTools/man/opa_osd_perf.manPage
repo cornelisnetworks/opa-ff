@@ -16,40 +16,28 @@ opa\(ulosd\(ulperf
 Tests the performance of the distributed SA shared memory database.
 .SH Syntax
 .NL
-opa\(ulosd\(ulperf [ \fIopts\fR] \fIguidtable\fR
+opa\(ulosd\(ulperf [-q | -p | -S] \fIguidtable\fR
 .SH Options
 .NL
 
 .TP 10
- \fIopts\fR 
+--help 
 .NL
-Options. Values include:
+Produces full help text.
 
-.RS
 .TP 10
-
-.sp
 -q \fIqueries\fR 
-Runs at least  \fIqueries\fR queries.
+.NL
+Runs at least the specified number of queries.
 
-.RE
-
-.RS
 .TP 10
-
-.sp
 -p \fIpkey\fR 
+.NL
 Specifies to include  \fIpkey\fR in the searches. Can be specified up to 8 times.
-.RE
-
-.RS
 .TP 10
-
-.sp
 -S \fIsid\fR 
+.NL
 Specifies to include SID in the searches. Can be specified up to 8 times. Note that providing both SIDs and pkeys may cause problems.
-.RE
-
 .TP 10
  \fIguidtable\fR 
 .NL

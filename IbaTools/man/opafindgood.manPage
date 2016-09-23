@@ -65,9 +65,9 @@ Note that opafindgood queries the SA for NodeDescriptions to determine hosts wit
 By default, opafindgood checks for and reports nodes that are quarantined for security reasons. To skip this, use the -Q option.
 .SH Syntax 
 .NL
-opafindgood [-R|-A|-Q] [-d \fIdir\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-t \fIportsfile\fR]
+opafindgood [-R|-A|-Q] [-d \fIdir\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-p \fIports\fR] [-T \fItimelimit\fR]
+[-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItimelimit\fR]
 .SH Options 
 .NL
 
@@ -90,60 +90,68 @@ Skips the quarantine test. Recommended if Intel(R) Omni-Path Fabric software or 
 .TP 10
 -d \fIdir\fR 
 .NL
-Directory in which to create alive, active, running, good, and bad files. Default is /etc/sysconfig/opa directory.
+Specifies the directory in which to create alive, active, running, good, and bad files. Default is /etc/sysconfig/opa directory.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster. Default is /etc/sysconfig/opa/hosts directory.
+Specifies the file with hosts in cluster. Default is /etc/sysconfig/opa/hosts directory.
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts to ping.
+Specifies the list of hosts to ping.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports file.
 .TP 10
 -p \fIports\fR 
 .NL
-List of local HFI ports used to access fabric(s) for analysis. The default is the first active port. The first HFI in the system is 1. The first port on an HFI is 1.Uses the format hfi:port, for example:
+Specifies the list of local HFI ports used to access fabric(s) for analysis.
+
+.IP
+Default is first active port. The first HFI in the system is 1. The first port on an HFI is 1. Uses the format hfi:port,
+.br
+for example:
 .RS
 .TP 10
 
 .sp
 0:0 
 First active port in system.
+
 .RE
 
 .RS
 .TP 10
 
 .sp
-0: \fIy\fR 
+0:y 
 Port  \fIy\fR within system.
+
 .RE
 
 .RS
 .TP 10
 
 .sp
- \fIx\fR:0 
+x:0 
 First active port on HFI  \fIx\fR.
+
 .RE
 
 .RS
 .TP 10
 
 .sp
- \fIx\fR: \fIy\fR 
+x:y 
 HFI  \fIx\fR, port  \fIy\fR.
-.RE
 
+.RE
 
 .TP 10
 -T \fItimelimit\fR 
 .NL
-Time limit in seconds for host to respond to SSH. Default = 20 seconds.
+Specifies the time limit in seconds for host to respond to SSH. Default = 20 seconds.
 
 .SH Environment Variables
 .NL

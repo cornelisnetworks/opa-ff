@@ -43,36 +43,42 @@ Performs recursive upload of directories.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file with hosts in cluster.
+.br
+Default is /etc/sysconfig/opa/hosts file.
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts to upload from.
+Specifies the list of hosts to upload from.
 .TP 10
 -u \fIuser\fR 
 .NL
-User to perform copy to. Default is current user code.
+Specifies the user to perform copy to. Default is current user code.
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Directory to upload to. Default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default, /uploads, is used.
+Specifies the directory to upload to. Default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default, /uploads, is used.
 .TP 10
  \fIsource\(ulfile\fR 
 .NL
-Name of files to copy to this system, relative to the current directory. Multiple files may be listed.
+Specifies the name of files to copy to this system, relative to the current directory. Multiple files may be listed.
 .TP 10
  \fIdest\(ulfile\fR 
 .NL
-Name of the file or directory on this system to copy to. It is relative to  \fIupload\(uldir\fR/\fIHOSTNAME\fR .A local directory within  \fIupload\(uldir\fR/ is created for each host. Each uploaded file is copied to upload\(uldir/\fIHOSTNAME\fR/\fIdest\(ulfile\fR within the local system. If more than one source file is specified, dest\(ulfile is treated as a directory name.
+Specifies the name of the file or directory on this system to copy to. It is relative to  \fIupload\(uldir\fR/\fIHOSTNAME\fR .A local directory within  \fIupload\(uldir\fR/ is created for each host. Each uploaded file is copied to upload\(uldir/\fIHOSTNAME\fR/\fIdest\(ulfile\fR within the local system. If more than one source file is specified, dest\(ulfile is treated as a directory name.
 .SH Example 
 .NL
 # upload two files from 2 hosts
 .br
 opauploadall -h \[aq]arwen elrond\[aq] capture.tgz /etc/init.d/ipoib.cfg.
 .br
+
+.br
 # upload two files from all hosts
 .br
 opauploadall -p capture.tgz /etc/init.d/ipoib.cfg.
+.br
+
 .br
 # upload network config files from all hosts
 .br

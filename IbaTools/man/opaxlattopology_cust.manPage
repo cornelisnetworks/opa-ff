@@ -18,31 +18,36 @@ Customizable script for documenting cluster topology. Provides an alternative to
 ). Edit the sample topology\(ulcust.xlsx to represent each external link in a cluster, then modify opaxlattopology\(ulcust to translate the alternate CSV form to the standard CSV form used by opaxlattopology.
 .SH Syntax
 .NL
-opaxlattopology\(ulcust -t \fItopology\(ulprime\fR[-s \fItopology\(ulsecond\fR] -T \fItopology\(ulout\fR
+opaxlattopology\(ulcust [-t \fItopology\(ulprime\fR] [-s \fItopology\(ulsecond\fR]
 .br
-[-v \fIlevel\fR] [-i \fIlevel\fR] [-c \fIchar\fR] [-K] [-?]
+[-T \fItopology\(ulout\fR] [-v \fIlevel\fR] [-i \fIlevel\fR] [-c \fIchar\fR] [-K] [-?]
 .SH Options
 .NL
 
 .TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
 -t \fItopology\(ulprime\fR 
 .NL
-Primary topology CSV input file. Specifies the primary CSV input file and must be present.
+Specifies the primary topology CSV input file. Specifies the primary CSV input file and must be present.
 
 .TP 10
 -s \fItopology\(ulsecond\fR 
 .NL
-Secondary topology CSV input file. Specifies a secondary CSV input file. Appended to the primary for processing.
+Specifies the secondary topology CSV input file. Specifies a secondary CSV input file. Appended to the primary for processing.
 
 .TP 10
 -T \fItopology\(ulout\fR 
 .NL
-Topology CSV output file. Specifies the CSV output file name and must be specified.
+Specifies the topology CSV output file. Specifies the CSV output file name and must be specified.
 
 .TP 10
 -v \fIlevel\fR 
 .NL
-Verbose level. Range = 0 - 8, default = 2.
+Specifies the verbose level. Range = 0 - 8, default = 2.
 
 .RS
 .TP 10
@@ -92,12 +97,12 @@ Reserved.
 .TP 10
 -i \fIlevel\fR 
 .NL
-Screen output indent level. Range = 0 - 15, default = 0.
+Specifies the screen output indent level. Range = 0 - 15, default = 0.
 
 .TP 10
 -c \fIchar\fR 
 .NL
-Concatenation character, used for Cable Label values. A space is used by default, but another character, such as underscore, can be specified.
+Specifies the concatenation character, used for Cable Label values. A space is used by default, but another character, such as underscore, can be specified.
 
 .TP 10
 -K 
@@ -115,23 +120,27 @@ Prints this output.
 .PP
 Each link contains source, destination, and cable fields with one link per row of the spreadsheet. Link fields must not contain commas. Source and Destination fields are each a concatenation of name and port information in the following forms. Names not of the form ib or C are assumed to be host names.
 .PP
-The following lists the
+The following lists the node type and source/destination.
+.TP 10
+
 \fBNode Type\fR
-:
-\fBSource/Destination\fR
-:
-.TP 10
-Host : 
+
 .NL
-host \fIN\fR where N is a host number.
+
+\fB: Source/Destination\fR
+
 .TP 10
-Edge Switch : 
+Host 
 .NL
-ib \fIN\fR p \fIN\fR where N is a switch/port number.
+: host \fIN\fR where N is a host number.
 .TP 10
-Core Leaf : 
+Edge Switch 
 .NL
-C \fIn\fR L \fInnn\fR p \fIN\fR where N/n is a host/switch/port number.
+: ib \fIN\fR p \fIN\fR where N is a switch/port number.
+.TP 10
+Core Leaf 
+.NL
+: C \fIn\fR L \fInnn\fR p \fIN\fR where N/n is a host/switch/port number.
 .PP
 Cable values, CableLength, and CableDetails are optional and have no special syntax. If present, they are placed in the standard-format CSV file exactly as they appear. CableLabel is created automatically by opaxlattopology\(ulcust as the concatenation of Source and Destination (see -c option).
 .PP

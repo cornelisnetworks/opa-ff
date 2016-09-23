@@ -35,7 +35,7 @@
 # to be explicitly provided.  For example many commands only need
 # CFG_HOSTS defined
 
-export TL_DIR=/opt/opa/tools
+export TL_DIR=/usr/lib/opa/tools
 
 Usage()
 {
@@ -50,4 +50,4 @@ fi
 
 proc="$1"
 shift
-TEST_CONFIG_FILE="/dev/null" TCLLIBPATH="/opt/opa/tools /usr/lib/tcl" expect -f /opt/opa/tools/front "$proc" "$@"
+TEST_CONFIG_FILE="/dev/null" TCLLIBPATH="/usr/lib/opa/tools /usr/lib/tcl" expect -f /usr/lib/opa/tools/front "$proc" "$@"

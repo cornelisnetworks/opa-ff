@@ -35,6 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "stl_print.h"
 #include "fe_connections.h"
 #include "fe_pa.h"
+#include "oib_utils_pa.h"
 
 #define min(a,b) (((a)<(b))?(a):(b))
 
@@ -346,6 +347,7 @@ fe_pa_multi_mad_group_stats_response_query(
     strcpy(p->groupName, group_name);
     p->imageId.imageNumber = image_id->imageNumber;
     p->imageId.imageOffset = image_id->imageOffset;
+    p->imageId.imageTime.absoluteTime = image_id->imageTime.absoluteTime;
 	BSWAP_STL_PA_PM_GROUP_INFO(p, 1);
     
     // process the command.
@@ -408,7 +410,7 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_GetGroupInfo(struct net_connection *connection, char *groupName, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetGroupInfo(struct net_connection *connection, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
 	FSTATUS					status;
@@ -512,6 +514,7 @@ fe_pa_multi_mad_group_config_response_query(
 
     p->imageId.imageNumber = hton64(image_id->imageNumber);
     p->imageId.imageOffset = hton32(image_id->imageOffset);
+    p->imageId.imageTime.absoluteTime = hton32(image_id->imageTime.absoluteTime);
     
     // process the command.
     switch (query->OutputType) 
@@ -576,7 +579,7 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_GetGroupConfig(struct net_connection *connection, char *groupName, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetGroupConfig(struct net_connection *connection, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -673,6 +676,7 @@ fe_pa_single_mad_port_counters_response_query(
 			   (user_cntrs_flag ? STL_PA_PC_FLAG_USER_COUNTERS : 0);
     p->imageId.imageNumber = image_id->imageNumber;
     p->imageId.imageOffset = image_id->imageOffset;
+    p->imageId.imageTime.absoluteTime = image_id->imageTime.absoluteTime;
 	memset(p->reserved, 0, sizeof(p->reserved));
 	memset(p->reserved2, 0, sizeof(p->reserved2));
 	p->lq.s.reserved = 0;
@@ -740,16 +744,49 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_GetPortCounters(struct net_connection *connection, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCtrsFlag, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetPortCounters(struct net_connection *connection, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag,
+		uint32_t userCtrsFlag, uint64 imageNumber, int32 imageOffset, uint32_t begin, uint32_t end)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
-    STL_PORT_COUNTERS_DATA		*response;
+    STL_PORT_COUNTERS_DATA		*response = NULL;
 
     fprintf(stderr, "Getting Port Counters...\n");
-	imageId.imageNumber = imageNumber;
+	imageId.imageNumber = end ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
-    if ((response = fe_pa_single_mad_port_counters_response_query(connection, nodeLid, portNumber, deltaFlag, userCtrsFlag, &imageId)) != NULL) {
+	imageId.imageTime.absoluteTime = end;
+
+	if (begin){
+		STL_PA_IMAGE_ID_DATA beginQuery = {0}, endQuery = {0};
+
+		beginQuery.imageNumber = PACLIENT_IMAGE_TIMED;
+		beginQuery.imageTime.absoluteTime = begin;
+
+		endQuery.imageNumber = end ? PACLIENT_IMAGE_TIMED : PACLIENT_IMAGE_CURRENT;
+		endQuery.imageTime.absoluteTime = end;
+
+		STL_PORT_COUNTERS_DATA *beginCounters = NULL, *endCounters = NULL;
+
+		if ((beginCounters = fe_pa_single_mad_port_counters_response_query(connection, nodeLid, portNumber, 0, 0, &beginQuery)) != NULL
+				&& (endCounters = fe_pa_single_mad_port_counters_response_query(connection, nodeLid, portNumber, 0, 0, &endQuery)) != NULL){
+
+			CounterSelectMask_t clearedCounters = DiffPACounters(endCounters, beginCounters, endCounters);
+			if (clearedCounters.AsReg32){
+				char counterBuf[128];
+				FormatStlCounterSelectMask(counterBuf, clearedCounters);
+				fprintf(stderr, "Counters reset, reporting latest count: %s\n", counterBuf);
+			}
+			status = FSUCCESS;
+			PrintStlPAPortCounters(&g_dest, 0, endCounters, (uint32)nodeLid, (uint32)portNumber, 0);
+		} else{
+        	fprintf(stderr, "Failed to receive GetPortCounters response\n");
+		}
+
+		if (endCounters)
+			MemoryDeallocate(endCounters);
+		if (beginCounters)
+			MemoryDeallocate(beginCounters);
+	} else if ((response = fe_pa_single_mad_port_counters_response_query(connection, nodeLid, portNumber, deltaFlag, userCtrsFlag, &imageId)) != NULL) {
         status = FSUCCESS;
 		PrintStlPAPortCounters(&g_dest, 0, response, (uint32)nodeLid, (uint32)portNumber, response->flags);
     } else {
@@ -1147,7 +1184,7 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_FreezeImage(struct net_connection *connection, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_FreezeImage(struct net_connection *connection, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			request = {0};
@@ -1534,6 +1571,7 @@ fe_pa_multi_mad_focus_ports_response_query (
 
     p->imageId.imageNumber = hton64(image_id->imageNumber);
     p->imageId.imageOffset = hton32(image_id->imageOffset);
+    p->imageId.imageTime.absoluteTime = hton32(image_id->imageTime.absoluteTime);
     
     // process the command.
     switch (query->OutputType) 
@@ -1600,7 +1638,7 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_GetFocusPorts(struct net_connection *connection, char *groupName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetFocusPorts(struct net_connection *connection, char *groupName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -1684,6 +1722,7 @@ fe_pa_multi_mad_get_image_info_response_query (
     p = (STL_PA_IMAGE_INFO_DATA *)request_data;
     p->imageId.imageNumber = hton64(image_info->imageId.imageNumber);
     p->imageId.imageOffset = hton32(image_info->imageId.imageOffset);
+    p->imageId.imageTime.absoluteTime = hton32(image_info->imageId.imageTime.absoluteTime);
 	p->reserved = 0;
 
     fprintf(stderr, "Sending Get Single Record request\n");
@@ -1734,16 +1773,18 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_GetImageInfo(struct net_connection *connection, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetImageInfo(struct net_connection *connection, uint64 imageNumber, int32 imageOffset, uint32_t imageTime)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_INFO_DATA		request = {{0}};
-    STL_PA_IMAGE_INFO_DATA		*response;;
+    STL_PA_IMAGE_INFO_DATA		*response;
 
     fprintf(stderr, "Getting image info...\n");
-	request.imageId.imageNumber = imageNumber;
+	request.imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
 	request.imageId.imageOffset = imageOffset;
-    if ((response = fe_pa_multi_mad_get_image_info_response_query(connection, &request)) != NULL) {
+	request.imageId.imageTime.absoluteTime = imageTime;
+
+	if ((response = fe_pa_multi_mad_get_image_info_response_query(connection, &request)) != NULL) {
         status = FSUCCESS;
 		PrintStlPAImageInfo(&g_dest, 0, response);
     } else {
@@ -1826,25 +1867,16 @@ done:
  * @param connection 				net_connection to send through
  *
  * @return
- *   FSUCCESS 		- Get successfully
- *     FERROR 		- Error
  */
-FSTATUS fe_GetClassPortInfo(struct net_connection *connection)
+STL_CLASS_PORT_INFO * fe_GetClassPortInfo(struct net_connection *connection)
 {
-	FSTATUS					status= FERROR;
-	STL_CLASS_PORT_INFO		*response;
+	STL_CLASS_PORT_INFO		*response = NULL;
 
-    fprintf(stderr, "Getting Class Port Info...\n");
-    if ((response = fe_pa_classportinfo_response_query(connection)) != NULL) {
-        status = FSUCCESS;
-		PrintStlClassPortInfo(&g_dest, 0, response);
-    } else {
+    if ((response = fe_pa_classportinfo_response_query(connection)) == NULL) {
         fprintf(stderr, "Failed to receive GetClassPortInfo response\n");
     }
 
-	if (response)
-		free(response);
-    return status;
+    return response;
 }
 
 /**
@@ -2041,6 +2073,7 @@ fe_pa_multi_mad_vf_info_response_query(
     strcpy(p->vfName, vf_name);
     p->imageId.imageNumber = image_id->imageNumber;
     p->imageId.imageOffset = image_id->imageOffset;
+    p->imageId.imageTime.absoluteTime = image_id->imageTime.absoluteTime;
 	BSWAP_STL_PA_VF_INFO(p, 1);
     
     // process the command.
@@ -2103,7 +2136,7 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_GetVFInfo(struct net_connection *connection, char *vfName, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetVFInfo(struct net_connection *connection, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
 	FSTATUS					status;
@@ -2207,6 +2240,7 @@ fe_pa_multi_mad_vf_config_response_query(
 
     p->imageId.imageNumber = hton64(image_id->imageNumber);
     p->imageId.imageOffset = hton32(image_id->imageOffset);
+    p->imageId.imageTime.absoluteTime = hton32(image_id->imageTime.absoluteTime);
     
     // process the command.
     switch (query->OutputType) 
@@ -2270,7 +2304,7 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_GetVFConfig(struct net_connection *connection, char *vfName, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetVFConfig(struct net_connection *connection, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -2370,6 +2404,7 @@ fe_pa_single_mad_vf_port_counters_response_query(
 
     p->imageId.imageNumber = image_id->imageNumber;
     p->imageId.imageOffset = image_id->imageOffset;
+	p->imageId.imageTime.absoluteTime = image_id->imageTime.absoluteTime;
 	memset(p->reserved, 0, sizeof(p->reserved));
 	p->reserved1 = 0;
     BSWAP_STL_PA_VF_PORT_COUNTERS(p);
@@ -2435,21 +2470,55 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
  */
-FSTATUS fe_GetVFPortCounters(struct net_connection *connection, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, char *vfName, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetVFPortCounters(struct net_connection *connection, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag,
+		uint32_t userCntrsFlag, char *vfName, uint64 imageNumber, int32 imageOffset, uint32_t begin, uint32_t end)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
-    STL_PA_VF_PORT_COUNTERS_DATA		*response;
+    STL_PA_VF_PORT_COUNTERS_DATA		*response = NULL;
 
     fprintf(stderr, "Getting Port Counters...\n");
-	imageId.imageNumber = imageNumber;
+	imageId.imageNumber = end ? PACLIENT_IMAGE_TIMED : imageNumber;
 	imageId.imageOffset = imageOffset;
-    if ((response = fe_pa_single_mad_vf_port_counters_response_query(connection, nodeLid, portNumber, deltaFlag, userCntrsFlag, vfName, &imageId)) != NULL) {
+	imageId.imageTime.absoluteTime = end;
+
+	if (begin){
+		STL_PA_IMAGE_ID_DATA beginQuery = {0}, endQuery = {0};
+
+		beginQuery.imageNumber = PACLIENT_IMAGE_TIMED;
+		beginQuery.imageTime.absoluteTime = begin;
+
+		endQuery.imageNumber = end ? PACLIENT_IMAGE_TIMED : PACLIENT_IMAGE_CURRENT;
+		endQuery.imageTime.absoluteTime = end;
+
+		STL_PA_VF_PORT_COUNTERS_DATA *beginCounters = NULL, *endCounters = NULL;
+
+		if ((beginCounters = fe_pa_single_mad_vf_port_counters_response_query(connection, nodeLid, portNumber, 0, 0, vfName, &beginQuery)) != NULL
+				&& (endCounters = fe_pa_single_mad_vf_port_counters_response_query(connection, nodeLid, portNumber, 0, 0, vfName, &endQuery)) != NULL){
+
+			CounterSelectMask_t clearedCounters = DiffPAVFCounters(endCounters, beginCounters, endCounters);
+			if (clearedCounters.AsReg32){
+				char counterBuf[128];
+				FormatStlCounterSelectMask(counterBuf, clearedCounters);
+				fprintf(stderr, "Counters reset, reporting latest count: %s", counterBuf);
+			}
+			status = FSUCCESS;
+			PrintStlPAVFPortCounters(&g_dest, 0, endCounters, (uint32)nodeLid, (uint32)portNumber, 0);
+		} else{
+        	fprintf(stderr, "Failed to receive GetVFPortCounters response\n");
+		}
+
+		if (endCounters)
+		    MemoryDeallocate(endCounters);
+	    if (beginCounters)
+		    MemoryDeallocate(beginCounters);
+    } else if ((response = fe_pa_single_mad_vf_port_counters_response_query(connection, nodeLid, portNumber, deltaFlag, userCntrsFlag, vfName, &imageId)) != NULL) {
         status = FSUCCESS;
 		PrintStlPAVFPortCounters(&g_dest, 0, response, (uint32)nodeLid, (uint32)portNumber, response->flags);
     } else {
         fprintf(stderr, "Failed to receive GetVFPortCounters response\n");
     }
+
     if(response) free(response);
     return status;
 }
@@ -2623,6 +2692,7 @@ fe_pa_multi_mad_vf_focus_ports_response_query (
 
     p->imageId.imageNumber = hton64(image_id->imageNumber);
     p->imageId.imageOffset = hton32(image_id->imageOffset);
+    p->imageId.imageTime.absoluteTime = hton32(image_id->imageTime.absoluteTime);
     
     // process the command.
     switch (query->OutputType) 
@@ -2689,7 +2759,7 @@ done:
  *   FSUCCESS 		- Get successfully
  *     FERROR 		- Error
 */
-FSTATUS fe_GetVFFocusPorts(struct net_connection *connection, char *vfName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset)
+FSTATUS fe_GetVFFocusPorts(struct net_connection *connection, char *vfName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	QUERY					query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};

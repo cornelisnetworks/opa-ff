@@ -41,7 +41,7 @@ if { [file exists $env(TL_DIR)/TestTools)] } {
 	# HostTests environment
 	set ibtools_dir $env(TL_DIR)/TestTools
 } else {
-	# in fastfabric, TL_DIR is set to /opt/opa/tools
+	# in fastfabric, TL_DIR is set to /usr/lib/opa/tools
 	set ibtools_dir $env(TL_DIR)
 }
 

@@ -1,0 +1,176 @@
+#!/bin/bash
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+
+MPI_HOSTS=${MPI_HOSTS:-$PWD/mpi_hosts}
+MPI_GROUP_HOSTS=${MPI_GROUP_HOSTS:-$PWD/mpi_group_hosts}
+DEFAULT_GROUPSIZE=2
+DEFAULT_NUMPROCS=3
+
+hostfile="/baddir/badfile"
+
+groupsize="NaN"
+numprocs="NaN"
+
+echo
+echo "This tool generates an mpi_group_test file for use with"
+echo "run_cabletest."
+echo
+echo "To generate an mpi_group_test file, please answer the"
+echo "following questions."
+
+until [ -f $hostfile ]
+do
+	echo
+	echo "Please enter the name of your hosts file."
+	echo "The hosts must be listed in group order, one per line. "
+	echo "Hosts should not be listed more than once and should be listed"
+	echo "in their physical order."
+	echo -n "Hostfile (default is $MPI_HOSTS)> "
+	read hostfile
+	
+	if [ -z "$hostfile" ] 
+	then
+		hostfile=$MPI_HOSTS
+	fi
+
+	if [ ! -f $hostfile ]
+	then
+		echo "Could not find '$hostfile'".
+	fi
+done
+
+until [ $groupsize -eq $groupsize 2>/dev/null ]
+do
+	echo 
+	echo "How big are your groups? For example, if you want to test each"
+	echo "node against the node next to it, use a group size of 2."
+	echo "(This is the default.)"
+	echo "If you want to test the nodes connected to one leaf switch against "
+	echo "nodes on another leaf switch, and you have 16 nodes per leaf,"
+	echo "your group size is 32."
+	echo "Remember, your hosts must be listed in the order they are connected"
+	echo "to the switches."
+	echo -n "Group Size (default is $DEFAULT_GROUPSIZE)> "
+	read groupsize
+
+	if [ -z "$groupsize" ] 
+	then
+		groupsize=$DEFAULT_GROUPSIZE
+	fi
+
+	# Believe it or not, this is how you check to see
+	# if $groupsize is numeric or not....
+	if [ $groupsize -eq $groupsize 2>/dev/null ]
+	then
+		if [ $groupsize -le 1 ]
+		then 
+			echo "Group Size must be at least two."
+			groupsize="NaN"
+		fi
+	else
+		echo "Group Size must be a number."
+	fi
+done
+
+until [ $numprocs -eq $numprocs 2>/dev/null ]
+do
+	echo 
+	echo "How many processes per node do you wish to run?"
+	echo "The higher you make this number, the higher your"
+	echo "link utilization will be. The number should be between"
+	echo "1 and the number of processors per node."
+	echo -n "Number of processes (default is $DEFAULT_NUMPROCS)> "
+	read numprocs
+
+	if [ -z "$numprocs" ] 
+	then
+		numprocs=$DEFAULT_NUMPROCS
+	fi
+	
+	# Believe it or not, this is how you check to see
+	# if $numprocs is numeric or not....
+	if [ $numprocs -eq $numprocs 2>/dev/null ]
+	then
+		if [ $numprocs -le 0 ]
+		then 
+			echo "Number of processes must be at least one."
+			numprocs="NaN"
+		fi
+	else
+		echo "Number of processes must be a number."
+	fi
+done
+
+# this assignment will implicitly ignore blank lines
+host=( `cat $hostfile | grep -v "^#"` )
+hostcount=${#host[*]}
+
+i=0
+j=$groupsize
+groupno=0
+
+echo "# DO NOT DELETE THIS LINE: $groupsize $numprocs" >$MPI_GROUP_HOSTS
+
+while [ $i -lt $hostcount ]
+do
+	if [ $j -eq $groupsize ]
+	then 
+		groupno=$((groupno + 1))
+		(echo "#"
+		echo "# Group $groupno"
+		echo "#") >> $MPI_GROUP_HOSTS
+		j=1
+	else
+		j=$((j + 1))
+	fi
+
+	k=0
+	while [ $k -lt $numprocs ]
+	do
+		k=$((k + 1))
+		echo ${host[$i]} >> $MPI_GROUP_HOSTS
+	done
+		
+	i=$((i + 1))
+done
+
+echo
+echo "$MPI_GROUP_HOSTS generated."
+if [ $j -ne $groupsize ] 
+then
+	echo 
+	echo "WARNING: The number of hosts in $hostfile is not"
+	echo "an even multiple of the group size $groupsize."
+	echo "It is highly likely that the new mpi_group_hosts"
+	echo "file is not correct."
+fi
+echo

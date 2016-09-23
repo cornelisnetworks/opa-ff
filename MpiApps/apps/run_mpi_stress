@@ -1,0 +1,124 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location, 
+# either edit this line or set MPICH_PREFIX in your environment.
+# see select_mpi for the set of default MPI selections
+# default to MPI used for build
+MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
+
+usage()
+{
+	echo "Usage: run_mpi_stress number_processes [mpi_stress arguments]" >&2
+	echo "number_processes may be 'all' in which case one rank will be started for" >&2
+	echo "every process in the mpi_hosts file" >&2
+	echo  >&2
+	echo "mpi_stress arguments:" >&2
+	echo "    -a INT : desired alignment for buffers (must be power of 2)" >&2
+	echo "    -b BYTE : byte value to initialize non-random send buffers (otherwise 0)" >&2
+	echo "    -c : enable CRC checksums" >&2
+	echo "    -D INT : set max data amount per msg size (default 1073741824)" >&2
+	echo "    -d : enable data checksums (otherwise headers only)" >&2
+	echo "    -e : exercise the interconnect with random length messages" >&2
+	echo "    -g INT : use INT-dimensional grid connectivity (non-periodic)" >&2
+	echo "    -G INT : use INT-dimensional grid connectivity (periodic)" >&2
+	echo "             (default is to use all-to-all connectivity)" >&2
+	echo "    -h : display this help page" >&2
+	echo "    -i : include local ranks as destinations (only for all-to-all)" >&2
+	echo "    -I INT : set msg size increment (default power of 2)" >&2
+	echo "    -l INT : set min msg size  (default 0)" >&2
+	echo "    -L INT : set min msg count (default 100)" >&2
+	echo "    -m INT : set max msg size  (default 4194304)" >&2
+	echo "    -M INT : set max msg count (default 10000)" >&2
+	echo "    -n INT : number of times to repeat (default 1)" >&2
+	echo "    -O : show options and parameters used for the run." >&2
+	echo "    -p : show progress" >&2
+	echo "    -P : poison receive buffers at init and after each receive" >&2
+	echo "    -q : quiet mode (don't show error details)" >&2
+	echo "    -r : fill send buffers with random data (else 0 or -b byte)" >&2
+	echo "    -R : round robin destinations (default is random selection)" >&2
+	echo "    -s : include self as a destination (only for all-to-all)" >&2
+	echo "    -S : use non-blocking synchronous sends (MPI_Issend)" >&2
+	echo "    -t INT : run for INT minutes (implictly adds -n BIGNUM)" >&2
+	echo "    -u : uni-directional traffic (only for grid)" >&2
+	echo "    -v : enable verbose mode (more -v for more verbose)" >&2
+	echo "    -w INT : number of send/recv in window (default 20)" >&2
+	echo "    -x : enable XOR checksums" >&2
+	echo "    -z : enable typical options for data integrity (-drx)" >&2
+	echo "       : (for stronger integrity checking try using -drc instead)" >&2
+	echo "    -Z : zero receive buffers at init and after each receive" >&2
+	echo "This an an MPI stress test program designed to load up an MPI" >&2
+	echo "interconnect with point-to-point messages while optionally" >&2
+	echo "checking for data integrity. By default, it runs with all-to-all" >&2
+	echo "traffic patterns, optionally including oneself and one's local" >&2
+	echo "shm peers. It can also be set up with multi-dimensional grid" >&2
+	echo "traffic patterns, and this can be parameterized to run rings," >&2
+	echo "open 2D grids, closed 2D grids, cubic lattices, hypercubes, etc." >&2
+	echo "Optionally, the message data can be randomized and checked" >&2
+	echo "using CRC checksums (strong but slow) or XOR checksums (weak but" >&2
+	echo "fast). The communication kernel is built out of non-blocking" >&2
+	echo "point-to-point calls to load up the interconnect. The program is" >&2
+	echo "not designed to exhaustively test out different MPI primitives." >&2
+	echo "Performance metrics are displayed, but should be carefully" >&2
+	echo "interpreted in terms of the features enabled." >&2
+	echo  >&2
+	exit 2
+}
+
+if [ -z "$1" ]
+then
+	usage
+fi
+if [ "$1" != "all" ] && ! [ "$1" -gt 0 ] 2>/dev/null
+then
+	usage
+fi
+NUM_PROCESSES=$1
+MIN_PROCESSES=1
+shift
+
+CMD="$MPICH_PREFIX/tests/intel/mpi_stress $@"
+
+APP=mpi_stress
+LOGFILE=
+. ./prepare_run
+
+(
+	echo " Running Mpi Stress ..."
+	show_mpi_hosts
+	set -x
+	$MPI_RUN_CMD $CMD
+	set +x
+) 2>&1 | tee -i -a $LOGFILE
+echo "########################################### " >> $LOGFILE

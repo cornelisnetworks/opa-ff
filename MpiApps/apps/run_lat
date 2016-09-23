@@ -1,0 +1,119 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# BASE PATH TO MPI EXECUTABLES: To use an alternate location, 
+# either edit this line or set MPICH_PREFIX in your environment.
+# see select_mpi for the set of default MPI selections
+# default to MPI used for build
+MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
+
+trap "exit 1" SIGHUP SIGTERM SIGINT
+
+full=n
+all=n
+size=1
+if [ -z $1 ]
+then 
+	echo " Setting the default Maximum Message Size to 1000"
+	MAX_SIZE=1000
+	mult=4
+elif [ "$1" = full ]
+then
+	MAX_SIZE=4194304
+	full=y
+	mult=2
+	size=0
+elif [ "$1" = all ]
+then
+	MAX_SIZE=`expr 128 \* 1024`
+	all=y
+	mult=0
+	size=0
+	if [ -z $2 ]
+	then
+		inc=10
+	else
+		inc=$2
+	fi
+else
+	MAX_SIZE=$1
+	mult=4
+fi
+
+NUM_PROCESSES=2
+APP=latency
+LOGFILE=
+. ./prepare_run
+
+loops=10000
+LATENCY_CMD="latency/latency"
+
+echo " Running Latency ..." | tee -a $LOGFILE
+show_mpi_hosts | tee -a $LOGFILE
+echo " Using: $MPI_RUN_CMD $LATENCY_CMD LOOPS SIZE" >> $LOGFILE
+while [ "$size" -le "$MAX_SIZE" ]
+do
+	if [ $all != y ]
+	then
+		echo " Running Latency for size $size"
+	fi
+	set -x
+	$MPI_RUN_CMD $LATENCY_CMD $loops $size 2>&1|tee -i -a $LOGFILE
+	set +x
+
+	if [ $all = y ]
+	then
+		size=`expr $size + $inc`
+	elif [ $full = y -a $size -lt 8 ]
+	then
+		size=`expr $size + 1`
+	else
+    	size=`expr $size \* $mult`
+	fi
+
+	if [ $size -lt 100 ]
+	then
+		loops=10000
+	elif [ $size -lt 1024 ]
+	then
+		loops=7000
+	elif [ $size -lt 2048 ]
+	then
+		loops=5000
+	elif [ $size -lt 1000000 ]
+	then
+		loops=1000
+	else
+		loops=20
+	fi
+done
+echo "########################################### " >> $LOGFILE

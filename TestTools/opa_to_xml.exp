@@ -220,7 +220,7 @@ proc ibaSAQuerySwitchltvToXml { switchltv_content } {
 	}
     }
     
-    #    puts "[$root asXML]"   
+    #puts "[$root asXML]"   
 
     return $root
 }
@@ -1028,17 +1028,17 @@ proc ibaSAQueryPortInfoToXml { port_content } {
 	}
 
 	# Build VLtoMTU Map
-	set rc [ regexp {^00: |^08: |^16: |^24: } $line matched ]
+	set rc [ regexp {^00:|^08:|^16:|^24:} $line matched ]
 	if { $rc == 1 } {
 	    #the regex ": +" eliminates the error for MTU values that are less than 4 characters
 	    #sample line 00>8192 01>4096 02>8192 03>8192 04>256 05>512 06>1024 07>2048
-	    set VLMTUPair_line [regsub -all ": +" $line >]
+	    set VLMTUPair_line [regsub -all ": *" $line >]
 	    
 	    foreach vlMTUPair [split $VLMTUPair_line " "] {
 		#00>8192
     	        set vlValue [lindex [split $vlMTUPair ">"] 0]
     	        set value [lindex [split $vlMTUPair ">"] 1]
-		
+
 		set mtuNode [ $doc selectNodes {//PortInfo/Port[PortNum=$portNum_dec and PortLID=$plid]/NeighborMTUByVL } ]
 		    
 		$mtuNode appendChild [ createAttributesElement $doc VL id $vlValue MTU  $value ]    

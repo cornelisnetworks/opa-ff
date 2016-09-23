@@ -30,7 +30,7 @@ opasaquery [-v [-v] [-v]] [-I] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-
 .br
 [-S \fIserviceId\fR] [-L \fIsl\fR] [-u \fIgid\fR] [-m \fIgid\fR] [-d \fIname\fR] [-P \[aq]\fIguid guid\fR\[aq]]
 .br
-[-G \[aq]\fIgid gid\fR\[aq]] [-a \[aq]\fIsguid\fR...; \fIdguid\fR...\[aq]] [-A#8217#160;\[aq]\fIsgid\fR...; \fIdgid\fR...\[aq]]
+[-G \[aq]\fIgid gid\fR\[aq]] [-a \[aq]\fIsguid\fR...; \fIdguid\fR...\[aq]] [-A \[aq]\fIsgid\fR...; \fIdgid\fR...\[aq]]
 .SH Options
 .NL
 
@@ -52,15 +52,15 @@ Issues query in legacy InfiniBand* format.
 .TP 10
 -h/--hfi \fIhfi\fR 
 .NL
-HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR is a system-wide port number. Default is 0.
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
 
 .TP 10
 -p/--port \fIport\fR 
 .NL
-Port, numbered 1..n. If 0, then  \fIport\fR is a first active. Default is first active.
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
 
 .TP 10
--o/--output \fItype\fR 
+-o \fItype\fR 
 .NL
 Output type for query (default is node). See
 \fIOutput Types\fR
@@ -74,85 +74,85 @@ Query a specific LID.
 .TP 10
 -t/--type \fInode\(ultype\fR 
 .NL
-Query by node type. See
+Queries by node type. See
 \fINode Types\fR
 for details.
 
 .TP 10
 -s/--sysguid \fIsystem\(ulimage\(ulguid\fR 
 .NL
-Query by system image GUID.
+Queries by system image GUID.
 
 .TP 10
 -n/--nodeguid \fInode\(ulguid\fR 
 .NL
-Query by node GUID.
+Queries by node GUID.
 
 .TP 10
 -g/--portguid \fIport\(ulguid\fR 
 .NL
-Query by port GUID.
+Queries by port GUID.
 
 .TP 10
 -k/--pkey \fIpkey\fR 
 .NL
-Query a specific PKey.
+Queries a specific PKey.
 
 .TP 10
 -i/--vfindex \fIvfIndex\fR 
 .NL
-Query a specific vfindex.
+Queries a specific vfindex.
 
 .TP 10
 -S/--serviceId \fIserviceId\fR 
 .NL
-Query a specific service ID.
+Queries a specific service ID.
 
 .TP 10
 -L/--SL \fISL\fR 
 .NL
-Query by service level.
+Queries by service level.
 
 .TP 10
 -u/--portgid \fIport\(ulgid\fR 
 .NL
-Query by port GID. See
+Queries by port GID. See
 \fIGIDs\fR
 for details.
 
 .TP 10
 -m/--mcgid \fImulticast\(ulgid\fR 
 .NL
-Query by multicast GID. See
+Queries by multicast GID. See
 \fIGIDs\fR
 for details.
 
 .TP 10
 -d/--desc \fInode\(uldescription\fR 
 .NL
-Query by node name/description.
+Queries by node name/description.
 
 .TP 10
 -P/--guidpair \fIguid guid\fR 
 .NL
-Query by a pair of port GUIDs.
+Queries by a pair of port GUIDs.
 
 .TP 10
 -G/--gidpair \fIgid gid\fR 
 .NL
-Query by a pair of GIDs. See
+Queries by a pair of GIDs. See
 \fIGIDs\fR
 for details.
 
 .TP 10
 -a/--guidlist \fIsguid ...;dguid ...\fR 
 .NL
-Query by a list of port GUIDs.
+Queries by a list of port GUIDs.
 
 .TP 10
 -A/--gidlist \fIsgid ...;dgid ...\fR 
 .NL
-Query by a list of GIDs. See
+Queries by a list of GIDs. See
 \fIGIDs\fR
 for details.
 
@@ -177,17 +177,17 @@ First active port in system.
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR#8217#160;-p 0 
+-h \fIx\fR \fI\fR-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy\fR#8217#160;within system (no matter which ports are active).
+Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR#8217#160;-p \fIy\fR 
+-h \fIx\fR \fI\fR-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR.
 
@@ -208,9 +208,9 @@ Switch
 .NL
 
 .PP
-Specify a 64-bit subnet and 64-bit interface ID in the form:
+Specifies a 64-bit subnet and 64-bit interface ID in the form:
 .PP
- \fIsubnet\fR: \fIinterface\fR 
+subnet:interface 
 .PP
 
 .B NOTE:
@@ -231,196 +231,197 @@ Default is node.
 .TP 10
 classportinfo 
 .NL
-classportinfo of the SA.
+Specifies the classportinfo of the SA.
 
 .TP 10
 systemguid 
 .NL
-List of system image GUIDs.
+Lists the system image GUIDs.
 
 .TP 10
 nodeguid 
 .NL
-List of node GUIDs.
+Lists the node GUIDs.
 
 .TP 10
 portguid 
 .NL
-List of port GUIDs.
+Lists the port GUIDs.
 
 .TP 10
 lid 
 .NL
-List of LIDs.
+Lists the LIDs.
 
 .TP 10
 desc 
 .NL
-List of node descriptions/names.
+Lists the node descriptions/names.
 
 .TP 10
 path 
 .NL
-List of path records.
+Lists the path records.
 
 .TP 10
 node 
 .NL
-List of node records.
+Lists the node records.
 
 .TP 10
 portinfo 
 .NL
-List of port info records.
+Lists the port info records.
 
 .TP 10
 sminfo 
 .NL
-List of SM info records.
+Lists the SM info records.
 
 .TP 10
 swinfo 
 .NL
-List of switch info records.
+Lists the switch info records.
 
 .TP 10
 link 
 .NL
-List of link records.
+Lists the link records.
 
 .TP 10
 scsc 
 .NL
-List of SC to SC mapping table records.
+Lists the SC to SC mapping table records.
 
 .TP 10
 slsc 
 .NL
-List of SL to SC mapping table records.
+Lists the SL to SC mapping table records.
 
 .TP 10
 scsl 
 .NL
-List of SC to SL mapping table records.
+Lists the SC to SL mapping table records.
 
 .TP 10
 scvlt 
 .NL
-List of SC to VLt table records.
+Lists the SC to VLt table records.
 
 .TP 10
 scvlnt 
 .NL
-List of SC to VLnt table records.
+Lists the SC to VLnt table records.
 
 .TP 10
 vlarb 
 .NL
-List of VL arbitration table records.
+Lists the VL arbitration table records.
 
 .TP 10
 pkey 
 .NL
-List of PKey table records.
+Lists the PKey table records.
 
 .TP 10
 service 
 .NL
-List of service records.
+Lists the service records.
 
 .TP 10
 mcmember 
 .NL
-List of multicast member records.
+Lists the multicast member records.
 
 .TP 10
 inform 
 .NL
-List of inform info records.
+Lists the inform info records.
 
 .TP 10
 linfdb 
 .NL
-List of switch linear forwarding database (FDB) records.
+Lists the switch linear forwarding database (FDB) records.
 
 .TP 10
 mcfdb 
 .NL
-List of switch multicast FDB records.
+Lists the switch multicast FDB records.
 
 .TP 10
 trace 
 .NL
-List of trace records.
+Lists the trace records.
 
 .TP 10
 vfinfo 
 .NL
-List of vFabrics.
+Lists the vFabrics.
 
 .TP 10
 vfinfocsv 
 .NL
-List of vFabrics in CSV format.
+Lists the vFabrics in CSV format.
 
 .TP 10
 vfinfocsv2 
 .NL
-List of vFabrics in CSV format with enums.
+Lists the vFabrics in CSV format with enums.
 
 .TP 10
 fabricinfo 
 .NL
-Summary of fabric devices.
+Specifies the summary of fabric devices.
 
 .TP 10
 quarantine 
 .NL
-List of quarantined nodes.
+Lists the quarantined nodes.
 
 .TP 10
 conginfo 
 .NL
-List of Congestion Info Records.
+Lists the Congestion Info Records.
 
 .TP 10
 swcongset 
 .NL
-List of Switch Congestion Settings.
+Lists the Switch Congestion Settings.
 
 .TP 10
 swportcong 
 .NL
-List of Switch Port Congestion Settings.
+Lists the Switch Port Congestion Settings.
+
 .TP 10
 hficongset 
 .NL
-List of HFI Congestion Settings.
+Lists the HFI Congestion Settings.
 
 .TP 10
 hficongcon 
 .NL
-List of HFI Congestion Control Settings.
+Lists the HFI Congestion Control Settings.
 
 .TP 10
 bfrctrl 
 .NL
-List of buffer control tables.
+Lists the buffer control tables.
 
 .TP 10
 cableinfo 
 .NL
-List of Cable Info records.
+Lists the Cable Info records.
 
 .TP 10
 portgroup 
 .NL
-List of AR Port Group records.
+Lists the AR Port Group records.
 
 .TP 10
 portgroupfdb 
 .NL
-List of AR Port Group FWD records.
+Lists the AR Port Group FWD records.
 
 .PP
 The vfinfocsv and vfinfocsv2 output formats are designed to make it easier to script vfinfo queries. One line is output per vFabric of the form:
@@ -472,6 +473,7 @@ systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo,
 trace 
 
 .RE
+
 
 .TP 10
 -t \fInode\(ultype\fR 

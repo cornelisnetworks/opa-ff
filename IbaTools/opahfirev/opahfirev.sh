@@ -74,6 +74,9 @@ else
 			instance=`ls ${driver} 2>/dev/null`
 		fi
 
+		hfinum=${instance#*_}
+		hfinum=`echo "${hfinum} +1" | bc`
+
 		if [ ! -e ${driver} -o ! -e ${driver}/${instance} ] 
 		then
 			instance="Driver not Loaded"
@@ -94,11 +97,11 @@ else
 			#note Add new HW rev codes here. This list was taken from WFR HAS CceRevision
 			esac
 
-			/usr/sbin/opatmmtool 2>/dev/null 1>/dev/null
+			/usr/sbin/opatmmtool -h ${hfinum} 2>/dev/null 1>/dev/null
 			tmm=$?
 			if [ $tmm -ne 3 ]
 			then
-				tmmver=`/usr/sbin/opatmmtool fwversion | sed s/"Current Firmware Version="//`
+				tmmver=`/usr/sbin/opatmmtool -h ${hfinum} fwversion | sed s/"Current Firmware Version="//`
 			fi
 		fi
 

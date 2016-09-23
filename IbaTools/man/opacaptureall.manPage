@@ -18,7 +18,7 @@ opacaptureall
 Captures supporting information for a problem report from all hosts or Intel(R) Omni-Path Chassis and uploads to this system.
 .PP
 
-\fBFor Hosts :\fR
+\fBFor Hosts:\fR
 When a host opacaptureall is performed, opacapture is run to create the specified capture file within ~root on each host (with the .tgz suffix added as needed). The files are uploaded and unpacked into a matching directory name within upload\(uldir/\fIhostname\fR/ on the local system. The default file name is hostcapture.
 .PP
 
@@ -28,11 +28,11 @@ When a chassis opacaptureall is performed, opacapture is run on each chassis and
 For both host and chassis capture, the uploaded captures are combined into a .tgz file with the file name specified and the suffix .all.tgz added.
 .SH Syntax
 .NL
-opacaptureall [-C] [-p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR]
+opacaptureall [-C] [-p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-h \[aq]\fIhosts\fR\[aq]]
+[-H \[aq]\fIchassis\fR\[aq]] [-t \fIportsfile\fR] [-d \fIupload\(uldir\fR] [-S] [-D \fIdetail\(ullevel\fR]
 .br
-[-H \[aq]\fIchassis\fR\[aq]] [-t \fIportsfile\fR] [-d \fIupload\(uldir\fR] [-S] [-D \fIdetail\(ullevel\fR] [ \fIfile\fR]
+[ \fIfile\fR]
 .SH Options
 .NL
 
@@ -54,32 +54,32 @@ Performs capture upload in parallel on all host/chassis. For a host capture, thi
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file with hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
 
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-File containing a list of chassis in the cluster. Default is /etc/sysconfig/opa/chassis file.
+Specifies the file containing a list of chassis in the cluster. Default is /etc/sysconfig/opa/chassis file.
 
 .TP 10
 -h \fIhosts\fR 
 .NL
-List of hosts on which to perform a capture.
+Specifies the list of hosts on which to perform a capture.
 
 .TP 10
 -H \fIchassis\fR 
 .NL
-List of chassis on which to perform a capture.
+Specifies the list of chassis on which to perform a capture.
 
 .TP 10
 -t \fIportsfile\fR 
 .NL
-File with list of local HFI ports used to access fabric(s) for switch access, default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabric(s) for switch access, default is /etc/sysconfig/opa/ports file.
 
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Directory to upload to, default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default (./uploads) is used.
+Specifies the directory to upload to; default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default (./uploads) is used.
 
 .TP 10
 -S 
@@ -89,30 +89,21 @@ Securely prompts for password for administrator on a chassis.
 .TP 10
 -D \fIdetail\(ullevel\fR 
 .NL
-Level of detail of the capture passed to host opacapture. (Only used for host captures; ignored for chassis captures.)
+Specifies the level of detail of the capture passed to host opacapture. (Only used for host captures; ignored for chassis captures.)
 .RS
 .TP 10
 
 .sp
-1 
-Local. Obtains local information from each host.
+1 (Local)
+Obtains local information from each host.
 .RE
 
 .RS
 .TP 10
 
 .sp
-2 
-Fabric. In addition to \fILocal\fR, also obtains basic fabric information by queries to the SM and fabric error analysis using opareport.
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-3 
-Fabric+FDB. In addition to \fIFabric\fR, also obtains the Forwarding Database (FDB), which includes the switch forwarding tables from the SM.
+2 (Fabric)
+In addition to \fILocal\fR, also obtains basic fabric information by queries to the SM and fabric error analysis using opareport.
 
 .RE
 
@@ -120,8 +111,17 @@ Fabric+FDB. In addition to \fIFabric\fR, also obtains the Forwarding Database (F
 .TP 10
 
 .sp
-4 
-Analysis. In addition to \fIFabric+FDB\fR, also obtains opaallanalysis results. If opaallanalysis has not yet been run, it is run as part of the capture.
+3 (Fabric+FDB)
+In addition to \fIFabric\fR, also obtains the Forwarding Database (FDB), which includes the switch forwarding tables from the SM.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+4 (Analysis)
+In addition to \fIFabric+FDB\fR, also obtains opaallanalysis results. If opaallanalysis has not yet been run, it is run as part of the capture.
 
 .RE
 
@@ -140,7 +140,7 @@ For detail levels 2-4, the additional information is only gathered on the node r
 .TP 10
  \fIfile\fR 
 .NL
-Name for capture file. The suffix .tgz is appended if it is not specified in the name.
+Specifies the name for capture file. The suffix .tgz is appended if it is not specified in the name.
 
 .SH Examples 
 .NL
@@ -165,11 +165,9 @@ opacaptureall mycapture
 .br
 
 .br
-opacaptureall -h #8217#180;arwen elrond\(aa 030127capture
+opacaptureall -h \[aq]arwen elrond\[aq] 030127capture
 .br
-# Gets the list of hosts from arwen elrond file and creates 030127cap#8217#8208;
-.br
-ture.tgz file.
+# Gets the list of hosts from arwen elrond file and creates 030127capture.tgz file.
 .NL
 
 .SH Chassis Capture Examples
@@ -190,7 +188,7 @@ in /etc/sysconfig/opa/chassis file, then creates mycapture.all.tgz.
 .br
 
 .br
-opacaptureall -C -H #8217#180;chassis1 chassis2\(aa 030127capture
+opacaptureall -C -H \[aq]chassis1 chassis2\[aq] 030127capture
 .br
 # Captures from chassis1 and chassis2, and creates 030127capture.tgz file.
 .SH Environment Variables

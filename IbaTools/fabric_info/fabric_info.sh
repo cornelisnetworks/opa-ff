@@ -32,7 +32,7 @@
 # This script provides a quick summary of fabric configuration
 # it uses saquery to gather the information from the SM
 
-if [ -f /opt/opa/tools/ff_funcs ]
+if [ -f /usr/lib/opa/tools/ff_funcs ]
 then
 	# optional override of defaults
 	if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
@@ -40,9 +40,9 @@ then
 		. /etc/sysconfig/opa/opafastfabric.conf
 	fi
 
-	. /opt/opa/tools/opafastfabric.conf.def
+	. /usr/lib/opa/tools/opafastfabric.conf.def
 
-	. /opt/opa/tools/ff_funcs
+	. /usr/lib/opa/tools/ff_funcs
 	ff_available=y
 else
 	ff_available=n

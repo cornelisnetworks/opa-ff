@@ -20,7 +20,9 @@ The tool can be used with additional scripts to help set PKey, SL, MTU, and Rate
 .
 .SH Syntax 
 .NL
-opagetvf [-h \fIhfi\fR] [-p \fIport\fR] [-e] [-d \fIvfname\fR|-S \fIserviceId\fR|-m \fImcgid\fR|-i \fIvfIndex\fR| -k \fIpkey\fR|-L \fIsl\fR]
+opagetvf [-h \fIhfi\fR] [-p \fIport\fR] [-e] [-d \fIvfname\fR| -S \fIserviceId\fR| -m \fImcgid\fR|
+.br
+-i \fIvfIndex\fR| -k \fIpkey\fR| -L \fIsl\fR]
 .SH Options 
 .NL
 
@@ -31,15 +33,15 @@ Produces full help text.
 .TP 10
 -h \fIhfi\fR 
 .NL
-HFI to send by. Default is first HFI.
+Specifies the HFI to send by. Default is first HFI.
 .TP 10
 -p \fIport\fR 
 .NL
-Port to send by, default is first active port.
+Specifies the port to send by. Default is first active port.
 .TP 10
 -e 
 .NL
-Output MTU and rate as enum values.
+Outputs MTU and rate as enum values.
 .TP 10
 -d \fIvfname\fR 
 .NL

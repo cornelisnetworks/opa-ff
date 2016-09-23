@@ -190,7 +190,7 @@ static boolean stl_pma_get_class_port_info(argrec *args, uint8_t *pm, size_t pm_
 	} else {
 		BSWAP_STL_CLASS_PORT_INFO(pClassPortInfo );
 		if (print)
-			PrintStlClassPortInfo(&g_dest, 0 /* indent */, pClassPortInfo);
+			PrintStlClassPortInfo(&g_dest, 0 /* indent */, pClassPortInfo, MCLASS_PERF);
 		return TRUE;
 	}
 } //stl_pma_get_class_port_info
@@ -420,38 +420,40 @@ void pma_Usage(boolean displayAbridged)
 	fprintf(stderr, "    -m port  Port in destination device to query.\n");
 	fprintf(stderr, "    -n mask  Port Mask, in hex, bits represent ports 63-0\n");
 	fprintf(stderr, "             (e.g. 0x2 for port 1, 0x6 for ports 1,2)\n");
-	fprintf(stderr, "    -e mask  Counter/error Select Mask, select bit positions as shown below\n");
-	fprintf(stderr, "             0 is least significant (rightmost)\n");
-	fprintf(stderr, "             default is all bits set (e.g. 0xffffffe0)\n");
-	fprintf(stderr, "                              (for Counters):      (for Error Info):\n");
-	fprintf(stderr, "             mask	  bit location  \n");
-	fprintf(stderr, "             0x80000000  31    Xmit Data           Rcv Error Info\n");
-	fprintf(stderr, "             0x40000000  30    Rcv Data            Excessive Buffer Overrun\n");
-	fprintf(stderr, "             0x20000000  29    Xmit Pkts           Xmit Const Error Info\n");
-	fprintf(stderr, "             0x10000000  28    Rcv Pkts            Rcv Const Error Info\n");
-	fprintf(stderr, "             0x08000000  27    Multicast Xmit Pkts Rcv Switch Relay Error Info\n");
-	fprintf(stderr, "             0x04000000  26    Multicast Rcv Pkts  Uncorrectable Error Info\n");
-	fprintf(stderr, "             0x02000000  25    Xmit Wait           FM Config Error Info\n");
-	fprintf(stderr, "             0x01000000  24    Congestion Discards\n");
-	fprintf(stderr, "             0x00800000  23    Rcv FECN\n");
-	fprintf(stderr, "             0x00400000  22    Rcv BECN\n");
-	fprintf(stderr, "             0x00200000  21    Xmit Time Cong.\n");
-	fprintf(stderr, "             0x00100000  20    Xmit Time Wasted BW\n");
-	fprintf(stderr, "             0x00080000  19    Xmit Time Wait Data\n");
-	fprintf(stderr, "             0x00040000  18    Rcv Bubble\n");
-	fprintf(stderr, "             0x00020000  17    Mark FECN\n");
-	fprintf(stderr, "             0x00010000  16    Rcv Constraint Errors\n");
-	fprintf(stderr, "             0x00008000  15    Rcv Switch Relay\n");
-	fprintf(stderr, "             0x00004000  14    Xmit Discards\n");
-	fprintf(stderr, "             0x00002000  13    Xmit Constraint Errors\n");
-	fprintf(stderr, "             0x00001000  12    Rcv Rmt Phys. Errors\n");
-	fprintf(stderr, "             0x00000800  11    Local Link Integrity\n");
-	fprintf(stderr, "             0x00000400  10    Rcv Errors\n");
-	fprintf(stderr, "             0x00000200   9    Exc. Buffer Overrun\n");
-	fprintf(stderr, "             0x00000100   8    FM Config Errors\n");
-	fprintf(stderr, "             0x00000080   7    Link Error Recovery\n");
-	fprintf(stderr, "             0x00000040   6    Link Error Downed\n");
-	fprintf(stderr, "             0x00000020   5    Uncorrectable Errors\n");
+	if(!displayAbridged) {
+		fprintf(stderr, "    -e mask  Counter/error Select Mask, select bit positions as shown below\n");
+		fprintf(stderr, "             0 is least significant (rightmost)\n");
+		fprintf(stderr, "             default is all bits set (e.g. 0xffffffe0)\n");
+		fprintf(stderr, "                              (for Counters):      (for Error Info):\n");
+		fprintf(stderr, "             mask	  bit location  \n");
+		fprintf(stderr, "             0x80000000  31    Xmit Data           Rcv Error Info\n");
+		fprintf(stderr, "             0x40000000  30    Rcv Data            Excessive Buffer Overrun\n");
+		fprintf(stderr, "             0x20000000  29    Xmit Pkts           Xmit Const Error Info\n");
+		fprintf(stderr, "             0x10000000  28    Rcv Pkts            Rcv Const Error Info\n");
+		fprintf(stderr, "             0x08000000  27    Multicast Xmit Pkts Rcv Switch Relay Error Info\n");
+		fprintf(stderr, "             0x04000000  26    Multicast Rcv Pkts  Uncorrectable Error Info\n");
+		fprintf(stderr, "             0x02000000  25    Xmit Wait           FM Config Error Info\n");
+		fprintf(stderr, "             0x01000000  24    Congestion Discards\n");
+		fprintf(stderr, "             0x00800000  23    Rcv FECN\n");
+		fprintf(stderr, "             0x00400000  22    Rcv BECN\n");
+		fprintf(stderr, "             0x00200000  21    Xmit Time Cong.\n");
+		fprintf(stderr, "             0x00100000  20    Xmit Time Wasted BW\n");
+		fprintf(stderr, "             0x00080000  19    Xmit Time Wait Data\n");
+		fprintf(stderr, "             0x00040000  18    Rcv Bubble\n");
+		fprintf(stderr, "             0x00020000  17    Mark FECN\n");
+		fprintf(stderr, "             0x00010000  16    Rcv Constraint Errors\n");
+		fprintf(stderr, "             0x00008000  15    Rcv Switch Relay\n");
+		fprintf(stderr, "             0x00004000  14    Xmit Discards\n");
+		fprintf(stderr, "             0x00002000  13    Xmit Constraint Errors\n");
+		fprintf(stderr, "             0x00001000  12    Rcv Rmt Phys. Errors\n");
+		fprintf(stderr, "             0x00000800  11    Local Link Integrity\n");
+		fprintf(stderr, "             0x00000400  10    Rcv Errors\n");
+		fprintf(stderr, "             0x00000200   9    Exc. Buffer Overrun\n");
+		fprintf(stderr, "             0x00000100   8    FM Config Errors\n");
+		fprintf(stderr, "             0x00000080   7    Link Error Recovery\n");
+		fprintf(stderr, "             0x00000040   6    Link Error Downed\n");
+		fprintf(stderr, "             0x00000020   5    Uncorrectable Errors\n");
+	}
 	fprintf(stderr, "    -w mask  Virtual Lane Select Mask, in hex, bits represent VL number 31-0\n");
 	fprintf(stderr, "             (e.g. 0x1 for VL 0, 0x3 for VL 0,1) default is none\n");
 	fprintf(stderr, "\n");

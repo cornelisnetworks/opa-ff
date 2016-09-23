@@ -208,8 +208,8 @@ int main(int argc, char *argv[])
 	uint32				fwSize;
 	EUI64				destPortGuid = -1;
 	int					c;
-	uint8				hfi = 1;
-	uint8				port = -1;
+	uint8				hfi = 0;
+	uint8				port = 0;
 	IB_PATH_RECORD		path;
 	uint16				sessionID = 0;
 	uint32				*u;
@@ -375,18 +375,10 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	if (!port) {
-		fprintf(stderr, "%s: Error: Invalid port number, First Port is 1\n", cmdName);
-		exit(1);
-	}
-
-	if (port == (uint8)-1)
-		port = 0;			// first active port
-
 	// Get the path
 
 	status = oib_open_port_by_num(&oib_port_session, hfi, port);
-	if (status != FSUCCESS) {
+	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}

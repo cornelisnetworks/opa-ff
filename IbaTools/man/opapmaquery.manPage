@@ -27,9 +27,14 @@ opapmaquery [-v] [-s \fIsl\fR] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-o
 .NL
 
 .TP 10
+--help 
+.NL
+Produces full help text.
+
+.TP 10
 -v 
 .NL
-Verbose output. Can be specified more than once for additional openib debugging and libibumad debugging.
+Specifies the verbose output. Can be specified more than once for additional openib debugging and libibumad debugging.
 
 .TP 10
 -s \fIsl\fR 
@@ -39,22 +44,24 @@ Specifies different service level. Default is 0.
 .TP 10
 -l \fIlid\fR 
 .NL
-Destination LID. Default is local port.
+Specifies the destination LID. Default is local port.
 
 .TP 10
--h \fIhfi\fR 
+-h/--hfi \fIhfi\fR 
 .NL
-HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
 
 .TP 10
--p \fIport\fR 
+-p/--port \fIport\fR 
 .NL
-Port, numbered 1..n. If -h \fIhfi\fR is 0, then  \fIport\fR is a system-wide port number. Default is first active port.
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
 
 .TP 10
 -o \fIotype\fR 
 .NL
-Output type. Default is getportstatus.
+Specifies the output type. Default is getportstatus. Refer to
+\fIotype options vary by report\fR
+for supported options.
 
 .IP
 Valid output types are:
@@ -62,20 +69,18 @@ Valid output types are:
 .TP 10
 
 .sp
-classportinfo 
-List of port info records.
-
+getportstatus 
+Specifies the list of port status records. Supported options:
+[-m port] [-w vl mask]
 .RE
 
 .RS
 .TP 10
 
 .sp
-getportstatus 
-List of port status records.
+classportinfo 
+Specifies the list of port info records.
 
-.IP
-[-m port] [-w vl mask] 
 .RE
 
 .RS
@@ -83,10 +88,8 @@ List of port status records.
 
 .sp
 clearportstatus 
-Clears the port status.
-
-.IP
-[-n port mask] [-e counter mask] [-w vl mask] 
+Clears the port status. Supported options:
+[-n port mask] [-e counter mask] [-w vl mask]
 .RE
 
 .RS
@@ -94,10 +97,8 @@ Clears the port status.
 
 .sp
 getdatacounters 
-List of data counters.
-
-.IP
-[-n port mask] [-w vl mask] 
+Specifies the list of data counters. Supported options:
+[-n port mask] [-w vl mask]
 .RE
 
 .RS
@@ -105,10 +106,8 @@ List of data counters.
 
 .sp
 geterrorcounters 
-List of error counters.
-
-.IP
-[-n port mask] [-w vl mask] 
+Specifies the list of error counters. Supported options:
+[-n port mask] [-w vl mask]
 .RE
 
 .RS
@@ -116,10 +115,8 @@ List of error counters.
 
 .sp
 geterrorinfo 
-List of error info.
-
-.IP
-[-n port mask] 
+Specifies the list of error info. Supported options:
+[-n port mask]
 .RE
 
 .RS
@@ -127,14 +124,13 @@ List of error info.
 
 .sp
 clearerrorinfo 
-Clears the error info.
-
-.IP
-[-n port mask] [-e counter mask] 
+Clears the error info. Supported options:
+[-n port mask] [-e counter mask]
 .RE
 
-.TP 10
-\fB-h and -p options permit a variety of selections:\fR
+.NL
+
+.SH -h and -p options permit a variety of selections:
 .NL
 
 .TP 10
@@ -153,128 +149,129 @@ First active port in system.
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR#8217#160;-p 0 
+-h \fIx\fR \fI\fR-p 0 
 .NL
 First active port on HFI \fIx\fR.
 
 .TP 10
 -h 0 -p \fIy\fR 
 .NL
-Port \fIy\fR#8217#160;within system (no matter which ports are active).
+Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR#8217#160;-p \fIy\fR 
+-h \fIx\fR \fI\fR-p \fIy\fR 
 .NL
 HFI \fIx\fR, port \fIy\fR.
 
-.TP 10
-\fBotype options vary by report\fR
+.NL
+
+.SH  \fIotype\fR options vary by report
 .NL
 
 .TP 10
 -m \fIport\fR 
 .NL
-Port in destination device to query/clear. Required when using -l option for all but -o classportinfo.
+Specifies the port in destination device to query/clear. Required when using -l option for all but -o classportinfo.
 
 .TP 10
 -n \fImask\fR 
 .NL
-Port mask, in hexadecimal. Bits represent ports 63-0. For example: 0x2 for port 1, 0x6 for ports 1, 2.
+Specifies the port mask, in hexadecimal. Bits represent ports 63-0. For example: 0x2 for port 1, 0x6 for ports 1, 2.
 
 .TP 10
 -e \fImask\fR 
 .NL
-Counter/error select mask, in hexadecimal. The following lists "Mask - Bit - Location for Counters". Where applicable, location "for Error Info" is presented. The default is all bits set (0xffffffe0).
+Specifies the counter/error select mask, in hexadecimal. The following lists "Mask - Bit - Location for Counters". Where applicable, location "for Error Info" is presented. The default is all bits set (0xffffffe0).
 
 .RS
 
 .IP \(bu
-0x80000000 - 31 - Transmit Data
+0x80000000 - 31 - Transmit Data (XmitData)
 For Error Info: Receive Error Info
 
 .IP \(bu
-0x40000000 - 30 - Receive Data
+0x40000000 - 30 - Receive Data (RcvData)
 For Error Info: Excessive Buffer Overrun
 
 .IP \(bu
-0x20000000 - 29 - Transmit Packets
+0x20000000 - 29 - Transmit Packets (XmitPkts)
 For Error Info: Transmit Const Error Info
 
 .IP \(bu
-0x10000000 - 28 - Receive Packets
+0x10000000 - 28 - Receive Packets (RcvPkts)
 For Error Info: Receive Const Error Info
 
 .IP \(bu
-0x08000000 - 27 - Multicast Transmit Packets
+0x08000000 - 27 - Multicast Transmit Packets (MulticastXmitPkts)
 For Error Info: Receive Switch Relay Error Info
 
 .IP \(bu
-0x04000000 - 26 - Multicast Receive Packets
+0x04000000 - 26 - Multicast Receive Packets (MulticastRcvPkts)
 For Error Info: Uncorrectable Error Info
 
 .IP \(bu
-0x02000000 - 25 - Transmit Wait
+0x02000000 - 25 - Transmit Wait (XmitWait)
 For Error Info: FM Configuration Error Info
 
 .IP \(bu
-0x01000000 - 24 - Congestion Discards
+0x01000000 - 24 - Congestion Discards (CongDiscards)
 
 .IP \(bu
-0x00800000 - 23 - Receive FECN
+0x00800000 - 23 - Receive FECN (RcvFECN)
 
 .IP \(bu
-0x00400000 - 22 - Receive BECN
+0x00400000 - 22 - Receive BECN (RcvBECN)
 
 .IP \(bu
-0x00200000 - 21 - Transmit Time Cong.
+0x00200000 - 21 - Transmit Time Congestion (XmitTimeCong)
 
 .IP \(bu
-0x00100000 - 20 - Transmit Time Wasted BW
+0x00100000 - 20 - Transmit Time Wasted BW (XmitWastedBW)
 
 .IP \(bu
-0x00080000 - 19 - Transmit Time Wait Data
+0x00080000 - 19 - Transmit Time Wait Data (XmitWaitData)
 
 .IP \(bu
-0x00040000 - 18 - Receive Bubble
+0x00040000 - 18 - Receive Bubble (RcvBubble)
 
 .IP \(bu
-0x00020000 - 17 - Mark FECN
+0x00020000 - 17 - Mark FECN (MarkFECN)
 
 .IP \(bu
-0x00010000 - 16 - Receive Constraint Errors
+0x00010000 - 16 - Receive Constraint Errors (RcvConstraintErrors)
 
 .IP \(bu
-0x00008000 - 15 - Receive Switch Relay
+0x00008000 - 15 - Receive Switch Relay (RcvSwitchRelayErrors)
 
 .IP \(bu
-0x00004000 - 14 - Transmit Discards
+0x00004000 - 14 - Transmit Discards (XmitDiscards)
 
 .IP \(bu
-0x00002000 - 13 - Transmit Constraint Errors
+0x00002000 - 13 - Transmit Constraint Errors (XmitConstraintErrors)
 
 .IP \(bu
-0x00001000 - 12 - Receive Remote Physical Errors
+0x00001000 - 12 - Receive Remote Physical Errors (RcvRemotePhysicalErrors)
 
 .IP \(bu
-0x00000800 - 11 - Local Link Integrity
+0x00000800 - 11 - Local Link Integrity (LocalLinkIntegrityErrors)
 
 .IP \(bu
-0x00000400 - 10 - Receive Errors
+0x00000400 - 10 - Receive Errors (RcvErrors)
 
 .IP \(bu
-0x00000200 - 9 - Exc. Buffer Overrun
+0x00000200 - 9 - Excessive Buffer Overrun (ExcessiveBufferOverruns)
 
 .IP \(bu
-0x00000100 - 8 - FM Configuration Errors
+0x00000100 - 8 - FM Configuration Errors (FMConfigErrors)
 
 .IP \(bu
-0x00000080 - 7 - Link Error Recovery
+0x00000080 - 7 - Link Error Recovery (LinkErrorRecovery)
 
 .IP \(bu
-0x00000040 - 6 - Link Error Downed
+0x00000040 - 6 - Link Error Downed (LinkDowned)
 
 .IP \(bu
-0x00000020 - 5 - Uncorrectable Errors
+0x00000020 - 5 - Uncorrectable Errors (UncorrectableErrors)
 
 
 .RE
@@ -282,7 +279,7 @@ For Error Info: FM Configuration Error Info
 .TP 10
 -w \fImask\fR 
 .NL
-Virtual Lane Select Mask, in hexadecimal. Bits represent VL number 31-0. For example, 0x1 for VL 0, 0x3 for VL 0,1. Default is none.
+Specifies the Virtual Lane Select Mask, in hexadecimal. Bits represent VL number 31-0. For example, 0x1 for VL 0, 0x3 for VL 0,1. Default is none.
 
 .SH Examples 
 .NL

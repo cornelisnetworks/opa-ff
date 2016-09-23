@@ -93,7 +93,7 @@ clean up of these temporary host files is the responsibility of the user.
 
    
 Here are some examples of how to call the scripts and pass vFabric parameters (Note, these examples
-utilize the proprietary MPI applications, which are located in the /opt/opa/src/mpi_apps/
+utilize the proprietary MPI applications, which are located in the /usr/lib/opa/src/mpi_apps/
 directory.  These MPI applications were provided specifically for administrative use only):
 
 

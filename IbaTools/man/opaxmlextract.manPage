@@ -32,9 +32,24 @@ opaxmlextract [-v][-H][-d \fIdelimiter\fR][-e \fIextract\(ulelement\fR]
 Produces full help text.
 
 .TP 10
+-v/--verbose 
+.NL
+Produces verbose output. Includes output progress reports during extraction and output prepended wildcard characters on element names in output header record.
+
+.TP 10
+-H/--noheader 
+.NL
+Does not output element name header record.
+
+.TP 10
+-d/--delimit \fIdelimiter\fR 
+.NL
+Uses single character or string as the delimiter between element names and element values. Default is semicolon.
+
+.TP 10
 -e/--extract \fIextract\(ulelement\fR 
 .NL
-Name of the XML element to extract. Elements can be nested in any order, but are output in the order specified. Elements can be specified multiple times, with a different attribute name or attribute value. An optional attribute (or attribute and value) can also be specified with elements:
+Specifies the name of the XML element to extract. Elements can be nested in any order, but are output in the order specified. Elements can be specified multiple times, with a different attribute name or attribute value. An optional attribute (or attribute and value) can also be specified with elements:
 
 .RS
 
@@ -71,38 +86,27 @@ A given element can be specified multiple times each with a different AttrName o
 .TP 10
 -s/--suppress \fIsuppress\(ulelement\fR 
 .NL
-Name of the XML element to suppress. Can be used multiple times (in any order). Supports the same syntax as -e.
-
-.TP 10
--d/--delimit \fIdelimiter\fR 
-.NL
-Uses delimiter (single character or string) as the delimiter between element names and element values. Default is semicolon.
+Specifies the name of the XML element to suppress extraction. Can be used multiple times (in any order). Supports the same syntax as -e.
 
 .TP 10
 -X/--infile \fIinput\(ulfile\fR 
 .NL
-Parses input XML from  \fIinput\(ulfile\fR instead of stdin.
+Parses XML from  \fIinput\(ulfile\fR.
 
 .TP 10
 -P/--pfile \fIparam\(ulfile\fR 
 .NL
-Uses input command line options (parameters) from param\(ulfile.
-
-.TP 10
--H/--noheader 
-.NL
-Does not output element name header record.
-
-.TP 10
--v/--verbose 
-.NL
-Produces verbose output. Includes output progress reports during extraction and output prepended wildcard characters on element names in output header record.
+Reads command parameters from param\(ulfile.
 
 .SH Example 
 .NL
 
 .PP
-Here is an example of opareport output filtered by opaxmlextract :# opareport -o comps -s -x | opaxmlextract -d \; -e NodeDesc
+Here is an example of opareport output filtered by opaxmlextract :
+.PP
+
+.br
+# opareport -o comps -s -x | opaxmlextract -d \; -e NodeDesc
 .br
 -e SystemImageGUID -e NumPorts -s Neighbor
 .br
@@ -133,6 +137,9 @@ phs1fnivd13u07n3 hfi1\(ul0;0x0011750101603593;1
 phs1swivd13u21;0x00117501ff6a5619;48
 .br
 phs1fnivd13u07n1 hfi1\(ul0;;
+.br
+
+
 .br
 
 .SH Details 

@@ -1,0 +1,111 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+#!/bin/bash
+
+# PURPOSE:
+#
+# This file sets environment variables for an mvapich2 job.
+# Note that there are many, many such variables.
+# See http://mvapich.cse.ohio-state.edu/support/ for details.
+
+# SYNTAX:
+#
+# This file must be a valid BASH script. In general, anything that's valid
+# in BASH is valid here. To pass variables to mvapich2, however, they
+# should take this form:
+#
+# export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_VARIABLE_NAME variablevalue"
+#
+
+# SAMPLE Tuning variables:
+#
+# Uncomment the following lines to enable them.
+#
+. /usr/sbin/opagetvf_env	# defines bash function opagetvf_func
+export MPI_CMD_ARGS=
+
+# These 3 lines select a Virtual Fabric by name and configure PKEY, SL, MTU
+# opagetvf_func "-d 'Compute'" MV2_DEFAULT_PKEY MV2_DEFAULT_SERVICE_LEVEL MTU
+# export MPI_CMD_ARGS="-genv MV2_DEFAULT_PKEY $MV2_DEFAULT_PKEY -genv MV2_DEFAULT_SERVICE_LEVEL $MV2_DEFAULT_SERVICE_LEVEL -genv PSM_PKEY $MV2_DEFAULT_PKEY -genv HFI_SL $MV2_DEFAULT_SERVICE_LEVEL"
+# [ -n "$MTU" ] && export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$MTU -genv PSM_MTU $MTU"
+
+# These 3 lines select a Virtual Fabric by ServiceId and configure PKEY, SL, MTU
+# opagetvf_func "-S '0x1000117500000000'" MV2_DEFAULT_PKEY MV2_DEFAULT_SERVICE_LEVEL MTU
+# export MPI_CMD_ARGS="-genv MV2_DEFAULT_PKEY $MV2_DEFAULT_PKEY -genv MV2_DEFAULT_SERVICE_LEVEL $MV2_DEFAULT_SERVICE_LEVEL -genv PSM_PKEY $MV2_DEFAULT_PKEY -genv HFI_SL $MV2_DEFAULT_SERVICE_LEVEL"
+# [ -n "$MTU" ] && export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$MTU -genv PSM_MTU $MTU"
+
+# These line selects a Virtual Fabric by ServiceId and uses dist_sa
+# to directly fetch the PathRecord at job startup.  This approach is
+# required when using Mesh/Torus fabrics and optional for other topologies.
+# This mechanism is only supported for Intel HFIs when using PSM (-hfi MPIs)
+#export MPI_CMD_ARGS="-genv PSM_PATH_REC opp -genv PSM_IB_SERVICE_ID 0x1000117500000000"
+
+# This line can enable dispersive routing. The following choices are allowed:
+#    adaptive, static_src, static_dest, static_base
+# If LMC is enabled in the SM, adaptive will automatically be used.
+# This mechanism is only supported for Intel HFIs when using PSM (-hfi MPIs)
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM_PATH_SELECTION adaptive"
+
+# Use this to explicitly specify a pkey (for virtual fabrics)
+#pkey=0x8002
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_PKEY $pkey -genv PSM_PKEY $pkey"
+
+# Use this to explicitly specify a service level (for virtual fabrics)
+#sl=0
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_SERVICE_LEVEL $sl -genv HFI_SL $sl"
+
+# Use this to explicitly specify a MTU (for virtual fabrics)
+#mtu=4096
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$mtu -genv PSM_MTU $mtu"
+
+# Use this to enable core dumps
+# (in addition ulimit and /etc/security/limits must enable core dumps too)
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEBUG_CORESIZE unlimited -genv HFI_NO_BACKTRACE 1"
+
+# Note that to use the rdma_cm, support for it must be enabled when mvapich2 
+# is compiled.
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_USE_RDMA_CM 1"
+
+# When using Intel HFIs over Verbs, the following are recommended
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_USE_RDMA_FAST_PATH 0"
+
+# Normally Congestion Control is completely configured in the SM config file.
+# However, if desired, the fabric interface settings can be overridden for
+# the given job.
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM_DISABLE_CCA 0 -genv PSM_CCTI_INCREMENT 1 -genv PSM_CCTI_TIMER 1 -genv PSM_CCTI_TABLE_SIZE 128"
+
+# These values can enable and control PSM Multi-Rail
+# The sample shown is for Dual HFI server with port 1 per HFI connected
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM_MULTIRAIL 1 -genv PSM_MULTIRAIL_MAP 0:1,1:1"
+
+# This can be enabled to force benchmarks to run on selected CPU cores
+#export MPI_TASKSET="${MPI_TASKSET:- -c 1-7}"
+

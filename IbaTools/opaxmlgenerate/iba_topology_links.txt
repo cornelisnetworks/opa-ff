@@ -1,2 +1,0 @@
-20g;2048;0;IO Server Link;11m;S4567;gore cable model 456;0x0002c9020020e004;1;bender HFI-1;0x0002c9020020e004;CA;Some info about port;0x00066a0007000df6;7;SilverStorm 9080 GUID=0x00066a00da000159 Leaf 4, Chip A;;SW;
-20g;;0;;;;;0x0002c9020025a678;1;mindy2 HFI-1;;CA;;0x00066a0007000e6d;4;SilverStorm 9080 GUID=0x00066a00da000159 Leaf 5, Chip A;;SW;

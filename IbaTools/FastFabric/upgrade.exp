@@ -95,7 +95,7 @@ proc case_cleanup { failed } {
 }
 
 test_suite "upgrade" "upgrade" "Simple upgrade of all hosts
-File: /opt/opa/tools/upgrade.exp" suite_setup noop {
+File: /usr/lib/opa/tools/upgrade.exp" suite_setup noop {
 	global host
 
 	# Global Initializations for Test Suite:
@@ -117,7 +117,7 @@ File: /opt/opa/tools/upgrade.exp" suite_setup noop {
 	parallel host $env(CFG_HOSTS) {
 		test_case "$host" "upgrade to $env(CFG_RELEASE) on $host" "Upgrade to $env(CFG_RELEASE) $env(CFG_PRODUCT) on $host
 with options $env(CFG_UPGRADE_OPTIONS)
-File: /opt/opa/tools/upgrade.exp" case_setup case_cleanup {
+File: /usr/lib/opa/tools/upgrade.exp" case_setup case_cleanup {
 			upvar host host
 
 			# build list of drivers.  If config says not to test a

@@ -18,7 +18,9 @@ opapingall
 Pings a group of hosts or chassis to verify that they are powered on and accessible through TCP/IP ping.
 .SH Syntax
 .NL
-opapingall [-C -p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \[aq]hosts\[aq]] [-H \[aq]chassis\[aq]]
+opapingall [-C] [-p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \[aq]hosts\[aq]]
+.br
+[-H \[aq]chassis\[aq]]
 .SH Options
 .NL
 
@@ -40,22 +42,26 @@ Pings all hosts/chassis in parallel.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-File with hosts in cluster, default is /etc/sysconfig/opa/hosts.
+Specifies the file with hosts in cluster.
+.br
+Default is /etc/sysconfig/opa/hosts.
 
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-File with chassis in cluster default is /etc/sysconfig/opa/chassis.
+Specifies the file with chassis in cluster.
+.br
+Default is /etc/sysconfig/opa/chassis.
 
 .TP 10
 -h hosts 
 .NL
-List of hosts to ping.
+Specifies the list of hosts to ping.
 
 .TP 10
 -H chassis 
 .NL
-List of chassis to ping.
+Specifies the list of chassis to ping.
 
 .SH Example 
 .NL
@@ -70,7 +76,6 @@ opapingall -C
 
 .B NOTE:
 This command pings all hosts/chassis found in the specified host/chassis file. The use of -C option merely selects the default file and/or environment variable to use. For this command, it is valid to use a file that lists both hosts and chassis.
-
 
 .br
 opapingall -C -H \[aq]chassis1 chassis2\[aq]

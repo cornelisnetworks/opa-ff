@@ -413,7 +413,7 @@ FSTATUS sendSysTableAccessGetMad(struct oib_port *port,
 	vendorData = (opasw_vendor_mad_t *)mad->VendorData;
 	sysTableP = (opasw_ini_sys_table_access_t *)&vendorData->data[0];
 	sysTableP->sysTableIndex = sysTableIndex;
-	sysTableP->dataLen = ntoh16((dataLen + 3) / 4);  // convert bytes to 4-byte words, then swap
+	sysTableP->dataLen = ntoh16(dataLen);
 	memcpy(sysTableP->sysTableData, sysTableData, dataLen);
 
 	// Send mad & recv response
@@ -502,7 +502,7 @@ FSTATUS sendSysTableAccessSetMad(struct oib_port *port,
 	vendorData = (opasw_vendor_mad_t *)mad->VendorData;
 	sysTableP = (opasw_ini_sys_table_access_t *)&vendorData->data[0];
 	sysTableP->sysTableIndex = sysTableIndex;
-	sysTableP->dataLen = ntoh16((dataLen + 3) / 4);  // convert bytes to 4-byte words, then swap
+	sysTableP->dataLen = ntoh16(dataLen);
 	memcpy(sysTableP->sysTableData, sysTableData, dataLen);
 
 	// Send mad & recv response
@@ -584,7 +584,7 @@ FSTATUS sendPortTableAccessSetMad(struct oib_port *port,
 	portTableP = (opasw_ini_port_table_access_t *)&vendorData->data[0];
 	portTableP->portTableIndex = portTableIndex;
 	portTableP->portNum = ntoh16(portNum);
-	portTableP->dataLen = ntoh32((dataLen + 3) / 4);  // convert bytes to 4-byte words, then swap
+	portTableP->dataLen = ntoh32(dataLen);
 	memcpy(portTableP->portTableData, portTableData, dataLen);
 
 	// Send mad & recv response

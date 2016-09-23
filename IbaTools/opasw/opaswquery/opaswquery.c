@@ -120,8 +120,8 @@ int main(int argc, char *argv[])
 	EUI64				destPortGuid = -1;
 	int					c;
 	int					i;
-	uint8				hfi = 1;
-	uint8				port = -1;
+	uint8				hfi = 0;
+	uint8				port = 0;
 	IB_PATH_RECORD		path;
 	uint16				sessionID;
 	uint32				regValue;
@@ -272,17 +272,10 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if (!port) {
-		fprintf(stderr, "%s: Error: Invalid port number, First Port is 1\n", cmdName);
-		exit(1);
-	}
-	if (port == (uint8)-1)
-		port = 0;			// first active port
-
 	// Get the path
 
 	status = oib_open_port_by_num(&oib_port_session, hfi, port);
-	if (status != FSUCCESS) {
+	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}
@@ -345,7 +338,7 @@ int main(int argc, char *argv[])
 			snprintf(mfgID, sizeof(mfgID), "%02x%02x%02x", vpdInfo.mfgID[0] & 0xff, vpdInfo.mfgID[1] & 0xff, vpdInfo.mfgID[2] & 0xff);
 			snprintf(mfgDate, sizeof(mfgDate), "%d-%02d-%d", vpdInfo.mfgMonth, vpdInfo.mfgDay, vpdInfo.mfgYear + 2000);
 			snprintf(mfgTime, sizeof(mfgTime), "%02d:%02d", vpdInfo.mfgHours, vpdInfo.mfgMins);
-			printf("VPD %s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+			printf("VPD \"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
 				vpdInfo.serialNum,
 				vpdInfo.partNum,
 				vpdInfo.model,
