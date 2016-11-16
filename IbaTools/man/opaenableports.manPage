@@ -38,11 +38,6 @@ Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port 
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
 
 .TP 10
-.BR
-
-.PP
-
-.TP 10
 disabled.csv 
 .NL
 Specifies the input file listing the ports to enable. The list is of the form: NodeGUID;PortNum;NodeType;NodeDesc;Ignored.

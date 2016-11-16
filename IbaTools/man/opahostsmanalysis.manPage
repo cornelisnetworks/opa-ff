@@ -90,7 +90,7 @@ latest/hostsm.smstatus - Output of the sm\(ulquery smShowStatus command.
 .IP \(bu
 baseline/hostsm.smver - Host SM version.
 .IP \(bu
-baseline/hostsm.smconfig - Copy of opafm.config.
+baseline/hostsm.smconfig - Copy of opafm.xml.
 .PP
 During a baseline run, the files are also created in FF\(ulANALYSIS\(ulDIR/latest.
 .PP

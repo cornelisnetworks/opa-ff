@@ -116,6 +116,7 @@ MAN_PAGE_8_FILES = \
 				opaxmlindent.8 \
 				opaswdisableall.8 \
 				opaswenableall.8 \
+				opaextractmissinglinks.8 \
 				# Add more man pages for chapter 8
 MISC_FILES= \
 				$(MAN_PAGE_1_FILES) \

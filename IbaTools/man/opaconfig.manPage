@@ -88,7 +88,7 @@ Disables autostart of given component. This option can appear with -E or more th
 Outputs list of supported components.
 
 .IP
-Supported components include: opa\(ulstack ibacm mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev fastfa bric delta\(ulipoib opafm mvapich2 openmpi gasnet openshmem mvapich2\(ulgcc\(ulhfi mvapic h2\(ulpgi\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulpgi\(ulhfi openmpi\(ulintel\(ulhfi delta\(ulmpisrc delta\(uldebug 
+Supported components include: opa\(ulstack ibacm mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev fastfabric delta\(ulipoib opafm mvapich2 openmpi gasnet openshmem mvapich2\(ulgcc\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulintel\(ulhfi delta\(ulmpisrc delta\(uldebug 
 .IP
 Supported component name aliases include: opa ipoib mpi mpisrc opadev 
 .TP 10

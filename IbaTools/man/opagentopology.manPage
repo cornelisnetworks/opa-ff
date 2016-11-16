@@ -15,27 +15,31 @@ opagentopology
 .PP
 Generates sample topology verification XML. Provides an example of using opaxmlgenerate and is a prototype for customization.
 .PP
+A multi-step process generates the required topology.xml file, as shown in the following figure. You must edit the sample topology.xlsx file, save the edited information in CSV format, and run the opaxlattopology script, which produces the topology.xml file.<fig xmlns:ditaarch="http://dita.oasis-open.org/architecture/2005/" id="FIG\(ul0E36DAF931454B82BC58C555D92B2F03" frame="none" ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\[aq] topic/image \[aq]) and not(parent::*/@conref)]" ishvarinusexpath="./@varref" ishvarassignedxpath="./@varid" class="- topic/fig "><title ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\[aq] topic/image \[aq]) and not(parent::*/@conref)]" class="- topic/title ">Topology Workflow</title></fig>
+.PP
 Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
 .PP
 LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:
 .PP
 
 .br
-opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul1.txt -d \; -h Link -g Rate -g
+opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul1.txt -d \; -h Link
 .br
-Rate\(ulInt -g MTU -g LinkDetails -h Cable -g CableLength -g CableLabel -g
+-g Rate -g Rate\(ulInt -g MTU -g LinkDetails -h Cable -g CableLength -g CableLabel
 .br
-CableDetails -e Cable -h Port -g NodeGUID -g PortNum -g NodeDesc -g PortGUID -g
+-g CableDetails -e Cable -h Port -g NodeGUID -g PortNum -g NodeDesc -g PortGUID
 .br
-NodeType -g NodeType\(ulInt -g PortDetails -e Port -h Port -g NodeGUID -g PortNum -g
+-g NodeType -g NodeType\(ulInt -g PortDetails -e Port -h Port -g NodeGUID -g PortNum
 .br
-NodeDesc -g PortGUID -g NodeType -g NodeType\(ulInt -g PortDetails -e Port -e Link
+-g NodeDesc -g PortGUID -g NodeType -g NodeType\(ulInt -g PortDetails -e Port -e Link
 .br
 
 .br
-opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul2.txt -d \; -h Node -g NodeGUID -g
+opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul2.txt -d \;
 .br
-NodeDesc -g NodeDetails -g HostName -g NodeType -g NodeType\(ulInt -g NumPorts -e Node
+-h Node -g NodeGUID -g NodeDesc -g NodeDetails -g HostName -g NodeType
+.br
+-g NodeType\(ulInt -g NumPorts -e Node
 
 .br
 
@@ -45,7 +49,7 @@ NodeDesc -g NodeDetails -g HostName -g NodeType -g NodeType\(ulInt -g NumPorts -
 .NL
 
 .PP
-This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
+This file can be found in /usr/lib/opa/samples/. For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
 .PP
 
 .B NOTE:
@@ -60,7 +64,7 @@ The following example exceeds the available width of the page. For readability, 
 .NL
 
 .PP
-This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows only two nodes.
+This file can be found in /usr/lib/opa/samples/. For brevity, this sample shows only two nodes.
 .PP
 
 .br
@@ -76,7 +80,7 @@ This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows
 .NL
 
 .PP
-This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows only two nodes.
+This file can be found in /usr/lib/opa/samples/. For brevity, this sample shows only two nodes.
 .PP
 
 .br
@@ -90,7 +94,7 @@ This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows
 .NL
 
 .PP
-This file can be found in /usr/lib/opa/samples/ . For brevity, this sample shows only one node.
+This file can be found in /usr/lib/opa/samples/. For brevity, this sample shows only one node.
 .PP
 
 .br

@@ -20,7 +20,7 @@ Customizable script for documenting cluster topology. Provides an alternative to
 .NL
 opaxlattopology\(ulcust [-t \fItopology\(ulprime\fR] [-s \fItopology\(ulsecond\fR]
 .br
-[-T \fItopology\(ulout\fR] [-v \fIlevel\fR] [-i \fIlevel\fR] [-c \fIchar\fR] [-K] [-?]
+[-T \fItopology\(ulout\fR] [-v \fIlevel\fR] [-i \fIlevel\fR] [-K]
 .SH Options
 .NL
 
@@ -100,20 +100,12 @@ Reserved.
 Specifies the screen output indent level. Range = 0 - 15, default = 0.
 
 .TP 10
--c \fIchar\fR 
-.NL
-Specifies the concatenation character, used for Cable Label values. A space is used by default, but another character, such as underscore, can be specified.
-
-.TP 10
 -K 
 .NL
-Does not clean temporary files. Prevents temporary files from being removed. Temporary files contain CSV data used during processing. Temporary files are not needed after the standard-format CSV file is created, but they can be retained for subsequent inspection or processing.
+Specifies DO NOT clean temporary files.
 
-.TP 10
--? 
-.NL
-Prints this output.
-
+.IP
+Prevents temporary files from being removed. Temporary files contain CSV data used during processing. Temporary files are not needed after the standard-format CSV file is created, but they can be retained for subsequent inspection or processing.
 .SH Description
 .NL
 
@@ -121,27 +113,13 @@ Prints this output.
 Each link contains source, destination, and cable fields with one link per row of the spreadsheet. Link fields must not contain commas. Source and Destination fields are each a concatenation of name and port information in the following forms. Names not of the form ib or C are assumed to be host names.
 .PP
 The following lists the node type and source/destination.
-.TP 10
-
-\fBNode Type\fR
-
-.NL
-
-\fB: Source/Destination\fR
-
-.TP 10
-Host 
-.NL
-: host \fIN\fR where N is a host number.
-.TP 10
-Edge Switch 
-.NL
-: ib \fIN\fR p \fIN\fR where N is a switch/port number.
-.TP 10
-Core Leaf 
-.NL
-: C \fIn\fR L \fInnn\fR p \fIN\fR where N/n is a host/switch/port number.
 .PP
-Cable values, CableLength, and CableDetails are optional and have no special syntax. If present, they are placed in the standard-format CSV file exactly as they appear. CableLabel is created automatically by opaxlattopology\(ulcust as the concatenation of Source and Destination (see -c option).
+Host: host \fIN\fR where N is a host number.
+.PP
+Edge Switch: ib \fIN\fR p \fIN\fR where N is a switch/port number.
+.PP
+Core Leaf: C \fIn\fR L \fInnn\fR p \fIN\fR where N/n is a host/switch/port number.
+.PP
+Cable values, CableLength, and CableDetails are optional and have no special syntax. If present, they are placed in the standard-format CSV file exactly as they appear. CableLabel is created automatically by opaxlattopology\(ulcust as the concatenation of Source and Destination.
 .PP
 Rack Group and Rack are not supported in topology\(ulcust.xlsx. Therefore, opaxlattopology\(ulcust leaves these fields empty in the standard-format CSV file.

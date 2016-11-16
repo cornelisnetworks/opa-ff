@@ -21,9 +21,10 @@ Use this tool for copying data files, operating system files, or applications to
 .PP
 
 .B NOTE:
-This tool can only copy from this system to a group of systems in the cluster. To copy from hosts in the cluster to this host, use opauploadall.
 
-.PP
+.IP \(bu
+This tool can only copy from this system to a group of systems in the cluster. To copy from hosts in the cluster to this host, use opauploadall.
+.IP \(bu
 user@ style syntax cannot be used when specifying filenames.
 
 .SH Syntax 

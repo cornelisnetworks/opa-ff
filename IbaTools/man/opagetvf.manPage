@@ -79,11 +79,11 @@ The output is of the form: name:index:pkey:sl:mtu:rate:optionflag as shown in th
 .PP
 Option flag (bitmask) values include:
 .IP \(bu
-0x00 Indicates no bits are set. Specifically, no QOS, no Security, and no flow control disabled (which means flow control is enabled).
+0x00 Indicates no bits are set. Specifically, no QoS, no Security, and no flow control disabled (which means flow control is enabled).
 .IP \(bu
 0x01 Security
 .IP \(bu
-0x02 QOS
+0x02 QoS
 .IP \(bu
 0x04 Flow Control Disable
 .PP

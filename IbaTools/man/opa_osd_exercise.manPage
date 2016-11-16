@@ -16,7 +16,9 @@ opa\(ulosd\(ulexercise
 Performs stress test on SM and distributed SA query system.
 .SH Syntax
 .NL
-opa\(ulosd\(ulexercise [-d | -s | -r | -x | -X | -D | -p | -S | -t | -e] \fIguidlist\fR
+opa\(ulosd\(ulexercise [-d | -s | -r | -x | -X | -D | -p | -S | -t |
+.br
+-e] \fIguidlist\fR
 .SH Options
 .NL
 
@@ -73,7 +75,18 @@ Instructs simulator to enable all ports before starting.
 .TP 10
  \fIguidlist\fR 
 .NL
-Text file that lists the source and destination GUIDs and LIDs. For example, from a build\(ultable.pl file.
+Text file that lists the source and destination GUIDs and LIDs.  \fIguidlist\fR format is:
+
+.RS
+
+.IP \(bu
+lid\(ul0;guid\(ul0;node\(uldesc\(ul0 
+.IP \(bu
+lid\(ul1;guid\(ul1;node\(uldesc\(ul1 
+.IP \(bu
+and so on.
+
+.RE
 
 .SH Example 
 .NL

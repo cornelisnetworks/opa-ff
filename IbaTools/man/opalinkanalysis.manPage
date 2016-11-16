@@ -171,7 +171,34 @@ Verifies links against topology input.
 
 .sp
 verifyextlinks 
-Verifies links against topology input. Limit analysis to links external to systems.
+Verifies links against topology input. Limits analysis to links external to systems.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+verifyfilinks 
+Verifies links against topology input. Limits analysis to FI links.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+verifyislinks 
+Verifies links against topology input. Limits analysis to inter-switch links.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+verifyextislinks 
+Verifies links against topology input. Limits analysis to inter-switch links external to systems.
 
 .RE
 

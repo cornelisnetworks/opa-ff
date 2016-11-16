@@ -29,9 +29,9 @@ By default, opapaquery uses the first active port on the local system. However, 
 .NL
 opapaquery [-v] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g \fIgroupName\fR] [-l \fInodeLid\fR]
 .br
-[-P \fIportNumber\fR] [-d \fIdelta\fR] [-b \fIdate\(ultime\fR] [-e \fIdate\(ultime\fR] [-U] [-s \fIselect\fR]
+[-P \fIportNumber\fR] [-d \fIdelta\fR] [-j \fIdate\(ultime\fR] [-q \fIdate\(ultime\fR] [-U] [-s \fIselect\fR]
 .br
-[-f \fIfocus\fR] [-S \fIstart\fR] [-r \fIrange\fR] [-n \fIimgNum\fR] [-O \fIimgOff\fR] [-t \fIimgTime\fR]
+[-f \fIfocus\fR] [-S \fIstart\fR] [-r \fIrange\fR] [-n \fIimgNum\fR] [-O \fIimgOff\fR] [-y \fIimgTime\fR]
 .br
 [-m \fImoveImgNum\fR] [-M \fImoveImgOff\fR] [-V vfName]
 .SH Options 
@@ -55,7 +55,7 @@ Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Def
 .TP 10
 -o/--output \fItype\fR 
 .NL
-Specifies the oOutput type, default is groupList. See
+Specifies the output type, default is groupList. See
 \fIOutput Types\fR
 .
 
@@ -80,26 +80,27 @@ Specifies the port number for portCounters query.
 Specifies the delta flag for portCounters query - 0 or 1.
 
 .TP 10
--b / --begin \fIdate\(ultime\fR 
+-j / --begin \fIdate\(ultime\fR 
 .NL
 Obtains portCounters over an interval beginning at  \fIdate\(ultime\fR.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--e / --end \fIdate\(ultime\fR 
+-q / --end \fIdate\(ultime\fR 
 .NL
-Obtains portCounters over an interval ending at  \fIdate\(ultime\fR.
+Obtains portCounters over an interval ending at  \fIdate\(ultime\fR.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
-.IP
- \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+.TP 10
+-U / --userCntrs 
+.NL
+Queries by user-controlled counters flag for portCounters.
+
 .TP 10
 -s/--select \fIselect\fR 
 .NL
 Specifies the 32-bit select flag for clearing port counters.
 
 .IP
-Select bits for clrPortCounters. 0 is the least significant bit (rightmost).
-.IP
-clrPortCounters bit descriptions listed in the order "mask - bit - location":
+Select bits for clrPortCounters. 0 is the least significant bit (rightmost). The clrPortCounters bit descriptions are listed in the order "mask - bit - location" below:
 .RS
 
 .IP \(bu
@@ -187,9 +188,7 @@ clrPortCounters bit descriptions listed in the order "mask - bit - location":
 .RE
 
 .IP
-Select bits for clrVfPortCounters. 0 is the least significant bit (rightmost).
-.IP
-clrVfPortCounters bit descriptions listed in the order "mask - bit - location":
+Select bits for clrVfPortCounters. 0 is the least significant bit (rightmost). The clrVfPortCounters bit descriptions are listed in the order "mask - bit - location" below:
 .RS
 
 .IP \(bu
@@ -243,10 +242,7 @@ Bits 17-0 reserved
 .TP 10
 -f/--focus \fIfocus\fR 
 .NL
-Specifies the focus select value for getting  \fIfocus\fR ports.
-
-.IP
- \fIfocus\fR select values:
+Specifies the focus select value for getting  \fIfocus\fR ports.  \fIfocus\fR select values are:
 .RS
 .TP 10
 
@@ -348,9 +344,9 @@ Specifies the 64-bit image number. Can be used with groupInfo, groupConfig, port
 Specifies the image offset. Can be used with groupInfo, groupConfig, portCounters (delta).
 
 .TP 10
--t / --imgTime 
+-y / --imgTime 
 .NL
-Specifies the image time. May be used with imageinfo. Will return closest image within image interval if possible. See --begin/--end above for format.
+Specifies the image time. May be used with imageinfo, groupInfo, groupInfo, groupConfig, freezeImage, focusPorts, vfInfo, vfConfig, and vfFocusPorts. Will return closest image within image interval if possible. See --begin/--end above for format.
 
 .TP 10
 -m/--moveImgNum \fImoveImgNum\fR 
@@ -519,7 +515,7 @@ opapaquery -o portCounters -l 1 -P 1 -d 1
 .br
 opapaquery -o portCounters -l 1 -P 1 -d 1 -n 0x20000000d02 -O 1
 .br
-opapaquery -o portCounters -l 1 -P 1 -d 1 -b 13:30 -e 14:20
+opapaquery -o portCounters -l 1 -P 1 -d 1 -j 13:30 -q 14:20
 .br
 opapaquery -o clrPortCounters -l 1 -P 1 -s 0xC0000000
 .br
@@ -543,7 +539,7 @@ opapaquery -o focusPorts -g All -f 0x00030001 -S 0 -r 20
 .br
 opapaquery -o imageInfo -n 0x20000000d02
 .br
-opapaquery -o imageInfo -t "1 hour ago"
+opapaquery -o imageInfo -y "1 hour ago"
 .br
 opapaquery -o vfList
 .br

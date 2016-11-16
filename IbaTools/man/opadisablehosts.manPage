@@ -46,6 +46,41 @@ Specifies the text describing the reason hosts are being disabled.  \fIreason\fR
 Information about the links disabled is written to a CSV file. By default, this file is named /opa/disabled:hfi:port.csv where the hfi:port part of the file name is replaced by the HFI number and the port number being operated on (such as 0:0 or 1:2). This CSV file can be used as input to opaenableports.
 .IP
 The list is of the form: NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID; PortNum;NodeType;NodeDesc;Reason For each listed link, the switch port closer to this is the one that has been disabled.
+.NL
+
+.SH -h and -p options permit a variety of selections:
+.NL
+
+.TP 10
+-h 0 
+.NL
+First active port in system (default).
+
+.TP 10
+-h 0 -p 0 
+.NL
+First active port in system.
+
+.TP 10
+-h \fIx\fR 
+.NL
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h \fIx\fR \fI\fR-p 0 
+.NL
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h 0 -p \fIy\fR 
+.NL
+Port \fIy\fR within system (no matter which ports are active).
+
+.TP 10
+-h \fIx\fR \fI\fR-p \fIy\fR 
+.NL
+HFI \fIx\fR, port \fIy\fR.
+
 .SH Examples 
 .NL
 opadisablehosts \[aq]bad DRAM\[aq] compute001 compute045

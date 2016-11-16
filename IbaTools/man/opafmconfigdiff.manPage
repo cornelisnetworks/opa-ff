@@ -28,7 +28,7 @@ Produces full help text.
 .TP 10
 -f 
 .NL
-Filters out FM parameters that are not part of the consistency check. Removes config tags that do not cause consistency checks on the FM to fail from diff.
+Filters out FM parameters that are not part of the consistency check. Removes configuration tags that do not cause consistency checks on the FM to fail from diff.
 
 .TP 10
 -l 

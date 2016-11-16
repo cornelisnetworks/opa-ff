@@ -1,6 +1,6 @@
 Name: opa
 Version: 10.3.0.0
-Release: 53%{?dist}
+Release: 64%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 License: GPLv2 or BSD 
@@ -77,7 +77,7 @@ fi
 
 %define ff_libs_misc libqlgc_fork.so
 
-%define ff_mans opaallanalysis.8 opacabletest.8 opacaptureall.8 opachassisadmin.8 opachassisanalysis.8 opacheckload.8 opacmdall.8 opadisablehosts.8 opadisableports.8 opadownloadall.8 opaenableports.8 opaledports.8 opaesmanalysis.8 opaexpandfile.8 opaextractbadlinks.8 opaextracterror.8 opaextractlids.8 opaextractlink.8 opaextractperf.8 opaextractsellinks.8 opaextractstat.8 opaextractstat2.8 opafabricanalysis.8 opafastfabric.8 opafequery.8 opafindgood.8 opafmconfigcheck.8 opafmconfigdiff.8 opagenchassis.8 opagenesmchassis.8 opagenswitches.8 opagentopology.8 opahostadmin.8 opahostsmanalysis.8 opalinkanalysis.8 opapaquery.8 opapingall.8 opareport.8 opareports.8 opascpall.8 opasetupssh.8 opashowallports.8 opasorthosts.8 opaswitchadmin.8 opatop.8 opauploadall.8 opaverifyhosts.8 opaxlattopology.8 opaxlattopology_cust.8 opashowmc.8 opaxmlextract.8 opaxmlfilter.8 opaxmlgenerate.8 opaxmlindent.8 opaswdisableall.8 opaswenableall.8 opafirmware.8
+%define ff_mans opaallanalysis.8 opacabletest.8 opacaptureall.8 opachassisadmin.8 opachassisanalysis.8 opacheckload.8 opacmdall.8 opadisablehosts.8 opadisableports.8 opadownloadall.8 opaenableports.8 opaledports.8 opaesmanalysis.8 opaexpandfile.8 opaextractbadlinks.8 opaextracterror.8 opaextractlids.8 opaextractlink.8 opaextractperf.8 opaextractsellinks.8 opaextractstat.8 opaextractstat2.8 opafabricanalysis.8 opafastfabric.8 opafequery.8 opafindgood.8 opafmconfigcheck.8 opafmconfigdiff.8 opagenchassis.8 opagenesmchassis.8 opagenswitches.8 opagentopology.8 opahostadmin.8 opahostsmanalysis.8 opalinkanalysis.8 opapaquery.8 opapingall.8 opareport.8 opareports.8 opascpall.8 opasetupssh.8 opashowallports.8 opasorthosts.8 opaswitchadmin.8 opatop.8 opauploadall.8 opaverifyhosts.8 opaxlattopology.8 opaxlattopology_cust.8 opashowmc.8 opaxmlextract.8 opaxmlfilter.8 opaxmlgenerate.8 opaxmlindent.8 opaswdisableall.8 opaswenableall.8 opafirmware.8 opaextractmissinglinks.8
 
 %define ff_iba_samples hostverify.sh opatopology_FIs.txt opatopology_links.txt opatopology_SMs.txt opatopology_SWs.txt linksum_swd06.csv linksum_swd24.csv README.topology README.xlat_topology topology_cust.xlsx topology.xlsx allhosts-sample chassis-sample hosts-sample switches-sample ports-sample opaff.xml-sample mac_to_dhcp filterFile.txt triggerFile.txt opamon.conf-sample opamon.si.conf-sample opafastfabric.conf-sample opa_ca_openssl.cnf-sample opa_comp_openssl.cnf-sample opagentopology esm_chassis-sample 
 

@@ -47,7 +47,7 @@ Specifies the top-level directory for saving baseline and history of failed chec
 .TP 10
 -c file 
 .NL
-Specifies the error thresholds config file. Default = /etc/sysconfig/opa/opamon.conf 
+Specifies the error thresholds config file.Default = /etc/sysconfig/opa/opamon.conf 
 .TP 10
 -t portsfile 
 .NL
@@ -158,7 +158,7 @@ Through the environment variables \fBPORTS\fR or \fBPORTS\(ulFILE\fR.
 .IP \(bu
 Using the \fBPORTS\(ulFILE\fR configuration option in opafastfabric.conf.
 .PP
-If the specified port does not exist or is empty, the first active port on the local system is used. In more complex configurations, you must specify the exact ports to use for all fabrics to be analyzed. .
+If the specified port does not exist or is empty, the first active port on the local system is used. In more complex configurations, you must specify the exact ports to use for all fabrics to be analyzed.
 .PP
 You can specify the topology\(ulinput file to be used with one of the following methods:
 .IP \(bu
@@ -174,10 +174,7 @@ For more information, refer to
 \fIopareport\fR
 .
 .PP
-By default, the error analysis includes PMA counters and slow links (that is, links running below enabled speeds). You can change this using the \fBFF\(ulFABRIC\(ulHEALTH\fR configuration parameter in opafastfabric.conf. This parameter specifies the opareport options and reports to be used for the health analysis. It also can specify the PMA counter clearing behavior (-I \fIseconds\fR, -C, or none at all). See \fIAppendix A\fR in the 
-\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
-
-for more information.
+By default, the error analysis includes PMA counters and slow links (that is, links running below enabled speeds). You can change this using the \fBFF\(ulFABRIC\(ulHEALTH\fR configuration parameter in opafastfabric.conf. This parameter specifies the opareport options and reports to be used for the health analysis. It also can specify the PMA counter clearing behavior (-I \fIseconds\fR, -C, or none at all).
 .PP
 When a topology\(ulinput file is used, it can also be useful to extend \fBFF\(ulFABRIC\(ulHEALTH\fR to include fabric topology verification options such as -o verifylinks.
 .PP
@@ -265,7 +262,7 @@ If the -s option is used and failures are detected, files related to the checks 
 .NL
 
 .PP
-Based on opareport -o links :
+Based on opareport -o links: 
 .IP \(bu
 Unconnected/down/missing cables
 .IP \(bu
@@ -279,7 +276,7 @@ Adding/Removing Nodes [FI, Virtual FIs, Virtual Switches, Physical Switches, Phy
 .IP \(bu
 Changes to server or switch names
 .PP
-Based on opareport -o comps :
+Based on opareport -o comps: 
 .IP \(bu
 Overlap with items from links report
 .IP \(bu
@@ -306,7 +303,7 @@ Configured priority for SM
 .NL
 
 .PP
-Based on opareport -s -C -o errors -o slowlinks :
+Based on opareport -s -C -o errors -o slowlinks: 
 .IP \(bu
 PMA error counters on all Intel(R) Omni-Path Fabric ports (HFI, switch external and switch internal) checked against configurable thresholds.
 .IP \(bu

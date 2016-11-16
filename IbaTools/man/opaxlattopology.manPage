@@ -21,14 +21,14 @@ The topology.csv input file must be present in the same directory from which the
 
 .SH Syntax
 .NL
-opaxlattopology [-d \fIlevel\fR-v \fIlevel\fR-i \fIlevel\fR-c \fIchar\fR-K -?]
+opaxlattopology [-d \fIlevel\fR-v \fIlevel\fR-i \fIlevel\fR-K] [-s \fIhfi\(ulsuffix\fR]
 .br
 [source [dest]]
 .SH Options
 .NL
 
 .TP 10
--- help 
+--help 
 .NL
 Produces full help text.
 
@@ -122,20 +122,21 @@ Reserved.
 Specifies the output indent level. Range = 0 - 15. Default = 0.
 
 .TP 10
--c \fIchar\fR 
-.NL
-Specifies the NodeDesc concatenation character. Used when creating NodeDesc values (that is, Name to Name-2, Name to HFI-1, and so on). A space is used by default, but another character, such as underscore, can be specified.
-
-.TP 10
 -K 
 .NL
-Does not clean temporary files. Prevents temporary files in each topology directory from being removed. Temporary files contain CSV formatted lists of links, HFIs, and switches used to create a topology XML file. Temporary files are not typically needed after a topology file is created, however they are used for creating linksum\(ulswd06.csv and linksum\(ulswd24.csv files, or can be retained for subsequent inspection or processing.
+Specifies DO NOT clean temporary files.
 
+.IP
+Prevents temporary files in each topology directory from being removed. Temporary files contain CSV formatted lists of links, HFIs, and switches used to create a topology XML file. Temporary files are not typically needed after a topology file is created, however they are used for creating linksum\(ulswd06.csv and linksum\(ulswd24.csv files, or can be retained for subsequent inspection or processing.
 .TP 10
--? 
+-s \fIhfi\(ulsuffix\fR 
 .NL
-Prints this output.
+Used on Multi-Rail or Multi-Plane fabrics. Can be used to override the default hfi1\(ul0.
 
+.IP
+For Multi-Plane fabric, use the tool multiple times with a different hfi-suffix.
+.IP
+For Multi-Rail fabric, specify HostName as "HostName HfiName" in the spreadsheet.
 .SH Description
 .NL
 
@@ -295,3 +296,7 @@ PortNum: 1 LID: 0x0001 PortGUID: 0x0011750101671ed9
 SM\(ulKey: 0x0000000000000000 Priority: 0 ActCount: 0x0000bcb2
 .br
 1 Matching SMs Found
+.PP
+At a minimum, the following information must be added in the topology.0:0.xml to avoid the "Unexpected SM" warning. This must be added inside <Nodes> section:
+.br
+<SMs> <SM> <NodeDesc>abcxyz</NodeDesc> </SM> </SMs>

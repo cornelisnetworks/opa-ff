@@ -13,7 +13,7 @@ opatop
 .NL
 
 .PP
-Starts the opatop Text User Interface (TUI) menu to display performance, congestion, and error information about a fabric. Refer to 
+Starts the Fabric Performance Monitor (opatop) Text User Interface (TUI) menu to display performance, congestion, and error information about a fabric. Refer to 
 \fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
 
 for additional details.

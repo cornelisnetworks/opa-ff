@@ -33,14 +33,21 @@ Produces full help text.
 -v / --verbose 
 .NL
 Specifies the verbose output.
+
 .TP 10
 -a / --ipAddr \fIipAddr\fR 
 .NL
 Specifies the IP address of node running the FE.
+
+.IP
+This options supports IPv4 and IPv6 addresses with port number; for example,  \fI127.0.0.1:3245\fR or  \fI[::1]:3245\fR.
 .TP 10
 -h / --hostName \fIhostName\fR 
 .NL
 Specifies the host name of node running the FE.
+
+.IP
+This option supports host name with port number; for example,  \fIlocalhost:3245\fR.
 .TP 10
 -o / --output \fIoutput\fR 
 .NL
@@ -49,14 +56,17 @@ Specifies the output type. See
 and
 \fIPA Output Types\fR
 for details.
+
 .TP 10
 -E / --feEsm \fIESMName\fR 
 .NL
 Specifies the ESM FE name.
+
 .TP 10
 -T / --sslParmsFile \fIfilename\fR 
 .NL
 Specifies the SSL/TLS parameters XML file. Default = /etc/sysconfig/opa/opaff.xml 
+
 .SH SA Specific Options
 .NL
 
@@ -64,74 +74,92 @@ Specifies the SSL/TLS parameters XML file. Default = /etc/sysconfig/opa/opaff.xm
 -I / --IB 
 .NL
 Issues query in legacy InfiniBand* format.
+
 .TP 10
 -l / --lid \fIlid\fR 
 .NL
 Queries a specific LID.
+
 .TP 10
 -k / --pkey \fIpkey\fR 
 .NL
 Queries a specific pkey.
+
 .TP 10
 -i / --vfindex \fIvfindex\fR 
 .NL
 Queries a specific vfindex.
+
 .TP 10
 -S / --serviceId \fIserviceId\fR 
 .NL
 Queries a specific service ID.
+
 .TP 10
 -L / --SL \fISL\fR 
 .NL
 Queries by service level.
+
 .TP 10
 -t / --type \fItype\fR 
 .NL
 Queries by node type.
+
 .TP 10
 -s / --sysguid \fIguid\fR 
 .NL
 Queries by system image GUID.
+
 .TP 10
 -n / --nodeguid \fIguid\fR 
 .NL
 Queries by node GUID.
+
 .TP 10
 -p / --portguid \fIguid\fR 
 .NL
 Queries by port GUID.
+
 .TP 10
 -u / --portgid \fIgid\fR 
 .NL
 Queries by port GID.
+
 .TP 10
 -m / --mcgid \fIgid\fR 
 .NL
 Queries by multicast GID.
+
 .TP 10
 -d / --desc \fIname\fR 
 .NL
 Queries by node name/description.
+
 .TP 10
 -P / --guidpair \fI\[aq]guid guid\[aq]\fR 
 .NL
 Queries by a pair of port GUIDs.
+
 .TP 10
 -G / --gidpair \fI\[aq]gid gid\[aq]\fR 
 .NL
 Queries by a pair of GIDs.
+
 .TP 10
 -B / --guidlist \fI\[aq]sguid ...;dguid ...\[aq]\fR 
 .NL
 Queries by a list of port GUIDs.
+
 .TP 10
 -A / --gidlist \fI\[aq]sgid ...;dgid ...\[aq]\fR 
 .NL
 Queries by a list of GIDs.
+
 .TP 10
 -x / --sourcegid \fIgid\fR 
 .NL
 Specifies a source GID for certain queries.
+
 .SH PA Specific Options
 .NL
 
@@ -139,23 +167,29 @@ Specifies a source GID for certain queries.
 -g / --groupName \fIgroupName\fR 
 .NL
 Queries by group name for groupInfo.
+
 .TP 10
 -l / --lid \fIlid\fR 
 .NL
 Queries by LID of node for portCounters.
+
 .TP 10
 -N / --portNumber 
 .NL
 Queries by port number for portCounters.
+
 .TP 10
 -f / --delta 
 .NL
 Queries by delta flag for portCounters. Values include: 0 or 1.
+
 .TP 10
 -j / --begin \fIdate\(ultime\fR 
 .NL
-Obtains portCounters over an interval beginning at  \fIdate\(ultime\fR.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+Obtains portCounters over an interval beginning at  \fIdate\(ultime\fR.
 
+.IP
+ \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 .TP 10
 -q / --end \fIdate\(ultime\fR 
 .NL
@@ -167,11 +201,14 @@ Obtains portCounters over an interval ending at  \fIdate\(ultime\fR.
 -U / --userCntrs 
 .NL
 Queries by user-controlled counters flag for portCounters.
+
 .TP 10
 -e / --select 
 .NL
-Specifies the 32-bit select flag for clearing port counters select bits. 0 is least significant (rightmost).Bit descriptions are listed below in the order "mask - bit - location":
+Specifies the 32-bit select flag for clearing port counters select bits. 0 is least significant (rightmost).
 
+.IP
+Bit descriptions are listed below in the order "mask - bit - location":
 .RS
 
 .IP \(bu
@@ -262,12 +299,14 @@ Specifies the 32-bit select flag for clearing port counters select bits. 0 is le
 -c / --focus \fIfocus\fR 
 .NL
 Specifies the focus select value for getting focus ports. Values include:
+
 .RS
 .TP 10
 
 .sp
 utilhigh 
 Sorted by utilization - highest first.
+
 .RE
 
 .RS
@@ -276,6 +315,7 @@ Sorted by utilization - highest first.
 .sp
 pktrate 
 Sorted by packet rate - highest first.
+
 .RE
 
 .RS
@@ -284,6 +324,7 @@ Sorted by packet rate - highest first.
 .sp
 utillow 
 Sorted by utilization - lowest first.
+
 .RE
 
 .RS
@@ -292,6 +333,7 @@ Sorted by utilization - lowest first.
 .sp
 integrity 
 Sorted by integrity errors - highest first.
+
 .RE
 
 .RS
@@ -300,6 +342,7 @@ Sorted by integrity errors - highest first.
 .sp
 congestion 
 Sorted by congestion errors - highest first.
+
 .RE
 
 .RS
@@ -308,6 +351,7 @@ Sorted by congestion errors - highest first.
 .sp
 smacongesion 
 Sorted by SMA congestion errors - highest first.
+
 .RE
 
 .RS
@@ -316,6 +360,7 @@ Sorted by SMA congestion errors - highest first.
 .sp
 bubbles 
 Sorted by bubble errors - highest first.
+
 .RE
 
 .RS
@@ -324,6 +369,7 @@ Sorted by bubble errors - highest first.
 .sp
 security 
 Sorted by security errors - highest first.
+
 .RE
 
 .RS
@@ -332,41 +378,49 @@ Sorted by security errors - highest first.
 .sp
 routing 
 Sorted by routing errors - highest first.
+
 .RE
 
 .TP 10
 -w / --start 
 .NL
 Specifies the start of window for focus ports - should always be 0.
+
 .TP 10
 -r / --range \fIrange\fR 
 .NL
 Specifies the size of window for focus ports list.
+
 .TP 10
 -b / --imgNum 
 .NL
 Specifies the 64-bit image number. May be used with groupInfo, groupConfig, portCounters (delta) outputs.
+
 .TP 10
 -O / --imgOff 
 .NL
 Specifies the image offset. May be used with groupInfo, groupConfig, portCounters (delta) outputs.
+
 .TP 10
 -y / --imgTime 
 .NL
-Specifies the image time. May be used with imageinfo. Will return closest image within image interval if possible. See --begin/--end above for format.
+Specifies the image time. May be used with imageinfo, groupInfo, groupInfo, groupConfig, freezeImage, focusPorts, vfInfo, vfConfig, and vfFocusPorts. Will return closest image within image interval if possible. See --begin/--end above for format.
 
 .TP 10
 -F / --moveImgNum 
 .NL
 Specifies the 64-bit image number. Used with moveFreeze output to move a freeze image.
+
 .TP 10
 -M / --moveImgOff \fIImgOff\fR 
 .NL
 Specifies the image offset. May be used with moveFreeze output to move a freeze image.
+
 .TP 10
 -V / --vfName 
 .NL
 Queries by VF name for vfInfo.
+
 .SH SA Output Types 
 .NL
 
@@ -376,154 +430,192 @@ Output types include:
 saclassPortInfo 
 .NL
 Specifies the class port info.
+
 .TP 10
 systemguid 
 .NL
 Lists the system image GUIDs.
+
 .TP 10
 nodeguid 
 .NL
 Lists the node GUIDs.
+
 .TP 10
 portguid 
 .NL
 Lists the port GUIDs.
+
 .TP 10
 lid 
 .NL
 Lists the LIDs.
+
 .TP 10
 desc 
 .NL
 Lists the node descriptions/names.
+
 .TP 10
 path 
 .NL
 Lists the path records.
+
 .TP 10
 node 
 .NL
 Lists the node records.
+
 .TP 10
 portinfo 
 .NL
 Lists the port info records.
+
 .TP 10
 sminfo 
 .NL
 Lists the SM info records.
+
 .TP 10
 swinfo 
 .NL
 Lists the switch info records.
+
 .TP 10
 link 
 .NL
 Lists the link records.
+
 .TP 10
 scsc 
 .NL
 Lists the SC to SC mapping table records.
+
 .TP 10
 slsc 
 .NL
 Lists the SL to SC mapping table records.
+
 .TP 10
 scsl 
 .NL
 Lists the SC to SL mapping table records.
+
 .TP 10
 scvlt 
 .NL
 Lists the SC to VLt table records.
+
 .TP 10
 scvlnt 
 .NL
 Lists the SC to VLnt table records.
+
 .TP 10
 vlarb 
 .NL
 Lists the VL arbitration table records.
+
 .TP 10
 pkey 
 .NL
 Lists the PKey table records.
+
 .TP 10
 service 
 .NL
 Lists the service records.
+
 .TP 10
 mcmember 
 .NL
 Lists the multicast member records.
+
 .TP 10
 inform 
 .NL
 Lists the inform info records.
+
 .TP 10
 linfdb 
 .NL
 Lists the switch linear forwarding database (FDB) records.
+
 .TP 10
 mcfdb 
 .NL
 Lists the switch multicast FDB records.
+
 .TP 10
 trace 
 .NL
 Lists the trace records.
+
 .TP 10
 vfinfo 
 .NL
 Lists the vFabrics.
+
 .TP 10
 vfinfocsv 
 .NL
 Lists the vFabrics in CSV format.
+
 .TP 10
 vfinfocsv2 
 .NL
 Lists the vFabrics in CSV format with enums.
+
 .TP 10
 fabricinfo 
 .NL
 Provides a summary of fabric devices.
+
 .TP 10
 quarantine 
 .NL
 Lists the quarantined nodes.
+
 .TP 10
 conginfo 
 .NL
 Lists the Congestion Info Records.
+
 .TP 10
 swcongset 
 .NL
 Lists the Switch Congestion Settings.
+
 .TP 10
 hficongset 
 .NL
 Lists the HFI Congestion Settings.
+
 .TP 10
 hficongcon 
 .NL
 Lists the HFI Congestion Control Settings.
+
 .TP 10
 bfrctrl 
 .NL
 Lists the buffer control tables.
+
 .TP 10
 cableinfo 
 .NL
 Lists the Cable Info records.
+
 .TP 10
 portgroup 
 .NL
 Lists the AR Port Group records.
+
 .TP 10
 portgroupfdb 
 .NL
 Lists the AR Port Group FWD records.
+
 .SH PA Output Types 
 .NL
 
@@ -533,82 +625,102 @@ Output types include:
 paclassPortInfo 
 .NL
 Specifies the class port info.
+
 .TP 10
 groupList 
 .NL
 Lists the PA groups.
+
 .TP 10
 groupInfo 
 .NL
 Provides a summary statistics of a PA group. Requires -g option for  \fIgroupName\fR.
+
 .TP 10
 groupConfig 
 .NL
 Specifies the configuration of a PA group. Requires -g option for  \fIgroupName\fR.
+
 .TP 10
 portCounters 
 .NL
 Specifies the port counters of fabric port. Requires -l \fIlid\fR and -N \fIport\fR options. Optionally, use the -f \fIdelta\fR option.
+
 .TP 10
 clrPortCounters 
 .NL
 Clears port counters of fabric port. Requires -l \fIlid\fR, -N \fIport\fR, and -e \fIselect\fR options.
+
 .TP 10
 clrAllPortCounters 
 .NL
 Clears all port counters in fabric.
+
 .TP 10
 pmConfig 
 .NL
 Retrieves PM configuration information.
+
 .TP 10
 freezeImage 
 .NL
 Creates freeze frame for image ID. Requires -b \fIimgNum\fR.
+
 .TP 10
 releaseImage 
 .NL
 Releases freeze frame for image ID. Requires -b \fIimgNum\fR.
+
 .TP 10
 renewImage 
 .NL
 Renews lease for freeze frame for image ID. Requires -b \fIimgNum\fR.
+
 .TP 10
 moveFreeze 
 .NL
 Moves freeze frame from image ID to new image ID. Requires -b \fIimgNum\fR and -F \fImoveImgNum\fR.
+
 .TP 10
 focusPorts 
 .NL
 Gets sorted list of ports using utilization or error values (from group buckets).
+
 .TP 10
 imageInfo 
 .NL
 Gets information about a PA image (timestamps and other details). Requires -b \fIimgNum\fR.
+
 .TP 10
 vfList 
 .NL
 Lists the virtual fabrics.
+
 .TP 10
 vfInfo 
 .NL
 Provides a summary statistics of a virtual fabric. Requires -V \fIvfName\fR option.
+
 .TP 10
 vfConfig 
 .NL
 Specifies the configuration of a virtual fabric. Requires -V \fIvfName\fR option.
+
 .TP 10
 vfPortCounters 
 .NL
 Specifies the port counters of fabric port. Requires -V \fIvfName\fR, -l \fIlid\fR, and -N \fIport\fR options. Optionally, use the -f \fIdelta\fR option.
+
 .TP 10
 vfFocusPorts 
 .NL
 Gets sorted list of virtual fabric ports usingutilization or error values (from VF buckets). Requires -V \fIvfName\fR option.
+
 .TP 10
 clrVfPortCounters 
 .NL
 Clears VF port counters of fabric port. Requires -l \fIlid\fR, -N \fIport\fR, -e \fIselect\fR, and -V \fIvfName\fR options.
+
 .SH Examples 
 .NL
 opafequery -o saclassPortInfo

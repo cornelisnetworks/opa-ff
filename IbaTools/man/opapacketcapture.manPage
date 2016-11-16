@@ -23,12 +23,12 @@ Using opapacketcapture with large amounts of traffic can cause performance issue
 
 .SH Syntax
 .NL
-opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR] [-t \fItriggerfile\fR] [-l \fItriggerlag\fR][-a \fIalarm\fR] [-p \fIpackets\fR] [-s \fImaxblocks\fR] [-v] [-h]
+opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR] [-t \fItriggerfile\fR] [-l \fItriggerlag\fR][-a \fIalarm\fR] [-p \fIpackets\fR] [-s \fImaxblocks\fR] [-v [-v]]
 .SH Options
 .NL
 
 .TP 10
---help/-h 
+--help 
 .NL
 Produces full help text.
 
@@ -79,7 +79,7 @@ Specifies the number of blocks to allocate for ring buffer. Value is in Millions
 .TP 10
 -v 
 .NL
-Produces verbose output.
+Produces verbose output. (Use verbose Level 1+ to show levels.)
 
 .SH Example
 .NL

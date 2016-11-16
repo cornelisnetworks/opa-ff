@@ -16,7 +16,21 @@ opaextractbadlinks
 Produces a CSV file listing all or some of the links that exceed opareport -o error thresholds. opaextractbadlinks is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
 .SH Syntax 
 .NL
-opaextractbadlinks [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR]
+opaextractbadlinks [opareport \fIoptions\fR]
+.SH Options
+.NL
+
+.TP 10
+opareport \fIoptions\fR 
+.NL
+Options are passed to opareport.
+
+.IP
+Specifies any of the other opareport arguments listed below (see
+\fIopareport Options\fR
+):
+.br
+[-v][-q] [-h \fIhfi\fR] [-p \fIport\fR]
 .br
 [-o \fIreport\fR] [-d \fIdetail\fR] [-P|-H] [-N] [-x]
 .br
@@ -27,7 +41,12 @@ opaextractbadlinks [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR]
 [-a] [-m] [-K \fImkey\fR] [-M] [-A] [-c \fIfile\fR] [-L]
 .br
 [-F \fIpoint\fR] [-S \fIpoint\fR] [-D \fIpoint\fR] [-Q] 
-.SH Options
+
+.br
+
+.NL
+
+.SH opareport Options
 .NL
 
 .TP 10
@@ -233,7 +252,7 @@ Gets routing tables for all switches.
 .TP 10
 -V/--vltables 
 .NL
-Gets QOS VL-related tables for all ports.
+Gets the P-Key tables for all nodes and the QoS VL-related tables for all ports.
 
 .NL
 
@@ -281,6 +300,21 @@ extlinks
 Summary of links external to systems.
 
 .TP 10
+filinks 
+.NL
+Summary of links to FIs.
+
+.TP 10
+islinks 
+.NL
+Summary of inter-switch links.
+
+.TP 10
+extislinks 
+.NL
+Summary of inter-switch links external to systems.
+
+.TP 10
 slowlinks 
 .NL
 Summary of links running slower than expected.
@@ -326,6 +360,26 @@ mcast
 Summary of multicast FDB for each switch in the fabric.
 
 .TP 10
+mcgroups 
+.NL
+Summary of multicast groups.
+
+.IP
+When used in conjunction with -d, the following report details are possible:
+.RS
+
+.IP \(bu
+-d0 : Shows the number of multicast groups
+.IP \(bu
+-d1 : Shows a list of multicast groups
+.IP \(bu
+-d2 : Shows a list of members per multicast group
+
+.RE
+
+.IP
+This report can be used with option -X.
+.TP 10
 portusage 
 .NL
 Summary of ports referenced in linear FDB for each switch, broken down by NodeType of DLID.
@@ -356,6 +410,11 @@ validateroutes
 Validates all routes in the fabric.
 
 .TP 10
+validatevlroutes 
+.NL
+Validates all routes in the fabric using SLSC, SCSC, and SCVL tables.
+
+.TP 10
 validatepgs 
 .NL
 Validates all port groups in the fabric.
@@ -364,6 +423,11 @@ Validates all port groups in the fabric.
 validatecreditloops 
 .NL
 Validates topology configuration of the fabric to identify any existing credit loops.
+
+.TP 10
+validatevlcreditloops 
+.NL
+Validates topology configuration of the fabric including SLSC, SCSC, and SCVL tables to identify any existing credit loops.
 
 .TP 10
 vfinfo 
@@ -404,6 +468,21 @@ Compares fabric (or snapshot) links to supplied topology and identifies differen
 verifyextlinks 
 .NL
 Compares fabric (or snapshot) links to supplied topology and identifies differences and omissions. Limits analysis to links external to systems.
+
+.TP 10
+verifyfilinks 
+.NL
+Compares fabric (or snapshot) links to supplied topology and identify differences and omissions. Limits analysis to links to FIs.
+
+.TP 10
+verifyislinks 
+.NL
+Compares fabric (or snapshot) links to supplied topology and identify differences and omissions. Limits analysis to inter-switch links.
+
+.TP 10
+verifyextislinks 
+.NL
+Compares fabric (or snapshot) links to supplied topology and identify differences and omissions. Limits analysis to inter-switch links external to systems.
 
 .TP 10
 verifyall 
@@ -658,6 +737,11 @@ smdetpat:value
 route:point1:point2 
 .NL
 Specifies all ports along the routes between the two given points.
+
+.TP 10
+led:value 
+.NL
+ \fIvalue\fR is either on or off for LED port beacon.
 
 .TP 10
 linkqual:value 

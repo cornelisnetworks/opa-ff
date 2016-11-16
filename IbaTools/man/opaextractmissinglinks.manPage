@@ -6,29 +6,57 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaextractlink 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaextractmissinglinks 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
-opaextractlink
+opaextractmissinglinks
 
 .NL
 
 .PP
-Produces a CSV file listing all or some of the links in the fabric. opaextractlink is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
+Produces a CSV file listing all or some of the links in the fabric. opaextractmissinglinks is a front end to the opareport tool that generates a report listing all or some of the links that are present in the supplied topology file, but are missing in the fabric. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
 .SH Syntax 
 .NL
-opaextractlink [opareport \fIoptions\fR]
+opaextractmissinglinks [-T topology\(ulinput] [-o report]
+.br
+[opareport \fIoptions\fR]
 .SH Options
 .NL
 
 .TP 10
+-T \fItopology\(ulfile\fR 
+.NL
+Specifies the file used for fabric verification: /etc/sysconfig/opa/topology.0:0.xml.
+
+.TP 10
+-o \fIreport\fR 
+.NL
+The output types specific for opaextractmissinglinks include:
+.RS
+
+.IP \(bu
+verifylinks - Verifies links against topology input.
+.IP \(bu
+verifyextlinks - Verifies links against topology input. Limits analysis to links external to systems.
+
+.IP \(bu
+verifyfilinks - Verifies links against topology input. Limits analysis to FI links.
+
+.IP \(bu
+verifyislinks - Verifies links against topology input. Limits analysis to inter-switch links.
+
+.IP \(bu
+verifyextislinks - Verifies links against topology input. Limits analysis to inter-switch links external to systems.
+
+
+.RE
+
+
+.TP 10
 opareport \fIoptions\fR 
 .NL
-Options are passed to opareport.
-
-.IP
-Specifies any of the other opareport arguments listed below (see
+Options are passed to opareport. Specifies any of the other opareport arguments listed below (see
 \fIopareport Options\fR
-):
+): 
 .br
 [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR]
 .br
@@ -43,6 +71,7 @@ Specifies any of the other opareport arguments listed below (see
 [-F \fIpoint\fR] [-S \fIpoint\fR] [-D \fIpoint\fR] [-Q] 
 
 .br
+
 
 .NL
 
@@ -760,24 +789,30 @@ Specifies the ports with a link quality greater than or equal to  \fIvalue\fR.
 
 .SH Examples 
 .NL
-# List all the links in the fabric:
+List all the missing links in the fabric:
 .br
-opaextractlink
-.br
-
-.br
-# List all the links to a switch named "OmniPth00117501ffffffff":
-.br
-opaextractlink -F "node:OmniPth00117501ffffffff"
+opaextractmissinglinks
 .br
 
 .br
-# List all the links to end-nodes:
+List all the missing links to a switch named "OmniPth00117501ffffffff":
 .br
-opaextractlink -F "nodetype:FI"
+opaextractmissinglinks -T topology.0:0.xml -F "node:OmniPth00117501ffffffff"
 .br
 
 .br
-# List all the links on the 2nd HFI\[aq]s fabric of a multi-plane fabric:
+List all the missing connections to end-nodes:
 .br
-opaextractlink -h 2
+opaextractmissinglinks -o verifyfilinks
+.br
+
+.br
+List all the missing links on the 2nd HFI\[aq]s fabric of a multi-plane fabric:
+.br
+opaextractmissinglinks -h 2 -T /etc/sysconfig/opa/topology.2:1.xml
+.br
+
+.br
+List all the missing links between two switches:
+.br
+opaextractmissinglinks -o verifyislinks -T topology.0:0.xml

@@ -24,7 +24,9 @@ Intel recommends that you set up SSH keys for chassis (see
 ). If SSH keys are not set up, all chassis must be configured with the same admin password and the password must be kept in the opafastfabric.conf configuration file.
 .SH Syntax
 .NL
-opaesmanalysis [-b|-e] [-s] [-d \fIdir\fR] [-G \fIesmchassisfile\fR] [-E \[aq]\fIesmchassis\fR\[aq]]
+opaesmanalysis [-b|-e] [-s] [-d \fIdir\fR] [-G \fIesmchassisfile\fR]
+.br
+[-E \[aq]\fIesmchassis\fR\[aq]]
 .SH Options
 .NL
 

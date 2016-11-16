@@ -72,7 +72,7 @@ Specifies the software upgrade options.
 .TP 10
 -T \fIproduct\fR 
 .NL
-Specifies the product type to install. Default = IntelOPA-Basic.RHEL7-x86\(ul64 
+Specifies the product type to install. Default = IntelOPA-Basic. 
 
 .IP
 Other options include: IntelOPA-Basic. \fI<distro>\fR, IntelOPA-IFS. \fI<distro>\fR where  \fI<distro>\fR is the distribution and CPU.

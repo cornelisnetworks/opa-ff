@@ -388,16 +388,10 @@ Issues an inband packet to the switches to test for presence and reports on pres
 .B NOTE:
 It is not necessary to supply a password (using -S) for this operation.
 
-
 .TP 10
 fwverify 
 .NL
 Verifies the integrity of the firmware images in the EEPROMs of the selected switches.
-
-.TP 10
-capture 
-.NL
-Gets switch hardware and firmware state capture of all nodes.
 
 .TP 10
 getconfig 

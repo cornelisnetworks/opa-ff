@@ -281,7 +281,7 @@ For Error Info: FM Configuration Error Info
 .NL
 Specifies the Virtual Lane Select Mask, in hexadecimal. Bits represent VL number 31-0. For example, 0x1 for VL 0, 0x3 for VL 0,1. Default is none.
 
-.SH Examples 
+.SH Examples
 .NL
 opapmaquery -o classportinfo
 .br
@@ -320,10 +320,6 @@ opapmaquery -o geterrorinfo -n 0x2
 opapmaquery -o clearerrorinfo -n 0x2
 .br
 # clear all error info, local port 1
-.PP
-
-\fBAdditional Examples\fR
-
 .br
 opapmaquery -o getdatacounters -l 6 -n 0x7e -w 0x1
 .br
