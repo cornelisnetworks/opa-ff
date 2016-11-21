@@ -1,41 +1,45 @@
 Name: opa
-Version: 10.3.0.0
-Release: 64%{?dist}
+Version: 10.4.0.0
+Release: 59%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
-License: GPLv2 or BSD 
-Url: https://github.com/01org/opa-ff
-# tarball created by:
-# git clone https://github.com/01org/opa-ff.git
-# cd opa-ff
-# tar czf opa-ff.tar.gz --exclude-vcs .
+Group: System Environment/Libraries
+License: GPLv2/BSD 
+Url: http://www.intel.com/
 Source: opa.tgz
 ExclusiveArch: x86_64
 # The Intel(R) OPA product line is only available on x86_64 platforms at this time.
+
+__RPM_DEBUG
 
 %description
 This package contains the tools necessary to manage an Intel(R) Omni-Path Architecture fabric.
 
 %package basic-tools
-Summary: Management level tools and scripts.
+Summary: Managment level tools and scripts.
+Group: System Environment/Libraries
 
 Requires: rdma bc
 
-BuildRequires: expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel
-BuildRequires: ibacm-devel, %{?BuildRequires}
+Requires: __RPM_REQ
+BuildRequires: __RPM_BLDREQ
 
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.
 
 %package fastfabric
 Summary: Management level tools and scripts.
+Group: System Environment/Libraries
 Requires: opa-basic-tools
+
+Requires: __RPM_RQ2
 
 %description fastfabric
 Contains tools for managing fabric on a managment node.
 
 %package address-resolution
 Summary: Contains Address Resolution manager
+Group: System Environment/Libraries
 Requires: opa-basic-tools
 
 %description address-resolution
@@ -69,7 +73,7 @@ fi
 
 %define ff_tools_exp basic.exp chassis.exp chassis_configure.exp chassis_fmconfig.exp chassis_fmcontrol.exp chassis_fmgetconfig.exp chassis_getconfig.exp chassis_reboot.exp chassis_fmgetsecurityfiles.exp chassis_fmsecurityfiles.exp chassis_upgrade.exp common_funcs.exp configipoib.exp extmng.exp ff_function.exp ib.exp opa_to_xml.exp ibtools.exp install.exp ipoibping.exp load.exp mpi.exp mpiperf.exp mpiperfdeviation.exp network.exp proc_mgr.exp reboot.exp sacache.exp sm_control.exp switch_capture.exp switch_configure.exp switch_dump.exp switch_fwverify.exp switch_getconfig.exp switch_hwvpd.exp switch_info.exp switch_ping.exp switch_reboot.exp switch_upgrade.exp target.exp tools.exp upgrade.exp tclIndex tcl_proc comm12 front
 
-%define ff_tools_sbin opacabletest opacheckload opaextracterror opaextractlink opaextractperf opaextractstat opaextractstat2 opafindgood opafirmware opagenchassis opagenesmchassis opagenswitches opalinkanalysis opareport opareports opasorthosts opatop opaxlattopology opaxlattopology_cust opaxmlextract opaxmlfilter opaxmlgenerate opaxmlindent opaallanalysis opacaptureall opachassisanalysis opacmdall opadownloadall opaesmanalysis opafabricanalysis opafastfabric opahostsmanalysis opadisablehosts opadisableports opaenableports opaledports opaexpandfile opaextractbadlinks opaextractlids opaextractsellinks opaextractmissinglinks opaswenableall opaswdisableall opaverifyhosts opahostadmin opachassisadmin opaswitchadmin opapingall opascpall opasetupssh opashowallports opauploadall opapaquery opashowmc opafequery
+%define ff_tools_sbin opacabletest opacheckload opaextracterror opaextractlink opaextractperf opaextractstat opaextractstat2 opafindgood opafirmware opagenchassis opagenesmchassis opagenswitches opalinkanalysis opareport opareports opasorthosts opatop opaxlattopology opaxlattopology_cust opaxmlextract opaxmlfilter opaxmlgenerate opaxmlindent opaallanalysis opacaptureall opachassisanalysis opacmdall opadownloadall opaesmanalysis opafabricanalysis opafastfabric opahostsmanalysis opadisablehosts opadisableports opaenableports opaledports opaexpandfile opaextractbadlinks opaextractlids opaextractsellinks opaextractmissinglinks opaswenableall opaswdisableall opaverifyhosts opahostadmin opachassisadmin opaswitchadmin opapingall opascpall opasetupssh opashowallports opauploadall opapaquery opashowmc opafequery opa2rm
 
 %define ff_tools_misc ff_funcs opachassisip opagenswitcheshelper chassis_setup switch_setup opagetipaddrtype opafastfabric.conf.def show_counts
 
@@ -246,7 +250,6 @@ sed -i 's;[ ];\n/usr/lib/opa/src/shmem_apps/;g' %{_builddir}/ff_shmem_apps.list
 cat %{_builddir}/ff_mpi_apps.list %{_builddir}/ff_shmem_apps.list %{_builddir}/ff_sbin_file.list %{_builddir}/ff_help_file.list %{_builddir}/ff_tools_exp.list %{_builddir}/ff_tools_misc.list %{_builddir}/ff_libs_misc.list %{_builddir}/ff_iba_samples.list %{_builddir}/ff_mans.list %{_builddir}/ff_tools_fm.list %{_builddir}/ff_opt_file.list > %{_builddir}/ff_file.list
 
 
-
 %post address-resolution -p /sbin/ldconfig
 %postun address-resolution -p /sbin/ldconfig
 
@@ -258,6 +261,7 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 
 %files fastfabric -f %{_builddir}/ff_file.list
 %{_sysconfdir}/sysconfig/opa/opamon.si.conf
+# Replace opamon.si.conf, as it's a template config file.
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/opafastfabric.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/opamon.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/allhosts
@@ -287,5 +291,5 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 %config(noreplace) %{_sysconfdir}/rdma/dsap.conf
 
 %changelog
-* Fri Sep 23 2016 Anton Bodner <anton.bodner@intel.com> - 10.3.0-ifs
-- Update to latest from build 10.3.0.0.58 (FF 10.3.0.0.53)
+* Fri Oct 10 2014 Erik E. Kahn <erik.kahn@intel.com> - 1.0.0-ifs
+- Initial version

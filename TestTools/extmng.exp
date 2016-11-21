@@ -554,12 +554,16 @@ proc get_switch_info { ibnode } {
 
         # use verbose option so we have a predictable output to expect
 		if { [ string equal "$brand" "OPA"] } {
-			# set capability to QDR for now
-			set capability "QDR"
+			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 11"
 		} else {
 			append_punchlist "$ibnode" "Not an Intel OPA device"
 			fail_test "$ibnode: Not an Intel OPA device"
 		}
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "Switch configuration values" "[[:space:]]+Link Width[[:space:]]+[:][[:space:]][[:print:]]*([0-9]+)" } { "Error"}]
+		regexp {[[:space:]]+Link Width[[:space:]]+[:][[:space:]]+([[:print:]],)*([0-9]+)} $out line p1 linkWidth
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "[[:space:]]+Link Speed[[:space:]]+[:][[:space:]]+([0-9Gb.,])*([0-9Gb]+)" } { "Error"}]
+		regexp {[[:space:]]+Link Speed[[:space:]]+[:][[:space:]]+([[:print:]],)*([0-9Gb]+)$} $out line p1 linkSpeed
+		set capability [format {%sx%s} $linkWidth $linkSpeed]
 
         # use verbose option so we have a predictable output to expect
 		if { [ string equal "$brand" "OPA"] } {

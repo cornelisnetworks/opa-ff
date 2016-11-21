@@ -45,6 +45,7 @@
 #   FILE_NODEFIS         - Host FIs, includes NodeDetails
 #   FILE_NODESWITCHES    - Edge, Leaf and Spine switches
 #   FILE_NODECHASSIS     - Core switches
+#   FILE_NODESM          - Nodes running SM
 #   FILE_NODELEAVES      - Leaf switches
 #   FILE_TOPOLOGY_OUT    - Topology: FILE_LINKSUM + FILE_LINKSUM_NOCABLE +
 #                           FILE_NODEFIS + FILE_NODESWITCHES
@@ -86,6 +87,7 @@
 
 ## Defines:
 XML_GENERATE="/usr/sbin/opaxmlgenerate"
+XML_INDENT="/usr/sbin/opaxmlindent"
 FILE_TOPOLOGY_LINKS="topology.csv"
 FILE_LINKSUM_SWD06="/usr/lib/opa/samples/linksum_swd06.csv"
 FILE_LINKSUM_SWD24="/usr/lib/opa/samples/linksum_swd24.csv"
@@ -96,6 +98,7 @@ FILE_NODEFIS="nodefis.csv"
 FILE_NODESWITCHES="nodeswitches.csv"
 FILE_NODELEAVES="nodeleaves.csv"
 FILE_NODECHASSIS="nodechassis.csv"
+FILE_NODESM="nodesm.csv"
 FILE_CHASSIS="chassis"
 FILE_HOSTS="hosts"
 FILE_TOPOLOGY_OUT="topology.0:0.xml"
@@ -135,21 +138,7 @@ MTU_SW_HFI=${MTU_SW_HFI:-8192}
 hfi_suffix="hfi1_0"
 
 # Parsing tokens:
-t_00=""
-t_01=""
-t_02=""
-t_03=""
-t_04=""
-t_05=""
-t_06=""
-t_07=""
-t_08=""
-t_09=""
-t_10=""
-t_11=""
-t_12=""
-t_13=""
-t_14=""
+declare -a t=("" "" "" "" "" "" "" "" "" "" "" "" "" "" "")
 
 t_srcgroup=""
 t_srcrack=""
@@ -202,10 +191,29 @@ rack=""
 switch=""
 leaves=""
 
+# Check Bash Version for hash tables
+if (( "${BASH_VERSINFO[0]}" < 4 ))
+then
+  echo "opaxlattopology: At least bash-4.0 is required to run this script" >&2
+  exit 1
+fi
+
+# Hash table:
+declare -A core_name_size
+declare -A core_name_rack
+declare -A core_name_group
+
 # Arrays
 tb_group[0]=""
 tb_rack[0]=""
 tb_switch[0]=""
+core=()
+partially_populated_core=()
+spine_array=()
+leaf_array=()
+external_leafs=()
+expected_sm=()
+hfi=()
 
 # Debug variables:
 debug_0=
@@ -217,6 +225,19 @@ debug_5=
 debug_6=
 debug_7=
 #echo "DEBUG-x.y: 0:$debug_0: 1:$debug_1: 2:$debug_2: 3:$debug_3: 4:$debug_4: 5:$debug_5: 6:$debug_6: 7:$debug_7:"
+
+array_contains() {
+    local array=("${!1}")
+    local seeking=$2
+    local found=1
+    for element in "${array[@]}"; do
+        if [[ $element == $seeking ]]; then
+            found=0
+            break
+        fi
+    done
+    return $found
+}
 
 function clean_tempfiles() {
   if [ $fl_clean == 1 ]
@@ -230,6 +251,7 @@ function clean_tempfiles() {
     rm -f $FILE_NODESWITCHES
     rm -f $FILE_NODELEAVES
     rm -f $FILE_NODECHASSIS
+    rm -f $FILE_NODESM
   fi
 }
 
@@ -242,7 +264,7 @@ functout=
 # Output usage information
 usage_full()
 {
-  echo "Usage: opaxlattopology [-d level -v level -i level -K]" >&2
+  echo "Usage: opaxlattopology [-d level] [-v level] [-i level] [-K]" >&2
   echo "                          [-s hfi_suffix] [source [dest]]" >&2
   echo "           or" >&2
   echo "       opaxlattopology --help" >&2
@@ -343,6 +365,7 @@ display_progress()
 #   FILE_NODEFIS
 #   FILE_NODESWITCHES
 #   FILE_NODECHASSIS
+#   FILE_NODESM
 #
 # Outputs:
 #   FILE_TOPOLOGY_OUT
@@ -392,6 +415,12 @@ gen_topology()
     sort -u $FILE_TEMP > $FILE_NODECHASSIS
     cp -p $FILE_NODECHASSIS $FILE_CHASSIS
   fi
+  if [ -f $FILE_NODESM ]
+    then
+    rm -f $FILE_TEMP
+    mv $FILE_NODESM $FILE_TEMP
+    sort -u $FILE_TEMP > $FILE_NODESM
+  fi
 
   rm -f $FILE_TOPOLOGY_OUT
   echo '<?xml version="1.0" encoding="utf-8" ?>' >> $FILE_TOPOLOGY_OUT
@@ -430,6 +459,14 @@ gen_topology()
     $XML_GENERATE -X $FILE_NODESWITCHES -d \; -i 2 -h Node -g NodeDesc -e Node >> $FILE_TOPOLOGY_OUT
   fi
   echo "</Switches>" >> $FILE_TOPOLOGY_OUT
+
+  # Generate SM section
+  echo "<SMs>" >> $FILE_TOPOLOGY_OUT
+  if [ -s $FILE_NODESM ]
+    then
+    $XML_GENERATE -X $FILE_NODESM -i 2 -h SM -g NodeDesc -g PortNum -e SM >> $FILE_TOPOLOGY_OUT
+  fi
+  echo "</SMs>" >> $FILE_TOPOLOGY_OUT
   echo "</Nodes>" >> $FILE_TOPOLOGY_OUT
 
   echo "</Report>" >> $FILE_TOPOLOGY_OUT
@@ -438,7 +475,7 @@ gen_topology()
   clean_tempfiles
 }  # End of gen_topology
 
-# Append to LINKSUM_NOCABLE file using parameter as input.  
+# Append to LINKSUM_NOCABLE file using parameter as input.
 # Inputs:
 #   $1 = FILE_LINKSUM_SWD06 or FILE_LINKSUM_SWD24
 # Outputs: FILE_LINKSUM_NOCABLE
@@ -446,17 +483,17 @@ generate_linksum_nocable()
 {
   if ! [ -z "$1" ]
   then
-    IFS=";"
-    cat $1|sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$CAT_CHAR/g" | grep -E "$leaves"| while read t_00 t_01 t_02 t_03 t_04 t_05 t_06 t_07 t_08 t_09 t_10 t_11 
+    local IFS=";"
+    cat $1|sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$CAT_CHAR/g" | grep -E "$leaves"| while read t[0] t[1] t[2] t[3] t[4] t[5] t[6] t[7] t[8] t[9] t[10] t[11]
     do
-      if [ $t_07 == "SW" ] && [ $t_10 == "SW" ]; then	
-        IFS="|" link="${t_00};${MTU_SW_SW};${t_02};${t_03};${t_04};${t_05};${t_06};${t_07};${t_08};${t_09};${t_10};${t_11}"
+      if [ "${t[7]}" == "SW" ] && [ "${t[10]}" == "SW" ]; then
+        local IFS="|" link="${t[0]};${MTU_SW_SW};${t[2]};${t[3]};${t[4]};${t[5]};${t[6]};${t[7]};${t[8]};${t[9]};${t[10]};${t[11]}"
       else
-        IFS="|" link="${t_00};${MTU_SW_HFI};${t_02};${t_03};${t_04};${t_05};${t_06};${t_07};${t_08};${t_09};${t_10};${t_11}"
+        local IFS="|" link="${t[0]};${MTU_SW_HFI};${t[2]};${t[3]};${t[4]};${t[5]};${t[6]};${t[7]};${t[8]};${t[9]};${t[10]};${t[11]}"
       fi
-      echo $link >> ${FILE_LINKSUM_NOCABLE}
-      IFS=";"
-    done 
+      echo "$link" >> ${FILE_LINKSUM_NOCABLE}
+      local IFS=";"
+    done
   fi
 }
 
@@ -643,6 +680,33 @@ trim_trailing_whitespace()
   echo "$(echo -e "${1}" | sed -e 's/[[:space:]]*$//')"
 }
 
+process_sm()
+{
+  for element in "${t[@]:1}"
+  do
+    if [ -n "$element" ]; then
+      host=`echo "$element" | cut -d : -f 1`
+      port=`echo "$element" | cut -s -d : -f 2`
+      if [ -z "$port" ]; then
+        if array_contains hfi[@] "$host" ; then
+          port=1
+        else
+          port=0
+        fi
+      fi
+      if array_contains hfi[@] "$host" && ! [[ "$host" =~ $HOST_HFI_REGEX ]] ; then
+        expected_sm+=("${host}${CAT_CHAR}${hfi_suffix};$port")
+      else
+        expected_sm+=("$host;$port")
+      fi
+    fi
+  done
+  # Add expected sm to FILE_NODESM
+  for element in "${expected_sm[@]}"
+  do
+    echo "$element" >> $FILE_NODESM
+  done
+}
 
 ## Main function:
 
@@ -709,12 +773,12 @@ rm -f ${FILE_NODECHASSIS}
 rate="100g"
 ix_line=1
 
-while IFS="," read t_00 t_01 t_02 t_03 t_04 t_05 t_06 t_07 t_08 t_09 t_10 t_11 t_12 t_13 t_14
+while IFS="," read -a t
 do
   case $cts_parse in
   # Syncing to beginning of link data
   0)
-    if [ "$t_00" == "Rack Group" ]
+    if [ "${t[0]}" == "Rack Group" ]
       then
       cts_parse=1
     fi
@@ -722,51 +786,53 @@ do
 
   # Process link tokens
   1)
-    if [ -n "$t_00" ]
+    if [ -n "${t[0]}" ]
       then
-      t_srcgroup=`trim_trailing_whitespace "$t_00"`
+      t_srcgroup=`trim_trailing_whitespace "${t[0]}"`
     fi
-    if [ -n "$t_01" ]
+    if [ -n "${t[1]}" ]
       then
-      t_srcrack=`trim_trailing_whitespace "$t_01"`
+      t_srcrack=`trim_trailing_whitespace "${t[1]}"`
     fi
-    t_srcname=`trim_trailing_whitespace "$t_02"`
-    t_srcname2=`trim_trailing_whitespace "$t_03"`
-    if [ -n "$t_05" ]
+    t_srcname=`trim_trailing_whitespace "${t[2]}"`
+    t_srcname2=`trim_trailing_whitespace "${t[3]}"`
+    if [ -n "${t[5]}" ]
       then
-      t_srctype=`trim_trailing_whitespace "$t_05"`
+      t_srctype=`trim_trailing_whitespace "${t[5]}"`
     fi
-    if [ -z "$t_04" -a "$t_srctype" == "$NODETYPE_HFI" ]
+    if [ -z "${t[4]}" -a "$t_srctype" == "$NODETYPE_HFI" ]
       then
+      hfi+=("$t_srcname")
       t_srcport=1
     else
-      t_srcport=`trim_trailing_whitespace "$t_04"`
+      t_srcport=`trim_trailing_whitespace "${t[4]}"`
     fi
 
-    if [ -n "$t_06" ]
+    if [ -n "${t[6]}" ]
       then
-      t_dstgroup=`trim_trailing_whitespace "$t_06"`
+      t_dstgroup=`trim_trailing_whitespace "${t[6]}"`
     fi
-    if [ -n "$t_07" ]
+    if [ -n "${t[7]}" ]
       then
-      t_dstrack=`trim_trailing_whitespace "$t_07"`
+      t_dstrack=`trim_trailing_whitespace "${t[7]}"`
     fi
-    t_dstname=`trim_trailing_whitespace "$t_08"`
-    t_dstname2=`trim_trailing_whitespace "$t_09"`
-    if [ -n "$t_11" ]
+    t_dstname=`trim_trailing_whitespace "${t[8]}"`
+    t_dstname2=`trim_trailing_whitespace "${t[9]}"`
+    if [ -n "${t[11]}" ]
       then
-      t_dsttype=`trim_trailing_whitespace "$t_11"`
+      t_dsttype=`trim_trailing_whitespace "${t[11]}"`
     fi
-    if [ -z "$t_10" -a "$t_dsttype" == "$NODETYPE_HFI" ]
+    if [ -z "${t[10]}" -a "$t_dsttype" == "$NODETYPE_HFI" ]
       then
+      hfi+=("$t_dstname")
       t_dstport=1
     else
-      t_dstport=`trim_trailing_whitespace "$t_10"`
+      t_dstport=`trim_trailing_whitespace "${t[10]}"`
     fi
 
-    t_cablelabel=`trim_trailing_whitespace "$t_12"`
-    t_cablelength=`trim_trailing_whitespace "$t_13"`
-    t_cabledetails=`trim_trailing_whitespace "$t_14"`
+    t_cablelabel=`trim_trailing_whitespace "${t[12]}"`
+    t_cablelength=`trim_trailing_whitespace "${t[13]}"`
+    t_cabledetails=`trim_trailing_whitespace "${t[14]}"`
 
     if [ "$t_srctype" == "$NODETYPE_SPINE" ]
       then
@@ -967,6 +1033,7 @@ do
         then
         echo "${nodedesc2}" >> ${FILE_NODELEAVES}
         echo "${t_dstname}" >> ${FILE_NODECHASSIS}
+        external_leafs+=("`echo "${nodedesc2}" | sed -e 's/[AB]$//'`")
       fi
       if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
         then
@@ -1008,13 +1075,20 @@ do
 
     # Process core switch data
   2)
-    if echo "$t_00" | grep -e "$CORE_NAME" > /dev/null 2>&1
+    if echo "${t[0]}" | grep -e "$CORE_NAME" > /dev/null 2>&1
       then
-      core_name=`echo $t_00 | cut -d ':' -f 2`
-      display_progress "Generating links for Core:$core_name"
-      if echo "$t_01" | grep -e "$CORE_GROUP" > /dev/null 2>&1
+      core_name=`echo "${t[0]}" | cut -d ':' -f 2`
+      # Make sure that core name do not have space char
+      if [[ "$core_name" =~ [[:space:]] ]]
         then
-        core_group=`echo $t_01 | cut -d ':' -f 2`
+        echo "opaxlattopology: Error - core name cannot have space char: $core_name" >&2
+        exit 1
+      fi
+      core+=("$core_name")
+      display_progress "Generating links for Core:$core_name"
+      if echo "${t[1]}" | grep -e "$CORE_GROUP" > /dev/null 2>&1
+        then
+        core_group=`echo "${t[1]}" | cut -d ':' -f 2`
       elif [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
         then
         echo "Must have rack group name when outputting rack group (line:$ix_line)"
@@ -1022,9 +1096,17 @@ do
       else
         core_group=""
       fi
-      if echo "$t_02" | grep -e "$CORE_RACK" > /dev/null 2>&1
+      # Make sure that core group do not have space char
+      if [[ "$core_group" =~ [[:space:]] ]]
         then
-        core_rack=`echo $t_02 | cut -d ':' -f 2`
+        echo "opaxlattopology: Error - core group name cannot have space char: $core_group" >&2
+        exit 1
+      fi
+      # Store core group
+      core_name_group["$core_name"]="$core_group"
+      if echo "${t[2]}" | grep -e "$CORE_RACK" > /dev/null 2>&1
+        then
+        core_rack=`echo "${t[2]}" | cut -d ':' -f 2`
       elif [ $((n_detail & OUTPUT_RACKS)) != 0 ]
         then
         echo "Must have rack name when outputting rack (line:$ix_line)"
@@ -1032,24 +1114,34 @@ do
       else
         core_rack=""
       fi
-      if echo "$t_03" | grep -e "$CORE_SIZE" > /dev/null 2>&1
+      # Make sure that core rack do not have space char
+      if [[ "$core_rack" =~ [[:space:]] ]]
         then
-        core_size=`echo $t_03 | cut -d ':' -f 2`
+        echo "opaxlattopology: Error - core rack name cannot have space char: $core_rack" >&2
+        exit 1
+      fi
+      # Store core rack
+      core_name_rack["$core_name"]="$core_rack"
+      if echo "${t[3]}" | grep -e "$CORE_SIZE" > /dev/null 2>&1
+        then
+        core_size=`echo ${t[3]} | cut -d ':' -f 2`
         if [ $core_size -ne 288 -a $core_size -ne 1152 ]
           then
-          echo "Invalid $CORE_SIZE parameter ($t_03)"
+          echo "Invalid $CORE_SIZE parameter (${t[3]})"
           usage_full "2"
         fi
       else
         echo "No $CORE_SIZE parameter"
         usage_full "2"
       fi
-      if echo "$t_04" | grep -e "$CORE_FULL" > /dev/null 2>&1
+      # Store core size
+      core_name_size["$core_name"]="$core_size"
+      if echo "${t[4]}" | grep -e "$CORE_FULL" > /dev/null 2>&1
         then
-        core_full=`echo $t_04 | cut -d ':' -f 2`
+        core_full=`echo ${t[4]} | cut -d ':' -f 2`
         if [ $core_full -ne 0 -a $core_full -ne 1 ]
           then
-          echo "Invalid $CORE_FULL parameter ($t_04)"
+          echo "Invalid $CORE_FULL parameter (${t[4]})"
           usage_full "2"
         fi
       else
@@ -1061,6 +1153,7 @@ do
         then
         leaves=""
       else
+        partially_populated_core+=($core_name)
         leaves=`cat $FILE_NODELEAVES | tr '\012' '|' | sed -e 's/|$//'`
       fi
       if [ $core_size == 288 ]
@@ -1087,9 +1180,9 @@ do
         else
 	  generate_linksum_nocable $FILE_LINKSUM_SWD24
         fi
-        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> $core_group/${FILE_NODESWITCHES}
-        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> $core_group/${FILE_NODESWITCHES}
-        cat $core_group/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> $core_group/${FILE_NODECHASSIS}
+        cat "$core_group"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+        cat "$core_group"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+        cat "$core_group"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/${FILE_NODECHASSIS}
       fi
 
       if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
@@ -1098,7 +1191,7 @@ do
           then
           leaves=""
         else
-          leaves=`cat $core_group/$core_rack/$FILE_NODELEAVES | tr '\012' '|' | sed -e 's/|$//'`
+          leaves=`cat "$core_group"/"$core_rack"/$FILE_NODELEAVES | tr '\012' '|' | sed -e 's/|$//'`
         fi
         if [ $core_size == 288 ]
           then
@@ -1106,16 +1199,149 @@ do
         else
 	  generate_linksum_nocable $FILE_LINKSUM_SWD24
         fi
-        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> $core_group/$core_rack/${FILE_NODESWITCHES}
-        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> $core_group/$core_rack/${FILE_NODESWITCHES}
-        cat $core_group/$core_rack/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> $core_group/$core_rack/${FILE_NODECHASSIS}
+        cat "$core_group"/"$core_rack"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
+        cat "$core_group"/"$core_rack"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
+        cat "$core_group"/"$core_rack"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODECHASSIS}
       fi
 
     # End of core switch information
+    elif [ "${t[0]}" == "SM" ]
+      then
+      # Process SM section
+      process_sm
     else
-      break
+      cts_parse=3
     fi
     ;;
+
+    # Finding "Present Leafs" or "Omitted Spine" or "SM" tag. Process if "SM" tag is found
+  3)
+    if [ "${t[0]}" == "Present Leafs" ]
+      then
+      cts_parse=4
+    elif [ "${t[0]}" == "Omitted Spines" ]
+      then
+      cts_parse=5
+    elif [ "${t[0]}" == "SM" ]
+      then
+      # Process SM section
+      process_sm
+    else
+      cts_parse=3
+    fi
+    ;;
+
+    # Process Present Leafs
+  4)
+    if echo "${t[0]}" | grep -e "$CORE_NAME" > /dev/null 2>&1 
+      then
+      core_name=`echo ${t[0]} | cut -d ':' -f 2`
+      if ! array_contains core[@] $core_name
+        then
+        echo "opaxlattopology: Error - No Core details found for $core_name, specified in \"Present Leafs\" section">&2
+        exit 1
+      fi
+      if array_contains partially_populated_core[@] $core_name
+        then
+        display_progress "Processing leafs of partially populated Core:$core_name"
+        # add external leafs to the leaf_array
+        for element in "${external_leafs[@]}"
+        do
+          if [[ "$element" =~ "$core_name"" "L[0-9]+$ ]]
+            then
+            leaf_array+=("$element")
+          fi
+        done
+        for element in "${t[@]:1}" 
+        do
+          if [ -n "$element" ]; then
+            leaf_array+=("$core_name ${element}")
+          fi
+        done
+        # Adding present leafs to temporary files
+        if [ ${#leaf_array[@]} != 0 ]
+          then
+          leaves=""
+          for element in "${leaf_array[@]}"
+          do
+            leaves="$leaves$element|"
+          done
+          leaves=`echo $leaves | sed -e 's/|$//'`
+          if [ ${core_name_size["$core_name"]} == 288 ]
+            then
+            generate_linksum_nocable $FILE_LINKSUM_SWD06
+          else
+            generate_linksum_nocable $FILE_LINKSUM_SWD24
+          fi
+          cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> ${FILE_NODESWITCHES}
+          cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> ${FILE_NODESWITCHES}
+          if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
+            then
+            cat "${core_name_group["$core_name"]}"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "${core_name_group["$core_name"]}"/${FILE_NODESWITCHES}
+            cat "$core_group"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+          fi
+          if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
+            then
+            cat "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
+            cat "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
+          fi
+        fi
+        leaf_array=()
+      else
+          echo "opaxlattopology: Warning - Listed \"Present Leafs\" for Fully Populated Core. Ignoring this row"
+      fi
+    # End of Present Leafs information
+    else
+        cts_parse=3
+    fi
+   ;;
+
+    # Process Omited Spine
+  5)
+    if echo "${t[0]}" | grep -e "$CORE_NAME" > /dev/null 2>&1
+      then
+      core_name=`echo ${t[0]} | cut -d ':' -f 2`
+      if ! array_contains core[@] $core_name
+        then
+        echo "opaxlattopology: Error - No Core details found for $core_name, specified in \"Omitted Spines\" section" >&2
+        exit 1
+      fi
+      if array_contains partially_populated_core[@] $core_name
+        then
+        display_progress "Processing spines of partially populated Core:$core_name"
+        for element in "${t[@]:1}" 
+        do
+          if [ -n "$element" ]; then
+            spine_array+=("$core_name ${element}")
+          fi
+        done
+        if [ ${#spine_array[@]} != 0 ]
+          then
+          for element in "${spine_array[@]}"
+          do
+            # Remove Spine from FILE_LINKSUM_NOCABLE and FILE_NODESWITCHES
+            sed -i "/$element/d" ${FILE_LINKSUM_NOCABLE}
+            sed -i "/$element/d" ${FILE_NODESWITCHES}
+            if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
+              then
+              sed -i "/$element/d" ${core_name_group["$core_name"]}/${FILE_LINKSUM_NOCABLE}
+              sed -i "/$element/d" ${core_name_group["$core_name"]}/${FILE_NODESWITCHES}
+            fi
+            if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
+              then
+              sed -i "/$element/d" ${core_name_group["$core_name"]}/${core_name_rack["$core_name"]}/${FILE_LINKSUM_NOCABLE}
+              sed -i "/$element/d" ${core_name_group["$core_name"]}/${core_name_rack["$core_name"]}/${FILE_NODESWITCHES}
+            fi
+          done
+        fi
+        spine_array=()
+      else
+        echo "opaxlattopology: Warning - Listed \"Omitted Spines\" for Fully Populated Core. Ignoring this row"
+      fi
+    else
+      cts_parse=3
+    fi
+   ;;
 
   esac  # end of case $cts_parse in
 
@@ -1241,6 +1467,11 @@ elif [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
   done  # End of for (( ix=1 ; $ix<$MAX_SWITCHES ; ix=$((ix+1)) ))
 
 fi  # End of if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
+
+# trim leading and trailing whitespace from tag contents
+$XML_INDENT -t $FILE_TOPOLOGY_OUT > $FILE_TEMP
+cat $FILE_TEMP > $FILE_TOPOLOGY_OUT
+rm -f $FILE_TEMP
 
 display_progress "Done"
 exit 0

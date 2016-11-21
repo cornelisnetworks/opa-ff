@@ -73,8 +73,8 @@ Usage_full()
 	echo "   List all the missing links in the fabric:" >&2
 	echo "      ${cmd}" >&2
 	echo >&2
-	echo "   List all the missing links to a switch named \"OmniPth00117501ffffffff\":" >&2
-	echo "      ${cmd} -T topology.0:0.xml -F \"node:OmniPth00117501ffffffff\"" >&2
+	echo "   List all the missing links to a switch named \"coresw1\":" >&2
+	echo "      ${cmd} -T topology.0:0.xml -F \"node:coresw1\"" >&2
 	echo >&2
 	echo "   List all the missing connections to end-nodes:" >&2
 	echo "      ${cmd} -o verifyfilinks" >&2

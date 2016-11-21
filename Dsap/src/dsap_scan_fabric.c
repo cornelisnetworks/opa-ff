@@ -28,6 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** END_ICS_COPYRIGHT4   ****************************************/
 
 #include <pthread.h>
+#include <signal.h>
+#include <unistd.h>
 
 /* work around conflicting names */
 #include <infiniband/mad.h>
@@ -887,6 +889,11 @@ void dsap_port_event(uint64 src_guid, uint64 src_subnet, uint64 dest_guid,
 	EventTrigger(&dsap_scanner_event);
 }
 
+static void kill_proc_handler(int signo){
+  if (signo == SIGTERM)
+	dsap_scanner_cleanup();
+}
+
 #define SCAN_DELAY 5
 
 static void * dsap_scanner(void* dummy)
@@ -902,6 +909,8 @@ static void * dsap_scanner(void* dummy)
 	uint64                 since_scan;
 
 	acm_log(2, "\n");
+	if(signal(SIGTERM, kill_proc_handler) == SIG_ERR)
+		acm_log(2, "Signal handler Init failed \n");
 
 	timeout_sec = 0;
 

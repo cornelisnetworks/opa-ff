@@ -1,0 +1,144 @@
+Patch to create a badtop.xml from a good top.xml
+top.xml is from a fabric_sim run of -n 50
+this simply adds a few missing objects
+--- /nfs/site/home/tmrimmer/top.xml	2016-10-16 15:19:28.468194576 -0400
++++ /nfs/site/home/tmrimmer/badtop.xml	2016-10-24 17:02:34.204054360 -0400
+@@ -3,11 +3,25 @@
+ <Nodes>
+     <FIs>
+         <ConnectedFICount>51</ConnectedFICount>
++        <Node id="0x0002b30101555555">
++            <NodeGUID>0x0002b30101555555</NodeGUID>
++            <NodeType>FI</NodeType>
++            <NodeType_Int>1</NodeType_Int>
++            <NodeDesc>MISSING_FI</NodeDesc>
++            <NodeDetails>MISSING_NODE</NodeDetails>
++        </Node>
++        <Node id="0x0002b30101666666">
++            <NodeGUID>0x0002b30101666666</NodeGUID>
++            <NodeType>FI</NodeType>
++            <NodeType_Int>1</NodeType_Int>
++            <NodeDesc>MISSING_FI2</NodeDesc>
++        </Node>
+         <Node id="0x0002b30101000000">
+             <NodeGUID>0x0002b30101000000</NodeGUID>
+             <NodeType>FI</NodeType>
+             <NodeType_Int>1</NodeType_Int>
+             <NodeDesc>SQUIRREL_STL_HFI0</NodeDesc>
++            <NodeDetails>Valid Node</NodeDetails>
+         </Node>
+         <Node id="0x0002b30101000001">
+             <NodeGUID>0x0002b30101000001</NodeGUID>
+@@ -312,6 +326,18 @@
+     </FIs>
+     <Switches>
+         <ConnectedSwitchCount>6</ConnectedSwitchCount>
++        <Node id="0x0002b30102555555">
++            <NodeGUID>0x0002b30102555555</NodeGUID>
++            <NodeType>SW</NodeType>
++            <NodeType_Int>2</NodeType_Int>
++            <NodeDesc>MISSING_SW</NodeDesc>
++        </Node>
++        <Node id="0x0002b30102666666">
++            <NodeGUID>0x0002b30102666666</NodeGUID>
++            <NodeType>SW</NodeType>
++            <NodeType_Int>2</NodeType_Int>
++            <NodeDesc>MISSING_SW2</NodeDesc>
++        </Node>
+         <Node id="0x0002b30102000000">
+             <NodeGUID>0x0002b30102000000</NodeGUID>
+             <NodeType>SW</NodeType>
+@@ -361,14 +387,85 @@
+             <NodeType>FI</NodeType>
+             <NodeType_Int>1</NodeType_Int>
+         </SM>
++        <SM id="0x0011750101555555:1">
++            <NodeGUID>0x0011750101555555</NodeGUID>
++            <NodeDesc>MISSING_FI</NodeDesc>
++            <PortNum>1</PortNum>
++            <PortGUID>0x0011750101555555</PortGUID>
++            <NodeType>FI</NodeType>
++            <NodeType_Int>1</NodeType_Int>
++            <SMDetails>MISSING</SMDetails>
++        </SM>
++        <SM id="0x0011750101666666:1">
++            <NodeGUID>0x0011750101666666</NodeGUID>
++            <NodeDesc>MISSING_FI2</NodeDesc>
++            <PortNum>1</PortNum>
++            <PortGUID>0x0011750101666666</PortGUID>
++            <NodeType>FI</NodeType>
++            <NodeType_Int>1</NodeType_Int>
++            <SMDetails>MISSING2</SMDetails>
++        </SM>
+     </SMs>
+ </Nodes>
+ <LinkSummary>
+     <LinkCount>147</LinkCount>
++    <Link id="0x0002b30101555555:1">
++        <Rate>25g</Rate>
++        <MTU>2048</MTU>
++        <Internal>0</Internal>
++        <Cable>
++            <CableLabel>MISSING_LABEL</CableLabel>
++            <CableDetails>MISSING_DETAILS</CableDetails>
++            <CableLength>MISSLEN</CableLength>
++        </Cable>
++        <LinkDetails>MISSING_LDETAILS</LinkDetails>
++        <Port id="0x0002b30101555555:1">
++            <NodeGUID>0x0002b30101555555</NodeGUID>
++            <PortGUID>0x0002b30101555555</PortGUID>
++            <PortNum>1</PortNum>
++            <NodeType>FI</NodeType>
++            <NodeType_Int>1</NodeType_Int>
++            <NodeDesc>MISSING_FI</NodeDesc>
++            <PortDetails>MISSING_PORT</PortDetails>
++        </Port>
++        <Port id="0x0002b30102555555:1">
++            <NodeGUID>0x0002b30102555555</NodeGUID>
++            <PortNum>1</PortNum>
++            <NodeType>SW</NodeType>
++            <NodeType_Int>2</NodeType_Int>
++            <NodeDesc>MISSING_SW</NodeDesc>
++        </Port>
++    </Link>
++    <Link id="0x0002b30101666666:1">
++        <Rate>100g</Rate>
++        <Rate_Int>16</Rate_Int>
++        <Internal>0</Internal>
++        <Port id="0x0002b30101666666:1">
++            <NodeGUID>0x0002b30101666666</NodeGUID>
++            <PortGUID>0x0002b30101666666</PortGUID>
++            <PortNum>1</PortNum>
++            <NodeType>FI</NodeType>
++            <NodeType_Int>1</NodeType_Int>
++            <NodeDesc>MISSING_FI2</NodeDesc>
++        </Port>
++        <Port id="0x0002b30102666666:1">
++            <NodeGUID>0x0002b30102666666</NodeGUID>
++            <PortNum>1</PortNum>
++            <NodeType>SW</NodeType>
++            <NodeType_Int>2</NodeType_Int>
++            <NodeDesc>MISSING_SW2</NodeDesc>
++        </Port>
++    </Link>
+     <Link id="0x0002b30101000000:1">
+         <Rate>100g</Rate>
+         <Rate_Int>16</Rate_Int>
+         <Internal>0</Internal>
++        <Cable>
++            <CableLabel>ValidLabel</CableLabel>
++            <CableDetails>ValidDetails</CableDetails>
++            <CableLength>ValidLen</CableLength>
++        </Cable>
++        <LinkDetails>ValidLink</LinkDetails>
+         <Port id="0x0002b30101000000:1">
+             <NodeGUID>0x0002b30101000000</NodeGUID>
+             <PortGUID>0x0002b30101000000</PortGUID>
+@@ -376,6 +473,7 @@
+             <NodeType>FI</NodeType>
+             <NodeType_Int>1</NodeType_Int>
+             <NodeDesc>SQUIRREL_STL_HFI0</NodeDesc>
++            <PortDetails>ValidPort</PortDetails>
+         </Port>
+         <Port id="0x0002b30102000000:48">
+             <NodeGUID>0x0002b30102000000</NodeGUID>

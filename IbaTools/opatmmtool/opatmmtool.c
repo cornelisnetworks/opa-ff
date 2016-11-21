@@ -346,7 +346,9 @@ static void Usage(int exitcode)
 //	fprintf(stderr, "    writeotp - write to the one-time programmable region, requires -f input_file\n");
 	fprintf(stderr, "    lockotp - lock the one-time programmable region\n");
 	fprintf(stderr, "    status - display the current GPIO pin status\n");
-	free(file_name);
+	if (gotFile) {
+		free(file_name);
+	}
 	exit(exitcode);
 }
 
@@ -377,8 +379,8 @@ int main(int argc, char *argv[])
 			file_name = strdup(optarg);
 			if(file_name == 0) {
 				fprintf(stderr, "opatmmtool: Process Out of Memory\n");
-				free(file_name);
-				exit(2);
+				status = FINSUFFICIENT_MEMORY;
+				goto err_exit;
 			}
 			gotFile = 1;
 			break;
@@ -420,7 +422,8 @@ int main(int argc, char *argv[])
 		char *i2cFile = (char *)malloc(I2C_FILE_SIZE);
 		if (!i2cFile) {
 			fprintf(stderr, "opatmmtool: No available memory\n");
-			return -1;
+			status = FINSUFFICIENT_MEMORY;
+			goto err_exit;
 		}
 		snprintf(i2cFile, I2C_FILE_SIZE, "%s%d%s", I2C_FILE_1, --hfi, I2C_FILE_2); // the actual number is offset by one, so 1st hfi -> 0, 2nd hfi -> 1
 		i2cFd = open(i2cFile, O_RDWR);
@@ -432,7 +435,8 @@ int main(int argc, char *argv[])
 		if (i2cFd < 0) {
 			fprintf(stderr, "opatmmtool: Unable to open driver interface: %s\n", strerror(errno));
 			free(i2cFile);
-			return -1;
+			status = -1;
+			goto err_exit;
 		}
 
 		if (verbose) printf("opatmmtool: Opened the driver interface\n");
@@ -462,7 +466,8 @@ int main(int argc, char *argv[])
 	status = getVersionFW(1, NULL);
 	if (status != FSUCCESS && errno == EIO) {
 		fprintf(stderr, "opatmmtool: Thermal Management Microchip sensor either not installed or not responding\n");
-		return 3;
+		status = 3;
+		goto err_exit;
 	}
 
 	// do the operation
@@ -568,11 +573,13 @@ int main(int argc, char *argv[])
 		ret = fstat(fileFd, &fileInfo);
 		if (ret != 0) {
 			fprintf(stderr, "opatmmtool: Unable to stat firmware file\n");
-			return FERROR;
+			status = FERROR;
+			goto err_exit;
 		}
 
 		if (fileInfo.st_size != OTP_SIZE) {
 			fprintf(stderr, "opatmmtool: Invalid input file for OTP write, must be 512 bytes\n");
+			status = FERROR;
 			goto err_exit;
 		}
 
@@ -616,10 +623,13 @@ err_exit:
 	if (i2cFd > 0) close(i2cFd);
 	if (fileFd > 0) close(fileFd);
 
-	free(file_name);
+	if (gotFile) {
+		free(file_name);
+	}
 
 	if (status == FSUCCESS)
 		exit(0);
 	else
 		exit(1);
+
 }

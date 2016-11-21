@@ -176,18 +176,27 @@ extern void ShowNodeBriefSummary(NodeData *nodep, Point *focus,
 extern void ShowTraceRecord(STL_TRACE_RECORD *pTraceRecord, Format_t format, int indent, int detail);
 
 // output brief summary of an expected IB Node
-extern void ShowExpectedNodeBriefSummary(ExpectedNode *enodep,
-				boolean close_node, Format_t format, int indent, int detail);
+extern void ShowExpectedNodeBriefSummary(
+				const char* prefix, ExpectedNode *enodep,
+				const char *xml_tag, boolean close_node, Format_t format,
+				int indent, int detail);
 
 extern void ShowVerifySMBriefSummary(SMData *smp,
 				boolean close_sm, Format_t format, int indent, int detail);
 
 extern void ShowVerifySMBriefSummaryHeadings(Format_t format, int indent, int detail);
 
-extern void ShowExpectedSMBriefSummary(ExpectedSM *esmp,
-				boolean close_sm, Format_t format, int indent, int detail);
+extern void ShowExpectedSMBriefSummary(const char* prefix, ExpectedSM *esmp,
+				const char *xml_tag, boolean close_sm, Format_t format,
+				int indent, int detail);
 
-extern void ShowPointFocus(Point* focus, Format_t format, int indent, int detail);
+typedef void ExpectedLinkSummaryDetailCallback_t(ExpectedLink *elinkp, uint8 side, Format_t format, int indent, int detail);
+extern void ShowExpectedLinkPortSelBriefSummary(const char* prefix,
+			ExpectedLink *elinkp, PortSelector *portselp,
+			uint8 side, ExpectedLinkSummaryDetailCallback_t *callback,
+			Format_t format, int indent, int detail);
+
+extern void ShowPointFocus(Point* focus, uint8 find_flag, Format_t format, int indent, int detail);
 
 // Verify ports in fabric against specified topology
 extern void ShowVerifyLinksReport(Point *focus, report_t report, Format_t format, int indent, int detail);

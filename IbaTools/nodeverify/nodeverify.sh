@@ -667,7 +667,7 @@ function pstates_enabled()
 	date
 
 	set -x
-	driver=$(cpupower -c 0 frequency-info -d | tail -1)
+	driver=`head -n 1 /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver`
 	set +x
 
 	return $([ "${driver}" = "intel_pstate" ])
@@ -761,8 +761,7 @@ test_governor()
 	date
 	
 	set -x
-	result=$(cpupower -c 0 frequency-info -p | tail -1)
-	gov=$(echo ${result} | cut -f 3 -d ' ')
+	gov=`head -n 1 /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
 	if [ "${gov}" != ${CPU_GOVERNOR} ]
 	then
 		fail "cpupower governor is set to ${gov}. Should be ${CPU_GOVERNOR}."

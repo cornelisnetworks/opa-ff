@@ -49,17 +49,17 @@ for more information.
 .TP 10
 pkey\(ulenv\(ulvar\(ulname 
 .NL
-Specifies the environment variable to fill in with pkey for the selected virtual fabric. The variable given will be exported with the hex numeric value for the pkey.If a variable name of "" is provided, pkey is not saved.
+Specifies the environment variable to fill in with pkey for the selected virtual fabric. The variable given will be exported with the hex numeric value for the pkey. If a variable name of "" is provided, pkey is not saved.
 
 .TP 10
 sl\(ulenv\(ulvar\(ulname 
 .NL
-Specifies the environment variable to fill in with service level (sl) for the selected virtual fabric. The variable given will be exported with the numeric value for the sl.If a variable name of "" is provided, sl is not saved.
+Specifies the environment variable to fill in with service level (sl) for the selected virtual fabric. The variable given will be exported with the numeric value for the sl. If a variable name of "" is provided, sl is not saved.
 
 .TP 10
 mtu\(ulenv\(ulvar\(ulname 
 .NL
-Specifies the environment variable to fill in with maximum MTU for the selected virtual fabric. The variable given will be exported with the value for the MTU.If a variable name of "" is provided, MTU is not saved.
+Specifies the environment variable to fill in with maximum MTU for the selected virtual fabric. The variable given will be exported with the value for the MTU. If a variable name of "" is provided, MTU is not saved.
 
 .IP
 For opagetvf\(ulfunc, MTU is returned as an absolute value of 2048, 4096, 8192 or 10240.
@@ -100,4 +100,5 @@ rate:$RATE"
 .PP
 
 .B NOTE:
-Additional examples may be found in /usr/lib/opa/src/  mpi\(ulapps/openmpi.params and /usr/lib/opa/src/mpi\(ulapps/mvapich2.params. Those scripts use opagetvf\(ulfunc and opagetvf2\(ulfunc to get virtual fabric parameters and then pass them into openmpi and mvapich2, respectively.
+Additional examples may be found in /usr/lib/opa/src/mpi\(ulapps/openmpi.params and /usr/lib/opa/src/mpi\(ulapps/mvapich2.params. Those scripts use opagetvf\(ulfunc and opagetvf2\(ulfunc to get virtual fabric parameters and then pass them into openmpi and mvapich2, respectively.
+

@@ -267,8 +267,8 @@ void XmlPrintTagFooter(const char *tag, int indent)
 void XMLPrintGroupRecord (McMemberData *pMcMemberRecord, int indent, int detail)
 {
 	char buf[8];
-	XmlPrintGID("MGID",pMcMemberRecord->MGID,indent+8);
-	XmlPrintLID("MLID",pMcMemberRecord->MLID, indent+8);
+	XmlPrintGID("MGID",pMcMemberRecord->MemberInfo.RID.MGID,indent+8);
+	XmlPrintLID("MLID",pMcMemberRecord->MemberInfo.MLID, indent+8);
 	XmlPrintPKey("P_Key", pMcMemberRecord->MemberInfo.P_Key, indent+8);
 	XmlPrintDec("Mtu", GetBytesFromMtu(pMcMemberRecord->MemberInfo.Mtu), indent+8);
 	XmlPrintRate(pMcMemberRecord->MemberInfo.Rate,indent+8);
@@ -277,7 +277,7 @@ void XMLPrintGroupRecord (McMemberData *pMcMemberRecord, int indent, int detail)
 	XmlPrintHex16("PktLifeTime_Int", pMcMemberRecord->MemberInfo.PktLifeTime, indent+8);
 	XmlPrintHex32("Q_Key", pMcMemberRecord->MemberInfo.Q_Key, indent+8);
 	XmlPrintDec("SL", pMcMemberRecord->MemberInfo.u1.s.SL, indent+8);
-	XmlPrintHex8("HopLimit", pMcMemberRecord->MemberInfo.u1.s.HopLimit, indent+8);
+	XmlPrintHex("HopLimit", pMcMemberRecord->MemberInfo.u1.s.HopLimit, indent+8);
 	XmlPrintHex("FlowLabel", pMcMemberRecord->MemberInfo.u1.s.FlowLabel, indent+8);
 	XmlPrintHex8("TClass", pMcMemberRecord->MemberInfo.TClass, indent+8);
 
@@ -293,23 +293,24 @@ void DisplayGroupRecord(McMemberData *pMcMemberRecord, int indent, int detail)
 {
 	char buf[8];
 	printf("%*sMGID: 0x%016"PRIx64":0x%016"PRIx64"\n",
-				indent, "",
-				pMcMemberRecord->MGID.AsReg64s.H,
-				pMcMemberRecord->MGID.AsReg64s.L);
+			indent, "",
+			pMcMemberRecord->MemberInfo.RID.MGID.AsReg64s.H,
+			pMcMemberRecord->MemberInfo.RID.MGID.AsReg64s.L);
 	FormatTimeoutMult(buf, pMcMemberRecord->MemberInfo.PktLifeTime);
 	printf("%*sMLID: 0x%04x PKey: 0x%04x Mtu: %5s Rate: %4s PktLifeTime: %s\n",
-				indent, "",
-				pMcMemberRecord->MLID,
-				pMcMemberRecord->MemberInfo.P_Key,
-				IbMTUToText(pMcMemberRecord->MemberInfo.Mtu),
-				StlStaticRateToText(pMcMemberRecord->MemberInfo.Rate), 
-				buf);
+			indent, "",
+			pMcMemberRecord->MemberInfo.MLID,
+			pMcMemberRecord->MemberInfo.P_Key,
+			IbMTUToText(pMcMemberRecord->MemberInfo.Mtu),
+			StlStaticRateToText(pMcMemberRecord->MemberInfo.Rate),
+			buf);
 	printf("%*sQKey: 0x%08x SL: %2d FlowLabel: 0x%05x  HopLimit: 0x%02x  TClass:  0x%02x\n",
-				indent, "",
-				pMcMemberRecord->MemberInfo.Q_Key,
-				pMcMemberRecord->MemberInfo.u1.s.SL,
-				pMcMemberRecord->MemberInfo.u1.s.FlowLabel, pMcMemberRecord->MemberInfo.u1.s.HopLimit,
-				pMcMemberRecord->MemberInfo.TClass);
+			indent, "",
+			pMcMemberRecord->MemberInfo.Q_Key,
+			pMcMemberRecord->MemberInfo.u1.s.SL,
+			pMcMemberRecord->MemberInfo.u1.s.FlowLabel,
+			pMcMemberRecord->MemberInfo.u1.s.HopLimit,
+			pMcMemberRecord->MemberInfo.TClass);
 }
 
 void ShowPathRecord(IB_PATH_RECORD *pPathRecord, Format_t format,
@@ -494,46 +495,42 @@ void ShowCableSummary(uint8_t *pCableData, Format_t format, int indent, int deta
 				//line3
 				memset(tempBuf, ' ', sizeof(tempBuf));
                         	i = 6;
-                        	strcpy(&tempBuf[i], "OPA Cert? ");
-                        	i = 16;
-                        	tempBuf[i] = (IsStlCableInfoCableCertified(pCableInfo->opa_cert_cable) ? 'Y' : 'N');
-                        	i = 19;
-                        	strcpy(&tempBuf[i], "OPA Rates: ");
-                        	i = 30;
-                        	strcpy(&tempBuf[i], StlCableInfoOpaCertifiedRateToText(pCableInfo->opa_cert_data_rate));
-                        	tempBuf[i + strlen(&tempBuf[i])] = ' ';
-                        	i = 56;
-                        	sprintf(&tempBuf[i], "OUI 0x%02X%02X%02X", pCableInfo->vendor_oui[0], pCableInfo->vendor_oui[1], pCableInfo->vendor_oui[2]);
-                        	printf("%*s%s\n", indent, "", tempBuf);
+                           	sprintf(&tempBuf[i], "OUI 0x%02X%02X%02X", pCableInfo->vendor_oui[0], pCableInfo->vendor_oui[1], pCableInfo->vendor_oui[2]);
+                           	printf("%*s%s\n", indent, "", tempBuf);
                         	if (detail == 2)
                         	        break;
 
 	                        if (cableLenValid) {
 	                                StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
-	                                printf("%*sCable Type: %s\n", indent+4, "", tempBuf);
+	                                printf("%*sCable Type: %s\n", indent+6, "", tempBuf);
 	                        } else {
 	                                StlCableInfoCableTypeToTextLong(pCableInfo->dev_tech.s.xmit_tech, pCableInfo->connector, tempBuf);
-	                                printf("%*sModule Type: %s\n", indent+4, "", tempBuf);
-					StlCableInfoOM4LengthToText(pCableInfo->len_om4, cableLenValid, sizeof(tempBuf), tempBuf);
+	                                printf("%*sModule Type: %s\n", indent+6, "", tempBuf);
+	                                StlCableInfoOM4LengthToText(pCableInfo->len_om4, cableLenValid, sizeof(tempBuf), tempBuf);
 	                                printf("%*sLength Cap: OM2: %um OM3: %um OM4: %s\n", indent+4, "",
 	                                        StlCableInfoOM2Length(pCableInfo->len_om2), StlCableInfoOM3Length(pCableInfo->len_om3),
 	                                        tempBuf);
 	                        }
+	                        memset(tempBuf, ' ', sizeof(tempBuf));
 	                        if (activeCable) {
 	                                StlCableInfoBitRateToText(pCableInfo->bit_rate_low, pCableInfo->bit_rate_high, tempBuf);
-	                                printf("%*sMax Temp: %u C Speed Sup: %s\n", indent+4, "", pCableInfo->max_case_temp, tempBuf);
-	                        } else {
-	                                printf("%*sMax Temp: %u C\n", indent+4, "", pCableInfo->max_case_temp);
+	                                printf("%*sSpeed Sup: %s\n", indent+6, "", tempBuf);
 	                        }
 	                        if (detail == 3)
 	                                break;
+
+	                        if (pCableInfo->max_case_temp == 0)
+	                        	printf("%*sSupported Max Temp: not indicated\n", indent+6, "");
+	                        else
+	                        	printf("%*sSupported Max Temp: %u C\n", indent+6, "", pCableInfo->max_case_temp);
+
 				printf("%*sTX SI: CDR: %s EQ: Fixed Cap: %s Auto Cap: %s Squelch En: %s\n",
-					indent+4, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.tx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl),
+					indent+6, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.tx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.tx_cdr_ctrl),
 					pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "Y" : "N",
 					pCableInfo->rxtx_opt_equemp.s.tx_inpeq_autadp_cap ? "Y" : "N",
 					pCableInfo->rxtx_opt_cdrsquel.s.tx_squel ? "Y" : "N");
 				printf("%*sRX SI: CDR: %s Emph Cap: %s Ampl Cap: %s\n",
-					indent+4, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.rx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl),
+					indent+6, "", StlCableInfoCDRToText(pCableInfo->ext_ident.s.rx_cdr_supp, pCableInfo->rxtx_opt_cdrsquel.s.rx_cdr_ctrl),
 					pCableInfo->rxtx_opt_equemp.s.rx_outemp_fixpro_cap ? "Y" : "N",
 					pCableInfo->rxtx_opt_equemp.s.rx_outamp_fixpro_cap ? "Y" : "N");
 				break;
@@ -564,7 +561,10 @@ void ShowCableSummary(uint8_t *pCableData, Format_t format, int indent, int deta
 				memcpy(tempStr, pCableInfo->vendor_rev, sizeof(pCableInfo->vendor_rev));
 				tempStr[sizeof(pCableInfo->vendor_rev)] = '\0';
 				printf("%*sVendorRev: %s\n", indent+4, "", tempStr);
-				printf("%*sMaxCaseTemp: %u C\n", indent+4, "", pCableInfo->max_case_temp);
+				if (pCableInfo->max_case_temp == 0)
+					printf("%*sMaxCaseTemp: Not indicated\n", indent+4, "");
+				else
+					printf("%*sMaxCaseTemp: %u C\n", indent+4, "", pCableInfo->max_case_temp);
 				printf("%*sCC_BASE: 0x%x\n", indent+4, "", pCableInfo->cc_base);
 				printf("%*sTxInpEqAutoAdp: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_autadp_cap ? "True" : "False");
 				printf("%*sTxInpEqFixProg: %s\n", indent+4, "", pCableInfo->rxtx_opt_equemp.s.tx_inpeq_fixpro_cap ? "True" : "False");
@@ -1469,7 +1469,6 @@ void ShowPointNodeBriefSummary(const char* prefix, NodeData *nodep, Format_t for
 	case FORMAT_XML:
 		printf("%*s<Node id=\"0x%016"PRIx64"\">\n", indent, "",
 					nodep->NodeInfo.NodeGUID);
-		/*TBD prefix,*/
 		XmlPrintHex64("NodeGUID", nodep->NodeInfo.NodeGUID,
 						indent+4);
 		XmlPrintNodeType(nodep->NodeInfo.NodeType, indent+4);
@@ -1504,12 +1503,11 @@ void ShowPointPortBriefSummary(const char* prefix, PortData *portp, Format_t for
 	case FORMAT_XML:
 		printf("%*s<Port id=\"0x%016"PRIx64":%u\">\n", indent, "",
 				portp->nodep->NodeInfo.NodeGUID, portp->PortNum);
-		// TBD prefix,
 		XmlPrintDec("PortNum", portp->PortNum, indent+4);
 		if (portp->PortGUID)
 			XmlPrintHex64("PortGUID", portp->PortGUID, indent+4);
 		ShowPointNodeBriefSummary("in Node: ", portp->nodep, format,
-								indent+8, detail);
+								indent+4, detail);
 		printf("%*s</Port>\n", indent, "");
 		break;
 	default:
@@ -1517,188 +1515,418 @@ void ShowPointPortBriefSummary(const char* prefix, PortData *portp, Format_t for
 	}
 }
 
-void ShowPointBriefSummary(Point* point, Format_t format, int indent, int detail)
+// show 1 port selector in link data in brief form
+// designed to be called for side 1 then side 2
+void ShowExpectedLinkPortSelBriefSummary(const char* prefix,
+			ExpectedLink *elinkp, PortSelector *portselp,
+			uint8 side, ExpectedLinkSummaryDetailCallback_t *callback,
+			Format_t format, int indent, int detail)
 {
-	switch (point->Type) {
-	case POINT_TYPE_PORT:
-		ShowPointPortBriefSummary("Port: ", point->u.portp, format, indent, detail);
-		break;
-	case POINT_TYPE_PORT_LIST:
+	DEBUG_ASSERT(side == 1 || side == 2);
+	switch (format) {
+	case FORMAT_TEXT:
 		{
-		LIST_ITERATOR i;
-		DLIST *pList = &point->u.portList;
+		int prefix_len = strlen(prefix);
+		if (side == 1) {
+			printf("%*s%s%4s ", indent, "", prefix,
+					elinkp->expected_rate?
+						StlStaticRateToText(elinkp->expected_rate)
+						:"    ");
+		} else {
+			printf("%*s%*s%4s ", indent, "", prefix_len, "",
+					"<-> ");
+		}
+		if (side == 1 && elinkp->expected_mtu)
+			printf("%5s ",
+				IbMTUToText(elinkp->expected_mtu));
+		else
+			printf("      ");
+		if (portselp) {
+			if (portselp->NodeGUID)
+				printf("0x%016"PRIx64, portselp->NodeGUID);
+			else
+				printf("                  ");
+			if (portselp->gotPortNum)
+				printf(" %3u               ",portselp->PortNum);
+			else if (portselp->PortGUID)
+				printf(" 0x%016"PRIx64, portselp->PortGUID);
+			else
+				printf("                   ");
+			if (portselp->NodeType)
+				printf(" %s",
+					StlNodeTypeToText(portselp->NodeType));
+			else
+				printf("   ");
+			if (portselp->NodeDesc)
+				printf(" %.*s\n",
+					NODE_DESCRIPTION_ARRAY_SIZE, g_noname?g_name_marker:portselp->NodeDesc);
+			else
+				printf("\n");
+			if (detail) {
+				if (portselp->details) {
+					// TBD should g_noname suppress some of this?
+					printf("%*sPortDetails: %s\n", indent+4+prefix_len, "", portselp->details);
+				}
+			}
+		}
+		}
+		break;
+	case FORMAT_XML:
+		// MTU is output as part of LinkFrom directly in <Link> tag
+		if (portselp) {
+			printf("%*s<Port id=\"%u\">\n", indent, "", side);
+			if (portselp->NodeGUID)
+				XmlPrintHex64("NodeGUID", portselp->NodeGUID, indent+4);
+			if (portselp->gotPortNum)
+				XmlPrintDec("PortNum", portselp->PortNum, indent+4);
+			if (portselp->PortGUID)
+				XmlPrintHex64("PortGUID", portselp->PortGUID, indent+4);
+			if (portselp->NodeType)
+				XmlPrintNodeType(portselp->NodeType, indent+4);
+			if (portselp->NodeDesc)
+				XmlPrintNodeDesc(portselp->NodeDesc, indent+4);
+			if (detail) {
+				if (portselp->details) {
+					// TBD should g_noname suppress some of this?
+					XmlPrintOptionalStr("PortDetails", portselp->details, indent+4);
+				}
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	if (callback && detail)
+		(*callback)(elinkp, side, format, indent+4, detail-1);
+	if (format == FORMAT_XML)
+		printf("%*s</Port>\n", indent, "");
+}
 
-		switch (format) {
-		case FORMAT_TEXT:
-			printf("%*s%u Ports:\n",
-					indent, "",
-					ListCount(pList));
-			break;
-		case FORMAT_XML:
-			printf("%*s<Ports>\n", indent, "");
-			XmlPrintDec("Count", ListCount(pList), indent+4);
-			break;
-		default:
-			break;
-		}
-		for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
-			PortData *portp = (PortData*)ListObj(i);
-			ShowPointPortBriefSummary("", portp, format, indent+4, detail);
-		}
-		if (format == FORMAT_XML) {
-			printf("%*s</Ports>\n",
-					indent, "");
-		}
-		break;
-		}
-	case POINT_TYPE_NODE:
-		ShowPointNodeBriefSummary("Node: ", point->u.nodep, format, indent, detail);
-		break;
-	case POINT_TYPE_NODE_LIST:
-		{
-		LIST_ITERATOR i;
-		DLIST *pList = &point->u.nodeList;
+void ShowPointExpectedLinkBriefSummary(const char* prefix, ExpectedLink *elinkp, Format_t format, int indent, int detail)
+{
+	// top level information about link
+	if (format == FORMAT_XML) {
+		printf("%*s<InputLink id=\"0x%016"PRIx64"\">\n", indent, "", (uint64)(uintn)elinkp);
+		indent+=4;
+		if (elinkp->expected_rate)
+	 		XmlPrintRate(elinkp->expected_rate, indent);
+		if (elinkp->expected_mtu)
+			XmlPrintDec("MTU",
+				GetBytesFromMtu(elinkp->expected_mtu), indent);
+		XmlPrintDec("Internal", elinkp->internal, indent);
+		if (detail)
+			ShowExpectedLinkBriefSummary(elinkp, format, indent+4, detail-1);
+	}
 
-		switch (format) {
-		case FORMAT_TEXT:
-			printf("%*s%u Nodes:\n",
-					indent, "",
-					ListCount(pList));
-			break;
-		case FORMAT_XML:
-			printf("%*s<Nodes>\n", indent, "");
-			XmlPrintDec("Count", ListCount(pList), indent+4);
-			break;
-		default:
-			break;
-		}
-		for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
-			NodeData *nodep = (NodeData*)ListObj(i);
-			ShowPointNodeBriefSummary("", nodep, format, indent+4, detail);
-		}
-		if (format == FORMAT_XML) {
-			printf("%*s</Nodes>\n", indent, "");
-		}
-		break;
-		}
-	case POINT_TYPE_IOC:
-	// TBD extract this and list code into common function
-		switch (format) {
-		case FORMAT_TEXT:
-			printf("%*sIoc: %3u 0x%016"PRIx64" %.*s\n",
-				indent, "",
-				point->u.iocp->IocSlot,
-				point->u.iocp->IocProfile.IocGUID,
-				IOC_IDSTRING_SIZE,
-				g_noname?g_name_marker:(char*)point->u.iocp->IocProfile.IDString);
-			break;
-		case FORMAT_XML:
-			printf("%*s<Ioc id=\"0x%016"PRIx64"\">\n", indent, "",
-						point->u.iocp->IocProfile.IocGUID);
-			XmlPrintDec("Slot", point->u.iocp->IocSlot, indent+4);
-			XmlPrintHex64("IocGUID", point->u.iocp->IocProfile.IocGUID, indent+4);
-			XmlPrintIocIDString(
-					(char*)point->u.iocp->IocProfile.IDString, indent+4);
-			printf("%*s</Ioc>\n", indent, "");
-			break;
-		default:
-			break;
-		}
-		ShowPointNodeBriefSummary("in Node: ", point->u.iocp->ioup->nodep,
-									format, indent+4, detail);
-		break;
-	case POINT_TYPE_IOC_LIST:
-		{
-		LIST_ITERATOR i;
-		DLIST *pList = &point->u.iocList;
+	// From Side (Port 1)
+	ShowExpectedLinkPortSelBriefSummary(prefix, elinkp, elinkp->portselp1,
+					1, NULL, format, indent, detail);
 
-		switch (format) {
-		case FORMAT_TEXT:
-			printf("%*s%u IOCs:\n",
-					indent, "",
-					ListCount(pList));
+	// To Side (Port 2)
+	ShowExpectedLinkPortSelBriefSummary(prefix, elinkp, elinkp->portselp2,
+					2, NULL, format, indent, detail);
+
+	// Summary information about Link itself
+	if (detail && format != FORMAT_XML)
+		ShowExpectedLinkBriefSummary(elinkp, format, indent+4, detail-1);
+	if (format == FORMAT_XML)
+		printf("%*s</InputLink>\n", indent-4, "");
+}
+
+void ShowPointBriefSummary(Point* point, uint8 find_flag, Format_t format, int indent, int detail)
+{
+	ASSERT(PointValid(point));
+	if (find_flag & FIND_FLAG_FABRIC) {
+		switch (point->Type) {
+		case POINT_TYPE_NONE:
 			break;
-		case FORMAT_XML:
-			printf("%*s<IOCs>\n", indent, "");
-			XmlPrintDec("Count", ListCount(pList), indent+4);
+		case POINT_TYPE_PORT:
+			ShowPointPortBriefSummary("Port: ", point->u.portp, format, indent, detail);
 			break;
-		default:
-			break;
-		}
-		for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
-			IocData *iocp = (IocData*)ListObj(i);
+		case POINT_TYPE_PORT_LIST:
+			{
+			LIST_ITERATOR i;
+			DLIST *pList = &point->u.portList;
+
 			switch (format) {
 			case FORMAT_TEXT:
-				printf("%*sIoc: %3u 0x%016"PRIx64" %.*s\n",
-					indent+4, "",
-					iocp->IocSlot,
-					iocp->IocProfile.IocGUID,
-					IOC_IDSTRING_SIZE,
-					g_noname?g_name_marker:(char*)iocp->IocProfile.IDString);
+				printf("%*s%u Ports:\n",
+						indent, "",
+						ListCount(pList));
 				break;
 			case FORMAT_XML:
-				printf("%*s<Ioc id=\"0x%016"PRIx64"\">\n", indent, "",
-						iocp->IocProfile.IocGUID);
-				XmlPrintDec("Slot", iocp->IocSlot, indent+8);
-				XmlPrintHex64("IocGUID", iocp->IocProfile.IocGUID, indent+8);
-				XmlPrintIocIDString(
-					(char*)iocp->IocProfile.IDString, indent+8);
+				printf("%*s<Ports>\n", indent, "");
+				XmlPrintDec("Count", ListCount(pList), indent+4);
 				break;
 			default:
 				break;
 			}
-			ShowPointNodeBriefSummary("in Node: ", iocp->ioup->nodep,
-									format, indent+8, detail);
+			for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
+				PortData *portp = (PortData*)ListObj(i);
+				ShowPointPortBriefSummary("", portp, format, indent+4, detail);
+			}
 			if (format == FORMAT_XML) {
-				printf("%*s</Ioc>\n", indent+4, "");
+				printf("%*s</Ports>\n",
+						indent, "");
+			}
+			break;
+			}
+		case POINT_TYPE_NODE:
+			ShowPointNodeBriefSummary("Node: ", point->u.nodep, format, indent, detail);
+			break;
+		case POINT_TYPE_NODE_LIST:
+			{
+			LIST_ITERATOR i;
+			DLIST *pList = &point->u.nodeList;
+
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*s%u Nodes:\n",
+						indent, "",
+						ListCount(pList));
+				break;
+			case FORMAT_XML:
+				printf("%*s<Nodes>\n", indent, "");
+				XmlPrintDec("Count", ListCount(pList), indent+4);
+				break;
+			default:
+				break;
+			}
+			for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
+				NodeData *nodep = (NodeData*)ListObj(i);
+				ShowPointNodeBriefSummary("", nodep, format, indent+4, detail);
+			}
+			if (format == FORMAT_XML) {
+				printf("%*s</Nodes>\n", indent, "");
+			}
+			break;
+			}
+		case POINT_TYPE_IOC:
+		// TBD extract this and list code into common function
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*sIoc: %3u 0x%016"PRIx64" %.*s\n",
+					indent, "",
+					point->u.iocp->IocSlot,
+					point->u.iocp->IocProfile.IocGUID,
+					IOC_IDSTRING_SIZE,
+					g_noname?g_name_marker:(char*)point->u.iocp->IocProfile.IDString);
+				break;
+			case FORMAT_XML:
+				printf("%*s<Ioc id=\"0x%016"PRIx64"\">\n", indent, "",
+							point->u.iocp->IocProfile.IocGUID);
+				XmlPrintDec("Slot", point->u.iocp->IocSlot, indent+4);
+				XmlPrintHex64("IocGUID", point->u.iocp->IocProfile.IocGUID, indent+4);
+				XmlPrintIocIDString(
+						(char*)point->u.iocp->IocProfile.IDString, indent+4);
+				break;
+			default:
+				break;
+			}
+			ShowPointNodeBriefSummary("in Node: ", point->u.iocp->ioup->nodep,
+										format, indent+4, detail);
+			if (format == FORMAT_XML) {
+				printf("%*s</Ioc>\n", indent, "");
+			}
+			break;
+		case POINT_TYPE_IOC_LIST:
+			{
+			LIST_ITERATOR i;
+			DLIST *pList = &point->u.iocList;
+
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*s%u IOCs:\n",
+						indent, "",
+						ListCount(pList));
+				break;
+			case FORMAT_XML:
+				printf("%*s<IOCs>\n", indent, "");
+				XmlPrintDec("Count", ListCount(pList), indent+4);
+				break;
+			default:
+				break;
+			}
+			for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
+				IocData *iocp = (IocData*)ListObj(i);
+				switch (format) {
+				case FORMAT_TEXT:
+					printf("%*s%3u 0x%016"PRIx64" %.*s\n",
+						indent+4, "",
+						iocp->IocSlot,
+						iocp->IocProfile.IocGUID,
+						IOC_IDSTRING_SIZE,
+						g_noname?g_name_marker:(char*)iocp->IocProfile.IDString);
+					break;
+				case FORMAT_XML:
+					printf("%*s<Ioc id=\"0x%016"PRIx64"\">\n", indent+4, "",
+							iocp->IocProfile.IocGUID);
+					XmlPrintDec("Slot", iocp->IocSlot, indent+8);
+					XmlPrintHex64("IocGUID", iocp->IocProfile.IocGUID, indent+8);
+					XmlPrintIocIDString(
+						(char*)iocp->IocProfile.IDString, indent+8);
+					break;
+				default:
+					break;
+				}
+				ShowPointNodeBriefSummary("in Node: ", iocp->ioup->nodep,
+										format, indent+8, detail);
+				if (format == FORMAT_XML) {
+					printf("%*s</Ioc>\n", indent+4, "");
+				}
+			}
+			if (format == FORMAT_XML) {
+				printf("%*s</IOCs>\n",
+						indent, "");
+			}
+			break;
+			}
+		case POINT_TYPE_SYSTEM:
+			{
+			SystemData *systemp = point->u.systemp;
+			cl_map_item_t *p;
+
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*sSystem: 0x%016"PRIx64"\n",
+					indent, "",
+					systemp->SystemImageGUID);
+				break;
+			case FORMAT_XML:
+				printf("%*s<System id=\"0x%016"PRIx64"\">\n", indent, "",
+						systemp->SystemImageGUID?systemp->SystemImageGUID:
+						PARENT_STRUCT(cl_qmap_head(&systemp->Nodes), NodeData, SystemNodesEntry)->NodeInfo.NodeGUID);
+				XmlPrintHex64("SystemImageGUID", systemp->SystemImageGUID, indent+4);
+				break;
+			default:
+				break;
+			}
+			for (p=cl_qmap_head(&systemp->Nodes); p != cl_qmap_end(&systemp->Nodes); p = cl_qmap_next(p)) {
+				NodeData *nodep = PARENT_STRUCT(p, NodeData, SystemNodesEntry);
+				ShowPointNodeBriefSummary("Node: ", nodep, format, indent+4, detail);
+			}
+			if (format == FORMAT_XML) {
+				printf("%*s</System>\n", indent, "");
+			}
+			break;
 			}
 		}
-		if (format == FORMAT_XML) {
-			printf("%*s</IOCs>\n",
-					indent, "");
-		}
-		break;
-		}
-	case POINT_TYPE_SYSTEM:
-		{
-		SystemData *systemp = point->u.systemp;
-		cl_map_item_t *p;
+	}
+	if (find_flag & FIND_FLAG_ENODE) {
+		switch (point->EnodeType) {
+		case POINT_ENODE_TYPE_NONE:
+			break;
+		case POINT_ENODE_TYPE_NODE:
+			ShowExpectedNodeBriefSummary("Input Node: ", point->u2.enodep, "InputNode", TRUE, format, indent, detail);
+			break;
+		case POINT_ENODE_TYPE_NODE_LIST:
+			{
+			LIST_ITERATOR i;
+			DLIST *pList = &point->u2.enodeList;
 
-		switch (format) {
-		case FORMAT_TEXT:
-			printf("%*sSystem: 0x%016"PRIx64"\n",
-				indent, "",
-				systemp->SystemImageGUID);
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*s%u Input Nodes:\n",
+						indent, "",
+						ListCount(pList));
+				break;
+			case FORMAT_XML:
+				printf("%*s<InputNodes>\n", indent, "");
+				XmlPrintDec("Count", ListCount(pList), indent+4);
+				break;
+			default:
+				break;
+			}
+			for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
+				ExpectedNode *enodep = (ExpectedNode*)ListObj(i);
+				ShowExpectedNodeBriefSummary("", enodep, "InputNode", TRUE, format, indent+4, detail);
+			}
+			if (format == FORMAT_XML) {
+				printf("%*s</InputNodes>\n", indent, "");
+			}
 			break;
-		case FORMAT_XML:
-			printf("%*s<System id=\"0x%016"PRIx64"\">\n", indent, "",
-					systemp->SystemImageGUID?systemp->SystemImageGUID:
-					PARENT_STRUCT(cl_qmap_head(&systemp->Nodes), NodeData, SystemNodesEntry)->NodeInfo.NodeGUID);
-			XmlPrintHex64("SystemImageGUID", systemp->SystemImageGUID, indent+4);
+			}
+		}
+	}
+	if (find_flag & FIND_FLAG_ESM) {
+		switch (point->EsmType) {
+		case POINT_ESM_TYPE_NONE:
 			break;
-		default:
+		case POINT_ESM_TYPE_SM:
+			ShowExpectedSMBriefSummary("Input SM: ", point->u3.esmp, "InputSM", TRUE, format, indent, detail);
 			break;
+		case POINT_ESM_TYPE_SM_LIST:
+			{
+			LIST_ITERATOR i;
+			DLIST *pList = &point->u3.esmList;
+
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*s%u Input SMs:\n",
+						indent, "",
+						ListCount(pList));
+				break;
+			case FORMAT_XML:
+				printf("%*s<InputSMs>\n", indent, "");
+				XmlPrintDec("Count", ListCount(pList), indent+4);
+				break;
+			default:
+				break;
+			}
+			for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
+				ExpectedSM *esmp = (ExpectedSM*)ListObj(i);
+				ShowExpectedSMBriefSummary("", esmp, "InputSM", TRUE, format, indent+4, detail);
+			}
+			if (format == FORMAT_XML) {
+				printf("%*s</InputSMs>\n", indent, "");
+			}
+			break;
+			}
 		}
-		for (p=cl_qmap_head(&systemp->Nodes); p != cl_qmap_end(&systemp->Nodes); p = cl_qmap_next(p)) {
-			NodeData *nodep = PARENT_STRUCT(p, NodeData, SystemNodesEntry);
-			ShowPointNodeBriefSummary("Node: ", nodep, format, indent+4, detail);
+	}
+	if (find_flag & FIND_FLAG_ELINK) {
+		switch (point->ElinkType) {
+		case POINT_ELINK_TYPE_NONE:
+			break;
+		case POINT_ELINK_TYPE_LINK:
+			ShowPointExpectedLinkBriefSummary("Input Link: ", point->u4.elinkp, format, indent, detail);
+			break;
+		case POINT_ELINK_TYPE_LINK_LIST:
+			{
+			LIST_ITERATOR i;
+			DLIST *pList = &point->u4.elinkList;
+
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*s%u Input Links:\n",
+						indent, "",
+						ListCount(pList));
+				break;
+			case FORMAT_XML:
+				printf("%*s<InputLinks>\n", indent, "");
+				XmlPrintDec("Count", ListCount(pList), indent+4);
+				break;
+			default:
+				break;
+			}
+			for (i=ListHead(pList); i != NULL; i = ListNext(pList, i)) {
+				ExpectedLink *elinkp = (ExpectedLink*)ListObj(i);
+				ShowPointExpectedLinkBriefSummary("", elinkp, format, indent+4, detail);
+			}
+			if (format == FORMAT_XML) {
+				printf("%*s</InputLinks>\n", indent, "");
+			}
+			break;
+			}
 		}
-		if (format == FORMAT_XML) {
-			printf("%*s</System>\n", indent, "");
-		}
-		break;
-		}
-	default:
-		ASSERT(0);
-		break;
 	}
 }
 
-void ShowPointFocus(Point* focus, Format_t format, int indent, int detail)
+void ShowPointFocus(Point* focus, uint8 find_flag, Format_t format, int indent, int detail)
 {
 	if (! focus || g_quietfocus)
 		return;
-	if (focus->Type != POINT_TYPE_NONE) {
+	if (PointValid(focus)) {
 		switch (format) {
 		case FORMAT_TEXT:
 			printf("%*sFocused on:\n", indent, "");
@@ -1709,7 +1937,7 @@ void ShowPointFocus(Point* focus, Format_t format, int indent, int detail)
 		default:
 			break;
 		}
-		ShowPointBriefSummary(focus, format, indent+4, detail);
+		ShowPointBriefSummary(focus, find_flag, format, indent+4, detail);
 		if (format == FORMAT_XML)
 			printf("%*s</Focus>\n", indent, "");
 	}
@@ -2840,7 +3068,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				printf("%*s<ActiveMTU>\n", indent+4, "");
 				for (i = 0; i < STL_MAX_VLS; ++i)
 				{
-					sprintf(indxStr, "VL%u", i);
+					snprintf(indxStr, sizeof(indxStr), "VL%u", i);
 					XmlPrintDec(indxStr, GetBytesFromMtu(GET_STL_PORT_INFO_NeighborMTU(pPortInfo, i)), indent+8);
 				}
 				printf("%*s</ActiveMTU>\n", indent+4, "");
@@ -2853,7 +3081,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				printf("%*s<VLStall>\n", indent+4, "");
 				for (i = 0; i < STL_MAX_VLS; ++i)
 				{
-					sprintf(indxStr, "VL%u", i);
+					snprintf(indxStr, sizeof(indxStr), "VL%u", i);
 					XmlPrintDec(indxStr, pPortInfo->XmitQ[i].VLStallCount, indent+8);
 				}	
 				printf("%*s</VLStall>\n", indent+4, "");
@@ -2930,7 +3158,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				printf("%*s<HOQLife>\n", indent+4, "");
 				for (i = 0; i < STL_MAX_VLS; ++i)
 				{
-					sprintf(indxStr, "VL%u", i);
+					snprintf(indxStr, sizeof(indxStr), "VL%u", i);
 					if (pPortInfo->XmitQ[i].HOQLife > IB_LIFETIME_MAX)
 					{
 						strncpy(buf1, "Infinite", 9);
@@ -2943,7 +3171,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				printf("%*s<HOQLife_Int>\n", indent+4, "");
 				for (i = 0; i < STL_MAX_VLS; ++i)
 				{
-					sprintf(indxStr, "VL%u", i);
+					snprintf(indxStr, sizeof(indxStr), "VL%u", i);
 					if (pPortInfo->XmitQ[i].HOQLife > IB_LIFETIME_MAX)
 					{
 						strncpy(buf1, "Infinite", 9);
@@ -3480,11 +3708,11 @@ void ShowAllSMSummary(Point *focus, Format_t format, int indent, int detail)
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching SMs Found\n", indent, "", count);
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingSMs", count, indent+4);
 		printf("%*s</SMs>\n", indent, "");
 		break;
@@ -3510,7 +3738,7 @@ void ShowComponentReport(Point *focus, Format_t format, int indent, int detail)
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf("%*s%u Connected Systems%s\n", indent, "", (unsigned)cl_qmap_count(&g_Fabric.AllSystems), detail?":":"");
@@ -3533,13 +3761,13 @@ void ShowComponentReport(Point *focus, Format_t format, int indent, int detail)
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching Systems Found\n", indent, "", count);
 		if (detail)
 			printf("\n");
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingSystems", count, indent+4);
 		printf("%*s</Systems>\n", indent, "");
 		break;
@@ -3577,7 +3805,7 @@ void ShowNodeTypeReport(Point *focus, Format_t format, int indent, int detail)
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf("%*s%u Connected FIs in Fabric%s\n", indent, "", (unsigned)QListCount(&g_Fabric.AllFIs), detail?":":"");
@@ -3601,13 +3829,13 @@ void ShowNodeTypeReport(Point *focus, Format_t format, int indent, int detail)
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching FIs Found\n", indent, "", count);
 		if (detail)
 			printf("\n");
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingFIs", count, indent+4);
 		indent-=4;
 		printf("%*s</FIs>\n", indent, "");
@@ -3640,13 +3868,13 @@ void ShowNodeTypeReport(Point *focus, Format_t format, int indent, int detail)
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching Switches Found\n", indent, "", count);
 		if (detail)
 			printf("\n");
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingSwitches", count, indent+4);
 		indent-=4;
 		printf("%*s</Switches>\n", indent, "");
@@ -3686,7 +3914,7 @@ void ShowAllIOUReport(Point *focus, Format_t format, int indent, int detail)
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf("%*s%u IOUs in Fabric%s\n", indent, "", (unsigned)QListCount(&g_Fabric.AllIOUs), detail?":":"");
@@ -3710,12 +3938,12 @@ void ShowAllIOUReport(Point *focus, Format_t format, int indent, int detail)
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching IOUs Found\n", indent, "", count);
 		DisplaySeparator();
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingIOUs", count, indent);
 		indent-=4;
 		printf("%*s</IOUs>\n", indent, "");
@@ -3825,7 +4053,7 @@ void ShowOtherPortsReport(Point *focus, Format_t format, int indent, int detail)
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf("%*s%u Connected FIs in Fabric%s\n", indent, "", (unsigned)QListCount(&g_Fabric.AllFIs), detail?":":"");
@@ -3861,7 +4089,7 @@ void ShowOtherPortsReport(Point *focus, Format_t format, int indent, int detail)
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching FIs Found\n", indent, "", node_count);
 		printf("%*s%u Connected FI Ports\n", indent, "", port_count);
 		printf("%*s%u Other FI Ports\n", indent, "", other_port_count);
@@ -3869,7 +4097,7 @@ void ShowOtherPortsReport(Point *focus, Format_t format, int indent, int detail)
 			printf("\n");
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingFIs", node_count, indent+4);
 		XmlPrintDec("ConnectedFIPorts", port_count, indent+4);
 		XmlPrintDec("OtherCAPorts", other_port_count, indent+4);
@@ -3921,7 +4149,7 @@ void ShowOtherPortsReport(Point *focus, Format_t format, int indent, int detail)
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching Switches Found\n", indent, "", node_count);
 		printf("%*s%u Connected Switch Ports\n", indent, "", port_count);
 		printf("%*s%u Other Switch Ports\n", indent, "", other_port_count);
@@ -3929,7 +4157,7 @@ void ShowOtherPortsReport(Point *focus, Format_t format, int indent, int detail)
 			printf("\n");
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingSwitches", node_count, indent+4);
 		XmlPrintDec("ConnectedSwitchPorts", port_count, indent+4);
 		XmlPrintDec("OtherSwitchPorts", other_port_count, indent+4);
@@ -4083,36 +4311,38 @@ void ShowNodeBriefSummary(NodeData *nodep, Point *focus,
 }
 
 // output brief summary of an expected IB Node
-void ShowExpectedNodeBriefSummary(ExpectedNode *enodep,
-				boolean close_node, Format_t format, int indent, int detail)
+void ShowExpectedNodeBriefSummary(const char *prefix, ExpectedNode *enodep,
+				const char *xml_tag, boolean close_node, Format_t format,
+				int indent, int detail)
 {
 	switch (format) {
 	case FORMAT_TEXT:
-		printf("%*s", indent, "");
+		printf("%*s%s", indent, "", prefix);
 		if (enodep->NodeGUID)
 			printf("0x%016"PRIx64, enodep->NodeGUID);
 		else
-			printf("                  ");
+			printf("%*s", 18, "");
 		if (enodep->NodeType)
 			printf(" %s", StlNodeTypeToText(enodep->NodeType));
 		else
 			printf("   ");
 		if (enodep->NodeDesc)
-			printf(" %s\n", g_noname?g_name_marker:enodep->NodeDesc);
+			printf(" %.*s\n", NODE_DESCRIPTION_ARRAY_SIZE,
+						g_noname?g_name_marker:enodep->NodeDesc);
 		else
 			printf("\n");
 		if (enodep->details)
 			printf("%*sNodeDetails: %s\n", indent+4, "", enodep->details);
 		break;
 	case FORMAT_XML:
-		printf("%*s<Node id=\"0x%016"PRIx64"\">\n", indent, "",
-					(uint64)(uintn)enodep);
+		printf("%*s<%s id=\"0x%016"PRIx64"\">\n", indent, "",
+					xml_tag, (uint64)(uintn)enodep);
 		if (enodep->NodeGUID)
 			XmlPrintHex64("NodeGUID", enodep->NodeGUID, indent+4);
 		if (enodep->NodeType)
 			XmlPrintNodeType(enodep->NodeType, indent+4);
 		if (enodep->NodeDesc)
-			XmlPrintNodeDesc( enodep->NodeDesc, indent+4);
+			XmlPrintNodeDesc(enodep->NodeDesc, indent+4);
 		if (enodep->details)
 			XmlPrintOptionalStr("NodeDetails", enodep->details, indent+4);
 		break;
@@ -4120,7 +4350,7 @@ void ShowExpectedNodeBriefSummary(ExpectedNode *enodep,
 		break;
 	}
 	if (close_node && format == FORMAT_XML) {
-		printf("%*s</Node>\n", indent, "");
+		printf("%*s</%s>\n", indent, "", xml_tag);
 	}
 }
 
@@ -4311,17 +4541,17 @@ void ShowVerifySMBriefSummary(SMData *smp,
 	}
 }
 
-void ShowExpectedSMBriefSummary(ExpectedSM *esmp,
-				boolean close_sm, Format_t format, int indent, int detail)
+void ShowExpectedSMBriefSummary(const char *prefix, ExpectedSM *esmp,
+				const char *xml_tag, boolean close_sm, Format_t format, int indent, int detail)
 {
 	switch (format) {
 	case FORMAT_TEXT:
-		printf("%*s", indent, "");
+		printf("%*s%s", indent, "", prefix);
 		if (esmp->NodeGUID)
 			printf("0x%016"PRIx64, esmp->NodeGUID);
 		else
 			printf("                  ");
-		if (esmp->PortNum)
+		if (esmp->gotPortNum)
 			printf(" %3u", esmp->PortNum);
 		else
 			printf("    ");
@@ -4343,8 +4573,8 @@ void ShowExpectedSMBriefSummary(ExpectedSM *esmp,
 			printf("%*sSMDetails: %s\n", indent+4, "", esmp->details);
 		break;
 	case FORMAT_XML:
-		printf("%*s<SM id=\"0x%016"PRIx64"\">\n", indent, "",
-					(uint64)(uintn)esmp);
+		printf("%*s<%s id=\"0x%016"PRIx64"\">\n", indent, "",
+					xml_tag, (uint64)(uintn)esmp);
 		if (esmp->NodeGUID)
 			XmlPrintHex64("NodeGUID", esmp->NodeGUID, indent+4);
 		if (esmp->gotPortNum)
@@ -4361,7 +4591,7 @@ void ShowExpectedSMBriefSummary(ExpectedSM *esmp,
 			XmlPrintHex64("PortGUID", esmp->PortGUID, indent+4);
 		}
 		if (close_sm)
-			printf("%*s</SM>\n", indent, "");
+			printf("%*s</%s>\n", indent, "", xml_tag);
 		break;
 	default:
 		break;
@@ -4412,11 +4642,11 @@ void ShowAllSMBriefSummary(Point *focus, Format_t format, int indent, int detail
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching SMs Found\n", indent, "", count);
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingSMs", count, indent+4);
 		indent-=4;
 		printf("%*s</SMs>\n", indent, "");
@@ -4443,7 +4673,7 @@ void ShowComponentBriefReport(Point *focus, Format_t format, int indent, int det
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf("%*s%u Connected Systems in Fabric%s\n", indent, "", (unsigned)cl_qmap_count(&g_Fabric.AllSystems), detail?":":"");
@@ -4469,12 +4699,12 @@ void ShowComponentBriefReport(Point *focus, Format_t format, int indent, int det
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching Systems Found\n", indent, "", count);
 		printf("\n");
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingSystems", count, indent);
 		indent-=4;
 		printf("%*s</Systems>\n", indent, "");
@@ -4513,7 +4743,7 @@ void ShowNodeTypeBriefReport(Point *focus, Format_t format, int indent, int deta
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf("%*s%u Connected FIs in Fabric%s\n", indent, "", (unsigned)QListCount(&g_Fabric.AllFIs), detail?":":"");
@@ -4540,13 +4770,13 @@ void ShowNodeTypeBriefReport(Point *focus, Format_t format, int indent, int deta
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching FI Found\n", indent, "", count);
 		if (detail)
 			printf("\n");
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingFIs", count, indent);
 		indent-=4;
 		printf("%*s</FIs>\n", indent, "");
@@ -4581,13 +4811,13 @@ void ShowNodeTypeBriefReport(Point *focus, Format_t format, int indent, int deta
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching Switches Found\n", indent, "", count);
 		if (detail)
 			printf("\n");
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingSwitches", count, indent);
 		indent-=4;
 		printf("%*s</Switches>\n", indent, "");
@@ -5203,7 +5433,7 @@ void ShowLinksReport(Point *focus, report_t report, Format_t format, int indent,
 		break;
 	}
 
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		switch (report) {
@@ -5280,12 +5510,12 @@ void ShowLinksReport(Point *focus, report_t report, Format_t format, int indent,
 
 	switch (format) {
 	case FORMAT_TEXT:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			printf("%*s%u Matching Links Found\n", indent, "", count);
 		DisplaySeparator();
 		break;
 	case FORMAT_XML:
-		if (focus->Type != POINT_TYPE_NONE)
+		if (PointValid(focus))
 			XmlPrintDec("MatchingLinks", count, indent);
 		indent-=4;
 		printf("%*s</%sLinkSummary>\n", indent, "", xml_prefix);
@@ -5386,7 +5616,7 @@ void ShowSlowLinkReport(LinkReport_t report, boolean one_report, Point *focus, F
 	}
 	if (format == FORMAT_XML)
 		indent+=4;
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	if (format == FORMAT_XML)
 		indent-=4;
 
@@ -5639,13 +5869,13 @@ void ShowRoutesReport(EUI64 portGuid, Point *point1, Point *point2, Format_t for
 	}
 	switch (format) {
 	case FORMAT_TEXT:
-		ShowPointBriefSummary(point1, format, indent+4, detail);
+		ShowPointBriefSummary(point1, FIND_FLAG_FABRIC, format, indent+4, detail);
 		printf("and ");
-		ShowPointBriefSummary(point2, format, indent, detail);
+		ShowPointBriefSummary(point2, FIND_FLAG_FABRIC, format, indent, detail);
 		break;
 	case FORMAT_XML:
-		ShowPointBriefSummary(point1, format, indent, detail);
-		ShowPointBriefSummary(point2, format, indent, detail);
+		ShowPointBriefSummary(point1, FIND_FLAG_FABRIC, format, indent, detail);
+		ShowPointBriefSummary(point2, FIND_FLAG_FABRIC, format, indent, detail);
 		break;
 	default:
 		break;
@@ -5895,7 +6125,7 @@ static void ValidateCLFabricSummaryCallback(FabricData_t *fabricp, const char *n
              totalPaths, totalBadPaths); 
       break; 
    case FORMAT_XML:
-      sprintf(title, "CreditLoop%sSummary", name);
+      snprintf(title, sizeof(title), "CreditLoop%sSummary", name);
       XmlPrintTagHeader(title, indent);
       indent+= 4;    
       XmlPrintDec("Devices", cl_qmap_count(&fabricp->map_guid_to_ib_device), indent); 
@@ -5905,7 +6135,7 @@ static void ValidateCLFabricSummaryCallback(FabricData_t *fabricp, const char *n
       XmlPrintDec("RoutingDecisions", fabricp->RouteCount, indent);
       XmlPrintDec("AnalyzedRoutes", totalPaths, indent);        
       XmlPrintDec("IncompleteRoutes", totalBadPaths, indent);        
-      sprintf(title, "CreditLoop%sSummary", name); 
+      snprintf(title, sizeof(title), "CreditLoop%sSummary", name);
       XmlPrintTagFooter(title, indent-4);
       break; 
    default:
@@ -5929,13 +6159,13 @@ static void ValidateCLDataSummaryCallback(clGraphData_t *graphp, const char *nam
              name, graphp->NumActiveVertices, (int)cl_qmap_count(&graphp->Arcs));
       break; 
    case FORMAT_XML:
-      sprintf(title, "CreditLoop%sSummary", name);
+      snprintf(title, sizeof(title), "CreditLoop%sSummary", name);
       printf("\n");
       XmlPrintTagHeader(title, indent);
       indent+= 4;    
       XmlPrintDec("Vertices", graphp->NumActiveVertices, indent); 
       XmlPrintDec("Arcs", cl_qmap_count(&graphp->Arcs), indent); 
-      sprintf(title, "CreditLoop%sSummary", name); 
+      snprintf(title, sizeof(title), "CreditLoop%sSummary", name);
       XmlPrintTagFooter(title, indent-4);
       break; 
    default:
@@ -6282,7 +6512,7 @@ void ShowLinkErrorReport(Point *focus, Format_t format, int indent, int detail)
 		}
 		goto done;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	if (g_limitstats) {
 		switch (format) {
 		case FORMAT_TEXT:
@@ -6387,7 +6617,7 @@ FSTATUS ClearAllPortCountersAndShow(EUI64 portGuid, Point *focus, boolean cleara
 		default:
 			break;
 		}
-		ShowPointFocus(focus, format, indent, 0);
+		ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, 0);
 		if (g_limitstats) {
 			switch (format) {
 			case FORMAT_TEXT:
@@ -6472,7 +6702,7 @@ void ShowAllLIDReport(Point *focus, Format_t format, int indent, int detail)
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u LID(s) in Fabric%s\n", indent, "",
@@ -6572,7 +6802,7 @@ void ShowAllLIDReport(Point *focus, Format_t format, int indent, int detail)
 		DisplaySeparator();
 		break;
 	case FORMAT_XML:
-		if (ct_lid)
+		if (detail && ct_lid)
 			printf("%*s</LIDs>\n", indent, "");
 		XmlPrintDec("ReportedLIDCount", (unsigned)ct_lid, indent);
 		indent-=4;
@@ -6621,7 +6851,7 @@ void ShowLinearFDBReport(Point *focus, Format_t format, int indent, int detail)
 		}
 		goto done;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u Connected Switches in Fabric%s\n", indent, "",
@@ -6835,7 +7065,7 @@ void ShowPGReport(Point *focus, Format_t format, int indent, int detail)
 	}
 
 	overallSwitchCount = QListCount(&g_Fabric.AllSWs);
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u Connected Switches in Fabric%s\n", indent, "",
@@ -7480,10 +7710,12 @@ void ShowValidatePGReport(Point *focus, Format_t format, int indent, int detail)
 			nodep->pSwitchInfo->SwitchInfoData.PortGroupTop != 0) {
 			pgCount = nodep->pSwitchInfo->SwitchInfoData.PortGroupTop;
 		} else if (nodep->pSwitchInfo && nodep->pSwitchInfo->SwitchInfoData.AdaptiveRouting.s.Enable == 0) {
-			if (format != FORMAT_XML) printf("%*sAdaptive Routing Disabled.\n", indent+4, "");
+			if (format == FORMAT_XML) printf("%*s</Node>\n", indent, "");
+			else printf("%*sAdaptive Routing Disabled.\n", indent+4, "");
 			continue;
 		} else if (nodep->pSwitchInfo && nodep->pSwitchInfo->SwitchInfoData.PortGroupTop == 0) {
-			if (format != FORMAT_XML) printf("%*sNo port groups defined.\n", indent+4, "");
+			if (format == FORMAT_XML) printf("%*s</Node>\n", indent, "");
+			else printf("%*sNo port groups defined.\n", indent+4, "");
 			continue;
 		} else {
 			if (format != FORMAT_XML) printf("%*sNo switch info.\n", indent+4, "");
@@ -7821,7 +8053,7 @@ void ShowValidatePGReport(Point *focus, Format_t format, int indent, int detail)
 
 FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int indent)
 {
-	LIST_ITEM *n1, *p1, *p;
+	LIST_ITEM *n1, *p1;
 	int nodecount;
 
 	if (detail >= 0)
@@ -7837,27 +8069,29 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 		break;
 	  }
 
-	n1 = QListHead (&fabricp->AllMcMembers);
 
-// collecting information about M
-	for (n1 = QListHead (&fabricp->AllMcMembers); n1 != NULL; n1 = QListNext(&fabricp->AllMcMembers, n1)) {
-		McMemberData *pmcmember = (McMemberData *)QListObj(n1);
+// collecting information about MC Groups
+	for (n1 = QListHead (&fabricp->AllMcGroups); n1 != NULL; n1 = QListNext(&fabricp->AllMcGroups, n1)) {
+		McGroupData *pmcgroup = (McGroupData *)QListObj(n1);
 		//for this PortGID get member group information
 		// do not get info on empty groups
-		 McGroupData *pMCGH = (McGroupData *)QListObj(QListHead(&pmcmember->AllMcGroupMembers));
-		if ((pMCGH->PortGID.AsReg64s.H ==0) && (pMCGH->PortGID.AsReg64s.L==0))
+		// As all members of the same group share certain properties, HEAD is used for printing
+		// group properties such as rate, etc.
+		McMemberData *pMCGM = (McMemberData *)QListObj(QListHead(&pmcgroup->AllMcGroupMembers));
+
+		if ((pMCGM->MemberInfo.RID.PortGID.AsReg64s.H ==0) && (pMCGM->MemberInfo.RID.PortGID.AsReg64s.L==0))
 			continue;
 		if (detail > 0 )
 			switch (format) {
 			case FORMAT_TEXT:
-				DisplayGroupRecord (pmcmember, indent, detail);
-				printf("Number of Group Members: %d\n", pmcmember->NumOfMembers);
+				DisplayGroupRecord (pMCGM, indent, detail);
+				printf("Number of Group Members: %d\n", pmcgroup->NumOfMembers);
 				break;
 			case FORMAT_XML:
-				printf("%*s<%s id=\"0x%016"PRIx64":0X%016"PRIx64"\">\n", indent+4, "", "MulticastGroup",
-					pmcmember->MGID.AsReg64s.H, pmcmember->MGID.AsReg64s.L);
-				printf("%*s<NumMcGMembers>%d</NumMcGMembers>\n",indent+8,"", pmcmember->NumOfMembers);
-				XMLPrintGroupRecord (pmcmember, indent, detail);
+				printf("%*s<%s id=\"0x%016"PRIx64":0x%016"PRIx64"\">\n", indent+4, "", "MulticastGroup",
+						pMCGM->MemberInfo.RID.MGID.AsReg64s.H, pMCGM->MemberInfo.RID.MGID.AsReg64s.L);
+				printf("%*s<NumMcGMembers>%d</NumMcGMembers>\n",indent+8,"", pmcgroup->NumOfMembers);
+				XMLPrintGroupRecord (pMCGM, indent, detail);
 				break;
 			default:
 				break;
@@ -7865,48 +8099,62 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 
 		if (detail > 1 ) {
 			//if the list is not empty)
-		    for (p1=QListHead(&pmcmember->AllMcGroupMembers), nodecount=0; p1 != NULL;
-		    			p1 = QListNext(&pmcmember->AllMcGroupMembers, p1), nodecount++) {
-			  McGroupData *pMCGG = (McGroupData *)QListObj(p1);
+			for (p1=QListHead(&pmcgroup->AllMcGroupMembers), nodecount=0; p1 != NULL;
+						p1 = QListNext(&pmcgroup->AllMcGroupMembers, p1), nodecount++) {
+				McMemberData *pMCGG = (McMemberData *)QListObj(p1);
 
-				if ((pMCGG->PortGID.AsReg64s.H !=0) || (pMCGG->PortGID.AsReg64s.L!=0)){
-				  switch (format) { // do not print "zero" members
-				  case FORMAT_TEXT:
-					  printf("PortGid: 0x%016"PRIx64":0X%016"PRIx64"\n",
-							  pMCGG->PortGID.AsReg64s.H,
-							  pMCGG->PortGID.AsReg64s.L);
-				  break;
-				  case FORMAT_XML:
-					  printf("%*s<%s id=\"0x%016"PRIx64":0X%016"PRIx64"\">\n", indent+8, "", "McMembers",
-							  pMCGG->PortGID.AsReg64s.H,  pMCGG->PortGID.AsReg64s.L);
-					  XmlPrintGID("PortGID",pMCGG->PortGID,indent+12);
-				  break;
-				  default:
-				  break;
-			      }// case end
-
-				// this list is sorted/keyed by NodeGUID
-				for (p=QListHead(&fabricp->AllPorts); p != NULL; p = QListNext(&fabricp->AllPorts,p)) {
-					PortData *portp = (PortData *) QListObj(p);
-					if (portp->PortGUID == pMCGG->PortGID.AsReg64s.L) {
-			  			switch (format) {
-			  			case FORMAT_TEXT:
-					    	  printf("Name: %.*s \n",  NODE_DESCRIPTION_ARRAY_SIZE,
-								  g_noname?g_name_marker:(char*)portp->nodep->NodeDesc.NodeString);
-						break;
-			  			case FORMAT_XML:
-			  				  XmlPrintNodeDesc((char*)portp->nodep->NodeDesc.NodeString, indent+12);
-			  				// print end tag
-						break;
-			  			default:
-						break;
-			  			}// end case	
-					} //end if
-				 } //end for p
+				if ((pMCGG->MemberInfo.RID.PortGID.AsReg64s.H !=0) || (pMCGG->MemberInfo.RID.PortGID.AsReg64s.L!=0)){
+					switch (format) { // do not print "zero" members
+						case FORMAT_TEXT:
+							printf("PortGid: 0x%016"PRIx64":0x%016"PRIx64" Membership: %s%s%s\n",
+								pMCGG->MemberInfo.RID.PortGID.AsReg64s.H,
+								pMCGG->MemberInfo.RID.PortGID.AsReg64s.L,
+								pMCGG->MemberInfo.JoinFullMember ? "Full " : "",
+								pMCGG->MemberInfo.JoinNonMember ? "Non " : "",
+								pMCGG->MemberInfo.JoinSendOnlyMember ? "Sendonly " : "");
+							break;
+						case FORMAT_XML:
+							printf("%*s<%s id=\"0x%016"PRIx64":0x%016"PRIx64"\">\n", indent+8, "", "McMembers",
+								pMCGG->MemberInfo.RID.PortGID.AsReg64s.H,  pMCGG->MemberInfo.RID.PortGID.AsReg64s.L);
+							XmlPrintGID("PortGID",pMCGG->MemberInfo.RID.PortGID,indent+12);
+							if (pMCGG->MemberInfo.JoinFullMember)
+								XmlPrintStr("Membership", pMCGG->MemberInfo.JoinFullMember? "Full":"", indent+12);
+							if (pMCGG->MemberInfo.JoinNonMember)
+								XmlPrintStr("Membership", pMCGG->MemberInfo.JoinNonMember? "Non":"", indent+12);
+							if (pMCGG->MemberInfo.JoinSendOnlyMember)
+								XmlPrintStr("Membership", pMCGG->MemberInfo.JoinSendOnlyMember? "Sendonly":"", indent+12);
+							break;
+						default:
+							break;
+					}// case end
+					PortData *portp=FindPortGuid(fabricp, pMCGG->MemberInfo.RID.PortGID.AsReg64s.L);
+					if (portp != NULL) {
+						switch (format) {
+			  				case FORMAT_TEXT:
+			  					printf("Name: %.*s \n",  NODE_DESCRIPTION_ARRAY_SIZE,
+			  							g_noname?g_name_marker:(char*)portp->nodep->NodeDesc.NodeString);
+			  					break;
+			  				case FORMAT_XML:
+			  					XmlPrintNodeDesc((char*)portp->nodep->NodeDesc.NodeString, indent+12);
+			  					break;
+			  				default:
+							break;
+			  			}// end case
+					}
+					else {
+						switch (format) {
+	  						case FORMAT_TEXT:
+	  							printf("Name: Not available\n");
+	  							break;
+	  						default:
+	  							break;
+	  					}// end case
+					} // end else
+		  		// print end tag
 				if (format == FORMAT_XML) printf("%*s</McMembers>\n", indent+8, "");
-			    }
-		    }	// end for p1
-		  } //end if detail
+			   	} // end if
+			}	// end for p1
+		} //end if detail
 		if (detail > 0)
 			switch (format) {
 			case FORMAT_TEXT:
@@ -8007,7 +8255,7 @@ void ShowMulticastFDBReport(Point *focus, Format_t format, int indent, int detai
 		}
 		goto done;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u Connected Switches in Fabric%s\n", indent, "",
@@ -8191,7 +8439,7 @@ void ShowPortUsageReport(Point *focus, Format_t format, int indent, int detail)
 		}
 		goto done;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u Connected Switch(es) in Fabric%s\n", indent, "",
@@ -8477,15 +8725,15 @@ void print_xml_statistics(int indent, const char* title, struct statistics_s *st
 {
 	char buf[64];
 
-	sprintf(buf, "%sTotal", title);
+	snprintf(buf, sizeof(buf), "%sTotal", title);
 	XmlPrintDec(buf, (unsigned)stat->total, indent);
-	sprintf(buf, "%sAvg", title);
+	snprintf(buf, sizeof(buf), "%sAvg", title);
 	XmlPrintDec(buf, (unsigned)stat->avg, indent);
-	sprintf(buf, "%sStdDev", title);
+	snprintf(buf, sizeof(buf),"%sStdDev", title);
 	XmlPrintDec(buf, (unsigned)stat->stddev, indent);
-	sprintf(buf, "%sMin", title);
+	snprintf(buf, sizeof(buf), "%sMin", title);
 	XmlPrintDec(buf, (unsigned)stat->min, indent);
-	sprintf(buf, "%sMax", title);
+	snprintf(buf, sizeof(buf), "%sMax", title);
 	XmlPrintDec(buf, (unsigned)stat->max, indent);
 }
 
@@ -8542,7 +8790,7 @@ void ShowPathUsageReport(Point *focus, Format_t format, int indent, int detail)
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u Connected Switch(es) in Fabric%s\n", indent, "",
@@ -8750,7 +8998,7 @@ void ShowPathUsageReport(Point *focus, Format_t format, int indent, int detail)
 	case FORMAT_TEXT:
 		printf("%*s%d Reported Switch(es)\n", indent, "", ct_node);
 		printf("%*s%d Reported Port(s)\n", indent, "", totalPorts);
-		printf("%*s%d Incomplete Routes(s)\n", indent, "", badPaths);
+		printf("%*s%d Incomplete Route(s)\n", indent, "", badPaths);
 		if (totalPorts) {
 			print_text_statistics(indent, "Recv All Paths:     ", &fabricRecvAllPaths);
 			print_text_statistics(indent, "Recv Base Paths:    ", &fabricRecvBasePaths);
@@ -8846,7 +9094,7 @@ void ShowTreePathUsageReport(Point *focus, Format_t format, int indent,
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u Connected Switch(es) in Fabric%s\n", indent, "",
@@ -9016,7 +9264,7 @@ void ShowTreePathUsageReport(Point *focus, Format_t format, int indent,
 			switch (format) {
 			case FORMAT_TEXT:
 				printf("%*s%d Reported Port(s)\n", indent, "", ct_port);
-				printf("%*s%d Incomplete Routes(s)\n", indent, "", badPaths);
+				printf("%*s%d Incomplete Route(s)\n", indent, "", badPaths);
 				if (ct_port) {
 					printf("%*s%u Uplink Port(s)  %u Downlink Port(s)\n", indent, "", swUplinkCount, swDownlinkCount);
 					if (swUplinkCount) {
@@ -9151,7 +9399,9 @@ void ValidateRouteCallback(PortData *portp1, PortData *portp2, IB_LID dlid, bool
 			g_noname?g_name_marker:(char*)portp2->nodep->NodeDesc.NodeString);
 		if (ValidateRoutesContext->detail >= 2) {
 			printf("%*sIncompletePath:\n", indent, "");
-			printf("%*sNodeGUID         Port Type Name\n", indent+4, "");
+			printf("%*sNodeGUID         Port Type ", indent+4, "");
+			if (g_use_scsc) printf("VL ");
+			printf("Name\n");
 		} else {
 			printf("\n");
 		}
@@ -9194,7 +9444,7 @@ void ValidateRouteCallback(PortData *portp1, PortData *portp2, IB_LID dlid, bool
 	} 
 }
 
-void ValidateRouteCallback2(PortData *portp,void *context)
+void ValidateRouteCallback2(PortData *portp, uint8 vl, void *context)
 {
 	struct ValidateRoutesContext *ValidateRoutesContext = (struct ValidateRoutesContext*)context;
 	int indent = ValidateRoutesContext->indent+4;
@@ -9222,11 +9472,13 @@ void ValidateRouteCallback2(PortData *portp,void *context)
 	case FORMAT_TEXT:
 		// output portp1 
 		// output -> dlid portp2
-		printf("%*s0x%016"PRIx64" %3u %s %.*s\n",
+		printf("%*s0x%016"PRIx64" %3u %s ",
 			indent, "",
 			portp->nodep->NodeInfo.NodeGUID,
 			portp->PortNum,
-			StlNodeTypeToText(portp->nodep->NodeInfo.NodeType),
+			StlNodeTypeToText(portp->nodep->NodeInfo.NodeType));
+		if (g_use_scsc) printf(" %2d ", vl);
+		printf("%.*s\n",
 			NODE_DESCRIPTION_ARRAY_SIZE,
 			g_noname?g_name_marker:(char*)portp->nodep->NodeDesc.NodeString);
 		break;
@@ -9240,6 +9492,7 @@ void ValidateRouteCallback2(PortData *portp,void *context)
 		XmlPrintDec("PortNum", portp->PortNum, indent+8);
 		XmlPrintNodeType(portp->nodep->NodeInfo.NodeType,
 						indent+8);
+		if (g_use_scsc) XmlPrintDec("VL", vl, indent+8);
 		XmlPrintNodeDesc((char*)portp->nodep->NodeDesc.NodeString, indent+8);
 		printf("%*s</Port>\n", indent+4, "");
 		break;
@@ -9281,7 +9534,7 @@ void ShowValidateRoutesReport(Point *focus, Format_t format, int indent, int det
 		break;
 	}
 	// TBD - what if anything should focus select?
-	//ShowPointFocus(focus, format, indent, detail);
+	//ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u LID(s) in Fabric%s\n", indent, "",
@@ -9342,7 +9595,7 @@ void ShowValidateRoutesReport(Point *focus, Format_t format, int indent, int det
 	switch (format) {
 	case FORMAT_TEXT:
 		printf("%*s%d Analyzed Routes\n", indent, "", totalPaths);
-		printf("%*s%d Incomplete Routes(s)\n", indent, "", badPaths);
+		printf("%*s%d Incomplete Route(s)\n", indent, "", badPaths);
 		break;
 	case FORMAT_XML:
 		XmlPrintDec("AnalyzedRoutes", (unsigned)totalPaths, indent);
@@ -9464,7 +9717,7 @@ void ShowLIDUsageReport(Point *focus, Format_t format, int indent, int detail)
 		}
 		goto done;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u Connected Switch(es) in Fabric%s\n", indent, "",
@@ -9560,24 +9813,13 @@ done:
 // output vFabric information
 void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 {
-	int ix;
-	PQUERY_RESULT_VALUES	pQueryResults = NULL;
-	STL_VFINFO_RECORD_RESULTS *pRR;
 	STL_VFINFO_RECORD	*pR;
 	char buf[8];
 	char buf2[8];
-	struct oib_port *oib_port_session = NULL;
+	LIST_ITEM *i;
+	VFData_t *vf;
 
-	ShowPointFocus(focus, format, indent, detail);
-
-	if(oib_open_port_by_guid(&oib_port_session, g_portGuid) != FSUCCESS)
-		return;
-	if ( !(( pQueryResults =
-			GetAllVFInfo(oib_port_session, &g_Fabric, focus, g_quiet) )) )
-		return;
-
-	pRR = (STL_VFINFO_RECORD_RESULTS *)pQueryResults->QueryResult;
-	pR = pRR->VfInfoRecords;
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 
 	switch (format) {
 	case FORMAT_TEXT:
@@ -9592,18 +9834,21 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 	}
 
 	// Report vFabric records
-	for (ix = 0; ix < pRR->NumVfInfoRecords; ix++, pR++)
+	for (i = QListHead(&g_Fabric.AllVFs); i; i = QListNext(&g_Fabric.AllVFs, i))
 	{
+		vf = QListObj(i);
+		pR = &vf->record;
+
 		snprintf(buf, sizeof(buf), "%d", 1 << pR->s1.pktLifeTimeInc);
 		if ( (pR->routingSLs > 1) &&
 				((pR->routingSLs + pR->s1.sl) <= 16) )
-			sprintf(buf2, "%d-%d", pR->s1.sl, pR->s1.sl + pR->routingSLs - 1);
+			snprintf(buf2, sizeof(buf2), "%d-%d", pR->s1.sl, pR->s1.sl + pR->routingSLs - 1);
 		else
-			sprintf(buf2, "%d", pR->s1.sl);
+			snprintf(buf2, sizeof(buf2), "%d", pR->s1.sl);
 
 		switch (format) {
 		case FORMAT_TEXT:
-			if (ix > 0)
+			if (i != QListHead(&g_Fabric.AllVFs))
 				DisplaySeparator();
 			printf("%*sIndex:%d Name:%s\n", indent, "", pR->vfIndex, pR->vfName);
 			printf( "%*sServiceID:0x%016"PRIx64" MGID:0x%016"PRIx64":0x%016"PRIx64"\n",
@@ -9703,7 +9948,7 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 			break;
 		}	// End of switch (format)
 
-	}	// End of for (ix = 0; ix < pRR->NumVfInfoRecords; ix++, pR++)
+	}	// End of for each VF
 
 	switch (format) {
 	case FORMAT_TEXT:
@@ -9716,12 +9961,6 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 	default:
 		break;
 	}
-
-	if (pQueryResults != NULL)
-		oib_free_query_result_buffer(pQueryResults);
-	if (oib_port_session != NULL)
-		oib_close_port(oib_port_session);
-
 }	// End of ShowVFInfoReport()
 
 
@@ -9990,16 +10229,18 @@ boolean PortIsVFMember(PortData *port, int sl)
 	}
 }
 
-void CheckVFAllocation(PortData *port, int indent, int format, int detail, STL_VFINFO_RECORD_RESULTS *pRR)
+void CheckVFAllocation(PortData *port, int indent, int format, int detail)
 {
 	if (detail>3 && (g_Fabric.flags & FF_QOSDATA)) {
-		int i, sl, sc, vl, ded, share;
-		STL_VFINFO_RECORD *pR = pRR->VfInfoRecords;
+		int sl, sc, vl, ded, share;
+		STL_VFINFO_RECORD *pR;
+		LIST_ITEM *i;
 		// this array will keep track of how many vFabrics are mapped to each VL
 		int vls[STL_MAX_VLS];
 		memset(vls, 0, STL_MAX_VLS*sizeof(int));
 
-		for (i = 0; i < pRR->NumVfInfoRecords; i++, pR++ ) {
+		for (i = QListHead(&g_Fabric.AllVFs); i; i = QListNext(&g_Fabric.AllVFs, i)) {
+			pR = &((VFData_t *)QListObj(i))->record;
 			// check that every VF that the port is a member of has a VL assigned to it
 			sl = pR->s1.sl;
 			if (!PortIsVFMember(port, sl)) 
@@ -10099,8 +10340,8 @@ void CheckVFAllocation(PortData *port, int indent, int format, int detail, STL_V
 					if (match_found) {
 						// now find the vfabric
 						match_found = FALSE;
-						pR = pRR->VfInfoRecords;
-						for (i = 0; i < pRR->NumVfInfoRecords; i++, pR++ ) {
+						for (i = QListHead(&g_Fabric.AllVFs); i; i = QListNext(&g_Fabric.AllVFs, i)) {
+							pR = &((VFData_t *)QListObj(i))->record;
 							if (sl == pR->s1.sl) {
 								match_found = TRUE;
 								break;
@@ -10162,10 +10403,11 @@ void CheckVFAllocation(PortData *port, int indent, int format, int detail, STL_V
 	}
 }
 
-void ShowPortVFMembershipText(PortData *port, int indent, int detail, STL_VFINFO_RECORD_RESULTS *pRR)
+void ShowPortVFMembershipText(PortData *port, int indent, int detail)
 {
-	int i, sl, sc, vl, ded, share;
-	STL_VFINFO_RECORD *pR = pRR->VfInfoRecords;
+	int sl, sc, vl, ded, share;
+	STL_VFINFO_RECORD *pR;
+	LIST_ITEM *i;
 
 	printf("%*sVF Membership:\n", indent, "");
 	indent+=4;
@@ -10178,7 +10420,8 @@ void ShowPortVFMembershipText(PortData *port, int indent, int detail, STL_VFINFO
 	}
 	printf("\n");
 	// look over every vFabric
-	for (i = 0; i < pRR->NumVfInfoRecords; i++, pR++ ) {
+	for (i = QListHead(&g_Fabric.AllVFs); i; i = QListNext(&g_Fabric.AllVFs, i)) {
+		pR = &((VFData_t *)QListObj(i))->record;
 		sl = pR->s1.sl;
 		if (!PortIsVFMember(port, sl))
 			continue;
@@ -10198,18 +10441,20 @@ void ShowPortVFMembershipText(PortData *port, int indent, int detail, STL_VFINFO
 		printf("\n"); 
 	}
 	printf("\n");
-	CheckVFAllocation(port, indent, FORMAT_TEXT, detail, pRR);
+	CheckVFAllocation(port, indent, FORMAT_TEXT, detail);
 }
 
-void ShowPortVFMembershipXML(PortData *port, int indent, int detail, STL_VFINFO_RECORD_RESULTS *pRR)
+void ShowPortVFMembershipXML(PortData *port, int indent, int detail)
 {
-	int i, sl, sc, vl, ded, share;
-	STL_VFINFO_RECORD *pR = pRR->VfInfoRecords;
+	int sl, sc, vl, ded, share;
+	STL_VFINFO_RECORD *pR;
+	LIST_ITEM *i;
 
 	printf("%*s<VFMembership>\n", indent, "");
 	indent+=4;
 	
-	for (i = 0; i < pRR->NumVfInfoRecords; i++, pR++ ) {
+	for (i = QListHead(&g_Fabric.AllVFs); i; i = QListNext(&g_Fabric.AllVFs, i)) {
+		pR = &((VFData_t *)QListObj(i))->record;
 		sl = pR->s1.sl;
 		if (!PortIsVFMember(port, sl)) 
 			continue;
@@ -10237,29 +10482,13 @@ void ShowPortVFMembershipXML(PortData *port, int indent, int detail, STL_VFINFO_
 	}
 	indent-=4;
 	printf("%*s</VFMembership>\n", indent, "");
-	CheckVFAllocation(port, indent, FORMAT_XML, detail, pRR);
+	CheckVFAllocation(port, indent, FORMAT_XML, detail);
 }
 
 void ShowVFMemberReport(Point *focus, Format_t format, int indent, int detail)
 {
 	int ct_port = 0;
 	LIST_ITEM *p;
-
-	PQUERY_RESULT_VALUES pQueryResults = NULL;
-	STL_VFINFO_RECORD_RESULTS *pRR = NULL;
-	struct oib_port *oib_port_session = NULL;
-
-	// need to query for the VF info
-	if (oib_open_port_by_guid(&oib_port_session, g_portGuid) != FSUCCESS) {
-		// error
-		return;
-	}
-	if (!((pQueryResults = 
-		   GetAllVFInfo(oib_port_session, &g_Fabric, NULL, 1)))) {
-		// error
-		return;
-	}
-	pRR = (STL_VFINFO_RECORD_RESULTS *)pQueryResults->QueryResult;
 
 	switch (format) {
 	case FORMAT_TEXT:
@@ -10272,7 +10501,7 @@ void ShowVFMemberReport(Point *focus, Format_t format, int indent, int detail)
 	default:
 		break;
 	}
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 
 	for (p=QListHead(&g_Fabric.AllPorts); p != NULL; p = QListNext(&g_Fabric.AllPorts, p)) {
 		PortData *port = (PortData *)QListObj(p);
@@ -10308,13 +10537,13 @@ void ShowVFMemberReport(Point *focus, Format_t format, int indent, int detail)
 				if (neighbor && neighbor->nodep->NodeInfo.NodeType == STL_NODE_FI) {
 					// if the node is a switch and the neighbor is a CA,
 					// use the mappings from the CA
-					ShowPortVFMembershipText(neighbor, indent, detail, pRR);
+					ShowPortVFMembershipText(neighbor, indent, detail);
 				}
 				// if the node is a switch and the neighbor is a switch
 				// then there is no VF membership
 			} else {
 				// node is a CA or switch port 0
-				ShowPortVFMembershipText(port, indent, detail, pRR);
+				ShowPortVFMembershipText(port, indent, detail);
 			}
 			printf("\n");
 			break;
@@ -10332,13 +10561,13 @@ void ShowVFMemberReport(Point *focus, Format_t format, int indent, int detail)
 				if (neighbor && neighbor->nodep->NodeInfo.NodeType == STL_NODE_FI) {
 					// if the node is a switch and the neighbor is a CA,
 					// use the mappings from the CA
-					ShowPortVFMembershipXML(neighbor, indent, detail, pRR);
+					ShowPortVFMembershipXML(neighbor, indent, detail);
 				}
 				// if the node is a switch and the neighbor is a switch
 				// then there is no VF membership
 			} else {
 				// node is a CA or switch port 0
-				ShowPortVFMembershipXML(port, indent, detail, pRR);
+				ShowPortVFMembershipXML(port, indent, detail);
 			}
 			indent-=4;
 			printf("%*s</Port>\n", indent, "");
@@ -10442,7 +10671,7 @@ void ShowQuarantineNodeReport(Point *focus, Format_t format, int indent, int det
 	STL_QUARANTINED_NODE_RECORD	*pR;
 	struct oib_port *oib_port_session = NULL;
 
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 
 	if(oib_open_port_by_guid(&oib_port_session, g_portGuid) != FSUCCESS)
 		return;
@@ -10729,14 +10958,14 @@ void Usage_full(void)
 	fprintf(stderr, "    misconnlinks              - summary of links connected with mismatched speed\n");
 	fprintf(stderr, "                                potential\n");
 	fprintf(stderr, "    errors                    - summary of links whose errors exceed counts in\n");
-        fprintf(stderr, "                                config file\n");
+	fprintf(stderr, "                                config file\n");
 	fprintf(stderr, "    otherports                - summary of ports not connected to this fabric\n");
 	fprintf(stderr, "    linear                    - summary of linear forwarding data base (FDB) for\n");
-        fprintf(stderr, "                                each Switch\n");
+	fprintf(stderr, "                                each Switch\n");
 	fprintf(stderr, "    mcast                     - summary of multicast FDB for each Switch\n");
 	fprintf(stderr, "    mcgroups                  - summary of multicast groups\n");
 	fprintf(stderr, "    portusage                 - summary of ports referenced in linear FDB for\n");
-        fprintf(stderr, "                                each Switch, broken down by NodeType of DLID\n");
+	fprintf(stderr, "                                each Switch, broken down by NodeType of DLID\n");
 	fprintf(stderr, "    pathusage                 - summary of number of FI to FI paths routed\n");
 	fprintf(stderr, "                                through each switch port\n");
 	fprintf(stderr, "    treepathusage             - analysis of number of FI to FI paths routed\n");
@@ -11247,6 +11476,7 @@ int main(int argc, char ** argv)
 	uint32 temp;
 	FabricFlags_t		sweepFlags = FF_NONE;
 	uint64 mkey;
+	uint8				find_flag = FIND_FLAG_FABRIC;	// always check fabric
 
 	Top_setcmdname("opareport");
 	PointInit(&focus);
@@ -11303,6 +11533,14 @@ int main(int argc, char ** argv)
 					fl_vlqos = 1;
 					g_use_scsc = 1;
 				}
+				if (report & (REPORT_VERIFYFIS|REPORT_VERIFYSWS))
+					find_flag |= FIND_FLAG_ENODE;
+				if (report & REPORT_VERIFYSMS)
+					find_flag |= FIND_FLAG_ESM;
+				if (report & (REPORT_VERIFYLINKS|REPORT_VERIFYEXTLINKS
+							  |REPORT_VERIFYFILINKS|REPORT_VERIFYISLINKS
+							  |REPORT_VERIFYEXTISLINKS))
+					find_flag |= FIND_FLAG_ELINK;
                 break;
             case 'd':	// detail level
 				if (FSUCCESS != StringToUint32(&temp, optarg, NULL, 0, TRUE)) {
@@ -11431,6 +11669,7 @@ int main(int argc, char ** argv)
 		} else {
 			report = REPORT_BRNODES|REPORT_LINKS;
 			format = FORMAT_XML;
+			detail = 1;
 		}
 	}
 	if ((report & REPORT_SNAPSHOT) && (report != REPORT_SNAPSHOT)) {
@@ -11464,6 +11703,10 @@ int main(int argc, char ** argv)
 		fprintf(stderr, "opareport: -F ignored for -o snapshot\n");
 		focus_arg = NULL;
 	}
+        if (report == REPORT_SNAPSHOT && g_limitstats) {
+                fprintf(stderr, "opareport: -L ignored for -o snapshot\n");
+                g_limitstats = 0;
+        }
 	//if (report == REPORT_ROUTE && g_snapshot_in_file) {
 	//	fprintf(stderr, "opareport: -o route not permitted with -X\n");
 	//	Usage();
@@ -11650,8 +11893,8 @@ int main(int argc, char ** argv)
 		// leave 0 when read snapshot.
 		// Then allow route could key off presence of portGuid.
 		status = ParseFocusPoint(g_snapshot_in_file?0:g_portGuid,
-						&g_Fabric, focus_arg, &focus, &p, TRUE);
-		if (FINVALID_PARAMETER == status || *p != '\0') {
+						&g_Fabric, focus_arg, &focus, find_flag, &p, TRUE);
+		if (FINVALID_PARAMETER == status || (FSUCCESS == status && *p != '\0')) {
 			fprintf(stderr, "opareport: Invalid Point Syntax: '%s'\n", focus_arg);
 			fprintf(stderr, "opareport:                        %*s^\n", (int)(p-focus_arg), "");
 			Usage_full();
@@ -11687,9 +11930,10 @@ int main(int argc, char ** argv)
 		}
 		char *p;
 		FSTATUS status;
+		// use FIND_FLAG_FABRIC, no use checking anything other than fabric
 		status = ParseFocusPoint(g_snapshot_in_file?0:g_portGuid,
-						&g_Fabric, focus_arg, &focus, &p, TRUE);
-		if (FINVALID_PARAMETER == status || *p != '\0') {
+						&g_Fabric, focus_arg, &focus, FIND_FLAG_FABRIC, &p, TRUE);
+		if (FINVALID_PARAMETER == status || (FSUCCESS == status && *p != '\0')) {
 			fprintf(stderr, "opareport: Invalid Point Syntax: '%s'\n", focus_arg);
 			fprintf(stderr, "opareport:                        %*s^\n", (int)(p-focus_arg), "");
 			Usage_full();
@@ -11701,7 +11945,7 @@ int main(int argc, char ** argv)
 		}
 	}
 
-	if (!g_snapshot_in_file && routes && ! g_hard && ! g_persist) {
+	if (!g_snapshot_in_file && routes && ! g_hard && ! g_persist)  {
 		if (FSUCCESS != GetAllFDBs(g_portGuid, &g_Fabric, &focus, g_quiet)) {
 			g_exitstatus = 1;
 			goto done;
@@ -11795,15 +12039,20 @@ int main(int argc, char ** argv)
 		Point point1, point2;
 		int skip = 0;
 
+		PointInit(&point1);
+		PointInit(&point2);
+
 		if (route_src) {
 			char *p;
-			if (FSUCCESS != (fstatus = ParsePoint(&g_Fabric, route_src, &point1, &p)) || *p != '\0') {
-                                if (fstatus == FINVALID_PARAMETER) {
-                                        fprintf(stderr, "opareport: Invalid Source Point Syntax: '%s' at '%s'\n", route_src, p);
-                                	Usage_full();
-                                }
-                                g_exitstatus = 1;
-                                goto done;
+			if (FSUCCESS != (fstatus = ParsePoint(&g_Fabric, route_src, &point1, FIND_FLAG_FABRIC, &p)) || *p != '\0') {
+				if (FINVALID_PARAMETER == fstatus || (FSUCCESS == fstatus && *p != '\0')) {
+					fprintf(stderr, "opareport: Invalid Source Point Syntax: '%s'\n", route_src);
+					fprintf(stderr, "opareport:                               %*s^\n", (int)(p-route_src), "");
+					Usage_full();
+				}
+				fprintf(stderr, "opareport: Unable to resolve Source Point: '%s': %s\n", route_src, iba_fstatus_msg(fstatus));
+				g_exitstatus = 1;
+				goto done;
 			}
 		} else {
 			PortData *portp1 = FindPortGuid(&g_Fabric, g_portGuid);
@@ -11823,13 +12072,15 @@ int main(int argc, char ** argv)
 		}
 		if ((!skip) && route_dest) {
 			char *p;
-			if (FSUCCESS != (fstatus = ParsePoint(&g_Fabric, route_dest, &point2, &p)) || *p != '\0') {
-                                if (fstatus == FINVALID_PARAMETER) {
-                                        fprintf(stderr, "opareport: Invalid Dest Point Syntax: '%s' at '%s'\n", route_dest, p);
-                                        Usage_full();
-                                }
-                                g_exitstatus = 1;
-                                goto done;
+			if (FSUCCESS != (fstatus = ParsePoint(&g_Fabric, route_dest, &point2, FIND_FLAG_FABRIC, &p)) || *p != '\0') {
+				if (FINVALID_PARAMETER == fstatus || (FSUCCESS == fstatus && *p != '\0')) {
+					fprintf(stderr, "opareport: Invalid Dest Point Syntax: '%s'\n", route_dest);
+					fprintf(stderr, "opareport:                             %*s^\n", (int)(p-route_dest), "");
+					Usage_full();
+				}
+				fprintf(stderr, "opareport: Unable to resolve Dest Point: '%s': %s\n", route_dest, iba_fstatus_msg(fstatus));
+				g_exitstatus = 1;
+				goto done;
 			}
 			ShowRoutesReport(g_portGuid, &point1, &point2, format, 0, detail);
 		}

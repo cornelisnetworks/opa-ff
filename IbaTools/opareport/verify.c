@@ -221,6 +221,9 @@ LinkVerifyResult_t ExpectedLinkVerify(ExpectedLink *elinkp, uint8 side, Format_t
 			if (side == 0 || side == 2)
 				ShowProblem(format, indent, detail, "Duplicate Port in input or incorrectly cabled");
 		}
+		if (ret == LINK_VERIFY_DUP && side == 3) {
+			ShowProblem(format, indent, detail, "Duplicate Port in input or incorrectly cabled");
+		}
 	} else { /* elinkp->portp1 || elinkp->portp2 */
 		// only 1 side resolved -> incorrectly cabled
 		ret = LINK_VERIFY_CONN;
@@ -282,7 +285,7 @@ void ShowExpectedLinkBriefSummaryHeader(Format_t format, int indent, int detail)
 {
 	switch (format) {
 	case FORMAT_TEXT:
-		printf("%*sRate MTU  NodeGUID          Port or PortGUID    Type Name\n", indent, "");
+		printf("%*sRate MTU   NodeGUID          Port or PortGUID    Type Name\n", indent, "");
 		if (detail && (g_Fabric.flags & FF_CABLEDATA)) {
 			//printf("%*sPortDetails\n", indent+4, "");
 			//printf("%*sLinkDetails\n", indent+4, "");
@@ -299,88 +302,6 @@ void ShowExpectedLinkBriefSummaryHeader(Format_t format, int indent, int detail)
 	}
 }
 
-typedef void ExpectedLinkSummaryDetailCallback_t(ExpectedLink *elinkp, uint8 side, Format_t format, int indent, int detail);
-
-// show 1 port selector in link data in brief form
-void ShowExpectedLinkPortSelBriefSummary(ExpectedLink *elinkp, PortSelector *portselp,
-			uint8 side, ExpectedLinkSummaryDetailCallback_t *callback,
-			Format_t format, int indent, int detail)
-{
-	DEBUG_ASSERT(side == 1 || side == 2);
-	switch (format) {
-	case FORMAT_TEXT:
-		printf("%*s%4s ", indent, "", 
-				(side == 1)?
-					elinkp->expected_rate?
-						StlStaticRateToText(elinkp->expected_rate)
-						:""
-					: "<-> ");
-		if (side == 1 && elinkp->expected_mtu)
-			printf("%5s ",
-				IbMTUToText(elinkp->expected_mtu));
-		else
-			printf("     ");
-		if (portselp) {
-			if (portselp->NodeGUID)
-				printf("0x%016"PRIx64, portselp->NodeGUID);
-			else
-				printf("                  ");
-			if (portselp->gotPortNum)
-				printf(" %3u               ",portselp->PortNum);
-			else if (portselp->PortGUID)
-				printf(" 0x%016"PRIx64, portselp->PortGUID);
-			else
-				printf("                   ");
-			if (portselp->NodeType)
-				printf(" %s",
-					StlNodeTypeToText(portselp->NodeType));
-			else
-				printf("   ");
-			if (portselp->NodeDesc)
-				printf(" %.*s\n",
-					NODE_DESCRIPTION_ARRAY_SIZE, g_noname?g_name_marker:portselp->NodeDesc);
-			else
-				printf("\n");
-			if (detail) {
-				if (portselp->details) {
-					// TBD should g_noname suppress some of this?
-					printf("%*sPortDetails: %s\n", indent+4, "", portselp->details);
-				}
-			}
-		}
-
-		break;
-	case FORMAT_XML:
-		// MTU is output as part of LinkFrom directly in <Link> tag
-		if (portselp) {
-			printf("%*s<Port id=\"%u\">\n", indent, "", side);
-			if (portselp->NodeGUID)
-				XmlPrintHex64("NodeGUID", portselp->NodeGUID, indent+4);
-			if (portselp->gotPortNum)
-				XmlPrintDec("PortNum", portselp->PortNum, indent+4);
-			if (portselp->PortGUID)
-				XmlPrintHex64("NodeGUID", portselp->PortGUID, indent+4);
-			if (portselp->NodeType)
-				XmlPrintNodeType(portselp->NodeType, indent+4);
-			if (portselp->NodeDesc)
-				XmlPrintNodeDesc(portselp->NodeDesc, indent+4);
-			if (detail) {
-				if (portselp->details) {
-					// TBD should g_noname suppress some of this?
-					XmlPrintOptionalStr("PortDetails", portselp->details, indent+4);
-				}
-			}
-		}
-		break;
-	default:
-		break;
-	}
-	if (callback && detail)
-		(*callback)(elinkp, side, format, indent+4, detail-1);
-	if (format == FORMAT_XML)
-		printf("%*s</Port>\n", indent, "");
-}
-
 void ShowExpectedLinkPortVerifySummaryCallback(ExpectedLink *elinkp, uint8 side,
 									Format_t format, int indent, int detail)
 {
@@ -395,7 +316,7 @@ void ShowExpectedLinkVerifySummary(ExpectedLink *elinkp, Format_t format, int in
 		printf("%*s<Link id=\"0x%016"PRIx64"\">\n", indent, "", (uint64)(uintn)elinkp);
 		indent+=4;
 		if (elinkp->expected_rate)
-	 		XmlPrintRate(elinkp->expected_rate, indent);
+			XmlPrintRate(elinkp->expected_rate, indent);
 		if (elinkp->expected_mtu)
 			XmlPrintDec("MTU",
 				GetBytesFromMtu(elinkp->expected_mtu), indent);
@@ -405,12 +326,12 @@ void ShowExpectedLinkVerifySummary(ExpectedLink *elinkp, Format_t format, int in
 	}
 
 	// From Side (Port 1)
-	ShowExpectedLinkPortSelBriefSummary(elinkp, elinkp->portselp1,
+	ShowExpectedLinkPortSelBriefSummary("", elinkp, elinkp->portselp1,
 					1, ShowExpectedLinkPortVerifySummaryCallback,
 					format, indent, detail);
 
 	// To Side (Port 2)
-	ShowExpectedLinkPortSelBriefSummary(elinkp, elinkp->portselp2,
+	ShowExpectedLinkPortSelBriefSummary("", elinkp, elinkp->portselp2,
 					2, ShowExpectedLinkPortVerifySummaryCallback,
 					format, indent, detail);
 
@@ -508,7 +429,7 @@ void ShowVerifyLinksReport(Point *focus, report_t report, Format_t format, int i
 		fprintf(stderr, "opareport: Warning: %s requested, but only ExternalLinkSummary information provided\n", report_name);
 	}
 
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, (FIND_FLAG_FABRIC|FIND_FLAG_ELINK), format, indent, detail);
 
 	// First we look at all the fabric links
 	switch (format) {
@@ -555,7 +476,12 @@ void ShowVerifyLinksReport(Point *focus, report_t report, Format_t format, int i
 		}
 
 		portp2 = portp1->neighbor;
-		if (! ComparePortPoint(portp1, focus) && ! ComparePortPoint(portp2, focus))
+		// We process only links whose PortData or resolved ExpectedLink
+		// match the focus
+		if (! ( ComparePortPoint(portp1, focus)
+				|| ComparePortPoint(portp2, focus)
+				|| (portp1->elinkp && CompareExpectedLinkPoint(portp1->elinkp, focus))
+				|| (portp2->elinkp && CompareExpectedLinkPoint(portp2->elinkp, focus))))
 			continue;
 		fabric_checked++;
 		// detail=-1 in LinkFabricVerify will suppress its output
@@ -631,11 +557,12 @@ void ShowVerifyLinksReport(Point *focus, report_t report, Format_t format, int i
 			break;
 		}
 
-		if (elinkp->portp1 && ! ComparePortPoint(elinkp->portp1, focus))
+		// We process only elinks whose resolved ports or ExpectedLink
+		// match the focus
+		if (! ( (elinkp->portp1 && ComparePortPoint(elinkp->portp1, focus))
+				|| (elinkp->portp2 && ComparePortPoint(elinkp->portp2, focus))
+				|| CompareExpectedLinkPoint(elinkp, focus)))
 			continue;
-		if (elinkp->portp2 && ! ComparePortPoint(elinkp->portp2, focus))
-			continue;
-		// TBD - how should focus work for unresolved Links?
 		input_checked++;
 		// detail=-1 in ExpectedLinkVerify will suppress its output
 		res = ExpectedLinkVerify(elinkp, 0, format, indent, -1);
@@ -810,7 +737,7 @@ void ShowNodeVerifySummary(NodeData *nodep, Format_t format, int indent, int det
 // show input node verify errors
 void ShowExpectedNodeVerifySummary(ExpectedNode *enodep, Format_t format, int indent, int detail)
 {
-	ShowExpectedNodeBriefSummary(enodep, FALSE, format, indent, detail-1);
+	ShowExpectedNodeBriefSummary("", enodep, "Node", FALSE, format, indent, detail-1);
 	if (format == FORMAT_XML)
 		indent+=4;
 	(void)ExpectedNodeVerify(enodep, format, indent, detail);
@@ -885,7 +812,7 @@ void ShowVerifyNodesReport(Point *focus, uint8 NodeType, Format_t format, int in
 		goto done;
 	}
 
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, (FIND_FLAG_FABRIC|FIND_FLAG_ENODE), format, indent, detail);
 
 	// First we look at all the fabric nodes
 	switch (format) {
@@ -901,7 +828,10 @@ void ShowVerifyNodesReport(Point *focus, uint8 NodeType, Format_t format, int in
 	for (p=QListHead(fabric_listp); p != NULL; p = QListNext(fabric_listp, p)) {
 		NodeData *nodep = (NodeData *)QListObj(p);
 
-		if (! CompareNodePoint(nodep, focus))
+		// We process only nodes whose NodeData or resolved ExpectedNode
+		// match the focus
+		if (! ( CompareNodePoint(nodep, focus)
+				|| (nodep->enodep && CompareExpectedNodePoint(nodep->enodep, focus))))
 			continue;
 		fabric_checked++;
 		// detail=-1 in NodeFabricVerify will suppress its output
@@ -960,9 +890,11 @@ void ShowVerifyNodesReport(Point *focus, uint8 NodeType, Format_t format, int in
 	for (p=QListHead(input_listp); p != NULL; p = QListNext(input_listp, p)) {
 		ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
 
-		if (enodep->nodep && ! CompareNodePoint(enodep->nodep, focus))
+		// We process only enodes whose resolved node or ExpectedNode
+		// match the focus
+		if (! ( (enodep->nodep && CompareNodePoint(enodep->nodep, focus))
+				|| CompareExpectedNodePoint(enodep, focus)))
 			continue;
-		// TBD - how should focus work for unresolved Nodes?
 		input_checked++;
 		// detail=-1 in ExpectedNodeVerify will suppress its output
 		res = ExpectedNodeVerify(enodep, format, indent, -1);
@@ -1163,7 +1095,7 @@ void ShowSMVerifySummary(SMData *smp, Format_t format, int indent, int detail)
 // show input SM verify errors
 void ShowExpectedSMVerifySummary(ExpectedSM *esmp, Format_t format, int indent, int detail)
 {
-	ShowExpectedSMBriefSummary(esmp, FALSE, format, indent, detail-1);
+	ShowExpectedSMBriefSummary("", esmp, "SM", FALSE, format, indent, detail-1);
 	if (format == FORMAT_XML)
 		indent+=4;
 	(void)ExpectedSMVerify(esmp, format, indent, detail);
@@ -1222,7 +1154,7 @@ void ShowVerifySMsReport(Point *focus, Format_t format, int indent, int detail)
 		goto done;
 	}
 
-	ShowPointFocus(focus, format, indent, detail);
+	ShowPointFocus(focus, (FIND_FLAG_FABRIC|FIND_FLAG_ESM), format, indent, detail);
 
 	// First we look at all the fabric SMs
 	switch (format) {
@@ -1238,7 +1170,10 @@ void ShowVerifySMsReport(Point *focus, Format_t format, int indent, int detail)
 	for (ip=cl_qmap_head(&g_Fabric.AllSMs); ip != cl_qmap_end(&g_Fabric.AllSMs); ip = cl_qmap_next(ip)) {
 		SMData *smp = PARENT_STRUCT(ip, SMData, AllSMsEntry);
 
-		if (! CompareSmPoint(smp, focus))
+		// We process only SMs whose SMData or resolved ExpectedSM
+		// match the focus
+		if (! ( CompareSmPoint(smp, focus)
+				|| (smp->esmp && CompareExpectedSMPoint(smp->esmp, focus))))
 			continue;
 		fabric_checked++;
 		// detail=-1 in SMFabricVerify will suppress its output
@@ -1287,9 +1222,11 @@ void ShowVerifySMsReport(Point *focus, Format_t format, int indent, int detail)
 	for (p=QListHead(&g_Fabric.ExpectedSMs); p != NULL; p = QListNext(&g_Fabric.ExpectedSMs, p)) {
 		ExpectedSM *esmp = (ExpectedSM *)QListObj(p);
 
-		if (esmp->smp && ! CompareSmPoint(esmp->smp, focus))
+		// We process only ExpectedSMs whose resolved SMData or ExpectedSM
+		// match the focus
+		if (! ( (esmp->smp && CompareSmPoint(esmp->smp, focus))
+				|| CompareExpectedSMPoint(esmp, focus)))
 			continue;
-		// TBD - how should focus work for unresolved SMs?
 		input_checked++;
 		// detail=-1 in ExpectedSMVerify will suppress its output
 		res = ExpectedSMVerify(esmp, format, indent, -1);

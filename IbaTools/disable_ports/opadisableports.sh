@@ -192,6 +192,7 @@ lookup_guid_by_desc_port()
 	grep "^[^;]*;$portnum;[^;]*;$nodedesc;[^;]*" < $lidmap | while read guid dport type desc lid
 	do
 		echo -n $guid
+		return
 	done
 }
 

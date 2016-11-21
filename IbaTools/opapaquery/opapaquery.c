@@ -1153,7 +1153,7 @@ void usage(void)
 	fprintf(stderr, "    opapaquery -o vfInfo -V Default\n");
 	fprintf(stderr, "    opapaquery -o vfConfig -V Default\n");
 	fprintf(stderr, "    opapaquery -o vfPortCounters -l 1 -P 1 -d 1 -V Default\n");
-	fprintf(stderr, "    opapaquery -o clrVfPortCounters -l 1 -P 1 -s 0xC0000000\n");
+	fprintf(stderr, "    opapaquery -o clrVfPortCounters -l 1 -P 1 -s 0xC0000000 -V Default\n");
 	fprintf(stderr, "        (clears VLXmitData & VLRcvData)\n");
 	fprintf(stderr, "    opapaquery -o vfFocusPorts -V Default -f integrity -S 0 -r 20\n");
 

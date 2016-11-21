@@ -15,8 +15,6 @@ opagentopology
 .PP
 Generates sample topology verification XML. Provides an example of using opaxmlgenerate and is a prototype for customization.
 .PP
-A multi-step process generates the required topology.xml file, as shown in the following figure. You must edit the sample topology.xlsx file, save the edited information in CSV format, and run the opaxlattopology script, which produces the topology.xml file.<fig xmlns:ditaarch="http://dita.oasis-open.org/architecture/2005/" id="FIG\(ul0E36DAF931454B82BC58C555D92B2F03" frame="none" ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\[aq] topic/image \[aq]) and not(parent::*/@conref)]" ishvarinusexpath="./@varref" ishvarassignedxpath="./@varid" class="- topic/fig "><title ishlabelxpath="./title | @alt | @href | @conref | self::*[@id and not(@varid)]/@id" ishlinkxpath="@conref | @href[contains(parent::*/@class,\[aq] topic/image \[aq]) and not(parent::*/@conref)]" class="- topic/title ">Topology Workflow</title></fig>
-.PP
 Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
 .PP
 LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:
