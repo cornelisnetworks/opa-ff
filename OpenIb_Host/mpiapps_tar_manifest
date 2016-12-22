@@ -6,4 +6,4 @@ MpiApps/apps/hpl-2.0
 MpiApps/apps/PMB2.2.1
 MpiApps/apps/imb
 MpiApps/apps/mpi_multibw
-mpi-apps.spec
+OpenIb_Host/mpi-apps.spec

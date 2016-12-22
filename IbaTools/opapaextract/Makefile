@@ -26,61 +26,24 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
 # END_ICS_COPYRIGHT8   ****************************************
-# Makefile for OPENIB_HOST Project
+# Makefile for opapaextract
 
 # Include Make Control Settings
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
-
-# default target for project level makefile is stage
-stage::
-#prepfiles:: prepfiles_global
-clobber:: clobber_global clobber_tools
-ALL:: tools
-
-BSP_SPECIFIC_DIRS=
 
 #=============================================================================#
 # Definitions:
 #-----------------------------------------------------------------------------#
 
 # Name of SubProjects
-DS_SUBPROJECTS	= 
+DS_SUBPROJECTS	=
 # name of executable or downloadable image
-EXECUTABLE		= # OPENIB_FF$(EXE_SUFFIX)
+EXECUTABLE		= $(BUILDDIR)/opapaextract$(EXE_SUFFIX)
 # list of sub directories to build
-
-
-DIRS			= \
-	$(TL_DIR)/Makerules \
-	$(TL_DIR)/IbAccess \
-	$(TL_DIR)/oib_utils \
-	$(TL_DIR)/opa_fe_utils \
-	$(TL_DIR)/Xml \
-	$(TL_DIR)/IbaTools \
-	$(TL_DIR)/MpiApps \
-	$(TL_DIR)/ShmemApps \
-	$(TL_DIR)/Iih \
-	$(TL_DIR)/TestTools \
-	$(TL_DIR)/IbPrint \
-	$(TL_DIR)/Topology \
-	$(TL_DIR)/opasadb \
-	$(TL_DIR)/Md5 \
-	$(TL_DIR)/Lsf \
-	$(TL_DIR)/Moab \
-	$(TL_DIR)/Dsap \
-	$(TL_DIR)/Esm/ib/src/linux/log/usr \
-	$(TL_DIR)/Esm/ib/src/ibaccess \
-	$(TL_DIR)/Esm/ib/src/cs \
-	$(TL_DIR)/Esm/ib/src/config \
-	$(TL_DIR)/Esm/ib/src/linux/startup/fm_config \
-	$(BUILD_TARGET_OS)
-
-				# DISABLED - MWHEINZ
-				#$(TL_DIR)/L8sim
-
-
+DIRS			=
 # C files (.c)
 CFILES			= \
+				opapaextract.c \
 				# Add more c files here
 # C++ files (.cpp)
 CCFILES			= \
@@ -89,7 +52,7 @@ CCFILES			= \
 LFILES			= \
 				# Add more lex files here
 # archive library files (basename, $ARFILES will add MOD_LIB_DIR/prefix and suffix)
-LIBFILES = 
+LIBFILES=
 # Windows Resource Files (.rc)
 RSCFILES		=
 # Windows IDL File (.idl)
@@ -105,27 +68,27 @@ MISC_FILES		=
 SOURCES			= $(CFILES) $(CCFILES) $(LFILES) $(RSCFILES) $(IDLFILE)
 # Source files to include in DSP File
 DSP_SOURCES		= $(INCLUDE_TARGETS) $(SOURCES) $(MISC_FILES) \
-				  $(RSCFILES) $(DEFFILE) $(MAKEFILE) Makerules.project 
+				  $(RSCFILES) $(DEFFILE) $(MAKEFILE)
 # all object files
 OBJECTS			= $(CFILES:.c=$(OBJ_SUFFIX)) $(CCFILES:.cpp=$(OBJ_SUFFIX)) \
 				  $(LFILES:.lex=$(OBJ_SUFFIX))
 RSCOBJECTS		= $(RSCFILES:.rc=$(RES_SUFFIX))
 # targets to build during LIBS phase
 LIB_TARGETS_IMPLIB	=
-LIB_TARGETS_ARLIB	= 
+LIB_TARGETS_ARLIB	= # $(LIB_PREFIX)ResourceTest$(ARLIB_SUFFIX)
 LIB_TARGETS_EXP		= $(LIB_TARGETS_IMPLIB:$(ARLIB_SUFFIX)=$(EXP_SUFFIX))
-LIB_TARGETS_MISC	= 
+LIB_TARGETS_MISC	=
 # targets to build during CMDS phase
-CMD_TARGETS_SHLIB	= 
+CMD_TARGETS_SHLIB	=
 CMD_TARGETS_EXE		= $(EXECUTABLE)
 CMD_TARGETS_MISC	=
 # files to remove during clean phase
-CLEAN_TARGETS_MISC	=  
+CLEAN_TARGETS_MISC	=
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
 # other files to remove during clobber phase
 CLOBBER_TARGETS_MISC=
 # sub-directory to install to within bin
-BIN_SUBDIR		= 
+BIN_SUBDIR		=
 # sub-directory to install to within include
 INCLUDE_SUBDIR		=
 
@@ -147,10 +110,21 @@ INCLUDE_SUBDIR		=
 #				(in addition to LOCALDEPLIBS)
 #LOCAL_LIB_DIRS	= User library directories for libpaths [Empty]
 
-LOCALDEPLIBS = 
+CLOCAL=$(CIBACCESS) $(CPIE)
+LOCAL_INCLUDE_DIRS=
+ifeq "$(IB_STACK)" "IBACCESS"
+LOCALDEPLIBS =$(IBACCESS_USER_LIBS) IbPrint
+LOCALLIBS=
+LOCAL_LIB_DIRS=$(IBACCESS_USER_LIB_DIRS)
+else
+LOCALDEPLIBS =$(IBACCESS_USER_LIBS) oib_utils IbPrint Xml Topology
+LOCALLIBS=$(OPENIB_USER_LIBS)
+LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
+endif
+
 
 # Include Make Rules definitions and rules
-include $(TL_DIR)/$(PROJ_FILE_DIR)/Makerules.project
+include $(TL_DIR)/IbaTools/Makerules.module
 
 #=============================================================================#
 # Overrides:
@@ -178,52 +152,10 @@ include $(TL_DIR)/Makerules/Maketargets.install
 # install for stage phase
 include $(TL_DIR)/Makerules/Maketargets.stage
 STAGE::
-ifeq "$(RELEASE_TAG)" ""
-	echo $(MODULEVERSION) | tr '_-' '..' > $(PROJ_STAGE_DIR)/version
-else
-	echo $(RELEASE_TAG) | tr '_-' '..' > $(PROJ_STAGE_DIR)/version
-endif
-	echo $(BUILD_TARGET) > $(PROJ_STAGE_DIR)/arch
-	echo $(BUILD_TARGET_OS_VENDOR) > $(PROJ_STAGE_DIR)/distro
-	echo $(BUILD_TARGET_OS_VENDOR_VERSION) > $(PROJ_STAGE_DIR)/distro_version
-	echo $(BUILD_TARGET_OS_ID) > $(PROJ_STAGE_DIR)/os_id
-
-# put version number into a file to facilitate rpm construction
-# presently only INSTALL allows dynamic version patch
-prepfiles:: check_env
-ifeq "$(RELEASE_TAG)" ""
-	$(CONVERT_RELEASETAG) $(MODULEVERSION) > $(PROJ_STAGE_DIR)/version
-else
-	$(CONVERT_RELEASETAG) $(RELEASE_TAG) > $(PROJ_STAGE_DIR)/version
-endif
-	cd $(PROJ_STAGE_DIR) && find . -print| $(PREP)
-	cd $(PROJ_STAGE_DIR) && $(PATCH_VERSION) -m % $(RELEASE_TAG) INSTALL
-	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opafastfabric ] || $(PATCH_VERSION) -m % $(RELEASE_TAG) fastfabric/opahostadmin fastfabric/opachassisadmin  fastfabric/opaswitchadmin fastfabric/opafastfabric
-	cd $(PROJ_STAGE_DIR) && $(PATCH_BRAND) -m % "$(BUILD_BRAND)" INSTALL
-	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opafastfabric ] || $(PATCH_BRAND) -m % "$(BUILD_BRAND)" fastfabric/opafastfabric
-
-# OS specific packaging step
-# package builds standard package
-package:
-	cd $(BUILD_TARGET_OS) && $(MAKE) $(MFLAGS) $@
-.PHONY:  package
-
-vars_include: vars_include_global
-
-final_package:
-	cd $(BUILD_TARGET_OS) && $(MAKE) $(MFLAGS) $@
-.PHONY:  final_package
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) $(EXECUTABLE)
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest
-
-tools:
-	mkdir -p $(COMN_LIB_DIRS) $(GLOBAL_SHLIB_DIR)
-	cd $(TL_DIR)/MakeTools && $(MAKE) $(MFLAGS)
-clobber_tools:
-	cd $(TL_DIR)/MakeTools && $(MAKE) $(MFLAGS) clobber
-CLOBBER::
-	rm -f packaged_files dist_files
 
 #=============================================================================#
 

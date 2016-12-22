@@ -594,6 +594,8 @@ proc get_switch_info { ibnode } {
 				set fanaStatus "TooFast"
 			} elseif { [ string equal "$f2" "SLOW"] } {
 				set fanaStatus "TooSlow"
+			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
+				set fanaStatus "NotPresent"
 			} else {
 				set fanaStatus "Unknown"
 			}
@@ -604,6 +606,8 @@ proc get_switch_info { ibnode } {
 				set fanbStatus "TooFast"
 			} elseif { [ string equal "$f2" "SLOW"] } {
 				set fanbStatus "TooSlow"
+			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
+				set fanbStatus "NotPresent"
 			} else {
 				set fanbStatus "Unknown"
 			}
@@ -614,6 +618,8 @@ proc get_switch_info { ibnode } {
 				set fancStatus "TooFast"
 			} elseif { [ string equal "$f2" "SLOW"] } {
 				set fancStatus "TooSlow"
+			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
+				set fancStatus "NotPresent"
 			} else {
 				set fancStatus "Unknown"
 			}
@@ -624,6 +630,8 @@ proc get_switch_info { ibnode } {
 				set fandStatus "TooFast"
 			} elseif { [ string equal "$f2" "SLOW"] } {
 				set fandStatus "TooSlow"
+			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
+				set fandStatus "NotPresent"
 			} else {
 				set fandStatus "Unknown"
 			}
@@ -634,6 +642,8 @@ proc get_switch_info { ibnode } {
 				set faneStatus "TooFast"
 			} elseif { [ string equal "$f2" "SLOW"] } {
 				set faneStatus "TooSlow"
+			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
+				set faneStatus "NotPresent"
 			} else {
 				set faneStatus "Unknown"
 			}
@@ -644,6 +654,8 @@ proc get_switch_info { ibnode } {
 				set fanfStatus "TooFast"
 			} elseif { [ string equal "$f2" "SLOW"] } {
 				set fanfStatus "TooSlow"
+			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
+				set fanfStatus "NotPresent"
 			} else {
 				set fanfStatus "Unknown"
 			}

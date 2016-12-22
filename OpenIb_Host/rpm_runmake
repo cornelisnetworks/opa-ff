@@ -28,19 +28,18 @@
 # 
 # END_ICS_COPYRIGHT8   ****************************************
 ##
-## runmake
+## rpm_runmake
 ## -----------
 ## Perform a full build
-## This is used by the weeklybuild script to provide product specific
-## build operations for product's whose build is more complex
-## than simply a "make stage prepfiles"
-## When this is invoked, the current directory will be the TL_DIR for a
-## full checkout of the product to be built
+## This is used within the FF src rpm by the ff_build.sh script
+## and for in-place builds its invoked directly by runmake
+## When this is invoked, the current directory will be the TL_DIR for
+## the source tree of FF
 ##
 ## Usage:
-##	runmake [-B 'build_config'] [-n]
+##	rpm_runmake [-B 'build_config'] [-n]
 ##			or
-##	runmake -r [-B 'build_config'] [-C] [-n]
+##	rpm_runmake -r [-B 'build_config'] [-C] [-n]
 ##
 ## Arguments:
 ##	-B build_config	release type to build, (debug/release). default is release
@@ -84,12 +83,7 @@ showbuild()
 {
 	# output summary of what we are building to stdout
 	echo "Building for $SUBPRODUCT $BUILD_TARGET $BUILD_CONFIG $(date)..."
-}
-
-fix_version()
-{
-	# translate underscores and dashes to dots
-	echo "$1"|tr '_-' '..'
+	#echo "Building for $BUILD_TARGET_OS $BUILD_TARGET $BUILD_TARGET_OS_VERSION $BUILD_CONFIG $(date)..."
 }
 
 build_config=
@@ -120,7 +114,7 @@ fi
 if [ -z "$build_config" ]
 then
 	# default to release build
-	setrel
+	export BUILD_CONFIG=release
 elif [ "$build_config" != debug -a "$build_config" != release ]
 then
 	Usage
@@ -128,12 +122,7 @@ else
 	export BUILD_CONFIG="$build_config"
 fi
 
-THISDIR=`basename $PWD`
-if [ $THISDIR = OpenIb_Host ]; then
-	export PROJ_FILE_DIR=OpenIb_Host
-else
-	export PROJ_FILE_DIR=.
-fi
+export PROJ_FILE_DIR=OpenIb_Host
 
 if [ "$BUILD_WITH_STACK" = "OPENIB" ]
 then
@@ -142,31 +131,36 @@ then
 		echo "$0: ERROR: OFED stack not found: $OFED_STACK_PREFIX" >&2
 		exit 1
 	fi
+	echo "Stack to build for: $BUILD_WITH_STACK ($OFED_STACK_PREFIX)"
+else
+	echo "Stack to build for: $BUILD_WITH_STACK"
 fi
 
 if [ "$nflag" = "y" ]
 then
-	if [ "$BUILD_WITH_STACK" = "OPENIB" ]
-	then
-		echo "Stack to build for: $BUILD_WITH_STACK ($OFED_STACK_PREFIX)"
-	else
-		echo "Stack to build for: $BUILD_WITH_STACK"
-	fi
 	exit 0
 fi
 
-# The following does not make much sense since we start the build
-# from scratch every time. However, in the future, if we decide
-# to support incremental build, just uncomment it.
-# clean up from prior build when rebuilding
-#if [ "$rerun" = y -a "$Cflag" != y ]
-if [ ]
+# when inplace developer builds have been done, the src rpm will include
+# prebuilt code.  if the -C option is not specified (via FF_BUILD_ARGS)
+# clobber any such files if they are present (indicated by builtinplace file).
+# The clobber allows a src.rpm packaged with an in-place build to still
+# generate normally when -C not given.
+# No need to check rerun flag because for rpms we always start fresh from what
+# was inside the src rpm and for runmake we can test built* to decide if the
+# clobber is needed
+clobber_arg=
+if [ "$Cflag" != y ]
 then
 	# force full rebuild
-	export REMOVE_DEPENDS=yes
-	clobber_arg="clobber clobber_stage clobber_release"
-else
-	clobber_arg=
+	if [ -e $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG \
+		-o  -e $TL_DIR/builtinclude.$PRODUCT.$BUILD_CONFIG \
+		-o  -e $TL_DIR/builtlibs.$PRODUCT.$BUILD_CONFIG \
+		-o  -e $TL_DIR/builtbin.$PRODUCT.$BUILD_CONFIG ]
+	then
+		export REMOVE_DEPENDS=yes
+		clobber_arg="clobber clobber_stage clobber_release"
+	fi
 fi
 rm -rf packaged_files dist_files
 
@@ -182,4 +176,6 @@ echo "=============================================================="
 
 echo "Preping Files for $BUILD_TARGET_OS $BUILD_TARGET $(date)..."
 # run prep and package once at end
+# TBD - move package into outer final_package step and remove from here
+# consolidate Makefile accordingly to have one package target
 make prepfiles package

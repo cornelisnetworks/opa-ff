@@ -20,3 +20,11 @@ MpiApps/apps/latency
 MpiApps/apps/mpi_multibw
 MpiApps/apps/imb
 MpiApps/apps/NPB*
+OpenIb_Host/build.err
+OpenIb_Host/build.res
+OpenIb_Host/build.warn
+OpenIb_Host/dist_files
+OpenIb_Host/FFresults
+OpenIb_Host/packaged_files
+OpenIb_Host/tests_build
+OpenIb_Host/TESTSresults

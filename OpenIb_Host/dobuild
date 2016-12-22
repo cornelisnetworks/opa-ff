@@ -30,10 +30,8 @@
 
 . $ICSBIN/funcs.sh
 
-# This is a user level file to build the basic project
-# One must run target and setver before invoking this script.
-# One should set the targeted stack by uncommenting one of the lines below.
-#export BUILD_WITH_STACK=${BUILD_WITH_STACK:-IBACCESS}
+# Simple script to perform builds for current system/OS type
+
 export BUILD_WITH_STACK=${BUILD_WITH_STACK:-OPENIB}
 
 # A given release will be targeted for a specific version of ofed
@@ -43,29 +41,12 @@ export BUILD_WITH_STACK=${BUILD_WITH_STACK:-OPENIB}
 # defaults in them, and thus you will run with the INSTALLED OFED
 # whatever version that is... 
 #export OFED_STACK_PREFIX=${OFED_STACK_PREFIX:-/usr/ofed-1.5}
-#
 
-# Simple script to perform builds for current system/OS type
 export BUILD_TARGET=${BUILD_TARGET:-`uname -m`}
-case $BUILD_TARGET in
-i?86)	BUILD_TARGET=ia32;;
-esac
 
 export BUILD_CONFIG=${BUILD_CONFIG:-"debug"}
 
 #unset MAKEFLAGS
-
-#. ./setenv
-
-#if [ "$BUILD_TARGET_OS" = "LINUX" ]
-#then
-#	incdir="/lib/modules/$BUILD_TARGET_OS_VERSION/build/include"
-#	if [ ! -e "$incdir" ]
-#	then
-#		echo "Kernel headers not installed to: $incdir" >&2
-#		exit 1
-#	fi
-#fi
 
 set -x
 {

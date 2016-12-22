@@ -186,6 +186,8 @@ STAGE:
 # TBD - make this a script, the wildcards for IntelOPA-Tools.* are a problem
 # packaging should be filelist based, especially for release media which will
 # be a subset of things found in stage
+# TBD - make some of these "make variables" so this can be a simple sequence
+# of commands and make will test exit codes for us
 package:
 	mkdir -p $(RELEASE_DIR)
 	rm -f packaged_files dist_files
@@ -204,15 +206,51 @@ package:
 	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
 	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/dist_files; \
 
-# package some additional items which no longer normally build
-package_full: package
-	cd $(STAGE_DIR) ; \
-	dir=`echo IntelOPA-Tools-FF.*`; \
-	ver=`expr IntelOPA-Tools-FF.* : 'IntelOPA-Tools-FF.\(.*\)$$'`; \
-	cd $(RELEASE_DIR); \
-		export pkg_label="QLogic Inc. FastFabric Tools $$ver for $(BUILD_TARGET) $(BUILD_TARGET_OS_VENDOR)"; \
-		$(TL_DIR)/MakeTools/makeself.sh IntelOPA-Tools-FF.$$ver install-openibtools-$$ver-$(BUILD_TARGET_OS_VENDOR).$(BUILD_TARGET).bin "$$pkg_label" ./INSTALL 2> /dev/null; \
-		$(MAKEISO) -z IntelOPA-Tools-FF.$$ver.iso IntelOPA-Tools-FF.$$ver; \
+# TBD - make some of these "make variables" so this can be a simple sequence
+# of commands and make will test exit codes for us
+final_package:
+	cd $(TL_DIR)/rpmbuild; \
+	dir=`grep 'IntelOPA-Tools-FF\.' BUILD/opa-$${MKRPM_VER}/packaged_files |xargs dirname`; \
+	filename=`grep 'IntelOPA-Tools-FF\.' BUILD/opa-$${MKRPM_VER}/packaged_files|xargs basename`; \
+	subdir=$${filename%.tgz}; \
+	srpmdir=$$dir/$$subdir/SRPMS; \
+	basicdir=`grep 'IntelOPA-Tools\.' BUILD/opa-$${MKRPM_VER}/packaged_files |xargs dirname`; \
+	basic=`grep 'IntelOPA-Tools\.' BUILD/opa-$${MKRPM_VER}/packaged_files|xargs basename`; \
+	arch=`echo $(BUILD_TARGET) | tr '[A-Z]' '[a-z]'`; \
+	rpmdir=$$dir/$$subdir/RPMS/$$arch;\
+	basicrpmdir=$$basicdir/$${basic%.tgz}/RPMS/$$arch;\
+	basicsrpmdir=$$basicdir/$${basic%.tgz}/SRPMS;\
+	mkdir -p $$srpmdir; if [ $$? -ne 0 ]; then echo "ERR""OR: mkdir $$srpmdir."; fi; \
+	mkdir -p $$rpmdir; if [ $$? -ne 0 ]; then echo "ERR""OR: mkdir $$rpmdir."; fi; \
+	rm -rf $${basicdir}/$${basic} $${basicdir}/$${basic%.tgz}; \
+	cp -rp $${dir}/$${subdir} $${basicdir}/$${basic%.tgz}; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $${basicdir}/$${basic%.tgz}."; fi; \
+	cp SRPMS/opa-mpi-apps-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$srpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
+	cp SRPMS/opa-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$srpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
+	cp SRPMS/opa-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$basicsrpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
+	cp RPMS/$$arch/opa-basic-tools-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
+	cp RPMS/$$arch/opa-address-resolution-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
+	cp RPMS/$$arch/opa-fastfabric-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
+	cp RPMS/$$arch/opa-basic-tools-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
+	cp RPMS/$$arch/opa-address-resolution-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
+	cp RPMS/$$arch/opa-mpi-apps-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
+	if [ "$(BUILD_TARGET_OS_VENDOR)" = "redhat" ]; then \
+		cp RPMS/$$arch/opa-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
+	fi; \
+	if [ "$(BUILD_TARGET_OS_VENDOR)" = "SuSE" ]; then \
+		cp RPMS/$$arch/opa-debugsource-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
+		cp RPMS/$$arch/opa-basic-tools-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
+		cp RPMS/$$arch/opa-basic-tools-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/;  \
+		cp RPMS/$$arch/opa-address-resolution-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
+		cp RPMS/$$arch/opa-address-resolution-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/;  \
+		cp RPMS/$$arch/opa-fastfabric-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
+	fi; \
+	cd $$dir; \
+	echo "Packaging $$dir/$$filename ..."; \
+	tar cvfz $$filename $$subdir; \
+	echo "Packaging $$basicdir/$$basic ..."; \
+	tar cvfz $${basic} --exclude mpi --exclude shmem $${basic%.tgz}
+	cp $(TL_DIR)/rpmbuild/BUILD/opa-$${MKRPM_VER}/packaged_files $(TL_DIR)/$(PROJ_FILE_DIR)
+	cp $(TL_DIR)/rpmbuild/BUILD/opa-$${MKRPM_VER}/dist_files $(TL_DIR)/$(PROJ_FILE_DIR)
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

@@ -12,6 +12,7 @@ MakeTemplates
 Md5
 MpiApps
 Moab
+OpenIb_Host
 opasadb
 oib_utils
 opa_fe_utils

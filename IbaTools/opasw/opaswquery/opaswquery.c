@@ -56,6 +56,16 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_PS	2
 #define MIN_PS	1
 
+//defining values for fan tray status
+#define FAN_STATUS_0	0X01
+#define FAN_STATUS_1	0X02
+#define FAN_STATUS_2	0X04
+#define FAN_STATUS_3	0X08
+#define FAN_STATUS_4	0X10
+#define FAN_STATUS_5	0X20
+#define FAN_STATUS_TRAY1 (FAN_STATUS_0 | FAN_STATUS_1 | FAN_STATUS_2)
+#define FAN_STATUS_TRAY2 (FAN_STATUS_3 | FAN_STATUS_4 | FAN_STATUS_5)
+
 // globals
 
 int						g_debugMode = 0;
@@ -159,6 +169,8 @@ int main(int argc, char *argv[])
 	char				portLinkWidthSupportedText[20];
 	char				portLinkSpeedSupportedText[20];
 	struct              oib_port *oib_port_session = NULL;
+
+	uint8				fanStatus;
 
 	// determine how we've been invoked
 	cmdName = strrchr(argv[0], '/');			// Find last '/' in path
@@ -371,6 +383,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 7:
+			fanStatus =0;
 			for (i = 0; i < OPASW_PSOC_FAN_CTRL_TACHS; i++) {
 				status = getFanSpeed(oib_port_session, &path, &mad, sessionID,
 									 (uint32)i, &fanSpeed[i]);
@@ -382,13 +395,42 @@ int main(int argc, char *argv[])
 					printf("Fan speed is %d\n", fanSpeed[i]);
 				}
 				// TODO: stl1baseboard.c only reports the speed itself, not FAST/SLOW/NORMAL, so I can't confirm that this matches
-				if (fanSpeed[i] > MAX_FAN_SPEED) 
-					printf("FAN %d:FAST ", i);
-				else if (fanSpeed[i] < MIN_FAN_SPEED)
-					printf("FAN %d:SLOW ", i);
-				else
-					printf("FAN %d:NORMAL ", i);
+				if (fanSpeed[i] == 0 ) {
+					fanStatus |= 1 << i;
+				}
 			}
+			// print results
+			if ((fanStatus & FAN_STATUS_TRAY1) == FAN_STATUS_TRAY1) {
+				printf("FAN 0:NOTPRESENT ");
+				printf("FAN 1:NOTPRESENT ");
+				printf("FAN 2:NOTPRESENT ");
+			}
+			else {
+				for (i=0; i<3; i++) {
+					if (fanSpeed[i] > MAX_FAN_SPEED)
+						printf("FAN %d:FAST ", i);
+					else if (fanSpeed[i] < MIN_FAN_SPEED)
+						printf("FAN %d:SLOW ", i);
+					else
+						printf("FAN %d:NORMAL ", i);
+				}
+			}// end else TRAY1
+			if ((fanStatus & FAN_STATUS_TRAY2) == FAN_STATUS_TRAY2) {
+				printf("FAN 3:NOTPRESENT ");
+				printf("FAN 4:NOTPRESENT ");
+				printf("FAN 5:NOTPRESENT ");
+			}
+			else {
+				for (i=3; i<6; i++) {
+					if (fanSpeed[i] > MAX_FAN_SPEED)
+						printf("FAN %d:FAST ", i);
+					else if (fanSpeed[i] < MIN_FAN_SPEED)
+						printf("FAN %d:SLOW ", i);
+					else
+						printf("FAN %d:NORMAL ", i);
+				}
+			}// end els TRAY2
+
 			printf("\n");
 			break;
 

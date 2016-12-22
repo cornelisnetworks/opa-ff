@@ -28,17 +28,14 @@
 # 
 # END_ICS_COPYRIGHT8   ****************************************
 
+# This is the main build script used within the FF src rpm's %build operation
+
 # Import the build environment
 . ./build.env
 
 export BUILD_PLATFORM="LINUX"
 
-if [ -d IbAccess ]
-then
-	source MakeTools/funcs-ext.sh
-else
-	source ../MakeTools/funcs-ext.sh
-fi
+source ../MakeTools/funcs-ext.sh
 
 settarget x86_64
 settl
@@ -65,9 +62,9 @@ esac
 export BUILD_CONFIG=${BUILD_CONFIG:-"debug"}
 export PRODUCT=${PRODUCT:-OPENIB_FF}
 
-# for HSM the kernel rev is not important.  We simply use the kernel rev
+# for FF the kernel rev is not important.  We simply use the kernel rev
 # of the running kernel.  While BUILD_TARGET_OS_VERSION is needed by Makerules
-# it will have no impact on what is actually built for HSM
+# it will have no impact on what is actually built for FF
 export BUILD_TARGET_OS_VERSION=${BUILD_TARGET_OS_VERSION:-`uname -r`}
 setver $BUILD_TARGET_OS_VENDOR $BUILD_TARGET_OS_VERSION
 

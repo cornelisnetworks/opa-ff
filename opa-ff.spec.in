@@ -1,6 +1,6 @@
 Name: opa
 Version: 10.4.0.0
-Release: 59%{?dist}
+Release: 92%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
@@ -52,12 +52,9 @@ It also contains the library and tools to access the shared memory database expo
 %setup -q -c
 
 %build
-if [ -d OpenIb_Host ]
-then
-	cd OpenIb_Host && ./ff_build.sh %{_builddir} $FF_BUILD_ARGS
-else
-	./ff_build.sh %{_builddir} $FF_BUILD_ARGS
-fi
+cd OpenIb_Host
+./ff_build.sh %{_builddir} $FF_BUILD_ARGS
+
 
 
 %install

@@ -1,6 +1,6 @@
 Name: opa-mpi-apps
 Version: 10.4.0.0
-Release: 59%{?dist}
+Release: 92%{?dist}
 Summary: Intel MPI benchmarks and Applications used by opa-fast-fabric
 Group: System Environment/Libraries
 License: GPLv2/BSD

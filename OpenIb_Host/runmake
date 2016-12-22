@@ -41,7 +41,7 @@
 ##	runmake [-B 'build_config ...'] [-V 'os_version os_version ...']
 ##			[-f options_file] [-T PROJ_FILE_DIR]
 ##			or
-##	runmake -r [-C] [-B 'build_config ...'] [-V 'os_version os_version ...']
+##	runmake -r [-iCRP] [-B 'build_config ...'] [-V 'os_version os_version ...']
 ##			[-f options_file] [-T PROJ_FILE_DIR]
 ##
 ## Arguments:
@@ -56,7 +56,10 @@
 ##		and quoted
 ##		This should be a version string such as 2.4.7-10
 ##	-r 		rerun the build in place without doing a new checkout/tag
+##	-i 		allow incremental builds by building in-place before package rpm
+##	-R 		skip building rpm, just leave in-place files
 ##	-C		don't clobber prior to the rerun
+##	-P		skip building and packaging IntelOPA-Tests
 ##	-O		Override to build despite kernel install not matching
 ##			Config file
 ##	-n		No build.  Useful for checking build machine
@@ -76,6 +79,58 @@
 ##	If the source code needs to be corrected, a full weeklybuild should be run
 ##	after the correction such that the code is properly tagged.
 ##
+## For developer builds (such as via dobuildall), the following combinations
+## of the -r, -i, -C and -R options are useful
+##	-r  - existing typical mode for developer builds
+##			- clobbers any existing built files
+##			- creates a src.rpm
+##			- builds in rpmbuild tree
+##			- creates a resulting binary rpm
+##			- IntelOpa-Tests built in a tests_build area
+##	-r -C - for opa FF & mpi_apps, behaves same as -r above except skips clobber
+##			- IntelOpa-Tests tree is not cleaned, so will do incremental build
+##	-r -i [-C] - incremental build mode for developer builds
+##			- clobbers any existing built files (unless -C specified)
+##			- builds FF code in place in source tree
+##			- src rpm contains pre-built code
+##			- rpmbuild ends up using pre-built code, creates binary rpm
+##			- IntelOpa-Tests built in a tests_build area using
+##				pre-built code from FF and previous tests build
+##			After this build, the developer may do incremental sub-tree builds
+##			using . OpenIb_Hosts/setenv and then running make in the subtree
+##			For subtree builds in tests_build, also export PROJ_FILE_DIR=.
+##	-r -i [-C] -R - incremental build mode for developer builds with no rpms
+##			- same as -r -i [-C] except no rpms are created
+##	none of these options - typical production build
+##			- expects a fresh un-built checkout of code tree
+##			- creates a src.rpm
+##			- builds in rpmbuild tree
+##			- creates a resulting binary rpm
+##			- IntelOpa-Tests built in a tests_build area
+##	if developer does not need an updated build of IntelOPA-Tests, the -P option
+##	may be used to further speed up the build
+##
+## Recommended developer sequence of builds when debugging new code
+## -r -i -C -R - performs the fastest full build possible, generates no rpms
+##			It is recommended to omit the -C option on 1st build so the tree
+##			is clobbered to be sure you start fresh.
+##			iterate on this and code changes until the basic build works
+##			and syntax errors and warnings are all resolved
+##			For unit tests only needing a few binaries, they can also be
+##			directly tested.
+##			If IntelOPA-Tests is not needed also use -P option
+##			after initial attempt, if compile errors are limited to a subtree:
+##				create a new bash shell, use . ./OpenIb_Host/setenv and then
+##				iterate on make in the subtree and code changes until compiles
+## -r -i -C - performs a build to generate rpms
+##			install the rpms and continue testing
+##			if focused on a few executables,:
+##				create a new bash shell, use . ./OpenIb_Host/setenv and then
+##				iterate on make in the subtree and code changes and test of
+##				the individual binary until works properly
+## -r 		- perform a full build and generate rpms
+##			install the rpms, confirm clean build, proper install and function
+##
 ##	Since weeklybuild and target commands always set BUILD_CONFIG, this
 ##	script ignores BUILD_CONFIG.  As such the BuildOptions file
 ##	or the -B argument completely control BUILD_CONFIG for this product.
@@ -94,15 +149,9 @@ Usage()
 	echo "Usage: runmake [-B 'build_config ...'] [-V 'os_version os_version ...']" >&2
  	echo "               [-f options_file] [-T PROJ_FILE_DIR]" >&2
 	echo "            OR" >&2
-	echo "       runmake -r [-C] [-B 'build_config ...'] [-V 'os_version os_version ...']" >&2
+	echo "       runmake -r [-iCRP] [-B 'build_config ...'] [-V 'os_version os_version ...']" >&2
  	echo "               [-f options_file] [-T PROJ_FILE_DIR]" >&2
 	exit 2
-}
-
-showbuild()
-{
-	# output summary of what we are building to stdout
-	echo "Building for $BUILD_TARGET_OS $BUILD_TARGET $BUILD_TARGET_OS_VERSION $BUILD_CONFIG $(date)..."
 }
 
 get_option()
@@ -147,6 +196,7 @@ setbuildconfig()
 	fi
 }
 
+# TBD - dead code, this and -O flag are not used
 setosversion()
 {
 	# determine appropriate default os version(s)
@@ -184,9 +234,12 @@ Bflag=n
 Vflag=n
 fflag=n
 nflag=n
+inplace=n
+rpm=y
+buildtests=y
 build_options=
-proj_file_dir=
-while getopts f:B:V:rCOnT: param
+proj_file_dir=OpenIb_Host
+while getopts f:B:V:riRPCOnT: param
 do
 	case $param in
 	V)
@@ -202,6 +255,12 @@ do
 		rerun=y;;
 	C)
 		Cflag=y;;
+	i)
+		inplace=y;;
+	R)
+		rpm=n;;
+	P)
+		buildtests=n;;
 	O)
 		Oflag=y;;
 	n)
@@ -266,9 +325,7 @@ elif [ "$SUBPRODUCT" = "OPEN12200" ]
 then
 	echo "ERROR: OPEN12200 build no longer supported for OPENIB_HOST" >&2
 	exit 1
-fi
-
-if [ "$SUBPRODUCT" = "MCLX" ]
+elif [ "$SUBPRODUCT" = "MCLX" ]
 then
 	export BUILD_BRAND="Mercury Computer Systems, Inc."
 fi
@@ -289,16 +346,16 @@ echo "---------------------------------------"
 showenv
 echo "---------------------------------------"
 
-# for FastFabric the kernel rev is not important.  We simply use the kernel rev
+# the kernel rev is not important.  We simply use the kernel rev
 # of the running kernel.  While BUILD_TARGET_OS_VERSION is needed by Makerules
-# it will have no impact on what is actually built for FastFabric
+# it will have no impact on what is actually built
 export BUILD_TARGET_OS_VERSION=${BUILD_TARGET_OS_VERSION:-`uname -r`}
 setver $BUILD_TARGET_OS_VENDOR $BUILD_TARGET_OS_VERSION
 
 if [ -z "$build_configs" ]
 then
 	# default to release build
-	setrel
+	export BUILD_CONFIG=release
 elif [ "$build_configs" != debug -a "$build_configs" != release ]
 then
 	Usage
@@ -306,11 +363,8 @@ else
 	export BUILD_CONFIG="$build_configs"
 fi
 
-# determine the correct default OS version(s) if any
-#setosversion
 export PROJ_FILE_DIR=$proj_file_dir
 echo "Using PROJ_FILE_DIR=$PROJ_FILE_DIR"
-
 
 if [ -z "$build_configs" ]
 then
@@ -329,11 +383,10 @@ then
 	echo "$0: ERROR: OFED stack not found: $OFED_STACK_PREFIX" >&2
 	exit 1
 fi
+echo "Building for OFED: $OFED_STACK_PREFIX" >&2
 
 if [ "$nflag" = "y" ]
 then
-	#echo "Kernels to build: $os_versions"
-	echo "Building for OFED: $OFED_STACK_PREFIX" >&2
 	exit 0
 fi
 
@@ -347,68 +400,76 @@ else
 	export RPM_VER=`echo $MODULEVERSION|cut -d"." -f1-4`
 	export RPM_REL=`echo $MODULEVERSION.999.999.999.999|cut -d"." -f5`
 fi
-	export MKRPM_VER=$RPM_VER
-	export MKRPM_REL=$RPM_REL`rpm --eval %{?dist}`
+export MKRPM_VER=$RPM_VER
+export MKRPM_REL=$RPM_REL`rpm --eval %{?dist}`
 
-if [ "$BUILD_TARGET_OS" != "VXWORKS" ]
+# even if building rpms, clobber to cleanup any previous in-place builds
+# so they don't end up inside the src.rpm when not wanted
+# clean up from prior build when rebuilding
+if [ "$rerun" = y -a "$Cflag" != y ]
 then
-	rpmbuild_dir=$PWD/rpmbuild
+	# force full rebuild
+	# this clobber is only necessary if we have ever built inplace
+	# otherwise each rpm build will get a fresh workplace for its build
+	# so to save some time, only do the clobber if needed
+	for build_config in $build_configs
+	do
+		export BUILD_CONFIG=$build_config
+		#if [ -e $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG \
+		#	-o  -e $TL_DIR/builtinclude.$PRODUCT.$BUILD_CONFIG \
+		#	-o  -e $TL_DIR/builtlibs.$PRODUCT.$BUILD_CONFIG \
+		#	-o  -e $TL_DIR/builtbin.$PRODUCT.$BUILD_CONFIG ]
+		#then
+			export REMOVE_DEPENDS=yes
+			make clobber clobber_stage clobber_release
+			rm -f $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG
+		#fi
+	done
+fi
+clobber_arg=
 
+rm -rf $TL_DIR/$PROJ_FILE_DIR/packaged_files $TL_DIR/$PROJ_FILE_DIR/dist_files
+
+args=
+if [ "$inplace" = y ]
+then
+	echo "Building $build_configs for allkernels for $BUILD_TARGET_OS $BUILD_TARGET ..."
+	echo "==============================================================================="
+	for build_config in $build_configs
+	do
+		# setup environment using BUILD_CONFIG
+		export BUILD_CONFIG=$build_config
+
+		#for os_version in $os_versions
+		#do
+			#setver $BUILD_TARGET_OS_VENDOR $os_version
+			echo > $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG
+			./rpm_runmake -r -C -B $BUILD_CONFIG
+		#done
+	done
+	args="-r -C"	# we pre-built, so skip clobber in rpmbuild
+fi
+
+if [ "$BUILD_TARGET_OS" != "VXWORKS" -a "$rpm" = y ]
+then
 	echo "# Adjust the environment variables if necessary" > build.env
 	echo "export PRODUCT=${PRODUCT:-OPENIB_FF}" >> build.env
 	echo "export RELEASE_TAG=${RELEASE_TAG}" >> build.env
 	echo "export BUILD_CONFIG=\${BUILD_CONFIG:-\"${BUILD_CONFIG}\"}" >> build.env
 	echo "export BUILD_WITH_STACK=${BUILD_WITH_STACK}" >> build.env
+	echo "export MODULEVERSION=${MODULEVERSION}" >> build.env
 
 	./package_script.sh $args
 
-	if [ `basename $PWD` = OpenIb_Host ]; then
-		export PROJ_FILE_DIR=OpenIb_Host
-		rpmbuild_dir=$TL_DIR/rpmbuild
-	fi
 	make final_package
-	cp $rpmbuild_dir/BUILD/opa-${RPM_VER}/packaged_files .
-	cp $rpmbuild_dir/BUILD/opa-${RPM_VER}/dist_files . 
-
-	./build_tests.sh
-
-	exit 0
 fi
 
-# clean up from prior build when rebuilding
-if [ "$rerun" = y -a "$Cflag" != y ]
+if [ "$BUILD_TARGET_OS" != "VXWORKS" -a "$buildtests" = y ]
 then
-	# force full rebuild
-	export REMOVE_DEPENDS=yes
-	clobber_arg="clobber clobber_stage clobber_release"
-else
-	clobber_arg=
+	echo "Building IntelOPA-Tests $build_configs for allkernels for $BUILD_TARGET_OS $BUILD_TARGET ..."
+	echo "==============================================================================="
+	./build_tests.sh $args
+	echo "Done IntelOPA-Tests $BUILD_TARGET_OS $BUILD_TARGET allkernels $(date)"
+	echo "==============================================================================="
 fi
-rm -rf $TL_DIR/packaged_files $TL_DIR/dist_files
-
-# export DATE for use by prep so all files get same date/time stamp
-DATE=${DATE:-"`date +'%m/%d/%y %H:%M'`"}
-
-echo "Building $build_configs for $os_versions for $BUILD_TARGET_OS $BUILD_TARGET ..."
-echo "==============================================================================="
-for build_config in $build_configs
-do
-	# setup environment using BUILD_CONFIG
-	export BUILD_CONFIG=$build_config
-
-	#for os_version in $os_versions
-	#do
-		#setver $BUILD_TARGET_OS_VENDOR $os_version
-		showbuild
-		make $clobber_arg stage
-		# adjusted so release notes don't report kernel OS Versions
-		#echo "Done $BUILD_TARGET_OS $BUILD_TARGET $BUILD_TARGET_OS_VERSION $(date)"
-		echo "Done $BUILD_TARGET_OS $BUILD_TARGET allkernels $(date)"
-		echo "==============================================================================="
-		# next build will clobber first
-		clobber_arg=clobber
-	#done
-done
-echo "Preping Files for $BUILD_TARGET_OS $BUILD_TARGET $(date)..."
-# run prep and package once at end
-make prepfiles package
+exit 0
