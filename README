@@ -4,7 +4,7 @@ OPA tools and Fast Fabric
 * To build the RPM and SRPM:
 
   1. mkdir -p $HOME/rpmbuild/{SOURCES,RPMS,SRPMS}
-  2. ./update_opa-ff.spec opa-ff.spec.in opa-ff.spec
+  2. ./update_opa-ff.spec.sh opa-ff.spec.in opa-ff.spec
   3. tar czf $HOME/rpmbuild/SOURCES/opa.tgz --exclude-vcs .
   4. rpmbuild -ba ./opa-ff.spec
 
