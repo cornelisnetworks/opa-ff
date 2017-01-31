@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2016, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -30,50 +30,50 @@
 
 #[ICS VERSION STRING: unknown]
 
-set -x
-{
-
-export FF_BUILD_ARGS=$*
-
-#Will need updated module version.
-echo "export MODULEVERSION=${MODULEVERSION}" >> build.env
-
-BASE_DIR=`pwd`
-FILES_TO_TAR="-T tar_manifest_secondary"
-
-# TODO can this be removed for cvsgitall1?
-if [ `basename $(pwd)` != "OPENIB_FF" ]
+if [ ! -f /etc/os-release ]
 then
-	BASE_DIR=`readlink -f $(pwd)/..`
-	FILES_TO_TAR="OpenIb_Host"
+	echo No such file /etc/os-release
+	echo Pleae contact Intel support
+	exit 1
 fi
 
-FILES_TO_TAR=$FILES_TO_TAR" -T tar_manifest_primary"
-MPIAPPS_FILES_TO_TAR="-T mpiapps_tar_manifest" 
+id=$(grep ^ID= /etc/os-release | cut -f2 -d\")
+versionid=$(grep ^VERSION_ID= /etc/os-release | cut -f2 -d\")
 
-RPMDIR="$BASE_DIR/rpmbuild"
-#rm -rf $RPMDIR
-mkdir -p $RPMDIR/{BUILD,SPECS,BUILDROOT,SOURCES,RPMS,SRPMS}
+from=$1
+to=$2
 
-cp opa.spec.in opa.spec
-sed -i "s/__RPM_VERSION/$RPM_VER/g" opa.spec
-sed -i "s/__RPM_RELEASE/$RPM_REL%{?dist}/g" opa.spec
-./update_opa_spec.sh
+if [ "$from" = "" -o "$to" = "" ]
+then
+	echo "Usage: update_opa-ff_spec.sh spec-in-file spec-file"
+	exit 1
+fi
 
-cp mpi-apps.spec.in mpi-apps.spec
-sed -i "s/__RPM_VERSION/$RPM_VER/g" mpi-apps.spec
-sed -i "s/__RPM_RELEASE/$RPM_REL%{?dist}/g" mpi-apps.spec
+if [ "$from" != "$to" ]
+then
+	cp $from $to
+fi
 
-tar czf $RPMDIR/SOURCES/opa.tgz -C $BASE_DIR $FILES_TO_TAR --exclude-vcs --ignore-case --exclude="./rpmbuild" -X tar_excludes
-tar czf $RPMDIR/SOURCES/opa-mpi-apps.tgz -C $BASE_DIR $MPIAPPS_FILES_TO_TAR --exclude-vcs --ignore-case
+if [ "$id" = "rhel" ]
+then
+	sed -i "s/__RPM_REQ/expect%{?_isa}, tcl%{?_isa}/g" $to
+	sed -i "s/__RPM_RQ2/atlas/g" $to
+	sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" $to
+	sed -i "/__RPM_DEBUG/,+1d" $to
+fi
 
-mv opa.spec $RPMDIR/SPECS/
-mv mpi-apps.spec $RPMDIR/SPECS/
-cd $RPMDIR
-}
-set +x
-	
-rpmbuild -ba --define "_topdir $RPMDIR" SPECS/opa.spec
-rpmbuild -ba --define "_topdir $RPMDIR" SPECS/mpi-apps.spec
+if [ "$id" = "sles" ]
+then
+	st=$(echo "$versionid >= 11.1" | bc)
+	if [ $st = 1 ]
+	then
+		sed -i "s/__RPM_DEBUG/%debug_package/g" $to
+	else
+		sed -i "/__RPM_DEBUG/,+1d" $to
+	fi
+	sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1/g" $to
+	sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" $to
+	sed -i "/__RPM_RQ2/,+1d" $to
+fi
 
-
+exit 0
