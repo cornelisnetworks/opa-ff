@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opashowallports 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opashowallports 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opashowallports
 
@@ -41,11 +41,11 @@ Performs operation against chassis. Default = host.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file containing the list of hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file containing the list of hosts in cluster. Default is /etc/opa/hosts file.
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-Specifies the file containing the list of chassis in cluster. Default is /etc/sysconfig/opa/chassis file.
+Specifies the file containing the list of chassis in cluster. Default is /etc/opa/chassis file.
 .TP 10
 -h \fIhosts\fR 
 .NL

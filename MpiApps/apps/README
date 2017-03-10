@@ -35,7 +35,7 @@ mpi-selector" for details on those commmands).
 To use mpi-selector with these scripts, add this line to your .bashrc
 file:
 
-source /usr/lib/opa/src/mpi_apps/get_selected_mpi.sh
+source /usr/src/opa/mpi_apps/get_selected_mpi.sh
 
 
 
@@ -67,7 +67,7 @@ to run the bandwith test, simply type:
 # ./run_bw
 
 The scripts log the output of the MPI programs to the 
-/usr/lib/opa/src/mpi_apps/logs directory.
+/usr/src/opa/mpi_apps/logs directory.
 
 
 

@@ -54,29 +54,29 @@ export MPI_CMD_ARGS=
 
 # These 3 lines select a Virtual Fabric by name and configure PKEY, SL, MTU
 # opagetvf_func "-d 'Compute'" MV2_DEFAULT_PKEY MV2_DEFAULT_SERVICE_LEVEL MTU
-# export MPI_CMD_ARGS="-genv MV2_DEFAULT_PKEY $MV2_DEFAULT_PKEY -genv MV2_DEFAULT_SERVICE_LEVEL $MV2_DEFAULT_SERVICE_LEVEL -genv PSM_PKEY $MV2_DEFAULT_PKEY -genv HFI_SL $MV2_DEFAULT_SERVICE_LEVEL"
-# [ -n "$MTU" ] && export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$MTU -genv PSM_MTU $MTU"
+# export MPI_CMD_ARGS="-genv MV2_DEFAULT_PKEY $MV2_DEFAULT_PKEY -genv MV2_DEFAULT_SERVICE_LEVEL $MV2_DEFAULT_SERVICE_LEVEL -genv PSM2_PKEY $MV2_DEFAULT_PKEY -genv HFI_SL $MV2_DEFAULT_SERVICE_LEVEL"
+# [ -n "$MTU" ] && export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$MTU -genv PSM2_MTU $MTU"
 
 # These 3 lines select a Virtual Fabric by ServiceId and configure PKEY, SL, MTU
 # opagetvf_func "-S '0x1000117500000000'" MV2_DEFAULT_PKEY MV2_DEFAULT_SERVICE_LEVEL MTU
-# export MPI_CMD_ARGS="-genv MV2_DEFAULT_PKEY $MV2_DEFAULT_PKEY -genv MV2_DEFAULT_SERVICE_LEVEL $MV2_DEFAULT_SERVICE_LEVEL -genv PSM_PKEY $MV2_DEFAULT_PKEY -genv HFI_SL $MV2_DEFAULT_SERVICE_LEVEL"
-# [ -n "$MTU" ] && export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$MTU -genv PSM_MTU $MTU"
+# export MPI_CMD_ARGS="-genv MV2_DEFAULT_PKEY $MV2_DEFAULT_PKEY -genv MV2_DEFAULT_SERVICE_LEVEL $MV2_DEFAULT_SERVICE_LEVEL -genv PSM2_PKEY $MV2_DEFAULT_PKEY -genv HFI_SL $MV2_DEFAULT_SERVICE_LEVEL"
+# [ -n "$MTU" ] && export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$MTU -genv PSM2_MTU $MTU"
 
 # These line selects a Virtual Fabric by ServiceId and uses dist_sa
 # to directly fetch the PathRecord at job startup.  This approach is
 # required when using Mesh/Torus fabrics and optional for other topologies.
 # This mechanism is only supported for Intel HFIs when using PSM (-hfi MPIs)
-#export MPI_CMD_ARGS="-genv PSM_PATH_REC opp -genv PSM_IB_SERVICE_ID 0x1000117500000000"
+#export MPI_CMD_ARGS="-genv PSM2_PATH_REC opp -genv PSM2_IB_SERVICE_ID 0x1000117500000000"
 
 # This line can enable dispersive routing. The following choices are allowed:
 #    adaptive, static_src, static_dest, static_base
 # If LMC is enabled in the SM, adaptive will automatically be used.
 # This mechanism is only supported for Intel HFIs when using PSM (-hfi MPIs)
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM_PATH_SELECTION adaptive"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_PATH_SELECTION adaptive"
 
 # Use this to explicitly specify a pkey (for virtual fabrics)
 #pkey=0x8002
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_PKEY $pkey -genv PSM_PKEY $pkey"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_PKEY $pkey -genv PSM2_PKEY $pkey"
 
 # Use this to explicitly specify a service level (for virtual fabrics)
 #sl=0
@@ -84,7 +84,7 @@ export MPI_CMD_ARGS=
 
 # Use this to explicitly specify a MTU (for virtual fabrics)
 #mtu=4096
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$mtu -genv PSM_MTU $mtu"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv MV2_DEFAULT_MTU IBV_MTU_$mtu -genv PSM2_MTU $mtu"
 
 # Use this to enable core dumps
 # (in addition ulimit and /etc/security/limits must enable core dumps too)
@@ -100,11 +100,12 @@ export MPI_CMD_ARGS=
 # Normally Congestion Control is completely configured in the SM config file.
 # However, if desired, the fabric interface settings can be overridden for
 # the given job.
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM_DISABLE_CCA 0 -genv PSM_CCTI_INCREMENT 1 -genv PSM_CCTI_TIMER 1 -genv PSM_CCTI_TABLE_SIZE 128"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_DISABLE_CCA 0 -genv PSM2_CCTI_INCREMENT 1 -genv PSM2_CCTI_TIMER 1 -genv PSM2_CCTI_TABLE_SIZE 128"
 
 # These values can enable and control PSM Multi-Rail
+# In most cases the default automatic selections will be sufficient.
 # The sample shown is for Dual HFI server with port 1 per HFI connected
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM_MULTIRAIL 1 -genv PSM_MULTIRAIL_MAP 0:1,1:1"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_MULTIRAIL 1 -genv PSM2_MULTIRAIL_MAP 0:1,1:1"
 
 # This can be enabled to force benchmarks to run on selected CPU cores
 #export MPI_TASKSET="${MPI_TASKSET:- -c 1-7}"

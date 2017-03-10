@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opachassisanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opachassisanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opachassisanalysis
 
@@ -53,7 +53,7 @@ Specifies the top-level directory for saving baseline and history of failed chec
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-Specifies the file with the chassis in the cluster. Default = /etc/sysconfig/opa/chassis 
+Specifies the file with the chassis in the cluster. Default = /etc/opa/chassis 
 .TP 10
 -H \[aq]\fIchassis\fR\[aq] 
 .NL
@@ -94,7 +94,7 @@ Single command to issue to check overall health during analysis, unused if -b op
 .PP
 Intel recommends that you set up SSH keys for chassis (see
 \fIopasetupssh\fR
-). If SSH keys are not set up, all chassis must be configured with the same admin password and the password must be kept in the /etc/sysconfig/opa/opafastfabric.conf configuration file.
+). If SSH keys are not set up, all chassis must be configured with the same admin password and the password must be kept in the /etc/opa/opafastfabric.conf configuration file.
 .PP
 The default set of \fBFF\(ulCHASSIS\(ulCMDS\fR is:showInventory fwVersion showNodeDesc timeZoneConf timeDSTConf
 .br

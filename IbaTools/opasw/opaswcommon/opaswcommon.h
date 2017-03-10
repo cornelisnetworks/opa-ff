@@ -128,6 +128,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STL_PRR_I2C_LOCATION_ADDR				8
 
 #define STL_PRR_BOARD_ID_MASK					0x1f
+#define STL_BOARD_ID_EDGE48						0x04
+#define STL_BOARD_ID_EDGE24						0x05
+#define STL_BOARD_ID_HPE7K						0x09
 
 #define I2C_OPASW_PRI_EEPROM_ADDR				(uint32)0x8000A000
 #define I2C_OPASW_SEC_EEPROM_ADDR				(uint32)0x8001A000
@@ -368,7 +371,7 @@ void releaseSession(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionI
 FSTATUS getFwVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *fwVersion);
 FSTATUS getVPDInfo(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 module, vpd_fruInfo_rec_t *vpdInfo);
 FSTATUS getFanSpeed(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 fanNum, uint32 *fanSpeed);
-FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH]);
+FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH], uint8 BoardID);
 FSTATUS getPowerSupplyStatus(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 psNum, uint32 *psStatus);
 FSTATUS getAsicVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 *asicVersion);
 FSTATUS getMaxQsfpTemperatureMaxDetected(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, boolean *maxDetected);

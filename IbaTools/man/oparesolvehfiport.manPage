@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH oparesolvehfiport 1 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH oparesolvehfiport 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 oparesolvehfiport
 

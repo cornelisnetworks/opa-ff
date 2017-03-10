@@ -254,7 +254,7 @@ File: TestTools/mpi.exp" case_setup case_cleanup {
 
 		if { ! [ info exists env(FF_MPI_APPS_DIR) ]
 			|| [ string equal "$env(FF_MPI_APPS_DIR)" "" ] } {
-			set env(FF_MPI_APPS_DIR) "/usr/lib/opa/src/mpi_apps"
+			set env(FF_MPI_APPS_DIR) "/usr/src/opa/mpi_apps"
 		}
 
 		if { [ catch {unix_cmd 20 0 "test -e $env(FF_MPI_APPS_DIR)/mvapich2.params"} res ] == 0 } {
@@ -470,7 +470,7 @@ proc test_case_run_intelmpi_mpi_app { transport host host_list timelimit dir mpi
 		
 		if { ! [ info exists env(FF_MPI_APPS_DIR) ]
 			|| [ string equal "$env(FF_MPI_APPS_DIR)" "" ] } {
-			set env(FF_MPI_APPS_DIR) "/usr/lib/opa/src/mpi_apps"
+			set env(FF_MPI_APPS_DIR) "/usr/src/opa/mpi_apps"
 		}
 
 		if { [ catch {unix_cmd 20 0 "test -e $env(FF_MPI_APPS_DIR)/intelmpi.params"} res ] == 0 } {
@@ -606,7 +606,7 @@ File: TestTools/mpi.exp" case_setup case_cleanup {
 	
 		if { ! [ info exists env(FF_MPI_APPS_DIR) ]
 			|| [ string equal "$env(FF_MPI_APPS_DIR)" "" ] } {
-			set env(FF_MPI_APPS_DIR) "/usr/lib/opa/src/mpi_apps"
+			set env(FF_MPI_APPS_DIR) "/usr/src/opa/mpi_apps"
 		}
 
 		if { [ catch {unix_cmd 20 0 "test -e $env(FF_MPI_APPS_DIR)/openmpi.params"} res ] == 0 } {

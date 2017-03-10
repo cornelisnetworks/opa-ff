@@ -188,7 +188,7 @@ uint32_t g_gotvfName	= 0;
 char g_groupName[STL_PM_GROUPNAMELEN];
 char g_vfName[MAX_VFABRIC_NAME];
 void *g_SDHandle = NULL;
-char* g_sslParmsFile = "/etc/sysconfig/opa/opaff.xml";
+char* g_sslParmsFile = "/etc/opa/opaff.xml";
 sslParametersData_t g_sslParmsData;
 
 static char g_ipAdr[48] = {DEFAULT_HOST};
@@ -371,12 +371,12 @@ void Usage(void)
 	fprintf(stderr, "           utilhigh           - sorted by utilization - highest first\n");                  // STL_PA_SELECT_UTIL_HIGH         0x00020001
 	fprintf(stderr, "           pktrate            - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_UTIL_PKTS_HIGH    0x00020082
 	fprintf(stderr, "           utillow            - sorted by utilization - lowest first\n");                   // STL_PA_SELECT_UTIL_LOW          0x00020101
-	fprintf(stderr, "           integrity          - sorted by integrity errors - highest first\n");             // STL_PA_SELECT_ERR_INTEG         0x00030001
-	fprintf(stderr, "           congestion         - sorted by congestion errors - highest first\n");            // STL_PA_SELECT_ERR_CONG          0x00030002
-	fprintf(stderr, "           smacongestion      - sorted by sma congestion errors - highest first\n");        // STL_PA_SELECT_ERR_SMA_CONG      0x00030003
-	fprintf(stderr, "           bubbles            - sorted by bubble errors - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
-	fprintf(stderr, "           security           - sorted by security errors - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
-	fprintf(stderr, "           routing            - sorted by routing errors - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
+	fprintf(stderr, "           integrity          - sorted by integrity category - highest first\n");             // STL_PA_SELECT_ERR_INTEG         0x00030001
+	fprintf(stderr, "           congestion         - sorted by congestion category - highest first\n");            // STL_PA_SELECT_ERR_CONG          0x00030002
+	fprintf(stderr, "           smacongestion      - sorted by sma congestion category - highest first\n");        // STL_PA_SELECT_ERR_SMA_CONG      0x00030003
+	fprintf(stderr, "           bubbles            - sorted by bubble category - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
+	fprintf(stderr, "           security           - sorted by security category - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
+	fprintf(stderr, "           routing            - sorted by routing category - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
 	fprintf(stderr, "    -w/--start                - start of window for focus ports - should always\n");
 	fprintf(stderr, "                                be 0 for now\n");
 	fprintf(stderr, "    -r/--range                - size of window for focus ports list\n");

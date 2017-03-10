@@ -89,8 +89,8 @@
 XML_GENERATE="/usr/sbin/opaxmlgenerate"
 XML_INDENT="/usr/sbin/opaxmlindent"
 FILE_TOPOLOGY_LINKS="topology.csv"
-FILE_LINKSUM_SWD06="/usr/lib/opa/samples/linksum_swd06.csv"
-FILE_LINKSUM_SWD24="/usr/lib/opa/samples/linksum_swd24.csv"
+FILE_LINKSUM_SWD06="/usr/share/opa/samples/linksum_swd06.csv"
+FILE_LINKSUM_SWD24="/usr/share/opa/samples/linksum_swd24.csv"
 FILE_LINKSUM="linksum.csv"
 FILE_LINKSUM_NOCORE="linksum_nocore.csv"
 FILE_LINKSUM_NOCABLE="linksum_nocable.csv"
@@ -132,7 +132,7 @@ HOST_HFI_REGEX="^[a-zA-Z0-9_-]+[ ]hfi[1-9]_[0-9]+$"
 CAT_CHAR=" "
 
 MTU_SW_SW=${MTU_SW_SW:-10240}
-MTU_SW_HFI=${MTU_SW_HFI:-8192}
+MTU_SW_HFI=${MTU_SW_HFI:-10240}
 
 ## Global variables:
 hfi_suffix="hfi1_0"
@@ -295,7 +295,7 @@ usage_full()
   echo "      MTU_SW_SW  -  If set will override default MTU on switch<->switch links" >&2
   echo "                       (default is 10240)" >&2
   echo "      MTU_SW_HFI -  If set will override default MTU on switch<->HFI links" >&2
-  echo "                       (default is 8192)" >&2
+  echo "                       (default is 10240)" >&2
   exit $1
 }  # End of usage_full()
 
@@ -740,6 +740,13 @@ do
 
   s)
     hfi_suffix=$OPTARG
+    if [[ "$hfi_suffix" =~ $HFI_SUFFIX_REGEX ]] ; then
+        hfiNum=`echo "$hfi_suffix" | cut -d "_" -f2`
+        FILE_TOPOLOGY_OUT="topology.$((hfiNum+1)):0.xml"
+    else
+        echo "opaxlattopology: Invalid Argument for -s option, should be like hfi1_0"
+        exit 1
+    fi
     ;;
   
   *)
@@ -802,7 +809,6 @@ do
     fi
     if [ -z "${t[4]}" -a "$t_srctype" == "$NODETYPE_HFI" ]
       then
-      hfi+=("$t_srcname")
       t_srcport=1
     else
       t_srcport=`trim_trailing_whitespace "${t[4]}"`
@@ -824,7 +830,6 @@ do
     fi
     if [ -z "${t[10]}" -a "$t_dsttype" == "$NODETYPE_HFI" ]
       then
-      hfi+=("$t_dstname")
       t_dstport=1
     else
       t_dstport=`trim_trailing_whitespace "${t[10]}"`
@@ -875,6 +880,7 @@ do
           nodedesc1="${nodedesc1}${CAT_CHAR}${hfi_suffix}"
         fi
         nodedetails1="${t_srcname2}"
+        hfi+=("$t_srcname")
       else
         nodedetails1=""
         if [ "$t_srctype" != "$NODETYPE_EDGE" ]
@@ -900,6 +906,27 @@ do
       if [ -z "$nodetype2" ]
       then
         echo "NodeType of "$t_dsttype" is not valid. Valid types are FI, SW, CL, CS" >&2
+        usage_full "2"
+      fi
+
+      # Validate sources and destinations
+      if [ "$t_dsttype" == "$NODETYPE_HFI" ]; then
+        echo "Error: HFIs cannot be destination nodes" >&2
+        usage_full "2"
+      fi
+
+      if [[ "$t_srctype" == "$NODETYPE_HFI" ]] && [[ "$t_dsttype" != "$NODETYPE_EDGE" && "$t_dsttype" != "$NODETYPE_LEAF" ]]; then
+          echo "Error: HFIs must connect to Edge/Leaf Switches" >&2
+          usage_full "2"
+      fi
+
+      if [ "$t_srctype" != "$NODETYPE_LEAF" ] && [ "$t_dsttype" == "$NODETYPE_SPINE" ]; then
+        echo "Error: Only Leaf switches can connect to Spine switches" >&2
+        usage_full "2"
+      fi
+
+      if [ "$t_srctype" == "$NODETYPE_SPINE" ]; then
+        echo "Error: Spine switches cannot be source nodes" >&2
         usage_full "2"
       fi
 

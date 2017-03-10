@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacaptureall 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacaptureall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacaptureall
 
@@ -54,12 +54,12 @@ Performs capture upload in parallel on all host/chassis. For a host capture, thi
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file with hosts in cluster. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file with hosts in cluster. Default is /etc/opa/hosts file.
 
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-Specifies the file containing a list of chassis in the cluster. Default is /etc/sysconfig/opa/chassis file.
+Specifies the file containing a list of chassis in the cluster. Default is /etc/opa/chassis file.
 
 .TP 10
 -h \fIhosts\fR 
@@ -74,7 +74,7 @@ Specifies the list of chassis on which to perform a capture.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-Specifies the file with list of local HFI ports used to access fabric(s) for switch access, default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabric(s) for switch access, default is /etc/opa/ports file.
 
 .TP 10
 -d \fIupload\(uldir\fR 
@@ -135,7 +135,7 @@ In addition to \fIFabric+FDB\fR, also obtains opaallanalysis results. If opaalla
 Detail levels 2-4 can be used when fabric operational problems occur. If the problem is node-specific, detail level 1 should be sufficient. Detail levels 2-4 require an operational Intel(R) Omni-Path Fabric Suite Fabric Manager. Typically your support representative requests a given detail level. If a given detail level takes excessively long or fails to be gathered, try a lower detail level.
 
 .PP
-For detail levels 2-4, the additional information is only gathered on the node running the opacaptureall command. The information is gathered for every fabric specified in the /etc/sysconfig/opa/ports file.
+For detail levels 2-4, the additional information is only gathered on the node running the opacaptureall command. The information is gathered for every fabric specified in the /etc/opa/ports file.
 
 .TP 10
  \fIfile\fR 
@@ -153,7 +153,7 @@ opacaptureall
 .br
 # Creates a hostcapture directory in upload\(uldir/hostname/ for each host in
 .br
-/etc/sysconfig/opa/hosts file, then creates hostcapture.all.tgz.
+/etc/opa/hosts file, then creates hostcapture.all.tgz.
 .br
 
 .br
@@ -161,7 +161,7 @@ opacaptureall mycapture
 .br
 # Creates a mycapture directory in upload\(uldir/hostname/ for each host in
 .br
-/etc/sysconfig/opa/hosts file, then creates mycapture.all.tgz.
+/etc/opa/hosts file, then creates mycapture.all.tgz.
 .br
 
 .br
@@ -176,7 +176,7 @@ opacaptureall -C
 .br
 # Creates a chassiscapture file in upload\(uldir/chassisname/ for each chassis
 .br
-in /etc/sysconfig/opa/chassis file, then creates chassiscapture.all.tgz.
+in /etc/opa/chassis file, then creates chassiscapture.all.tgz.
 .br
 
 .br
@@ -184,7 +184,7 @@ opacaptureall -C mycapture
 .br
 # Creates a mycapture.tgz file in upload\(uldir/chassisname/ for each chassis
 .br
-in /etc/sysconfig/opa/chassis file, then creates mycapture.all.tgz.
+in /etc/opa/chassis file, then creates mycapture.all.tgz.
 .br
 
 .br

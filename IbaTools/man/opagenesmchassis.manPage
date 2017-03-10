@@ -1,19 +1,19 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagenesmchassis 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagenesmchassis 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagenesmchassis
 
 .NL
 
 .PP
-Generates a list of chassis IPv4 and IPv6 addresses and/or TCP names where the Embedded Subnet Manager (ESM) is running, in a format acceptable for inclusion in the /etc/sysconfig/opa/esm\(ulchassis file. This tool uses opagenchassis output to iterate through all the chassis.
+Generates a list of chassis IPv4 and IPv6 addresses and/or TCP names where the Embedded Subnet Manager (ESM) is running, in a format acceptable for inclusion in the /etc/opa/esm\(ulchassis file. This tool uses opagenchassis output to iterate through all the chassis.
 .SH Syntax 
 .NL
 opagenesmchassis [-u user] [-S] [-t \fIportsfile\fR] [-p \fIports\fR]
@@ -37,7 +37,7 @@ Securely prompts for password for user on chassis.
 .NL
 Specifies the file with a list of local HFI ports used to access fabric(s) for analysis.
 .br
-Default is /etc/sysconfig/opa/ports 
+Default is /etc/opa/ports 
 .TP 10
 -p \fIports\fR 
 .NL

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapingall 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapingall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapingall
 
@@ -44,14 +44,14 @@ Pings all hosts/chassis in parallel.
 .NL
 Specifies the file with hosts in cluster.
 .br
-Default is /etc/sysconfig/opa/hosts.
+Default is /etc/opa/hosts.
 
 .TP 10
 -F \fIchassisfile\fR 
 .NL
 Specifies the file with chassis in cluster.
 .br
-Default is /etc/sysconfig/opa/chassis.
+Default is /etc/opa/chassis.
 
 .TP 10
 -h hosts 

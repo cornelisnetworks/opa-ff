@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaesmanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaesmanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaesmanalysis
 
@@ -53,7 +53,7 @@ Specifies the top-level directory for saving baseline and history of failed chec
 .TP 10
 -G \fIesmchassisfile\fR 
 .NL
-Specifies the file with SM chassis in the cluster. Default = /etc/sysconfig/opa/esm\(ulchassis 
+Specifies the file with SM chassis in the cluster. Default = /etc/opa/esm\(ulchassis 
 .TP 10
 -E \[aq]\fIesmchassis\fR\[aq] 
 .NL

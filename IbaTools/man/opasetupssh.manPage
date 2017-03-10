@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasetupssh 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opasetupssh 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opasetupssh
 
@@ -49,14 +49,14 @@ Performs connect only (to enter in local hosts, known hosts). When run in this m
 .NL
 Specifies the file with hosts in cluster.
 .br
-Default is /etc/sysconfig/opa/hosts file.
+Default is /etc/opa/hosts file.
 
 .TP 10
 -F \fIchassisfile\fR 
 .NL
 Specifies the file with chassis in cluster.
 .br
-Default is /etc/sysconfig/opa/chassis file.
+Default is /etc/opa/chassis file.
 
 .TP 10
 -h \fIhosts\fR 
@@ -201,7 +201,7 @@ Typically after completing the installation and booting of Intel(R) Omni-Path Fa
 .PP
 When run without the -U option, opasetupssh performs the initial key exchange and enables password-less SSH and SCP. For chassis, the key exchange uses SCP and the chassis CLI. During this command you log into the chassis using the configured mechanism for chassis login.
 .PP
-The preferred way to use opasetupssh for initial key exchange is with the -S option. This requires that all chassis are configured with the same password for admin. In this mode, you are prompted for the password once and then the \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR and SCP are used in conjunction with that password to complete the setup for the chassis. This method also avoids the need to setup the chassis password in /etc/sysconfig/opa/opafastfabric.conf (which can be a security risk).
+The preferred way to use opasetupssh for initial key exchange is with the -S option. This requires that all chassis are configured with the same password for admin. In this mode, you are prompted for the password once and then the \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR and SCP are used in conjunction with that password to complete the setup for the chassis. This method also avoids the need to setup the chassis password in /etc/opa/opafastfabric.conf (which can be a security risk).
 .PP
 For chassis, the -i option is ignored.
 .SH Chassis Refreshing Local Systems Known Hosts

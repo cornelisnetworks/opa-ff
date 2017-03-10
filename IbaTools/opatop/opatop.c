@@ -69,7 +69,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *   2             SCREEN_GROUP_BW_STATS
  *   3                 SCREEN_GROUP_FOCUS
  *   4                     SCREEN_PORT_STATS
- *   2             SCREEN_GROUP_ERR_STATS
+ *   2             SCREEN_GROUP_CTG_STATS
  *   3                 SCREEN_GROUP_FOCUS
  *   4                     SCREEN_PORT_STATS
  *   2             SCREEN_GROUP_CONFIG
@@ -83,7 +83,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *	 4                     SCREEN_PORT_STATS
  *	 2             SCREEN_VF_CONFIG
  *	 3                 SCREEN_PORT_STATS
- *	 2             SCREEN_VF_ERR_STATS
+ *	 2             SCREEN_VF_CTG_STATS
  *	 3                 SCREEN_VF_FOCUS
  *	 4                     SCREEN_PORT_STATS
  */
@@ -92,7 +92,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SCREEN_IMAGE_INFO         2
 #define SCREEN_GROUP_INFO_SELECT  3
 #define SCREEN_GROUP_BW_STATS     4
-#define SCREEN_GROUP_ERR_STATS    5
+#define SCREEN_GROUP_CTG_STATS    5
 #define SCREEN_GROUP_CONFIG       6
 #define SCREEN_GROUP_FOCUS        7
 #define SCREEN_PORT_STATS         8
@@ -100,7 +100,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SCREEN_VF_INFO_SELECT     10
 #define SCREEN_VF_BW_STATS        11
 #define SCREEN_VF_CONFIG          12
-#define SCREEN_VF_ERR_STATS       13
+#define SCREEN_VF_CTG_STATS       13
 #define SCREEN_VF_FOCUS           14
 
 #define VERBOSE_NONE		0				// No verbose output
@@ -116,7 +116,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUG_IMGID			0x0002			// Display single image ID
 #define DEBUG_IMGID_2		0x0004			// Display multiple image IDs
 
-#define PATH_HELP		"/usr/lib/opa/help/"
+#define PATH_HELP		"/usr/share/opa/help/"
 // if help files are bigger than this, extra will be silently ignored
 #define MAX_HELP_CHARS	10240	// allows for about 10x growth
 #define MAX_HELP_LINES	999	// allows for about 10x growth
@@ -760,9 +760,9 @@ void DisplayScreen(void)
 			DisplayScreen_Help(PATH_HELP "opatop_group_info_sel.hlp");
 		else if (tb_menu[n_level_menu] == SCREEN_GROUP_BW_STATS)
 			DisplayScreen_Help(PATH_HELP "opatop_group_bw.hlp");
-		else if (tb_menu[n_level_menu] == SCREEN_GROUP_ERR_STATS ||
-				 tb_menu[n_level_menu] == SCREEN_VF_ERR_STATS)
-			DisplayScreen_Help(PATH_HELP "opatop_group_err.hlp");
+		else if (tb_menu[n_level_menu] == SCREEN_GROUP_CTG_STATS ||
+				 tb_menu[n_level_menu] == SCREEN_VF_CTG_STATS)
+			DisplayScreen_Help(PATH_HELP "opatop_group_ctg.hlp");
 		else if (tb_menu[n_level_menu] == SCREEN_GROUP_CONFIG)
 			DisplayScreen_Help(PATH_HELP "opatop_group_config.hlp");
 		else if (tb_menu[n_level_menu] == SCREEN_GROUP_FOCUS ||
@@ -840,7 +840,7 @@ void DisplayScreen(void)
 
 	if ( (tb_menu[n_level_menu] == SCREEN_GROUP_INFO_SELECT) ||
 			(tb_menu[n_level_menu] == SCREEN_GROUP_BW_STATS) ||
-			(tb_menu[n_level_menu] == SCREEN_GROUP_ERR_STATS) ||
+			(tb_menu[n_level_menu] == SCREEN_GROUP_CTG_STATS) ||
 			(tb_menu[n_level_menu] == SCREEN_GROUP_FOCUS) )
 	{
 		if ( fb_valid_group_list && ( pa_client_get_group_info( g_portHandle, g_imageIdQuery,
@@ -853,7 +853,7 @@ void DisplayScreen(void)
 
 	if (tb_menu[n_level_menu] == SCREEN_VF_INFO_SELECT || 
 		tb_menu[n_level_menu] == SCREEN_VF_BW_STATS ||
-		tb_menu[n_level_menu] == SCREEN_VF_ERR_STATS ||
+		tb_menu[n_level_menu] == SCREEN_VF_CTG_STATS ||
 		tb_menu[n_level_menu] == SCREEN_VF_FOCUS)  {
 		if (fb_valid_VF_list) {
 			QUERY query = {0};
@@ -1188,7 +1188,7 @@ void DisplayScreen(void)
 			printf( " Max Clients:  %7u\n", g_PmConfig.maxClients);
 			printf( " Total Images: %7u   Freeze Images: %-7u   Freeze Lease: %u seconds\n",
 				g_PmConfig.sizeHistory, g_PmConfig.sizeFreeze, g_PmConfig.lease );
-			printf( " Err Thresholds: Integrity:      %4u  Congestion:    %4u\n",
+			printf( " Ctg Thresholds: Integrity:      %4u  Congestion:    %4u\n",
 				g_PmConfig.errorThresholds.integrityErrors,
 				g_PmConfig.errorThresholds.congestionErrors );
 			printf( "                 SmaCongest:     %4u  Bubble:        %4u\n",
@@ -1328,8 +1328,8 @@ void DisplayScreen(void)
 					StlStaticRateToText(g_PmGroupInfo.maxExternalRate));
 			else
 				printf( "Ext NumPorts: %u\n", g_PmGroupInfo.numExternalPorts);
-			printf("  Group BW Summary (W)\n");
-			printf("  Group Err Summary (E)\n");
+			printf("  Group Performance (P)\n");
+			printf("  Group Statistics (S)\n");
 			printf("  Group Config (C)\n");
 			ct_lines -= 6;
 		}
@@ -1353,8 +1353,8 @@ void DisplayScreen(void)
 			else
 				printf( "NumPorts: %u\n", g_PmVFInfo.numPorts);
 
-			printf("  Group BW Summary (W)\n");
-			printf("  Group Err Summary (E)\n");
+			printf("  Group Performance (P)\n");
+			printf("  Group Statistics (S)\n");
 			printf("  Group Config (C)\n");
 			ct_lines -= 5;
 		} else {
@@ -1381,7 +1381,7 @@ void DisplayScreen(void)
 				p_select = "Util-High";
 			}
 
-			printf( "Group BW Stats: %-.44s%s  Criteria: %s",
+			printf( "Group BW Util: %-.44s%s  Criteria: %s",
 				g_PmGroupInfo.groupName,
 				strgetlaststr(g_PmGroupInfo.groupName, 44),
  				p_select );
@@ -1438,7 +1438,7 @@ void DisplayScreen(void)
 
 		else
 		{
-		   	printf("Group BW Stats: GROUP INFO NOT AVAILABLE\n");
+			printf("Group BW Util: GROUP INFO NOT AVAILABLE\n");
 			ct_lines -= 1;
 		}
 
@@ -1460,7 +1460,7 @@ void DisplayScreen(void)
 				p_select = "Util-High";
 			}
 
-			printf("VF BW Stats: %-.45s%s Criteria: %s",
+			printf("VF BW Util: %-.45s%s Criteria: %s",
 				g_PmVFInfo.vfName,
 				strgetlaststr(g_PmVFInfo.vfName, 45),
  				p_select);
@@ -1490,13 +1490,13 @@ void DisplayScreen(void)
 			    ct_lines-=1;
 			}
 		} else {
-			printf("VF BW Stats: VF INFO NOT AVAILABLE\n");
+			printf("VF BW Util: VF INFO NOT AVAILABLE\n");
 			ct_lines -= 1;
 		}
 
 		break;
 
-	case SCREEN_GROUP_ERR_STATS:
+	case SCREEN_GROUP_CTG_STATS:
 		if (fb_valid_group_info)
 		{
 			if (g_select == PACLIENT_SEL_ERR_CONGST)
@@ -1520,7 +1520,7 @@ void DisplayScreen(void)
 				p_select = "Integ";
 			}
 	
-			printf( "Group Err Stats: %-.43s%s Criteria: %s",
+			printf( "Group Ctg Stats: %-.43s%s Criteria: %s",
 				g_PmGroupInfo.groupName,
 				strgetlaststr(g_PmGroupInfo.groupName, 43),
  				p_select );
@@ -1550,13 +1550,13 @@ void DisplayScreen(void)
 
 		else
 		{
-		   	printf("Group Err Stats: GROUP INFO NOT AVAILABLE\n");
+		   	printf("Group Ctg Stats: GROUP INFO NOT AVAILABLE\n");
 			ct_lines -= 1;
 		}
 
 		break;
 
-	case SCREEN_VF_ERR_STATS:
+	case SCREEN_VF_CTG_STATS:
 		if (fb_valid_VF_info) {
 			if (g_select == PACLIENT_SEL_ERR_CONGST)
 				p_select = "Congst";
@@ -1579,7 +1579,7 @@ void DisplayScreen(void)
 				p_select = "Integ";
 			}
 
-			printf("VF Err Stats: %-.46s%s Criteria: %s",
+			printf("VF Ctg Stats: %-.46s%s Criteria: %s",
 				g_PmVFInfo.vfName,
 				strgetlaststr(g_PmVFInfo.vfName, 46),
 				p_select);
@@ -1598,7 +1598,7 @@ void DisplayScreen(void)
 				ct_lines -= DisplayScreen_Err(&g_PmVFInfo.internalErrors, "Int");
 			}
 		} else {
-			printf("VF Err Stats: VF INFO NOT AVAILABLE\n");
+			printf("VF Ctg Stats: VF INFO NOT AVAILABLE\n");
 			ct_lines -= 1;
 		}
 
@@ -2259,13 +2259,13 @@ void DisplayScreen(void)
 	
 	case SCREEN_VF_INFO_SELECT:
 	case SCREEN_GROUP_INFO_SELECT:
-		printf("W E C:\n");
+		printf("P S C:\n");
 		break;
 
-	case SCREEN_VF_ERR_STATS:
+	case SCREEN_VF_CTG_STATS:
 	case SCREEN_VF_BW_STATS:
 	case SCREEN_GROUP_BW_STATS:
-	case SCREEN_GROUP_ERR_STATS:
+	case SCREEN_GROUP_CTG_STATS:
 		if (g_expr_funct)
 		{
 			printf("cC I0-n N0-n Detail:\n");
@@ -2733,15 +2733,15 @@ int main(int argc, char ** argv)
 
 				if (tb_menu[n_level_menu] == SCREEN_GROUP_INFO_SELECT)
 				{
-					if (toupper(n_cmd) == 'W')
+					if (toupper(n_cmd) == 'P')
 					{
 						tb_menu[++n_level_menu] = SCREEN_GROUP_BW_STATS;
 						g_select = PACLIENT_SEL_UTIL_HIGH;
 					}
 
-					else if (toupper(n_cmd) == 'E')
+					else if (toupper(n_cmd) == 'S')
 					{
-						tb_menu[++n_level_menu] = SCREEN_GROUP_ERR_STATS;
+						tb_menu[++n_level_menu] = SCREEN_GROUP_CTG_STATS;
 						g_select = PACLIENT_SEL_ERR_INTEG;	
 					}
 	
@@ -2753,11 +2753,11 @@ int main(int argc, char ** argv)
 				}
 
 				if (tb_menu[n_level_menu] == SCREEN_VF_INFO_SELECT) {
-					if (toupper(n_cmd) == 'W') {
+					if (toupper(n_cmd) == 'P') {
 						tb_menu[++n_level_menu] = SCREEN_VF_BW_STATS;
 						g_select = PACLIENT_SEL_UTIL_HIGH;
-					} else if (toupper(n_cmd) == 'E') {
-						tb_menu[++n_level_menu] = SCREEN_VF_ERR_STATS;
+					} else if (toupper(n_cmd) == 'S') {
+						tb_menu[++n_level_menu] = SCREEN_VF_CTG_STATS;
 						g_select = PACLIENT_SEL_UTIL_HIGH;
 					} else if (toupper(n_cmd) == 'C') {
 						g_scroll = 0;
@@ -2766,7 +2766,7 @@ int main(int argc, char ** argv)
 				}
 	
 				if ( (tb_menu[n_level_menu] == SCREEN_GROUP_BW_STATS) ||
-						(tb_menu[n_level_menu] == SCREEN_GROUP_ERR_STATS) ||
+						(tb_menu[n_level_menu] == SCREEN_GROUP_CTG_STATS) ||
 						(tb_menu[n_level_menu] == SCREEN_GROUP_FOCUS) )
 				{
 					if ((toupper(n_cmd) == 'I') && g_expr_funct)
@@ -2781,7 +2781,7 @@ int main(int argc, char ** argv)
 				}
 
 				if (tb_menu[n_level_menu] == SCREEN_VF_BW_STATS ||
-					tb_menu[n_level_menu] == SCREEN_VF_ERR_STATS ||
+					tb_menu[n_level_menu] == SCREEN_VF_CTG_STATS ||
 					tb_menu[n_level_menu] == SCREEN_VF_FOCUS) {
 					/*
 					if ((toupper(n_cmd) == 'I') && g_expr_funct)
@@ -2830,8 +2830,8 @@ int main(int argc, char ** argv)
 					}
 				}
 	
-				if (tb_menu[n_level_menu] == SCREEN_GROUP_ERR_STATS ||
-					tb_menu[n_level_menu] == SCREEN_VF_ERR_STATS )
+				if (tb_menu[n_level_menu] == SCREEN_GROUP_CTG_STATS ||
+					tb_menu[n_level_menu] == SCREEN_VF_CTG_STATS )
 				{
 					if (n_cmd == 'c')
 					{
@@ -2970,7 +2970,7 @@ int main(int argc, char ** argv)
 				}
 
 				if ( (tb_menu[n_level_menu] == SCREEN_GROUP_BW_STATS) ||
-						(tb_menu[n_level_menu] == SCREEN_GROUP_ERR_STATS) )
+						(tb_menu[n_level_menu] == SCREEN_GROUP_CTG_STATS) )
 				{
 					if (toupper(n_cmd) == 'D')
 					{
@@ -2980,7 +2980,7 @@ int main(int argc, char ** argv)
 				}
 				
 				if ( (tb_menu[n_level_menu] == SCREEN_VF_BW_STATS) ||
-					 (tb_menu[n_level_menu] == SCREEN_VF_ERR_STATS) ) {
+					 (tb_menu[n_level_menu] == SCREEN_VF_CTG_STATS) ) {
 				
 					if (toupper(n_cmd) == 'D') {
 						g_scroll = 0;

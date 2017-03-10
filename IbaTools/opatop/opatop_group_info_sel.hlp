@@ -3,7 +3,7 @@ The Group Info Select screen allows the user to select the type of group
 information to display for the group selected in the summary screen.  The
 following input commands are accepted and lead to the corresponding screen.
 
-  W: Performance (Bandwidth Utilization) statistics
-  E: Error statistics
+  P: Performance (Bandwidth Utilization)
+  S: Category statistics
   C: Group configuration (port list)
 

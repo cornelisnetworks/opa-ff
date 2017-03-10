@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapaquery
 
@@ -275,7 +275,7 @@ Sorted by utilization - lowest first.
 
 .sp
 integrity 
-Sorted by integrity errors - highest first.
+Sorted by integrity category - highest first.
 
 .RE
 
@@ -284,7 +284,7 @@ Sorted by integrity errors - highest first.
 
 .sp
 congestion 
-Sorted by congestion errors - highest first.
+Sorted by congestion category - highest first.
 
 .RE
 
@@ -293,7 +293,7 @@ Sorted by congestion errors - highest first.
 
 .sp
 smacongestion 
-Sorted by SMA congestion errors - highest first.
+Sorted by SMA congestion category - highest first.
 
 .RE
 
@@ -302,7 +302,7 @@ Sorted by SMA congestion errors - highest first.
 
 .sp
 bubbles 
-Sorted by bubble errors - highest first.
+Sorted by bubble category - highest first.
 .RE
 
 .RS
@@ -310,7 +310,7 @@ Sorted by bubble errors - highest first.
 
 .sp
 security 
-Sorted by security errors - highest first.
+Sorted by security category - highest first.
 
 .RE
 
@@ -319,7 +319,7 @@ Sorted by security errors - highest first.
 
 .sp
 routing 
-Sorted by routing errors - highest first.
+Sorted by routing category - highest first.
 
 .RE
 
@@ -551,6 +551,6 @@ opapaquery -o vfPortCounters -l 1 -P 1 -d 1 -V Default
 .br
 opapaquery -o clrVfPortCounters -l 1 -P 1 -s 0xC0000000
 .br
-   #clears VLXmitData & VLRcvData
+-V Default    #clears VLXmitData & VLRcvData
 .br
 opapaquery -o vfFocusPorts -V Default -f 0x00030001 -S 0 -r 20

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opauploadall 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opauploadall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opauploadall
 
@@ -45,7 +45,7 @@ Performs recursive upload of directories.
 .NL
 Specifies the file with hosts in cluster.
 .br
-Default is /etc/sysconfig/opa/hosts file.
+Default is /etc/opa/hosts file.
 .TP 10
 -h \fIhosts\fR 
 .NL

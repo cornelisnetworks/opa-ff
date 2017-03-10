@@ -1411,13 +1411,9 @@ proc check_esm_config { config_file } {
 	if { [ file exists "/usr/lib/opa/fm_tools/config_check" ] } {
 		set env(IFS_FM_BASE) ""
 		set tooldir "/usr/lib/opa/fm_tools"
-	} elseif { [ file exists "/etc/sysconfig/opa/opafm.info" ] } {
-		log_message {bash -c '. /etc/sysconfig/opa/opafm.info >/dev/null 2>&1; echo $IFS_FM_BASE'}
-		set env(IFS_FM_BASE) [exec bash -c {. /etc/sysconfig/opa/opafm.info >/dev/null 2>&1; echo $IFS_FM_BASE} ]
-		set tooldir "$env(IFS_FM_BASE)/etc"
 	} else {
-		set env(IFS_FM_BASE) "/usr/local/iview"
-		set tooldir "$env(IFS_FM_BASE)/etc"
+		set env(IFS_FM_BASE) "/usr/lib/opa-fm"
+		set tooldir "$env(IFS_FM_BASE)/bin"
 	}
 	log_message "IFS_FM_BASE=$env(IFS_FM_BASE)"
 	log_message "tooldir=$tooldir"

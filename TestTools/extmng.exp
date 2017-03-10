@@ -572,8 +572,8 @@ proc get_switch_info { ibnode } {
 			append_punchlist "$ibnode" "Not an Intel OPA device"
 			fail_test "$ibnode: Not an Intel OPA device"
 		}
-		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\"" } { "Error"}]
-		regexp {([VPD]+) "([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)"} $out p1 p2 p3 partnumber p4 hwversion
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\"" } { "Error"}]
+		regexp {([VPD]+) "([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)"} $out p1 p2 p3 partnumber p4 hwversion
 
         # use verbose option so we have a predictable output to expect
 		if { [ string equal "$brand" "OPA"] } {
@@ -596,6 +596,8 @@ proc get_switch_info { ibnode } {
 				set fanaStatus "TooSlow"
 			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
 				set fanaStatus "NotPresent"
+			} elseif { [ string equal "$f2" "NOTAVAIL"] } {
+				set fanaStatus "NotAvail"
 			} else {
 				set fanaStatus "Unknown"
 			}
@@ -608,6 +610,8 @@ proc get_switch_info { ibnode } {
 				set fanbStatus "TooSlow"
 			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
 				set fanbStatus "NotPresent"
+			} elseif { [ string equal "$f2" "NOTAVAIL"] } {
+				set fanbStatus "NotAvail"
 			} else {
 				set fanbStatus "Unknown"
 			}
@@ -620,6 +624,8 @@ proc get_switch_info { ibnode } {
 				set fancStatus "TooSlow"
 			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
 				set fancStatus "NotPresent"
+			} elseif { [ string equal "$f2" "NOTAVAIL"] } {
+				set fancStatus "NotAvail"
 			} else {
 				set fancStatus "Unknown"
 			}
@@ -632,6 +638,8 @@ proc get_switch_info { ibnode } {
 				set fandStatus "TooSlow"
 			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
 				set fandStatus "NotPresent"
+			} elseif { [ string equal "$f2" "NOTAVAIL"] } {
+				set fandStatus "NotAvail"
 			} else {
 				set fandStatus "Unknown"
 			}
@@ -644,6 +652,8 @@ proc get_switch_info { ibnode } {
 				set faneStatus "TooSlow"
 			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
 				set faneStatus "NotPresent"
+			} elseif { [ string equal "$f2" "NOTAVAIL"] } {
+				set faneStatus "NotAvail"
 			} else {
 				set faneStatus "Unknown"
 			}
@@ -656,6 +666,8 @@ proc get_switch_info { ibnode } {
 				set fanfStatus "TooSlow"
 			} elseif { [ string equal "$f2" "NOTPRESENT"] } {
 				set fanfStatus "NotPresent"
+			} elseif { [ string equal "$f2" "NOTAVAIL"] } {
+				set fanfStatus "NotAvail"
 			} else {
 				set fanfStatus "Unknown"
 			}
@@ -815,8 +827,8 @@ proc get_switch_hwvpd { ibnode } {
 			append_punchlist "$ibnode" "Not an OPA series device"
 			fail_test "$ibnode: Not an Intel OPA device"
 		}
-		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]+\"" } { "Error" }]
-		regexp {([VPD]+) "([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)","([[:print:]]+)"} $out p1 p2 serialnumber partnumber model hwversion mfgname proddesc mfgid date time
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\"" } { "Error" }]
+		regexp {([VPD]+) "([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)"} $out p1 p2 serialnumber partnumber model hwversion mfgname proddesc mfgid date time
 		local_sh_exit
 
 		# report the results

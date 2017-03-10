@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacabletest 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacabletest 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacabletest
 
@@ -40,12 +40,12 @@ Forces the system to clear hardware error counters. Implies -C.
 .TP 10
 -c \fIfile\fR 
 .NL
-Specifies the error thresholds configuration file. Default is /etc/sysconfig/opa/opamon.si.conf file. Only used if -C or -A specified.
+Specifies the error thresholds configuration file. Default is /etc/opa/opamon.si.conf file. Only used if -C or -A specified.
 
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file with hosts to include in HFI -to-SW test. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file with hosts to include in HFI -to-SW test. Default is /etc/opa/hosts file.
 
 .TP 10
 -h \fIhosts\fR 
@@ -60,7 +60,7 @@ Specifies the number of processes per host for HFI -SW test.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-Specifies the file with list of local HFI ports used to access fabrics when clearing counters. Default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabrics when clearing counters. Default is /etc/opa/ports file.
 
 .TP 10
 -p \fIports\fR 

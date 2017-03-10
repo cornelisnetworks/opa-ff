@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafmconfigdiff 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafmconfigdiff 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafmconfigdiff
 
@@ -47,8 +47,8 @@ Specifies the names of the configuration files to be compared.
 
 .SH Example 
 .NL
-opafmconfigdiff /etc/sysconfig/opafm.xml /usr/lib/opa-fm/etc/opafm.xml
+opafmconfigdiff /etc/opa-fm/opafm.xml /usr/share/opa-fm/opafm.xml
 .br
-opafmconfigdiff -f /etc/sysconfig/opafm.xml /usr/lib/opa-fm/etc/opafm.xml
+opafmconfigdiff -f /etc/opa-fm/opafm.xml /usr/share/opa-fm/opafm.xml
 .br
-opafmconfigdiff -d -uw /etc/sysconfig/opafm.xml /usr/lib/opa-fm/etc/ opafm.xml
+opafmconfigdiff -d -uw /etc/opa-fm/opafm.xml /usr/share/opa-fm/opafm.xml

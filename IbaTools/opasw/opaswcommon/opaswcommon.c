@@ -489,7 +489,7 @@ int ltc2974_L11_to_Celsius(uint16 half16)
 }
 
 FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
-		VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH])
+		VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH], uint8 BoardID)
 {
 	FSTATUS status = FSUCCESS;
 	uint8 ErrorFlags = 0;
@@ -500,19 +500,26 @@ FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
 		uint16 u16;
 	} value;
 
-	{ // LTC2974
-		// It is possible the LTC2974 temp sensor may need to be initilized
+// for GMF modules, LTC2974 may not be there
+
+	if (BoardID == STL_BOARD_ID_HPE7K) {	
+		snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: N/A");
+	}
+	else {
+	 	// LTC2974
+			// It is possible the LTC2974 temp sensor may need to be initilized
 		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
 			I2C_OPASW_LTC2974_TEMP_ADDR, 2, I2C_OPASW_LTC2974_TEMP_OFFSET, &value.u8[0]);
 
 		if (status != FSUCCESS) {
 			//fprintf(stderr, "getTempReadings: Error sending MAD packet to switch to read LTC2974 temp\n");
-			snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: N/A");
+				snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: N/A");
 			ErrorFlags |= (1<<0);
 		} else {
 			snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: %dC", ltc2974_L11_to_Celsius(value.u16));
-		}
+		}	
 	}
+
 	{ // PRR ASIC
 		mgmtFpgaOffset = (I2C_OPASW_MGMT_FPGA_REG_RD << 8) | I2C_OPASW_PRR_ASIC_TEMP_MGMT_FPGA_OFFSET;
 		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
@@ -527,7 +534,7 @@ FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
 		}
 	}
 	{ // CHECK QSFPTemperatureMaxDetected
-	status = getMaxQsfpTemperatureMaxDetected(port, path, mad, sessionID, &maxDetected);
+		status = getMaxQsfpTemperatureMaxDetected(port, path, mad, sessionID, &maxDetected);
 		if (status != FSUCCESS) {
 			fprintf(stderr,"Error: getMaxQsfpTemperatureMaxDetected failed\n");
 			iba_fstatus_msg(status);

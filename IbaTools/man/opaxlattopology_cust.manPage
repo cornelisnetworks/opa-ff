@@ -1,16 +1,21 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxlattopology\(ulcust 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxlattopology\(ulcust 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxlattopology\(ulcust
 
 .NL
+
+.PP
+
+.B NOTE:
+This tool has been deprecated.
 
 .PP
 Customizable script for documenting cluster topology. Provides an alternative to the standard script (see
@@ -116,7 +121,7 @@ The following lists the node type and source/destination.
 .PP
 Host: host \fIN\fR where N is a host number.
 .PP
-Edge Switch: ib \fIN\fR p \fIN\fR where N is a switch/port number.
+Edge Switch: opa \fIN\fR p \fIN\fR where N is a switch/port number.
 .PP
 Core Leaf: C \fIn\fR L \fInnn\fR p \fIN\fR where N/n is a host/switch/port number.
 .PP

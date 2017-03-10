@@ -47,7 +47,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <string.h>
 
-#define MYTAG MAKE_MEM_TAG('o','2', 's', 'l')
+
+#define MYTAG MAKE_MEM_TAG('o','2', 'r', 'm')
 
 #define DBGPRINT(format, args...) \
 	do { if (g_verbose) { fflush(stdout); fprintf(stderr, format, ##args); } } while (0)
@@ -56,6 +57,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	do { if (! g_quiet) { ProgressPrint(newline, format, ##args); }  } while (0)
 
 #define PROGRESS_FREQ 1000
+
+#define MIN_LIST_ITEMS 10	// for neighbor sw and fi DLISTs
 
 // macro to always return a valid pointer for use in %s formats
 #define OPTIONAL_STR(s) (s?s:"")
@@ -94,13 +97,185 @@ typedef struct NameData_s {
 	const char	*suffix;
 } NameData_t;
 
-typedef struct SwitchNameLists_s {
-	cl_qmap_t fi_neighbors;
-	cl_qmap_t sw_neighbors;
-} SwitchNameLists_t;
+// This will be attached to each switch node via ExpectedNode.context 
+typedef struct SwitchLists_s {
+	cl_qmap_t	fiNeighborNames;// filtered list of neighbor FIs NameData_t
+	cl_qmap_t	swNeighborNames;// filtered list of neighbor SWs NameData_t
+	uint8		tier;			// tier in tree of given switch
+								// (distance from FIs)
+	DLIST		swNeighbors;	// list of all neighbor SWs ExpectedNode*
+} SwitchLists_t;
 
 boolean CompareExpectedNodeFocus(ExpectedNode *enodep);
 boolean CompareExpectedLinkFocus(ExpectedLink *elinkp);
+
+// -------------- output of Expected* functions --------------------
+// these next few functions are for error output and debug
+// They allow dumping of the input topology file which was parsed
+// output goes to stderr
+
+// show 1 port selector in link data in brief form
+void ShowExpectedLinkPortSelBriefSummary(ExpectedLink *elinkp, PortSelector *portselp,
+			 uint8 side, int indent, int detail)
+{
+	DEBUG_ASSERT(side == 1 || side == 2);
+	fprintf(stderr, "%*s%4s ", indent, "",
+			(side == 1)?
+				elinkp->expected_rate?
+					StlStaticRateToText(elinkp->expected_rate)
+					:""
+			: "<-> ");
+	if (side == 1 && elinkp->expected_mtu)
+		fprintf(stderr, "%5s ", IbMTUToText(elinkp->expected_mtu));
+	else
+		fprintf(stderr, "     ");
+
+	if (portselp) {
+		if (portselp->NodeGUID)
+			fprintf(stderr, "0x%016"PRIx64, portselp->NodeGUID);
+		else
+			fprintf(stderr, "                  ");
+		if (portselp->gotPortNum)
+			fprintf(stderr, " %3u               ",portselp->PortNum);
+		else if (portselp->PortGUID)
+			fprintf(stderr, " 0x%016"PRIx64, portselp->PortGUID);
+		else
+			fprintf(stderr, "                   ");
+		if (portselp->NodeType)
+			fprintf(stderr, " %s",
+				StlNodeTypeToText(portselp->NodeType));
+		else
+			fprintf(stderr, "   ");
+		if (portselp->NodeDesc)
+			fprintf(stderr, " %.*s\n",
+				NODE_DESCRIPTION_ARRAY_SIZE, portselp->NodeDesc);
+		else
+			fprintf(stderr, "\n");
+		if (detail) {
+			if (portselp->details) {
+				fprintf(stderr, "%*sPortDetails: %s\n", indent+4, "", portselp->details);
+			}
+		}
+	}
+}
+
+
+// show cable information for a link in multi-line format with field headings
+void ShowExpectedLinkSummary(ExpectedLink *elinkp,
+			int indent, int detail)
+{
+	// From Side (Port 1)
+	ShowExpectedLinkPortSelBriefSummary(elinkp, elinkp->portselp1,
+										1, indent, detail);
+	// To Side (Port 2)
+	ShowExpectedLinkPortSelBriefSummary(elinkp, elinkp->portselp2,
+										2, indent, detail);
+	if (elinkp->details) {
+		fprintf(stderr, "%*sLinkDetails: %s\n", indent, "", elinkp->details);
+	}
+	if (elinkp->CableData.length || elinkp->CableData.label
+		|| elinkp->CableData.details) {
+		fprintf(stderr, "%*sCableLabel: %-*s  CableLen: %-*s\n",
+			indent, "",
+			CABLE_LABEL_STRLEN, OPTIONAL_STR(elinkp->CableData.label),
+			CABLE_LENGTH_STRLEN, OPTIONAL_STR(elinkp->CableData.length));
+		fprintf(stderr, "%*sCableDetails: %s\n",
+			indent, "",
+			OPTIONAL_STR(elinkp->CableData.details));
+	}
+}
+
+// Verify links in fabric against specified topology
+void ShowExpectedLinksReport(/*Point *focus,*/ int indent, int detail)
+{
+	LIST_ITEM *p;
+	uint32 input_checked = 0;
+
+	fprintf(stderr, "%*sLinks Topology Expected\n", indent, "");
+
+	fprintf(stderr, "%*sRate MTU  NodeGUID          Port or PortGUID    Type Name\n", indent, "");
+	if (detail && (g_Fabric.flags & FF_CABLEDATA)) {
+		//fprintf(stderr, "%*sPortDetails\n", indent+4, "");
+		//fprintf(stderr, "%*sLinkDetails\n", indent+4, "");
+		fprintf(stderr, "%*sCable: %-*s %-*s\n", indent+4, "",
+						CABLE_LABEL_STRLEN, "CableLabel",
+						CABLE_LENGTH_STRLEN, "CableLen");
+		fprintf(stderr, "%*s%s\n", indent+4, "", "CableDetails");
+	}
+	for (p=QListHead(&g_Fabric.ExpectedLinks); p != NULL; p = QListNext(&g_Fabric.ExpectedLinks, p)) {
+		ExpectedLink *elinkp = (ExpectedLink *)QListObj(p);
+
+		if (! elinkp)
+			continue;
+		if (! CompareExpectedLinkFocus(elinkp))
+				continue;
+		input_checked++;
+		ShowExpectedLinkSummary(elinkp, indent, detail);
+	}
+	if (detail && input_checked)
+		fprintf(stderr, "\n");	// blank line between links
+	fprintf(stderr, "%*s%u of %u Input Links Shown\n", indent, "",
+				input_checked, QListCount(&g_Fabric.ExpectedLinks));
+
+	return;
+}
+
+// output brief summary of an expected IB Node
+void ShowExpectedNodeBriefSummary(ExpectedNode *enodep, int indent, int detail)
+{
+	fprintf(stderr, "%*s", indent, "");
+	if (enodep->NodeGUID)
+		fprintf(stderr, "0x%016"PRIx64, enodep->NodeGUID);
+	else
+		fprintf(stderr, "                  ");
+	if (enodep->NodeType)
+		fprintf(stderr, " %s", StlNodeTypeToText(enodep->NodeType));
+	else
+		fprintf(stderr, "   ");
+	if (enodep->NodeDesc)
+		fprintf(stderr, " %s\n", enodep->NodeDesc);
+	else
+		fprintf(stderr, "\n");
+	if (enodep->details)
+		fprintf(stderr, "%*sNodeDetails: %s\n", indent+4, "", enodep->details);
+}
+
+// Verify nodes in fabric against specified topology
+void ShowExpectedNodesReport(/*Point *focus,*/ uint8 NodeType, int indent, int detail)
+{
+	LIST_ITEM *p;
+	uint32 input_checked = 0;
+	const char *NodeTypeText = StlNodeTypeToText(NodeType);
+	QUICK_LIST *input_listp;
+
+	switch (NodeType) {
+	case STL_NODE_FI:
+			input_listp = &g_Fabric.ExpectedFIs;
+			break;
+	case STL_NODE_SW:
+			input_listp = &g_Fabric.ExpectedSWs;
+			break;
+	default:
+			ASSERT(0);
+			break;
+	}
+
+	// intro for report
+	fprintf(stderr, "%*s%ss Topology Expected\n", indent, "", NodeTypeText);
+	for (p=QListHead(input_listp); p != NULL; p = QListNext(input_listp, p)) {
+		ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
+
+		if (! enodep)
+			continue;
+		input_checked++;
+		ShowExpectedNodeBriefSummary(enodep, indent, detail);
+	}
+	if (detail && input_checked)
+		fprintf(stderr, "\n");	// blank line between links
+	fprintf(stderr, "%*s%u of %u Input %ss Shown\n", indent, "",
+					input_checked, QListCount(input_listp), NodeTypeText);
+	return;
+}
 
 // --------------------- NameData functions ----------------------------
 
@@ -130,7 +305,7 @@ void SetNameToGuid(NameData_t *namep, EUI64 guid)
 //				can be useful so can sort and combine to get ranges
 //				such as Leaf101_opacore[1-7]
 // guid - use text representation of hex GUID
-// TBD - multi-rail suffix addition or replace modes
+// TBD - future - could add multi-rail suffix addition or replace modes
 //		- algortihmic suffix (hf1_0 -> -opa1, hfi1_1 -> -opa2)
 typedef enum {
 	NAME_MODE_UNDERSCORE = 1,
@@ -446,33 +621,51 @@ void FreeNameList(cl_qmap_t *listp)
 	}
 }
 
-// --------------------- SwitchNameLists functions ----------------------------
+// --------------------- SwitchLists functions ----------------------------
 
-static __inline cl_qmap_t *GetSwitchFiNeighList(ExpectedNode *enodep)
+static __inline cl_qmap_t *GetSwitchFiNeighNameList(ExpectedNode *enodep)
 {
-	return &((SwitchNameLists_t*)enodep->context)->fi_neighbors;
+	return &((SwitchLists_t*)enodep->context)->fiNeighborNames;
 }
 
-static __inline cl_qmap_t *GetSwitchSwNeighList(ExpectedNode *enodep)
+static __inline cl_qmap_t *GetSwitchSwNeighNameList(ExpectedNode *enodep)
 {
-	return &((SwitchNameLists_t*)enodep->context)->sw_neighbors;
+	return &((SwitchLists_t*)enodep->context)->swNeighborNames;
 }
 
-FSTATUS AllocSwitchNameLists(ExpectedNode *enodep)
+static __inline uint8 GetSwitchTier(ExpectedNode *enodep)
 {
-	enodep->context = MemoryAllocate2AndClear(sizeof(SwitchNameLists_t), IBA_MEM_FLAG_PREMPTABLE, MYTAG);
+	return ((SwitchLists_t*)enodep->context)->tier;
+}
+
+static __inline DLIST *GetSwitchSwNeighList(ExpectedNode *enodep)
+{
+	return &((SwitchLists_t*)enodep->context)->swNeighbors;
+}
+
+FSTATUS AllocSwitchLists(ExpectedNode *enodep)
+{
+	enodep->context = MemoryAllocate2AndClear(sizeof(SwitchLists_t), IBA_MEM_FLAG_PREMPTABLE, MYTAG);
 	if (! enodep->context)
 		return FINSUFFICIENT_MEMORY;
-	InitNameList(GetSwitchFiNeighList(enodep));
-	InitNameList(GetSwitchSwNeighList(enodep));
+	InitNameList(GetSwitchFiNeighNameList(enodep));
+	InitNameList(GetSwitchSwNeighNameList(enodep));
+	ListInitState(&((SwitchLists_t*)enodep->context)->swNeighbors);
+	if (! ListInit(&((SwitchLists_t*)enodep->context)->swNeighbors, MIN_LIST_ITEMS))
+		goto fail;
 	return FSUCCESS;
+
+fail:
+	MemoryDeallocate(enodep->context);
+	return FINSUFFICIENT_MEMORY;
 }
 
-void FreeSwitchNameLists(ExpectedNode *enodep)
+void FreeSwitchLists(ExpectedNode *enodep)
 {
 	if (enodep->context) {
-		FreeNameList(GetSwitchFiNeighList(enodep));
-		FreeNameList(GetSwitchSwNeighList(enodep));
+		FreeNameList(GetSwitchFiNeighNameList(enodep));
+		FreeNameList(GetSwitchSwNeighNameList(enodep));
+		ListDestroy(&((SwitchLists_t*)enodep->context)->swNeighbors);
 		MemoryDeallocate(enodep->context);
 		enodep->context = NULL;
 	}
@@ -482,11 +675,11 @@ FSTATUS AddSwitchFiNameList(ExpectedNode *enodep, const char* name, EUI64 guid, 
 				const char *prefix, const char *suffix)
 {
 	if (! enodep->context) {
-		FSTATUS status = AllocSwitchNameLists(enodep);
+		FSTATUS status = AllocSwitchLists(enodep);
 		if (FSUCCESS != status)
 			return status;
 	}
-	return AddNameList(GetSwitchFiNeighList(enodep), name, guid, mode,
+	return AddNameList(GetSwitchFiNeighNameList(enodep), name, guid, mode,
 				prefix, suffix);
 }
 
@@ -494,12 +687,130 @@ FSTATUS AddSwitchSwNameList(ExpectedNode *enodep, const char* name, EUI64 guid, 
 				const char *prefix, const char *suffix)
 {
 	if (! enodep->context) {
-		FSTATUS status = AllocSwitchNameLists(enodep);
+		FSTATUS status = AllocSwitchLists(enodep);
 		if (FSUCCESS != status)
 			return status;
 	}
-	return AddNameList(GetSwitchSwNeighList(enodep), name, guid, mode,
+	return AddNameList(GetSwitchSwNeighNameList(enodep), name, guid, mode,
 				prefix, suffix);
+}
+
+FSTATUS SetSwitchTier(ExpectedNode *enodep, uint8 tier)
+{
+	if (! enodep->context) {
+		FSTATUS status = AllocSwitchLists(enodep);
+		if (FSUCCESS != status)
+			return status;
+	}
+	((SwitchLists_t*)enodep->context)->tier = tier;
+	return FSUCCESS;
+}
+
+FSTATUS AddSwitchSwNeighbor(ExpectedNode *enodep, ExpectedNode *swnodep)
+{
+	if (! enodep->context) {
+		FSTATUS status = AllocSwitchLists(enodep);
+		if (FSUCCESS != status)
+			return status;
+	}
+	if (! ListInsertTail(&((SwitchLists_t*)enodep->context)->swNeighbors, swnodep))
+		return FINSUFFICIENT_MEMORY;
+	return FSUCCESS;
+}
+
+// analyze the expected links to determine the swNeighbors for each switch.
+// TBD - Future - would be nice to be able to filter out selected hosts such as
+// service nodes connected to core, but would need to figure out how to
+// filter out edge switches left with no hosts so they aren't mistaken for
+// core switches.  For now, SLURM uses with impure trees or other topologies
+// should use the -o slurm option which will provide a brief report which does
+// not list all the ISLs
+void BuildSwitchNeighList(boolean get_isls)
+{
+	LIST_ITEM *q;
+	LIST_ITEM *p;
+	uint8 tier = 0;
+	boolean found;
+
+	ResolveExpectedLinks(&g_Fabric, g_quiet);
+
+	if (! get_isls)
+		return;
+
+	// now populate swNeighbors for each switch and identify tier 1 switches
+	for (q=QListHead(&g_Fabric.ExpectedLinks); q != NULL; q = QListNext(&g_Fabric.ExpectedLinks, q)) {
+		ExpectedLink *elinkp = (ExpectedLink *)QListObj(q);
+
+		if (! elinkp->enodep1 || ! elinkp->enodep2) {
+			// Skipping Link, unresolved
+			continue;
+		}
+		// figure out the types on both ends
+		switch (elinkp->enodep1->NodeType) {
+		case STL_NODE_FI:
+			switch (elinkp->enodep2->NodeType) {
+			case STL_NODE_FI: // FI<->FI
+				// Skipping Link, unexpected FI<->FI link
+				break;
+			case STL_NODE_SW: // FI<->SW
+				(void)SetSwitchTier(elinkp->enodep2, 1);
+				break;
+			default:	// should not happen, enodep should always have type
+				// Skipping Link, unspecified NodeType
+				break;
+			}
+			break;
+		case STL_NODE_SW:
+			switch (elinkp->portselp2->NodeType) {
+			case STL_NODE_FI: // SW<->FI
+				(void)SetSwitchTier(elinkp->enodep1, 1);
+				break;
+			case STL_NODE_SW: // SW<->SW
+				(void)AddSwitchSwNeighbor(elinkp->enodep1, elinkp->enodep2);
+				(void)AddSwitchSwNeighbor(elinkp->enodep2, elinkp->enodep1);
+				break;
+			default:	// should not happen, enodep should always have type
+				// Skipping Link, unspecified NodeType
+				break;
+			}
+			break;
+		default:	// should not happen, enodep should always have type
+			// Skipping Link, unspecified NodeType
+			continue;
+		}
+	}
+
+	// now we have tier 1 switches identified, need to walk up the tree to
+	// identify higher tier switches (higher is closer to core and further from
+	// FIs)
+	// This algorithm is based on Topology/route.c:DetermineSwitchTiers except
+	// this works with ExpectedNode while route.c works with NodeData
+	//
+	// switches connected to tier 1 switches are tier 2, etc
+	
+	// This algorithm works fine for pure trees, however for impure trees
+	// it can yield unexpected results, for example a core switch with an HFI
+	// will be considered a tier 1 switch.
+	tier=2;
+	do {
+		found = FALSE;
+		for (p=QListHead(&g_Fabric.ExpectedSWs); p != NULL; p = QListNext(&g_Fabric.ExpectedSWs, p)) {
+			ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
+			LIST_ITERATOR i;
+			if (GetSwitchTier(enodep) != tier-1)
+				continue;
+			for (i=ListHead(GetSwitchSwNeighList(enodep)); i != NULL;
+						i = ListNext(GetSwitchSwNeighList(enodep),i)) {
+				ExpectedNode* nswnodep = (ExpectedNode*)ListObj(i);
+				if (! GetSwitchTier(nswnodep)) {
+					SetSwitchTier(nswnodep, tier);
+					found = TRUE;
+				}
+			}
+		}
+		tier++;
+	} while (found);
+	return;
 }
 
 // Analyze ExpectedLinks and build lists of neighbors in ExpectedSW's context
@@ -510,142 +821,115 @@ FSTATUS AddSwitchSwNameList(ExpectedNode *enodep, const char* name, EUI64 guid, 
 //	- All entries in both have NodeType
 // The above will all be true if the topology.xml was autogenerated by
 // opaxlattopologory or opareport -o topology
-void BuildAllSwitchNameLists(name_mode_t switch_name_mode, name_mode_t node_name_mode, boolean get_isls, boolean get_hfis)
+void BuildAllSwitchLists(name_mode_t switch_name_mode, name_mode_t node_name_mode, boolean get_isls, boolean get_hfis)
 {
 	LIST_ITEM *q;
-	LIST_ITEM *p;
 	uint32 input_checked = 0;
 	uint32 bad_input = 0;
 	uint32 fi_links = 0;
-	uint32 isl_ports = 0;
+	uint32 isl_links = 0;
+	uint32 bad_isl_links = 0;
 	uint32 ix = 0;
+
+	BuildSwitchNeighList(get_isls);
 
 	PROGRESS_PRINT(TRUE, "Processing Links...");
 	for (q=QListHead(&g_Fabric.ExpectedLinks); q != NULL; q = QListNext(&g_Fabric.ExpectedLinks, q)) {
 		ExpectedLink *elinkp = (ExpectedLink *)QListObj(q);
-		PortSelector *swportselp = NULL;
-		PortSelector *nswportselp = NULL;
-		PortSelector *fiportselp = NULL;
-		uint32 ends = 0;	// # ends of a SW-SW link we have found enodep for
+		ExpectedNode *swenodep = NULL;
+		ExpectedNode *nswenodep = NULL;
+		ExpectedNode *fienodep = NULL;
 
 		if ((ix++ % PROGRESS_FREQ) == 0) {
 			PROGRESS_PRINT(FALSE, "Processed %6d of %6d Links...",
 				ix, QListCount(&g_Fabric.ExpectedLinks));
 		}
 
-		if (! elinkp->portselp1 || ! elinkp->portselp2) {
-			fprintf(stderr, "Skipping Link, incomplete\n");
-			bad_input++;
-			continue;
-		}
-		if ((! elinkp->portselp1->NodeDesc && ! elinkp->portselp1->NodeGUID)
-			|| (! elinkp->portselp2->NodeDesc && ! elinkp->portselp2->NodeGUID)) {
-			fprintf(stderr, "Skipping Link, unspecified NodeDesc and NodeGUID\n");
+		if (! elinkp->enodep1 || ! elinkp->enodep2) {
+			fprintf(stderr, "Skipping Link, unresolved\n");
+			ShowExpectedLinkSummary(elinkp, 4, 0);
 			bad_input++;
 			continue;
 		}
 		// figure out the types on both ends, want FI-SW and SW-SW links
-		switch (elinkp->portselp1->NodeType) {
+		switch (elinkp->enodep1->NodeType) {
 		case STL_NODE_FI:
-			switch (elinkp->portselp2->NodeType) {
+			switch (elinkp->enodep2->NodeType) {
 			case STL_NODE_FI:
 				fprintf(stderr, "Skipping Link, unexpected FI<->FI link\n");
+				ShowExpectedLinkSummary(elinkp, 4, 0);
 				bad_input++;
 				continue;
 			case STL_NODE_SW:
-				fiportselp = elinkp->portselp1;
-				swportselp = elinkp->portselp2;
+				fienodep = elinkp->enodep1;
+				swenodep = elinkp->enodep2;
 				break;
 			default:
 				fprintf(stderr, "Skipping Link, unspecified NodeType\n");
+				ShowExpectedLinkSummary(elinkp, 4, 0);
 				bad_input++;
 				continue;
 			}
 			break;
 		case STL_NODE_SW:
-			switch (elinkp->portselp2->NodeType) {
+			switch (elinkp->enodep2->NodeType) {
 			case STL_NODE_FI:
-				swportselp = elinkp->portselp1;
-				fiportselp = elinkp->portselp2;
+				swenodep = elinkp->enodep1;
+				fienodep = elinkp->enodep2;
 				break;
 			case STL_NODE_SW:
-				swportselp = elinkp->portselp1;
-				nswportselp = elinkp->portselp2;
+				swenodep = elinkp->enodep1;
+				nswenodep = elinkp->enodep2;
 				break;
 			default:
 				fprintf(stderr, "Skipping Link, unspecified NodeType\n");
+				ShowExpectedLinkSummary(elinkp, 4, 0);
 				bad_input++;
 				continue;
 			}
 			break;
 		default:
 			fprintf(stderr, "Skipping Link, unspecified NodeType\n");
+			ShowExpectedLinkSummary(elinkp, 4, 0);
 			bad_input++;
 			continue;
 		}
-		// now swportselp is a SW
-		// if neighbor is a FI, fiportselp is non-NULL
-		// if neighbor is a SW, nswportselp is non-NULL
-		DEBUG_ASSERT(swportselp);
-		DEBUG_ASSERT(nswportselp || fiportselp);
+		// now swenodep is a SW
+		// if neighbor is a FI, fienodep is non-NULL
+		// if neighbor is a SW, nswenodep is non-NULL
+		DEBUG_ASSERT(swenodep);
+		DEBUG_ASSERT(nswenodep || fienodep);
 
-		if ( ! get_hfis && ! nswportselp)
+		if ( ! get_hfis && ! nswenodep)
 				continue;	// skip FI-SW link
-		if ( ! get_isls && ! fiportselp)
+		if ( ! get_isls && ! fienodep)
 				continue;	// skip SW-SW link
 		if (! CompareExpectedLinkFocus(elinkp))
 			continue;
 		input_checked++;
-		// find enodep for swportselp and nswportselp
-		for (p=QListHead(&g_Fabric.ExpectedSWs); p != NULL; p = QListNext(&g_Fabric.ExpectedSWs, p)) {
-			ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
-
-			// compare swportselp and nswportselp to enodep
-			// we ignore switches connected to themselves
-			// so if one matches, don't check the other
-			if (enodep->NodeDesc) {
-				if (swportselp->NodeDesc && 0 == strcmp(enodep->NodeDesc, swportselp->NodeDesc)) {
-					if (nswportselp) {
-						(void)AddSwitchSwNameList(enodep, nswportselp->NodeDesc, nswportselp->NodeGUID, switch_name_mode, NULL, NULL);
-						isl_ports++;
-						if (ends++)
-							break;	// processed both ends of ISL
-						continue;
-					} else { /* fiportselp */
-						(void)AddSwitchFiNameList(enodep, fiportselp->NodeDesc, fiportselp->NodeGUID, node_name_mode, g_prefix, g_suffix);
-						fi_links++;
-						break;
-					}
-				} else if (nswportselp && nswportselp->NodeDesc && 0 == strcmp(enodep->NodeDesc, nswportselp->NodeDesc)) {
-					(void)AddSwitchSwNameList(enodep, swportselp->NodeDesc, swportselp->NodeGUID, switch_name_mode, NULL, NULL);
-					isl_ports++;
-					if (ends++)
-						break;	// processed both ends of ISL
-					continue;
-				}
+		if (fienodep) {	// FI<->SW
+			(void)AddSwitchFiNameList(swenodep, fienodep->NodeDesc, fienodep->NodeGUID, node_name_mode, g_prefix, g_suffix);
+			fi_links++;
+		} else {	// SW<->SW
+			// only add downlink which goes from upper tier switch to lower tier
+			// SLURM wants just one direction reported for each link, so
+			// we only report downlinks in pure trees and warn if any links are
+			// found which are not tier X to tier X-1 or tier X+1
+			if (GetSwitchTier(swenodep) == GetSwitchTier(nswenodep)+1) {
+				(void)AddSwitchSwNameList(swenodep, nswenodep->NodeDesc, nswenodep->NodeGUID, switch_name_mode, NULL, NULL);
+				isl_links++;
+			} else if (GetSwitchTier(nswenodep) == GetSwitchTier(swenodep)+1) {
+				(void)AddSwitchSwNameList(nswenodep, swenodep->NodeDesc, swenodep->NodeGUID, switch_name_mode, NULL, NULL);
+				isl_links++;
+			} else {
+				// This is a best attempt but will not catch all issues
+				// for example a 3 tier fabric with an HFI on the core will
+				// treat the core as a tier 1 which is connected to tier 2
+				// switches and hence not reported as an issue
+				fprintf(stderr, "Skipping Link, not a pure tree\n");
+				ShowExpectedLinkSummary(elinkp, 4, 0);
+				bad_isl_links++;
 			}
-			if (enodep->NodeGUID) {
-				if (enodep->NodeGUID == swportselp->NodeGUID) {
-					if (nswportselp) {
-						(void)AddSwitchSwNameList(enodep, nswportselp->NodeDesc, nswportselp->NodeGUID, switch_name_mode, NULL, NULL);
-						isl_ports++;
-						if (ends++)
-							break;	// processed both ends of ISL
-						continue;
-					} else { /* fiportselp */
-						(void)AddSwitchFiNameList(enodep, fiportselp->NodeDesc, fiportselp->NodeGUID, node_name_mode, g_prefix, g_suffix);
-						fi_links++;
-						break;
-					}
-				} else if (nswportselp && enodep->NodeGUID == nswportselp->NodeGUID) {
-					(void)AddSwitchSwNameList(enodep, swportselp->NodeDesc, swportselp->NodeGUID, switch_name_mode, NULL, NULL);
-					isl_ports++;
-					if (ends++)
-						break;	// processed both ends of ISL
-					continue;
-				}
-			}
-			//fprintf(stderr, "Skipping Switch, no name nor GUID\n");
 		}
 	}
 	PROGRESS_PRINT(TRUE, "Done Processing Links");
@@ -655,8 +939,8 @@ void BuildAllSwitchNameLists(name_mode_t switch_name_mode, name_mode_t node_name
 		fprintf(stderr, "%u Input FI Links Shown\n",
 					fi_links);
 	if (get_isls)
-		fprintf(stderr, "%u Input ISLs Shown\n",
-					isl_ports/2);
+		fprintf(stderr, "%u Input ISLs Shown, %u Bad ISLs Skipped\n",
+					isl_links, bad_isl_links);
 	return;
 }
 
@@ -667,7 +951,7 @@ void FreeAllSwitchNamelists(void)
 	for (p=QListHead(&g_Fabric.ExpectedSWs); p != NULL; p = QListNext(&g_Fabric.ExpectedSWs, p)) {
 		ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
 
-		FreeSwitchNameLists(enodep);
+		FreeSwitchLists(enodep);
 	}
 }
 
@@ -699,173 +983,6 @@ boolean CompareExpectedLinkFocus(ExpectedLink *elinkp)
 		if (CompareExpectedLinkPoint(elinkp, &g_focus[i]))
 			return TRUE;
 	return FALSE;
-}
-
-// -------------- debug output of Expected* functions --------------------
-// these next few functions are for debug and allow dumping of the
-// input topology file which was parsed
-
-// show 1 port selector in link data in brief form
-void ShowExpectedLinkPortSelBriefSummary(ExpectedLink *elinkp, PortSelector *portselp,
-			 uint8 side, int indent, int detail)
-{
-	DEBUG_ASSERT(side == 1 || side == 2);
-	fprintf(stderr, "%*s%4s ", indent, "",
-			(side == 1)?
-				elinkp->expected_rate?
-					StlStaticRateToText(elinkp->expected_rate)
-					:""
-			: "<-> ");
-	if (side == 1 && elinkp->expected_mtu)
-		fprintf(stderr, "%5s ", IbMTUToText(elinkp->expected_mtu));
-	else
-		fprintf(stderr, "     ");
-
-	if (portselp) {
-		if (portselp->NodeGUID)
-			fprintf(stderr, "0x%016"PRIx64, portselp->NodeGUID);
-		else
-			fprintf(stderr, "                  ");
-		if (portselp->gotPortNum)
-			fprintf(stderr, " %3u               ",portselp->PortNum);
-		else if (portselp->PortGUID)
-			fprintf(stderr, " 0x%016"PRIx64, portselp->PortGUID);
-		else
-			fprintf(stderr, "                   ");
-		if (portselp->NodeType)
-			fprintf(stderr, " %s",
-				StlNodeTypeToText(portselp->NodeType));
-		else
-			fprintf(stderr, "   ");
-		if (portselp->NodeDesc)
-			fprintf(stderr, " %.*s\n",
-				NODE_DESCRIPTION_ARRAY_SIZE, portselp->NodeDesc);
-		else
-			fprintf(stderr, "\n");
-		if (detail) {
-			if (portselp->details) {
-				fprintf(stderr, "%*sPortDetails: %s\n", indent+4, "", portselp->details);
-			}
-		}
-	}
-}
-
-
-// show cable information for a link in multi-line format with field headings
-void ShowExpectedLinkSummary(ExpectedLink *elinkp,
-			int indent, int detail)
-{
-	// From Side (Port 1)
-	ShowExpectedLinkPortSelBriefSummary(elinkp, elinkp->portselp1,
-										1, indent, detail);
-	// To Side (Port 2)
-	ShowExpectedLinkPortSelBriefSummary(elinkp, elinkp->portselp2,
-										2, indent, detail);
-	if (elinkp->details) {
-		fprintf(stderr, "%*sLinkDetails: %s\n", indent, "", elinkp->details);
-	}
-	if (elinkp->CableData.length || elinkp->CableData.label
-		|| elinkp->CableData.details) {
-		fprintf(stderr, "%*sCableLabel: %-*s  CableLen: %-*s\n",
-			indent, "",
-			CABLE_LABEL_STRLEN, OPTIONAL_STR(elinkp->CableData.label),
-			CABLE_LENGTH_STRLEN, OPTIONAL_STR(elinkp->CableData.length));
-		fprintf(stderr, "%*sCableDetails: %s\n",
-			indent, "",
-			OPTIONAL_STR(elinkp->CableData.details));
-	}
-}
-
-// Verify links in fabric against specified topology
-void ShowExpectedLinksReport(/*Point *focus,*/ int indent, int detail)
-{
-	LIST_ITEM *p;
-	uint32 input_checked = 0;
-
-	fprintf(stderr, "%*sLinks Topology Expected\n", indent, "");
-
-	fprintf(stderr, "%*sRate MTU  NodeGUID          Port or PortGUID    Type Name\n", indent, "");
-	if (detail && (g_Fabric.flags & FF_CABLEDATA)) {
-		//fprintf(stderr, "%*sPortDetails\n", indent+4, "");
-		//fprintf(stderr, "%*sLinkDetails\n", indent+4, "");
-		fprintf(stderr, "%*sCable: %-*s %-*s\n", indent+4, "",
-						CABLE_LABEL_STRLEN, "CableLabel",
-						CABLE_LENGTH_STRLEN, "CableLen");
-		fprintf(stderr, "%*s%s\n", indent+4, "", "CableDetails");
-	}
-	for (p=QListHead(&g_Fabric.ExpectedLinks); p != NULL; p = QListNext(&g_Fabric.ExpectedLinks, p)) {
-		ExpectedLink *elinkp = (ExpectedLink *)QListObj(p);
-
-		if (! elinkp)
-			continue;
-		if (! CompareExpectedLinkFocus(elinkp))
-				continue;
-		input_checked++;
-		ShowExpectedLinkSummary(elinkp, indent, detail);
-	}
-	if (detail && input_checked)
-		fprintf(stderr, "\n");	// blank line between links
-	fprintf(stderr, "%*s%u of %u Input Links Shown\n", indent, "",
-				input_checked, QListCount(&g_Fabric.ExpectedLinks));
-
-	return;
-}
-
-// output brief summary of an expected IB Node
-void ShowExpectedNodeBriefSummary(ExpectedNode *enodep, int indent, int detail)
-{
-	fprintf(stderr, "%*s", indent, "");
-	if (enodep->NodeGUID)
-		fprintf(stderr, "0x%016"PRIx64, enodep->NodeGUID);
-	else
-		fprintf(stderr, "                  ");
-	if (enodep->NodeType)
-		fprintf(stderr, " %s", StlNodeTypeToText(enodep->NodeType));
-	else
-		fprintf(stderr, "   ");
-	if (enodep->NodeDesc)
-		fprintf(stderr, " %s\n", enodep->NodeDesc);
-	else
-		fprintf(stderr, "\n");
-	if (enodep->details)
-		fprintf(stderr, "%*sNodeDetails: %s\n", indent+4, "", enodep->details);
-}
-
-// Verify nodes in fabric against specified topology
-void ShowExpectedNodesReport(/*Point *focus,*/ uint8 NodeType, int indent, int detail)
-{
-	LIST_ITEM *p;
-	uint32 input_checked = 0;
-	const char *NodeTypeText = StlNodeTypeToText(NodeType);
-	QUICK_LIST *input_listp;
-
-	switch (NodeType) {
-	case STL_NODE_FI:
-			input_listp = &g_Fabric.ExpectedFIs;
-			break;
-	case STL_NODE_SW:
-			input_listp = &g_Fabric.ExpectedSWs;
-			break;
-	default:
-			ASSERT(0);
-			break;
-	}
-
-	// intro for report
-	fprintf(stderr, "%*s%ss Topology Expected\n", indent, "", NodeTypeText);
-	for (p=QListHead(input_listp); p != NULL; p = QListNext(input_listp, p)) {
-		ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
-
-		if (! enodep)
-			continue;
-		input_checked++;
-		ShowExpectedNodeBriefSummary(enodep, indent, detail);
-	}
-	if (detail && input_checked)
-		fprintf(stderr, "\n");	// blank line between links
-	fprintf(stderr, "%*s%u of %u Input %ss Shown\n", indent, "",
-					input_checked, QListCount(input_listp), NodeTypeText);
-	return;
 }
 
 // --------------------- Output functions ----------------------------
@@ -910,6 +1027,9 @@ void ShowFastFabricHosts(name_mode_t node_name_mode)
 	if (0 != gethostname(myhostname, sizeof(myhostname))) {
 		// odd, just ignore filtering out our hostname
 		myhostname[0] = '\0';
+	} else {
+		// if hostname is truncated, might lack a trailing NUL
+		myhostname[NODE_DESCRIPTION_ARRAY_SIZE-1] = '\0';
 	}
 	// truncate any domain names
 	for (i=0; i< sizeof(myhostname); i++) {
@@ -926,6 +1046,7 @@ void ShowFastFabricHosts(name_mode_t node_name_mode)
 
 		if (! enodep->NodeDesc) {
 			fprintf(stderr, "Skipping FI, no name\n");
+			ShowExpectedNodeBriefSummary(enodep, 4, 0);
 			bad_input++;
 			continue;
 		}
@@ -933,6 +1054,7 @@ void ShowFastFabricHosts(name_mode_t node_name_mode)
 		// ExpectedFIs list
 		if (enodep->NodeType != STL_NODE_FI) {
 			fprintf(stderr, "Skipping FI, unspecified NodeType\n");
+			ShowExpectedNodeBriefSummary(enodep, 4, 0);
 			bad_input++;
 			continue;	//unspecified type
 		}
@@ -963,22 +1085,44 @@ void ShowFastFabricHosts(name_mode_t node_name_mode)
 	return;
 }
 
-// Output SLURM topology file ISL lists of the form:
-//     SwitchName=xyz Switches=abc, def, ghi
-void ShowSlurmISLs(name_mode_t switch_name_mode)
+// Output SLURM topology file fake ISL single list of the form:
+//     SwitchName=fake Switches=abc,def,ghi
+// This output form allows for faster SLURM operation by assuming that once
+// scheduling gets outside a single edge switch, its roughly equivalent latency
+// This also supports impure tree and other topologies
+void ShowSlurmFakeISLs(name_mode_t switch_name_mode)
 {
 	LIST_ITEM *p;
+	ExpectedNode fake = {
+		NodeType: STL_NODE_SW,
+		NodeDesc: "fake"
+	};
 
-	printf("# Switch to Switch Connectivity\n");
+	// build list of neighbors for "fake" core switch listing all switches
+	// which have unfiltered FIs
 	for (p=QListHead(&g_Fabric.ExpectedSWs); p != NULL; p = QListNext(&g_Fabric.ExpectedSWs, p)) {
 		ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
 		cl_qmap_t *neigh_list;
-		int first=1;
-		cl_map_item_t *np;
 
 		if (! enodep->context)	// switch has no neighbors
 			continue;
-		neigh_list = GetSwitchSwNeighList(enodep);
+		neigh_list = GetSwitchFiNeighNameList(enodep);
+		if (cl_qmap_head(neigh_list) == cl_qmap_end(neigh_list))
+			continue;	// switch has no FI neighbors
+		(void)AddSwitchSwNameList(&fake, enodep->NodeDesc, enodep->NodeGUID, switch_name_mode, NULL, NULL);
+	}
+
+	if (! fake.context)
+		return;	// there are no switches with FIs
+
+	printf("# Fake Switch to Switch Connectivity\n");
+	{
+		ExpectedNode *enodep = &fake;
+		int first=1;
+		cl_qmap_t *neigh_list;
+		cl_map_item_t *np;
+
+		neigh_list = GetSwitchSwNeighNameList(enodep);
 		// if using GUIDs for names, simply skip compact and will
 		// get no ranges in output
 		if (switch_name_mode != NAME_MODE_GUID)
@@ -993,7 +1137,49 @@ void ShowSlurmISLs(name_mode_t switch_name_mode)
 				printf(" Switches=");
 				first=0;
 			} else {
-				printf(", ");
+				printf(",");
+			}
+			PrintName(namep);
+		}
+		if (! first)
+			printf("\n");
+	}
+	FreeSwitchLists(&fake);
+
+	return;
+}
+
+// Output SLURM topology file ISL lists for each switch of the form:
+//     SwitchName=xyz Switches=abc,def,ghi
+void ShowSlurmISLs(name_mode_t switch_name_mode)
+{
+	LIST_ITEM *p;
+
+	printf("# Switch to Switch Connectivity\n");
+	for (p=QListHead(&g_Fabric.ExpectedSWs); p != NULL; p = QListNext(&g_Fabric.ExpectedSWs, p)) {
+		ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
+		cl_qmap_t *neigh_list;
+		int first=1;
+		cl_map_item_t *np;
+
+		if (! enodep->context)	// switch has no neighbors
+			continue;
+		neigh_list = GetSwitchSwNeighNameList(enodep);
+		// if using GUIDs for names, simply skip compact and will
+		// get no ranges in output
+		if (switch_name_mode != NAME_MODE_GUID)
+			CompactNameList(neigh_list);
+		for (np=cl_qmap_head(neigh_list); np != cl_qmap_end(neigh_list); np = cl_qmap_next(np)) {
+			NameData_t *namep = PARENT_STRUCT(np, NameData_t, NameListEntry);
+			if (first) {
+				NameData_t nameData = { };
+				printf("SwitchName=");
+				CopyName(&nameData, enodep->NodeDesc, enodep->NodeGUID, switch_name_mode, NULL, NULL);
+				PrintName(&nameData);
+				printf(" Switches=");
+				first=0;
+			} else {
+				printf(",");
 			}
 			PrintName(namep);
 		}
@@ -1004,8 +1190,8 @@ void ShowSlurmISLs(name_mode_t switch_name_mode)
 	return;
 }
 
-// Output SLURM topology file FI lists of the form:
-//     SwitchName=xyz Nodes=abc, def, ghi
+// Output SLURM topology file FI lists for each switch of the form:
+//     SwitchName=xyz Nodes=abc,def,ghi
 void ShowSlurmNodes(name_mode_t switch_name_mode, name_mode_t node_name_mode)
 {
 	LIST_ITEM *p;
@@ -1019,7 +1205,7 @@ void ShowSlurmNodes(name_mode_t switch_name_mode, name_mode_t node_name_mode)
 
 		if (! enodep->context)	// switch has no FI neighbors
 			continue;
-		neigh_list = GetSwitchFiNeighList(enodep);
+		neigh_list = GetSwitchFiNeighNameList(enodep);
 		// if using GUIDs for names, simply skip compact and will
 		// get no ranges in output
 		if (node_name_mode != NAME_MODE_GUID)
@@ -1034,7 +1220,7 @@ void ShowSlurmNodes(name_mode_t switch_name_mode, name_mode_t node_name_mode)
 				printf(" Nodes=");
 				first=0;
 			} else {
-				printf(", ");
+				printf(",");
 			}
 			PrintName(namep);
 		}
@@ -1070,9 +1256,10 @@ void Usage_full(void)
 	fprintf(stderr, "    -v/--verbose              - verbose output\n");
 	fprintf(stderr, "    -q/--quiet                - disable progress reports\n");
 	fprintf(stderr, "    -o/--output output        - output type\n");
-	fprintf(stderr, "                                slnodes - SLURM nodes per switch\n");
-	fprintf(stderr, "                                slisls - SLURM switches per switch\n");
-	fprintf(stderr, "                                slurm - slnodes and slisls\n");
+	fprintf(stderr, "                                slurm - SLURM tree nodes\n");
+	fprintf(stderr, "                                        Supports variety of topologies\n");
+	fprintf(stderr, "                                slurmfull - SLURM fat tree nodes and ISLs\n");
+	fprintf(stderr, "                                        Only supports pure trees\n");
 	fprintf(stderr, "                                hosts - fastfabric hosts file\n");
 	fprintf(stderr, "                                        omitting this host\n");
 	fprintf(stderr, "    -g/--guid                 - output switch GUIDs instead of names\n");
@@ -1120,8 +1307,6 @@ void Usage_full(void)
 	fprintf(stderr, "   opa2rm -o slurm topology.xml\n");
 	fprintf(stderr, "   opa2rm -o slurm -p 'opa-' topology.xml\n");
 	fprintf(stderr, "   opa2rm -o slurm -s '-opa' topology.xml\n");
-	fprintf(stderr, "   opa2rm -o slnodes -F 'nodepat:compute*' topology.xml\n");
-	fprintf(stderr, "   opa2rm -o slisls -t -F 'nodepat:opacore1 *' topology.xml\n");
 	fprintf(stderr, "   opa2rm -o slurm -F 'nodepat:compute*' -F 'nodepat:opacore1 *' topology.xml\n");
 	fprintf(stderr, "   opa2rm -o nodes -F 'nodedetpat:compute*' topology.xml\n");
 	fprintf(stderr, "   opa2rm -o hosts topology.xml\n");
@@ -1137,9 +1322,10 @@ void Usage(void)
 	fprintf(stderr, "    -v/--verbose              - verbose output\n");
 	fprintf(stderr, "    -q/--quiet                - disable progress reports\n");
 	fprintf(stderr, "    -o/--output output        - output type\n");
-	fprintf(stderr, "                                slnodes - SLURM nodes per switch\n");
-	fprintf(stderr, "                                slisls - SLURM switches per switch\n");
-	fprintf(stderr, "                                slurm - slnodes and slisls\n");
+	fprintf(stderr, "                                slurm - SLURM tree nodes\n");
+	fprintf(stderr, "                                        Supports variety of topologies\n");
+	fprintf(stderr, "                                slurmfull - SLURM fat tree nodes and ISLs\n");
+	fprintf(stderr, "                                        Only supports pure trees\n");
 	fprintf(stderr, "                                hosts - fastfabric hosts file\n");
 	fprintf(stderr, "                                        omitting this host\n");
 	fprintf(stderr, "    -g/--guid                 - output switch GUIDs instead of names\n");
@@ -1152,23 +1338,21 @@ void Usage(void)
 	exit(2);
 }
 
-typedef enum {
-	REPORT_NONE		=0x0,
-	REPORT_SLNODES	=0x1,
-	REPORT_SLISLS	=0x2,
-	REPORT_HOSTS	=0x4,
+typedef enum {	// bitmask indicating selected reports
+	REPORT_NONE			=0x0,
+	REPORT_SLURM		=0x1,
+	REPORT_SLURMFULL	=0x2,
+	REPORT_HOSTS		=0x4,
 } report_t;
 
 
 // convert a output type argument to the proper constant
 report_t checkOutputType(const char* name)
 {
-	if (0 == strcmp(optarg, "slnodes")) {
-		return REPORT_SLNODES;
-	} else if (0 == strcmp(optarg, "slisls")) {
-		return REPORT_SLISLS;
-	} else if (0 == strcmp(optarg, "slurm")) {
-		return (REPORT_SLNODES|REPORT_SLISLS);
+	if (0 == strcmp(optarg, "slurm")) {
+		return REPORT_SLURM;
+	} else if (0 == strcmp(optarg, "slurmfull")) {
+		return (REPORT_SLURMFULL);
 	} else if (0 == strcmp(optarg, "hosts")) {
 		return (REPORT_HOSTS);
 	} else {
@@ -1239,6 +1423,11 @@ int main(int argc, char ** argv)
 				break;
 		}
 	} /* end while */
+	// Name algorithms just check for NULL, so convert empty strings to NULL
+	if (g_suffix && 0 == strlen(g_suffix))
+		g_suffix = NULL;
+	if (g_prefix && 0 == strlen(g_prefix))
+		g_prefix = NULL;
 
 	if (optind < argc) {
 		topology_in_file = argv[optind++];
@@ -1309,21 +1498,21 @@ int main(int argc, char ** argv)
 		ShowFastFabricHosts(node_name_mode);
 	}
 
-	if (report & (REPORT_SLNODES|REPORT_SLISLS))
-		BuildAllSwitchNameLists(switch_name_mode, node_name_mode, 0 != (report&REPORT_SLISLS), 0 != (report&REPORT_SLNODES));
-
-	//clearMatchLevel();
-	if (report & REPORT_SLNODES) {
+	if (report & (REPORT_SLURM|REPORT_SLURMFULL)) {
+		BuildAllSwitchLists(switch_name_mode, node_name_mode,
+							 0 != (report&REPORT_SLURMFULL), 1);
 		PrintComment("#", argc, argv);
 		ShowSlurmNodes(switch_name_mode, node_name_mode);
-	}
-	if (report & REPORT_SLISLS) {
-		if (! (report & REPORT_SLNODES))
-			PrintComment("#", argc, argv);
-		ShowSlurmISLs(switch_name_mode);
-	}
-	if (report & (REPORT_SLNODES|REPORT_SLISLS))
+		if (report & REPORT_SLURM) {
+			printf("\n");
+			ShowSlurmFakeISLs(switch_name_mode);
+		}
+		if (report & REPORT_SLURMFULL) {
+			printf("\n");
+			ShowSlurmISLs(switch_name_mode);
+		}
 		FreeAllSwitchNamelists();
+	}
 
 	DestroyFabricData(&g_Fabric);
 done:

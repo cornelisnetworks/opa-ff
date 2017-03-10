@@ -3,6 +3,6 @@ The PM Configuration screen displays information as provided by the PM.
 The Sweep Interval parameter is separate from the opatop interval.
 Normally the opatop interval should be set to a value >= Sweep Interval.
 PM image configuration information (total images, freeze images, freeze
-lease time), error thresholds and weights, PM memory footprint, and PM MAD
+lease time), category thresholds and weights, PM memory footprint, and PM MAD
 retry/timeout information is shown.  The PM Config screen has no
 screen-specific input commands.

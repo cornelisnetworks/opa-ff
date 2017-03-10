@@ -64,13 +64,13 @@ export MPI_CMD_ARGS=
 # opagetvf2_func "-d 'Compute'" OMPI_MCA_btl_openib_pkey OMPI_MCA_btl_openib_ib_service_level OMPI_MCA_btl_openib_mtu
 #export OMPI_MCA_mtl_psm_ib_pkey=$OMPI_MCA_btl_openib_pkey
 #export OMPI_MCA_mtl_psm_ib_service_level=$OMPI_MCA_btl_openib_ib_service_level
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_MTU=$OMPI_MCA_btl_openib_mtu"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM2_MTU=$OMPI_MCA_btl_openib_mtu"
 
 # These 4 lines select a Virtual Fabric by ServiceId and configure PKEY, SL, MTU
 # opagetvf2_func "-S '0x1000117500000000'" OMPI_MCA_btl_openib_pkey OMPI_MCA_btl_openib_ib_service_level OMPI_MCA_btl_openib_mtu
 #export OMPI_MCA_mtl_psm_ib_pkey=$OMPI_MCA_btl_openib_pkey
 #export OMPI_MCA_mtl_psm_ib_service_level=$OMPI_MCA_btl_openib_ib_service_level
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_MTU=$OMPI_MCA_btl_openib_mtu"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM2_MTU=$OMPI_MCA_btl_openib_mtu"
 
 # These 2 lines select a Virtual Fabric by ServiceId and uses dist_sa
 # to directly fetch the PathRecord at job startup.  This approach is
@@ -83,7 +83,7 @@ export MPI_CMD_ARGS=
 #    adaptive, static_src, static_dest, static_base
 # If LMC is enabled in the SM, adaptive will automatically be used.
 # This mechanism is only supported for Intel HFIs when using PSM (-hfi MPIs)
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_PATH_SELECTION=adaptive"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM2_PATH_SELECTION=adaptive"
 
 # Use this to explicitly specify a pkey (for virtual fabrics)
 #export OMPI_MCA_btl_openib_pkey=0x8002
@@ -96,7 +96,7 @@ export MPI_CMD_ARGS=
 # Use this to explicitly specify a mtu (for virtual fabrics)
 # 1=256, 2=512, 3=1024, 4=2048, 5=4096
 #export OMPI_MCA_btl_openib_mtu=4
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_MTU=$OMPI_MCA_btl_openib_mtu"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM2_MTU=$OMPI_MCA_btl_openib_mtu"
 
 # By default, if openmpi for verbs cannot find a working connection to a target
 # node, it will automatically fall back to using Ethernet. If this is not
@@ -111,11 +111,12 @@ export MPI_CMD_ARGS=
 # Normally Congestion Control is completely configured in the SM config file.
 # However, if desired, the fabric interface settings can be overridden for
 # the given job.
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_DISABLE_CCA=0 -x PSM_CCTI_INCREMENT=1 -x PSM_CCTI_TIMER=1 -x PSM_CCTI_TABLE_SIZE=128"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM2_DISABLE_CCA=0 -x PSM2_CCTI_INCREMENT=1 -x PSM2_CCTI_TIMER=1 -x PSM2_CCTI_TABLE_SIZE=128"
 
 # These values can enable and control PSM Multi-Rail
+# In most cases the default automatic selections will be sufficient.
 # The sample shown is for Dual HFI server with port 1 per HFI connected
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM_MULTIRAIL=1 -x PSM_MULTIRAIL_MAP=0:1,1:1"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -x PSM2_MULTIRAIL=1 -x PSM2_MULTIRAIL_MAP=0:1,1:1"
 
 # This can be enabled to force benchmarks to run on selected CPU cores
 #export MPI_TASKSET="${MPI_TASKSET:- -c 1-7}"

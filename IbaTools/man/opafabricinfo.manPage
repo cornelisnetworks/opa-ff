@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafabricinfo 1 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafabricinfo 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafabricinfo
 
@@ -46,7 +46,7 @@ Produces full help text.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/sysconfig/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports file.
 .TP 10
 -p \fIports\fR 
 .NL

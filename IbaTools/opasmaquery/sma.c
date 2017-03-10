@@ -1694,7 +1694,8 @@ static boolean get_portgroupfdb(argrec *args, uint8_t *mad, size_t mad_len, bool
 			fprintf(stderr, "get_portgroupfdb failed: Adaptive Routing not supported\n");
 			return FALSE;
 		}
-		maxLid = MIN(pSwInfo->LinearFDBTop, DEFAULT_MAX_PGFT_LID);
+		maxLid = MIN(pSwInfo->LinearFDBTop, 
+					 pSwInfo->PortGroupFDBCap ? pSwInfo->PortGroupFDBCap - 1 : DEFAULT_MAX_PGFT_LID);
 	}
 
 	if (args->flid) {
@@ -2046,8 +2047,8 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 {
 	FSTATUS status;
 	STL_SMP *smp = (STL_SMP *)mad;
-	uint16_t startAddr = STL_CIB_STD_START_ADDR;
-	uint16_t len = STL_CIB_STD_LEN;
+	uint16_t startAddr = STL_CIB_STD_LOW_PAGE_ADDR;
+	uint16_t len = 2*STL_CIB_STD_LEN;
 	STL_NODE_INFO *pNodeInfo;
 	NODE_TYPE nodetype;
 	uint8_t maxPort;

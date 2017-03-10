@@ -86,6 +86,7 @@ else
 		guid="UNKNOWN"
 		tmmver="UNKNOWN"
 		tmm=0
+		instance=""
 
 		localbus_info=$(lspci -vv -s "${hfi}" | 
 			grep LnkSta: | 
@@ -98,13 +99,15 @@ else
 			instance=`ls ${driver} 2>/dev/null`
 		fi
 
-		hfinum=${instance#*_}
-		hfinum=`echo "${hfinum} +1" | bc`
-
-		if [ ! -e ${driver} -o ! -e ${driver}/${instance} ] 
+		if [ -z ${instance} ]	
+		then
+			instance="Driver not Loaded"
+		elif [ ! -e ${driver} -o ! -e ${driver}/${instance} ]
 		then
 			instance="Driver not Loaded"
 		else
+			hfinum=${instance#*_}
+			hfinum=`echo "${hfinum} +1" | bc`
 			eval 2>/dev/null read boardver < ${driver}/${instance}/boardversion
 			eval 2>/dev/null read serial < ${driver}/${instance}/serial
 			eval 2>/dev/null read guid < ${driver}/${instance}/node_guid
@@ -183,9 +186,9 @@ else
 
 		if [ -z $hw_string ]
 		then
-			echo "HWRev: $hw_rev"
+			echo "SiRev: $hw_rev"
 		else
-			echo "HWRev: $hw_string ($hw_rev)"
+			echo "SiRev: $hw_string ($hw_rev)"
 		fi
 
 		if [ $tmm -ne 3 ]

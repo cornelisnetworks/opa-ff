@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxlattopology
 
@@ -17,13 +17,11 @@ Generates a topology XML file of a cluster using topology.csv, linksum\(ulswd06.
 .PP
 
 .B NOTE:
-The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/lib/opa/samples directory.
+The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/share/opa/samples directory.
 
 .SH Syntax
 .NL
-opaxlattopology [-d \fIlevel\fR-v \fIlevel\fR-i \fIlevel\fR-K] [-s \fIhfi\(ulsuffix\fR]
-.br
-[source [dest]]
+opaxlattopology [-d \fIlevel\fR] [-v \fIlevel\fR] [-i \fIlevel\fR] [-K] [-s \fIhfi\(ulsuffix\fR] [source [dest]]
 .SH Options
 .NL
 
@@ -141,9 +139,9 @@ For Multi-Rail fabric, specify HostName as "HostName HfiName" in the spreadsheet
 .NL
 
 .PP
-The opaxlattopology script reads the topology.csv file from the local directory, and reads the other files from /usr/lib/opa/samples/linksum\(ulswd06.csv and /usr/lib/opa/samples/linksum\(ulswd24.csv. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. A sample topology.xlsx is located in the /usr/lib/opa/samples/ directory. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
+The opaxlattopology script reads the topology.csv file from the local directory, and reads the other files from /usr/share/opa/samples/linksum\(ulswd06.csv and /usr/share/opa/samples/linksum\(ulswd24.csv. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. A sample topology.xlsx is located in the /usr/share/opa/samples/ directory. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
 .PP
-The script outputs one or more topology files starting with topology.0:0.xml. The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/lib/opa/samples directory.
+The script outputs one or more topology files starting with topology.0:0.xml. The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/share/opa/samples directory.
 .SH Example 
 .NL
 opaxlattopology
@@ -178,7 +176,7 @@ If set, it overrides default MTU on switch-to-HFI links. Default = 8192
 .NL
 
 .PP
-The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone files in the /usr/lib/opa/samples directory. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
+The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone files in the /usr/share/opa/samples directory. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
 
 .IP 1) 4n 
 Save each of the following from the topology.xlsx file as individual .csv files:
@@ -195,108 +193,22 @@ For each saved topology.csv file, run the script with the -K option.
 .IP 3) 4n 
 Upon completion of the script, save the top level linksum.csv file as linksum\(ulswd06.csv or linksum\(ulswd24.csv as appropriate.
 
-.SH Including SM Blocks in Topology
+.SH Multi Rail and Multi Plane Fabrics
 .NL
 
 .PP
-You must manually edit the /etc/sysconfig/opa/topology.0:0.xml file to include SM blocks for each SM in your fabric. opaxlattopology translates the topology.csv file which does not include SM blocks in the xml file by default. If manual edits are not completed, then the command opareport -o verifyall -T topology.0:0.xml fails with errors similar to the following:# opareport -o verifyall -T topology.0:0.xml
-.br
-SMs Topology Verification
-.br
-
-.br
-SMs Found with incorrect configuration:
-.br
-NodeGUID Port PortGUID Type Name
-.br
-0x0011750101671ed9 1 0x0011750101671ed9 FI phkp3un86 hfi1\(ul0
-.br
-NodeDetails: koplab
-.br
-Unexpected SM
-.br
-
-.br
-1 of 1 Fabric SMs Checked
-.br
-
-.br
-SMs Expected but Missing or Duplicate in input:
-.br
-0 of 0 Input SMs Checked
-.br
-
-.br
-Total of 1 Incorrect SMs found
-.br
-0 Missing, 1 Unexpected, 0 Duplicate, 0 Different
+By default, the opaxlattopology script considers all of the hosts to have a single HFI (hfi1\(ul0).
 .PP
-To retrieve the info for the SM block, use the command opareport -o nodes -F sm as shown in the following example.
-.br
-# opareport -o nodes -F sm
-.br
-Getting All Node Records...
-.br
-Done Getting All Node Records
-.br
-Done Getting All Link Records
-.br
-Done Getting All Cable Info Records
-.br
-Done Getting All SM Info Records
-.br
-Node Type Summary
-.br
-Focused on:
-.br
-Port: 1 0x0011750101671ed9
-.br
-in Node: 0x0011750101671ed9 FI phkp3un86 hfi1\(ul0
-.br
+For Multi Rail/Plane fabrics, the user has following options:
+.IP \(bu
+For Multi Rail fabrics or for a Single Plane fabric with some multi-ported hosts, the user can edit the "Host Name" in topology.csv file to include the HFI Name, like "HostName HfiName" and then follow the standard procedure to generate topology.xml.
+.IP \(bu
+For a Multi Plane fabric with Identical planes, the tool can be run multiple times on same topology.csv with different "-s hfi\(ulsuffix" options.For example, if there are two identical fabric (fabric\(ul1 and fabric\(ul2) connected to a single host with two HFIs (hfi1\(ul0 and hfi1\(ul1), the tool can be run twice like this:
+For fabric\(ul1:
+opaxlattopology topology.csv topology.xmlFor fabric\(ul2:
 
 .br
-3 Connected FIs in Fabric:
-.br
-Name: phkp3un86 hfi1\(ul0
-.br
-NodeGUID: 0x0011750101671ed9 Type: FI
-.br
-Ports: 1 PartitionCap: 16 SystemImageGuid: 0x0011750101671ed9
-.br
-BaseVer: 128 SmaVer: 128 VendorID: 0x1175 DeviceID: 0x24f0 Rev: 0x10
-.br
-1 Connected Ports:
-.br
-PortNum: 1 LID: 0x0001 GUID: 0x0011750101671ed9
-.br
-Neighbor: Name: phedfim20
-.br
-NodeGUID: 0x0011750102648205 Type: SW PortNum: 46
-.br
-Width: 4 Speed: 25Gb Downgraded? No
-.br
-1 Matching FIs Found
-.br
+opaxlattopology -s hfi1\(ul1 topology.csv topology.xml
 
-.br
-1 Connected Switches in Fabric:
-.br
-0 Matching Switches Found
-.br
-
-.br
-1 Connected SMs in Fabric:
-.br
-State: Master Name: phkp3un86 hfi1\(ul0
-.br
-NodeGUID: 0x0011750101671ed9 Type: FI
-.br
-PortNum: 1 LID: 0x0001 PortGUID: 0x0011750101671ed9
-.br
-SM\(ulKey: 0x0000000000000000 Priority: 0 ActCount: 0x0000bcb2
-.br
-1 Matching SMs Found
-.PP
-At a minimum, the following information must be added in the topology.0:0.xml to avoid the "Unexpected SM" warning. This must be added inside <Nodes> section:
-.br
-<SMs> <SM> <NodeDesc>abcxyz</NodeDesc> </SM> </SMs>
+.IP \(bu
+For a fabric with both Multi Rail and Multi Plane segments, the user can use a combination of above techniques to generate desired topology.xml file.

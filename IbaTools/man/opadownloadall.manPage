@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opadownloadall 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opadownloadall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opadownloadall
 
@@ -48,7 +48,7 @@ Performs copy in parallel on all hosts.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file with hosts in cluster. The default is /etc/sysconfig/opa/hosts.
+Specifies the file with hosts in cluster. The default is /etc/opa/hosts.
 
 .TP 10
 -d \fIdownload\(uldir\fR 
@@ -90,13 +90,13 @@ Specifies the name of the file or directory on the destination hosts to copy to.
 If more than one source file is specified,  \fIdest\(ulfile\fR is treated as a directory name. The given directory must already exist on the destination host. The copy fails for hosts where the directory does not exist.
 .SH Example 
 .NL
-opadownloadall -h \[aq]arwen elrond\[aq] irqbalance vncservers /etc/sysconfig
+opadownloadall -h \[aq]arwen elrond\[aq] irqbalance vncservers /etc
 .br
 # Copies two files to 2 hosts
 .br
 
 .br
-opadownloadall -p irqbalance vncservers /etc/sysconfig
+opadownloadall -p irqbalance vncservers /etc
 .br
 # Copies two files to all hosts
 .SH Environment Variables 

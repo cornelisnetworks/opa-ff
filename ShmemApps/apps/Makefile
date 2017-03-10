@@ -46,7 +46,7 @@ ifndef SHMEM_PREFIX
 export SHMEM_PREFIX=$(shell pkg-config --variable=prefix openshmem)
 ifeq ($(strip$(SHMEM_PREFIX)),)
 # Fallback: openshmem.pc may not found in pkg-config search path
-export SHMEM_PREFIX=/usr/shmem/gcc/openshmem-1.0h-hfi/
+export SHMEM_PREFIX=/usr/shmem/gcc/openshmem-1.3-hfi/
 endif
 
 endif

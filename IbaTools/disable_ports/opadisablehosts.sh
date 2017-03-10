@@ -62,7 +62,7 @@ Usage_full()
 	echo "Information about the links disabled will be written to a CSV file. By default">&2
 	echo "this file is named $CONFIG_DIR/opa/disabled:hfi:port.csv where the hfi:port">&2
 	echo "part of the file name is replaced by the HFI number and the port number being">&2
-	echo "operated on (such as 0:0 or 1:2).  This CSV file can be used as input to">&2
+	echo "operated on (such as 1:1 or 2:1).  This CSV file can be used as input to">&2
 	echo "opaenableports. It is of the form:" >&2
 	echo "  NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID;PortNum;NodeType;NodeDesc;Reason" >&2
 	echo "For each listed link, the switch port closer to this is the one that has been" >&2

@@ -59,6 +59,7 @@ mkdir -p $RPMDIR/{BUILD,SPECS,BUILDROOT,SOURCES,RPMS,SRPMS}
 cp opa.spec.in opa.spec
 sed -i "s/__RPM_VERSION/$RPM_VER/g" opa.spec
 sed -i "s/__RPM_RELEASE/$RPM_REL%{?dist}/g" opa.spec
+sed -i "s/.\/ff_install/OpenIb_Host\/ff_install/g" opa.spec
 ./update_opa_spec.sh
 
 cp mpi-apps.spec.in mpi-apps.spec

@@ -35,9 +35,9 @@
 
 
 # optional override of defaults
-if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
+if [ -f /etc/opa/opafastfabric.conf ]
 then
-	. /etc/sysconfig/opa/opafastfabric.conf
+	. /etc/opa/opafastfabric.conf
 fi
 
 . /usr/lib/opa/tools/opafastfabric.conf.def
@@ -83,14 +83,14 @@ Usage_full()
 	echo "Information about the links disabled (and the reason) will be saved (in same">&2
 	echo "format) to an output file named $CONFIG_DIR/opa/disabled:hfi:port.csv where">&2
 	echo "the hfi:port part of the file name is replaced by the HFI number and the port">&2
-	echo "number being operated on (such as 0:0 or 1:2).  This CSV file can be used as">&2
+	echo "number being operated on (such as 1:1 or 2:1).  This CSV file can be used as">&2
         echo "input to opaenableports." >&2
 	echo >&2
 	echo "for example:" >&2
 	echo "   opadisableports 'bad cable' < disable.csv" >&2
 	echo "   opadisableports -h 1 -p 1 'dead servers' < disable.csv" >&2
 	echo "   opaextractsellinks -F lid:3 | opadisableports 'bad server'" >&2
-	echo "   opaextractmissinglinks -T /etc/sysconfig/opa/topology.0:0.xml | opadisableports" >&2
+	echo "   opaextractmissinglinks -T /etc/opa/topology.0:0.xml | opadisableports" >&2
 	exit 0
 }
 
@@ -120,7 +120,7 @@ Usage()
 	echo "Information about the links disabled (and the reason) will be saved (in same">&2
 	echo "format) to an output file named $CONFIG_DIR/opa/disabled:hfi:port.csv where">&2
 	echo "the hfi:port part of the file name is replaced by the HFI number and the port">&2
-	echo "number being operated on (such as 0:0 or 1:2)." >&2
+	echo "number being operated on (such as 1:1 or 2:1)." >&2
 	echo >&2
 	echo "for example:" >&2
 	echo "   opadisableports 'bad cable' < disable.csv" >&2

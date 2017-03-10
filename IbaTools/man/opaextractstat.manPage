@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaextractstat 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaextractstat 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaextractstat
 
@@ -93,7 +93,7 @@ Specifies the report type for output. Refer to
 for details.
 
 .TP 10
--d/--detail \fIdetail\fR 
+-d/--detail \fIlevel\fR 
 .NL
 Specifies the level of detail 0-n for output. Default is 2.
 
@@ -120,12 +120,12 @@ Produces output in XML.
 .TP 10
 -X/--infile \fIsnapshot\(ulinput\fR 
 .NL
-Generates a report using the data in the snapshot\(ulinput file. snapshot\(ulinput must have been generated during a previous -o \fIsnapshot\fR run. When used, the -s, -i, -C, and -a options are ignored. Not permitted with -o \fIroute\fR and -F \fIroute\fR. \[aq]-\[aq] may be used as the snapshot\(ulinput to specify stdin.
+Generates a report using the data in the snapshot\(ulinput file. snapshot\(ulinput must have been generated during a previous -o \fIsnapshot\fR run. When used, the -s, -i, -C, and -a options are ignored. \[aq]-\[aq] may be used as the snapshot\(ulinput to specify stdin.
 
 .TP 10
 -T/--topology \fItopology\(ulinput\fR 
 .NL
-Uses topology\(ulinput file to augment and verify fabric information. When used, various reports can be augmented with information not available electronically (such as cable labels and lengths). \[aq]-\[aq] may be used to specify stdin.
+Uses topology\(ulinput file to augment and verify fabric information. When used, various reports can be augmented with information not available electronically (such as cable labels). \[aq]-\[aq] may be used to specify stdin.
 
 .TP 10
 -s/--stats 
@@ -135,17 +135,17 @@ Gets performance statistics for all ports.
 .TP 10
 -i/--interval \fIseconds\fR 
 .NL
-Obtains performance statistics over interval  \fIseconds\fR, clears all statistics, waits interval  \fIseconds\fR, then generates report. Implies -s option.
+Obtains performance statistics over interval  \fIseconds\fR. Clears all statistics, waits interval  \fIseconds\fR, then generates report. Implies -s option.
 
 .TP 10
 -b / --begin \fIdate\(ultime\fR 
 .NL
-Obtains portCounters over an interval beginning at  \fIdate\(ultime\fR.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+Obtains past performance stats over an interval beginning at  \fIdate\(ultime\fR. Implies -s option.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
 -e / --end \fIdate\(ultime\fR 
 .NL
-Obtains portCounters over an interval ending at  \fIdate\(ultime\fR.
+Obtains past performance stats over an interval ending at  \fIdate\(ultime\fR. Implies -s option.
 
 .IP
  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
@@ -177,12 +177,12 @@ Accesses performance statistics using direct PMA.
 .TP 10
 -A/--allports 
 .NL
-Gets PortInfo for down switch ports. Uses direct SMA to get this data. If used with -M, also gets PMA stats for down-switch ports.
+Gets PortInfo for down switch ports. Uses direct SMA to get this data. If used with -M, also gets PMA stats for down switch ports.
 
 .TP 10
 -c/--config \fIfile\fR 
 .NL
-Specifies the error thresholds configuration file. Default is /etc/sysconfig/opa/opamon.conf file.
+Specifies the error thresholds configuration file. Default is /etc/opa/opamon.conf file.
 
 .TP 10
 -L/--limit 
@@ -199,7 +199,7 @@ for details.
 .TP 10
 -S/--src \fIpoint\fR 
 .NL
-Specifies the source for trace route, default is local port. Refer to
+Specifies the source for trace route. Default is local port. Refer to
 \fIPoint Syntax\fR
 for details.
 
@@ -441,6 +441,10 @@ validatevlcreditloops
 Validates topology configuration of the fabric including SLSC, SCSC, and SCVL tables to identify any existing credit loops.
 
 .TP 10
+validatemcroutes 
+.NL
+Validates multicast routes of the fabric.
+.TP 10
 vfinfo 
 .NL
 Summary of virtual fabric (vFabric) information.
@@ -612,12 +616,12 @@ iocpat:value1:port:value2
 .TP 10
 ioctype:value 
 .NL
- \fIvalue\fR is IOC type (VNIC or SRP).
+ \fIvalue\fR is IOC type (SRP or OTHER).
 
 .TP 10
 ioctype:value1:port:value2 
 .NL
- \fIvalue1\fR is IOC type (VNIC or SRP),  \fIvalue2\fR is port number.
+ \fIvalue1\fR is IOC type (SRP or OTHER);  \fIvalue2\fR is port number.
 
 .TP 10
 node:value 
@@ -667,7 +671,7 @@ rate:value
 .TP 10
 portstate:value 
 .NL
- \fIvalue\fR is a string for state (init, armed, active).
+ \fIvalue\fR is a string for state (down, init, armed, active, notactive, initarmed).
 
 .TP 10
 portphysstate:value 
@@ -715,14 +719,14 @@ cabinfvendrevpat:value
  \fIvalue\fR is glob pattern for cable info vendor revision.
 
 .TP 10
-cabinftype:value 
-.NL
- \fIvalue\fR is either optical, passive\(ulcopper, active\(ulcopper, or unknown.
-
-.TP 10
 cabinfvendsnpat:value 
 .NL
  \fIvalue\fR is glob pattern for cable info vendor serial number.
+
+.TP 10
+cabinftype:value 
+.NL
+ \fIvalue\fR is either optical, passive\(ulcopper, active\(ulcopper, or unknown.
 
 .TP 10
 linkdetpat:value 

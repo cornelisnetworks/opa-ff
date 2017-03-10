@@ -1,19 +1,19 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagenswitches 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagenswitches 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagenswitches
 
 .NL
 
 .PP
-Analyzes the present fabric and produces a list of Externally Managed switches in the required format for the /etc/sysconfig/opa/switches file.
+Analyzes the present fabric and produces a list of Externally Managed switches in the required format for the /etc/opa/switches file.
 .SH Syntax 
 .NL
 opagenswitches [-t portsfile] [-p ports] [-R] [-L switches\(ulfile]
@@ -31,7 +31,7 @@ Produces full help text.
 .NL
 Specifies the file with list of local HFI ports used to access fabric(s) for analysis.
 .br
-Default is /etc/sysconfig/opa/ports file.
+Default is /etc/opa/ports file.
 .TP 10
 -p \fIports\fR 
 .NL

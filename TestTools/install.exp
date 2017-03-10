@@ -187,8 +187,8 @@ proc install_uninstall { {uninstall 1} {remove_config 0} { dir "" } } {
 	if { $remove_config } {
 		set target_os_type [target_get_os_type]
 
-		unix_cmd 60 "" {rm -rf /etc/sysconfig/opa /etc/sysconfig/ipoib.cfg /etc/sysconfig/ics_srp.cfg /etc/sysconfig/ics_inic.cfg /etc/sysconfig/mpi.param /etc/sysconfig/mpi.param.safe /etc/sysconfig/mpi.param.microbench $toolsdir/opafastfabric.conf /etc/dat.conf}
-		unix_cmd 60 "" {rm -rf /etc/sysconfig/opafm.xml /etc/infiniband/openib.conf /etc/sysconfig/opamon.conf}
+		unix_cmd 60 "" {rm -rf /etc/opa /etc/sysconfig/ipoib.cfg /etc/sysconfig/ics_srp.cfg /etc/sysconfig/ics_inic.cfg /etc/sysconfig/mpi.param /etc/sysconfig/mpi.param.safe /etc/sysconfig/mpi.param.microbench $toolsdir/opafastfabric.conf /etc/dat.conf}
+		unix_cmd 60 "" {rm -rf /etc/opa-fm/opafm.xml /etc/infiniband/openib.conf /etc/opamon.conf}
 		unix_cmd 60 "" {rm -rf /etc/sysconfig/network-scripts/ifcfg-eioc[0-9]* /etc/sysconfig/network-scripts/ifcfg-ib[0-9]*}
 		unix_cmd 60 "" {rm -rf /etc/sysconfig/network/ifcfg-eioc[0-9]* /etc/sysconfig/network/ifcfg-ib[0-9]*}
 		unix_cmd 60 "" {rm -rf /etc/dapl}

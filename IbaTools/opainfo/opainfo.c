@@ -263,7 +263,7 @@ void show_info( struct oib_port *portHandle,
 
 		PrintStlPortSummary(&g_dest, 0, get_port_name(portHandle),
 				pPortInfo, portGUID, g_pkey,
-				cableInfo, STL_CIB_STD_START_ADDR, STL_CIB_STD_LEN, 
+				cableInfo, STL_CIB_STD_HIGH_PAGE_ADDR, STL_CIB_STD_LEN, 
  				pPortStatusRsp, detail, g_printLineByLine);
 	}
 
@@ -469,7 +469,7 @@ int main(int argc, char *argv[])
 			uint16_t addr;
 			uint8_t *data;
 			have_cableinfo = TRUE;	// assume success
-			for (addr = STL_CIB_STD_START_ADDR, data=g_cableInfo;
+			for (addr = STL_CIB_STD_HIGH_PAGE_ADDR, data=g_cableInfo;
 				 addr + STL_CABLE_INFO_MAXLEN <= STL_CIB_STD_END_ADDR; addr += STL_CABLE_INFO_DATA_SIZE, data += STL_CABLE_INFO_DATA_SIZE)
 			{
 				fstatus = get_local_stl_cable_info(portHandle, addr, &smpCableInfo);

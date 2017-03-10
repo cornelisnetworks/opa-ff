@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafequery 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafequery 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafequery
 
@@ -65,7 +65,7 @@ Specifies the ESM FE name.
 .TP 10
 -T / --sslParmsFile \fIfilename\fR 
 .NL
-Specifies the SSL/TLS parameters XML file. Default = /etc/sysconfig/opa/opaff.xml 
+Specifies the SSL/TLS parameters XML file. Default = /etc/opa/opaff.xml 
 
 .SH SA Specific Options
 .NL
@@ -332,7 +332,7 @@ Sorted by utilization - lowest first.
 
 .sp
 integrity 
-Sorted by integrity errors - highest first.
+Sorted by integrity category - highest first.
 
 .RE
 
@@ -341,7 +341,7 @@ Sorted by integrity errors - highest first.
 
 .sp
 congestion 
-Sorted by congestion errors - highest first.
+Sorted by congestion category - highest first.
 
 .RE
 
@@ -350,7 +350,7 @@ Sorted by congestion errors - highest first.
 
 .sp
 smacongesion 
-Sorted by SMA congestion errors - highest first.
+Sorted by SMA congestion category - highest first.
 
 .RE
 
@@ -359,7 +359,7 @@ Sorted by SMA congestion errors - highest first.
 
 .sp
 bubbles 
-Sorted by bubble errors - highest first.
+Sorted by bubble category - highest first.
 
 .RE
 
@@ -368,7 +368,7 @@ Sorted by bubble errors - highest first.
 
 .sp
 security 
-Sorted by security errors - highest first.
+Sorted by security category - highest first.
 
 .RE
 
@@ -377,7 +377,7 @@ Sorted by security errors - highest first.
 
 .sp
 routing 
-Sorted by routing errors - highest first.
+Sorted by routing category - highest first.
 
 .RE
 

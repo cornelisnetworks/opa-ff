@@ -64,7 +64,7 @@ INCLUDE_TARGETS	= \
 				# Add more h hpp files here
 # Non-compiled files
 MISC_FILES		= opatop_group_bw.hlp opatop_group_config.hlp \
-				opatop_group_err.hlp opatop_group_focus.hlp \
+				opatop_group_ctg.hlp opatop_group_focus.hlp \
 				opatop_group_info_sel.hlp opatop_img_config.hlp \
 				opatop_pm_config.hlp opatop_port_stats.hlp \
 				opatop_summary.hlp opatop_vf_bw.hlp \

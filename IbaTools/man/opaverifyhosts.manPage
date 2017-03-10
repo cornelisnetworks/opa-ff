@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaverifyhosts 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaverifyhosts 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaverifyhosts
 
@@ -17,10 +17,10 @@ Verifies basic node configuration and performance by running FF\(ulHOSTVERIFY\(u
 .PP
 
 .B NOTE:
-Prior to using opaverifyhosts, copy the sample file /usr/lib/opa/samples/hostverify.sh to FF\(ulHOSTVERIFY\(ulDIR and edit it to set the appropriate configuration and performance expectations and select which tests to run by default. On the first run for a given node, use the -c option so that hostverify.sh gets copied to each node.
+Prior to using opaverifyhosts, copy the sample file /usr/share/opa/samples/hostverify.sh to FF\(ulHOSTVERIFY\(ulDIR and edit it to set the appropriate configuration and performance expectations and select which tests to run by default. On the first run for a given node, use the -c option so that hostverify.sh gets copied to each node.
 
 .PP
-FF\(ulHOSTVERIFY\(ulDIR defines both the location of hostverify.sh and the destination of the hostverify.res output file. FF\(ulHOSTVERIFY\(ulDIR is configured in the /etc/sysconfig/opa/opafastfabric.conf file.
+FF\(ulHOSTVERIFY\(ulDIR defines both the location of hostverify.sh and the destination of the hostverify.res output file. FF\(ulHOSTVERIFY\(ulDIR is configured in the /etc/opa/opafastfabric.conf file.
 .PP
 A summary of results is appended to the FF\(ulRESULT\(ulDIR/verifyhosts.res file. A punchlist of failures is also appended to the FF\(ulRESULT\(ulDIR/punchlist.csv file. Only failures are shown on stdout.
 
@@ -52,7 +52,7 @@ Copies hostverify.sh to hosts first, useful if you have edited it.
 .NL
 Specifies the file with hosts in cluster.
 .br
-Default is /etc/sysconfig/opa/hosts. 
+Default is /etc/opa/hosts. 
 
 .TP 10
 -h \fIhosts\fR 
@@ -79,7 +79,7 @@ Specifies the time limit in seconds for host to complete tests. Default is 300 s
 .NL
 Specifies one or more specific tests to run. See
 .br
-/usr/lib/opa/samples/hostverify.sh for a list of available tests.
+/usr/share/opa/samples/hostverify.sh for a list of available tests.
 
 .SH Examples 
 .NL

@@ -1,10 +1,10 @@
 HELP: SUMMARY SCREEN
 opatop is a command line tool which displays performance analysis
 information about a fabric.  Performance analysis information is divided
-into two areas - utilization and error statistics, which are main starting
+into two areas - utilization and category statistics, which are main starting
 points for analyzing fabric traffic.  Utilization can identify over-utilized
 areas (bottle necks) and under-utilized areas (potentially misconfigured);
-errors can identify problems in fabric hardware or configuration.
+category statistics can identify problems in fabric hardware or configuration.
 
 On the help screens you may use these commands:
   u: Up to previous screen (done help)
@@ -12,10 +12,10 @@ On the help screens you may use these commands:
   <sp>: Scroll forward 1 line (space key)
 	
 The top level (summary) screen of opatop shows basic fabric configuration
-information as well as utilization and error information.  Fabric
+information as well as utilization and category statistics.  Fabric
 configuration information includes numbers of links, switches, SMs, and
 ports, as well as details about the master and secondary (if present) SMs.
-Fabric utilization and error statistics are presented based on PM port
+Fabric utilization and category statistics are presented based on PM port
 groups, which include the predefined PM groups: All (all ports in the fabric),
 HFIs, and SWs.  These groups provide a natural subdivision of the ports in
 a fabric for performance analysis.  The summary screen also will include any
@@ -25,45 +25,45 @@ The user may toggle between a PM group based summary display and a Virtual
 Fabric (VF) based summary display.  The VF display will show all presently
 enabled Virtual Fabrics.
 
-After looking at the summary screen a user can decide
-which area of performance (utilization or error) and which group of ports
+After looking at the summary screen a user can decide which area of
+performance (utilization or category statistics) and which group of ports
 most warrants investigation, and can then "drill down" into that area.
 
 If the message "Unexpected Clear" (or "Unexp Clear") is reported, this means
 one or more devices have had their PMA counters unexpectedly cleared by
 something other than the PM.  For Intel switches, make sure ismAutoClearConf
-is disabled.  For HFIs make that other tools such as opareport or
+is disabled.  For HFIs make sure that other tools such as opareport or
 OFED diagnostics are not being run in a manner which would directly clear
 PMA counters.  The Image Info Screen will indicate how many such ports
 were affected.
 
 For each port group or VF, average, minimum and maximum MBps (megabytes
 per second), and KPps (kilo-packets per second) are shown, as well
-as a status indicator for each of five error categories.
+as a status indicator for each of six counter categories.
 (Note: mega=1,000,000; kilo=1000)
 
-Performance statistics for each port group are further divided into up to
+Performance utilization for each port group are further divided into up to
 three subgroups - Internal, Send and Receive - based on whether a port's
 neighbor port is in its group.  If a port's neighbor port is in its group,
-all performance statistics are contained in the Internal subgroup.  If a port's
-neighbor is not in its group, statistics for data leaving the port (group) are
-contained in the Send subgroup and statistics for data entering the port are
+all performance utilization are contained in the Internal subgroup. If a port's
+neighbor is not in its group, utilization for data leaving the port (group) are
+contained in the Send subgroup and utilization for data entering the port are
 contained in the Receive subgroup.
 
 In the All group all ports are Internal since, by definition, the neighbor port
 must be in the All group.  In the HFIs group all neighbor ports are outside the
-group so statistics are contained in the Send and Receive subgroups.  In the
+group so utilization are contained in the Send and Receive subgroups.  In the
 SWs group neighbor ports are either outside the group (HFI) or inside the
-group (another switch) so statistics are contained in all three subgroups.
+group (another switch) so utilization are contained in all three subgroups.
 
-For VF summary display, all information is reported ad Internal.
+For VF summary display, all information is reported as Internal.
 
-The five error categories are: Integrity, Congestion, SMA Congestion,
-Security and Routing, and are based on mapping each port (error) counter
-into one of the five categories. Each error status indicator is shown at
+The six category statistics are: Integrity, Congestion, SMA Congestion,
+Bubble, Security and Routing, and are based on mapping each port counter
+into one of the six categories. Each category status indicator is shown at
 one of five values/colors: minimum/green, Low/blue, Moderate/cyan,
-Warning/yellow or OVER/red based on the error value as compared to a
-threshold value.
+Warning/yellow or OVER/red based on the category value as compared
+to a threshold value.
 
 opatop allows the user to access statistics from sequential PM sweeps
 (the PM keeps a history of previous sweep images) and queries the PM at a

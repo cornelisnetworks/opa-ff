@@ -39,7 +39,7 @@ warning: No version string in file: ./fastfabric/samples/linksum_180.csv
 warning: No version string in file: ./fastfabric/samples/linksum_360.csv
 warning: No version string in file: ./fastfabric/opatop_group_bw.hlp
 warning: No version string in file: ./fastfabric/opatop_group_config.hlp
-warning: No version string in file: ./fastfabric/opatop_group_err.hlp
+warning: No version string in file: ./fastfabric/opatop_group_ctg.hlp
 warning: No version string in file: ./fastfabric/opatop_group_focus.hlp
 warning: No version string in file: ./fastfabric/opatop_group_info_sel.hlp
 warning: No version string in file: ./fastfabric/opatop_img_config.hlp

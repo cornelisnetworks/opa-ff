@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaswdisableall 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaswdisableall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaswdisableall
 
@@ -32,7 +32,7 @@ Produces full help text.
 .NL
 Specifies the file with list of local HFI ports used to access fabrics when clearing counters.
 .br
-Default is /etc/sysconfig/opa/ports file.
+Default is /etc/opa/ports file.
 
 .TP 10
 -p \fIports\fR 

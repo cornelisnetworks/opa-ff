@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opachassisadmin
 
@@ -39,7 +39,7 @@ Overwrites the result files from any previous run before starting this run.
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-Specifies the file with chassis in cluster. The default is /etc/sysconfig/opa/chassis.
+Specifies the file with chassis in cluster. The default is /etc/opa/chassis.
 
 .TP 10
 -H \fIchassis\fR 
@@ -432,7 +432,7 @@ For more information about chassis firmware, refer to the
 \fIIntel(R) Omni-Path Fabric Switches GUI User Guide\fR
 
 and 
-\fIIntel(R) Omni-Path Fabric Externally-Managed Switches Release Notes\fR
+\fIIntel(R) Omni-Path Fabric Switches Release Notes\fR
 
 .
 .TP 10

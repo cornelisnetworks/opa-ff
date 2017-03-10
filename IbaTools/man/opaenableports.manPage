@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaenableports 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaenableports 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaenableports
 
@@ -15,7 +15,7 @@ opaenableports
 .PP
 
 \fB(Linux)\fR
-Accepts a disabled ports input file and re-enables the specified ports. The input file can be /etc/sysconfig/opa/disabled*.csv or a user-created subset of such a file. After enabling the port, it is removed from /etc/sysconfig/opa/disabled*.csv.
+Accepts a disabled ports input file and re-enables the specified ports. The input file can be /etc/opa/disabled*.csv or a user-created subset of such a file. After enabling the port, it is removed from /etc/opa/disabled*.csv.
 .SH Syntax 
 .NL
 opaenableports [-h \fIhfi\fR] [-p \fIport\fR] < disabled.csv
@@ -43,7 +43,7 @@ disabled.csv
 Specifies the input file listing the ports to enable. The list is of the form: NodeGUID;PortNum;NodeType;NodeDesc;Ignored.
 
 .IP
-An input file like this is generated in /etc/sysconfig/opa/disabled* by opadisableports.
+An input file like this is generated in /etc/opa/disabled* by opadisableports.
 .NL
 
 .SH -h and -p options permit a variety of selections:
@@ -83,6 +83,6 @@ HFI \fIx\fR, port \fIy\fR.
 .NL
 opaenableports < disabled.csv
 .br
-opaenableports < /etc/sysconfig/opa/disabled:0:0.csv
+opaenableports < /etc/opa/disabled:0:0.csv
 .br
 opaenableports -h 1 -p 1 < disabled.csv

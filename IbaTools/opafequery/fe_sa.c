@@ -1755,7 +1755,7 @@ FSTATUS fe_processSAQuery(PQUERY pQuery, struct net_connection *connection, PQUE
 			// Default values.
 			saMad.SaHdr.ComponentMask |= STL_CIR_COMP_LEN | STL_CIR_COMP_ADDR;
 			pCIR->Length = STL_CABLE_INFO_PAGESZ - 1;
-			pCIR->u1.s.Address = STL_CIB_STD_START_ADDR;
+			pCIR->u1.s.Address = STL_CIB_STD_HIGH_PAGE_ADDR;
 
 			BSWAP_STL_CABLE_INFO_RECORD(pCIR);
 			MAD_SET_METHOD_TYPE(&saMad, SUBN_ADM_GETTABLE);

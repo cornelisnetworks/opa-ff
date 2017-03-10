@@ -1,0 +1,68 @@
+HELP: GROUP/VF CATEGORY STATS SCREEN
+Category Stats for a port group/VF are divided into up to two subgroups -
+Internal or External - based on whether a port's neighbor port is in its group
+(Internal) or not (External).  In the All group all ports are Internal. For
+example in the HFIs group all ports are External. In the SWs group ports may be
+Internal or External.  The six categories are based on mapping each port
+counter into one of the categories as follows. The integrity and congestion
+counter values are calculated by using a weighted sum. The weights for each
+and the threshold value for each category can be seen in the PM Config screen.
+Some counters are gathered from the neighbor's port instead.
+
+ Integrity:
+  Local Link Integrity Errors
+  Port Receive Errors
+  Excessive Buffer Overrun Errors (neighbor port)
+  Link Error Recovery
+  Link Downed
+  Uncorrectable Errors
+  FM Config Errors
+
+ Congestion:
+  Port Transmit Wait
+  Switch Port Congestion
+  Port Receive FECN (neighbor port)
+  Port Receive BECN (only from FIs)
+  Port Transmit Time Congestion
+  Port Mark FECN
+
+ SmaCongestion:
+  The counters included in the SMA Congestion category are the VL 15 counters
+  equivalent to the port counters in the Congestion category.
+
+ Bubble:
+  Port Transmit Wasted Bandwidth
+  Port Transmit Wait Data
+  Port Receive Bubble (neighbor port)
+
+ Security:
+  Port Receive Constraint Errors (neighbor port)
+  Port Transmit Constraint Errors
+
+ Routing:
+  Port Receive Switch Relay Errors
+
+For each subgroup within a category, there are five histogram buckets. Each
+bucket has a width of 25%(0+%, 25+%, etc) and the last bucket for over the
+threshold(100+%). A bucket is used to measure the number of ports whose category
+value when compared to the threshold falls within the range of the bucket. This
+provides an indication of how counter rates compare to their thresholds.
+
+The Ctg Stats screen accepts input commands which specify parameters to be
+used in a group focus query, which will provide a list of ports sorted
+according to a specified category criterion. The second line of the Ctg Stats
+screen displays the group name, and the currently selected focus criterion
+and number of ports for a group focus query.  The 'D' command causes the group
+focus query to be performed and displayed in a Group Focus screen.  The
+following input commands are accepted in the Ctg Stats screen.
+
+  C: Select group focus criterion forward (c*) or reverse (C*):
+     Integrity category (highest first)
+     Congestion category (highest first)
+     SmaCongestion category (highest first)
+     Bubble category (highest first)
+     Security category (highest first)
+     Routing category (highest first)
+  Nn: Number of entries n in group focus list
+  D:  Display detail group focus list
+

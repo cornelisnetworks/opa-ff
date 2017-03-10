@@ -263,24 +263,34 @@ void XmlPrintTagFooter(const char *tag, int indent)
 { 
    printf("%*s</%s>\n", indent, "", tag); 
 }
-
-void XMLPrintGroupRecord (McMemberData *pMcMemberRecord, int indent, int detail)
+void XmlPrintGroupRecord (McGroupData *pMcGroupRecord, int indent, int detail)
 {
 	char buf[8];
-	XmlPrintGID("MGID",pMcMemberRecord->MemberInfo.RID.MGID,indent+8);
-	XmlPrintLID("MLID",pMcMemberRecord->MemberInfo.MLID, indent+8);
-	XmlPrintPKey("P_Key", pMcMemberRecord->MemberInfo.P_Key, indent+8);
-	XmlPrintDec("Mtu", GetBytesFromMtu(pMcMemberRecord->MemberInfo.Mtu), indent+8);
-	XmlPrintRate(pMcMemberRecord->MemberInfo.Rate,indent+8);
-	FormatTimeoutMult(buf, pMcMemberRecord->MemberInfo.PktLifeTime);
-	XmlPrintStr("PktLifeTime", buf, indent+8);
-	XmlPrintHex16("PktLifeTime_Int", pMcMemberRecord->MemberInfo.PktLifeTime, indent+8);
-	XmlPrintHex32("Q_Key", pMcMemberRecord->MemberInfo.Q_Key, indent+8);
-	XmlPrintDec("SL", pMcMemberRecord->MemberInfo.u1.s.SL, indent+8);
-	XmlPrintHex("HopLimit", pMcMemberRecord->MemberInfo.u1.s.HopLimit, indent+8);
-	XmlPrintHex("FlowLabel", pMcMemberRecord->MemberInfo.u1.s.FlowLabel, indent+8);
-	XmlPrintHex8("TClass", pMcMemberRecord->MemberInfo.TClass, indent+8);
 
+	XmlPrintGID("MGID",pMcGroupRecord->MGID,indent+8);
+	XmlPrintLID("MLID",pMcGroupRecord->MLID, indent+8);
+	XmlPrintPKey("P_Key", pMcGroupRecord->GroupInfo.P_Key, indent+8);
+	XmlPrintDec("Mtu", GetBytesFromMtu(pMcGroupRecord->GroupInfo.Mtu), indent+8);
+	XmlPrintRate(pMcGroupRecord->GroupInfo.Rate,indent+8);
+	FormatTimeoutMult(buf, pMcGroupRecord->GroupInfo.PktLifeTime);
+	XmlPrintStr("PktLifeTime", buf, indent+8);
+	XmlPrintDec("PktLifeTime_Int", pMcGroupRecord->GroupInfo.PktLifeTime, indent+8);
+	XmlPrintHex32("Q_Key", pMcGroupRecord->GroupInfo.Q_Key, indent+8);
+	XmlPrintDec("SL", pMcGroupRecord->GroupInfo.u1.s.SL, indent+8);
+	XmlPrintHex("HopLimit", pMcGroupRecord->GroupInfo.u1.s.HopLimit, indent+8);
+	XmlPrintHex("FlowLabel", pMcGroupRecord->GroupInfo.u1.s.FlowLabel, indent+8);
+	XmlPrintHex8("TClass", pMcGroupRecord->GroupInfo.TClass, indent+8);
+}
+
+void McMembershipXmlOutput(const char *tag, McMemberData *pMCGG, int indent)
+{
+	uint8 Memberstatus;
+
+	Memberstatus = (pMCGG->MemberInfo.JoinSendOnlyMember<<2 |
+					pMCGG->MemberInfo.JoinNonMember<<1|
+					pMCGG->MemberInfo.JoinFullMember);
+
+	XmlPrintDec(tag, Memberstatus, indent);
 }
 
 void DisplaySeparator(void)
@@ -289,28 +299,28 @@ void DisplaySeparator(void)
 
 }
 
-void DisplayGroupRecord(McMemberData *pMcMemberRecord, int indent, int detail)
+void DisplayGroupRecord(McGroupData *pMcGroupRecord, int indent, int detail)
 {
 	char buf[8];
 	printf("%*sMGID: 0x%016"PRIx64":0x%016"PRIx64"\n",
 			indent, "",
-			pMcMemberRecord->MemberInfo.RID.MGID.AsReg64s.H,
-			pMcMemberRecord->MemberInfo.RID.MGID.AsReg64s.L);
-	FormatTimeoutMult(buf, pMcMemberRecord->MemberInfo.PktLifeTime);
+			pMcGroupRecord->MGID.AsReg64s.H,
+			pMcGroupRecord->MGID.AsReg64s.L);
+	FormatTimeoutMult(buf, pMcGroupRecord->GroupInfo.PktLifeTime);
 	printf("%*sMLID: 0x%04x PKey: 0x%04x Mtu: %5s Rate: %4s PktLifeTime: %s\n",
 			indent, "",
-			pMcMemberRecord->MemberInfo.MLID,
-			pMcMemberRecord->MemberInfo.P_Key,
-			IbMTUToText(pMcMemberRecord->MemberInfo.Mtu),
-			StlStaticRateToText(pMcMemberRecord->MemberInfo.Rate),
+			pMcGroupRecord->MLID,
+			pMcGroupRecord->GroupInfo.P_Key,
+			IbMTUToText(pMcGroupRecord->GroupInfo.Mtu),
+			StlStaticRateToText(pMcGroupRecord->GroupInfo.Rate),
 			buf);
 	printf("%*sQKey: 0x%08x SL: %2d FlowLabel: 0x%05x  HopLimit: 0x%02x  TClass:  0x%02x\n",
 			indent, "",
-			pMcMemberRecord->MemberInfo.Q_Key,
-			pMcMemberRecord->MemberInfo.u1.s.SL,
-			pMcMemberRecord->MemberInfo.u1.s.FlowLabel,
-			pMcMemberRecord->MemberInfo.u1.s.HopLimit,
-			pMcMemberRecord->MemberInfo.TClass);
+			pMcGroupRecord->GroupInfo.Q_Key,
+			pMcGroupRecord->GroupInfo.u1.s.SL,
+			pMcGroupRecord->GroupInfo.u1.s.FlowLabel,
+			pMcGroupRecord->GroupInfo.u1.s.HopLimit,
+			pMcGroupRecord->GroupInfo.TClass);
 }
 
 void ShowPathRecord(IB_PATH_RECORD *pPathRecord, Format_t format,
@@ -327,9 +337,18 @@ void ShowPathRecord(IB_PATH_RECORD *pPathRecord, Format_t format,
 				indent, "",
 				pPathRecord->DGID.Type.Global.SubnetPrefix,
 				pPathRecord->DGID.Type.Global.InterfaceID);
-		printf("%*sSLID: 0x%04x DLID: 0x%04x Reversible: %s PKey: 0x%04x\n",
+		printf("%*sSLID: 0x%04x DLID: 0x%04x Reversible: %s",
 				indent, "", pPathRecord->SLID, pPathRecord->DLID,
-				pPathRecord->Reversible?"Y":"N", pPathRecord->P_Key);
+				pPathRecord->Reversible?"Y":"N");
+		// If this is from a snapshot, stop here - the remaining values cannot be
+		// deduced.
+		if (g_snapshot_in_file) {
+			printf("\n");
+			break;
+		}
+
+		printf(" PKey: 0x%04x\n", pPathRecord->P_Key);
+
 		printf("%*sRaw: %s FlowLabel: 0x%05x HopLimit: 0x%02x TClass: 0x%02x\n",
 				indent, "", pPathRecord->u1.s.RawTraffic?"Y":"N",
 				pPathRecord->u1.s.FlowLabel, pPathRecord->u1.s.HopLimit,
@@ -355,6 +374,12 @@ void ShowPathRecord(IB_PATH_RECORD *pPathRecord, Format_t format,
 		XmlPrintLID("DLID", pPathRecord->DLID, indent+4);
 		XmlPrintStr("Reversible", pPathRecord->Reversible?"Y":"N", indent+4);
 		XmlPrintDec("Reversible_Int", pPathRecord->Reversible, indent+4);
+		// If this is from a snapshot, stop here - the remaining values cannot be
+		// deduced.
+		if (g_snapshot_in_file) {
+			printf("%*s</PathRecord>\n", indent, "");
+			break;
+		}
 		XmlPrintPKey("PKey", pPathRecord->P_Key, indent+4);
 		XmlPrintStr("Raw", pPathRecord->u1.s.RawTraffic?"Y":"N", indent+4);
 		XmlPrintDec("Raw_Int", pPathRecord->u1.s.RawTraffic, indent+4);
@@ -434,7 +459,7 @@ void ShowLinkBriefSummaryHeader(Format_t format, int indent, int detail)
 void ShowCableSummary(uint8_t *pCableData, Format_t format, int indent, int detail, uint8 portType)
 {
 	// CableInfo is organized in 128-byte pages but is stored in 64-byte half-pages
-	// For portType STANDARD we use STL_CIB_STD_START_ADDR to STL_CIB_STD_END_ADDR
+	// For portType STANDARD we use STL_CIB_STD_HIGH_PAGE_ADDR to STL_CIB_STD_END_ADDR
 	// inclusive (128-255)
 	// To avoid compiler warnings, data pointer is used for the data portion
 	// of the STL_CABLE_INFO
@@ -2216,10 +2241,7 @@ void ShowSCSLTable(NodeData *nodep, PortData *portp, Format_t format, int indent
 // output verbose summary of SC-to-SC table
 void ShowSCSCTable(NodeData *nodep, PortData *portp, Format_t format, int indent, int detail)
 {
-	cl_map_item_t *p;
-	STL_SCSCMAP *pSCSC;
-	PortData *portp2;
-	uint8 ix_port;
+	LIST_ITEM *p;
 	int i;
 
 	if (format == FORMAT_XML) {
@@ -2229,43 +2251,42 @@ void ShowSCSCTable(NodeData *nodep, PortData *portp, Format_t format, int indent
 		printf("%*sSCtoSC:\n", indent, "");
 	}
 
-	for ( p=cl_qmap_head(&nodep->Ports), pSCSC = portp->pQOS->SC2SCMap;
-			p != cl_qmap_end(&nodep->Ports); p = cl_qmap_next(p) )
+	for (p=QListHead(&portp->pQOS->SC2SCMapList); p != NULL; p = QListNext(&portp->pQOS->SC2SCMapList, p))
 	{
-		portp2 = PARENT_STRUCT(p, PortData, NodePortsEntry);
+		PortMaskSC2SCMap *pSC2SC = (PortMaskSC2SCMap *)QListObj(p);
 		ASSERT(nodep->NodeInfo.NodeType == STL_NODE_SW);
-		ix_port = portp2->PortNum;
-		if (ix_port == 0)
-			continue;	// SC to SC N/A for Switch Port 0
 
+		char outports[nodep->NodeInfo.NumPorts*3];
+		FormatStlPortMask(outports, pSC2SC->outports, nodep->NodeInfo.NumPorts, nodep->NodeInfo.NumPorts*3);
 		switch (format) {
 		case FORMAT_TEXT:
-			printf("%*soport SC: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15\n",
+			printf("%*s%s\n", indent, "", outports);
+			printf("%*s        SC: 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15\n",
 					indent, "");
-			printf("%*s %3u SC': ", indent, "", ix_port);
+			printf("%*s       SC': ", indent, "");
 			for (i = 0; i < STL_MAX_SCS; i++) {
 				if (i == 16) {
-					printf("\n%*soport SC: 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31\n",
+					printf("\n%*s        SC: 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31\n",
 						indent, "");
-					printf("%*s %3u SC': ", indent, "", ix_port);
+					printf("%*s       SC': ", indent, "");
 				}
-				printf("%02u ", pSCSC[ix_port].SCSCMap[i].SC);
+				printf("%02u ", pSC2SC->SC2SCMap->SCSCMap[i].SC);
 			}
 			printf("\n");
 			break;
 		case FORMAT_XML:
-			printf("%*s<OutputPort port=\"%u\">\n", indent, "", portp2->PortNum);
+			printf("%*s<OutputPorts ports=\"%s\">\n", indent, "", &outports[7]); // don't want to print the 1st 7 chars of the string
 			indent+=4;
-			for (i=0; i<STL_MAX_SCS; i++) 
-				printf("%*s<SC SC=\"%u\">%u</SC>\n", indent, "", i, pSCSC[ix_port].SCSCMap[i].SC);
+			for (i=0; i<STL_MAX_SCS; i++)
+				printf("%*s<SC SC=\"%u\">%u</SC>\n", indent, "", i, pSC2SC->SC2SCMap->SCSCMap[i].SC);
 			indent-=4;
-			printf("%*s</OutputPort>\n", indent, "");
+			printf("%*s</OutputPorts>\n", indent, "");
 			break;
 		default:
 			break;
 		}	// End of switch (format)
 
-	}	// End of for ( p=cl_qmap_head(&nodep->Ports)
+	}	// End of for ( p=QListHead(&portp->pQOS->SC2SCMapList)
 
 	switch (format) {
 	case FORMAT_TEXT:
@@ -2941,7 +2962,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				if ( portp->pQOS->SC2SLMap ) {
 					ShowSCSLTable(portp->nodep, portp, format, indent+4, detail-2);
 				}
-				if ( portp->pQOS->SC2SCMap )  {
+				if ( !(QListIsEmpty(&portp->pQOS->SC2SCMapList)) )  {
 					ShowSCSCTable(portp->nodep, portp, format, indent+4, detail-2);
 				}
 			}
@@ -3292,7 +3313,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				if ( portp->pQOS->SC2SLMap ) {
 					ShowSCSLTable(portp->nodep, portp, format, indent+8, detail-2);
 				}
-				if ( portp->pQOS->SC2SCMap )  {
+				if ( !(QListIsEmpty(&portp->pQOS->SC2SCMapList)) )  {
 					ShowSCSCTable(portp->nodep, portp, format, indent+8, detail-2);
 				}
 			}
@@ -8060,12 +8081,14 @@ void ShowValidatePGReport(Point *focus, Format_t format, int indent, int detail)
 FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int indent)
 {
 	LIST_ITEM *n1, *p1;
-	int nodecount;
 
 	if (detail >= 0)
 	  switch (format) {
 	  case FORMAT_TEXT:
-		printf("Number of MC Groups: %d\n", fabricp->NumOfMcGroups);
+		if (fabricp->NumOfMcGroups == 1)
+			printf("Number of MC Group: %d\n", fabricp->NumOfMcGroups);
+		else
+			printf("Number of MC Groups: %d\n", fabricp->NumOfMcGroups);
 		if (detail > 0 ) printf("\n");
 		break;
 	  case FORMAT_XML:
@@ -8075,14 +8098,11 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 		break;
 	  }
 
-
 // collecting information about MC Groups
 	for (n1 = QListHead (&fabricp->AllMcGroups); n1 != NULL; n1 = QListNext(&fabricp->AllMcGroups, n1)) {
 		McGroupData *pmcgroup = (McGroupData *)QListObj(n1);
 		//for this PortGID get member group information
 		// do not get info on empty groups
-		// As all members of the same group share certain properties, HEAD is used for printing
-		// group properties such as rate, etc.
 		McMemberData *pMCGM = (McMemberData *)QListObj(QListHead(&pmcgroup->AllMcGroupMembers));
 
 		if ((pMCGM->MemberInfo.RID.PortGID.AsReg64s.H ==0) && (pMCGM->MemberInfo.RID.PortGID.AsReg64s.L==0))
@@ -8090,14 +8110,14 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 		if (detail > 0 )
 			switch (format) {
 			case FORMAT_TEXT:
-				DisplayGroupRecord (pMCGM, indent, detail);
+				DisplayGroupRecord (pmcgroup, indent, detail);
 				printf("Number of Group Members: %d\n", pmcgroup->NumOfMembers);
 				break;
 			case FORMAT_XML:
 				printf("%*s<%s id=\"0x%016"PRIx64":0x%016"PRIx64"\">\n", indent+4, "", "MulticastGroup",
-						pMCGM->MemberInfo.RID.MGID.AsReg64s.H, pMCGM->MemberInfo.RID.MGID.AsReg64s.L);
+						pmcgroup->MGID.AsReg64s.H, pmcgroup->MGID.AsReg64s.L);
 				printf("%*s<NumMcGMembers>%d</NumMcGMembers>\n",indent+8,"", pmcgroup->NumOfMembers);
-				XMLPrintGroupRecord (pMCGM, indent, detail);
+				XmlPrintGroupRecord (pmcgroup, indent, detail);
 				break;
 			default:
 				break;
@@ -8105,8 +8125,8 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 
 		if (detail > 1 ) {
 			//if the list is not empty)
-			for (p1=QListHead(&pmcgroup->AllMcGroupMembers), nodecount=0; p1 != NULL;
-						p1 = QListNext(&pmcgroup->AllMcGroupMembers, p1), nodecount++) {
+
+			for (p1=QListHead(&pmcgroup->AllMcGroupMembers); p1 != NULL; p1 = QListNext(&pmcgroup->AllMcGroupMembers, p1)) {
 				McMemberData *pMCGG = (McMemberData *)QListObj(p1);
 
 				if ((pMCGG->MemberInfo.RID.PortGID.AsReg64s.H !=0) || (pMCGG->MemberInfo.RID.PortGID.AsReg64s.L!=0)){
@@ -8122,13 +8142,13 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 						case FORMAT_XML:
 							printf("%*s<%s id=\"0x%016"PRIx64":0x%016"PRIx64"\">\n", indent+8, "", "McMembers",
 								pMCGG->MemberInfo.RID.PortGID.AsReg64s.H,  pMCGG->MemberInfo.RID.PortGID.AsReg64s.L);
-							XmlPrintGID("PortGID",pMCGG->MemberInfo.RID.PortGID,indent+12);
-							if (pMCGG->MemberInfo.JoinFullMember)
-								XmlPrintStr("Membership", pMCGG->MemberInfo.JoinFullMember? "Full":"", indent+12);
-							if (pMCGG->MemberInfo.JoinNonMember)
-								XmlPrintStr("Membership", pMCGG->MemberInfo.JoinNonMember? "Non":"", indent+12);
-							if (pMCGG->MemberInfo.JoinSendOnlyMember)
-								XmlPrintStr("Membership", pMCGG->MemberInfo.JoinSendOnlyMember? "Sendonly":"", indent+12);
+							XmlPrintGID("GID",pMCGG->MemberInfo.RID.PortGID,indent+12);
+							XmlPrintTagHeader("Membership", indent+12);
+							XmlPrintStr("Full", pMCGG->MemberInfo.JoinFullMember? "1":"0", indent+16);
+							XmlPrintStr("NonMember", pMCGG->MemberInfo.JoinNonMember? "1":"0", indent+16);
+							XmlPrintStr("SendOnly", pMCGG->MemberInfo.JoinSendOnlyMember? "1":"0", indent+16);
+							XmlPrintTagFooter("Membership", indent+12);
+							McMembershipXmlOutput("Membership_Int", pMCGG,indent+12);
 							break;
 						default:
 							break;
@@ -8136,29 +8156,29 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 					PortData *portp=FindPortGuid(fabricp, pMCGG->MemberInfo.RID.PortGID.AsReg64s.L);
 					if (portp != NULL) {
 						switch (format) {
-			  				case FORMAT_TEXT:
-			  					printf("Name: %.*s \n",  NODE_DESCRIPTION_ARRAY_SIZE,
-			  							g_noname?g_name_marker:(char*)portp->nodep->NodeDesc.NodeString);
-			  					break;
-			  				case FORMAT_XML:
-			  					XmlPrintNodeDesc((char*)portp->nodep->NodeDesc.NodeString, indent+12);
-			  					break;
-			  				default:
+							case FORMAT_TEXT:
+								printf("Name: %.*s \n",  NODE_DESCRIPTION_ARRAY_SIZE,
+										g_noname?g_name_marker:(char*)portp->nodep->NodeDesc.NodeString);
+								break;
+							case FORMAT_XML:
+								XmlPrintNodeDesc((char*)portp->nodep->NodeDesc.NodeString, indent+12);
+								break;
+							default:
 							break;
-			  			}// end case
+						}// end case
 					}
 					else {
 						switch (format) {
-	  						case FORMAT_TEXT:
-	  							printf("Name: Not available\n");
-	  							break;
-	  						default:
-	  							break;
-	  					}// end case
+							case FORMAT_TEXT:
+								printf("Name: Not available\n");
+								break;
+							default:
+								break;
+						}// end case
 					} // end else
-		  		// print end tag
+				// print end tag
 				if (format == FORMAT_XML) printf("%*s</McMembers>\n", indent+8, "");
-			   	} // end if
+				} // end if
 			}	// end for p1
 		} //end if detail
 		if (detail > 0)
@@ -9450,6 +9470,133 @@ void ValidateRouteCallback(PortData *portp1, PortData *portp2, IB_LID dlid, bool
 	} 
 }
 
+struct MCRoutesContext {
+	Format_t format;
+	int indent;
+	int detail;
+	MCROUTESTATUS status;
+};
+
+void PrintMCRouteMembers(McNodeLoopInc *LoopIncp, void *context)
+{
+	struct MCRoutesContext *MCRoutesContext = (struct MCRoutesContext*)context;
+	int indent = MCRoutesContext->indent;
+
+	if (! MCRoutesContext->detail)
+		return;
+
+	switch (MCRoutesContext->format) {
+	case FORMAT_TEXT:
+		printf("0x%016"PRIx64"\t%s\t%.*s\t%3u\t%3u\n",
+			LoopIncp->pPort->nodep->NodeInfo.NodeGUID,
+			StlNodeTypeToText(LoopIncp->pPort->nodep->NodeInfo.NodeType),
+			NODE_DESCRIPTION_ARRAY_SIZE,
+			g_noname?g_name_marker:(char*)LoopIncp->pPort->nodep->NodeDesc.NodeString,
+			LoopIncp->pPort->PortNum,
+			LoopIncp->exitPort);
+
+		break;
+	case FORMAT_XML:
+		printf("%*s<Port id=\"0x%016"PRIx64":%u\">\n", indent+4, "",
+				LoopIncp->pPort->nodep->NodeInfo.NodeGUID, LoopIncp->pPort->PortNum);
+		XmlPrintHex64("NodeGUID",
+				LoopIncp->pPort->nodep->NodeInfo.NodeGUID, indent+8);
+		if (LoopIncp->pPort->PortGUID)
+				XmlPrintHex64("PortGUID", LoopIncp->pPort->PortGUID, indent+8);
+		XmlPrintNodeType(LoopIncp->pPort->nodep->NodeInfo.NodeType,
+				indent+8);
+		XmlPrintNodeDesc((char*)LoopIncp->pPort->nodep->NodeDesc.NodeString, indent+8);
+		XmlPrintDec("EntryPort", LoopIncp->pPort->PortNum, indent+8);
+		XmlPrintDec("ExitPort", LoopIncp->exitPort, indent+8);
+		printf("%*s</Port>\n", indent+4, "");
+		break;
+	default:
+		break;
+	}
+}
+
+
+void PrintEndMCRoute(void *context)
+{
+	struct MCRoutesContext *MCRoutesContext = (struct MCRoutesContext*)context;
+	int indent = MCRoutesContext->indent+4;
+
+	if (MCRoutesContext->detail <= 1)
+		return;
+
+	switch (MCRoutesContext->format) {
+		case FORMAT_TEXT:
+			printf("\n");
+			break;
+		case FORMAT_XML:
+			printf("%*s</McPath>\n", indent-4, "");
+			break;
+		default:
+			break;
+		}
+	return;
+}
+
+void PrintInitMCRoute(uint32 count,void *context)
+{
+	struct MCRoutesContext *MCRoutesContext = (struct MCRoutesContext*)context;
+	int indent = MCRoutesContext->indent+4;
+	MCROUTESTATUS mcstatus = MCRoutesContext->status;
+	char statusstr[80], statusxml[80];
+
+	if (MCRoutesContext->detail <= 1)
+		return;
+
+	if (count == 0) {
+		if (MCRoutesContext->format== FORMAT_XML)
+			printf("%*s<McPath>\n", indent-4, "");
+	}
+	else {
+		switch (mcstatus) {
+		case MC_NO_TRACE:
+			strncpy(statusstr,"Unable to trace route",sizeof("Unable to trace route"));
+			strncpy(statusxml,"UnableToTraceRoute",sizeof("UnableToTraceRoute"));
+			break;
+		case MC_NOT_FOUND:
+			strncpy(statusstr,"No start point",sizeof("No start point"));
+			strncpy(statusxml,"NoStartPoint",sizeof("NoStartPoint"));
+			break;
+		case MC_UNAVAILABLE:
+			strncpy(statusstr,"No MFT Route Table",sizeof("No MFT Route Table"));
+			strncpy(statusxml,"NoMFTRouteTable",sizeof("NoMFTRouteTable"));
+			break;
+		case MC_LOOP:
+			strncpy(statusstr,"Found Loop",sizeof("Found Loop"));
+			strncpy(statusxml,"FoundLoop",sizeof("FoundLoop"));
+			break;
+		case MC_NOGROUP:
+			strncpy(statusstr,"HFI does not belong to MCGROUP",sizeof("HFI does not belong to MCGROUP"));
+			strncpy(statusxml,"HFINoGroup",sizeof("HFINoGroup"));
+			break;
+		default:
+			strcpy(statusstr,"");
+			strcpy(statusxml,"");
+			break;
+		}
+
+		switch (MCRoutesContext->format) {
+		case FORMAT_TEXT:
+			printf("%s: Num. of paths: %d\n",statusstr,count);
+			if (MCRoutesContext->detail >= 2) {
+				printf(" NodeGUID\t\tType\tName\tEntry Port\tExitPort\n");
+			} else
+				printf("\n");
+			break;
+		case FORMAT_XML:
+			printf("%*s<%s>%d</%s>\n", indent-4, "",statusxml,count,statusxml);
+			break;
+		default:
+			break;
+		}
+	}
+
+}
+
 void ValidateRouteCallback2(PortData *portp, uint8 vl, void *context)
 {
 	struct ValidateRoutesContext *ValidateRoutesContext = (struct ValidateRoutesContext*)context;
@@ -9506,13 +9653,13 @@ void ValidateRouteCallback2(PortData *portp, uint8 vl, void *context)
 		break;
 	} 
 }
-
 // Validate all routes in linear FDBs
 void ShowValidateRoutesReport(Point *focus, Format_t format, int indent, int detail)
 {
 	FSTATUS status;
 	uint32 totalPaths;
 	uint32 badPaths;
+
 	struct ValidateRoutesContext ValidateRoutesContext = { format:format, detail:detail };
 
 	if (! (g_Fabric.flags & FF_ROUTES) && g_snapshot_in_file) {
@@ -9622,6 +9769,163 @@ void ShowValidateRoutesReport(Point *focus, Format_t format, int indent, int det
 		break;
 	}
 }	// End of ShowValidateRoutesReport()
+
+void PrintHeadGroup(IB_LID mlid, void *context)
+{
+	struct MCRoutesContext *MCRoutesContext = (struct MCRoutesContext*)context;
+	int indent = MCRoutesContext->indent;
+	int NOM=0;
+	LIST_ITEM *p;
+
+	if (! MCRoutesContext->detail)
+		return;
+
+	//Search number of members for MLID mcgroup
+	for ( p= QListHead(&g_Fabric.AllMcGroups); p!=NULL; p=QListNext(&g_Fabric.AllMcGroups,p)){
+		McGroupData *pMCGD = (McGroupData *)QListObj(p);
+		if (pMCGD->MLID == mlid) {
+			NOM = pMCGD->NumOfMembers;
+			break;
+		}
+	}
+
+	if (NOM !=0) {
+		switch (MCRoutesContext->format) {
+			case FORMAT_TEXT:
+				printf("MC Group 0x%04x\n", mlid);
+				printf("Number of Members:%d \n", NOM);
+				break;
+			case FORMAT_XML:
+				XmlPrintLID("MLID",mlid,indent+4);
+				printf("%*s<MCGroupMembers>%d</MCGroupMembers>\n", indent+4, "",NOM);
+				break;
+		}
+	}
+
+	return;
+}
+
+
+// Validate MC routes in multicast tables MCDBs
+void ShowValidateMCRoutesReport(Point *focus, Format_t format, int indent, int detail)
+{
+	FSTATUS status;
+	uint32 totalPaths, badPaths=0, listcount=0;
+	LIST_ITEM *p, *q;
+	int i;
+	struct MCRoutesContext MCRoutesContext = { format:format, detail:detail, status:MC_NO_TRACE };
+
+	if (! (g_Fabric.flags & FF_ROUTES) && g_snapshot_in_file) {
+		switch (format) {
+		case FORMAT_TEXT:
+			printf("%*sReport skipped: provided snapshot was created without -r option\n", indent, "");
+			break;
+		case FORMAT_XML:
+			printf("%*s<!-- Report skipped: provided snapshot was created without -r option -->\n", indent, "");
+			break;
+		default:
+			break;
+		}
+		return;
+	}
+
+	if (QListCount(&g_Fabric.AllSWs) ==0) {
+		printf("Cannot Validate MC Routes: No Switches Connected\n");
+		return;
+	}
+
+	switch (format) {
+	case FORMAT_TEXT:
+		printf("%*sValidate Multicast Routes\n", indent, "");
+		break;
+	case FORMAT_XML:
+		printf("%*s<ValidateMCRoutes>\n", indent, "");
+		indent+=4;
+		break;
+	default:
+		break;
+	}
+	///////////////////////////////////////////////////////////////////////
+	//Get MCGroups
+
+	switch (format) { // do not print "zero" members
+		case FORMAT_TEXT:
+			printf(" %d Multicast groups\n", g_Fabric.NumOfMcGroups);
+			break;
+		case FORMAT_XML:
+			printf("%*s<MCGroup>%d</MCGroup>\n", indent, "",g_Fabric.NumOfMcGroups);
+			break;
+		default:
+			break;
+	}// case end
+
+	MCRoutesContext.indent = indent;
+
+	status = ValidateAllMCRoutes(&g_Fabric, &totalPaths);
+
+	if (status != FSUCCESS) {
+		fprintf(stderr, "opareport: -o validatemcroutes: Unable to validate multicast routes (status=0x%x): %s\n", status, iba_fstatus_msg(status));
+		g_exitstatus = 1;
+	}
+
+	// Display all MC routes with problems:
+	for (i=0;i<MAXMCROUTESTATUS;i++){
+		MCRoutesContext.status = g_Fabric.AllMcLoopIncRoutes[i].status;
+		listcount = QListCount(&g_Fabric.AllMcLoopIncRoutes[i].AllMcRouteStatus);
+		badPaths+=listcount;
+		if (listcount >0) { // do not print "zero" members
+			PrintInitMCRoute(listcount,&MCRoutesContext); // print init
+			if (QListCount(&g_Fabric.AllMcLoopIncRoutes[i].AllMcRouteStatus)>0) {
+				for (p = QListHead(&g_Fabric.AllMcLoopIncRoutes[i].AllMcRouteStatus); p!= NULL;
+							p = QListNext( &g_Fabric.AllMcLoopIncRoutes[i].AllMcRouteStatus,p) ){
+					McLoopInc *pmcloop = (McLoopInc *) QListObj(p);
+					if (pmcloop != NULL) {
+						PrintInitMCRoute(0,&MCRoutesContext); // print MC route members
+						PrintHeadGroup(pmcloop->mlid,&MCRoutesContext);
+						for (q = QListHead(&pmcloop->AllMcNodeLoopIncR ); q!= NULL; q = QListNext(&pmcloop->AllMcNodeLoopIncR,q)) {
+							McNodeLoopInc *pmcnodeloop = (McNodeLoopInc *) QListObj(q);
+							//print node
+							PrintMCRouteMembers(pmcnodeloop, &MCRoutesContext);
+						} // end for q
+						PrintEndMCRoute(&MCRoutesContext); // print closure
+					}
+				}// end for p
+			}// end if
+		} // end if count > 0
+	}
+
+	switch (format) {
+		case FORMAT_TEXT:
+			printf(" Total Analyzed MC Routes from Entry Switch to HFI: %d\n MC Bad Paths %d\n",totalPaths, badPaths);
+			break;
+		case FORMAT_XML:
+			printf("%*s<AnalyzedMCRoutes>%d</AnalyzedMCRoutes>\n", indent, "",totalPaths);
+			printf("%*s<BadMCRoutes>%d</BadMCRoutes>\n", indent, "",badPaths);
+			indent-=4;
+			break;
+		default:
+			break;
+	}// case end
+	
+	switch (format) {
+		case FORMAT_TEXT:
+			printf("\n");
+			DisplaySeparator();
+			break;
+		case FORMAT_XML:
+			printf("%*s</ValidateMCRoutes>\n", indent, "");
+			indent-=4;
+			break;
+		default:
+			break;
+	}
+
+	// delete MC routes structure
+	// deallocate memory for the MC route
+	FreeValidateMCRoutes(&g_Fabric);
+
+}	// End of ShowValidateMCRoutesReport()
+
 
 // Validate all routes for credit loops
 void ShowValidateCreditLoopsReport(Point *focus, Format_t format, int indent, int detail) 
@@ -11066,6 +11370,7 @@ void Usage_full(void)
 	fprintf(stderr, "    validatevlcreditloops     - validate topology configuration of the fabric\n");
 	fprintf(stderr, "                                including SLSC, SCSC, and SCVL tables to identify\n");
 	fprintf(stderr, "                                any existing credit loops\n");
+	fprintf(stderr, "    validatemcroutes          - validate multicast routes of the fabric to\n");
 	fprintf(stderr, "    vfinfo                    - summary of vFabric information\n");
 	fprintf(stderr, "    vfmember                  - summary of vFabric membership information\n");
 	fprintf(stderr, "    verifyfis                 - compare fabric (or snapshot) FIs to supplied\n");
@@ -11494,6 +11799,8 @@ report_t checkOutputType(const char* name)
 		return REPORT_MCGROUPS;
 	} else if (0 == strcmp(optarg, "vfinfo")) {
 		return REPORT_VFINFO;
+	} else if (0 == strcmp(optarg, "validatemcroutes")) {
+		return REPORT_VALIDATEMCROUTES;
 	} else if (0 == strcmp(optarg, "portusage")) {
 		return REPORT_PORTUSAGE;
 	} else if (0 == strcmp(optarg, "lidusage")) {
@@ -11605,12 +11912,12 @@ int main(int argc, char ** argv)
 				report = (report_t) report | checkOutputType(optarg);
 				if (report & REPORT_ERRORS)
 					stats = 1;
-				if (report & (REPORT_MCGROUPS | REPORT_SNAPSHOT))
+				if (report & (REPORT_MCGROUPS | REPORT_SNAPSHOT | REPORT_VALIDATEMCROUTES))
 					mcgroups = 1;
 				if ( report & ( REPORT_LINEARFDBS | REPORT_MCASTFDBS |
 						REPORT_PORTUSAGE | REPORT_LIDUSAGE      |
 						REPORT_PATHUSAGE | REPORT_TREEPATHUSAGE |
-						REPORT_VALIDATEROUTES | REPORT_VALIDATECREDITLOOPS |
+						REPORT_VALIDATEROUTES | REPORT_VALIDATECREDITLOOPS | REPORT_VALIDATEMCROUTES |
 						REPORT_PORTGROUPS | REPORT_VERIFYPGS |
 						REPORT_VALIDATEVLCREDITLOOPS | REPORT_VALIDATEVLROUTES ) )
 					routes = 1;
@@ -11831,6 +12138,13 @@ int main(int argc, char ** argv)
 		g_persist = 0;
 	}
 
+	if ((report & REPORT_MCGROUPS ) && (sweepFlags & FF_SMADIRECT)) {
+		fprintf(stderr, "opareport: -m ignored for -o mcgroups\n");
+	}
+	if ((report & REPORT_VALIDATEMCROUTES ) && (sweepFlags & FF_SMADIRECT)) {
+		fprintf(stderr, "opareport: -m ignored for -o validatemcroutes\n");
+	}
+
 	if (g_snapshot_in_file && (g_interval || g_clearstats || g_clearallstats || g_begin || g_end)) {
 		fprintf(stderr, "opareport: -i, -C, -a, -b, and -e ignored for -X\n");
 		g_interval = 0;
@@ -11864,7 +12178,7 @@ int main(int argc, char ** argv)
 	if (g_snapshot_in_file && routes) {
 		if ( ! ( report & ( REPORT_LINEARFDBS | REPORT_MCASTFDBS |
 				REPORT_PORTUSAGE | REPORT_LIDUSAGE | REPORT_PATHUSAGE | REPORT_TREEPATHUSAGE | REPORT_VALIDATEROUTES | REPORT_VALIDATECREDITLOOPS
-				| REPORT_VALIDATEVLCREDITLOOPS | REPORT_VALIDATEVLROUTES ) ) ) {
+				| REPORT_VALIDATEVLCREDITLOOPS | REPORT_VALIDATEVLROUTES | REPORT_VALIDATEMCROUTES) ) ) {
 			// -r must have been explicitly specified
 			fprintf(stderr, "opareport: -r ignored for -X\n");
 		}
@@ -12246,6 +12560,9 @@ int main(int argc, char ** argv)
 
 	if (report & REPORT_VALIDATECREDITLOOPS || report & REPORT_VALIDATEVLCREDITLOOPS) 
 		ShowValidateCreditLoopsReport(&focus, format, 0, detail); 
+
+	if (report & REPORT_VALIDATEMCROUTES)
+		ShowValidateMCRoutesReport(&focus, format, 0, detail);
 
 	if (report & REPORT_VFINFO)
 		ShowVFInfoReport(&focus, format, 0, detail);

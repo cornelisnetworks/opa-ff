@@ -4,12 +4,12 @@ When making large HPL runs this can be useful to get a feeling as to how far the
 run has progressed and how fast it is running.
 
 To apply this patch:
-	cd /usr/lib/opa/src/mpi_apps
+	cd /usr/src/opa/mpi_apps
 	patch -p0 < hpl-count.diff
 	make clean
 	make quick
 To remove this patch:
-	cd /usr/lib/opa/src/mpi_apps
+	cd /usr/src/opa/mpi_apps
 	patch -R -p0 < hpl-count.diff
 	make clean
 	make quick

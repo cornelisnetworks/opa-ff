@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacheckload
 
@@ -28,7 +28,7 @@ Produces full help text.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file with hosts to check. Default = /etc/sysconfig/opa/hosts 
+Specifies the file with hosts to check. Default = /etc/opa/hosts 
 
 .TP 10
 -h \fIhosts\fR 

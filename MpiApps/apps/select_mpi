@@ -74,7 +74,11 @@ then
 	prefix=${prefix:-/usr}	
 	if ! valid_mpich_prefix
 	then
-		find_mpi $prefix/mpi/gcc/openmpi*hfi
+		find_mpi $(ls -d $prefix/mpi/gcc/openmpi*hfi | grep -v cuda)
+	fi
+	if ! valid_mpich_prefix
+	then
+		find_mpi $prefix/mpi/gcc/openmpi*cuda*hfi
 	fi
 	if ! valid_mpich_prefix
 	then

@@ -85,6 +85,20 @@ INSTALL_SOURCES= \
 				 $(TL_DIR)/CommonInstall/comp_oftools.pl \
 				 $(TL_DIR)/CommonInstall/comp_fastfabric.pl \
 				 $(TL_DIR)/CommonInstall/main_openibff.pl
+
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES72"
+	PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL72.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES73"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL72.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES121"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES121.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES122"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES122.pl
+endif
+
 COMP_SOURCES= \
 				 $(TL_DIR)/CommonInstall/mpi_apps.pl \
 				 $(TL_DIR)/CommonInstall/comp_oftools.pl \
@@ -167,8 +181,8 @@ INSTALL.pl: $(INSTALL_SOURCES)
 	cat $(INSTALL_SOURCES) > INSTALL.pl
 	chmod +x INSTALL.pl
 
-comp.pl: $(COMP_SOURCES)
-	cat $(COMP_SOURCES) > comp.pl
+comp.pl:
+	cat $(PREREQ_SOURCE) $(COMP_SOURCES) > comp.pl
 	chmod +x comp.pl
 
 # install for stage phase

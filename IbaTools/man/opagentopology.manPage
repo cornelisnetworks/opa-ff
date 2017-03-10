@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagentopology 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagentopology 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagentopology
 
@@ -17,11 +17,7 @@ Generates sample topology verification XML. Provides an example of using opaxmlg
 .PP
 Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
 .PP
-LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:
-.PP
-
-.br
-opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul1.txt -d \; -h Link
+LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:opaxmlgenerate -X /usr/share/opa/samples/opatopology\(ul1.txt -d \; -h Link
 .br
 -g Rate -g Rate\(ulInt -g MTU -g LinkDetails -h Cable -g CableLength -g CableLabel
 .br
@@ -33,26 +29,22 @@ opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul1.txt -d \; -h Link
 .br
 
 .br
-opaxmlgenerate -X /usr/lib/opa/samples/opatopology\(ul2.txt -d \;
+opaxmlgenerate -X /usr/share/opa/samples/opatopology\(ul2.txt -d \;
 .br
 -h Node -g NodeGUID -g NodeDesc -g NodeDetails -g HostName -g NodeType
 .br
 -g NodeType\(ulInt -g NumPorts -e Node
-
-.br
-
 .NL
 
 .SH opatopology\(ullinks.txt
 .NL
 
 .PP
-This file can be found in /usr/lib/opa/samples/. For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
+This file can be found in /usr/share/opa/samples/. For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
 .PP
 
 .B NOTE:
 The following example exceeds the available width of the page. For readability, a blank line is shown between lines to make it clear where the line ends. In an actual link file, no blank lines are used.
-
 25g;2048;0;IO Server Link;11m;S4567;cable model 456;0x0002c9020020e004;1;bender HFI-1;0x0002c9020020e004;FI;Some info about port;0x0011750007000df6;7;Switch 1234 Leaf 4;;SW;
 .br
 25g;;0;;;;;0x0002c9020025a678;1;mindy2 HFI-1;;FI;;0x0011750007000e6d;4;Switch 2345 Leaf 5;;SW;
@@ -62,53 +54,28 @@ The following example exceeds the available width of the page. For readability, 
 .NL
 
 .PP
-This file can be found in /usr/lib/opa/samples/. For brevity, this sample shows only two nodes.
-.PP
-
-.br
-0x0002c9020020e004;bender HFI-1;More details about node
+This file can be found in /usr/share/opa/samples/. For brevity, this sample shows only two nodes.0x0002c9020020e004;bender HFI-1;More details about node
 .br
 0x0002c9020025a678;mindy2 HFI-1;Node details
-
-.br
-
 .NL
 
 .SH opatopology\(ulSWs.txt
 .NL
 
 .PP
-This file can be found in /usr/lib/opa/samples/. For brevity, this sample shows only two nodes.
-.PP
-
-.br
-0x0011750007000df6;Switch 1234 Leaf 4; 0x0011750007000e6d;Switch 2345 Leaf 5;
-
-.br
-
+This file can be found in /usr/share/opa/samples/. For brevity, this sample shows only two nodes.0x0011750007000df6;Switch 1234 Leaf 4; 0x0011750007000e6d;Switch 2345 Leaf 5;
 .NL
 
 .SH opatopology\(ulSMs.txt
 .NL
 
 .PP
-This file can be found in /usr/lib/opa/samples/. For brevity, this sample shows only one node.
-.PP
-
-.br
-0x0002c9020025a678;1;mindy2 HFI-1;0x0011750007000e6d;FI;details about SM
-
-.br
-
+This file can be found in /usr/share/opa/samples/. For brevity, this sample shows only one node.0x0002c9020025a678;1;mindy2 HFI-1;0x0011750007000e6d;FI;details about SM
 .SH Example 
 .NL
 
 .PP
-When run against the supplied topology input files, opagentopology produces:
-.PP
-
-.br
-<?xml version="1.0" encoding="utf-8" ?>
+When run against the supplied topology input files, opagentopology produces:<?xml version="1.0" encoding="utf-8" ?>
 .br
 <Topology>
 .br
@@ -271,5 +238,3 @@ When run against the supplied topology input files, opagentopology produces:
 </Nodes>
 .br
 </Topology>
-
-.br

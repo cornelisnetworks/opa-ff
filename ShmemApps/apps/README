@@ -87,7 +87,7 @@ mpi-selector" for details on those commmands).
 To use mpi-selector with these scripts, add this line to your .bashrc
 file:
 
-source /usr/lib/opa/src/mpi_apps/get_selected_mpi.sh
+source /usr/src/opa/mpi_apps/get_selected_mpi.sh
 
 
 
@@ -118,4 +118,4 @@ For example, to run the barrier test, simply type:
 # ./run_barrier 2
 
 The scripts log the output of the SHMEM programs to the 
-/usr/lib/opa/src/shmem_apps/logs directory.
+/usr/src/opa/shmem_apps/logs directory.

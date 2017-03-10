@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2016, Intel Corporation                *
+.\" .\" *             Copyright 2015-2017, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2016" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opahostadmin
 
@@ -42,7 +42,7 @@ Specifies the suffix to apply to host names to create IPoIB host names. Default 
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file with the names of hosts in a cluster. Default is /etc/sysconfig/opa/hosts file.
+Specifies the file with the names of hosts in a cluster. Default is /etc/opa/hosts file.
 
 .TP 10
 -h \fIhosts\fR 
@@ -72,14 +72,14 @@ Specifies the software upgrade options.
 .TP 10
 -T \fIproduct\fR 
 .NL
-Specifies the product type to install. Default = IntelOPA-Basic. 
+Specifies the product type to install. Default = IntelOPA-Basic.RHEL72-x86\(ul64 
 
 .IP
 Other options include: IntelOPA-Basic. \fI<distro>\fR, IntelOPA-IFS. \fI<distro>\fR where  \fI<distro>\fR is the distribution and CPU.
 .TP 10
 -P \fIpackages\fR 
 .NL
-Specifies the packages to install. Default = oftools ipoib mpi 
+Specifies the packages to install. Default = oftools ipoib psm\(ulmpi 
 
 .TP 10
 -m \fInetmask\fR 
@@ -256,14 +256,14 @@ configipoib
 Creates a ifcfg-ib1 configuration file for each node using the IP address found using the resolver on the node. The standard Linux* resolver is used through the host command. (If running OFA Delta, this option configures ifcfg-ib0 .)
 
 .IP
-If the host is not found, /etc/hosts on the node is checked. The -i option specifies an IPoIB suffix to apply to the host name to create the IPoIB host name for the node. The default suffix is -ib. The -m option specifies a netmask other than the default for the given class of IP address, such as when dividing a class A or B address into smaller IP subnets. IPoIB is configured for a static IP address and is autostarted at boot. For the Intel(R) OP Software Stack, the default /etc/sysconfig/ipoib.cfg file is used, which provides a redundant IPoIB configuration using both ports of the first HFI in the system.
+If the host is not found, /etc/hosts on the node is checked. The -i option specifies an IPoIB suffix to apply to the host name to create the IPoIB host name for the node. The default suffix is -ib. The -m option specifies a netmask other than the default for the given class of IP address, such as when dividing a class A or B address into smaller IP subnets. IPoIB is configured for a static IP address and is autostarted at boot. For the Intel(R) OP Software Stack, the default /etc/ipoib.cfg file is used, which provides a redundant IPoIB configuration using both ports of the first HFI in the system.
 .TP 10
 .BR
 
 .PP
 
 .B NOTE:
-opahostadmin configipoib now supports DHCP (auto or static options) for configuring the IPoIB interface. You must specify these options in /etc/sysconfig/opa/opafastfabric.conf against the \fBFF\(ulIPOIB\(ulCONFIG\fR variable. If no options are found, the static IP configuration is used by default. If auto is specified, then one IP address from either static or dhcp is chosen. Static is used if the IP address can be obtained out of /etc/hosts or the resolver, otherwise DHCP is used.
+opahostadmin configipoib now supports DHCP (auto or static options) for configuring the IPoIB interface. You must specify these options in /etc/opa/opafastfabric.conf against the \fBFF\(ulIPOIB\(ulCONFIG\fR variable. If no options are found, the static IP configuration is used by default. If auto is specified, then one IP address from either static or dhcp is chosen. Static is used if the IP address can be obtained out of /etc/hosts or the resolver, otherwise DHCP is used.
 
 
 .TP 10

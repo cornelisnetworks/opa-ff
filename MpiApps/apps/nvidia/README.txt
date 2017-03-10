@@ -45,7 +45,7 @@ To build the test programs, use the following steps:
    - Please make sure your LD_LIBRARY_PATH includes /usr/local/cuda/lib64
    - Please make sure your PATH includes /usr/local/cuda/bin
 
-2. From the /usr/lib/opa/src/mpi_apps directory, choose your mpi as you
+2. From the /usr/src/opa/mpi_apps directory, choose your mpi as you
    would normally, then type:
 
    # make NVIDIA

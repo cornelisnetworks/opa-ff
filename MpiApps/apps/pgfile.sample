@@ -44,21 +44,21 @@
 #
 # Simple example using the bandwith benchmark:
 #
-# host1_ib /usr/lib/opa/src/mpi_apps/bandwidth/bw 16384 65536
-# host2_ib /usr/lib/opa/src/mpi_apps/bandwidth/bw 16384 65536
+# host1_ib /usr/src/opa/mpi_apps/bandwidth/bw 16384 65536
+# host2_ib /usr/src/opa/mpi_apps/bandwidth/bw 16384 65536
 
 #
 # To use multiple cpus on a single node, specify the single node 
 # more than once:
 #
-# host1_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
-# host1_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
-# host1_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
-# host1_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
-# host2_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
-# host2_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
-# host2_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
-# host2_ib /usr/lib/opa/src/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host1_ib /usr/src/opa/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host1_ib /usr/src/opa/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host1_ib /usr/src/opa/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host1_ib /usr/src/opa/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host2_ib /usr/src/opa/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host2_ib /usr/src/opa/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host2_ib /usr/src/opa/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
+# host2_ib /usr/src/opa/mpi_apps/PMB2.2.1/SRC_PMB/PMB-MPI1
 #
 
 #

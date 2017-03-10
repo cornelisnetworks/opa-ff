@@ -34,9 +34,9 @@
 # reenable the specified set of ports
 
 # optional override of defaults
-if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
+if [ -f /etc/opa/opafastfabric.conf ]
 then
-	. /etc/sysconfig/opa/opafastfabric.conf
+	. /etc/opa/opafastfabric.conf
 fi
 
 . /usr/lib/opa/tools/opafastfabric.conf.def
@@ -73,7 +73,7 @@ Usage_full()
 	echo "by opadisableports." >&2
 	echo "for example:" >&2
 	echo "   opaenableports < disabled.csv" >&2
-	echo "   opaenableports < $CONFIG_DIR/opa/disabled:0:0.csv" >&2
+	echo "   opaenableports < $CONFIG_DIR/opa/disabled:1:1.csv" >&2
 	echo "   opaenableports -h 1 -p 1 < disabled.csv" >&2
 	exit 0
 }
@@ -167,7 +167,7 @@ enable_ports()
 		lid=$(lookup_lid $nodeguid 0)
 		if [ x"$lid" = x ]
 		then
-			echo "Skipping port: $desc:$dport"
+			echo "Skipping port: $desc:$dport: Device not found in fabric"
 			skipped=$(( $skipped + 1))
 		else
 			echo "Enabling port: $desc:$dport"
@@ -188,6 +188,13 @@ enable_ports()
 			fi
 		fi
 	done
+	if [ $skipped -ne 0 ]
+	then
+		echo "For Skipped ports, either the device is now offline or the other end of the"
+		echo "link was disabled and the device is no longer accessible in-band."
+		echo "The end of the link previously disabled by opedisableports or opadisablehosts"
+		echo "can be found in $CONFIG_DIR/opa/disabled$suffix.csv"
+	fi
 	if [ $failed -eq 0 ]
 	then
 		echo "Enabled: $enabled; Skipped: $skipped"

@@ -371,7 +371,12 @@ int main(int argc, char *argv[])
 			printf("Node description is %s\n", nodeDesc);
 			break;
 		case 6:
-			status = getTempReadings(oib_port_session, &path, &mad, sessionID, tempStrs);
+			status = getBoardID(oib_port_session, &path, &mad, sessionID, &boardID);
+			if (status != FSUCCESS) {
+				fprintf(stderr, "Error: Failed to get board id - status %d\n", status);
+				break;
+			}
+			status = getTempReadings(oib_port_session, &path, &mad, sessionID, tempStrs,boardID);
 
 			for (i=0; i<I2C_OPASW_TEMP_SENSOR_COUNT; i++) {
 				printf("SENSOR %d: %s ", i, tempStrs[i]);
@@ -383,6 +388,22 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 7:
+			status = getBoardID(oib_port_session, &path, &mad, sessionID, &boardID);
+			if (status != FSUCCESS) {
+				fprintf(stderr, "Error: Failed to get board id - status %d\n", status);
+				break;
+			}
+			if (boardID == STL_BOARD_ID_HPE7K) {
+
+				printf("FAN 0:NOTAVAIL ");
+				printf("FAN 1:NOTAVAIL ");
+				printf("FAN 2:NOTAVAIL ");
+				printf("FAN 3:NOTAVAIL ");
+				printf("FAN 4:NOTAVAIL ");
+				printf("FAN 5:NOTAVAIL ");
+				printf("\n");
+			}
+			else {
 			fanStatus =0;
 			for (i = 0; i < OPASW_PSOC_FAN_CTRL_TACHS; i++) {
 				status = getFanSpeed(oib_port_session, &path, &mad, sessionID,
@@ -432,9 +453,19 @@ int main(int argc, char *argv[])
 			}// end els TRAY2
 
 			printf("\n");
+			}
 			break;
 
 		case 8:
+			status = getBoardID(oib_port_session, &path, &mad, sessionID, &boardID);
+			if (status != FSUCCESS) {
+				fprintf(stderr, "Error: Failed to get board id - status %d\n", status);
+				break;
+			}
+			if (boardID == STL_BOARD_ID_HPE7K) {
+					printf("PS %d: N/A\n", g_intParam);
+			}
+			else {
 			status = getPowerSupplyStatus(oib_port_session, &path, &mad, sessionID, g_intParam, 
 										  &psStatus);
 			if (status != FSUCCESS) {
@@ -457,6 +488,7 @@ int main(int argc, char *argv[])
 				default:  
 					fprintf(stderr, "Error: Failed to get power supply status for ps %d\n", g_intParam); 
 					break;
+			}
 			}
 			break;
 

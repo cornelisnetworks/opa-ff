@@ -33,9 +33,9 @@
 # start and stop HFI-SW and/or ISL cable Bit Error Rate tests
 
 # optional override of defaults
-if [ -f /etc/sysconfig/opa/opafastfabric.conf ]
+if [ -f /etc/opa/opafastfabric.conf ]
 then
-	. /etc/sysconfig/opa/opafastfabric.conf
+	. /etc/opa/opafastfabric.conf
 fi
 
 . /usr/lib/opa/tools/opafastfabric.conf.def
@@ -202,16 +202,9 @@ fi
 
 get_fmconfig()
 {
-	FM_CONFIG_DIR=/etc/sysconfig
+	FM_CONFIG_DIR=/etc
 	FM_CONFIG_FILE=$CONFIG_DIR/opafm.xml
 	IFS_FM_BASE=/usr/lib/opa-fm # default
-	if [ -s $FM_CONFIG_DIR/opa/opafm.info ]
-	then
-	    # get IFS_FM_BASE
-	    . $FM_CONFIG_DIR/opa/opafm.info
-	else
-	    echo "opacabletest: Warning: $FM_CONFIG_DIR/opa/opafm.info not found: using $IFS_FM_BASE" >&2
-	fi
 }
 
 start_fi()

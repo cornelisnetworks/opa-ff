@@ -36,6 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* work around conflicting names */
 #include "infiniband/umad.h"
+#include "infiniband/verbs.h"
 
 #include <oib_utils.h>
 
@@ -188,7 +189,8 @@ void show_port_info(const char* title, EUI64 portGuid, STL_SMP* smp)
 	STL_PORT_INFO* pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
 
 	printf("%s\n", title);
-	printf("Port %u Info\n", smp->common.AttributeModifier & 0xFF);
+	printf("Port %u Info on HFI %u (%.*s)\n", smp->common.AttributeModifier & 0xFF,
+		oib_get_hfi_num(g_oib_port), IBV_SYSFS_NAME_MAX, oib_get_hfi_name(g_oib_port));
 	PrintStlPortInfo(&g_dest, 3, pPortInfo, portGuid, 0);
 }
 
@@ -299,7 +301,7 @@ FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID_32 dli
 	str = enabled ? "Enabling LED" : "Disabling Led";
 	if (hfi > 0)
 	{
-		sprintf(hfistr, " on HFI %u", hfi);
+		snprintf(hfistr, sizeof(hfistr), " on HFI %u", hfi);
 	} else {
 		hfistr[0] = '\0';
 	}
@@ -345,7 +347,7 @@ FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dp
 {
 	FSTATUS  fstatus = FSUCCESS;
 	const char *str;
-	char hfistr[40];
+	char hfistr[IBV_SYSFS_NAME_MAX + 40];
 	STL_SMP returnedSmp;
 
 	switch (cmd)
@@ -369,9 +371,10 @@ FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dp
 
 	if (hfi > 0)
 	{
-		sprintf(hfistr, " on HFI %u", hfi);
+		snprintf(hfistr, sizeof(hfistr), " on HFI %u", hfi);
 	} else {
-		hfistr[0] = '\0';
+		snprintf(hfistr, sizeof(hfistr), " on HFI %u (%.*s)", oib_get_hfi_num(g_oib_port),
+			IBV_SYSFS_NAME_MAX, oib_get_hfi_name(g_oib_port));
 	}
 	if (dlid) {
 		printf("%s at LID 0x%08x Port %u via local port %u (0x%016"PRIx64")%s\n",

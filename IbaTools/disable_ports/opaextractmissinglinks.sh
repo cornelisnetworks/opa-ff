@@ -38,7 +38,7 @@ trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT
 trap "rm -f $tempfile" EXIT
 
 # Default values
-topology_input=/etc/sysconfig/opa/topology.0:0.xml
+topology_input=/etc/opa/topology.0:0.xml
 otype=verifylinks
 
 topology_args="-T $topology_input"
@@ -51,7 +51,7 @@ Usage_full()
 	echo "Usage: ${cmd} [-T topology_input] [-o report] [--help]|[opareport options]" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -T     - topology file to verify against" >&2
-	echo "            [Default: \"/etc/sysconfig/opa/topology.0:0.xml\"]" >&2
+	echo "            [Default: \"/etc/opa/topology.0:0.xml\"]" >&2
 	echo "   -o     - output report type [Default: \"verifylinks\"]" >&2
 	echo "      verifylinks - verify links against topology input" >&2
 	echo "      verifyextlinks - verify links against topology input" >&2
@@ -80,7 +80,7 @@ Usage_full()
 	echo "      ${cmd} -o verifyfilinks" >&2
 	echo >&2
 	echo "   List all the missing links on the 2nd HFI's fabric of a multi-plane fabric:" >&2
-	echo "      ${cmd} -h 2 -T /etc/sysconfig/opa/topology.2:1.xml" >&2
+	echo "      ${cmd} -h 2 -T /etc/opa/topology.2:1.xml" >&2
 	echo >&2
 	echo "   List all the missing links between two switches:" >&2
 	echo "      ${cmd} -o verifyislinks -T topology.0:0.xml" >&2
@@ -96,7 +96,7 @@ Usage()
 	echo "Usage: ${cmd} [-T topology_input] [-o report] [--help]|[opareport options]" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -T     - topology file to verify against" >&2
-	echo "            [Default: \"/etc/sysconfig/opa/topology.0:0.xml\"]" >&2
+	echo "            [Default: \"/etc/opa/topology.0:0.xml\"]" >&2
 	echo "   -o     - output report type [Default: \"verifylinks\"]" >&2
 	echo "      verifylinks, verifyextlinks, verifyfilinks, verifyislinks, verifyextislinks" >&2
 	echo "   [opareport options] - options will be passed to opareport." >&2

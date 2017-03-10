@@ -40,7 +40,7 @@ default_megsram=$(( $bytesram / 1024 ))
 default_pressure=0.3
 
 # If we have an mpi_hosts file, use that for the default # of hosts.
-if [ -e /usr/lib/opa/src/mpi_hosts ]; then 
+if [ -e /usr/src/opa/mpi_hosts ]; then 
 	default_numnodes=$(sort -u mpi_hosts | wc -l)
 else
 	default_numnodes=1
