@@ -1,11 +1,14 @@
 Name: opa
 Version: 10.3.1.0
-Release: 8%{?dist}
+Release: 9%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
-Group: System Environment/Libraries
-License: GPLv2/BSD 
-Url: http://www.intel.com/
+License: GPLv2 or BSD 
+Url: https://github.com/01org/opa-ff
+# tarball created by:
+# git clone https://github.com/01org/opa-ff.git
+# cd opa-ff
+# tar czf opa-ff.tar.gz --exclude-vcs .
 Source: opa.tgz
 ExclusiveArch: x86_64
 # The Intel(R) OPA product line is only available on x86_64 platforms at this time.
@@ -13,11 +16,10 @@ ExclusiveArch: x86_64
 __RPM_DEBUG
 
 %description
-This package contains the tools necessary to manage an Intel(R) Omni-Path Architecture fabric.
+This package contains the tools necessary to manage an Intel Omni-Path Architecture fabric.
 
 %package basic-tools
 Summary: Managment level tools and scripts.
-Group: System Environment/Libraries
 
 Requires: rdma bc
 
@@ -29,17 +31,13 @@ Contains basic tools for fabric managment necessary on all compute nodes.
 
 %package fastfabric
 Summary: Management level tools and scripts.
-Group: System Environment/Libraries
 Requires: opa-basic-tools
 
-Requires: __RPM_RQ2
-
 %description fastfabric
-Contains tools for managing fabric on a managment node.
+Contains tools for managing fabric on a management node.
 
 %package address-resolution
 Summary: Contains Address Resolution manager
-Group: System Environment/Libraries
 Requires: opa-basic-tools
 
 %description address-resolution
@@ -70,9 +68,11 @@ BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=%{_libdir} ./OpenIb_Host/ff_in
 cd /usr/lib/opa/src/mpi_apps >/dev/null 2>&1
 make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from the make clean.
 
-%files basic-tools -f %{_builddir}/basic_file.list
+%files basic-tools
+__RPM_BASIC_FILES
 
-%files fastfabric -f %{_builddir}/ff_file.list
+%files fastfabric
+__RPM_FF_FILES
 %{_sysconfdir}/sysconfig/opa/opamon.si.conf
 # Replace opamon.si.conf, as it's a template config file.
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/opafastfabric.conf
@@ -84,7 +84,7 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/ports
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/switches
 %config(noreplace) %{_sysconfdir}/sysconfig/opa/opaff.xml
-%config(noreplace) /usr/lib/opa/tools/osid_wrapper
+%config(noreplace) %{_libdir}/opa/tools/osid_wrapper
 %{_sbindir}/opafmconfigcheck
 %{_sbindir}/opafmconfigdiff
 
@@ -104,7 +104,10 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 %config(noreplace) %{_sysconfdir}/rdma/dsap.conf
 
 %changelog
-* Fri Feb 23 2017 Scott Breyer <scott.j.breyer@@intel.com> - 10.3.1.0-8
+* Wed Mar 22 2017 Scott Breyer <scott.j.breyer@@intel.com> - 10.3.1.0-9
+- Updates for spec file cleanup for 10.3.1.0.9
+
+* Thu Feb 23 2017 Scott Breyer <scott.j.breyer@@intel.com> - 10.3.1.0-8
 - Updates for spec file cleanup for 10.3.1.0.8
 
 * Fri Oct 10 2014 Erik E. Kahn <erik.kahn@intel.com> - 1.0.0-ifs

@@ -123,15 +123,13 @@ release_string="IntelOPA-Tools-FF.$BUILD_TARGET_OS_ID.$MODULEVERSION"
 #rm -rf $RPM_BUILD_ROOT
 mkdir -p ${DESTDIR}/usr/bin
 mkdir -p ${DESTDIR}/usr/sbin
-mkdir -p ${DESTDIR}/usr/lib/opa/{tools,fm_tools,help,samples,src/mpi_apps,src/shmem_apps}
+mkdir -p ${DESTDIR}$LIBDIR/opa/{tools,fm_tools,help,samples,src/mpi_apps,src/shmem_apps}
 mkdir -p ${DESTDIR}$LIBDIR/ibacm
 mkdir -p ${DESTDIR}/etc/rdma
 mkdir -p ${DESTDIR}/etc/opa
 mkdir -p ${DESTDIR}/etc/sysconfig/opa
 mkdir -p ${DESTDIR}/usr/include/infiniband
 mkdir -p ${DESTDIR}/usr/share/man/{man1,man8}
-> ${BUILDDIR}/basic_file.list
-> ${BUILDDIR}/ff_file.list
 
 
 #Binaries and scripts installing (basic tools)
@@ -140,107 +138,51 @@ cd $(cat ${BUILDDIR}/RELEASE_PATH)
 
 cd bin
 cp -t ${DESTDIR}/usr/sbin $basic_tools_sbin
-cp -t ${DESTDIR}/usr/lib/opa/tools/ $basic_tools_opt
+cp -t ${DESTDIR}$LIBDIR/opa/tools/ $basic_tools_opt
 ln -s ./opaportinfo ${DESTDIR}/usr/sbin/opaportconfig
 ln -s ./opasmaquery ${DESTDIR}/usr/sbin/opapmaquery
-for i in $basic_tools_sbin $basic_tools_sbin_sym
-do
-	echo "/usr/sbin/$i" >> ${BUILDDIR}/basic_file.list
-done
-for i in $basic_tools_opt
-do
-	echo "/usr/lib/opa/tools/$i" >> ${BUILDDIR}/basic_file.list
-done
 
 cd ../opasadb
 cp -t ${DESTDIR}/usr/bin $opasadb_bin
 cp -t ${DESTDIR}/usr/include/infiniband $opasadb_header
 
 cd ../bin
-cp -t ${DESTDIR}/usr/lib/opa/tools/ $ff_tools_opt
-for i in $ff_tools_opt
-do
-	echo "/usr/lib/opa/tools/$i" >> ${BUILDDIR}/ff_file.list
-done
+cp -t ${DESTDIR}$LIBDIR/opa/tools/ $ff_tools_opt
 
 cd ../fastfabric
 cp -t ${DESTDIR}/usr/sbin $ff_tools_sbin
-cp -t ${DESTDIR}/usr/lib/opa/tools/ $ff_tools_misc
-cp -t ${DESTDIR}/usr/lib/opa/help $help_doc
-for i in $ff_tools_sbin
-do
-	echo "/usr/sbin/$i" >> ${BUILDDIR}/ff_file.list
-done
-for i in $ff_tools_misc
-do
-	echo "/usr/lib/opa/tools/$i" >> ${BUILDDIR}/ff_file.list
-done
-for i in $help_doc
-do
-	echo "/usr/lib/opa/help/$i" >> ${BUILDDIR}/ff_file.list
-done
+cp -t ${DESTDIR}$LIBDIR/opa/tools/ $ff_tools_misc
+cp -t ${DESTDIR}$LIBDIR/opa/help $help_doc
 
 cd ../etc
-cp -t ${DESTDIR}/usr/lib/opa/fm_tools/ $ff_tools_fm
-ln -s /usr/lib/opa/fm_tools/config_check ${DESTDIR}/usr/sbin/opafmconfigcheck
-ln -s /usr/lib/opa/fm_tools/config_diff ${DESTDIR}/usr/sbin/opafmconfigdiff
-for i in $ff_tools_fm
-do
-	echo "/usr/lib/opa/fm_tools/$i" >> ${BUILDDIR}/ff_file.list
-done
-for i in opafmconfigcheck opafmconfigdiff
-do
-	echo "/usr/sbin/$i" >> ${BUILDDIR}/ff_file.list
-done
+cp -t ${DESTDIR}$LIBDIR/opa/fm_tools/ $ff_tools_fm
+ln -s $LIBDIR/opa/fm_tools/config_check ${DESTDIR}/usr/sbin/opafmconfigcheck
+ln -s $LIBDIR/opa/fm_tools/config_diff ${DESTDIR}/usr/sbin/opafmconfigdiff
 
 cd ../fastfabric/samples
-cp -t ${DESTDIR}/usr/lib/opa/samples $ff_iba_samples
-for i in $ff_iba_samples
-do
-	echo "/usr/lib/opa/samples/$i" >> ${BUILDDIR}/ff_file.list
-done
+cp -t ${DESTDIR}$LIBDIR/opa/samples $ff_iba_samples
 cd ..
 
 cd ../fastfabric/tools
-cp -t ${DESTDIR}/usr/lib/opa/tools/ $ff_tools_exp
-cp -t ${DESTDIR}/usr/lib/opa/tools/ $ff_libs_misc
-cp -t ${DESTDIR}/usr/lib/opa/tools/ osid_wrapper
+cp -t ${DESTDIR}$LIBDIR/opa/tools/ $ff_tools_exp
+cp -t ${DESTDIR}$LIBDIR/opa/tools/ $ff_libs_misc
+cp -t ${DESTDIR}$LIBDIR/opa/tools/ osid_wrapper
 cp -t ${DESTDIR}/etc/sysconfig/opa allhosts chassis esm_chassis hosts ports switches opaff.xml
-for i in $ff_tools_exp $ff_libs_misc
-do
-	echo "/usr/lib/opa/tools/$i" >> ${BUILDDIR}/ff_file.list
-done
 cd ..
 
 cd ../man/man1
 cp -t ${DESTDIR}/usr/share/man/man1 $basic_mans
-for i in $basic_mans
-do
-	echo "/usr/share/man/man1/${i}.gz" >> ${BUILDDIR}/basic_file.list
-done
 cp -t ${DESTDIR}/usr/share/man/man1 $opasadb_mans
 cd ../man8
 cp -t ${DESTDIR}/usr/share/man/man8 $ff_mans
-for i in $ff_mans
-do
-	echo "/usr/share/man/man8/${i}.gz" >> ${BUILDDIR}/ff_file.list
-done
 cd ..
 
 cd ../src/mpi/mpi_apps
-tar -xzf mpi_apps.tgz -C ${DESTDIR}/usr/lib/opa/src/mpi_apps/
-for i in $mpi_apps_files
-do
-	echo "/usr/lib/opa/src/mpi_apps/$i" >> ${BUILDDIR}/ff_file.list
-done
+tar -xzf mpi_apps.tgz -C ${DESTDIR}$LIBDIR/opa/src/mpi_apps/
 cd ../../
 
 cd ../src/shmem/shmem_apps
-tar -xzf shmem_apps.tgz -C ${DESTDIR}/usr/lib/opa/src/shmem_apps/
-for i in $shmem_apps_files
-do
-	echo "/usr/lib/opa/src/shmem_apps/$i" >> ${BUILDDIR}/ff_file.list
-done
+tar -xzf shmem_apps.tgz -C ${DESTDIR}$LIBDIR/opa/src/shmem_apps/
 cd ../../
 
 #Config files
@@ -257,5 +199,5 @@ cp -t ${DESTDIR}${LIBDIR}/ibacm libdsap.so.*
 # Now that we've put everything in the buildroot, copy any default config files to their expected location for user
 # to edit. To prevent nuking existing user configs, the files section of this spec file will reference these as noreplace
 # config files.
-cp ${DESTDIR}/usr/lib/opa/tools/opafastfabric.conf.def ${DESTDIR}/etc/sysconfig/opa/opafastfabric.conf
+cp ${DESTDIR}$LIBDIR/opa/tools/opafastfabric.conf.def ${DESTDIR}/etc/sysconfig/opa/opafastfabric.conf
 
