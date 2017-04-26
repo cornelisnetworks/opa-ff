@@ -740,13 +740,6 @@ do
 
   s)
     hfi_suffix=$OPTARG
-    if [[ "$hfi_suffix" =~ $HFI_SUFFIX_REGEX ]] ; then
-        hfiNum=`echo "$hfi_suffix" | cut -d "_" -f2`
-        FILE_TOPOLOGY_OUT="topology.$((hfiNum+1)):0.xml"
-    else
-        echo "opaxlattopology: Invalid Argument for -s option, should be like hfi1_0"
-        exit 1
-    fi
     ;;
   
   *)

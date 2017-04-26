@@ -21,188 +21,72 @@ opaextractsellinks [opareport \fIoptions\fR]
 .NL
 
 .TP 10
-opareport \fIoptions\fR 
-.NL
-Options are passed to opareport.
-
-.IP
-Specifies any of the other opareport arguments listed below (see
-\fIopareport Options\fR
-):
-.br
-[-v][-q] [-h \fIhfi\fR] [-p \fIport\fR]
-.br
-[-o \fIreport\fR] [-d \fIdetail\fR] [-P|-H] [-N] [-x]
-.br
-[-X \fIsnapshot\(ulinput\fR] [-T \fItopology\(ulinput\fR] [-s] [-r] [-V]
-.br
-[-i \fIseconds\fR] [-b \fIdate\(ultime\fR] [-e \fIdate\(ultime\fR] [-C]
-.br
-[-a] [-m] [-K \fImkey\fR] [-M] [-A] [-c \fIfile\fR] [-L]
-.br
-[-F \fIpoint\fR] [-S \fIpoint\fR] [-D \fIpoint\fR] [-Q] 
-
-.br
-
-.NL
-
-.SH opareport Options
-.NL
-
-.TP 10
 --help 
 .NL
 Produces full help text.
 
 .TP 10
--v/--verbose 
+opareport \fIoptions\fR 
 .NL
-Returns verbose output.
+The following options are passed to opareport. This subset is considered typical and useful for this command.
 
+.RS
 .TP 10
--q/--quiet 
-.NL
-Disables progress reports.
 
-.TP 10
+.sp
 -h/--hfi \fIhfi\fR 
-.NL
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
 
+.RE
+
+.RS
 .TP 10
+
+.sp
 -p/--port \fIport\fR 
-.NL
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
 
+.RE
+
+.RS
 .TP 10
+
+.sp
 -o/--output \fIreport\fR 
-.NL
 Specifies the report type for output. Refer to
 \fIReport Types\fR
 for details.
 
-.TP 10
--d/--detail \fIlevel\fR 
-.NL
-Specifies the level of detail 0-n for output. Default is 2.
+.RE
 
+.RS
 .TP 10
--P/--persist 
-.NL
-Only includes data persistent across reboots.
 
-.TP 10
--H/--hard 
-.NL
-Only includes permanent hardware data.
-
-.TP 10
--N/--noname 
-.NL
-Omits node and IOC names.
-
-.TP 10
--x/--xml 
-.NL
-Produces output in XML.
-
-.TP 10
+.sp
 -X/--infile \fIsnapshot\(ulinput\fR 
-.NL
 Generates a report using the data in the snapshot\(ulinput file. snapshot\(ulinput must have been generated during a previous -o \fIsnapshot\fR run. When used, the -s, -i, -C, and -a options are ignored. \[aq]-\[aq] may be used as the snapshot\(ulinput to specify stdin.
 
+.RE
+
+.RS
 .TP 10
+
+.sp
 -T/--topology \fItopology\(ulinput\fR 
-.NL
 Uses topology\(ulinput file to augment and verify fabric information. When used, various reports can be augmented with information not available electronically (such as cable labels). \[aq]-\[aq] may be used to specify stdin.
 
-.TP 10
--s/--stats 
-.NL
-Gets performance statistics for all ports.
+.RE
 
+.RS
 .TP 10
--i/--interval \fIseconds\fR 
-.NL
-Obtains performance statistics over interval  \fIseconds\fR. Clears all statistics, waits interval  \fIseconds\fR, then generates report. Implies -s option.
 
-.TP 10
--b / --begin \fIdate\(ultime\fR 
-.NL
-Obtains past performance stats over an interval beginning at  \fIdate\(ultime\fR. Implies -s option.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
-
-.TP 10
--e / --end \fIdate\(ultime\fR 
-.NL
-Obtains past performance stats over an interval ending at  \fIdate\(ultime\fR. Implies -s option.
-
-.IP
- \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
-.TP 10
--C/--clear 
-.NL
-Clears performance statistics for all ports. Only statistics with error thresholds are cleared. A clear occurs after generating the report.
-
-.TP 10
--a/--clearall 
-.NL
-Clears all performance statistics for all ports.
-
-.TP 10
--m/--smadirect 
-.NL
-Accesses fabric information directly from SMA.
-
-.TP 10
--K/--mkey \fImkey\fR 
-.NL
-Specifies the SMA M\(ulKey for direct SMA query. Default is 0.
-
-.TP 10
--M/--pmadirect 
-.NL
-Accesses performance statistics using direct PMA.
-
-.TP 10
--A/--allports 
-.NL
-Gets PortInfo for down switch ports. Uses direct SMA to get this data. If used with -M, also gets PMA stats for down switch ports.
-
-.TP 10
--c/--config \fIfile\fR 
-.NL
-Specifies the error thresholds configuration file. Default is /etc/opa/opamon.conf file.
-
-.TP 10
--L/--limit 
-.NL
-Limits operation to exact specified focus with -F for port error counters check (-o \fIerrors\fR) and port counters clear (-C or -i). Normally, the neighbor of each selected port is also checked/cleared. Does not affect other reports.
-
-.TP 10
+.sp
 -F/--focus \fIpoint\fR 
-.NL
-Specifies the focus area for report. Used for all reports except route to limit scope of report. Refer to
+Specifies the focus area for report. Used for all reports except route to limit scope of report. Refer to 
 \fIPoint Syntax\fR
 for details.
 
-.TP 10
--S/--src \fIpoint\fR 
-.NL
-Specifies the source for trace route. Default is local port. Refer to
-\fIPoint Syntax\fR
-for details.
-
-.TP 10
--D/--dest \fIpoint\fR 
-.NL
-Specifies the destination for trace route. Refer to
-\fIPoint Syntax\fR
-for details.
-
-.TP 10
--Q/--quietfocus 
-.NL
-Excludes focus description from report.
+.RE
 
 .NL
 
@@ -241,227 +125,8 @@ HFI \fIx\fR, port \fIy\fR.
 
 .NL
 
-.SH Snapshot-Specific Options
-.NL
-
-.TP 10
--r/--routes 
-.NL
-Gets routing tables for all switches.
-
-.TP 10
--V/--vltables 
-.NL
-Gets the P-Key tables for all nodes and the QoS VL-related tables for all ports.
-
-.NL
-
 .SH Report Types
 .NL
-
-.TP 10
-comps 
-.NL
-Summary of all systems and SMs in fabric.
-
-.TP 10
-brcomps 
-.NL
-Brief summary of all systems and SMs in fabric.
-
-.TP 10
-nodes 
-.NL
-Summary of all node types and SMs in fabric.
-
-.TP 10
-brnodes 
-.NL
-Brief summary of all node types and SMs in fabric.
-
-.TP 10
-ious 
-.NL
-Summary of all IO units in the fabric.
-
-.TP 10
-lids 
-.NL
-Summary of all LIDs in the fabric.
-
-.TP 10
-links 
-.NL
-Summary of all links.
-
-.TP 10
-extlinks 
-.NL
-Summary of links external to systems.
-
-.TP 10
-filinks 
-.NL
-Summary of links to FIs.
-
-.TP 10
-islinks 
-.NL
-Summary of inter-switch links.
-
-.TP 10
-extislinks 
-.NL
-Summary of inter-switch links external to systems.
-
-.TP 10
-slowlinks 
-.NL
-Summary of links running slower than expected.
-
-.TP 10
-slowconfiglinks 
-.NL
-Summary of links configured to run slower than supported, includes slowlinks.
-
-.TP 10
-slowconnlinks 
-.NL
-Summary of links connected with mismatched speed potential, includes slowconfiglinks.
-
-.TP 10
-misconfiglinks 
-.NL
-Summary of links configured to run slower than supported.
-
-.TP 10
-misconnlinks 
-.NL
-Summary of links connected with mismatched speed potential.
-
-.TP 10
-errors 
-.NL
-Summary of links whose errors exceed counts in the configuration file.
-
-.TP 10
-otherports 
-.NL
-Summary of ports not connected to the fabric.
-
-.TP 10
-linear 
-.NL
-Summary of linear forwarding data base (FDB) for each switch.
-
-.TP 10
-mcast 
-.NL
-Summary of multicast FDB for each switch in the fabric.
-
-.TP 10
-mcgroups 
-.NL
-Summary of multicast groups.
-
-.IP
-When used in conjunction with -d, the following report details are possible:
-.RS
-
-.IP \(bu
--d0 : Shows the number of multicast groups
-.IP \(bu
--d1 : Shows a list of multicast groups
-.IP \(bu
--d2 : Shows a list of members per multicast group
-
-.RE
-
-.IP
-This report can be used with option -X.
-.TP 10
-portusage 
-.NL
-Summary of ports referenced in linear FDB for each switch, broken down by NodeType of DLID.
-
-.TP 10
-pathusage 
-.NL
-Summary of number of FI to FI paths routed through each switch port.
-
-.TP 10
-treepathusage 
-.NL
-Analysis of number of FI to FI paths routed through each switch port for a FAT tree.
-
-.TP 10
-portgroups 
-.NL
-Summary of adaptive routing port groups for each switch.
-
-.TP 10
-quarantinednodes 
-.NL
-Summary of quarantined nodes.
-
-.TP 10
-validateroutes 
-.NL
-Validates all routes in the fabric.
-
-.TP 10
-validatevlroutes 
-.NL
-Validates all routes in the fabric using SLSC, SCSC, and SCVL tables.
-
-.TP 10
-validatepgs 
-.NL
-Validates all port groups in the fabric.
-
-.TP 10
-validatecreditloops 
-.NL
-Validates topology configuration of the fabric to identify any existing credit loops.
-
-.TP 10
-validatevlcreditloops 
-.NL
-Validates topology configuration of the fabric including SLSC, SCSC, and SCVL tables to identify any existing credit loops.
-
-.TP 10
-validatemcroutes 
-.NL
-Validates multicast routes of the fabric.
-.TP 10
-vfinfo 
-.NL
-Summary of virtual fabric (vFabric) information.
-
-.TP 10
-vfmember 
-.NL
-Summary of vFabric membership information.
-
-.TP 10
-verifyfis 
-.NL
-Compares fabric (or snapshot) FIs to supplied topology and identifies differences and omissions.
-
-.TP 10
-verifysws 
-.NL
-Compares fabric (or snapshot) switches to supplied topology and identifies differences and omissions.
-
-.TP 10
-verifynodes 
-.NL
-Returns verifyfis and verifysws reports.
-
-.TP 10
-verifysms 
-.NL
-Compares fabric (or snapshot) SMs to supplied topology and identifies differences and omissions.
 
 .TP 10
 verifylinks 
@@ -492,35 +157,6 @@ Compares fabric (or snapshot) links to supplied topology and identify difference
 verifyall 
 .NL
 Returns verifyfis, verifysws, verifysms, and verifylinks reports.
-
-.TP 10
-all 
-.NL
-Returns comps, nodes, ious, links, extlinks, slowconnlinks, and errors reports.
-
-.TP 10
-route 
-.NL
-Traces route between -S and -D points.
-
-.TP 10
-bfrctrl 
-.NL
-Reports Buffer Control Tables for all ports.
-
-.TP 10
-snapshot 
-.NL
-Outputs snapshot of the fabric state for later use as  \fIsnapshot\(ulinput\fR. This implies -x. May not be combined with other reports. When selected, -F, -P, -H, and -N options are ignored.
-
-.TP 10
-topology 
-.NL
-Outputs the topology of the fabric for later use as  \fItopology\(ulinput\fR. This implies -x. May not be combined with other reports.
-.TP 10
-none 
-.NL
-No report, useful to clear statistics.
 
 .NL
 

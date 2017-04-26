@@ -1,0 +1,120 @@
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+#[ICS VERSION STRING: unknown]
+#!/bin/bash
+
+# PURPOSE:
+#
+# This file sets environment variables for an IntelMPI job.
+# Note that there are many, many such variables.
+#
+# SYNTAX:
+#
+# This file must be a valid BASH script. In general, anything that's valid
+# in BASH is valid here. To pass variables to IntelMPI, they
+# may take either of these forms:
+#
+# export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv VARIABLE_NAME variablevalue"
+# export VARIABLE_NAME=variablevalue
+#
+# This script generally both exports the variable and provides it via -genv
+# As such MPI_CMD_ARGS shown in the log of running the MPI app will explicitly
+# show the variables used.
+
+# SAMPLE Tuning variables:
+#
+# Uncomment the following lines to enable them.
+#
+. /usr/sbin/opagetvf_env	# defines bash function opagetvf_func
+export MPI_CMD_ARGS=
+
+# It is recommended to use the TMI interface over PSM2 within IntelMPI
+export I_MPI_FABRICS=shm:tmi
+export I_MPI_TMI_PROVIDER=psm2
+
+# These 3 lines select a Virtual Fabric by name and configure PKEY, SL, MTU
+# opagetvf_func "-d 'Compute'" PSM2_PKEY HFI_SL PSM2_MTU
+# export MPI_CMD_ARGS="-genv PSM2_PKEY $PSM2_PKEY -genv HFI_SL $HFI_SL"
+# [ -n "$PSM2_MTU" ] && export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_MTU $PSM2_MTU"
+
+# These 3 lines select a Virtual Fabric by ServiceId and configure PKEY, SL, MTU
+# opagetvf_func "-S '0x1000117500000000'" PSM2_PKEY HFI_SL PSM2_MTU
+# export MPI_CMD_ARGS="-genv PSM2_PKEY $PSM2_PKEY -genv HFI_SL $HFI_SL"
+# [ -n "$PSM2_MTU" ] && export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_MTU $PSM2_MTU"
+
+# These 3 lines select a Virtual Fabric by ServiceId and uses dist_sa
+# to directly fetch the PathRecord at job startup.
+# This mechanism is only supported for Intel HFIs when using PSM (-hfi MPIs)
+#export PSM2_PATH_REC=opp
+#export PSM2_IB_SERVICE_ID=0x1000117500000000
+#export MPI_CMD_ARGS="-genv PSM2_PATH_REC $PSM2_PATH_REC -genv PSM2_IB_SERVICE_ID $PSM2_IB_SERVICE_ID"
+
+# This line can enable dispersive routing. The following choices are allowed:
+#    adaptive, static_src, static_dest, static_base
+# If LMC is enabled in the SM, adaptive will automatically be used.
+# This mechanism is only supported for Intel HFIs when using PSM
+#export PSM2_PATH_SELECTION=adaptive
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_PATH_SELECTION $PSM2_PATH_SELECTION"
+
+# Use this to explicitly specify a pkey (for virtual fabrics)
+#export PSM2_PKEY=0x8002
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_PKEY $PSM2_PKEY"
+
+# Use this to explicitly specify a service level (for virtual fabrics)
+#export HFI_SL=0
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv HFI_SL $HFI_SL"
+
+# Use this to explicitly specify a MTU (for virtual fabrics)
+#export PSM2_MTU=4096
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_MTU $PSM2_MTU"
+
+# Use this to enable core dumps
+# (in addition ulimit and /etc/security/limits must enable core dumps too)
+#export HFI_NO_BACKTRACE=1
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv HFI_NO_BACKTRACE $HFI_NO_BACKTRACE"
+
+# Normally Congestion Control is completely configured in the SM config file.
+# However, if desired, the fabric interface settings can be overridden for
+# the given job.
+#export PSM2_DISABLE_CCA=0
+#export PSM2_CCTI_INCREMENT=1
+#export PSM2_CCTI_TIMER=1
+#export PSM2_CCTI_TABLE_SIZE=128
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_DISABLE_CCA $PSM2_DISABLE_CCA -genv PSM2_CCTI_INCREMENT $PSM2_CCTI_INCREMENT -genv PSM2_CCTI_TIMER $PSM2_CCTI_TIMER -genv PSM2_CCTI_TABLE_SIZE $PSM2_CCTI_TABLE_SIZE"
+
+# These values can enable and control PSM Multi-Rail
+# In most cases the default automatic selections will be sufficient
+# The sample shown is for Dual HFI server with port 1 per HFI connected
+#export PSM2_MULTIRAIL=1
+#export PSM2_MULTIRAIL_MAP="0:1,1:1"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_MULTIRAIL $PSM2_MULTIRAIL -genv PSM2_MULTIRAIL_MAP $PSM2_MULTIRAIL_MAP"
+
+# This can be enabled to force benchmarks to run on selected CPU cores
+#export MPI_TASKSET="${MPI_TASKSET:- -c 1-7}"

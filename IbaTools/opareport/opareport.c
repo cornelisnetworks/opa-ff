@@ -4901,6 +4901,8 @@ static boolean PortCountersExceedThreshold(PortData *portp)
 			PortCounterExceedsThreshold64(pPortStatus->field, g_Thresholds.field)
 #define BELOW_THRESHOLD_LQI(field) \
 			PortCounterBelowThreshold(pPortStatus->lq.s.field, g_Thresholds.lq.s.field)
+#define EXCEEDS_THRESHOLD_NLD(field) \
+			PortCounterExceedsThreshold((pPortStatus->lq.field >> 4), (g_Thresholds.lq.field >> 4))
 
 			// Data movement
 	return EXCEEDS_THRESHOLD64(PortXmitData)
@@ -4919,6 +4921,7 @@ static boolean PortCountersExceedThreshold(PortData *portp)
 			|| EXCEEDS_THRESHOLD(LinkErrorRecovery)
 			|| EXCEEDS_THRESHOLD64(LocalLinkIntegrityErrors)
 			|| EXCEEDS_THRESHOLD64(PortRcvRemotePhysicalErrors)
+			|| EXCEEDS_THRESHOLD_NLD(AsReg8)
 			// Security
 			|| EXCEEDS_THRESHOLD64(PortXmitConstraintErrors)
 			|| EXCEEDS_THRESHOLD64(PortRcvConstraintErrors)
@@ -4939,6 +4942,7 @@ static boolean PortCountersExceedThreshold(PortData *portp)
 #undef EXCEEDS_THRESHOLD
 #undef EXCEEDS_THRESHOLD64
 #undef BELOW_THRESHOLD_LQI
+#undef EXCEEDS_THRESHOLD_NLD
 }
 
 void ShowPortCounterBelowThreshold(const char* field, uint32 value, uint32 threshold, Format_t format, int indent, int detail)
@@ -5032,6 +5036,8 @@ void ShowLinkPortErrorSummary(PortData *portp, Format_t format, int indent, int 
 			ShowPortCounterExceedingThreshold64(#name, pPortStatus->field, g_Thresholds.field, format, indent, detail)
 #define SHOW_EXCEEDING_MB_THRESHOLD(field, name) \
 			ShowPortCounterExceedingMbThreshold64(#name, pPortStatus->field, g_Thresholds.field, format, indent, detail)
+#define SHOW_EXCEEDING_NLD_THRESHOLD(field, name) \
+			ShowPortCounterExceedingThreshold(#name, (pPortStatus->lq.field >> 4), (g_Thresholds.lq.field >> 4), format, indent, detail)
 	// Data movement
 	SHOW_EXCEEDING_MB_THRESHOLD(PortXmitData, XmitData);
 	SHOW_EXCEEDING_MB_THRESHOLD(PortRcvData, RcvData);
@@ -5049,6 +5055,7 @@ void ShowLinkPortErrorSummary(PortData *portp, Format_t format, int indent, int 
 	SHOW_EXCEEDING_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery);
 	SHOW_EXCEEDING_THRESHOLD64(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
 	SHOW_EXCEEDING_THRESHOLD64(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
+	SHOW_EXCEEDING_NLD_THRESHOLD(AsReg8, NumLanesDown);
 	// Security
 	SHOW_EXCEEDING_THRESHOLD64(PortXmitConstraintErrors, XmitConstraintErrors);
 	SHOW_EXCEEDING_THRESHOLD64(PortRcvConstraintErrors, RcvConstraintErrors);
@@ -5070,6 +5077,7 @@ void ShowLinkPortErrorSummary(PortData *portp, Format_t format, int indent, int 
 #undef SHOW_EXCEEDING_THRESHOLD
 #undef SHOW_EXCEEDING_THRESHOLD64
 #undef SHOW_EXCEEDING_MB_THRESHOLD
+#undef SHOW_EXCEEDING_NLD_THRESHOLD
 }
 
 // returns TRUE if thresholds are configured
@@ -5095,6 +5103,9 @@ boolean ShowThresholds(Format_t format, int indent, int detail)
 #define SHOW_MB_THRESHOLD(field, name) \
 	do { if (g_Thresholds.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu MB\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB); break; case FORMAT_XML: printf("%*s<%sMB>%lu</%sMB>\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB, #name); break; default: break; } didoutput = TRUE; } }  while (0)
 
+#define SHOW_THRESHOLD_NLD(field, name) \
+	do { if (g_Thresholds.lq.field >> 4) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu\n", indent+4, "", #name, (uint64)(g_Thresholds.lq.field >> 4)); break; case FORMAT_XML: printf("%*s<%s>%lu</%s>\n", indent+4, "", #name, (uint64)(g_Thresholds.lq.field >> 4), #name); break; default: break; } didoutput = TRUE; } }  while (0)
+
 	// Data movement
 	SHOW_MB_THRESHOLD(PortXmitData, XmitData);
 	SHOW_MB_THRESHOLD(PortRcvData, RcvData);
@@ -5113,6 +5124,7 @@ boolean ShowThresholds(Format_t format, int indent, int detail)
 	SHOW_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery);
 	SHOW_THRESHOLD(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
 	SHOW_THRESHOLD(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
+	SHOW_THRESHOLD_NLD(AsReg8, NumLanesDown);
 
 	// Security
 	SHOW_THRESHOLD(PortXmitConstraintErrors, XmitConstraintErrors);
@@ -5149,6 +5161,8 @@ boolean ShowThresholds(Format_t format, int indent, int detail)
 
 #undef SHOW_THRESHOLD
 #undef SHOW_MB_THRESHOLD
+#undef SHOW_THRESHOLD_LQI
+#undef SHOW_THRESHOLD_NLD
 	return didoutput;
 }
 
@@ -11644,7 +11658,13 @@ int parse(const char* filename)
 				} else {
 					g_Thresholds.lq.s.LinkQualityIndicator = threshold;
 					/* can't be cleared. */
-				}	
+				}
+			} else if (strcmp(param,"NumLanesDown") == 0) {
+				if (threshold > 4) {
+					fprintf(stderr, "opareport: NumLanesDown max threshold setting is 4, ignoring: %llu\n", threshold);
+				} else {
+					g_Thresholds.lq.AsReg8 |= (threshold << 4);
+				}
 #define PARSE_THRESHOLD(field, name, max) \
 	if (strcmp(param, #name) == 0) { \
 		if (threshold > (max)) { \

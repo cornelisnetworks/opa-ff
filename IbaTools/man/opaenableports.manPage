@@ -83,6 +83,11 @@ HFI \fIx\fR, port \fIy\fR.
 .NL
 opaenableports < disabled.csv
 .br
-opaenableports < /etc/opa/disabled:0:0.csv
+opaenableports < /etc/opa/disabled:1:1.csv
 .br
 opaenableports -h 1 -p 1 < disabled.csv
+.SH Other Information
+.NL
+
+.PP
+For messages containing skipping ports, either the device is offline or the other end of the link has been disabled and the device is no longer accessible in-band. The end of the link previously disabled by opedisableports or opadisablehosts can be found in /etc/opa/disabled:1:1.csv.

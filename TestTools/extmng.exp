@@ -718,12 +718,13 @@ proc get_switch_info { ibnode } {
 			if { "$numPS" == "2" } {
 				check_exit_status 60 0
 				send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 8 -i 1"
-				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 1: [A-Z ]+" } { "Error" }]
-				regexp {([PS 1:]+) ([A-Z ]+)} $out p1 p2 p3
+				set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 1: [A-Z\/ ]+" } { "Error" }]
+				regexp {([PS 1:]+) ([A-Z\/ ]+)} $out p1 p2 p3
 
 				if { ! [ string equal "$p3" "ONLINE" ] && 
 				     ! [ string equal "$p3" "OFFLINE" ] &&
 				     ! [ string equal "$p3" "NOT PRESENT" ] &&
+				     ! [ string equal "$p3" "N/A" ] &&
 				     ! [ string equal "$p3" "INVALID" ] } {
 					set ps1Status "ERROR"
 				} else {
@@ -734,11 +735,12 @@ proc get_switch_info { ibnode } {
 			}
 			check_exit_status 60 0
 			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 8 -i 2"
-			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 2: [A-Z ]+" } { "Error" }]
-			regexp {([PS 2:]+) ([A-Z ]+)} $out p1 p2 p3
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 2: [A-Z\/ ]+" } { "Error" }]
+			regexp {([PS 2:]+) ([A-Z\/ ]+)} $out p1 p2 p3
 			if { ! [ string equal "$p3" "ONLINE" ] &&
 			     ! [ string equal "$p3" "OFFLINE" ] &&
 			     ! [ string equal "$p3" "NOT PRESENT" ] &&
+			     ! [ string equal "$p3" "N/A" ] &&
 			     ! [ string equal "$p3" "INVALID" ] } {
 				set ps2Status "ERROR"
 			} else {
