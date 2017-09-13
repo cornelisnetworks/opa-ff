@@ -154,7 +154,7 @@ Top level directory for baselines and failed health checks.
 .NL
 
 .PP
-The opaallanalysis command performs the set of analysis specified in \fBFF\(ulALL\(ulANALYSIS\fR, which must be a space-separated list. This can be provided by the environment or using /etc/opa/opafastfabric.conf. The analysis set includes the options: fabric, chassis, esm, or hostsm.
+The opaallanalysis command performs the set of analysis specified in \fBFF\(ulALL\(ulANALYSIS\fR, which must be a space-separated list. This can be provided by the environment or using /etc/opa/opafastfabric.conf. The analysis set includes the options: fabric, chassis, esm, or hostsm. For a fabric with only externally managed switches, \fBFF\(ulALL\(ulANALYSIS\fR should be set to -fabric in opafastfabric.conf.
 .PP
 Note that the opaallanalysis command has options which are a super-set of the options for all other analysis commands. The options are passed along to the respective tools as needed. For example, the -c file option is passed on to opafabricanalysis if it is specified in \fBFF\(ulALL\(ulANALYSIS\fR.
 .PP

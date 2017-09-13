@@ -58,7 +58,6 @@ extern char *g_cmdname;
 
 extern uint64_t g_transactID;
 #define RESP_WAIT_TIME (1000)	// 1000 milliseconds for receive response
-#define DEFAULT_PMA_SL 0        // default SL used by stl_pma_query
 
 #if defined(DBGPRINT)
 #undef DBGPRINT
@@ -69,7 +68,7 @@ extern uint64_t g_transactID;
 #define MAX_DR_PATH	63
 
 typedef struct _argrec {
-	int					port;	// local port (-p)
+	uint8				port;	// local port (-p)
 	IB_LID				slid;	//source lid
 	IB_LID				dlid;	//dest lid (-l)
 	IB_LID				flid;	// -f lid to lookup in fwd table to select block
@@ -82,10 +81,10 @@ typedef struct _argrec {
 	boolean				mflag2;	// were two ports supplied
 	uint8				dport;	// typical -m option
 	uint8				mcount;	// optional count specified via -m
-	uint8				inport; // used for SLVL and SLSC maps.
-	uint8				outport;// used for SLVL and SLSC maps.
+	uint8				inport; // used for pstate, BCT, SCVL and SCSC maps.
+	uint8				outport;// used for pstate, BCT, SCVL and SCSC maps.
 	const char*			oname;	// -o name
-	struct oib_port    *oib_port;
+	struct omgt_port    *omgt_port;
 	boolean             printLineByLine; // modify output to be line by line
     uint8               sl;
 } argrec;

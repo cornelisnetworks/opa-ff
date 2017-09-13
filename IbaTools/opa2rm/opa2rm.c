@@ -156,6 +156,8 @@ void ShowExpectedLinkPortSelBriefSummary(ExpectedLink *elinkp, PortSelector *por
 				fprintf(stderr, "%*sPortDetails: %s\n", indent+4, "", portselp->details);
 			}
 		}
+	} else {
+		fprintf(stderr, "unspecified\n");
 	}
 }
 
@@ -732,8 +734,6 @@ void BuildSwitchNeighList(boolean get_isls)
 	uint8 tier = 0;
 	boolean found;
 
-	ResolveExpectedLinks(&g_Fabric, g_quiet);
-
 	if (! get_isls)
 		return;
 
@@ -741,19 +741,20 @@ void BuildSwitchNeighList(boolean get_isls)
 	for (q=QListHead(&g_Fabric.ExpectedLinks); q != NULL; q = QListNext(&g_Fabric.ExpectedLinks, q)) {
 		ExpectedLink *elinkp = (ExpectedLink *)QListObj(q);
 
-		if (! elinkp->enodep1 || ! elinkp->enodep2) {
+		if (! elinkp->portselp1 || ! elinkp->portselp1->enodep
+			|| ! elinkp->portselp2 || ! elinkp->portselp2->enodep) {
 			// Skipping Link, unresolved
 			continue;
 		}
 		// figure out the types on both ends
-		switch (elinkp->enodep1->NodeType) {
+		switch (elinkp->portselp1->enodep->NodeType) {
 		case STL_NODE_FI:
-			switch (elinkp->enodep2->NodeType) {
+			switch (elinkp->portselp2->enodep->NodeType) {
 			case STL_NODE_FI: // FI<->FI
 				// Skipping Link, unexpected FI<->FI link
 				break;
 			case STL_NODE_SW: // FI<->SW
-				(void)SetSwitchTier(elinkp->enodep2, 1);
+				(void)SetSwitchTier(elinkp->portselp2->enodep, 1);
 				break;
 			default:	// should not happen, enodep should always have type
 				// Skipping Link, unspecified NodeType
@@ -763,11 +764,11 @@ void BuildSwitchNeighList(boolean get_isls)
 		case STL_NODE_SW:
 			switch (elinkp->portselp2->NodeType) {
 			case STL_NODE_FI: // SW<->FI
-				(void)SetSwitchTier(elinkp->enodep1, 1);
+				(void)SetSwitchTier(elinkp->portselp1->enodep, 1);
 				break;
 			case STL_NODE_SW: // SW<->SW
-				(void)AddSwitchSwNeighbor(elinkp->enodep1, elinkp->enodep2);
-				(void)AddSwitchSwNeighbor(elinkp->enodep2, elinkp->enodep1);
+				(void)AddSwitchSwNeighbor(elinkp->portselp1->enodep, elinkp->portselp2->enodep);
+				(void)AddSwitchSwNeighbor(elinkp->portselp2->enodep, elinkp->portselp1->enodep);
 				break;
 			default:	// should not happen, enodep should always have type
 				// Skipping Link, unspecified NodeType
@@ -845,51 +846,52 @@ void BuildAllSwitchLists(name_mode_t switch_name_mode, name_mode_t node_name_mod
 				ix, QListCount(&g_Fabric.ExpectedLinks));
 		}
 
-		if (! elinkp->enodep1 || ! elinkp->enodep2) {
-			fprintf(stderr, "Skipping Link, unresolved\n");
+		if (! elinkp->portselp1 || ! elinkp->portselp1->enodep
+			|| ! elinkp->portselp2 || ! elinkp->portselp2->enodep) {
+			fprintf(stderr, "Skipping Link (topology file line %"PRIu64"), unresolved:\n", elinkp->lineno);
 			ShowExpectedLinkSummary(elinkp, 4, 0);
 			bad_input++;
 			continue;
 		}
 		// figure out the types on both ends, want FI-SW and SW-SW links
-		switch (elinkp->enodep1->NodeType) {
+		switch (elinkp->portselp1->enodep->NodeType) {
 		case STL_NODE_FI:
-			switch (elinkp->enodep2->NodeType) {
+			switch (elinkp->portselp2->enodep->NodeType) {
 			case STL_NODE_FI:
-				fprintf(stderr, "Skipping Link, unexpected FI<->FI link\n");
+				fprintf(stderr, "Skipping Link (topology file line %"PRIu64"), unexpected FI<->FI link:\n", elinkp->lineno);
 				ShowExpectedLinkSummary(elinkp, 4, 0);
 				bad_input++;
 				continue;
 			case STL_NODE_SW:
-				fienodep = elinkp->enodep1;
-				swenodep = elinkp->enodep2;
+				fienodep = elinkp->portselp1->enodep;
+				swenodep = elinkp->portselp2->enodep;
 				break;
 			default:
-				fprintf(stderr, "Skipping Link, unspecified NodeType\n");
+				fprintf(stderr, "Skipping Link (topology file line %"PRIu64"), unspecified NodeType:\n", elinkp->lineno);
 				ShowExpectedLinkSummary(elinkp, 4, 0);
 				bad_input++;
 				continue;
 			}
 			break;
 		case STL_NODE_SW:
-			switch (elinkp->enodep2->NodeType) {
+			switch (elinkp->portselp2->enodep->NodeType) {
 			case STL_NODE_FI:
-				swenodep = elinkp->enodep1;
-				fienodep = elinkp->enodep2;
+				swenodep = elinkp->portselp1->enodep;
+				fienodep = elinkp->portselp2->enodep;
 				break;
 			case STL_NODE_SW:
-				swenodep = elinkp->enodep1;
-				nswenodep = elinkp->enodep2;
+				swenodep = elinkp->portselp1->enodep;
+				nswenodep = elinkp->portselp2->enodep;
 				break;
 			default:
-				fprintf(stderr, "Skipping Link, unspecified NodeType\n");
+				fprintf(stderr, "Skipping Link (topology file line %"PRIu64"), unspecified NodeType:\n", elinkp->lineno);
 				ShowExpectedLinkSummary(elinkp, 4, 0);
 				bad_input++;
 				continue;
 			}
 			break;
 		default:
-			fprintf(stderr, "Skipping Link, unspecified NodeType\n");
+			fprintf(stderr, "Skipping Link (topology file line %"PRIu64"), unspecified NodeType:\n", elinkp->lineno);
 			ShowExpectedLinkSummary(elinkp, 4, 0);
 			bad_input++;
 			continue;
@@ -926,7 +928,7 @@ void BuildAllSwitchLists(name_mode_t switch_name_mode, name_mode_t node_name_mod
 				// for example a 3 tier fabric with an HFI on the core will
 				// treat the core as a tier 1 which is connected to tier 2
 				// switches and hence not reported as an issue
-				fprintf(stderr, "Skipping Link, not a pure tree\n");
+				fprintf(stderr, "Skipping Link (topology file line %"PRIu64"), not a pure tree:\n", elinkp->lineno);
 				ShowExpectedLinkSummary(elinkp, 4, 0);
 				bad_isl_links++;
 			}
@@ -1045,7 +1047,7 @@ void ShowFastFabricHosts(name_mode_t node_name_mode)
 		ExpectedNode *enodep = (ExpectedNode *)QListObj(p);
 
 		if (! enodep->NodeDesc) {
-			fprintf(stderr, "Skipping FI, no name\n");
+			fprintf(stderr, "Skipping FI (topology file line %"PRIu64"), no name\n", enodep->lineno);
 			ShowExpectedNodeBriefSummary(enodep, 4, 0);
 			bad_input++;
 			continue;
@@ -1053,7 +1055,7 @@ void ShowFastFabricHosts(name_mode_t node_name_mode)
 		// be paranoid, this is probably not possible since we are checking
 		// ExpectedFIs list
 		if (enodep->NodeType != STL_NODE_FI) {
-			fprintf(stderr, "Skipping FI, unspecified NodeType\n");
+			fprintf(stderr, "Skipping FI (topology file line %"PRIu64"), unspecified NodeType\n", enodep->lineno);
 			ShowExpectedNodeBriefSummary(enodep, 4, 0);
 			bad_input++;
 			continue;	//unspecified type
@@ -1240,6 +1242,8 @@ struct option options[] = {
 		{ "trunc", no_argument, NULL, 't' },
 		{ "prefix", required_argument, NULL, 'p' },
 		{ "suffix", required_argument, NULL, 's' },
+		{ "strict", required_argument, NULL, 'S' },
+		{ "check", required_argument, NULL, 'C' },
 		{ "focus", no_argument, NULL, 'F' },
 		{ "help", no_argument, NULL, '$' },	// use an invalid option character
 
@@ -1277,6 +1281,13 @@ void Usage_full(void)
 	fprintf(stderr, "                                Limits scope of output to links\n");
 	fprintf(stderr, "                                which match any of the given focus points.\n");
 	fprintf(stderr, "                                May be specified up to %d times\n", MAX_FOCUS);
+	fprintf(stderr, "    -C/--check                - perform more topology file validation.\n");
+	fprintf(stderr, "                                Requires all links resolve against nodes,\n");
+	fprintf(stderr, "                                all nodes connected to same fabric and\n");
+	fprintf(stderr, "                                treats any resolution errors as fatal.\n");
+	fprintf(stderr, "    -S/--strict               - perform strict topology file validation.\n");
+	fprintf(stderr, "                                Performs all checks in -C, and\n");;
+	fprintf(stderr, "                                requires all links list PortNum.\n");
 	fprintf(stderr, "    topology_input            - topology_input file to use\n");
 	fprintf(stderr, "                                '-' may be used to specify stdin\n");
 // list only subset of formats applicable to ExpectedLink and useful here
@@ -1372,12 +1383,13 @@ int main(int argc, char ** argv)
 	name_mode_t			node_name_mode = NAME_MODE_TRUNC;
 	char*				topology_in_file	= NULL;	// input file being parsed
 	int					exitstatus	= 0;
+	TopoVal_t			validation = TOPOVAL_NONE;
 
 	Top_setcmdname("opa2rm");
 	g_quiet = ! isatty(2);  // disable progress if stderr is not tty
 
 	// process command line arguments
-	while (-1 != (c = getopt_long(argc,argv, "vqo:gutp:s:F:",
+	while (-1 != (c = getopt_long(argc,argv, "vqo:gutp:s:F:SC",
 									options, &i)))
 	{
 		switch (c)
@@ -1417,6 +1429,12 @@ int main(int argc, char ** argv)
 				PointInit(&g_focus[g_num_focus]);
 				g_focus_arg[g_num_focus++] = optarg;
 				break;
+			case 'S':
+				validation = TOPOVAL_STRICT;
+				break;
+			case 'C':
+				validation = TOPOVAL_SOMEWHAT_STRICT;
+				break;
 			default:
 				fprintf(stderr, "opa2rm: Invalid option -%c\n", c);
 				Usage();
@@ -1428,6 +1446,10 @@ int main(int argc, char ** argv)
 		g_suffix = NULL;
 	if (g_prefix && 0 == strlen(g_prefix))
 		g_prefix = NULL;
+	// slurm report generation requires cross referenced elinkp and enodep
+	if (validation < TOPOVAL_LOOSE
+		&& (report & (REPORT_SLURM|REPORT_SLURMFULL))) 
+		validation = TOPOVAL_LOOSE;
 
 	if (optind < argc) {
 		topology_in_file = argv[optind++];
@@ -1453,7 +1475,8 @@ int main(int argc, char ** argv)
 	}
 
 	// parse topology input file
-	if (FSUCCESS != Xml2ParseTopology(topology_in_file, g_quiet, &g_Fabric)) {
+	if (FSUCCESS != Xml2ParseTopology(topology_in_file, g_quiet, &g_Fabric, 
+						validation)) {
 		exitstatus = 1;
 		goto done;
 	}
@@ -1473,8 +1496,11 @@ int main(int argc, char ** argv)
 	for (i=0; i < g_num_focus; i++) {
 		char *p;
 		FSTATUS status;
+		uint8 find_flag =
+				((report & (REPORT_SLURM|REPORT_SLURMFULL))?FIND_FLAG_ELINK:0)
+				| ((report & (REPORT_HOSTS))?FIND_FLAG_ENODE:0);
 		status = ParseFocusPoint(0, &g_Fabric, g_focus_arg[i], &g_focus[i],
-									 FIND_FLAG_ELINK, &p, TRUE);
+									find_flag, &p, TRUE);
 		if (FINVALID_PARAMETER == status || *p != '\0') {
 			fprintf(stderr, "opa2rm: Invalid Point Syntax: '%s'\n", g_focus_arg[i]);
 			fprintf(stderr, "opa2rm:                        %*s^\n", (int)(p-g_focus_arg[i]), "");

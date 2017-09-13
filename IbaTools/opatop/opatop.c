@@ -35,8 +35,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/ioctl.h>
 #include "stl_pm.h"
 #include "topology.h"
-#include "oib_utils.h"
-#include "oib_utils_pa.h"
+#include "opamgt_priv.h"
+#include "opamgt_pa_priv.h"
+#include "opamgt_pa.h"
 #include <getopt.h>
 #include <limits.h>
 #include <fcntl.h>
@@ -58,6 +59,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_GROUPFOCUS_PORTS_PER_SCREEN  ((MAX_LINES_PER_SCREEN - 5) / 2)
 #define MAX_VFCONFIG_PORTS_PER_SCREEN	  MAX_GROUPCONFIG_PORTS_PER_SCREEN
 #define MAX_VFFOCUS_PORTS_PER_SCREEN 	  MAX_GROUPFOCUS_PORTS_PER_SCREEN
+
+
+#define PACLIENT_SEL_ALL                0x00010000  // All ports in group
+
 
 /* Screen hierarchy map:
  *
@@ -136,7 +141,7 @@ struct termios	g_term_save;			// saved terminal I/O settings
 int				g_exitstatus	= 0;
 EUI64			g_portGuid		= -1;	// local port to use to access fabric
 uint32			g_interval		= 10;
-struct oib_port *g_portHandle = NULL;
+struct omgt_port *g_portHandle = NULL;
 
 uint32          g_verbose = VERBOSE_NONE;
 uint32          g_debug = DEBUG_NONE;
@@ -216,7 +221,7 @@ int g_vf	= -1;
 int g_ix_port = -1;
 uint16 g_portlid = 0;
 uint8 g_portnum = 0;
-uint32 g_select = PACLIENT_SEL_UTIL_HIGH;
+uint32 g_select = STL_PA_SELECT_UTIL_HIGH;
 uint32 g_start = 0;
 uint32 g_range = 10;
 int g_scroll = 0;
@@ -376,57 +381,57 @@ int DisplayScreen_SMs(void)
 	return 6;
 }
 
-int DisplayScreen_Err(STL_PMERRSTAT_T * p_PmErrStats, char * p_title)
+int DisplayScreen_Err(STL_PM_CATEGORY_STATS * p_PmErrStats, char * p_title)
 {
 	printf( "%-4s                  Max       0+%%      25+%%      50+%%      75+%%     100+%%\n",
 		p_title );
 	printf( "    Integrity  %10u %9u %9u %9u %9u %9u\n",
-		p_PmErrStats->errorMaximums.integrityErrors,
+		p_PmErrStats->categoryMaximums.integrityErrors,
 		p_PmErrStats->ports[0].integrityErrors,
 		p_PmErrStats->ports[1].integrityErrors,
 		p_PmErrStats->ports[2].integrityErrors,
 		p_PmErrStats->ports[3].integrityErrors,
 		p_PmErrStats->ports[4].integrityErrors );
 	printf( "    Congestion %10u %9u %9u %9u %9u %9u\n",
-		p_PmErrStats->errorMaximums.congestionErrors,
-		p_PmErrStats->ports[0].congestionErrors,
-		p_PmErrStats->ports[1].congestionErrors,
-		p_PmErrStats->ports[2].congestionErrors,
-		p_PmErrStats->ports[3].congestionErrors,
-		p_PmErrStats->ports[4].congestionErrors );
+		p_PmErrStats->categoryMaximums.congestion,
+		p_PmErrStats->ports[0].congestion,
+		p_PmErrStats->ports[1].congestion,
+		p_PmErrStats->ports[2].congestion,
+		p_PmErrStats->ports[3].congestion,
+		p_PmErrStats->ports[4].congestion );
 	printf( "    SmaCongest %10u %9u %9u %9u %9u %9u\n",
-		p_PmErrStats->errorMaximums.smaCongestionErrors,
-		p_PmErrStats->ports[0].smaCongestionErrors,
-		p_PmErrStats->ports[1].smaCongestionErrors,
-		p_PmErrStats->ports[2].smaCongestionErrors,
-		p_PmErrStats->ports[3].smaCongestionErrors,
-		p_PmErrStats->ports[4].smaCongestionErrors );
+		p_PmErrStats->categoryMaximums.smaCongestion,
+		p_PmErrStats->ports[0].smaCongestion,
+		p_PmErrStats->ports[1].smaCongestion,
+		p_PmErrStats->ports[2].smaCongestion,
+		p_PmErrStats->ports[3].smaCongestion,
+		p_PmErrStats->ports[4].smaCongestion );
 	printf( "    Bubble     %10u %9u %9u %9u %9u %9u\n",
-		p_PmErrStats->errorMaximums.bubbleErrors,
-		p_PmErrStats->ports[0].bubbleErrors,
-		p_PmErrStats->ports[1].bubbleErrors,
-		p_PmErrStats->ports[2].bubbleErrors,
-		p_PmErrStats->ports[3].bubbleErrors,
-		p_PmErrStats->ports[4].bubbleErrors );
+		p_PmErrStats->categoryMaximums.bubble,
+		p_PmErrStats->ports[0].bubble,
+		p_PmErrStats->ports[1].bubble,
+		p_PmErrStats->ports[2].bubble,
+		p_PmErrStats->ports[3].bubble,
+		p_PmErrStats->ports[4].bubble );
 	printf( "    Security   %10u %9u %9u %9u %9u %9u\n",
-		p_PmErrStats->errorMaximums.securityErrors,
+		p_PmErrStats->categoryMaximums.securityErrors,
 		p_PmErrStats->ports[0].securityErrors,
 		p_PmErrStats->ports[1].securityErrors,
 		p_PmErrStats->ports[2].securityErrors,
 		p_PmErrStats->ports[3].securityErrors,
 		p_PmErrStats->ports[4].securityErrors );
 	printf( "    Routing    %10u %9u %9u %9u %9u %9u\n",
-		p_PmErrStats->errorMaximums.routingErrors,
+		p_PmErrStats->categoryMaximums.routingErrors,
 		p_PmErrStats->ports[0].routingErrors,
 		p_PmErrStats->ports[1].routingErrors,
 		p_PmErrStats->ports[2].routingErrors,
 		p_PmErrStats->ports[3].routingErrors,
 		p_PmErrStats->ports[4].routingErrors );
 	printf("    Utilization:   %3u.%1u%%  Discards: %3u.%1u%%\n",
-		p_PmErrStats->errorMaximums.utilizationPct10 / 10,
-		p_PmErrStats->errorMaximums.utilizationPct10 % 10,
-		p_PmErrStats->errorMaximums.discardsPct10 / 10,
-		p_PmErrStats->errorMaximums.discardsPct10 % 10);
+		p_PmErrStats->categoryMaximums.utilizationPct10 / 10,
+		p_PmErrStats->categoryMaximums.utilizationPct10 % 10,
+		p_PmErrStats->categoryMaximums.discardsPct10 / 10,
+		p_PmErrStats->categoryMaximums.discardsPct10 % 10);
 
 	return (8);
 
@@ -444,17 +449,17 @@ int DisplayScreen_Group(STL_PA_PM_GROUP_INFO_DATA * p_PmGroupInfo, int n_group)
 	char *p_state_routing, *p_color_routing;
 
 #define EVAL_ERR_STAT2(statistic, state, color) \
-	if (p_PmGroupInfo->internalErrors.ports[4].statistic > 0 \
-		|| p_PmGroupInfo->externalErrors.ports[4].statistic > 0) \
+	if (p_PmGroupInfo->internalCategoryStats.ports[4].statistic > 0 \
+		|| p_PmGroupInfo->externalCategoryStats.ports[4].statistic > 0) \
 	{	state = "OVER"; color = bf_color_red; } \
-	else if (p_PmGroupInfo->internalErrors.ports[3].statistic > 0 \
-			|| p_PmGroupInfo->externalErrors.ports[3].statistic > 0) \
+	else if (p_PmGroupInfo->internalCategoryStats.ports[3].statistic > 0 \
+			|| p_PmGroupInfo->externalCategoryStats.ports[3].statistic > 0) \
 	{	state = "Warn"; color = bf_color_yellow; } \
-	else if (p_PmGroupInfo->internalErrors.ports[2].statistic > 0 \
-			|| p_PmGroupInfo->externalErrors.ports[2].statistic > 0) \
+	else if (p_PmGroupInfo->internalCategoryStats.ports[2].statistic > 0 \
+			|| p_PmGroupInfo->externalCategoryStats.ports[2].statistic > 0) \
 	{	state = "Mod"; color = bf_color_cyan; } \
-	else if (p_PmGroupInfo->internalErrors.ports[1].statistic > 0 \
-			|| p_PmGroupInfo->externalErrors.ports[1].statistic > 0) \
+	else if (p_PmGroupInfo->internalCategoryStats.ports[1].statistic > 0 \
+			|| p_PmGroupInfo->externalCategoryStats.ports[1].statistic > 0) \
 	{	state = "Low"; color = bf_color_blue; } \
 	else \
 	{	state = "min"; color = bf_color_green; }
@@ -513,9 +518,9 @@ int DisplayScreen_Group(STL_PA_PM_GROUP_INFO_DATA * p_PmGroupInfo, int n_group)
 	} else {
 		// Summarize errors
 		EVAL_ERR_STAT2(integrityErrors, p_state_integ, p_color_integ);
-		EVAL_ERR_STAT2(congestionErrors, p_state_congst, p_color_congst);
-		EVAL_ERR_STAT2(smaCongestionErrors, p_state_smacong, p_color_smacong);
-		EVAL_ERR_STAT2(bubbleErrors, p_state_bubble, p_color_bubble);
+		EVAL_ERR_STAT2(congestion, p_state_congst, p_color_congst);
+		EVAL_ERR_STAT2(smaCongestion, p_state_smacong, p_color_smacong);
+		EVAL_ERR_STAT2(bubble, p_state_bubble, p_color_bubble);
 		EVAL_ERR_STAT2(securityErrors, p_state_secure, p_color_secure);
 		EVAL_ERR_STAT2(routingErrors, p_state_routing, p_color_routing);
 
@@ -563,8 +568,8 @@ int DisplayScreen_Util(STL_PA_PM_UTIL_STATS * p_PmUtilStats, char * p_title)
 		p_PmUtilStats->BWBuckets[4], p_PmUtilStats->BWBuckets[5],
 		p_PmUtilStats->BWBuckets[6], p_PmUtilStats->BWBuckets[7],
 		p_PmUtilStats->BWBuckets[8], p_PmUtilStats->BWBuckets[9] );
-	printf("     Failed %-.3s Ports: PMA: %6u  Topo: %6u\n", p_title,
-		p_PmUtilStats->pmaFailedPorts, p_PmUtilStats->topoFailedPorts);
+	printf("     NoResp %-.3s Ports: PMA: %6u  Topo: %6u\n", p_title,
+		p_PmUtilStats->pmaNoRespPorts, p_PmUtilStats->topoIncompPorts);
 
 	return (5);
 
@@ -589,13 +594,13 @@ int DisplayScreen_VFGroup(STL_PA_VF_INFO_DATA* p_PmVfGrpInfo, int n_group)
 	}
 
 #define VFEVAL_ERR_STAT(statistic, state, color) \
-	if (p_PmVfGrpInfo->internalErrors.ports[4].statistic > 0 ) \
+	if (p_PmVfGrpInfo->internalCategoryStats.ports[4].statistic > 0 ) \
 	{	state = "OVER"; color = bf_color_red; } \
-	else if (p_PmVfGrpInfo->internalErrors.ports[3].statistic > 0 )\
+	else if (p_PmVfGrpInfo->internalCategoryStats.ports[3].statistic > 0 )\
 	{	state = "Warn"; color = bf_color_yellow; } \
-	else if (p_PmVfGrpInfo->internalErrors.ports[2].statistic > 0 )\
+	else if (p_PmVfGrpInfo->internalCategoryStats.ports[2].statistic > 0 )\
 	{	state = "Mod"; color = bf_color_cyan; } \
-	else if (p_PmVfGrpInfo->internalErrors.ports[1].statistic > 0 )\
+	else if (p_PmVfGrpInfo->internalCategoryStats.ports[1].statistic > 0 )\
 	{	state = "Low"; color = bf_color_blue; } \
 	else \
 	{	state = "min"; color = bf_color_green; }
@@ -611,9 +616,9 @@ int DisplayScreen_VFGroup(STL_PA_VF_INFO_DATA* p_PmVfGrpInfo, int n_group)
 		p_PmUtilStats->maxKPps );
 
 	VFEVAL_ERR_STAT(integrityErrors, p_state_integ, p_color_integ);
-	VFEVAL_ERR_STAT(congestionErrors, p_state_congst, p_color_congst);
-	VFEVAL_ERR_STAT(smaCongestionErrors, p_state_smacong, p_color_smacong);
-	VFEVAL_ERR_STAT(bubbleErrors, p_state_bubble, p_color_bubble);
+	VFEVAL_ERR_STAT(congestion, p_state_congst, p_color_congst);
+	VFEVAL_ERR_STAT(smaCongestion, p_state_smacong, p_color_smacong);
+	VFEVAL_ERR_STAT(bubble, p_state_bubble, p_color_bubble);
 	VFEVAL_ERR_STAT(securityErrors, p_state_secure, p_color_secure);
 	VFEVAL_ERR_STAT(routingErrors, p_state_routing, p_color_routing);
 
@@ -791,15 +796,15 @@ void DisplayScreen(void)
 
 	if (!fb_valid_pa_client)
 	{
-		if ( oib_pa_client_init( &g_portHandle, hfi, port,
-			(g_verbose & VERBOSE_PACLIENT ? stderr : NULL) ) ==
-			PACLIENT_OPERATIONAL )
+		struct omgt_params params = {.debug_file = (g_verbose & VERBOSE_PACLIENT ? stderr : NULL)};
+		if (!omgt_open_port_by_num(&g_portHandle, hfi, port, &params) &&
+				(PACLIENT_OPERATIONAL == omgt_pa_client_connect(g_portHandle)))
 		{
 			fb_valid_pa_client = TRUE;
 		}
 	}
 
-	if (pa_client_get_image_info(g_portHandle, g_imageIdQuery, &g_PmImageInfo) == FSUCCESS)
+	if (omgt_pa_get_image_info(g_portHandle, g_imageIdQuery, &g_PmImageInfo) == FSUCCESS)
 		fb_valid_image_info = TRUE;
 	else
 	{
@@ -810,7 +815,7 @@ void DisplayScreen(void)
 	if ( (tb_menu[n_level_menu] == SCREEN_PM_CONFIG) ||
 			!fb_valid_pm_config )
 	{
-		if (pa_client_get_pm_config(g_portHandle, &g_PmConfig) == FSUCCESS)
+		if (omgt_pa_get_pm_config(g_portHandle, &g_PmConfig) == FSUCCESS)
 			fb_valid_pm_config = TRUE;
 		else
 			fb_valid_pm_config = FALSE;
@@ -820,8 +825,8 @@ void DisplayScreen(void)
 			(tb_menu[n_level_menu] == SCREEN_PM_CONFIG) ||
 			!fb_valid_group_list )
 	{
-		pa_client_release_group_list(g_portHandle, &g_PmGroupList.groupList);
-		if (pa_client_get_group_list(g_portHandle, &g_PmGroupList.numGroups,
+		omgt_pa_release_group_list(&g_PmGroupList.groupList);
+		if (omgt_pa_get_group_list(g_portHandle, &g_PmGroupList.numGroups,
 			      &g_PmGroupList.groupList) == FSUCCESS)
 			fb_valid_group_list = TRUE;
 		else
@@ -831,8 +836,8 @@ void DisplayScreen(void)
 	if (tb_menu[n_level_menu] == SCREEN_VF_SUMMARY ||
 		!fb_valid_group_list ) {
 
-		pa_client_release_vf_list(g_portHandle, &g_PmVFList.vfList);
-		if (pa_client_get_vf_list(g_portHandle, &g_PmVFList.numVFs,
+		omgt_pa_release_vf_list(&g_PmVFList.vfList);
+		if (omgt_pa_get_vf_list(g_portHandle, &g_PmVFList.numVFs,
 			     &g_PmVFList.vfList) == FSUCCESS)
 			fb_valid_VF_list = TRUE;
 		else
@@ -843,7 +848,7 @@ void DisplayScreen(void)
 			(tb_menu[n_level_menu] == SCREEN_GROUP_CTG_STATS) ||
 			(tb_menu[n_level_menu] == SCREEN_GROUP_FOCUS) )
 	{
-		if ( fb_valid_group_list && ( pa_client_get_group_info( g_portHandle, g_imageIdQuery,
+		if ( fb_valid_group_list && ( omgt_pa_get_group_info( g_portHandle, g_imageIdQuery,
 				g_PmGroupList.groupList[g_group].groupName, &g_imageIdResp,
 				&g_PmGroupInfo) == FSUCCESS ) )
 			fb_valid_group_info = TRUE;
@@ -856,14 +861,14 @@ void DisplayScreen(void)
 		tb_menu[n_level_menu] == SCREEN_VF_CTG_STATS ||
 		tb_menu[n_level_menu] == SCREEN_VF_FOCUS)  {
 		if (fb_valid_VF_list) {
-			QUERY query = {0};
+			OMGT_QUERY query = {0};
 			PQUERY_RESULT_VALUES pQueryResults = NULL;
 			
 			query.InputType = InputTypeNoInput;
 			query.OutputType = OutputTypePaTableRecord;
 
 			if (iba_pa_multi_mad_vf_info_response_query(g_portHandle, &query, g_PmVFList.vfList[g_vf].vfName,
-				&pQueryResults, NULL, &g_imageIdResp) == FSUCCESS) {
+				&pQueryResults, &g_imageIdResp) == FSUCCESS) {
 
 				g_PmVFInfo = ((STL_PA_VF_INFO_RESULTS*)pQueryResults->QueryResult)->VFInfoRecords[0];
 				fb_valid_VF_info = TRUE;
@@ -873,13 +878,13 @@ void DisplayScreen(void)
 
 	// Do default query to get g_imageIdResp
 	if ((g_group < 0) && fb_valid_group_list)
-		pa_client_get_group_info(g_portHandle, g_imageIdQuery, g_PmGroupList.groupList[0].groupName,
+		omgt_pa_get_group_info(g_portHandle, g_imageIdQuery, g_PmGroupList.groupList[0].groupName,
 			&g_imageIdResp, &g_PmGroupInfo);	
 
 	if (tb_menu[n_level_menu] == SCREEN_GROUP_CONFIG)
 	{
-		pa_client_release_group_config(g_portHandle, &pg_PmGroupConfig.portList);
-		if ( fb_valid_group_list && ( pa_client_get_group_config(g_portHandle, g_imageIdQuery,
+		omgt_pa_release_group_config(&pg_PmGroupConfig.portList);
+		if ( fb_valid_group_list && ( omgt_pa_get_group_config(g_portHandle, g_imageIdQuery,
 				g_PmGroupList.groupList[g_group].groupName, &g_imageIdResp, &pg_PmGroupConfig.numPorts,
 				&pg_PmGroupConfig.portList ) == FSUCCESS ) )
 		{
@@ -891,8 +896,8 @@ void DisplayScreen(void)
 	}
 
 	if (tb_menu[n_level_menu] == SCREEN_VF_CONFIG) {
-		pa_client_release_vf_config(g_portHandle, &g_pPmVFConfig.portList);	
-		if (fb_valid_VF_list && (pa_client_get_vf_config(g_portHandle, g_imageIdQuery,
+		omgt_pa_release_vf_config(&g_pPmVFConfig.portList);
+		if (fb_valid_VF_list && (omgt_pa_get_vf_config(g_portHandle, g_imageIdQuery,
 				g_PmVFList.vfList[g_vf].vfName, &g_imageIdResp, &g_pPmVFConfig.numPorts, &g_pPmVFConfig.portList) == FSUCCESS))
 		{
 			fb_valid_VF_config = TRUE;
@@ -903,8 +908,8 @@ void DisplayScreen(void)
 
 	if (tb_menu[n_level_menu] == SCREEN_GROUP_FOCUS)
 	{
-		pa_client_release_group_focus(g_portHandle, &pg_PmGroupFocus.portList);
-		if ( fb_valid_group_list && ( pa_client_get_group_focus( g_portHandle, g_imageIdQuery,
+		omgt_pa_release_group_focus(&pg_PmGroupFocus.portList);
+		if ( fb_valid_group_list && ( omgt_pa_get_group_focus( g_portHandle, g_imageIdQuery,
                         g_PmGroupList.groupList[g_group].groupName, g_select, g_start, g_range,
                         &g_imageIdResp, &pg_PmGroupFocus.numPorts, &pg_PmGroupFocus.portList ) == FSUCCESS ) )
 		{
@@ -921,8 +926,8 @@ void DisplayScreen(void)
 
 	if (tb_menu[n_level_menu] == SCREEN_VF_FOCUS) {
 
-		pa_client_release_vf_focus(g_portHandle, &g_pPmVFFocus.portList);
-		if (fb_valid_VF_list && (pa_client_get_vf_focus(g_portHandle, g_imageIdQuery,
+		omgt_pa_release_vf_focus(&g_pPmVFFocus.portList);
+		if (fb_valid_VF_list && (omgt_pa_get_vf_focus(g_portHandle, g_imageIdQuery,
                         g_PmVFList.vfList[g_vf].vfName, g_select, g_start, g_range,
                         &g_imageIdResp, &g_pPmVFFocus.numPorts, &g_pPmVFFocus.portList) == FSUCCESS) )
 		{
@@ -939,11 +944,11 @@ void DisplayScreen(void)
 
 	if (tb_menu[n_level_menu] == SCREEN_PORT_STATS)
 	{
-		if ( pa_client_get_port_stats(g_portHandle, g_imageIdQuery, g_portlid, g_portnum,
+		if ( omgt_pa_get_port_stats(g_portHandle, g_imageIdQuery, g_portlid, g_portnum,
 				&g_imageIdResp, &g_portCounters, &g_portCounterFlags, 1, 0 ) == FSUCCESS ) {
 			fb_valid_port_stats = TRUE;
 
-			if ((g_PmConfig.pmFlags & STL_PM_PROCESS_VL_COUNTERS) && pa_client_get_vf_port_stats(g_portHandle,
+			if ((g_PmConfig.pmFlags & STL_PM_PROCESS_VL_COUNTERS) && omgt_pa_get_vf_port_stats(g_portHandle,
 									g_imageIdQuery, "HIDDEN_VL15_VF", g_portlid, g_portnum, &g_imageIdResp,
 									&g_hiddenVfPortCounters, &g_hiddenVfPortCounterFlags, 1, 0 ) == FSUCCESS ) {
 				fb_valid_vf_port_stats_hidden = TRUE;
@@ -1049,9 +1054,9 @@ void DisplayScreen(void)
 			printf( "Summary:  SW: %5u Ports: SW: %5u  HFI: %5u       Link: %5u\n",
 				g_PmImageInfo.numSwitchNodes, g_PmImageInfo.numSwitchPorts,
 				g_PmImageInfo.numHFIPorts, g_PmImageInfo.numLinks);
-			printf( "          SM: %5u Node Fail: %5u Skip: %5u Port Fail: %5u Skip: %5u\n",
-				g_PmImageInfo.numSMs, g_PmImageInfo.numFailedNodes,
-				g_PmImageInfo.numSkippedNodes, g_PmImageInfo.numFailedPorts,
+			printf( "          SM: %5u Node NRsp: %5u Skip: %5u Port NRsp: %5u Skip: %5u\n",
+				g_PmImageInfo.numSMs, g_PmImageInfo.numNoRespNodes,
+				g_PmImageInfo.numSkippedNodes, g_PmImageInfo.numNoRespPorts,
 				g_PmImageInfo.numSkippedPorts );
 			if (g_PmImageInfo.numUnexpectedClearPorts) {
 				status_color = bf_color_red;
@@ -1071,7 +1076,7 @@ void DisplayScreen(void)
 				g_scroll_summary_backward = 0;	// default if at start
 				for (ix = g_scroll_summary-1; ix >= 0; ix--)
 				{
-					if ( pa_client_get_group_info(g_portHandle, g_imageIdQuery,
+					if ( omgt_pa_get_group_info(g_portHandle, g_imageIdQuery,
 							g_PmGroupList.groupList[ix].groupName, &g_imageIdResp,
 							&g_PmGroupInfo) == FSUCCESS )
 						ct_group_lines -= ScreenLines_Group(&g_PmGroupInfo, ix);
@@ -1085,7 +1090,7 @@ void DisplayScreen(void)
 				g_scroll_summary_forward = g_scroll_summary;	// initialize
 				for (ix = g_scroll_summary; ix < g_PmGroupList.numGroups; ix++)
 				{
-					if ( pa_client_get_group_info(g_portHandle, g_imageIdQuery,
+					if ( omgt_pa_get_group_info(g_portHandle, g_imageIdQuery,
 							g_PmGroupList.groupList[ix].groupName, &g_imageIdResp,
 							&g_PmGroupInfo) == FSUCCESS )
 					{
@@ -1129,9 +1134,9 @@ void DisplayScreen(void)
 			printf( "Summary:  SW: %5u Ports: SW: %5u  HFI: %5u       Link: %5u\n",
 				g_PmImageInfo.numSwitchNodes, g_PmImageInfo.numSwitchPorts,
 				g_PmImageInfo.numHFIPorts, g_PmImageInfo.numLinks);
-			printf( "          SM: %5u Node Fail: %5u Skip: %5u Port Fail: %5u Skip: %5u\n",
-				g_PmImageInfo.numSMs, g_PmImageInfo.numFailedNodes,
-				g_PmImageInfo.numSkippedNodes, g_PmImageInfo.numFailedPorts,
+			printf( "          SM: %5u Node NRsp: %5u Skip: %5u Port NRsp: %5u Skip: %5u\n",
+				g_PmImageInfo.numSMs, g_PmImageInfo.numNoRespNodes,
+				g_PmImageInfo.numSkippedNodes, g_PmImageInfo.numNoRespPorts,
 				g_PmImageInfo.numSkippedPorts );
 			if (g_PmImageInfo.numUnexpectedClearPorts) {
 				status_color = bf_color_red;
@@ -1149,14 +1154,14 @@ void DisplayScreen(void)
 				if (g_scroll_vf_summary >= g_PmVFList.numVFs)
 					g_scroll_vf_summary = g_PmVFList.numVFs-1;
 				for (ix = g_scroll_vf_summary; ix < MIN(g_scroll_vf_summary + MAX_VF_SUMMARY_PER_SCREEN, g_PmVFList.numVFs) ; ++ix) {
-					QUERY query = {0};
+					OMGT_QUERY query = {0};
 					PQUERY_RESULT_VALUES pQueryResults = NULL;
 				
 					query.InputType = InputTypeNoInput;
 					query.OutputType = OutputTypePaTableRecord;
 
 					if (iba_pa_multi_mad_vf_info_response_query(g_portHandle, &query, g_PmVFList.vfList[ix].vfName,
-							&pQueryResults, NULL, &g_imageIdResp) == FSUCCESS) {
+							&pQueryResults, &g_imageIdResp) == FSUCCESS) {
 						STL_PA_VF_INFO_DATA *p = &((STL_PA_VF_INFO_RESULTS*)pQueryResults->QueryResult)->VFInfoRecords[0];
 						ct_lines -= DisplayScreen_VFGroup(p, ix);
 					}
@@ -1189,14 +1194,14 @@ void DisplayScreen(void)
 			printf( " Total Images: %7u   Freeze Images: %-7u   Freeze Lease: %u seconds\n",
 				g_PmConfig.sizeHistory, g_PmConfig.sizeFreeze, g_PmConfig.lease );
 			printf( " Ctg Thresholds: Integrity:      %4u  Congestion:    %4u\n",
-				g_PmConfig.errorThresholds.integrityErrors,
-				g_PmConfig.errorThresholds.congestionErrors );
+				g_PmConfig.categoryThresholds.integrityErrors,
+				g_PmConfig.categoryThresholds.congestion );
 			printf( "                 SmaCongest:     %4u  Bubble:        %4u\n",
-				g_PmConfig.errorThresholds.smaCongestionErrors,
-				g_PmConfig.errorThresholds.bubbleErrors );
+				g_PmConfig.categoryThresholds.smaCongestion,
+				g_PmConfig.categoryThresholds.bubble );
 			printf( "                 Security:       %4u  Routing:       %4u\n",
-				g_PmConfig.errorThresholds.securityErrors,
-				g_PmConfig.errorThresholds.routingErrors );
+				g_PmConfig.categoryThresholds.securityErrors,
+				g_PmConfig.categoryThresholds.routingErrors );
 			printf( " Integrity Wts:  Link Qual:      %4u  Uncorrectable: %4u\n",
 				g_PmConfig.integrityWeights.LinkQualityIndicator,
 				g_PmConfig.integrityWeights.UncorrectableErrors );
@@ -1289,8 +1294,8 @@ void DisplayScreen(void)
 			printf( " Num SWs:      %7u  Num Links: %7u  Num SMs:   %7u\n\n",
 				g_PmImageInfo.numSwitchNodes, g_PmImageInfo.numLinks,
 				g_PmImageInfo.numSMs );
-			printf( " Num Fail Nodes: %7u  Ports: %7u  Unexpected Clear Ports: %u\n",
-				g_PmImageInfo.numFailedNodes, g_PmImageInfo.numFailedPorts,
+			printf( " Num NRsp Nodes: %7u  Ports: %7u  Unexpected Clear Ports: %u\n",
+				g_PmImageInfo.numNoRespNodes, g_PmImageInfo.numNoRespPorts,
 				g_PmImageInfo.numUnexpectedClearPorts);
 			printf( " Num Skip Nodes: %7u  Ports: %7u\n\n",
 				g_PmImageInfo.numSkippedNodes, g_PmImageInfo.numSkippedPorts );
@@ -1366,9 +1371,9 @@ void DisplayScreen(void)
 	case SCREEN_GROUP_BW_STATS:
 		if (fb_valid_group_info)
 		{
-			if (g_select == PACLIENT_SEL_UTIL_PKTS_HIGH)
+			if (g_select == STL_PA_SELECT_UTIL_PKTS_HIGH)
 				p_select = "UtlPkt-Hi";
-			else if (g_select == PACLIENT_SEL_UTIL_LOW)
+			else if (g_select == STL_PA_SELECT_UTIL_LOW)
 				p_select = "Util-Low";
 // Future enhancement
 #if 0
@@ -1377,7 +1382,7 @@ void DisplayScreen(void)
 #endif
 			else
 			{
-				g_select = PACLIENT_SEL_UTIL_HIGH;
+				g_select = STL_PA_SELECT_UTIL_HIGH;
 				p_select = "Util-High";
 			}
 
@@ -1414,23 +1419,23 @@ void DisplayScreen(void)
 
 			    if (g_PmGroupInfo.numInternalPorts) {
 			      printf( "Int Congestion %10u %9u %9u %9u %9u %9u\n",
-				    g_PmGroupInfo.internalErrors.errorMaximums.congestionErrors,
-				    g_PmGroupInfo.internalErrors.ports[0].congestionErrors,
-				    g_PmGroupInfo.internalErrors.ports[1].congestionErrors,
-				    g_PmGroupInfo.internalErrors.ports[2].congestionErrors,
-				    g_PmGroupInfo.internalErrors.ports[3].congestionErrors,
-				    g_PmGroupInfo.internalErrors.ports[4].congestionErrors );
+				    g_PmGroupInfo.internalCategoryStats.categoryMaximums.congestion,
+				    g_PmGroupInfo.internalCategoryStats.ports[0].congestion,
+				    g_PmGroupInfo.internalCategoryStats.ports[1].congestion,
+				    g_PmGroupInfo.internalCategoryStats.ports[2].congestion,
+				    g_PmGroupInfo.internalCategoryStats.ports[3].congestion,
+				    g_PmGroupInfo.internalCategoryStats.ports[4].congestion );
 			      ct_lines-=1;
 			    }
 
 			    if (g_PmGroupInfo.numExternalPorts) {
 				  printf( "Ext Congestion %10u %9u %9u %9u %9u %9u\n",
-				    g_PmGroupInfo.externalErrors.errorMaximums.congestionErrors,
-				    g_PmGroupInfo.externalErrors.ports[0].congestionErrors,
-				    g_PmGroupInfo.externalErrors.ports[1].congestionErrors,
-				    g_PmGroupInfo.externalErrors.ports[2].congestionErrors,
-				    g_PmGroupInfo.externalErrors.ports[3].congestionErrors,
-				    g_PmGroupInfo.externalErrors.ports[4].congestionErrors );
+				    g_PmGroupInfo.externalCategoryStats.categoryMaximums.congestion,
+				    g_PmGroupInfo.externalCategoryStats.ports[0].congestion,
+				    g_PmGroupInfo.externalCategoryStats.ports[1].congestion,
+				    g_PmGroupInfo.externalCategoryStats.ports[2].congestion,
+				    g_PmGroupInfo.externalCategoryStats.ports[3].congestion,
+				    g_PmGroupInfo.externalCategoryStats.ports[4].congestion );
 				  ct_lines -=1;
 			    }
 			}
@@ -1445,9 +1450,9 @@ void DisplayScreen(void)
 		break;
 	case SCREEN_VF_BW_STATS:
 		if (fb_valid_VF_info) {
-			if (g_select == PACLIENT_SEL_UTIL_PKTS_HIGH)
+			if (g_select == STL_PA_SELECT_UTIL_PKTS_HIGH)
 				p_select = "UtlPkt-Hi";
-			else if (g_select == PACLIENT_SEL_UTIL_LOW)
+			else if (g_select == STL_PA_SELECT_UTIL_LOW)
 				p_select = "Util-Low";
 // Future enhancement
 #if 0
@@ -1456,7 +1461,7 @@ void DisplayScreen(void)
 #endif
 			else
 			{
-				g_select = PACLIENT_SEL_UTIL_HIGH;
+				g_select = STL_PA_SELECT_UTIL_HIGH;
 				p_select = "Util-High";
 			}
 
@@ -1481,12 +1486,12 @@ void DisplayScreen(void)
 			    printf("                      Max       0+%%      25+%%      50+%%      75+%%     100+%%\n");
 			    ct_lines -=2;
 			    printf( "Int Congestion %10u %9u %9u %9u %9u %9u\n",
-			    		  g_PmVFInfo.internalErrors.errorMaximums.congestionErrors,
-					  g_PmVFInfo.internalErrors.ports[0].congestionErrors,
-					  g_PmVFInfo.internalErrors.ports[1].congestionErrors,
-					  g_PmVFInfo.internalErrors.ports[2].congestionErrors,
-					  g_PmVFInfo.internalErrors.ports[3].congestionErrors,
-					  g_PmVFInfo.internalErrors.ports[4].congestionErrors );
+			    		  g_PmVFInfo.internalCategoryStats.categoryMaximums.congestion,
+					  g_PmVFInfo.internalCategoryStats.ports[0].congestion,
+					  g_PmVFInfo.internalCategoryStats.ports[1].congestion,
+					  g_PmVFInfo.internalCategoryStats.ports[2].congestion,
+					  g_PmVFInfo.internalCategoryStats.ports[3].congestion,
+					  g_PmVFInfo.internalCategoryStats.ports[4].congestion );
 			    ct_lines-=1;
 			}
 		} else {
@@ -1499,15 +1504,15 @@ void DisplayScreen(void)
 	case SCREEN_GROUP_CTG_STATS:
 		if (fb_valid_group_info)
 		{
-			if (g_select == PACLIENT_SEL_ERR_CONGST)
+			if (g_select == STL_PA_SELECT_CATEGORY_CONG)
 				p_select = "Congst";
-			else if (g_select == PACLIENT_SEL_ERR_SMACONG)
+			else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
 				p_select = "SmaCong";
-			else if (g_select == PACLIENT_SEL_ERR_BUBBLE)
+			else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
 				p_select = "Bubble";
-			else if (g_select == PACLIENT_SEL_ERR_SECURE)
+			else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
 				p_select = "Secure";
-			else if (g_select == PACLIENT_SEL_ERR_ROUTING)
+			else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
 				p_select = "Routing";
 // Future enhancement
 #if 0
@@ -1516,7 +1521,7 @@ void DisplayScreen(void)
 #endif
 			else
 			{
-				g_select = PACLIENT_SEL_ERR_INTEG;
+				g_select = STL_PA_SELECT_CATEGORY_INTEG;
 				p_select = "Integ";
 			}
 	
@@ -1530,13 +1535,13 @@ void DisplayScreen(void)
 			ct_lines -= 1;
 	
 			if (g_PmGroupInfo.numInternalPorts)
-				ct_lines -= DisplayScreen_Err(&g_PmGroupInfo.internalErrors, "Int");
+				ct_lines -= DisplayScreen_Err(&g_PmGroupInfo.internalCategoryStats, "Int");
 	
 			if (g_PmGroupInfo.numExternalPorts)
 			{
 				printf("\n");
 				ct_lines -= 1;
-				ct_lines -= DisplayScreen_Err(&g_PmGroupInfo.externalErrors, "Ext");
+				ct_lines -= DisplayScreen_Err(&g_PmGroupInfo.externalCategoryStats, "Ext");
 			}
 
 			if (g_PmGroupInfo.numInternalPorts == 0
@@ -1558,15 +1563,15 @@ void DisplayScreen(void)
 
 	case SCREEN_VF_CTG_STATS:
 		if (fb_valid_VF_info) {
-			if (g_select == PACLIENT_SEL_ERR_CONGST)
+			if (g_select == STL_PA_SELECT_CATEGORY_CONG)
 				p_select = "Congst";
-			else if (g_select == PACLIENT_SEL_ERR_SMACONG)
+			else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
 				p_select = "SmaCong";
-			else if (g_select == PACLIENT_SEL_ERR_BUBBLE)
+			else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
 				p_select = "Bubble";
-			else if (g_select == PACLIENT_SEL_ERR_SECURE)
+			else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
 				p_select = "Secure";
-			else if (g_select == PACLIENT_SEL_ERR_ROUTING)
+			else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
 				p_select = "Routing";
 // Future enhancement
 #if 0
@@ -1575,7 +1580,7 @@ void DisplayScreen(void)
 #endif
 			else
 			{
-				g_select = PACLIENT_SEL_ERR_INTEG;
+				g_select = STL_PA_SELECT_CATEGORY_INTEG;
 				p_select = "Integ";
 			}
 
@@ -1595,7 +1600,7 @@ void DisplayScreen(void)
 				ct_lines -= 2;
 			}
 			else {
-				ct_lines -= DisplayScreen_Err(&g_PmVFInfo.internalErrors, "Int");
+				ct_lines -= DisplayScreen_Err(&g_PmVFInfo.internalCategoryStats, "Int");
 			}
 		} else {
 			printf("VF Ctg Stats: VF INFO NOT AVAILABLE\n");
@@ -1690,21 +1695,21 @@ void DisplayScreen(void)
 			char* status_color_neighbor = bf_color_off;
 			char* status_symbol_neighbor = " ";
 
-			if (pg_PmGroupFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH)
+			if (pg_PmGroupFocus.select == STL_PA_SELECT_UTIL_PKTS_HIGH)
 				p_select = "UtlPkt-Hi";
-			else if (pg_PmGroupFocus.select == PACLIENT_SEL_UTIL_LOW)
+			else if (pg_PmGroupFocus.select == STL_PA_SELECT_UTIL_LOW)
 				p_select = " Util-Low";
-			else if (pg_PmGroupFocus.select == PACLIENT_SEL_ERR_INTEG)
+			else if (pg_PmGroupFocus.select == STL_PA_SELECT_CATEGORY_INTEG)
 				p_select = "Integrity";
-			else if (pg_PmGroupFocus.select == PACLIENT_SEL_ERR_CONGST)
+			else if (pg_PmGroupFocus.select == STL_PA_SELECT_CATEGORY_CONG)
 				p_select = " Congestn";
-			else if (pg_PmGroupFocus.select == PACLIENT_SEL_ERR_SMACONG)
+			else if (pg_PmGroupFocus.select == STL_PA_SELECT_CATEGORY_SMA_CONG)
 				p_select = "SmaCongst";
-			else if (pg_PmGroupFocus.select == PACLIENT_SEL_ERR_BUBBLE)
+			else if (pg_PmGroupFocus.select == STL_PA_SELECT_CATEGORY_BUBBLE)
 				p_select = "  Bubble";
-			else if (pg_PmGroupFocus.select == PACLIENT_SEL_ERR_SECURE)
+			else if (pg_PmGroupFocus.select == STL_PA_SELECT_CATEGORY_SEC)
 				p_select = " Security";
-			else if (pg_PmGroupFocus.select == PACLIENT_SEL_ERR_ROUTING)
+			else if (pg_PmGroupFocus.select == STL_PA_SELECT_CATEGORY_ROUT)
 				p_select = "  Routing";
 // Future enhancement
 #if 0
@@ -1713,7 +1718,7 @@ void DisplayScreen(void)
 #endif
 			else
 			{
-				pg_PmGroupFocus.select = PACLIENT_SEL_UTIL_HIGH;
+				pg_PmGroupFocus.select = STL_PA_SELECT_UTIL_HIGH;
 				p_select = "Util-High";
 			}
 	
@@ -1734,47 +1739,47 @@ void DisplayScreen(void)
 			for ( ix = g_scroll; (ix < pg_PmGroupFocus.numPorts) &&
 					((ix - g_scroll) < MAX_GROUPFOCUS_PORTS_PER_SCREEN); ix++ )
 			{
-				switch (pg_PmGroupFocus.portList[ix].localFlags) {
-				case STL_PA_FOCUS_FLAG_PMA_IGNORE:
+				switch (pg_PmGroupFocus.portList[ix].localStatus) {
+				case STL_PA_FOCUS_STATUS_PMA_IGNORE:
 					status_color_local = bf_color_blue;
 					status_symbol_local = "~";
 					break;
-				case STL_PA_FOCUS_FLAG_PMA_FAILURE:
+				case STL_PA_FOCUS_STATUS_PMA_FAILURE:
 					status_color_local = bf_color_yellow;
 					status_symbol_local = "!";
 					break;
-				case STL_PA_FOCUS_FLAG_TOPO_FAILURE:
+				case STL_PA_FOCUS_STATUS_TOPO_FAILURE:
 					status_color_local = bf_color_red;
 					status_symbol_local = "?";
 					break;
-				case STL_PA_FOCUS_FLAG_OK:
+				case STL_PA_FOCUS_STATUS_OK:
 				default:
 					status_color_local = bf_color_off;
 					status_symbol_local = " ";
 				}
-				switch (pg_PmGroupFocus.portList[ix].neighborFlags) {
-				case STL_PA_FOCUS_FLAG_PMA_IGNORE:
+				switch (pg_PmGroupFocus.portList[ix].neighborStatus) {
+				case STL_PA_FOCUS_STATUS_PMA_IGNORE:
 					status_color_neighbor = bf_color_blue;
 					status_symbol_neighbor = "~";
 					break;
-				case STL_PA_FOCUS_FLAG_PMA_FAILURE:
+				case STL_PA_FOCUS_STATUS_PMA_FAILURE:
 					status_color_neighbor = bf_color_yellow;
 					status_symbol_neighbor = "!";
 					break;
-				case STL_PA_FOCUS_FLAG_TOPO_FAILURE:
+				case STL_PA_FOCUS_STATUS_TOPO_FAILURE:
 					status_color_neighbor = bf_color_red;
 					status_symbol_neighbor = "?";
 					break;
-				case STL_PA_FOCUS_FLAG_OK:
+				case STL_PA_FOCUS_STATUS_OK:
 				default:
 					status_color_neighbor = bf_color_off;
 					status_symbol_neighbor = " ";
 				}
 				printf("%s%s%4u ", status_color_local, status_symbol_local, ix);
 
-				if ( ( (pg_PmGroupFocus.select >= PACLIENT_SEL_ERR_INTEG) &&
-						(pg_PmGroupFocus.select <= PACLIENT_SEL_ERR_ROUTING) ) ||
-						(pg_PmGroupFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH) )
+				if ( ( (pg_PmGroupFocus.select >= STL_PA_SELECT_CATEGORY_INTEG) &&
+						(pg_PmGroupFocus.select <= STL_PA_SELECT_CATEGORY_ROUT) ) ||
+						(pg_PmGroupFocus.select == STL_PA_SELECT_UTIL_PKTS_HIGH) )
 					printf("%9" PRIu64 "%s",
 						pg_PmGroupFocus.portList[ix].value,
 						bf_color_off);
@@ -1795,9 +1800,9 @@ void DisplayScreen(void)
 					printf("%s%s <-> ", status_color_neighbor,
 						status_symbol_neighbor);
 	
-					if ( ( (pg_PmGroupFocus.select >= PACLIENT_SEL_ERR_INTEG) &&
-							(pg_PmGroupFocus.select <= PACLIENT_SEL_ERR_ROUTING) ) ||
-							(pg_PmGroupFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH) )
+					if ( ( (pg_PmGroupFocus.select >= STL_PA_SELECT_CATEGORY_INTEG) &&
+							(pg_PmGroupFocus.select <= STL_PA_SELECT_CATEGORY_ROUT) ) ||
+							(pg_PmGroupFocus.select == STL_PA_SELECT_UTIL_PKTS_HIGH) )
 						printf( "%9" PRIu64 "%s",
 							pg_PmGroupFocus.portList[ix].neighborValue,
 							bf_color_off);
@@ -1841,21 +1846,21 @@ void DisplayScreen(void)
 			char* status_color_neighbor = bf_color_off;
 			char* status_symbol_neighbor = " ";
 
-			if (g_pPmVFFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH)
+			if (g_pPmVFFocus.select == STL_PA_SELECT_UTIL_PKTS_HIGH)
 				p_select = "UtlPkt-Hi";
-			else if (g_pPmVFFocus.select == PACLIENT_SEL_UTIL_LOW)
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_UTIL_LOW)
 				p_select = " Util-Low";
-			else if (g_pPmVFFocus.select == PACLIENT_SEL_ERR_INTEG)
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_INTEG)
 				p_select = "Integrity";
-			else if (g_pPmVFFocus.select == PACLIENT_SEL_ERR_CONGST)
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_CONG)
 				p_select = " Congestn";
-			else if (g_pPmVFFocus.select == PACLIENT_SEL_ERR_SMACONG)
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_SMA_CONG)
 				p_select = "SmaCongst";
-			else if (g_pPmVFFocus.select == PACLIENT_SEL_ERR_BUBBLE)
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_BUBBLE)
 				p_select = "   Bubble";
-			else if (g_pPmVFFocus.select == PACLIENT_SEL_ERR_SECURE)
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_SEC)
 				p_select = " Security";
-			else if (g_pPmVFFocus.select == PACLIENT_SEL_ERR_ROUTING)
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_ROUT)
 				p_select = "  Routing";
 // Future enhancement
 #if 0
@@ -1864,7 +1869,7 @@ void DisplayScreen(void)
 #endif
 			else
 			{
-				g_pPmVFFocus.select = PACLIENT_SEL_UTIL_HIGH;
+				g_pPmVFFocus.select = STL_PA_SELECT_UTIL_HIGH;
 				p_select = "Util-High";
 			}
 	
@@ -1885,47 +1890,47 @@ void DisplayScreen(void)
 			for ( ix = g_scroll; (ix < g_pPmVFFocus.numPorts) &&
 					((ix - g_scroll) < MAX_VFFOCUS_PORTS_PER_SCREEN); ix++ )
 			{
-				switch (g_pPmVFFocus.portList[ix].localFlags) {
-				case STL_PA_FOCUS_FLAG_PMA_IGNORE:
+				switch (g_pPmVFFocus.portList[ix].localStatus) {
+				case STL_PA_FOCUS_STATUS_PMA_IGNORE:
 					status_color_local = bf_color_blue;
 					status_symbol_local = "~";
 					break;
-				case STL_PA_FOCUS_FLAG_PMA_FAILURE:
+				case STL_PA_FOCUS_STATUS_PMA_FAILURE:
 					status_color_local = bf_color_yellow;
 					status_symbol_local = "!";
 					break;
-				case STL_PA_FOCUS_FLAG_TOPO_FAILURE:
+				case STL_PA_FOCUS_STATUS_TOPO_FAILURE:
 					status_color_local = bf_color_red;
 					status_symbol_local = "?";
 					break;
-				case STL_PA_FOCUS_FLAG_OK:
+				case STL_PA_FOCUS_STATUS_OK:
 				default:
 					status_color_local = bf_color_off;
 					status_symbol_local = " ";
 				}
-				switch (g_pPmVFFocus.portList[ix].neighborFlags) {
-				case STL_PA_FOCUS_FLAG_PMA_IGNORE:
+				switch (g_pPmVFFocus.portList[ix].neighborStatus) {
+				case STL_PA_FOCUS_STATUS_PMA_IGNORE:
 					status_color_neighbor = bf_color_blue;
 					status_symbol_neighbor = "~";
 					break;
-				case STL_PA_FOCUS_FLAG_PMA_FAILURE:
+				case STL_PA_FOCUS_STATUS_PMA_FAILURE:
 					status_color_neighbor = bf_color_yellow;
 					status_symbol_neighbor = "!";
 					break;
-				case STL_PA_FOCUS_FLAG_TOPO_FAILURE:
+				case STL_PA_FOCUS_STATUS_TOPO_FAILURE:
 					status_color_neighbor = bf_color_red;
 					status_symbol_neighbor = "?";
 					break;
-				case STL_PA_FOCUS_FLAG_OK:
+				case STL_PA_FOCUS_STATUS_OK:
 				default:
 					status_color_neighbor = bf_color_off;
 					status_symbol_neighbor = " ";
 				}
 				printf("%s%s%4u ", status_color_local, status_symbol_local, ix);
 
-				if ( ( (g_pPmVFFocus.select >= PACLIENT_SEL_ERR_INTEG) &&
-						(g_pPmVFFocus.select <= PACLIENT_SEL_ERR_ROUTING) ) ||
-						(g_pPmVFFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH) )
+				if ( ( (g_pPmVFFocus.select >= STL_PA_SELECT_CATEGORY_INTEG) &&
+						(g_pPmVFFocus.select <= STL_PA_SELECT_CATEGORY_ROUT) ) ||
+						(g_pPmVFFocus.select == STL_PA_SELECT_UTIL_PKTS_HIGH) )
 					printf("%9" PRIu64 "%s",
 						 g_pPmVFFocus.portList[ix].value, bf_color_off);
 				else
@@ -1946,9 +1951,9 @@ void DisplayScreen(void)
 					printf("%s%s <-> ", status_color_neighbor,
 						status_symbol_neighbor);
 	
-					if ( ( (g_pPmVFFocus.select >= PACLIENT_SEL_ERR_INTEG) &&
-							(g_pPmVFFocus.select <= PACLIENT_SEL_ERR_ROUTING) ) ||
-							(g_pPmVFFocus.select == PACLIENT_SEL_UTIL_PKTS_HIGH) )
+					if ( ( (g_pPmVFFocus.select >= STL_PA_SELECT_CATEGORY_INTEG) &&
+							(g_pPmVFFocus.select <= STL_PA_SELECT_CATEGORY_ROUT) ) ||
+							(g_pPmVFFocus.select == STL_PA_SELECT_UTIL_PKTS_HIGH) )
 						printf( "%9" PRIu64 "%s",
 							g_pPmVFFocus.portList[ix].neighborValue,
 							bf_color_off);
@@ -2049,7 +2054,7 @@ void DisplayScreen(void)
 								pg_PmGroupFocus.portList[g_ix_port - g_start].neighborLid,
 								pg_PmGroupFocus.portList[g_ix_port - g_start].neighborPortNumber,
 								StlStaticRateToText(pg_PmGroupFocus.portList[g_ix_port - g_start].rate),
-								IbMTUToText(pg_PmGroupFocus.portList[g_ix_port - g_start].mtu),
+								IbMTUToText(pg_PmGroupFocus.portList[g_ix_port - g_start].maxVlMtu),
 								status_color, status_message, bf_color_off );
 							printf( "NodeDesc: %-.41s%s NodeGUID: 0x%016"PRIX64"\n",
 								pg_PmGroupFocus.portList[g_ix_port - g_start].neighborNodeDesc,
@@ -2070,7 +2075,7 @@ void DisplayScreen(void)
 								pg_PmGroupFocus.portList[g_ix_port - g_start].nodeLid,
 								pg_PmGroupFocus.portList[g_ix_port - g_start].portNumber,
 								StlStaticRateToText(pg_PmGroupFocus.portList[g_ix_port - g_start].rate),
-								IbMTUToText(pg_PmGroupFocus.portList[g_ix_port - g_start].mtu),
+								IbMTUToText(pg_PmGroupFocus.portList[g_ix_port - g_start].maxVlMtu),
 								status_color, status_message, bf_color_off );
 							printf( "NodeDesc: %-.41s%s NodeGUID: 0x%016"PRIX64"\n",
 								pg_PmGroupFocus.portList[g_ix_port - g_start].nodeDesc,
@@ -2106,7 +2111,7 @@ void DisplayScreen(void)
 								g_pPmVFFocus.portList[g_ix_port - g_start].neighborLid,
 								g_pPmVFFocus.portList[g_ix_port - g_start].neighborPortNumber,
 								StlStaticRateToText(g_pPmVFFocus.portList[g_ix_port - g_start].rate),
-								IbMTUToText(g_pPmVFFocus.portList[g_ix_port - g_start].mtu),
+								IbMTUToText(g_pPmVFFocus.portList[g_ix_port - g_start].maxVlMtu),
 								status_color, status_message, bf_color_off );
 							printf( "NodeDesc: %-.41s%s NodeGUID: 0x%016"PRIX64"\n",
 								g_pPmVFFocus.portList[g_ix_port - g_start].neighborNodeDesc,
@@ -2127,7 +2132,7 @@ void DisplayScreen(void)
 								g_pPmVFFocus.portList[g_ix_port - g_start].nodeLid,
 								g_pPmVFFocus.portList[g_ix_port - g_start].portNumber,
 								StlStaticRateToText(g_pPmVFFocus.portList[g_ix_port - g_start].rate),
-								IbMTUToText(g_pPmVFFocus.portList[g_ix_port - g_start].mtu),
+								IbMTUToText(g_pPmVFFocus.portList[g_ix_port - g_start].maxVlMtu),
 								status_color, status_message, bf_color_off );
 							printf( "NodeDesc: %-.41s%s NodeGUID: 0x%016"PRIX64"\n",
 								g_pPmVFFocus.portList[g_ix_port - g_start].nodeDesc,
@@ -2463,9 +2468,9 @@ int main(int argc, char ** argv)
 	bf_error[0] = 0;
 	fb_error_displayed = FALSE;
 
-	if ( oib_pa_client_init( &g_portHandle, hfi, port,
-			(g_verbose & VERBOSE_PACLIENT ? stderr : NULL) ) !=
-			PACLIENT_OPERATIONAL )
+	struct omgt_params params = {.debug_file = (g_verbose & VERBOSE_PACLIENT ? stderr : NULL)};
+	if (!omgt_open_port_by_num(&g_portHandle, hfi, port, &params) &&
+				(PACLIENT_OPERATIONAL != omgt_pa_client_connect(g_portHandle)))
 	{
 		printf(NAME_PROG " PaClient Not Operational\n");
 		g_exitstatus = 1;
@@ -2531,7 +2536,7 @@ int main(int argc, char ** argv)
 				{
 					if (g_imageIdFreeze.imageNumber != PACLIENT_IMAGE_CURRENT)
 					{
-						if ( (fstatus = pa_client_release_image(g_portHandle, g_imageIdFreeze)) !=
+						if ( (fstatus = omgt_pa_release_image(g_portHandle, g_imageIdFreeze)) !=
 								FSUCCESS )
 							snprintf( &bf_error[strlen(bf_error)], sizeof(bf_error)-strlen(bf_error),
 								"UNABLE TO UNFREEZE HISTORY IMAGE fstatus:%u %s",
@@ -2559,7 +2564,7 @@ int main(int argc, char ** argv)
 						g_imageIdTemp.imageNumber = g_imageIdResp.imageNumber;
 						g_imageIdTemp.imageOffset = temp2;
 
-						if ( ( fstatus = pa_client_freeze_image(g_portHandle, g_imageIdTemp,
+						if ( ( fstatus = omgt_pa_freeze_image(g_portHandle, g_imageIdTemp,
 								&g_imageIdResp) ) == FSUCCESS )
 						{
 							g_imageIdQuery = g_imageIdFreeze = g_imageIdResp;
@@ -2581,7 +2586,7 @@ int main(int argc, char ** argv)
 						g_imageIdTemp.imageOffset =
 							g_imageIdFreeze.imageOffset + temp2;
 
-						if ( ( fstatus = pa_client_move_image_freeze(g_portHandle, g_imageIdFreeze,
+						if ( ( fstatus = omgt_pa_move_image_freeze(g_portHandle, g_imageIdFreeze,
 							&g_imageIdTemp) ) == FSUCCESS )
 						{
 							g_imageIdQuery = g_imageIdFreeze = g_imageIdTemp;
@@ -2602,7 +2607,7 @@ int main(int argc, char ** argv)
 							g_imageIdBookmark.imageNumber;
 						g_imageIdTemp.imageOffset = temp2;
 
-						if ( ( fstatus = pa_client_freeze_image( g_portHandle, g_imageIdTemp,
+						if ( ( fstatus = omgt_pa_freeze_image( g_portHandle, g_imageIdTemp,
 								&g_imageIdResp) ) == FSUCCESS )
 						{
 							g_imageIdQuery = g_imageIdFreeze = g_imageIdResp;
@@ -2628,7 +2633,7 @@ int main(int argc, char ** argv)
 					if ( g_imageIdFreeze.imageNumber !=
 							PACLIENT_IMAGE_CURRENT )
 					{
-						pa_client_release_image(g_portHandle, g_imageIdFreeze);
+						omgt_pa_release_image(g_portHandle, g_imageIdFreeze);
 						g_imageIdFreeze.imageNumber = PACLIENT_IMAGE_CURRENT;
 					}
 
@@ -2642,7 +2647,7 @@ int main(int argc, char ** argv)
 				{
 					if (g_imageIdQuery.imageNumber == PACLIENT_IMAGE_CURRENT)
 					{
-						if ( ( fstatus = pa_client_freeze_image(g_portHandle, g_imageIdResp,
+						if ( ( fstatus = omgt_pa_freeze_image(g_portHandle, g_imageIdResp,
 								&g_imageIdBookmark) ) == FSUCCESS )
 							g_imageIdQuery.imageNumber =
 								g_imageIdBookmark.imageNumber;
@@ -2671,7 +2676,7 @@ int main(int argc, char ** argv)
 						( g_imageIdBookmark.imageNumber !=
 						PACLIENT_IMAGE_CURRENT ) )
 				{
-					if (pa_client_release_image(g_portHandle, g_imageIdBookmark) != FSUCCESS)
+					if (omgt_pa_release_image(g_portHandle, g_imageIdBookmark) != FSUCCESS)
 						snprintf( &bf_error[strlen(bf_error)], sizeof(bf_error)-strlen(bf_error),
 							"UNABLE TO UNBOOKMARK IMAGE");
 
@@ -2736,13 +2741,13 @@ int main(int argc, char ** argv)
 					if (toupper(n_cmd) == 'P')
 					{
 						tb_menu[++n_level_menu] = SCREEN_GROUP_BW_STATS;
-						g_select = PACLIENT_SEL_UTIL_HIGH;
+						g_select = STL_PA_SELECT_UTIL_HIGH;
 					}
 
 					else if (toupper(n_cmd) == 'S')
 					{
 						tb_menu[++n_level_menu] = SCREEN_GROUP_CTG_STATS;
-						g_select = PACLIENT_SEL_ERR_INTEG;	
+						g_select = STL_PA_SELECT_CATEGORY_INTEG;	
 					}
 	
 					else if (toupper(n_cmd) == 'C')
@@ -2755,10 +2760,10 @@ int main(int argc, char ** argv)
 				if (tb_menu[n_level_menu] == SCREEN_VF_INFO_SELECT) {
 					if (toupper(n_cmd) == 'P') {
 						tb_menu[++n_level_menu] = SCREEN_VF_BW_STATS;
-						g_select = PACLIENT_SEL_UTIL_HIGH;
+						g_select = STL_PA_SELECT_UTIL_HIGH;
 					} else if (toupper(n_cmd) == 'S') {
 						tb_menu[++n_level_menu] = SCREEN_VF_CTG_STATS;
-						g_select = PACLIENT_SEL_UTIL_HIGH;
+						g_select = STL_PA_SELECT_UTIL_HIGH;
 					} else if (toupper(n_cmd) == 'C') {
 						g_scroll = 0;
 						tb_menu[++n_level_menu] = SCREEN_VF_CONFIG;
@@ -2799,34 +2804,34 @@ int main(int argc, char ** argv)
 					tb_menu[n_level_menu] == SCREEN_VF_BW_STATS) {
 					if (n_cmd == 'c')
 					{
-						if (g_select == PACLIENT_SEL_UTIL_HIGH)
-							g_select = PACLIENT_SEL_UTIL_PKTS_HIGH;
-						else if (g_select == PACLIENT_SEL_UTIL_PKTS_HIGH)
-							g_select = PACLIENT_SEL_UTIL_LOW;
+						if (g_select == STL_PA_SELECT_UTIL_HIGH)
+							g_select = STL_PA_SELECT_UTIL_PKTS_HIGH;
+						else if (g_select == STL_PA_SELECT_UTIL_PKTS_HIGH)
+							g_select = STL_PA_SELECT_UTIL_LOW;
 // Future enhancement
 #if 0
-						else if (g_select == PACLIENT_SEL_UTIL_LOW)
+						else if (g_select == STL_PA_SELECT_UTIL_LOW)
 							g_select = PACLIENT_SEL_ALL;
 #endif
 						else
-							g_select = PACLIENT_SEL_UTIL_HIGH;
+							g_select = STL_PA_SELECT_UTIL_HIGH;
 					}
 
 					else if (n_cmd == 'C')
 					{
-						if (g_select == PACLIENT_SEL_UTIL_HIGH)
-							g_select = PACLIENT_SEL_UTIL_LOW;
+						if (g_select == STL_PA_SELECT_UTIL_HIGH)
+							g_select = STL_PA_SELECT_UTIL_LOW;
 // Future enhancement
 #if 0
-						if (g_select == PACLIENT_SEL_UTIL_HIGH)
+						if (g_select == STL_PA_SELECT_UTIL_HIGH)
 							g_select = PACLIENT_SEL_ALL;
 						else if (g_select == PACLIENT_SEL_ALL)
-							g_select = PACLIENT_SEL_UTIL_LOW;
+							g_select = STL_PA_SELECT_UTIL_LOW;
 #endif
-						else if (g_select == PACLIENT_SEL_UTIL_LOW)
-							g_select = PACLIENT_SEL_UTIL_PKTS_HIGH;
+						else if (g_select == STL_PA_SELECT_UTIL_LOW)
+							g_select = STL_PA_SELECT_UTIL_PKTS_HIGH;
 						else
-							g_select = PACLIENT_SEL_UTIL_HIGH;
+							g_select = STL_PA_SELECT_UTIL_HIGH;
 					}
 				}
 	
@@ -2835,46 +2840,46 @@ int main(int argc, char ** argv)
 				{
 					if (n_cmd == 'c')
 					{
-						if (g_select == PACLIENT_SEL_ERR_INTEG)
-							g_select = PACLIENT_SEL_ERR_CONGST;
-						else if (g_select == PACLIENT_SEL_ERR_CONGST)
-							g_select = PACLIENT_SEL_ERR_SMACONG;
-						else if (g_select == PACLIENT_SEL_ERR_SMACONG)
-							g_select = PACLIENT_SEL_ERR_BUBBLE;
-						else if (g_select == PACLIENT_SEL_ERR_BUBBLE)
-							g_select = PACLIENT_SEL_ERR_SECURE;
-						else if (g_select == PACLIENT_SEL_ERR_SECURE)
-							g_select = PACLIENT_SEL_ERR_ROUTING;
+						if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
+							g_select = STL_PA_SELECT_CATEGORY_CONG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_CONG)
+							g_select = STL_PA_SELECT_CATEGORY_SMA_CONG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
+							g_select = STL_PA_SELECT_CATEGORY_BUBBLE;
+						else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
+							g_select = STL_PA_SELECT_CATEGORY_SEC;
+						else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
+							g_select = STL_PA_SELECT_CATEGORY_ROUT;
 // Future enhancement
 #if 0
-						else if (g_select == PACLIENT_SEL_ERR_ROUTING)
+						else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
 							g_select = PACLIENT_SEL_ALL;
 #endif
 						else
-							g_select = PACLIENT_SEL_ERR_INTEG;
+							g_select = STL_PA_SELECT_CATEGORY_INTEG;
 					}
 
 					else if (n_cmd == 'C')
 					{
-						if (g_select == PACLIENT_SEL_ERR_ROUTING)
-							g_select = PACLIENT_SEL_ERR_SECURE;
-						else if (g_select == PACLIENT_SEL_ERR_SECURE)
-							g_select = PACLIENT_SEL_ERR_BUBBLE;
-						else if (g_select == PACLIENT_SEL_ERR_BUBBLE)
-							g_select = PACLIENT_SEL_ERR_SMACONG;
-						else if (g_select == PACLIENT_SEL_ERR_SMACONG)
-							g_select = PACLIENT_SEL_ERR_CONGST;
-						else if (g_select == PACLIENT_SEL_ERR_INTEG)
-							g_select = PACLIENT_SEL_ERR_ROUTING;
+						if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
+							g_select = STL_PA_SELECT_CATEGORY_SEC;
+						else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
+							g_select = STL_PA_SELECT_CATEGORY_BUBBLE;
+						else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
+							g_select = STL_PA_SELECT_CATEGORY_SMA_CONG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
+							g_select = STL_PA_SELECT_CATEGORY_CONG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
+							g_select = STL_PA_SELECT_CATEGORY_ROUT;
 // Future enhancement
 #if 0
-						else if (g_select == PACLIENT_SEL_ERR_INTEG)
+						else if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
 							g_select = PACLIENT_SEL_ALL;
 						else if (g_select == PACLIENT_SEL_ALL)
-							g_select = PACLIENT_SEL_ERR_ROUTING;
+							g_select = STL_PA_SELECT_CATEGORY_ROUT;
 #endif
 						else
-							g_select = PACLIENT_SEL_ERR_INTEG;
+							g_select = STL_PA_SELECT_CATEGORY_INTEG;
 					}
 				}
 
@@ -2914,58 +2919,58 @@ int main(int argc, char ** argv)
 
 					else if (n_cmd == 'c')
 					{
-						if (g_select == PACLIENT_SEL_UTIL_HIGH)
-							g_select = PACLIENT_SEL_UTIL_PKTS_HIGH;
-						else if (g_select == PACLIENT_SEL_UTIL_PKTS_HIGH)
-							g_select = PACLIENT_SEL_UTIL_LOW;
-						else if (g_select == PACLIENT_SEL_UTIL_LOW)
-							g_select = PACLIENT_SEL_ERR_INTEG;
-						else if (g_select == PACLIENT_SEL_ERR_INTEG)
-							g_select = PACLIENT_SEL_ERR_CONGST;
-						else if (g_select == PACLIENT_SEL_ERR_CONGST)
-							g_select = PACLIENT_SEL_ERR_SMACONG;
-						else if (g_select == PACLIENT_SEL_ERR_SMACONG)
-							g_select = PACLIENT_SEL_ERR_BUBBLE;
-						else if (g_select == PACLIENT_SEL_ERR_BUBBLE)
-							g_select = PACLIENT_SEL_ERR_SECURE;
-						else if (g_select == PACLIENT_SEL_ERR_SECURE)
-							g_select = PACLIENT_SEL_ERR_ROUTING;
+						if (g_select == STL_PA_SELECT_UTIL_HIGH)
+							g_select = STL_PA_SELECT_UTIL_PKTS_HIGH;
+						else if (g_select == STL_PA_SELECT_UTIL_PKTS_HIGH)
+							g_select = STL_PA_SELECT_UTIL_LOW;
+						else if (g_select == STL_PA_SELECT_UTIL_LOW)
+							g_select = STL_PA_SELECT_CATEGORY_INTEG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
+							g_select = STL_PA_SELECT_CATEGORY_CONG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_CONG)
+							g_select = STL_PA_SELECT_CATEGORY_SMA_CONG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
+							g_select = STL_PA_SELECT_CATEGORY_BUBBLE;
+						else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
+							g_select = STL_PA_SELECT_CATEGORY_SEC;
+						else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
+							g_select = STL_PA_SELECT_CATEGORY_ROUT;
 // Future enhancement
 #if 0
-						else if (g_select == PACLIENT_SEL_ERR_ROUTING)
+						else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
 							g_select = PACLIENT_SEL_ALL;
 #endif
 						else
-							g_select = PACLIENT_SEL_UTIL_HIGH;
+							g_select = STL_PA_SELECT_UTIL_HIGH;
 					}
 
 					else if (n_cmd == 'C')
 					{
-						if (g_select == PACLIENT_SEL_UTIL_HIGH)
-							g_select = PACLIENT_SEL_ERR_ROUTING;
-						else if (g_select == PACLIENT_SEL_ERR_ROUTING)
-							g_select = PACLIENT_SEL_ERR_SECURE;
-						else if (g_select == PACLIENT_SEL_ERR_SECURE)
-							g_select = PACLIENT_SEL_ERR_BUBBLE;
-						else if (g_select == PACLIENT_SEL_ERR_BUBBLE)
-							g_select = PACLIENT_SEL_ERR_SMACONG;
-						else if (g_select == PACLIENT_SEL_ERR_SMACONG)
-							g_select = PACLIENT_SEL_ERR_CONGST;
-						else if (g_select == PACLIENT_SEL_ERR_CONGST)
-							g_select = PACLIENT_SEL_ERR_INTEG;
-						else if (g_select == PACLIENT_SEL_ERR_INTEG)
-							g_select = PACLIENT_SEL_UTIL_LOW;
-						else if (g_select == PACLIENT_SEL_UTIL_LOW)
-							g_select = PACLIENT_SEL_UTIL_PKTS_HIGH;
+						if (g_select == STL_PA_SELECT_UTIL_HIGH)
+							g_select = STL_PA_SELECT_CATEGORY_ROUT;
+						else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
+							g_select = STL_PA_SELECT_CATEGORY_SEC;
+						else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
+							g_select = STL_PA_SELECT_CATEGORY_BUBBLE;
+						else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
+							g_select = STL_PA_SELECT_CATEGORY_SMA_CONG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
+							g_select = STL_PA_SELECT_CATEGORY_CONG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_CONG)
+							g_select = STL_PA_SELECT_CATEGORY_INTEG;
+						else if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
+							g_select = STL_PA_SELECT_UTIL_LOW;
+						else if (g_select == STL_PA_SELECT_UTIL_LOW)
+							g_select = STL_PA_SELECT_UTIL_PKTS_HIGH;
 // Future enhancement
 #if 0
-						else if (g_select == PACLIENT_SEL_UTIL_HIGH)
+						else if (g_select == STL_PA_SELECT_UTIL_HIGH)
 							g_select = PACLIENT_SEL_ALL;
 						else if (g_select == PACLIENT_SEL_ALL)
-							g_select = PACLIENT_SEL_ERR_ROUTING;
+							g_select = STL_PA_SELECT_CATEGORY_ROUT;
 #endif
 						else
-							g_select = PACLIENT_SEL_UTIL_HIGH;
+							g_select = STL_PA_SELECT_UTIL_HIGH;
 					}
 				}
 
@@ -3112,28 +3117,28 @@ int main(int argc, char ** argv)
 
 		// Renew frozen image if present
 		if (g_imageIdFreeze.imageNumber != PACLIENT_IMAGE_CURRENT)
-			pa_client_renew_image(g_portHandle, g_imageIdFreeze);
+			omgt_pa_renew_image(g_portHandle, g_imageIdFreeze);
 
 		// Renew bookmark image if present
 		if (g_imageIdBookmark.imageNumber != PACLIENT_IMAGE_CURRENT)
-			pa_client_renew_image(g_portHandle, g_imageIdBookmark);
+			omgt_pa_renew_image(g_portHandle, g_imageIdBookmark);
 	
 	}	// End of while (TRUE)
 
 quit:
 	// release any frozen image
 	if (g_imageIdFreeze.imageNumber != PACLIENT_IMAGE_CURRENT)
-		pa_client_release_image(g_portHandle, g_imageIdFreeze);
+		omgt_pa_release_image(g_portHandle, g_imageIdFreeze);
 
 	// release any bookmark image
 	if (g_imageIdBookmark.imageNumber != PACLIENT_IMAGE_CURRENT)
-		pa_client_release_image(g_portHandle, g_imageIdBookmark);
+		omgt_pa_release_image(g_portHandle, g_imageIdBookmark);
 
 	// restore terminal settings
 	tcsetattr(fileno(stdin), TCSAFLUSH, &g_term_save);
 
 done:
-	if (g_portHandle) oib_close_port(g_portHandle);
+	if (g_portHandle) omgt_close_port(g_portHandle);
 	g_portHandle = NULL;
 
 	if (g_exitstatus == 2)

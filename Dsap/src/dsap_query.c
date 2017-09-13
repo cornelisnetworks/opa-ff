@@ -39,13 +39,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <infiniband/verbs.h>
 
 #include "iba/ibt.h"
-#include "iba/ib_sd.h"
 #include "iba/stl_sd.h"
+#include "iba/ib_sd.h"
 #include "iba/public/ievent.h"
 #include "iba/public/ilist.h"
 #include "opasadb_debug.h"
 #include "dsap.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 
 #include <netinet/in.h>
 
@@ -144,7 +144,7 @@ FSTATUS dsap_query_path_records(dsap_src_port_t *src_port,
 				uint64_t sid, uint16_t pkey)
 {
 	FSTATUS rval = FNOT_FOUND;
-	QUERY query;
+	OMGT_QUERY query;
 	PQUERY_RESULT_VALUES res = NULL;
 	struct dsap_port *port;
 
@@ -152,43 +152,43 @@ FSTATUS dsap_query_path_records(dsap_src_port_t *src_port,
 
 	/* While the mask prevents unused fields from being used in the query,
 	   this will still help when trying to dump or debug paths. */
-	memset(&query,0,sizeof(QUERY));
+	memset(&query,0,sizeof(OMGT_QUERY));
 
 	/* Get ALL Paths between ports using Local and Remote Port GIDs */
 	query.InputType = InputTypePathRecord;
 	query.OutputType = OutputTypePathRecordNetworkOrder;
-	query.InputValue.PathRecordValue.ComponentMask = 
+	query.InputValue.IbPathRecord.PathRecord.ComponentMask =
 		IB_PATH_RECORD_COMP_SERVICEID |
 		IB_PATH_RECORD_COMP_DGID |
 		IB_PATH_RECORD_COMP_SGID |
 		IB_PATH_RECORD_COMP_PKEY |
 		IB_PATH_RECORD_COMP_REVERSIBLE |
 		IB_PATH_RECORD_COMP_NUMBPATH;
-	query.InputValue.PathRecordValue.PathRecord.DGID.Type.Global.SubnetPrefix =
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.DGID.Type.Global.SubnetPrefix =
 		ntohll(dst_port->gid.global.subnet_prefix);
-	query.InputValue.PathRecordValue.PathRecord.DGID.Type.Global.InterfaceID  =
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.DGID.Type.Global.InterfaceID  =
 		ntohll(dst_port->gid.global.interface_id);
-	query.InputValue.PathRecordValue.PathRecord.SGID.Type.Global.SubnetPrefix =
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.SGID.Type.Global.SubnetPrefix =
 		ntohll(src_port->gid.global.subnet_prefix);
-	query.InputValue.PathRecordValue.PathRecord.SGID.Type.Global.InterfaceID  =
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.SGID.Type.Global.InterfaceID  =
 		ntohll(src_port->gid.global.interface_id);
-	query.InputValue.PathRecordValue.PathRecord.ServiceID = ntohll(sid);
-	query.InputValue.PathRecordValue.PathRecord.P_Key = ntohs(pkey ) & 0x7fff;
-	query.InputValue.PathRecordValue.PathRecord.Reversible = 1;
-	query.InputValue.PathRecordValue.PathRecord.NumbPath = PATHRECORD_NUMBPATH;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.ServiceID = ntohll(sid);
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.P_Key = ntohs(pkey ) & 0x7fff;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.Reversible = 1;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.NumbPath = PATHRECORD_NUMBPATH;
 
 	dump_path_record(
-	   (IB_PATH_RECORD_NO *) &query.InputValue.PathRecordValue.PathRecord,
+	   (IB_PATH_RECORD_NO *) &query.InputValue.IbPathRecord.PathRecord.PathRecord,
 	   0);
 	
 	port = dsap_lock_prov_port(src_port);
 	if (!port) 
 		return rval;
-	if (!port->oib_handle) {
+	if (!port->omgt_handle) {
 		goto query_exit;
 	}
 
-	rval = oib_query_sa(port->oib_handle, &query, &res);
+	rval = omgt_query_sa(port->omgt_handle, &query, &res);
 	if (rval == FSUCCESS) {
 		rval = dsap_check_query_results(res);
 		if (rval == FSUCCESS) {
@@ -212,7 +212,7 @@ FSTATUS dsap_query_path_records(dsap_src_port_t *src_port,
 	}
 
 	if ((res != NULL) && (res->QueryResult != NULL))
-		oib_free_query_result_buffer(res);
+		omgt_free_query_result_buffer(res);
 
 query_exit:
 	dsap_release_prov_port(port);
@@ -258,7 +258,7 @@ FSTATUS dsap_query_dst_ports(dsap_subnet_t *subnet)
 {
 	FSTATUS rval = FNOT_FOUND;
 	LIST_ITEM *item;
-	QUERY query;
+	OMGT_QUERY query;
 	PQUERY_RESULT_VALUES res = NULL;
 	dsap_src_port_t *src_port;
 	struct dsap_port *port;
@@ -277,21 +277,21 @@ FSTATUS dsap_query_dst_ports(dsap_subnet_t *subnet)
 				src_port->hfi_name, src_port->port_num);
 			continue;
 		}
-		if (!port->oib_handle) {
-			acm_log(1, "no oib port handle for port %s/%d\n",
+		if (!port->omgt_handle) {
+			acm_log(1, "no opamgt port handle for port %s/%d\n",
 				port->dev->device->verbs->device->name,
 				port->port->port_num);
 			goto next_src_port;
 		}
 
-		if ((rval = oib_query_sa(port->oib_handle, &query, &res)) ==
+		if ((rval = omgt_query_sa(port->omgt_handle, &query, &res)) ==
 		    FSUCCESS) {
 			dsap_release_prov_port(port);
 			break;
 		}
 
 		if ((res != NULL) && (res->QueryResult != NULL)) {
-			oib_free_query_result_buffer(res);
+			omgt_free_query_result_buffer(res);
 			res = NULL;
 		}
 
@@ -316,7 +316,7 @@ FSTATUS dsap_query_dst_ports(dsap_subnet_t *subnet)
 	}
 
 	if ((res != NULL) && (res->QueryResult != NULL))
-		oib_free_query_result_buffer(res);
+		omgt_free_query_result_buffer(res);
 
 	return rval;
 }
@@ -539,7 +539,7 @@ FSTATUS dsap_query_vfinfo_records(dsap_subnet_t *subnet,
 	FSTATUS rval = FNOT_FOUND;
 	FSTATUS status = FNOT_FOUND;
 	LIST_ITEM *item;
-	QUERY query;
+	OMGT_QUERY query;
 	PQUERY_RESULT_VALUES res = NULL;
 	dsap_src_port_t *src_port;
 	struct dsap_port *port;
@@ -547,7 +547,7 @@ FSTATUS dsap_query_vfinfo_records(dsap_subnet_t *subnet,
 	acm_log(2, "\n");
 
 	query.InputType = InputTypeServiceId;
-	query.InputValue.ServiceId = ntoh64(sid_range->lower_service_id);
+	query.InputValue.VfInfoRecord.ServiceId = ntoh64(sid_range->lower_service_id);
 	query.OutputType = OutputTypeStlVfInfoRecord;
 
 	for_each (&subnet->src_port_list, item) {
@@ -555,10 +555,10 @@ FSTATUS dsap_query_vfinfo_records(dsap_subnet_t *subnet,
 		port = dsap_lock_prov_port(src_port);
 		if (!port) 
 			continue;
-		if (!port->oib_handle) 
+		if (!port->omgt_handle) 
 			goto next_src_port;
 
-		rval = oib_query_sa(port->oib_handle, &query, &res);
+		rval = omgt_query_sa(port->omgt_handle, &query, &res);
 		if (rval != FSUCCESS) 
 			goto next_src_port;
 		
@@ -580,7 +580,7 @@ FSTATUS dsap_query_vfinfo_records(dsap_subnet_t *subnet,
 
 	free_result:
 		if ((res != NULL) && (res->QueryResult != NULL)) {
-			oib_free_query_result_buffer(res);
+			omgt_free_query_result_buffer(res);
 			res = NULL;
 		}
 	next_src_port:
@@ -612,7 +612,7 @@ FSTATUS dsap_query_dst_port(union ibv_gid *dst_gid, NODE_TYPE *node_type,
 {
 	FSTATUS rval = FNOT_FOUND;
 	LIST_ITEM *item;
-	QUERY query;
+	OMGT_QUERY query;
 	PQUERY_RESULT_VALUES res = NULL;
 	dsap_subnet_t *subnet;
 	PNODE_RECORD_RESULTS rec;
@@ -622,7 +622,7 @@ FSTATUS dsap_query_dst_port(union ibv_gid *dst_gid, NODE_TYPE *node_type,
 	acm_log(2, "\n");
 
 	query.InputType = InputTypePortGuid;
-	query.InputValue.Guid = ntohll(dst_gid->global.interface_id);
+	query.InputValue.IbNodeRecord.PortGUID = ntohll(dst_gid->global.interface_id);
 	query.OutputType = OutputTypeNodeRecord;
 
 	subnet = dsap_find_subnet(&dst_gid->global.subnet_prefix);
@@ -636,16 +636,16 @@ FSTATUS dsap_query_dst_port(union ibv_gid *dst_gid, NODE_TYPE *node_type,
 		port = dsap_lock_prov_port(src_port);
 		if (!port) 
 			continue;
-		if (!port->oib_handle) 
+		if (!port->omgt_handle) 
 			goto next_src_port;
 
-		if ((rval = oib_query_sa(port->oib_handle, &query,
+		if ((rval = omgt_query_sa(port->omgt_handle, &query,
 					 &res)) == FSUCCESS) {
 			dsap_release_prov_port(port);
 			break;
 		}
 		if ((res != NULL) && (res->QueryResult != NULL)) {
-			oib_free_query_result_buffer(res);
+			omgt_free_query_result_buffer(res);
 			res = NULL;
 		}
 	next_src_port:
@@ -683,7 +683,7 @@ FSTATUS dsap_query_dst_port(union ibv_gid *dst_gid, NODE_TYPE *node_type,
 
 exit:
 	if ((res != NULL) && (res->QueryResult != NULL))
-		oib_free_query_result_buffer(res);
+		omgt_free_query_result_buffer(res);
 
 	return rval;
 }

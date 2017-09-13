@@ -126,7 +126,7 @@ else
 
 			/usr/sbin/opatmmtool -h ${hfinum} 2>/dev/null 1>/dev/null
 			tmm=$?
-			if [ $tmm -ne 3 ]
+			if [ $tmm -eq 0 ]
 			then
 				tmmver=`/usr/sbin/opatmmtool -h ${hfinum} fwversion | sed s/"Current Firmware Version="//`
 			fi
@@ -191,7 +191,7 @@ else
 			echo "SiRev: $hw_string ($hw_rev)"
 		fi
 
-		if [ $tmm -ne 3 ]
+		if [ $tmm -eq 0 ]
 		then
 			echo "TMM:   $tmmver"
 		fi

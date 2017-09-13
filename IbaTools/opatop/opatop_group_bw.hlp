@@ -5,10 +5,11 @@ MBps and KPps (see SUMMARY SCREEN help for terminology).  For each subgroup
 ten performance 'buckets', from 0+% to 90+% in 10% increments, count the number
 of ports whose 'MBps compared to link speed' value corresponds to that bucket.
 This provides an indication of how the data rate of the group compares to its
-potential. Also present on the screen are two categories of 'Failed Ports' per
-subgroup: PM query failures (PMA) and PM topology failures (Topo). PMA failures
-are port counter query failures during the PM Sweep. Topo errors are failures
-caused by encountering missing neighbor information in the topology.
+potential. Also present on the screen are two categories of port issues per
+subgroup: No response on PM query (PMA) and PM topology incomplete (Topo). PMA
+issues occur when the PM does not receive a response during the PM Sweep. Topo
+issues occur whem PM cannot determine the neighbor information of the local
+port in the topology.
 
 The BW Util screen accepts input commands which specify parameters to be
 used in a group focus query, which will provide a list of ports (in the port

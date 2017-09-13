@@ -53,8 +53,7 @@ EXECUTABLE		= # OPENIB_FF$(EXE_SUFFIX)
 DIRS			= \
 	$(TL_DIR)/Makerules \
 	$(TL_DIR)/IbAccess \
-	$(TL_DIR)/oib_utils \
-	$(TL_DIR)/opa_fe_utils \
+	$(TL_DIR)/opamgt \
 	$(TL_DIR)/Xml \
 	$(TL_DIR)/IbaTools \
 	$(TL_DIR)/MpiApps \

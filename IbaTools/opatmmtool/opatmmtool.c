@@ -462,12 +462,17 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// use get FW version to see if board has tmm
-	status = getVersionFW(1, NULL);
-	if (status != FSUCCESS && errno == EIO) {
-		fprintf(stderr, "opatmmtool: Thermal Management Microchip sensor either not installed or not responding\n");
-		status = 3;
-		goto err_exit;
+	if (op != OP_TMM_FILEVER) {
+		// use get FW version to see if board has tmm
+		status = getVersionFW(1, NULL);
+		if (status != FSUCCESS) {
+			if (errno == ENXIO) {
+				fprintf(stderr, "opatmmtool: Thermal Management Microchip sensor not installed\n");
+			} else {
+				fprintf(stderr, "opatmmtool: Thermal Management Microchip sensor not responding\n");
+			}
+			goto err_exit;
+		}
 	}
 
 	// do the operation

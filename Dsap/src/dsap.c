@@ -57,7 +57,7 @@ uint32 dsap_dbg_level = _DBG_LVL_NOTICE;
 
 #define LOG_FILE_LENGTH 256
 static char dsap_log_file[LOG_FILE_LENGTH] = {0};
-static FILE *oib_log_file = NULL;
+static FILE *omgt_log_file = NULL;
 
 /*
  * Parameter handling - replaces module parameters.
@@ -300,10 +300,6 @@ void dsap_get_config(char *filename)
 	if (strlen(dsap_log_file) > 0) {
 		op_log_set_file(dsap_log_file);
 		op_log_set_level(dsap_dbg_level);
-		oib_log_file = op_log_get_file();
-		oib_set_err(oib_log_file);
-		if (dsap_dbg_level >= 7)
-			oib_set_dbg(oib_log_file);
 	}
 
 	dsap_dump_params(parameters);
@@ -321,8 +317,8 @@ void dsap_cleanup(void)
 	dsap_scanner_cleanup();
 	dsap_topology_cleanup();
 
-	if (oib_log_file) 
-		fclose(oib_log_file);
+	if (omgt_log_file) 
+		fclose(omgt_log_file);
 }
 
 /*!
@@ -351,4 +347,13 @@ dsap_init(void)
 
 exit:
 	return fstatus;
+}
+void dsap_omgt_log_init(struct omgt_port *omgt_port)
+{
+	if (strlen(dsap_log_file) > 0) {
+		omgt_log_file = op_log_get_file();
+		omgt_set_err(omgt_port, omgt_log_file);
+		if (dsap_dbg_level >= 7)
+			omgt_set_dbg(omgt_port, omgt_log_file);
+	}
 }

@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils.h"
+#include "opamgt_priv.h"
 #include <iba/ibt.h>
 #include "Md5.h"
 #include "opaswcommon.h"

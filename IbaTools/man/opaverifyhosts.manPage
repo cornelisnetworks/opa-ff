@@ -28,7 +28,7 @@ A summary of results is appended to the FF\(ulRESULT\(ulDIR/verifyhosts.res file
 .NL
 opaverifyhosts [-kc] [-f \fIhostfile\fR] [-u \fIupload\(ulfile\fR] [-d \fIupload\(uldir\fR]
 .br
-[-h \fIhosts\fR] [-T \fItimelimit\fR] [ \fItest\fR...]
+[-h \fIhosts\fR] [-T \fItimelimit\fR] [-F \fIfilename\fR] [ \fItest\fR...]
 .SH Options
 .NL
 
@@ -73,6 +73,11 @@ Specifies the directory to upload result from each host to. Default is uploads.
 -T \fItimelimit\fR 
 .NL
 Specifies the time limit in seconds for host to complete tests. Default is 300 seconds (5 minutes).
+
+.TP 10
+-F \fIfilename\fR 
+.NL
+Specifies the filename of hostverify script to use. Default is /root/hostverify.sh.
 
 .TP 10
  \fItest\fR 

@@ -45,7 +45,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define STL_WIRESHARK_MAJOR	2
 #define STL_WIRESHARK_MINOR	4
-#define STL_WIRESHARK_MAGIC	0xa1b2c3d4
+/*PCAP Nanosecond format magic*/
+#define STL_WIRESHARK_MAGIC	0xa1b23c4d
 #define STL_WIRESHARK_ERF	197
 
 #define ERF_TYPE_OPA_SNC        28
@@ -115,8 +116,7 @@ typedef struct _pcapRecHdr_s {
 } pcapRecHdr_t;
 
 typedef struct extHeader_s {
-	uint32				tv_nsec;
-	uint32				tv_sec;
+	uint64				ts;
 	uint8				linkType;		/* Lyink Type 26 = STL; 21 = IB */
 	uint8				flags;			/* ERF flags */
 	uint16				length;			/* Record Length in Bytes */

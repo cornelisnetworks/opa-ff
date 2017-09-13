@@ -65,8 +65,22 @@ sed -i "s/.\/ff_install/OpenIb_Host\/ff_install/g" opa.spec
 cp mpi-apps.spec.in mpi-apps.spec
 sed -i "s/__RPM_VERSION/$RPM_VER/g" mpi-apps.spec
 sed -i "s/__RPM_RELEASE/$RPM_REL%{?dist}/g" mpi-apps.spec
+./update_mpi_spec.sh
 
-tar cvzf $RPMDIR/SOURCES/opa.tgz -C $TL_DIR $FILES_TO_TAR --exclude-vcs --ignore-case --exclude="./rpmbuild" -X tar_excludes
+if [[ "${RELEASE_TYPE}" == "EMBARGOED" ]]
+then
+	echo "Building Embargoed Release."
+	export OPA_LICENSE_DIR=${TL_DIR}/CodeTemplates/EmbargoedNotices
+	TMP=$(mktemp -d)
+	cp -rp ${TL_DIR}/* ${TMP}
+	${TL_DIR}/CodeTemplates/update_license.sh -c -q ${TMP}
+	tar cvzf ${RPMDIR}/SOURCES/opa.tgz -C ${TMP} ${FILES_TO_TAR} --exclude-vcs --ignore-case --exclude="./rpmbuild" -X tar_excludes
+	rm -rf ${TMP} 
+else
+	echo "Building Public Release."
+	tar cvzf $RPMDIR/SOURCES/opa.tgz -C $TL_DIR $FILES_TO_TAR --exclude-vcs --ignore-case --exclude="./rpmbuild" -X tar_excludes
+fi
+
 tar cvzf $RPMDIR/SOURCES/opa-mpi-apps.tgz -C $TL_DIR $MPIAPPS_FILES_TO_TAR --exclude-vcs --ignore-case
 
 mv opa.spec $RPMDIR/SPECS/

@@ -195,7 +195,7 @@ struct op_route_use_matrix
  * FUNCTION PROTOTYPES
  */
 
-extern enum op_route_status op_route_open( struct oib_port * port,
+extern enum op_route_status op_route_open( struct omgt_port * port,
 								uint64_t port_guid,
                                 OP_ROUTE_PORT_HANDLE * p_port_handle ); // output
 
@@ -205,57 +205,57 @@ extern enum op_route_status op_route_create_job( OP_ROUTE_PORT_HANDLE port_handl
                                 uint16_t optn_create,
                                 struct op_route_job_parameters * p_job_params,
                                 struct op_route_portguid_vec * p_guid_vec,
-								struct oib_port * port,
+								struct omgt_port * port,
                                 OP_ROUTE_JOB_ID * p_job_id,         // output
                                 struct op_route_switch_map * p_switch_map, // output
                                 uint16_t ** pp_cost_matrix );       // output
 
 extern enum op_route_status op_route_complete_job( OP_ROUTE_PORT_HANDLE port_handle,
                                 OP_ROUTE_JOB_ID job_id,
-								struct oib_port * port );
+								struct omgt_port * port );
 
 extern enum op_route_status op_route_get_portguid_vec( OP_ROUTE_PORT_HANDLE port_handle,
                                 OP_ROUTE_JOB_ID job_id,
-								struct oib_port * port,
+								struct omgt_port * port,
                                 struct op_route_portguid_vec * p_guid_vec ); // output
 
 extern void op_route_release_portguid_vec(struct op_route_portguid_vec * p_guid_vec);
 
 extern enum op_route_status op_route_get_switch_map( OP_ROUTE_PORT_HANDLE port_handle,
                                 OP_ROUTE_JOB_ID job_id,
-								struct oib_port * port,
+								struct omgt_port * port,
                                 struct op_route_switch_map * p_switch_map ); // output
 
 extern void op_route_release_switch_map(struct op_route_switch_map * p_switch_map);
 
 extern enum op_route_status op_route_get_cost_matrix( OP_ROUTE_PORT_HANDLE port_handle,
                                 OP_ROUTE_JOB_ID job_id,
-								struct oib_port * port,
+								struct omgt_port * port,
                                 uint16_t ** pp_cost_matrix );   // output
 
 extern void op_route_release_cost_matrix(uint16_t * p_cost_matrix);
 
 extern enum op_route_status op_route_get_use_matrix( OP_ROUTE_PORT_HANDLE port_handle,
                                 OP_ROUTE_JOB_ID job_id,
-								struct oib_port * port,
+								struct omgt_port * port,
                                 struct op_route_use_matrix * p_use_matrix ); // output
 
 extern enum op_route_status op_route_set_use_matrix( OP_ROUTE_PORT_HANDLE port_handle,
                                 OP_ROUTE_JOB_ID job_id,
-								struct oib_port * port,
+								struct omgt_port * port,
                                 struct op_route_use_matrix * p_use_matrix );
 
 extern void op_route_release_use_matrix(struct op_route_use_matrix * p_use_matrix);
 
 extern enum op_route_status op_route_get_job_list( OP_ROUTE_PORT_HANDLE port_handle,
-								struct oib_port * port,
+								struct omgt_port * port,
                                 struct op_route_job_list * p_job_list); // output
 
 extern void op_route_release_job_list(struct op_route_job_list * p_job_list);
 
 extern enum op_route_status op_route_poll_ready( OP_ROUTE_PORT_HANDLE port_handle,
                                 OP_ROUTE_JOB_ID job_id,
-								struct oib_port * port,
+								struct omgt_port * port,
                                 enum op_route_job_status * p_job_status );
 
 extern char * op_route_get_status_text(enum op_route_status status);

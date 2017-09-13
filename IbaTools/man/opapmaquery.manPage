@@ -39,7 +39,7 @@ Specifies the verbose output. Can be specified more than once for additional ope
 .TP 10
 -s \fIsl\fR 
 .NL
-Specifies different service level. Default is 0.
+Specifies different service level. Default is SM SL.
 
 .TP 10
 -l \fIlid\fR 

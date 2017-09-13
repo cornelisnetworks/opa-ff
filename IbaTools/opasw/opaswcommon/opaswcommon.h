@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define QP1_WELL_KNOWN_Q_KEY					0x80010000U
 #define GSI_QUEUE_PAIR							1
-#define OIB_GLOBAL_PORTID						-1
+#define OMGT_GLOBAL_PORTID						-1
 #define RESP_WAIT_TIME							(1000)
 #define DEF_RETRIES								3
 #define FW_RETRIES								5
@@ -365,42 +365,42 @@ typedef struct pm_port_counters_s {
  *   FUNCTION PROTOTYPES
  ***********************/
 
-FSTATUS getDestPath(struct oib_port *port, EUI64 destPortGuid, char *cmd, IB_PATH_RECORD *pathp);
-uint16 getSessionID(struct oib_port *port, IB_PATH_RECORD *path);
-void releaseSession(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID);
-FSTATUS getFwVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *fwVersion);
-FSTATUS getVPDInfo(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 module, vpd_fruInfo_rec_t *vpdInfo);
-FSTATUS getFanSpeed(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 fanNum, uint32 *fanSpeed);
-FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH], uint8 BoardID);
-FSTATUS getPowerSupplyStatus(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 psNum, uint32 *psStatus);
-FSTATUS getAsicVersion(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 *asicVersion);
-FSTATUS getMaxQsfpTemperatureMaxDetected(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, boolean *maxDetected);
-FSTATUS getBoardID(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *boardID);
-FSTATUS doPingSwitch(struct oib_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad);
-FSTATUS getEMFWFileNames(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, char *fwFileName, char *inibinFileName);
+FSTATUS getDestPath(struct omgt_port *port, EUI64 destPortGuid, char *cmd, IB_PATH_RECORD *pathp);
+uint16 getSessionID(struct omgt_port *port, IB_PATH_RECORD *path);
+void releaseSession(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID);
+FSTATUS getFwVersion(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *fwVersion);
+FSTATUS getVPDInfo(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 module, vpd_fruInfo_rec_t *vpdInfo);
+FSTATUS getFanSpeed(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 fanNum, uint32 *fanSpeed);
+FSTATUS getTempReadings(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH], uint8 BoardID);
+FSTATUS getPowerSupplyStatus(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 psNum, uint32 *psStatus);
+FSTATUS getAsicVersion(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 *asicVersion);
+FSTATUS getMaxQsfpTemperatureMaxDetected(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, boolean *maxDetected);
+FSTATUS getBoardID(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *boardID);
+FSTATUS doPingSwitch(struct omgt_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad);
+FSTATUS getEMFWFileNames(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, char *fwFileName, char *inibinFileName);
 
 void opaswDisplayBuffer(char *buffer, int dataLen);
 
-FSTATUS sendClassPortInfoMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad);
-FSTATUS sendSessionMgmtGetMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 *sessionID);
-FSTATUS sendSessionMgmtReleaseMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID);
-FSTATUS sendMemAccessGetMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 memAddr, uint8 dataLen, uint8 *memData);
-FSTATUS sendIniDescriptorGetMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, opasw_ini_descriptor_get_t *descriptors);
-FSTATUS sendSysTableAccessGetMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 sysTableIndex, uint8 dataLen, uint8 *sysTableData);
-FSTATUS sendSysTableAccessSetMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 sysTableIndex, uint8 dataLen, uint8 *sysTableData);
-FSTATUS sendPortTableAccessSetMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 portTableIndex, uint16 portNum, uint8 dataLen, uint8 *portTableData);
-FSTATUS sendGetFwVersionMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *fwVersion);
-FSTATUS sendRegisterAccessMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 regAddr, uint32 *regValue, int get);
-FSTATUS sendRebootMad(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, VENDOR_MAD *mad, uint32 delay);
-FSTATUS sendI2CAccessMad(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, uint8 jumbo, uint8 method, int timeout, uint32 locationDescriptor, uint16 dataLen, 
+FSTATUS sendClassPortInfoMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad);
+FSTATUS sendSessionMgmtGetMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 *sessionID);
+FSTATUS sendSessionMgmtReleaseMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID);
+FSTATUS sendMemAccessGetMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 memAddr, uint8 dataLen, uint8 *memData);
+FSTATUS sendIniDescriptorGetMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, opasw_ini_descriptor_get_t *descriptors);
+FSTATUS sendSysTableAccessGetMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 sysTableIndex, uint8 dataLen, uint8 *sysTableData);
+FSTATUS sendSysTableAccessSetMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 sysTableIndex, uint8 dataLen, uint8 *sysTableData);
+FSTATUS sendPortTableAccessSetMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 portTableIndex, uint16 portNum, uint8 dataLen, uint8 *portTableData);
+FSTATUS sendGetFwVersionMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *fwVersion);
+FSTATUS sendRegisterAccessMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 regAddr, uint32 *regValue, int get);
+FSTATUS sendRebootMad(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, VENDOR_MAD *mad, uint32 delay);
+FSTATUS sendI2CAccessMad(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, uint8 jumbo, uint8 method, int timeout, uint32 locationDescriptor, uint16 dataLen, 
 						 uint16 dataOffset, uint8 *data);
-FSTATUS sendPortStatsPort1Mad(struct oib_port *port, IB_PATH_RECORD *path, PERF_MAD *mad);
-FSTATUS sendSTLPortStatsPort1Mad(struct oib_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad);
-FSTATUS sendSaveConfigMad(struct oib_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID);
+FSTATUS sendPortStatsPort1Mad(struct omgt_port *port, IB_PATH_RECORD *path, PERF_MAD *mad);
+FSTATUS sendSTLPortStatsPort1Mad(struct omgt_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad);
+FSTATUS sendSaveConfigMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID);
 uint16 getMadStatus(VENDOR_MAD *mad);
 void displayStatusMessage(uint16 madStatus);
 
-FSTATUS opaswEepromRW(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, int timeout, uint32 len, uint32 offset, uint8 *data, boolean writeData, boolean secondary);
+FSTATUS opaswEepromRW(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, int timeout, uint32 len, uint32 offset, uint8 *data, boolean writeData, boolean secondary);
 
 const char* StlPortLtpCrcModeVMAToText(uint16_t mode, char *str, size_t len);
 

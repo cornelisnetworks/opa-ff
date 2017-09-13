@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "infiniband/umad.h"
 #include "infiniband/verbs.h"
 
-#include <oib_utils.h>
+#include <opamgt_priv.h>
 
 #include "iba/ib_types.h"
 #include "iba/ib_sm.h"
@@ -53,8 +53,8 @@ PrintDest_t g_dest;
 uint64		g_mkey=0;                           // SMA M-Key
 uint8       g_verbose = 0;                      // Debug aid: data turn on global verbose => debugging
 uint32      debug_level = 0;                    // Debug aid: User passed-in clo; 0 = portdown; 1 = open-ib_utils; 2=debug for mad calls
-struct      oib_port *g_oib_port;
-uint16_t    mgmt_pkey = OIB_DEFAULT_PKEY;
+struct      omgt_port *g_omgt_port;
+uint16_t    mgmt_pkey = OMGT_DEFAULT_PKEY;
 
 #define SEND_WAIT_TIME (100)	// 100 milliseconds for sends
 #define FLUSH_WAIT_TIME (100)	// 100 milliseconds for sends/recv during flush
@@ -150,14 +150,14 @@ int get_port_info(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
 	STL_BSWAP_SMP_HEADER(smp);
 
 	{
-		struct oib_mad_addr addr = {
+		struct omgt_mad_addr addr = {
 			lid : dlid,
 			qpn : 0,
 			qkey : 0,
 			pkey : mgmt_pkey
 		};
         size_t recv_size = sizeof(*smp);
-		if (FSUCCESS != oib_send_recv_mad_no_alloc(g_oib_port, (uint8_t *)smp, sizeof(*smp), &addr,
+		if (FSUCCESS != omgt_send_recv_mad_no_alloc(g_omgt_port, (uint8_t *)smp, sizeof(*smp), &addr,
 											(uint8_t *)smp, &recv_size, RESP_WAIT_TIME, 0)) {
 			fprintf(stderr, "Failed to send MAD or receive response MAD\n");
 			return FALSE;
@@ -187,10 +187,14 @@ int get_port_info(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
 void show_port_info(const char* title, EUI64 portGuid, STL_SMP* smp)
 {
 	STL_PORT_INFO* pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
+	int32_t hfi_num = -1;
+	char hfi_name[IBV_SYSFS_NAME_MAX] = {0};
+	(void)omgt_port_get_hfi_num(g_omgt_port, &hfi_num);
+	(void)omgt_port_get_hfi_name(g_omgt_port, hfi_name);
 
 	printf("%s\n", title);
 	printf("Port %u Info on HFI %u (%.*s)\n", smp->common.AttributeModifier & 0xFF,
-		oib_get_hfi_num(g_oib_port), IBV_SYSFS_NAME_MAX, oib_get_hfi_name(g_oib_port));
+		hfi_num, IBV_SYSFS_NAME_MAX, hfi_name);
 	PrintStlPortInfo(&g_dest, 3, pPortInfo, portGuid, 0);
 }
 
@@ -314,14 +318,14 @@ FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID_32 dli
 	
 	MemoryClear(&returnedSmp, sizeof(returnedSmp));
 	{
-		struct oib_mad_addr addr = {
+		struct omgt_mad_addr addr = {
 			lid : dlid,
 			qpn : 0,
 			qkey : 0,
 			pkey : mgmt_pkey
 		};
         size_t recv_size = sizeof(returnedSmp);
-		fstatus = oib_send_recv_mad_no_alloc(g_oib_port, (uint8_t *)&smp, sizeof(smp), &addr,
+		fstatus = omgt_send_recv_mad_no_alloc(g_omgt_port, (uint8_t *)&smp, sizeof(smp), &addr,
 											(uint8_t *)&returnedSmp, &recv_size, RESP_WAIT_TIME, 0);
 	}
 	if (FSUCCESS == fstatus)
@@ -373,8 +377,12 @@ FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dp
 	{
 		snprintf(hfistr, sizeof(hfistr), " on HFI %u", hfi);
 	} else {
-		snprintf(hfistr, sizeof(hfistr), " on HFI %u (%.*s)", oib_get_hfi_num(g_oib_port),
-			IBV_SYSFS_NAME_MAX, oib_get_hfi_name(g_oib_port));
+		int32_t hfi_num;
+		char hfi_name[IBV_SYSFS_NAME_MAX] = {0};
+		(void)omgt_port_get_hfi_num(g_omgt_port, &hfi_num);
+		(void)omgt_port_get_hfi_name(g_omgt_port, hfi_name);
+		snprintf(hfistr, sizeof(hfistr), " on HFI %d (%.*s)", hfi_num,
+			IBV_SYSFS_NAME_MAX, hfi_name);
 	}
 	if (dlid) {
 		printf("%s at LID 0x%08x Port %u via local port %u (0x%016"PRIx64")%s\n",
@@ -386,14 +394,14 @@ FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dp
 	MemoryClear(&returnedSmp, sizeof(returnedSmp));
 
 	{
-		struct oib_mad_addr addr = {
+		struct omgt_mad_addr addr = {
 			lid : dlid,
 			qpn : 0,
 			qkey : 0,
 			pkey : mgmt_pkey
 		};
         size_t recv_size = sizeof(returnedSmp);
-		fstatus = oib_send_recv_mad_no_alloc(g_oib_port, (uint8_t *)smp, sizeof(*smp), &addr,
+		fstatus = omgt_send_recv_mad_no_alloc(g_omgt_port, (uint8_t *)smp, sizeof(*smp), &addr,
 											(uint8_t *)&returnedSmp, &recv_size, RESP_WAIT_TIME, 0);
 	}
 	if (FSUCCESS == fstatus)
@@ -656,26 +664,29 @@ static enum cmd_t determine_invocation(const char *argv0, char **command, const 
 	return (rc);
 }
 
-static void initialize_oib(uint8_t hfi, uint8_t port, int *port_in_hfi,
+static void initialize_opamgt(uint8_t hfi, uint8_t port, int *port_in_hfi,
 						STL_LID_32 *slid, EUI64 *portGuid)
 {
 	int status = 0;
+	uint8_t port_num;
 
-	if ((status = oib_open_port_by_num (&g_oib_port, hfi, port)) != 0) {
+	struct omgt_params params = {.debug_file = g_verbose > 2 ? stderr : NULL};
+	if ((status = omgt_open_port_by_num (&g_omgt_port, hfi, port, &params)) != 0) {
 		fprintf(stderr, "failed to open port hfi %d:%d: %s\n", hfi, port, strerror(status));
 		exit(1);
 	}
 
-	*port_in_hfi = oib_get_hfi_port_num(g_oib_port);
-	*slid = oib_get_port_lid(g_oib_port);
-	*portGuid = oib_get_port_guid(g_oib_port);
-    if (oib_find_pkey(g_oib_port, mgmt_pkey) < 0) {
+	(void)omgt_port_get_hfi_port_num(g_omgt_port, &port_num);
+	(void)omgt_port_get_port_lid(g_omgt_port, slid);
+	(void)omgt_port_get_port_guid(g_omgt_port, portGuid);
+	*port_in_hfi = port_num;
+    if (omgt_find_pkey(g_omgt_port, mgmt_pkey) < 0) {
         if (param.dlid) {
 		    fprintf(stderr, "ERROR: Local port does not have management privileges\n");
             goto error;
         }
         mgmt_pkey = 0x7fff;
-        if (oib_find_pkey(g_oib_port, mgmt_pkey) < 0) {
+        if (omgt_find_pkey(g_omgt_port, mgmt_pkey) < 0) {
 		    fprintf(stderr, "ERROR: Local port does not have management connectivity!!!\n"
                             "neither 0xffff nor 0x7fff is in pkey table???\n");
             goto error;
@@ -685,7 +696,7 @@ static void initialize_oib(uint8_t hfi, uint8_t port, int *port_in_hfi,
     return;
 
 error:
-    oib_close_port(g_oib_port);
+    omgt_close_port(g_omgt_port);
     exit(1);
 }
 
@@ -817,7 +828,6 @@ int main(int argc, char** argv)
 			/* End Long options */
 			case 'v':
 				g_verbose++;
-				if (g_verbose>2) oib_set_dbg(stderr);
 				if (g_verbose>3) umad_debug(g_verbose-3);
 				break;
 			case 'L':
@@ -952,7 +962,7 @@ int main(int argc, char** argv)
 		Usage();
 	}
 
-	initialize_oib(param.hfi, port, &param.port_in_hfi, &param.slid, &param.portGuid);
+	initialize_opamgt(param.hfi, port, &param.port_in_hfi, &param.slid, &param.portGuid);
 
 	run_stl_mode();
 

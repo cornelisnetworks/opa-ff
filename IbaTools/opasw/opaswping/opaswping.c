@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	IB_PATH_RECORD		path;
 	STL_PERF_MAD			mad;
 	FSTATUS				status;
-	struct              oib_port *oib_port_session = NULL;
+	struct              omgt_port *omgt_port_session = NULL;
 
 	// determine how we've been invoked
 	cmdName = strrchr(argv[0], '/');			// Find last '/' in path
@@ -116,7 +116,6 @@ int main(int argc, char *argv[])
 		switch (c) {
 			case 'D':
 				g_debugMode = 1;
-				oib_set_dbg(stderr);
 				break;
 
 			case 't':
@@ -140,7 +139,6 @@ int main(int argc, char *argv[])
 				break;
 
 			case 'v':
-				oib_set_dbg(stderr);
 				g_verbose = 1;
 				break;
 
@@ -189,33 +187,34 @@ int main(int argc, char *argv[])
 
 	// Get the path
 
-	status = oib_open_port_by_num(&oib_port_session, hfi, port);
+	struct omgt_params params = {.debug_file = (g_verbose || g_debugMode) ? stderr : NULL};
+	status = omgt_open_port_by_num(&omgt_port_session, hfi, port, &params);
 	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}
 
-	if (getDestPath(oib_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
+	if (getDestPath(omgt_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to get destination path\n", cmdName);
-		oib_close_port(oib_port_session);
+		omgt_close_port(omgt_port_session);
 		exit(1);
 	}
 
-	status = doPingSwitch(oib_port_session, &path, &mad);
+	status = doPingSwitch(omgt_port_session, &path, &mad);
 	if (status != FSUCCESS) {
 		if (status != FTIMEOUT) {
 			fprintf(stderr, "%s: Error: Failed to ping switch\n", cmdName);
-			oib_close_port(oib_port_session);
+			omgt_close_port(omgt_port_session);
 			exit(1);
 		} else {
 			printf("%s: Unit is not present\n", cmdName);
-			oib_close_port(oib_port_session);
+			omgt_close_port(omgt_port_session);
 			exit(0);
 		}
 	}
 
 	printf("%s: Unit is present\n", cmdName);
-	oib_close_port(oib_port_session);
+	omgt_close_port(omgt_port_session);
 	exit(0);
 
 }

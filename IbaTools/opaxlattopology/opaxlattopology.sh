@@ -174,7 +174,7 @@ n_detail=0
 fl_output_edge_leaf=1
 fl_output_spine_leaf=1
 n_verbose=2
-indent=""
+indent=4
 fl_clean=1
 ix_srcgroup=0
 ix_srcrack=0
@@ -190,6 +190,8 @@ core_full=
 rack=""
 switch=""
 leaves=""
+group_cnt=1
+rack_cnt=1
 
 # Check Bash Version for hash tables
 if (( "${BASH_VERSINFO[0]}" < 4 ))
@@ -283,7 +285,7 @@ usage_full()
   echo "                         2 - reserved" >&2
   echo "                         4 - time stamps" >&2
   echo "                         8 - reserved" >&2
-  echo "       -i level      -  output indent level (0-15, default 0)" >&2
+  echo "       -i level      -  output indent level (default 4)" >&2
   echo "       -K            -  DO NOT clean temporary files" >&2
   echo "       -s hfi_suffix -  Used on Multi-Rail or Multi-Plane fabrics" >&2
   echo "                        Can be used to override the default hfi1_0." >&2
@@ -344,10 +346,10 @@ display_progress()
 {
   if [ $n_verbose -ge 1 ]
     then
-    echo "$indent$1"
+    echo "$1"
     if [ $n_verbose -ge 4 ]
       then
-      echo "$indent  "`date`
+      echo "  "`date`
     fi
   fi
 }  # End of display_progress()
@@ -513,7 +515,7 @@ proc_group()
 
   val=0
 
-  if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
+  if [ $((n_detail & OUTPUT_GROUPS)) != 0 ] || [ $((n_detail & OUTPUT_RACKS)) != 0 ] || [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
     then
     if [ -n "$1" ]
       then
@@ -533,6 +535,7 @@ proc_group()
           rm -f -r ${tb_group[$ix]}
           mkdir ${tb_group[$ix]}
           val=$ix
+          (( group_cnt++ ))
           break
         fi
       
@@ -572,7 +575,7 @@ proc_rack()
 
   val=0
 
-  if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
+  if [ $((n_detail & OUTPUT_RACKS)) != 0 ] || [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
     then
     if [ -n "$1" ]
       then
@@ -592,6 +595,7 @@ proc_rack()
           rm -f -r $2${tb_rack[$ix]}
           mkdir $2${tb_rack[$ix]}
           val=$ix
+          (( rack_cnt++ ))
           break
         fi
       
@@ -727,7 +731,7 @@ do
     ;;
 
   i)
-    indent=`echo "                    " | cut -b -$OPTARG`
+    indent=$OPTARG
     ;;
 
   K)
@@ -1194,15 +1198,10 @@ do
         else
           leaves=`cat $core_group/$FILE_NODELEAVES | tr '\012' '|' | sed -e 's/|$//'`
         fi
-        if [ $core_size == 288 ]
-          then
-	  generate_linksum_nocable $FILE_LINKSUM_SWD06
-        else
-	  generate_linksum_nocable $FILE_LINKSUM_SWD24
-        fi
-        cat "$core_group"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
-        cat "$core_group"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
-        cat "$core_group"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/${FILE_NODECHASSIS}
+        cp ${FILE_LINKSUM_NOCABLE} "$core_group"/${FILE_LINKSUM_NOCABLE}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/${FILE_NODECHASSIS}
       fi
 
       if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
@@ -1213,15 +1212,10 @@ do
         else
           leaves=`cat "$core_group"/"$core_rack"/$FILE_NODELEAVES | tr '\012' '|' | sed -e 's/|$//'`
         fi
-        if [ $core_size == 288 ]
-          then
-	  generate_linksum_nocable $FILE_LINKSUM_SWD06
-        else
-	  generate_linksum_nocable $FILE_LINKSUM_SWD24
-        fi
-        cat "$core_group"/"$core_rack"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
-        cat "$core_group"/"$core_rack"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
-        cat "$core_group"/"$core_rack"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODECHASSIS}
+        cp ${FILE_LINKSUM_NOCABLE} "$core_group"/"$core_rack"/${FILE_LINKSUM_NOCABLE}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODECHASSIS}
       fi
 
     # End of core switch information
@@ -1297,13 +1291,13 @@ do
           cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> ${FILE_NODESWITCHES}
           if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
             then
-            cat "${core_name_group["$core_name"]}"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "${core_name_group["$core_name"]}"/${FILE_NODESWITCHES}
-            cat "$core_group"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "${core_name_group["$core_name"]}"/${FILE_NODESWITCHES}
+            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
           fi
           if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
             then
-            cat "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
-            cat "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
+            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
+            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
           fi
         fi
         leaf_array=()
@@ -1371,125 +1365,53 @@ done < <( cat $FILE_TOPOLOGY_LINKS | tr -d '\015' )  # End of while read ... do
 
 # Generate topology file(s)
 display_progress "Generating $FILE_TOPOLOGY_OUT file(s)"
+
 # Generate top-level topology file
 gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
 
 # Output rack groups
-if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
-  then
-  # Loop through rack groups
-  for (( ix=1 ; $ix<$MAX_GROUPS ; ix=$((ix+1)) ))
-  do
-    if [ -n "${tb_group[$ix]}" ]
-      then
-      cd ${tb_group[$ix]}
-      gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
+if [ "$n_detail" != "0" ]; then
+  # iterate through groups
+  for (( iy=1 ; $iy<$group_cnt ; iy=$((iy+1)) )); do
 
-      if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
-        then
-        # Loop through racks
-        for rack in *
-        do
-          if [ -d $rack ]
-            then
-            cd $rack
+    if [ -d "${tb_group[$iy]}" ]; then
+      cd ${tb_group[$iy]}
+
+      if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]; then
+        gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
+      fi
+
+      # iterate through racks
+      for (( ix=1 ; $ix<$rack_cnt ; ix=$((ix+1)) )); do
+        if [ -d "${tb_rack[$ix]}" ]; then
+          cd ${tb_rack[$ix]}
+
+          if [ $((n_detail & OUTPUT_RACKS)) != 0 ]; then
             gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
+          fi
 
-            if [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
-              then
-              # Loop through switches
-              for switch in *
-              do
-                if [ -d $switch ]
-                  then
-                  cd $switch
-                  gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
-                  cd ..
-                fi  # End of if [ -d $switch ]
+          # iterate through switches
+          if [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]; then
+            for switch in *; do
+              if [ -d $switch ]; then
+                cd $switch
+                gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
+                cd ..
+              fi # switch directory create
+            done  # next switch
+          fi # switch detail
 
-              done  # End of for switch in *
+          cd .. # go up to group directory
+        fi # end rack topology create
+      done # next rack
+      cd .. # go up to base directory
+    fi # rack detail
+  done # next group
 
-            fi  # End of if [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
+fi # detail output
 
-            cd ..
-
-          fi  # End of if [ -d $rack ]
-
-        done  # End of for rack in *
-
-      fi  # End of if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
-
-      cd ..
-
-    elif [ $ix == 1 ]
-      then
-      echo "Must specify Rack Group names when outputting Rack Groups"
-      usage_full "2"
-    fi  # End of if [ -n "${tb_group[$ix]}" ]
-
-  done  # End of for (( ix=1 ; $ix<$MAX_GROUPS ; ix=$((ix+1)) ))
-
-# Output racks without rack groups
-elif [ $((n_detail & OUTPUT_RACKS)) != 0 ]
-  then
-  # Loop through racks
-  for (( ix=1 ; $ix<$MAX_RACKS ; ix=$((ix+1)) ))
-  do
-    if [ -n "${tb_rack[$ix]}" ]
-      then
-      cd ${tb_rack[$ix]}
-      gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
-
-      if [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
-        then
-        # Loop through switches
-        for switch in *
-        do
-          if [ -d $switch ]
-            then
-            cd $switch
-            gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
-            cd ..
-          fi  # End of if [ -d $switch ]
-
-        done  # End of for switch in *
-
-      fi  # End of if [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
-
-      cd ..
-
-    elif [ $ix == 1 ]
-      then
-      echo "Must specify Rack names when outputting Racks"
-      usage_full "2"
-    fi  # End of if [ -n "${tb_rack[$ix]}" ]
-
-  done  # End of for (( ix=1 ; $ix<$MAX_RACKS ; ix=$((ix+1)) ))
-
-# Output switches without racks or rack groups
-elif [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
-  then
-  # Loop through switches
-  for (( ix=1 ; $ix<$MAX_SWITCHES ; ix=$((ix+1)) ))
-  do
-    if [ -n "${tb_switch[$ix]}" ]
-      then
-      cd ${tb_switch[$ix]}
-      gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
-      cd ..
-
-    elif [ $ix == 1 ]
-      then
-      echo "Must specify Switch names when outputting Switches"
-      usage_full "2"
-    fi  # End of if [ -n "${tb_switch[$ix]}" ]
-
-  done  # End of for (( ix=1 ; $ix<$MAX_SWITCHES ; ix=$((ix+1)) ))
-
-fi  # End of if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
-
-# trim leading and trailing whitespace from tag contents
-$XML_INDENT -t $FILE_TOPOLOGY_OUT > $FILE_TEMP
+# trim leading and trailing whitespace from tag contents and add indent
+$XML_INDENT -t $FILE_TOPOLOGY_OUT -i $indent > $FILE_TEMP
 cat $FILE_TEMP > $FILE_TOPOLOGY_OUT
 rm -f $FILE_TEMP
 

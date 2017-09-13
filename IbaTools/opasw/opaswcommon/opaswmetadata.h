@@ -210,9 +210,9 @@ extern int variableSettingsMetaDataSize;
 
 int32 getMetaDataIndexByField (table_meta_data_t *table, int tableSize, const char *field);
 FSTATUS parseDataTable(table_meta_data_t *metaData, uint8 *dataBuffer, uint16 tableLen, table_parsed_data_t *parsedData, int showme);
-uint32 getModuleType(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID);
-uint32 getNumPorts(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID);
-FSTATUS getNodeDescription(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, uint8 *nodeDesc);
-FSTATUS getGuid(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, EUI64 *guid, int which);
+uint32 getModuleType(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID);
+uint32 getNumPorts(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID);
+FSTATUS getNodeDescription(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, uint8 *nodeDesc);
+FSTATUS getGuid(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, EUI64 *guid, int which);
 
 #endif /* _XEDGE_METADATA_H_ */

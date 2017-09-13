@@ -8,6 +8,7 @@ Url: http://www.intel.com/
 Source: opa-mpi-apps.tgz
 
 AutoReq: no
+__RPM_REQ
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 

@@ -1,6 +1,6 @@
 Name: opa
-Version: 10.4.0.0
-Release: 197%{?dist}
+Version: 10.5.0.0
+Release: 140%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
@@ -32,19 +32,34 @@ Summary: Management level tools and scripts.
 Group: System Environment/Libraries
 Requires: opa-basic-tools
 
-Requires: __RPM_RQ2
-
 %description fastfabric
 Contains tools for managing fabric on a managment node.
 
 %package address-resolution
 Summary: Contains Address Resolution manager
 Group: System Environment/Libraries
-Requires: opa-basic-tools
+Requires: opa-basic-tools ibacm
 
 %description address-resolution
 This package contains the ibacm distributed SA provider (dsap) for name and address resolution on OPA platform.
 It also contains the library and tools to access the shared memory database exported by dsap.
+
+%package libopamgt
+Summary: Omni-Path management API library
+Group: System Environment/Libraries
+Requires: __RPM_RQ2
+
+%description libopamgt
+This package contains the library necessary to build applications that interface with an Omni-Path FM.
+
+
+%package libopamgt-devel
+Summary: Omni-Path library development headers
+Group: System Environment/Libraries
+Requires: opa-libopamgt
+
+%description libopamgt-devel
+This package contains the necessary headers for opamgt development.
 
 %prep
 #rm -rf %{_builddir}/*
@@ -57,7 +72,7 @@ cd OpenIb_Host
 
 
 %install
-BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=%{_libdir} ./OpenIb_Host/ff_install.sh
+BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=/usr/lib ./OpenIb_Host/ff_install.sh
 
 %post address-resolution -p /sbin/ldconfig
 %postun address-resolution -p /sbin/ldconfig
@@ -66,9 +81,18 @@ BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=%{_libdir} ./OpenIb_Host/ff_in
 cd /usr/src/opa/mpi_apps >/dev/null 2>&1
 make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from the make clean.
 
-%files basic-tools -f %{_builddir}/basic_file.list
+%post libopamgt -p /sbin/ldconfig
+%postun libopamgt -p /sbin/ldconfig
 
-%files fastfabric -f %{_builddir}/ff_file.list
+%preun libopamgt-devel
+cd /usr/src/opamgt >/dev/null 2>&1
+make -k clean >/dev/null 2>&1 || :
+
+%files basic-tools
+__RPM_BASIC_FILES
+
+%files fastfabric
+__RPM_FF_FILES
 %{_sysconfdir}/opa/opamon.si.conf
 # Replace opamon.si.conf, as it's a template config file.
 %config(noreplace) %{_sysconfdir}/opa/opafastfabric.conf
@@ -88,8 +112,8 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 %{_bindir}/opa_osd_exercise
 %{_bindir}/opa_osd_perf
 %{_bindir}/opa_osd_query
-%{_libdir}/ibacm
-%{_libdir}/libopasadb.so.*
+/usr/lib/ibacm
+/usr/lib/libopasadb.so.*
 %{_includedir}/infiniband
 %{_mandir}/man1/opa_osd_dump.1*
 %{_mandir}/man1/opa_osd_exercise.1*
@@ -97,6 +121,16 @@ make -k clean >/dev/null 2>&1 || : # suppress all errors and return codes from t
 %{_mandir}/man1/opa_osd_query.1*
 %config(noreplace) %{_sysconfdir}/rdma/dsap.conf
 
+%files libopamgt
+/usr/lib/libopamgt.*
+
+
+%files libopamgt-devel
+%{_includedir}/opamgt
+/usr/src/opamgt
+
 %changelog
+* Thu Apr 13 2017 Scott Breyer <scott.j.breyer@intel.com> - 10.5.0.0
+- Updates for spec file cleanup
 * Fri Oct 10 2014 Erik E. Kahn <erik.kahn@intel.com> - 1.0.0-ifs
 - Initial version

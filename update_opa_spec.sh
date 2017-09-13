@@ -30,15 +30,8 @@
 
 #[ICS VERSION STRING: unknown]
 
-if [ ! -f /etc/os-release ]
-then
-	echo No such file /etc/os-release
-	echo Pleae contact Intel support
-	exit 1
-fi
-
-id=$(grep ^ID= /etc/os-release | cut -f2 -d\")
-versionid=$(grep ^VERSION_ID= /etc/os-release | cut -f2 -d\")
+id=$(./get_id_and_versionid.sh | cut -f1 -d' ')
+versionid=$(./get_id_and_versionid.sh | cut -f2 -d' ')
 
 from=$1
 to=$2
@@ -54,15 +47,16 @@ then
 	cp $from $to
 fi
 
+
+source ./OpenIb_Host/ff_filegroups.sh
+
 if [ "$id" = "rhel" ]
 then
-	sed -i "s/__RPM_REQ/expect%{?_isa}, tcl%{?_isa}/g" $to
-	sed -i "s/__RPM_RQ2/atlas/g" $to
+	sed -i "s/__RPM_REQ/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}, libibmad%{?_isa}/g" $to
+	sed -i "s/__RPM_RQ2/libibumad/g" $to
 	sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" $to
 	sed -i "/__RPM_DEBUG/,+1d" $to
-fi
-
-if [ "$id" = "sles" ]
+elif [ "$id" = "sles" ]
 then
 	st=$(echo "$versionid >= 11.1" | bc)
 	if [ $st = 1 ]
@@ -71,9 +65,82 @@ then
 	else
 		sed -i "/__RPM_DEBUG/,+1d" $to
 	fi
-	sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1/g" $to
+	sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
 	sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" $to
-	sed -i "/__RPM_RQ2/,+1d" $to
+	sed -i "s/__RPM_RQ2/libibumad3/g" $to
+else
+	echo ERROR: Unsupported distribution: $id $versionid
+	exit 1
 fi
+
+> .tmpspec
+while read line
+do
+	if [ "$line" = "__RPM_BASIC_FILES" ]
+	then
+		for i in $basic_tools_sbin $basic_tools_sbin_sym
+		do
+			echo "%{_sbindir}/$i" >> .tmpspec
+		done
+		for i in $basic_tools_opt
+		do
+			echo "/usr/lib/opa/tools/$i" >> .tmpspec
+		done
+		for i in $basic_lib_opa_opt
+		do
+			echo "/usr/lib/opa/$i" >> .tmpspec
+		done
+		for i in $basic_mans
+		do
+			echo "%{_mandir}/man1/${i}.gz" >> .tmpspec
+		done
+	else
+		echo "$line" >> .tmpspec
+	fi
+done < $to
+mv .tmpspec $to
+
+> .tmpspec
+while read line
+do
+	if [ "$line" = "__RPM_FF_FILES" ]
+	then
+		for i in $ff_tools_sbin opafmconfigcheck opafmconfigdiff
+		do
+			echo "%{_sbindir}/$i" >> .tmpspec
+		done
+		for i in $ff_tools_opt $ff_tools_misc $ff_tools_exp $ff_libs_misc
+		do
+			echo "/usr/lib/opa/tools/$i" >> .tmpspec
+		done
+		for i in $help_doc
+		do
+			echo "/usr/share/opa/help/$i" >> .tmpspec
+		done
+		for i in $ff_tools_fm
+		do
+			echo "/usr/lib/opa/fm_tools/$i" >> .tmpspec
+		done
+		for i in $ff_iba_samples
+		do
+			echo "/usr/share/opa/samples/$i" >> .tmpspec
+		done
+		for i in $ff_mans
+		do
+			echo "%{_mandir}/man8/${i}.gz" >> .tmpspec
+		done
+		for i in $mpi_apps_files
+		do
+			echo "/usr/src/opa/mpi_apps/$i" >> .tmpspec
+		done
+		for i in $shmem_apps_files
+		do
+			echo "/usr/src/opa/shmem_apps/$i" >> .tmpspec
+		done
+	else
+		echo "$line" >> .tmpspec
+	fi
+done < $to
+mv .tmpspec $to
 
 exit 0

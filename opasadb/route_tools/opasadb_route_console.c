@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ib_ibt.h"
 
-#include "oib_utils.h"
+#include "opamgt_priv.h"
 #include "opasadb_route2.h"
 #include "statustext.h"
 
@@ -1008,7 +1008,7 @@ int main(int argc, char ** argv)
 	struct op_route_param_alloc_port_guid_entry * p_param_port_guid;
 	struct op_route_param_alloc_job_list_entry * p_param_job_list;
 	struct op_route_job_info * p_job_info;
-	struct oib_port *oib_port_session = NULL;
+	struct omgt_port *omgt_port_session = NULL;
 
 	// Initialize allocated parameters
 	if ( op_route_init_param( &param_port_guid,
@@ -1150,7 +1150,7 @@ int main(int argc, char ** argv)
 		connect_portguid = *(uint64_t *)p_param_port_guid->bf_data;
 	}
 
-	fstatus = oib_open_port_by_guid(&oib_port_session, connect_portguid);
+	fstatus = omgt_open_port_by_guid(&omgt_port_session, connect_portguid, NULL);
 	if (fstatus != FSUCCESS) {
 		fprintf(stderr, "Unable to open fabric interface.\n");
 		err_usage();
@@ -1164,7 +1164,7 @@ int main(int argc, char ** argv)
 	{
 		port_guid = *(uint64_t *)p_param_port_guid->bf_data;
 
-		if ( (rstatus = op_route_open(oib_port_session, port_guid, &port_handle)) !=
+		if ( (rstatus = op_route_open(omgt_port_session, port_guid, &port_handle)) !=
 				OP_ROUTE_STATUS_OK )
 		{
 			fprintf( stderr, NAME_PROG ": open Error:%s, GUID:0x%"PRIX64"\n",
@@ -1179,7 +1179,7 @@ int main(int argc, char ** argv)
 				err_usage();
 			}
 
-		if ( (rstatus = op_route_get_job_list(port_handle, oib_port_session, &job_list)) !=
+		if ( (rstatus = op_route_get_job_list(port_handle, omgt_port_session, &job_list)) !=
 				OP_ROUTE_STATUS_OK )
 		{
 			fprintf( stderr, NAME_PROG ": show Error:%s, can't get job list\n",
@@ -1263,7 +1263,7 @@ int main(int argc, char ** argv)
 
 					if (fb_showguidswitch)
 						if ( ( rstatus = op_route_get_portguid_vec( port_handle,
-								p_job_info->job_id, oib_port_session, &portguid_vec ) ) !=
+								p_job_info->job_id, omgt_port_session, &portguid_vec ) ) !=
 								OP_ROUTE_STATUS_OK )
 						{
 							fprintf( stderr, NAME_PROG
@@ -1274,7 +1274,7 @@ int main(int argc, char ** argv)
 
 					if (fb_showguidswitch || fb_showcost)
 						if ( ( rstatus = op_route_get_switch_map( port_handle,
-								p_job_info->job_id, oib_port_session, &switch_map ) ) !=
+								p_job_info->job_id, omgt_port_session, &switch_map ) ) !=
 								OP_ROUTE_STATUS_OK )
 						{
 							fprintf( stderr, NAME_PROG
@@ -1299,7 +1299,7 @@ int main(int argc, char ** argv)
 					if (fb_showcost)
 					{
 						if ( ( rstatus = op_route_get_cost_matrix( port_handle,
-								p_job_info->job_id, oib_port_session, &p_cost_matrix ) ) !=
+								p_job_info->job_id, omgt_port_session, &p_cost_matrix ) ) !=
 								OP_ROUTE_STATUS_OK )
 						{
 							fprintf( stderr, NAME_PROG
@@ -1375,7 +1375,7 @@ int main(int argc, char ** argv)
 					if (fb_showuse)
 					{
 						if ( ( rstatus = op_route_get_use_matrix( port_handle,
-								p_job_info->job_id, oib_port_session, &use_matrix ) ) !=
+								p_job_info->job_id, omgt_port_session, &use_matrix ) ) !=
 								OP_ROUTE_STATUS_OK )
 						{
 							fprintf( stderr, NAME_PROG
@@ -1459,7 +1459,7 @@ int main(int argc, char ** argv)
 						p_job_info->job_id, p_job_info->params.name );
 
 					if ( ( rstatus = op_route_complete_job( port_handle,
-							p_job_info->job_id, oib_port_session ) ) != OP_ROUTE_STATUS_OK )
+							p_job_info->job_id, omgt_port_session ) ) != OP_ROUTE_STATUS_OK )
 						{
 							fprintf( stderr, NAME_PROG
 								": clear Error:%s, can't complete job ID:%"PRIX64"\n",
@@ -1501,8 +1501,8 @@ int main(int argc, char ** argv)
 	op_route_free_param(&param_job_list);
 	op_route_free_param(&param_job_id);
 
-	if (oib_port_session != NULL) {
-		oib_close_port(oib_port_session);
+	if (omgt_port_session != NULL) {
+		omgt_close_port(omgt_port_session);
 	}
 
 	printf("--------------------------------------------------\n");

@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* [ICS VERSION STRING: unknown] */
 
-#include <oib_utils.h>
+#include <opamgt_priv.h>
 
 #include "opasmaquery.h"
 
@@ -40,9 +40,12 @@ static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod
 {
 	FSTATUS status;
 	uint32_t dlid;
-    uint8_t sl;
-
-    sl   = args->sl==0xff?DEFAULT_PMA_SL:args->sl;  // check if sl has been set, if not use default sl
+	uint8_t sl = args->sl;
+	uint8_t port_state;
+	if (sl == 0xff) {
+		// check if sl has been set, if not use default sl (SM SL)
+		(void)omgt_port_get_port_sm_sl(args->omgt_port, &sl);
+	}
 
 	mad->common.BaseVersion = STL_BASE_VERSION;
 	mad->common.ClassVersion = STL_PM_CLASS_VERSION;
@@ -54,19 +57,23 @@ static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod
 	mad->common.TransactionID = (++g_transactID);
 	mad->common.AttributeModifier = attrmod;
 
-	if (oib_get_port_state(args->oib_port) != IB_PORT_ACTIVE) {
+	(void)omgt_port_get_port_state(args->omgt_port, &port_state);
+	if (port_state != IB_PORT_ACTIVE) {
+		uint8_t port_num;
+		char hfi_name[IBV_SYSFS_NAME_MAX] = {0};
+		(void)omgt_port_get_hfi_port_num(args->omgt_port, &port_num);
+		(void)omgt_port_get_hfi_name(args->omgt_port, hfi_name);
 		fprintf(stderr, "WARNING port (%s:%d) is not ACTIVE!\n",
-			oib_get_hfi_name(args->oib_port),
-			oib_get_hfi_port_num(args->oib_port));
-    	dlid = args->dlid?args->dlid:STL_LID_PERMISSIVE;// perm lid for local query
+			hfi_name, port_num);
+		dlid = args->dlid ? args->dlid : STL_LID_PERMISSIVE; // perm lid for local query
 	} else {
-	    dlid = args->dlid?args->dlid:args->slid;	// use slid for local query
+		dlid = args->dlid ? args->dlid : args->slid; // use slid for local query
 	}
 
     // Determine which pkey to use (full or limited)
     // Attempt to use full at all times, otherwise, can
     // use the limited for queries of the local port.
-    uint16_t pkey = oib_get_mgmt_pkey(args->oib_port, args->dlid, args->drpaths);
+    uint16_t pkey = omgt_get_mgmt_pkey(args->omgt_port, args->dlid, args->drpaths);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -80,7 +87,7 @@ static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod
 
 	BSWAP_MAD_HEADER((MAD*)mad);
 	{
-		struct oib_mad_addr addr = {
+		struct omgt_mad_addr addr = {
 			lid  : dlid,
 			qpn  : 1,
 			qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -88,7 +95,7 @@ static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod
             sl   : sl
 		};
         size_t recv_size = sizeof(*mad);
-		status = oib_send_recv_mad_no_alloc(args->oib_port, (uint8_t *)mad, send_size+sizeof(MAD_COMMON), &addr,
+		status = omgt_send_recv_mad_no_alloc(args->omgt_port, (uint8_t *)mad, send_size+sizeof(MAD_COMMON), &addr,
 											(uint8_t *)mad, &recv_size, RESP_WAIT_TIME, 0);
 	}
 	BSWAP_MAD_HEADER((MAD*)mad);
@@ -184,7 +191,7 @@ static boolean stl_pma_get_class_port_info(argrec *args, uint8_t *pm, size_t pm_
 	STL_CLASS_PORT_INFO *pClassPortInfo = (STL_CLASS_PORT_INFO *)&(mad->PerfData);
 	MemoryClear(mad, sizeof(*mad));
 
-	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_GET, MCLASS_ATTRIB_ID_CLASS_PORT_INFO, 0, args, mad, 0))) {
+	if ( FSUCCESS != (status = perform_stl_pma_query (MMTHD_GET, STL_PM_ATTRIB_ID_CLASS_PORTINFO, 0, args, mad, 0))) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_PMA_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	} else {
@@ -401,7 +408,7 @@ void pma_Usage(boolean displayAbridged)
 	fprintf(stderr, "    -o otype Output type. See below for list.\n");
 	fprintf(stderr, "    -v       Verbose output. Can be specified more than once for\n");
 	fprintf(stderr, "             additional openib debugging and libibumad debugging.\n");
-    fprintf(stderr, "    -s       Specify different Service Level (default is %u)\n", DEFAULT_PMA_SL);
+    fprintf(stderr, "    -s       Specify different Service Level (default is SM SL)\n");
 	fprintf(stderr, "    -l lid   Destination lid, default is local port\n");
 	fprintf(stderr, "    -h hfi   hfi, numbered 1..n, 0= -p port will be a\n");
 	fprintf(stderr, "             system wide port num (default is 0)\n");

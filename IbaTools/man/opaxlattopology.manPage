@@ -170,7 +170,7 @@ If set, it overrides default MTU on switch-to-switch links. Default = 10240
 .TP 10
 \fBMTU\(ulSW\(ulHFI\fR 
 .NL
-If set, it overrides default MTU on switch-to-HFI links. Default = 8192
+If set, it overrides default MTU on switch-to-HFI links. Default = 10240
 
 .SH Creating linksum Files
 .NL

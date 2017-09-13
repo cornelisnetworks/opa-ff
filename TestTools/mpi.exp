@@ -474,7 +474,6 @@ proc test_case_run_intelmpi_mpi_app { transport host host_list timelimit dir mpi
 		}
 
 		if { [ catch {unix_cmd 20 0 "test -e $env(FF_MPI_APPS_DIR)/intelmpi.params"} res ] == 0 } {
-			set paramfile "-configfile $env(FF_MPI_APPS_DIR)/intelmpi.params"
 			unix_cmd 20 0 ". $env(FF_MPI_APPS_DIR)/intelmpi.params"
 			unix_cmd 20 "" {echo MPI_CMD_ARGS="$MPI_CMD_ARGS"}
 		} else {

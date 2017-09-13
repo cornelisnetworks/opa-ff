@@ -34,33 +34,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ib_types.h"
 #include "ib_pa.h"
-
-#include "fe_connections.h"
 #include "iba/ib_generalServices.h"
+#include "opamgt.h"
 
 extern int g_verbose;
 
-STL_CLASS_PORT_INFO *
-fe_pa_classportinfo_response_query(struct net_connection *connection);
-FSTATUS fe_GetGroupList(struct net_connection *connection);
-FSTATUS fe_GetGroupInfo(struct net_connection *connection, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
-FSTATUS fe_GetGroupConfig(struct net_connection *connection, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
-FSTATUS fe_GetPortCounters(struct net_connection *connection, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCtrsFlag, uint64 imageNumber, int32 imageOffset, uint32_t begin, uint32_t end);
-FSTATUS fe_ClrPortCounters(struct net_connection *connection, uint32_t nodeLid, uint8_t portNumber, uint32_t selectFlag);
-FSTATUS fe_ClrAllPortCounters(struct net_connection *connection, uint32_t selectFlag);
-FSTATUS fe_GetPMConfig(struct net_connection *connection);
-FSTATUS fe_FreezeImage(struct net_connection *connection, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
-FSTATUS fe_ReleaseImage(struct net_connection *connection, uint64 imageNumber, int32 imageOffset);
-FSTATUS fe_RenewImage(struct net_connection *connection, uint64 imageNumber, int32 imageOffset);
-FSTATUS fe_MoveFreeze(struct net_connection *connection, uint64 imageNumber, int32 imageOffset, uint64 moveImageNumber, int32 moveImageOffset);
-FSTATUS fe_GetFocusPorts(struct net_connection *connection, char *groupName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
-FSTATUS fe_GetImageInfo(struct net_connection *connection, uint64 imageNumber, int32 imageOffset, uint32_t imageTime);
-STL_CLASS_PORT_INFO * fe_GetClassPortInfo(struct net_connection *connection);
-FSTATUS fe_GetVFList(struct net_connection *connection);
-FSTATUS fe_GetVFInfo(struct net_connection *connection, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
-FSTATUS fe_GetVFConfig(struct net_connection *connection, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
-FSTATUS fe_GetVFPortCounters(struct net_connection *connection, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, char *vfName, uint64 imageNumber, int32 imageOffset, uint32_t begin, uint32_t end);
-FSTATUS fe_ClrVFPortCounters(struct net_connection *connection, uint32_t nodeLid, uint8_t portNumber, uint32_t selectFlag, char *vfName);
-FSTATUS fe_GetVFFocusPorts(struct net_connection *connection, char *vfName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
+FSTATUS fe_GetGroupList(struct omgt_port *port);
+FSTATUS fe_GetGroupInfo(struct omgt_port *port, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
+FSTATUS fe_GetGroupConfig(struct omgt_port *port, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
+FSTATUS fe_GetPortCounters(struct omgt_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCtrsFlag, uint64 imageNumber, int32 imageOffset, uint32_t begin, uint32_t end);
+FSTATUS fe_ClrPortCounters(struct omgt_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t selectFlag);
+FSTATUS fe_ClrAllPortCounters(struct omgt_port *port, uint32_t selectFlag);
+FSTATUS fe_GetPMConfig(struct omgt_port *port);
+FSTATUS fe_FreezeImage(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
+FSTATUS fe_ReleaseImage(struct omgt_port *port, uint64 imageNumber, int32 imageOffset);
+FSTATUS fe_RenewImage(struct omgt_port *port, uint64 imageNumber, int32 imageOffset);
+FSTATUS fe_MoveFreeze(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, uint64 moveImageNumber, int32 moveImageOffset);
+FSTATUS fe_GetFocusPorts(struct omgt_port *port, char *groupName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
+FSTATUS fe_GetImageInfo(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, uint32_t imageTime);
+FSTATUS fe_GetVFList(struct omgt_port *port);
+FSTATUS fe_GetVFInfo(struct omgt_port *port, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
+FSTATUS fe_GetVFConfig(struct omgt_port *port, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
+FSTATUS fe_GetVFPortCounters(struct omgt_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, char *vfName, uint64 imageNumber, int32 imageOffset, uint32_t begin, uint32_t end);
+FSTATUS fe_ClrVFPortCounters(struct omgt_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t selectFlag, char *vfName);
+FSTATUS fe_GetVFFocusPorts(struct omgt_port *port, char *vfName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, uint32 imageTime);
 
 #endif /* FE_PA_INCLUDE */

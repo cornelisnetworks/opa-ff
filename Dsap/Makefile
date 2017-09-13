@@ -117,11 +117,11 @@ LDLOCAL	= -Wl,--export-dynamic -Wl,--version-script=libdsap.map
 
 COMMON_SRCDIR=.
 CLOCAL=$(CIBACCESS) $(CPIC)
-LOCALDEPLIBS=$(IBACCESS_USER_LIBS) oib_utils
+LOCALDEPLIBS=$(IBACCESS_USER_LIBS) opamgt-priv
 LOCAL_INCLUDE_DIRS= $(COMMON_SRCDIR) 
 # opasadb is a shared library, don't need in LOCALDEPLIBS
 LOCALLIBS=$(OPENIB_USER_LIBS) opasadb rt
-LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS) /usr/lib64
+LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
 
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makerules.project
 #=============================================================================#

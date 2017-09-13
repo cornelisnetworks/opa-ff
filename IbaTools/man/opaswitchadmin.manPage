@@ -240,6 +240,11 @@ Maximum concurrent operations.
 .NL
 Serialize output of parallel operations (yes or no).
 
+.TP 10
+\fBFF\(ulTIMEOUT\(ulMULT\fR 
+.NL
+Multiplier for all timeouts associated with this command. Used if the systems are slow for some reason.
+
 .SH Details
 .NL
 

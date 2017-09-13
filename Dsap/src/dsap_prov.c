@@ -78,7 +78,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __USE_GNU
 #include <search.h> 
 
-#include <oib_utils.h>
+#include <opamgt_priv.h>
 #include "iba/ibt.h"
 #include "opasadb_debug.h"
 #include "dsap.h"
@@ -331,6 +331,7 @@ static void dsap_port_up(struct dsap_port *port)
 
 	/* Start the notification thread */
 	if (dsap_notification_register_port(port) != FSUCCESS) {
+		dsap_terminate_notification(port);
 		acm_log(0, "Failed to register port for notification\n");
 		return;
 	}

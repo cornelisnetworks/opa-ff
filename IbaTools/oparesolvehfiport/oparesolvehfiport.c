@@ -39,9 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <getopt.h>
 
 #include <iba/ibt.h>
-#include <oib_utils.h>
-
-extern int oib_get_hfiNum (IN char * hfiName);
+#include <opamgt_priv.h>
 
 void Usage(int exitcode)
 {
@@ -126,7 +124,7 @@ int main(int argc, char ** argv)
 	}
 
 	// find portGuid specified
-	fstatus = oib_get_portguid(hfi, port, NULL, NULL, &portGuid, NULL, NULL,
+	fstatus = omgt_get_portguid(hfi, port, NULL, NULL, NULL, &portGuid, NULL, NULL,
 								&caCount, &portCount, fiName, &caPort, NULL);
 
 	if (FNOT_FOUND == fstatus) {
@@ -134,13 +132,13 @@ int main(int argc, char ** argv)
 			iba_format_get_portguid_error(hfi, port, caCount, portCount));
 		return 1;
 	} else if (FSUCCESS != fstatus) {
-		fprintf(stderr, "opasaquery: iba_get_portguid Failed: %s\n", iba_fstatus_msg(fstatus));
+		fprintf(stderr, "opasaquery: omgt_get_portguid Failed: %s\n", iba_fstatus_msg(fstatus));
 		return 1;
 	}
     //printf("PORT GUID 0x%016"PRIx64"\n",portGuid);
 
 	if(hfiNum_out) {
-		hfiNum = oib_get_hfiNum(fiName);
+		hfiNum = omgt_get_hfi_num(fiName);
 		printf("%d\n", hfiNum);
 	}
 	else if(devName_out) {

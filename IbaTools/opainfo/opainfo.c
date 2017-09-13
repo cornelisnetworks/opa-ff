@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils.h"
+#include "opamgt_priv.h"
 #include "ibprint.h"
 #include "stl_print.h"
 #include "iba/stl_pm.h"
@@ -61,6 +61,7 @@ unsigned g_verbose = 0;
 uint64_t g_transactID = 0xffffffff1234000;	// Upper half overwritten by umad
 uint16_t g_pkey;	// mgmt pkey to use
 uint8_t g_cableInfo[STL_CIB_STD_LEN];
+uint8_t g_pm_sl = 0xFF;
 
 #if defined(DBGPRINT)
 #undef DBGPRINT
@@ -68,11 +69,14 @@ uint8_t g_cableInfo[STL_CIB_STD_LEN];
 #define VRBSE_PRINT(format, args...) do { if (g_verbose) { fflush(stdout); fprintf(stdout, format, ##args); } } while (0)
 #define DBGPRINT(format, args...) do { if (g_verbose>1) { fflush(stdout); fprintf(stderr, format, ##args); } } while (0)
 
-const char *get_port_name(struct oib_port *portHandle)
+const char *get_port_name(struct omgt_port *portHandle)
 {
 	static char buf[IBV_SYSFS_NAME_MAX + 6];
-
-	sprintf(buf, "%.*s:%u", IBV_SYSFS_NAME_MAX, oib_get_hfi_name(portHandle), oib_get_hfi_port_num(portHandle));
+	char hfi_name[IBV_SYSFS_NAME_MAX] = {0};
+	uint8_t port_num;
+	(void)omgt_port_get_hfi_port_num(portHandle, &port_num);
+	(void)omgt_port_get_hfi_name(portHandle, hfi_name);
+	sprintf(buf, "%.*s:%u", IBV_SYSFS_NAME_MAX, hfi_name, port_num);
 	return buf;
 }
 
@@ -90,7 +94,7 @@ void stl_set_local_route(OUT STL_SMP* smp)
 }
 
 
-FSTATUS perform_local_stl_sma_query( IN struct oib_port *portHandle,
+FSTATUS perform_local_stl_sma_query( IN struct omgt_port *portHandle,
 						   IN uint16 attrid,
 						   IN uint32 attrmod,
 						   OUT STL_SMP* smp )
@@ -108,14 +112,15 @@ FSTATUS perform_local_stl_sma_query( IN struct oib_port *portHandle,
 
 	STL_BSWAP_SMP_HEADER(smp);
 	{
-		struct oib_mad_addr addr = {
+		struct omgt_mad_addr addr = {
 			.lid = 0,
 			.qpn = 0,
 			.qkey = 0,
 			.pkey = g_pkey
 		};
         size_t recv_size = sizeof(*smp);
-		status = oib_send_recv_mad_no_alloc(portHandle, (uint8_t *)smp, sizeof(*smp), &addr,
+		size_t send_size = STL_MIN_SMP_DR_MAD; // no payload.
+		status = omgt_send_recv_mad_no_alloc(portHandle, (uint8_t *)smp, send_size, &addr,
 											(uint8_t *)smp, &recv_size, RESP_WAIT_TIME, MAD_ATTEMPTS-1);
 		if (FSUCCESS != status)
 			fprintf(stderr, "opainfo: MAD failed on hfi:port %s with Status: %s\n",
@@ -132,7 +137,7 @@ FSTATUS perform_local_stl_sma_query( IN struct oib_port *portHandle,
 	return status;
 }
 
-FSTATUS get_local_stl_port_info( IN struct oib_port *portHandle,
+FSTATUS get_local_stl_port_info( IN struct omgt_port *portHandle,
 						   OUT STL_SMP* smp )
 {
 	FSTATUS status;
@@ -150,7 +155,7 @@ FSTATUS get_local_stl_port_info( IN struct oib_port *portHandle,
 	return status;
 }
 
-FSTATUS get_local_stl_cable_info ( IN struct oib_port *portHandle,
+FSTATUS get_local_stl_cable_info ( IN struct omgt_port *portHandle,
 							 IN unsigned cabaddr,
 							 OUT STL_SMP* smp )
 {
@@ -171,13 +176,14 @@ FSTATUS get_local_stl_cable_info ( IN struct oib_port *portHandle,
 	return status;
 }
 
-FSTATUS perform_local_stl_pma_query( IN struct oib_port *portHandle,
+FSTATUS perform_local_stl_pma_query( IN struct omgt_port *portHandle,
 						   IN uint16 attrid,
 						   IN uint32 attrmod,
 						   OUT STL_PERF_MAD* mad )
 {
 	FSTATUS status;
 	uint32_t dlid;
+	uint8_t port_state;
 
 	mad->common.BaseVersion = STL_BASE_VERSION;
 	mad->common.MgmtClass = MCLASS_PERF;
@@ -190,23 +196,25 @@ FSTATUS perform_local_stl_pma_query( IN struct oib_port *portHandle,
 	mad->common.TransactionID = (++g_transactID);
 	// rest of fields should be ignored for a Get, zero'ed above
 
-	if (oib_get_port_state(portHandle) != IB_PORT_ACTIVE) {
-		//fprintf(stderr, "opainfo: hfi:port %s is not ACTIVE!\n",
-		//		get_port_name(portHandle));
+	(void)omgt_port_get_port_state(portHandle, &port_state);
+	if (port_state != IB_PORT_ACTIVE) {
 		dlid = STL_LID_PERMISSIVE; // special case for local query
-	} else
-		dlid = oib_get_port_lid(portHandle);
+	} else {
+		(void)omgt_port_get_port_lid(portHandle, &dlid);
+	}
 		
 	BSWAP_MAD_HEADER((MAD*)mad);
 	{
-		struct oib_mad_addr addr = {
+		struct omgt_mad_addr addr = {
 			.lid = dlid, 
 			.qpn = 1,
 			.qkey = QP1_WELL_KNOWN_Q_KEY,
-			.pkey = g_pkey
+			.pkey = g_pkey,
+			.sl = g_pm_sl,
 		};
 		size_t recv_size = sizeof(*mad);
-		status = oib_send_recv_mad_no_alloc(portHandle, (uint8_t *)mad, sizeof(*mad), &addr,
+		size_t send_size = STL_GS_HDRSIZE + sizeof(STL_PORT_STATUS_REQ);
+		status = omgt_send_recv_mad_no_alloc(portHandle, (uint8_t *)mad, send_size, &addr,
 										(uint8_t *)mad, &recv_size, RESP_WAIT_TIME, MAD_ATTEMPTS-1);
 		if (FSUCCESS != status)
 			fprintf(stderr, "opainfo: MAD failed on hfi:port %s with Status: %s\n",
@@ -223,7 +231,7 @@ FSTATUS perform_local_stl_pma_query( IN struct oib_port *portHandle,
 	return status;
 }
 
-FSTATUS get_local_stl_port_status( IN struct oib_port *portHandle,
+FSTATUS get_local_stl_port_status( IN struct omgt_port *portHandle,
 						   OUT STL_PERF_MAD* mad )
 {
 	FSTATUS status;
@@ -235,7 +243,7 @@ FSTATUS get_local_stl_port_status( IN struct oib_port *portHandle,
 		VRBSE_PRINT("Sending Get(PortStatus) to hfi:port %s\n",
 						get_port_name(portHandle));
 	}
-	pPortCounterReq->PortNumber = oib_get_hfi_port_num(portHandle);
+	(void)omgt_port_get_hfi_port_num(portHandle, &pPortCounterReq->PortNumber);
 	//pPortCounterReq->VLSelectMask = 0x8001; // Mask for VL15 & VL0 by default (same as pmaquery).
 
 	BSWAP_STL_PORT_STATUS_REQ(pPortCounterReq);
@@ -247,13 +255,14 @@ FSTATUS get_local_stl_port_status( IN struct oib_port *portHandle,
 }
 
 
-void show_info( struct oib_port *portHandle,
+void show_info( struct omgt_port *portHandle,
 					 IN int outputType,
 					 IN STL_PORT_INFO* pPortInfo,
 					 IN uint8_t* cableInfo,
 					 IN STL_PORT_STATUS_RSP *pPortStatusRsp)
 {
-	uint64_t portGUID = oib_get_port_guid(portHandle);
+	uint64_t portGUID = 0;
+	(void)omgt_port_get_port_guid(portHandle, &portGUID);
 
 	if (! outputType) {
 		uint8_t detail = g_detail;
@@ -279,7 +288,7 @@ void show_info( struct oib_port *portHandle,
 void Usage(void)
 {
 
-	fprintf(stderr, "Usage: opainfo [-h hfi] [-p port] [-o type] [-g] [-d detail] [-v [-v]...]\n");
+	fprintf(stderr, "Usage: opainfo [-h hfi] [-p port] [-o type] [-g] [-d detail] [-s pm_sl] [-v [-v]...]\n");
 	fprintf(stderr, "    -h hfi     hfi, numbered 1..n, 0=system wide port num\n");
 	fprintf(stderr, "               (default is 0)\n");
 	fprintf(stderr, "    -p port    port, numbered 1..n, 0=1st active\n");
@@ -298,6 +307,7 @@ void Usage(void)
 	fprintf(stderr, "                   3 - verbose output\n");
 	fprintf(stderr, "                   4 - verbose and debug output. lists all settings both\n");
 	fprintf(stderr, "                       statically and dynamically configured in the cable\n");
+	fprintf(stderr, "    -s pm_sl   Specify different Service Level for PMA traffic\n");
 	fprintf(stderr, "    -v         verbose output. Additional invocations will turn on debugging,\n");
 	fprintf(stderr, "               openib debugging and libibumad debugging.\n");
 	fprintf(stderr, "\n");
@@ -341,6 +351,7 @@ int main(int argc, char *argv[])
 	uint8 port = 0;
 	int allPorts = 1;
 	int outputType = 0;
+	uint8 pm_sl = 0xFF;
 
 	int c;
 	int index;
@@ -353,53 +364,57 @@ int main(int argc, char *argv[])
 	STL_PORT_INFO* pPortInfo;
 	int have_cableinfo;
 	STL_PORT_STATUS_RSP *pPortStatusRsp = 0;
-    struct oib_port     *portHandle = NULL;
+    struct omgt_port     *portHandle = NULL;
 
-	while (-1 != (c = getopt_long(argc,argv, "h:p:o:d:gv", options, &index)))
+	while (-1 != (c = getopt_long(argc,argv, "h:p:o:d:gvs:", options, &index)))
 	{
-		switch (c)
-		{
-			case '$':
+		switch (c) {
+		case '$':
+			Usage();
+			break;
+		case 'h':
+			if (FSUCCESS != StringToUint8(&hfi, optarg, NULL, 0, TRUE)) {
+				fprintf(stderr, "opainfo: Invalid HFI Number: %s\n", optarg);
 				Usage();
-				break;
-			case 'h':
-				if (FSUCCESS != StringToUint8(&hfi, optarg, NULL, 0, TRUE)) {
-					fprintf(stderr, "opainfo: Invalid HFI Number: %s\n", optarg);
-					Usage();
-				}
-				break;
-			case 'p':
-				if (FSUCCESS != StringToUint8(&port, optarg, NULL, 0, TRUE)) {
-					fprintf(stderr, "opainfo: Invalid Port Number: %s\n", optarg);
-					Usage();
-				}
-				allPorts = 0;
-				break;
-			case 'o':
-				outputType |= checkOutputType(optarg);
-				if (outputType < 0)
-					Usage();
-				break;
-			case 'g':
-				g_printLineByLine=1;
-				break;
-			case 'd':
-				if (FSUCCESS != StringToUint8(&g_detail, optarg, NULL, 0, TRUE)) {
-					fprintf(stderr, "opainfo: Invalid Detail: %s\n", optarg);
-					Usage();
-				}
-				break;
-			case 'v':
-				g_verbose++;
-				madrpc_show_errors(1);
-                if (g_verbose>2) oib_set_dbg(stderr);
-                if (g_verbose>3) umad_debug(g_verbose-3);
-				break;
-			default:
-				fprintf(stderr, "opainfo: Invalid option -%c\n", c);
+			}
+			break;
+		case 'p':
+			if (FSUCCESS != StringToUint8(&port, optarg, NULL, 0, TRUE)) {
+				fprintf(stderr, "opainfo: Invalid Port Number: %s\n", optarg);
 				Usage();
-				break;
-		}	// switch
+			}
+			allPorts = 0;
+			break;
+		case 'o':
+			outputType |= checkOutputType(optarg);
+			if (outputType < 0)
+				Usage();
+			break;
+		case 'g':
+			g_printLineByLine = 1;
+			break;
+		case 'd':
+			if (FSUCCESS != StringToUint8(&g_detail, optarg, NULL, 0, TRUE)) {
+				fprintf(stderr, "opainfo: Invalid Detail: %s\n", optarg);
+				Usage();
+			}
+			break;
+		case 'v':
+			g_verbose++;
+			madrpc_show_errors(1);
+			if (g_verbose > 3) umad_debug(g_verbose - 3);
+			break;
+		case 's':
+			if (FSUCCESS != StringToUint8(&pm_sl, optarg, NULL, 0, TRUE)) {
+				fprintf(stderr, "opainfo: Invalid PM SL: %s\n", optarg);
+				Usage();
+			}
+			break;
+		default:
+			fprintf(stderr, "opainfo: Invalid option -%c\n", c);
+			Usage();
+			break;
+		}   // switch
 	}  // while
 
 	if (optind < argc)
@@ -413,7 +428,7 @@ int main(int argc, char *argv[])
 		// determine port count for selected hfi
 		// if hfi==0, its system wide port count
 		// if port!=0, we get a specific port (fstatus parsing easier below)
-		fstatus = oib_get_portguid( hfi, 1, NULL, NULL, NULL,
+		fstatus = omgt_get_portguid( hfi, 1, NULL, NULL, NULL, NULL,
 									NULL, NULL, NULL, &portCount,
 									NULL, NULL, NULL );
 
@@ -435,11 +450,12 @@ int main(int argc, char *argv[])
 	for (; portCount > 0; port++, portCount--)
 	{
 		have_cableinfo = FALSE;
-		ret = oib_open_port_by_num(&portHandle, hfi, port);
-		if (port == 0 && ret == EAGAIN) {
+		struct omgt_params params = {.debug_file = g_verbose > 2 ? stderr : NULL};
+		ret = omgt_open_port_by_num(&portHandle, hfi, port, &params);
+		if (port == 0 && ret == OMGT_STATUS_NOT_DONE) {
 			// asked for 1st active, but none active, use 1st port
 			port = 1;
-			ret = oib_open_port_by_num(&portHandle, hfi, port);
+			ret = omgt_open_port_by_num(&portHandle, hfi, port, &params);
 		}
 		if (ret != 0) {
 			printf("opainfo: Unable to open hfi:port %u:%u\n", hfi, port);
@@ -449,7 +465,7 @@ int main(int argc, char *argv[])
     	// Determine which pkey to use (full or limited)
     	// Attempt to use full at all times, otherwise, can
     	// use the limited for queries of the local port.
-    	g_pkey = oib_get_mgmt_pkey(portHandle, 0, 0);
+    	g_pkey = omgt_get_mgmt_pkey(portHandle, 0, 0);
     	if (g_pkey==0) {
         	fprintf(stderr, "opainfo: Unable to find mgmt pkey on hfi:port %s\n",
 					get_port_name(portHandle));
@@ -485,7 +501,12 @@ int main(int argc, char *argv[])
 			have_cableinfo = FALSE;
 		}
 
-		fstatus = get_local_stl_port_status(portHandle, &madPortStatusRsp);
+		// If PM SL not set, use SM's SL
+		if (pm_sl == 0xFF) {
+			(void)omgt_port_get_port_sm_sl(portHandle, &pm_sl);
+		}
+		g_pm_sl = pm_sl;
+		fstatus = get_local_stl_port_status(portHandle, &madPortStatusRsp); 
 		if (FSUCCESS != fstatus) {
 			fprintf(stderr, "opainfo: Failed to get PMA Port Status for hfi:port %s\n", 
 					get_port_name(portHandle));
@@ -496,7 +517,7 @@ int main(int argc, char *argv[])
 
 		show_info(portHandle, outputType, pPortInfo, have_cableinfo?g_cableInfo:NULL, pPortStatusRsp);
 next:
-		oib_close_port(portHandle);
+		omgt_close_port(portHandle);
 		portHandle = NULL;
 	}
 

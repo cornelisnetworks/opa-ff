@@ -44,8 +44,7 @@ DIRS			=
 # C files (.c)
 CFILES			= \
 				opafequery.c \
-				fe_pa.c \
-				fe_sa.c \
+				fe_pa.c
 				# Add more c files here
 # C++ files (.cpp)
 CCFILES			= \
@@ -119,8 +118,8 @@ LOCALDEPLIBS =$(IBACCESS_USER_LIBS) IbPrint Xml
 LOCALLIBS=ssl crypto
 LOCAL_LIB_DIRS=$(IBACCESS_USER_LIB_DIRS)
 else
-LOCALDEPLIBS =$(IBACCESS_USER_LIBS) oib_utils opa_fe_utils IbPrint Xml 
-LOCALLIBS=$(OPENIB_USER_LIBS) ncurses ssl crypto
+LOCALDEPLIBS =$(IBACCESS_USER_LIBS) opamgt-priv IbPrint Xml
+LOCALLIBS=$(OPENIB_USER_LIBS)
 LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
 endif
 

@@ -38,7 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 
 #include "byteswap.h"
-#include "oib_utils.h"
+#include "opamgt_priv.h"
 #include "opasadb_route2.h"
 #include "statustext.h"
 
@@ -260,7 +260,7 @@ static struct param_alloc_port_handle_entry * op_route_get_port_handle_entry(
  *   pp_cost_matrix - Pointer to pointer to cost_matrix
  *     p_use_matrix - Pointer to use_matrix
  *  	 p_job_list - Pointer to job_list
- *  	       port - Pointer to oib utils handler
+ *  	       port - Pointer to opamgt handler
  *
  * Outputs:
  *              OP_ROUTE_STATUS_OK - Query successful
@@ -284,7 +284,7 @@ static enum op_route_status op_route_send_recv_query( uint32_t attr_mod,
     uint16_t ** pp_cost_matrix,
     struct op_route_use_matrix * p_use_matrix,
     struct op_route_job_list * p_job_list,
-    struct oib_port * port)
+    struct omgt_port * port)
 {
 	FSTATUS fstatus;
 	enum op_route_status rstatus = OP_ROUTE_STATUS_OK;
@@ -328,7 +328,8 @@ static enum op_route_status op_route_send_recv_query( uint32_t attr_mod,
 	uint8_t default_use;
 	uint16_t num_jobs;
 	uint64_t temp;
-	struct oib_mad_addr addr;
+	struct omgt_mad_addr addr;
+	uint8_t port_state;
 
 	if (p_guid_vec) num_guids = p_guid_vec->num_guids;
 
@@ -337,7 +338,8 @@ static enum op_route_status op_route_send_recv_query( uint32_t attr_mod,
 		return (OP_ROUTE_STATUS_INVALID_PARAM);
 
 	// Ensure the port is active
-	if (oib_get_port_state(port) != PortStateActive)
+	(void)omgt_port_get_port_state(port, &port_state);
+	if (port_state != PortStateActive)
 		return (OP_ROUTE_STATUS_ERROR);
 	
 	// Construct query based on attribute modifier
@@ -464,12 +466,12 @@ static enum op_route_status op_route_send_recv_query( uint32_t attr_mod,
 	// Send query
 
 	memset(&addr, 0, sizeof(addr));
-	addr.lid = oib_get_port_sm_lid(port);
+	(void)omgt_port_get_port_sm_lid(port, &addr.lid);
 	addr.qpn = qp_sm;
 	addr.qkey = QP1_WELL_KNOWN_Q_KEY;
-	addr.pkey = OIB_DEFAULT_PKEY;
+	addr.pkey = OMGT_DEFAULT_PKEY;
 
-	fstatus = oib_send_recv_mad_alloc(port, 
+	fstatus = omgt_send_recv_mad_alloc(port, 
 									  (uint8_t *)p_mad_send, len_data_alloc, 
 									  &addr,
 									  (uint8_t **)&p_mad_recv, (size_t *)&len_recv, 
@@ -1489,7 +1491,7 @@ extern char * op_route_get_status_text(enum op_route_status status)
  *   and passed back to the caller.
  *
  * Inputs:
- *            port - Pointer to oib utils handler
+ *            port - Pointer to opamgt handler
  *       port_guid - GUID of port on which to register
  *   p_port_handle - Pointer to OP_ROUTE_PORT_HANDLE
  *
@@ -1501,7 +1503,7 @@ extern char * op_route_get_status_text(enum op_route_status status)
  *                                 - Unable to allocate memory
  *                                 - Register error
  */
-enum op_route_status op_route_open( struct oib_port * port,
+enum op_route_status op_route_open( struct omgt_port * port,
 									uint64_t port_guid,
 									OP_ROUTE_PORT_HANDLE * p_port_handle )
 {
@@ -1630,7 +1632,7 @@ enum op_route_status op_route_close(OP_ROUTE_PORT_HANDLE port_handle)
  *      optn_create - Options for create job (see OP_ROUTE_CREATE_JOB_xx)
  *     p_job_params - Pointer to job parameters
  *  	 p_guid_vec - Pointer to portguid_vec
- *             port - Pointer to oib utils handle 
+ *             port - Pointer to opamgt handle 
  *         p_job_id - Pointer to OP_ROUTE_JOB_ID
  *     p_switch_map - Pointer to switch_map
  *   pp_cost_matrix - Pointer to pointer to cost_matrix
@@ -1654,7 +1656,7 @@ enum op_route_status op_route_create_job( OP_ROUTE_PORT_HANDLE port_handle,
     uint16_t optn_create,
     struct op_route_job_parameters * p_job_params,
     struct op_route_portguid_vec * p_guid_vec,
-	struct oib_port * port,
+	struct omgt_port * port,
     OP_ROUTE_JOB_ID * p_job_id,                 // output
     struct op_route_switch_map * p_switch_map,  // output
     uint16_t ** pp_cost_matrix )                // output
@@ -1686,7 +1688,7 @@ enum op_route_status op_route_create_job( OP_ROUTE_PORT_HANDLE port_handle,
  * Inputs:
  *   port_handle - OP_ROUTE_PORT_HANDLE
  *  	p_job_id - Pointer to OP_ROUTE_JOB_ID
- *  	    port - Pointer to oib utils port handler
+ *  	    port - Pointer to opamgt port handler
  *
  * Outputs:
  *              OP_ROUTE_STATUS_OK - Completion successful
@@ -1695,7 +1697,7 @@ enum op_route_status op_route_create_job( OP_ROUTE_PORT_HANDLE port_handle,
  */
 enum op_route_status op_route_complete_job( OP_ROUTE_PORT_HANDLE port_handle,
     OP_ROUTE_JOB_ID job_id,
-	struct oib_port * port  )
+	struct omgt_port * port  )
 {
 	enum op_route_status rstatus;
 
@@ -1720,7 +1722,7 @@ enum op_route_status op_route_complete_job( OP_ROUTE_PORT_HANDLE port_handle,
  * Inputs:
  *      port_handle - OP_ROUTE_PORT_HANDLE
  *           job_id - OP_ROUTE_JOB_ID
- *             port - Pointer to oib utils handle
+ *             port - Pointer to opamgt handle
  *   p_portguid_vec - Pointer to portguid_vec
  *
  * Outputs:
@@ -1732,7 +1734,7 @@ enum op_route_status op_route_complete_job( OP_ROUTE_PORT_HANDLE port_handle,
  */
 enum op_route_status op_route_get_portguid_vec( OP_ROUTE_PORT_HANDLE port_handle,
     OP_ROUTE_JOB_ID job_id,
-	struct oib_port * port,
+	struct omgt_port * port,
     struct op_route_portguid_vec * p_guid_vec )     // output
 {
 	enum op_route_status rstatus;
@@ -1782,7 +1784,7 @@ void op_route_release_portguid_vec(struct op_route_portguid_vec * p_guid_vec)
  * Inputs:
  *    port_handle - OP_ROUTE_PORT_HANDLE
  *  	   job_id - OP_ROUTE_JOB_ID
- *  	     port - Pointer to oib utils handle
+ *  	     port - Pointer to opamgt handle
  *   p_switch_map - Pointer to switch_map
  *
  * Outputs:
@@ -1794,7 +1796,7 @@ void op_route_release_portguid_vec(struct op_route_portguid_vec * p_guid_vec)
  */
 enum op_route_status op_route_get_switch_map( OP_ROUTE_PORT_HANDLE port_handle,
     OP_ROUTE_JOB_ID job_id,
-	struct oib_port * port,
+	struct omgt_port * port,
     struct op_route_switch_map * p_switch_map )  // output
 {
 	enum op_route_status rstatus;
@@ -1844,7 +1846,7 @@ void op_route_release_switch_map(struct op_route_switch_map * p_switch_map)
  * Inputs:
  *      port_handle - OP_ROUTE_PORT_HANDLE
  *  		 job_id - OP_ROUTE_JOB_ID
- *  		   port - Pointer to oib utils handle
+ *  		   port - Pointer to opamgt handle
  *   pp_cost_matrix - Pointer to pointer to cost_matrix
  *
  * Outputs:
@@ -1856,7 +1858,7 @@ void op_route_release_switch_map(struct op_route_switch_map * p_switch_map)
  */
 enum op_route_status op_route_get_cost_matrix( OP_ROUTE_PORT_HANDLE port_handle,
     OP_ROUTE_JOB_ID job_id,
-	struct oib_port * port,
+	struct omgt_port * port,
     uint16_t ** pp_cost_matrix )    // output
 {
 	enum op_route_status rstatus;
@@ -1903,7 +1905,7 @@ void op_route_release_cost_matrix(uint16_t * p_cost_matrix)
  * Inputs:
  *    port_handle - OP_ROUTE_PORT_HANDLE
  *  	   job_id - OP_ROUTE_JOB_ID
- *  	     port - Pointer to oib utils handle
+ *  	     port - Pointer to opamgt handle
  *   p_use_matrix - Pointer to use_matrix
  *
  * Outputs:
@@ -1915,7 +1917,7 @@ void op_route_release_cost_matrix(uint16_t * p_cost_matrix)
  */
 enum op_route_status op_route_get_use_matrix( OP_ROUTE_PORT_HANDLE port_handle,
     OP_ROUTE_JOB_ID job_id,
-	struct oib_port * port,
+	struct omgt_port * port,
     struct op_route_use_matrix * p_use_matrix )
 {
 	enum op_route_status rstatus;
@@ -1942,7 +1944,7 @@ enum op_route_status op_route_get_use_matrix( OP_ROUTE_PORT_HANDLE port_handle,
  * Inputs:
  *    port_handle - OP_ROUTE_PORT_HANDLE
  *  	   job_id - OP_ROUTE_JOB_ID
- *  	     port - Pointer to oib utils handle
+ *  	     port - Pointer to opamgt handle
  *   p_use_matrix - Pointer to use_matrix
  *
  * Outputs:
@@ -1953,7 +1955,7 @@ enum op_route_status op_route_get_use_matrix( OP_ROUTE_PORT_HANDLE port_handle,
  */
 enum op_route_status op_route_set_use_matrix( OP_ROUTE_PORT_HANDLE port_handle,
     OP_ROUTE_JOB_ID job_id,
-	struct oib_port * port,
+	struct omgt_port * port,
     struct op_route_use_matrix * p_use_matrix )
 {
 	enum op_route_status rstatus;
@@ -2002,7 +2004,7 @@ void op_route_release_use_matrix(struct op_route_use_matrix * p_use_matrix)
  *
  * Inputs:
  *   port_handle - OP_ROUTE_PORT_HANDLE
- *          port - Pointer to oib utils handle
+ *          port - Pointer to opamgt handle
  *    p_job_list - Pointer to job list (array of job_info)
  *
  * Outputs:
@@ -2011,7 +2013,7 @@ void op_route_release_use_matrix(struct op_route_use_matrix * p_use_matrix)
  *   OP_ROUTE_STATUS_ERROR - Error during get
  */
 enum op_route_status op_route_get_job_list( OP_ROUTE_PORT_HANDLE port_handle,
-	struct oib_port * port,
+	struct omgt_port * port,
     struct op_route_job_list * p_job_list)   // output
 {
 	enum op_route_status rstatus;
@@ -2060,7 +2062,7 @@ void op_route_release_job_list(struct op_route_job_list * p_job_list)
  * Inputs:
  *   port_handle - OP_ROUTE_PORT_HANDLE
  *  	  job_id - OP_ROUTE_JOB_ID
- *  	    port - Pointer to oib utils handle
+ *  	    port - Pointer to opamgt handle
  *  p_job_status - Pointer to job status
  *
  * Outputs:
@@ -2072,7 +2074,7 @@ void op_route_release_job_list(struct op_route_job_list * p_job_list)
  */
 enum op_route_status op_route_poll_ready( OP_ROUTE_PORT_HANDLE port_handle,
     OP_ROUTE_JOB_ID job_id, 
-	struct oib_port * port,
+	struct omgt_port * port,
 	enum op_route_job_status * p_job_status )
 {
 	enum op_route_status rstatus;

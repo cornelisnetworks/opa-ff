@@ -21,11 +21,20 @@ opa\(ulosd\(ulquery [-v | -verbose] | [-s | --slid] | [-d | --dlid] | [-S | --sg
 .NL
 
 .PP
+
+.B NOTE:
+
+.IP \(bu
 All arguments are optional, but ill-formed queries can be expected to fail. You must provide at least a pair of LIDs or a pair of GIDs.
-.PP
+.IP \(bu
+The mixing of lids and gids in a query is not permitted.
+.IP \(bu
+SID or PKey can be provided, but not both.
+.IP \(bu
 If you have multiple HFIs, the same LID can appear on more than one HFI, therefore you must specify which HFI to use when searching by LIDs.
-.PP
+.IP \(bu
 Numbers can be in decimal, hex, or octal.
+
 .TP 10
 --help 
 .NL

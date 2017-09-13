@@ -122,25 +122,27 @@ dump(FILE *f)
 	fprintf(f,"\tCount: %u\n", r.vfab_table->count);
 	for (i = 1; i <= r.vfab_table->count ; i++) {
 		int j;
+		op_ppath_vfab_record_t *vf = &r.vfab_table->vfab[i];
+
 		fprintf(f,"\tVFab[%u]: %s\n", i, 
-				r.vfab_table->vfab[i].vfab_name);
+				vf->vfab_name);
 		fprintf(f,"\t\tPrefix: 0x%16lx\n",
-				hton64(r.vfab_table->vfab[i].source_prefix));
+				hton64(vf->source_prefix));
 		fprintf(f,"\t\tPKey: 0x%04x\n",
-				hton16(r.vfab_table->vfab[i].pkey));
+				hton16(vf->pkey));
 		fprintf(f,"\t\tService Level: 0x%04x\n",
-				hton16(r.vfab_table->vfab[i].sl));
+				hton16(vf->sl));
 
 		fprintf(f,"\n\t\tDLID Hash Table:\n");
 		for (j=0;j<HASH_TABLE_SIZE; j++) {
 			fprintf(f,"\t\t\tRecord[%u] = %u\n",
-					j,r.vfab_table->vfab[i].first_dlid[j]);
+					j,vf->first_dlid[j]);
 		}
 
 		fprintf(f,"\n\t\tDGUID Hash Table:\n");
 		for (j=0;j<HASH_TABLE_SIZE; j++) {
 			fprintf(f,"\t\t\tRecord[%u] = %u\n",
-					j,r.vfab_table->vfab[i].first_dguid[j]);
+					j,vf->first_dguid[j]);
 		}
 		
 	}

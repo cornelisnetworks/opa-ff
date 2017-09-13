@@ -176,12 +176,14 @@ op_path_find_hfi(const char *name,
 		errno = EFAULT;
 		return NULL;
 	}
-	
 	if (name == NULL || name[0]=='\0') {
 		i=0;
 	} else if (isdigit(name[0])) {
 		i = strtoul(name,NULL,0) - 1;
-		if (i<0 || i > num_devices) i=0;
+		if (i < 0 || i >= num_devices){
+			errno = EFAULT;
+                        return NULL;
+		}
 	} else {
 		for (i=0; i < num_devices; i++) {
 			if (!strcmp(ibv_get_device_name(dev_list[i]), name))

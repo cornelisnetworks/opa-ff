@@ -44,7 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 #include "zlib.h"
@@ -76,7 +76,7 @@ char					fwFileName[FNAME_SIZE];
 char					inibinFileName[FNAME_SIZE];
 char					fwDirName[DNAME_SIZE];
 
-uint32 loadFirmwareBuffer(struct oib_port *port, char **fwBuffer, IB_PATH_RECORD *path, uint16 sessionID)
+uint32 loadFirmwareBuffer(struct omgt_port *port, char **fwBuffer, IB_PATH_RECORD *path, uint16 sessionID)
 {
 	FILE *fp;
 	DIR *fwDir;
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
 	uint32				crc;
 	VENDOR_MAD_JUMBO	mad;
 	FSTATUS				status = FSUCCESS;
-	struct              oib_port *oib_port_session = NULL;
+	struct              omgt_port *omgt_port_session = NULL;
 
 	// determine how we've been invoked
 	cmdName = strrchr(argv[0], '/');			// Find last '/' in path
@@ -236,7 +236,6 @@ int main(int argc, char *argv[])
 		switch (c) {
 			case 'D':
 				g_debugMode = 1;
-				oib_set_dbg(stderr);
 				break;
 
 			case 't':
@@ -377,20 +376,21 @@ int main(int argc, char *argv[])
 
 	// Get the path
 
-	status = oib_open_port_by_num(&oib_port_session, hfi, port);
+	struct omgt_params params = {.debug_file = g_debugMode ? stderr : NULL};
+	status = omgt_open_port_by_num(&omgt_port_session, hfi, port, &params);
 	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}
 
-	if (getDestPath(oib_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
+	if (getDestPath(omgt_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to get destination path\n", cmdName);
 		goto err_exit;
 	}
 
 	// Send a ClassPortInfo to see if the switch is responding
 
-	status = sendClassPortInfoMad(oib_port_session, &path, (VENDOR_MAD*)&mad);
+	status = sendClassPortInfoMad(omgt_port_session, &path, (VENDOR_MAD*)&mad);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to send/rcv ClassPortInfo\n", cmdName);
 		status = FERROR;
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
 
 	// Get a session ID
 
-	sessionID = getSessionID(oib_port_session, &path);
+	sessionID = getSessionID(omgt_port_session, &path);
 	if (sessionID == (uint16)-1) {
 		fprintf(stderr, "%s: Error: Failed to obtain sessionID\n", cmdName);
 		status = FERROR;
@@ -408,10 +408,10 @@ int main(int argc, char *argv[])
 
 	// read the file into the buffer
 
-	fwSize = loadFirmwareBuffer(oib_port_session, (char **)&fwBuffer, &path, sessionID);
+	fwSize = loadFirmwareBuffer(omgt_port_session, (char **)&fwBuffer, &path, sessionID);
 	if (fwSize == 0) {
 		fprintf(stderr, "%s: Error: Failed to load firmware file\n", cmdName);
-		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 		status = FERROR;
 		goto err_exit;
 	}
@@ -428,7 +428,7 @@ int main(int argc, char *argv[])
 		// error trying to erase the old firmware
 		fprintf(stderr, "%s: Error erasing old firmware rc: %d\n", cmdName, status);
 	} else {
-		status = opaswEepromRW(oib_port_session, &path, sessionID, (void *)&mad, g_respTimeout,
+		status = opaswEepromRW(omgt_port_session, &path, sessionID, (void *)&mad, g_respTimeout,
 							   fwSize + 4, 0, (uint8 *)fwBuffer, TRUE, g_gotSecondary);
 		if (status != FSUCCESS) {
 			// error trying to update the firmware
@@ -444,14 +444,14 @@ int main(int argc, char *argv[])
 	}
 	if ((fwBuffer2 = malloc(fwSize + 1024)) == NULL) {
 		fprintf(stderr, "Error allocating memory for firmware read back buffer\n");
-		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 		goto err_exit;
     }
 
 	if (status == FSUCCESS) {
 		memset(fwBuffer2, 0, fwSize + 1024);
 
-		status = opaswEepromRW(oib_port_session, &path, sessionID, (void *)&mad, g_respTimeout,
+		status = opaswEepromRW(omgt_port_session, &path, sessionID, (void *)&mad, g_respTimeout,
 							   fwSize + 4, 0, (uint8 *)fwBuffer2, FALSE, g_gotSecondary);
 
 		if (!g_quiet) {
@@ -475,7 +475,7 @@ int main(int argc, char *argv[])
 		// reset switch if necessary
 		if ((status == FSUCCESS) && g_resetSwitch) {
 			printf("Resetting switch...\n");
-			status = sendRebootMad(oib_port_session, &path, sessionID, (VENDOR_MAD*)&mad, 2000);
+			status = sendRebootMad(omgt_port_session, &path, sessionID, (VENDOR_MAD*)&mad, 2000);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error sending MAD packet to switch\n", cmdName);
 			}
@@ -483,14 +483,12 @@ int main(int argc, char *argv[])
 	}
 
 	if (!g_resetSwitch)
-		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 
 	printf("opaswfwupdate completed\n");
 
 err_exit:
-	if (oib_port_session != NULL) {
-		oib_close_port(oib_port_session);
-	}
+	omgt_close_port(omgt_port_session);
 
 	if (fwBuffer != NULL)
 		free(fwBuffer);

@@ -29,7 +29,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* [ICS VERSION STRING: unknown] */
 
-#include <oib_utils.h>
+#include <opamgt_priv.h>
 
 #include "opasmaquery.h"
 
@@ -80,6 +80,7 @@ int main(int argc, char** argv)
 	int c;
 	uint8 hfi = 0;
 	uint8 port = 0;	// default to port 0, this way pma can will choose first active.
+	uint32 slid = 0;
 	const char *options;
 	int otype = 0;
 	uint8 i;
@@ -132,7 +133,6 @@ int main(int argc, char** argv)
 		case 'v':
 			g_verbose++;
 			madrpc_show_errors(1);
-			if (g_verbose>2) oib_set_dbg(stdout);
 			if (g_verbose>3) umad_debug(g_verbose-3);
 			break;
 		case 's':
@@ -324,8 +324,9 @@ int main(int argc, char** argv)
 		}
 	}
 
-	status = oib_open_port_by_num (&args.oib_port, hfi, port);
-	if (status == EAGAIN) {
+	struct omgt_params params = {.debug_file = g_verbose > 2 ? stdout : NULL};
+	status = omgt_open_port_by_num (&args.omgt_port, hfi, port, &params);
+	if (status == OMGT_STATUS_NOT_DONE) {
 		// Wildcard search for either/or port & hfi yielded no ACTIVE ports.
 		if (!port) {
 			char *sErr_msg="No Active port found";
@@ -335,7 +336,7 @@ int main(int argc, char** argv)
 				fprintf(stderr, "%s in System. Trying default hfi:1 port:1\n", sErr_msg);
 				hfi = 1;
 				port = 1;
-				status = oib_open_port_by_num(&args.oib_port, hfi, port);
+				status = omgt_open_port_by_num(&args.omgt_port, hfi, port, &params);
 			} else {
 				fprintf(stderr, "%s on hfi:%d\n", sErr_msg, hfi);
 				exit (1);
@@ -347,8 +348,9 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-    args.slid = oib_get_port_lid(args.oib_port);
-	args.port = oib_get_hfi_port_num(args.oib_port);
+	(void)omgt_port_get_port_lid(args.omgt_port, &slid);
+	(void)omgt_port_get_hfi_port_num(args.omgt_port, &args.port);
+	args.slid = (IB_LID)slid;
 
 	PrintDestInitFile(&g_dest, stdout);
 
@@ -358,7 +360,7 @@ int main(int argc, char** argv)
         rc = 0;
     }
 
-    oib_close_port(args.oib_port);
+    omgt_close_port(args.omgt_port);
 
 	return rc;
 } //main

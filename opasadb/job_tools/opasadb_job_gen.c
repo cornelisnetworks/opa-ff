@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ib_ibt.h"
 
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include "opasadb_route2.h"
 #include "statustext.h"
 
@@ -576,10 +576,10 @@ int main(int argc, char ** argv)
 	FSTATUS fstatus;
 	uint8_t rstatus;
 	OP_ROUTE_PORT_HANDLE port_handle = 0;
-	QUERY SDQuery;
+	OMGT_QUERY SDQuery;
 	QUERY_RESULT_VALUES *pSDQueryResults = NULL;
 	GUID_RESULTS *pSDGuidResults = NULL;
-	static struct oib_port *oib_port_session = NULL;
+	static struct omgt_port *omgt_port_session = NULL;
 
 	struct op_route_param_alloc_port_guid_entry * p_param_port_guid;
 
@@ -621,7 +621,7 @@ int main(int argc, char ** argv)
 		}
 	}
 
-	fstatus = oib_open_port_by_guid(&oib_port_session, connect_portguid);
+	fstatus = omgt_open_port_by_guid(&omgt_port_session, connect_portguid, NULL);
 	if (fstatus != FSUCCESS) {
 		fprintf(stderr, "Unable to open fabric interface.\n");
 		ret_val = 2;
@@ -633,10 +633,10 @@ int main(int argc, char ** argv)
 	{
 		memset(&SDQuery, 0, sizeof(SDQuery));
 		SDQuery.InputType = InputTypeNodeType;
-		SDQuery.InputValue.TypeOfNode = STL_NODE_FI;
+		SDQuery.InputValue.IbNodeRecord.NodeType = STL_NODE_FI;
 		SDQuery.OutputType = OutputTypePortGuid;
 
-		fstatus = oib_query_sa(oib_port_session, 
+		fstatus = omgt_query_sa(omgt_port_session, 
 							   &SDQuery, 
 							   &pSDQueryResults);
 
@@ -653,7 +653,7 @@ int main(int argc, char ** argv)
 				!pSDGuidResults->NumGuids )
 		{
 			fprintf(stderr, NAME_PROG ": No SD query FI port GUIDs\n");
-			oib_free_query_result_buffer(pSDQueryResults);
+			omgt_free_query_result_buffer(pSDQueryResults);
 			err_usage();
 			ret_val = 2;
 			goto close_port;
@@ -666,7 +666,7 @@ int main(int argc, char ** argv)
 				{
 					fprintf( stderr, NAME_PROG
 						": Unable to allocate port_guid parameter\n" );
-					oib_free_query_result_buffer(pSDQueryResults);
+					omgt_free_query_result_buffer(pSDQueryResults);
 					err_usage();
 					ret_val = 2;
 					goto close_port;
@@ -683,12 +683,12 @@ int main(int argc, char ** argv)
 
 		}  // End of for (ix = 0; ix < pSDGuidResults->NumGuids; ix++)
 
-		oib_free_query_result_buffer(pSDQueryResults);
+		omgt_free_query_result_buffer(pSDQueryResults);
 
 	}  // End of if (fb_allguids)
 
 	// Open port connection
-	if ( (rstatus = op_route_open(oib_port_session, connect_portguid, &port_handle)) !=
+	if ( (rstatus = op_route_open(omgt_port_session, connect_portguid, &port_handle)) !=
 			OP_ROUTE_STATUS_OK )
 	{
 		fprintf( stderr, NAME_PROG ": open Error rstatus(0x%X):%s, GUID:0x%"
@@ -736,7 +736,7 @@ int main(int argc, char ** argv)
 	case create:
 	{
 		rstatus = op_route_create_job( port_handle, optn_create_job, &job_params,
-			&portguid_vec, oib_port_session, &job_id, &switch_map, &p_cost_matrix );
+			&portguid_vec, omgt_port_session, &job_id, &switch_map, &p_cost_matrix );
 		if (rstatus != OP_ROUTE_STATUS_OK)
 		{
 			fprintf(stderr, NAME_PROG ": Create Job Error rstatus(0x%X):%s\n",
@@ -876,7 +876,7 @@ close_route:
 	op_route_close(port_handle);
 
 close_port:
-	oib_close_port(oib_port_session);
+	omgt_close_port(omgt_port_session);
 
 free_param:
 	op_route_free_param(&param_port_guid);

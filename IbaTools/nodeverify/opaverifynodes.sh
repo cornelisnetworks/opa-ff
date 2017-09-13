@@ -70,6 +70,7 @@ Usage_full()
 	echo "                   default is uploads" >&2
 	echo "   -T timelimit - timelimit in seconds for host to complete tests" >&2
 	echo "                  default of 300 seconds (5 minutes)" >&2
+	echo "   -F filename - filename of hostverify script to use. Default is $FF_HOSTVERIFY_DIR/hostverify.sh" >&2
 	echo "	 test - one or more specific tests to run" >&2
 	echo "	        see /usr/share/opa/samples/hostverify.sh for a list of available tests" >&2
 	echo "This verifies basic node configuration and performance by running" >&2
@@ -166,7 +167,8 @@ do_copy=n
 upload_file=hostverify.res
 timelimit=300
 do_kill=n
-while getopts kcf:h:d:u:T: param
+filename=$FF_HOSTVERIFY_DIR/hostverify.sh
+while getopts kcf:h:d:u:T:F: param
 do
 	case $param in
 	k)
@@ -183,6 +185,8 @@ do
 		upload_file="$OPTARG";;
 	T)
 		timelimit="$OPTARG";;
+	F)
+		filename="$OPTARG";;
 	?)
 		Usage;;
 	esac
@@ -201,8 +205,8 @@ echo "$(echo "$HOSTS"|tr -s ' ' '\n'|sed -e '/^$/d'|sort -u| wc -l) hosts will b
 
 if [ "$do_copy" = y ]
 then
-	echo "SCPing $FF_HOSTVERIFY_DIR/hostverify.sh to $FF_HOSTVERIFY_DIR/hostverify.sh ..."| tee -a $FF_RESULT_DIR/verifyhosts.res
-	opascpall -p "$FF_HOSTVERIFY_DIR/hostverify.sh" "$FF_HOSTVERIFY_DIR/hostverify.sh" 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res
+	echo "SCPing $filename to $FF_HOSTVERIFY_DIR/hostverify.sh ..."| tee -a $FF_RESULT_DIR/verifyhosts.res
+	opascpall -p "$filename" "$FF_HOSTVERIFY_DIR/hostverify.sh" 2>&1|tee -a $FF_RESULT_DIR/verifyhosts.res
 	date >> $FF_RESULT_DIR/verifyhosts.res
 fi
 

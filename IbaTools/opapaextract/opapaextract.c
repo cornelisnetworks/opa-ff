@@ -38,13 +38,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "topology.h"
 #ifdef IB_STACK_OPENIB
-#include <oib_utils_sa.h>
+#include <opamgt_sa_priv.h>
 #endif
 #include "ib_status.h"
 #include "stl_mad.h"
 #include "iba/stl_pa.h"
-#include "oib_utils.h"
-#include "oib_utils_pa.h"
+#include "opamgt_priv.h"
+#include "opamgt_pa_priv.h"
+#include "opamgt_pa.h"
 #include "stl_print.h"
 #include <infiniband/umad.h>
 
@@ -65,7 +66,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define					MAX_VFABRIC_NAME		64		// from fm_xml.h
 
 int						g_verbose 			= 0;
-uint16					g_primaryPmLid		= 0;
 uint32					g_nodeLid			= 0;
 uint8					g_portNumber		= 0;
 uint64					g_nodeGUID			= 0;
@@ -92,7 +92,7 @@ uint32					g_gotXmit			= 0;
 char					g_groupName[STL_PM_GROUPNAMELEN];
 //char					g_vfName[MAX_VFABRIC_NAME];
 PrintDest_t				g_dest;
-struct oib_port 		*g_portHandle		= NULL;
+struct omgt_port 		*g_portHandle		= NULL;
 
 typedef struct ColumnEntry_s {
 	uint64 nodeGUID;
@@ -142,9 +142,9 @@ static FSTATUS opa_pa_init(uint8 hfi, uint8 port)
     FSTATUS				fstatus = FERROR;
 
 	// Open the port
-    if ( oib_pa_client_init( &g_portHandle, (int)hfi, port,
-                             ((g_verbose>3) ? stderr : NULL) )
-         == PACLIENT_OPERATIONAL )
+    struct omgt_params params = {.debug_file = (g_verbose > 3 ? stderr : NULL)};
+    if (!(omgt_open_port_by_num( &g_portHandle, (int)hfi, port, &params)) &&
+			(PACLIENT_OPERATIONAL == omgt_pa_client_connect(g_portHandle)))
     {
         fstatus = FSUCCESS;
     }
@@ -157,13 +157,13 @@ static FSTATUS opa_pa_init(uint8 hfi, uint8 port)
 }
 
 #if 0
-static FSTATUS GetClassPortInfo(struct oib_port *port)
+static FSTATUS GetClassPortInfo(struct omgt_port *port)
 {
 	FSTATUS					status= FERROR;
 	STL_CLASS_PORT_INFO		*response;
 
     fprintf(stderr, "Getting Class Port Info...\n");
-    if ((response = iba_pa_classportinfo_response_query(port)) != NULL) {
+    if ((response = omgt_pa_get_classportinfo(port)) != NULL) {
         status = FSUCCESS;
 		PrintStlClassPortInfo(&g_dest, 0, response);
     } else {
@@ -176,7 +176,7 @@ static FSTATUS GetClassPortInfo(struct oib_port *port)
 }
 #endif
 
-static FSTATUS GetPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, uint64 imageNumber, int32 imageOffset, STL_PORT_COUNTERS_DATA *pCounters)
+static FSTATUS GetPortCounters(struct omgt_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, uint64 imageNumber, int32 imageOffset, STL_PORT_COUNTERS_DATA *pCounters)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -201,7 +201,7 @@ static FSTATUS GetPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_t 
 }
 
 #if 0
-static FSTATUS GetPMConfig(struct oib_port *port)
+static FSTATUS GetPMConfig(struct omgt_port *port)
 {
 	FSTATUS					status= FERROR;
     STL_PA_PM_CFG_DATA			*response;
@@ -220,7 +220,7 @@ static FSTATUS GetPMConfig(struct oib_port *port)
 #endif
 
 #if USE_FREEZE
-static FSTATUS FreezeImage(struct oib_port *port, uint64 imageNumber, int32 imageOffset, STL_PA_IMAGE_ID_DATA *pImageId)
+static FSTATUS FreezeImage(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, STL_PA_IMAGE_ID_DATA *pImageId)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			request = {0};
@@ -248,7 +248,7 @@ static FSTATUS FreezeImage(struct oib_port *port, uint64 imageNumber, int32 imag
 #endif
 
 #if USE_FREEZE
-static FSTATUS ReleaseImage(struct oib_port *port, uint64 imageNumber, int32 imageOffset)
+static FSTATUS ReleaseImage(struct omgt_port *port, uint64 imageNumber, int32 imageOffset)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			request = {0};
@@ -272,7 +272,7 @@ static FSTATUS ReleaseImage(struct oib_port *port, uint64 imageNumber, int32 ima
 #endif
 
 #if 0
-static FSTATUS RenewImage(struct oib_port *port, uint64 imageNumber, int32 imageOffset)
+static FSTATUS RenewImage(struct omgt_port *port, uint64 imageNumber, int32 imageOffset)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			request = {0};
@@ -294,7 +294,7 @@ static FSTATUS RenewImage(struct oib_port *port, uint64 imageNumber, int32 image
 #endif
 
 #if USE_FREEZE
-static FSTATUS MoveFreeze(struct oib_port *port, uint64 imageNumber, int32 imageOffset, uint64 moveImageNumber, int32 moveImageOffset, STL_PA_IMAGE_ID_DATA *pImageId)
+static FSTATUS MoveFreeze(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, uint64 moveImageNumber, int32 moveImageOffset, STL_PA_IMAGE_ID_DATA *pImageId)
 {
 	FSTATUS					status= FERROR;
     STL_MOVE_FREEZE_DATA		request;
@@ -313,7 +313,7 @@ static FSTATUS MoveFreeze(struct oib_port *port, uint64 imageNumber, int32 image
 		if (pImageId)
 			*pImageId = response->newFreezeImage;
     } else {
-		if (oib_get_mad_status(port) == STL_MAD_STATUS_STL_PA_NO_IMAGE)
+		if (omgt_get_pa_mad_status(port) == STL_MAD_STATUS_STL_PA_NO_IMAGE)
 			status = FNOT_FOUND;
 		else
         	fprintf(stderr, "Failed to receive MoveFreeze response: %s\n", iba_pa_mad_status_msg(port));
@@ -324,9 +324,9 @@ static FSTATUS MoveFreeze(struct oib_port *port, uint64 imageNumber, int32 image
 }
 #endif
 
-static FSTATUS GetGroupList(struct oib_port *port, char groupName[STL_PM_GROUPNAMELEN])
+static FSTATUS GetGroupList(struct omgt_port *port, char groupName[STL_PM_GROUPNAMELEN])
 {
-	QUERY					query;
+	OMGT_QUERY				query;
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
 
@@ -342,7 +342,7 @@ static FSTATUS GetGroupList(struct oib_port *port, char groupName[STL_PM_GROUPNA
 					   		iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_group_list_response_query(port, &query, &pQueryResults, NULL);
+	status = iba_pa_multi_mad_group_list_response_query(port, &query, &pQueryResults);
 
 	if (! pQueryResults)
 	{
@@ -377,7 +377,7 @@ done:
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 	return status;
 
 fail:
@@ -386,9 +386,9 @@ fail:
 }
 
 #if 0
-static FSTATUS GetGroupInfo(struct oib_port *port, char *groupName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetGroupInfo(struct omgt_port *port, char *groupName, uint64 imageNumber, int32 imageOffset)
 {
-	QUERY					query;
+	OMGT_QUERY				query;
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
 	STL_PA_IMAGE_ID_DATA	imageId = {0};
@@ -406,7 +406,7 @@ static FSTATUS GetGroupInfo(struct oib_port *port, char *groupName, uint64 image
 					   		iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_group_stats_response_query(port, &query, groupName, &pQueryResults, NULL, &imageId);
+	status = iba_pa_multi_mad_group_stats_response_query(port, &query, groupName, &pQueryResults, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -438,7 +438,7 @@ done:
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 	return status;
 
 fail:
@@ -468,11 +468,11 @@ boolean ColumnCompare(uint32 index, void* const elem, void *const context)
 	return (p->nodeGUID == q->nodeGUID && p->portNumber == q->portNumber);
 }
 
-static FSTATUS GetAndPrintGroupConfig(struct oib_port *port, char *groupName,
+static FSTATUS GetAndPrintGroupConfig(struct omgt_port *port, char *groupName,
  uint64 imageNumber, int32 imageOffset,
  STL_PA_IMAGE_INFO_DATA *pImageInfo)
 {
-	QUERY					query;
+	OMGT_QUERY				query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
@@ -503,7 +503,7 @@ static FSTATUS GetAndPrintGroupConfig(struct oib_port *port, char *groupName,
 							iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_group_config_response_query(port, &query, groupName, &pQueryResults, NULL, &imageId);
+	status = iba_pa_multi_mad_group_config_response_query(port, &query, groupName, &pQueryResults, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -678,7 +678,7 @@ done:
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 	return status;
 
 fail:
@@ -724,7 +724,7 @@ static void PrintFocusPorts(uint32 select,
 
 
 	switch (select) {
-	case STL_PA_SELECT_ERR_INTEG:
+	case STL_PA_SELECT_CATEGORY_INTEG:
 	// HEADING: LinkQualityIndicator;UncorectableErrors;LinkDowned;NumLanesDown;RcvErrors;ExcessiveBufferOverruns;FMConfigErrors;LinkErrorRecovery;LocalLinkIntegrity
 			printf("%u;%u;%u;%u;%lu;%lu;%lu;%u;%lu",
 		   		pCounters->lq.s.linkQualityIndicator,
@@ -897,9 +897,9 @@ static void PrintFocusPorts(uint32 select,
 #endif
 
 #if 0
-static FSTATUS GetAndPrintFocusPorts(struct oib_port *port, char *groupName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, STL_PA_IMAGE_INFO_DATA *pImageInfo)
+static FSTATUS GetAndPrintFocusPorts(struct omgt_port *port, char *groupName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset, STL_PA_IMAGE_INFO_DATA *pImageInfo)
 {
-	QUERY					query;
+	OMGT_QUERY				query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
@@ -919,7 +919,7 @@ static FSTATUS GetAndPrintFocusPorts(struct oib_port *port, char *groupName, uin
 
 	// this call is synchronous
 	// TBD - fails with insufficient resources in PA if range is maxint.  What is the limit?  Do we need to do a groupconfig query instead?  Then how do we get the neighbor information?
-	status = iba_pa_multi_mad_focus_ports_response_query(port, &query, groupName, select, start, MIN(range, pImageInfo->numSwitchPorts+pImageInfo->numHFIPorts), &pQueryResults, NULL, &imageId);
+	status = iba_pa_multi_mad_focus_ports_response_query(port, &query, groupName, select, start, MIN(range, pImageInfo->numSwitchPorts+pImageInfo->numHFIPorts), &pQueryResults, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -979,7 +979,7 @@ done:
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 	return status;
 
 fail:
@@ -988,7 +988,7 @@ fail:
 }
 #endif
 
-static FSTATUS GetImageInfo(struct oib_port *port, uint64 imageNumber, int32 imageOffset, STL_PA_IMAGE_INFO_DATA* pImageInfo)
+static FSTATUS GetImageInfo(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, STL_PA_IMAGE_INFO_DATA* pImageInfo)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_INFO_DATA		request = {{0}};
@@ -1005,7 +1005,7 @@ static FSTATUS GetImageInfo(struct oib_port *port, uint64 imageNumber, int32 ima
 			PrintStlPAImageInfo(&g_dest, 0, response);
     } else {
         fprintf(stderr, "Failed to receive GetImageInfo response: %s\n", iba_pa_mad_status_msg(port));
-		if (oib_get_mad_status(port) == STL_MAD_STATUS_STL_PA_NO_IMAGE)
+		if (omgt_get_pa_mad_status(port) == STL_MAD_STATUS_STL_PA_NO_IMAGE)
 			status = FNOT_FOUND;
     }
 	if (response)
@@ -1014,9 +1014,9 @@ static FSTATUS GetImageInfo(struct oib_port *port, uint64 imageNumber, int32 ima
 }
 
 #if 0
-static FSTATUS GetVFList(struct oib_port *port)
+static FSTATUS GetVFList(struct omgt_port *port)
 {
-	QUERY					query;
+	OMGT_QUERY				query;
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
 
@@ -1031,7 +1031,7 @@ static FSTATUS GetVFList(struct oib_port *port)
 					   		iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_vf_list_response_query(port, &query, &pQueryResults, NULL);
+	status = iba_pa_multi_mad_vf_list_response_query(port, &query, &pQueryResults);
 
 	if (! pQueryResults)
 	{
@@ -1063,7 +1063,7 @@ done:
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 	return status;
 
 fail:
@@ -1073,9 +1073,9 @@ fail:
 #endif
 
 #if 0
-static FSTATUS GetVFInfo(struct oib_port *port, char *vfName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetVFInfo(struct omgt_port *port, char *vfName, uint64 imageNumber, int32 imageOffset)
 {
-	QUERY					query;
+	OMGT_QUERY				query;
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
 	STL_PA_IMAGE_ID_DATA	imageId = {0};
@@ -1093,7 +1093,7 @@ static FSTATUS GetVFInfo(struct oib_port *port, char *vfName, uint64 imageNumber
 					   		iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_vf_info_response_query(port, &query, vfName, &pQueryResults, NULL, &imageId);
+	status = iba_pa_multi_mad_vf_info_response_query(port, &query, vfName, &pQueryResults, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -1125,7 +1125,7 @@ done:
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 	return status;
 
 fail:
@@ -1135,9 +1135,9 @@ fail:
 #endif
 
 #if 0
-static FSTATUS GetVFConfig(struct oib_port *port, char *vfName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetVFConfig(struct omgt_port *port, char *vfName, uint64 imageNumber, int32 imageOffset)
 {
-	QUERY					query;
+	OMGT_QUERY				query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
@@ -1155,7 +1155,7 @@ static FSTATUS GetVFConfig(struct oib_port *port, char *vfName, uint64 imageNumb
 							iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_vf_config_response_query(port, &query, vfName, &pQueryResults, NULL, &imageId);
+	status = iba_pa_multi_mad_vf_config_response_query(port, &query, vfName, &pQueryResults, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -1187,7 +1187,7 @@ done:
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 	return status;
 
 fail:
@@ -1197,7 +1197,7 @@ fail:
 #endif
 
 #if 0
-static FSTATUS GetVFPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, char *vfName, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetVFPortCounters(struct omgt_port *port, uint32_t nodeLid, uint8_t portNumber, uint32_t deltaFlag, uint32_t userCntrsFlag, char *vfName, uint64 imageNumber, int32 imageOffset)
 {
 	FSTATUS					status= FERROR;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
@@ -1220,9 +1220,9 @@ static FSTATUS GetVFPortCounters(struct oib_port *port, uint32_t nodeLid, uint8_
 #endif
 
 #if 0
-static FSTATUS GetVFFocusPorts(struct oib_port *port, char *vfName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset)
+static FSTATUS GetVFFocusPorts(struct omgt_port *port, char *vfName, uint32 select, uint32 start, uint32 range, uint64 imageNumber, int32 imageOffset)
 {
-	QUERY					query;
+	OMGT_QUERY				query;
     STL_PA_IMAGE_ID_DATA			imageId = {0};
 	FSTATUS					status;
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
@@ -1240,7 +1240,7 @@ static FSTATUS GetVFFocusPorts(struct oib_port *port, char *vfName, uint32 selec
 							iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	status = iba_pa_multi_mad_vf_focus_ports_response_query(port, &query, vfName, select, start, range, &pQueryResults, NULL, &imageId);
+	status = iba_pa_multi_mad_vf_focus_ports_response_query(port, &query, vfName, select, start, range, &pQueryResults, &imageId);
 
 	if (! pQueryResults)
 	{
@@ -1272,7 +1272,7 @@ done:
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 	return status;
 
 fail:
@@ -1310,12 +1310,12 @@ void usage(void)
 	//fprintf(stderr, "           utilhigh      - sorted by utilization - highest first\n");                  // STL_PA_SELECT_UTIL_HIGH         0x00020001
 	//fprintf(stderr, "           pktrate       - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_UTIL_PKTS_HIGH    0x00020082
 	//fprintf(stderr, "           utillow       - sorted by utilization - lowest first\n");                   // STL_PA_SELECT_UTIL_LOW          0x00020101
-	//fprintf(stderr, "           integrity     - sorted by integrity errors - highest first\n");             // STL_PA_SELECT_ERR_INTEG         0x00030001
-	//fprintf(stderr, "           congestion    - sorted by congestion errors - highest first\n");            // STL_PA_SELECT_ERR_CONG          0x00030002
-	//fprintf(stderr, "           smacongestion - sorted by sma congestion errors - highest first\n");        // STL_PA_SELECT_ERR_SMA_CONG      0x00030003
-	//fprintf(stderr, "           bubbles       - sorted by bubble errors - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
-	//fprintf(stderr, "           security      - sorted by security errors - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
-	//fprintf(stderr, "           routing       - sorted by routing errors - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
+	//fprintf(stderr, "           integrity     - sorted by integrity errors - highest first\n");             // STL_PA_SELECT_CATEGORY_INTEG         0x00030001
+	//fprintf(stderr, "           congestion    - sorted by congestion errors - highest first\n");            // STL_PA_SELECT_CATEGORY_CONG          0x00030002
+	//fprintf(stderr, "           smacongestion - sorted by sma congestion errors - highest first\n");        // STL_PA_SELECT_CATEGORY_SMA_CONG      0x00030003
+	//fprintf(stderr, "           bubbles       - sorted by bubble errors - highest first\n");                // STL_PA_SELECT_CATEGORY_BUBBLE        0x00030004
+	//fprintf(stderr, "           security      - sorted by security errors - highest first\n");              // STL_PA_SELECT_CATEGORY_SEC           0x00030005
+	//fprintf(stderr, "           routing       - sorted by routing errors - highest first\n");               // STL_PA_SELECT_CATEGORY_ROUT          0x00030006
 	//fprintf(stderr, "    -S/--start           - start of window for focus ports - should always be 0\n");
 	//fprintf(stderr, "                           for now\n");
 	//fprintf(stderr, "    -r/--range           - size of window for focus ports list\n");
@@ -1379,12 +1379,12 @@ OutputFocusMap_t OutputFocusTable[]= {
 	{"utilhigh",        STL_PA_SELECT_UTIL_HIGH },        // 0x00020001
 	{"pktrate",         STL_PA_SELECT_UTIL_PKTS_HIGH },   // 0x00020082
 	{"utillow",         STL_PA_SELECT_UTIL_LOW },         // 0x00020101
-	{"integrity",       STL_PA_SELECT_ERR_INTEG },        // 0x00030001
-	{"congestion",      STL_PA_SELECT_ERR_CONG },         // 0x00030002
-	{"smacongestion",   STL_PA_SELECT_ERR_SMA_CONG },     // 0x00030003
-	{"bubbles",	        STL_PA_SELECT_ERR_BUBBLE },       // 0x00030004
-	{"security" ,       STL_PA_SELECT_ERR_SEC },          // 0x00030005
-	{"routing",	        STL_PA_SELECT_ERR_ROUT },         // 0x00030006
+	{"integrity",       STL_PA_SELECT_CATEGORY_INTEG },        // 0x00030001
+	{"congestion",      STL_PA_SELECT_CATEGORY_CONG },         // 0x00030002
+	{"smacongestion",   STL_PA_SELECT_CATEGORY_SMA_CONG },     // 0x00030003
+	{"bubbles",	        STL_PA_SELECT_CATEGORY_BUBBLE },       // 0x00030004
+	{"security" ,       STL_PA_SELECT_CATEGORY_SEC },          // 0x00030005
+	{"routing",	        STL_PA_SELECT_CATEGORY_ROUT },         // 0x00030006
 	{ NULL, 0},
 };
 
@@ -1431,7 +1431,6 @@ int main(int argc, char ** argv)
         {
             case 'v':
                 g_verbose++;
-				if (g_verbose>3) oib_set_dbg(stderr);
 				if (g_verbose>4) umad_debug(g_verbose-4);
                 break;
 
@@ -1596,7 +1595,7 @@ int main(int argc, char ** argv)
 		set_opapaquery_debug(g_portHandle);
 
 	// Read and set the primary pa master
-    if (FSUCCESS == (fstatus = iba_pa_query_master_pm_lid(g_portHandle, &g_primaryPmLid))) {
+    if (FSUCCESS == (fstatus = iba_pa_query_master_pm_lid(g_portHandle))) {
         // The LID value of the Primary PM has been set in the port object as a side effect of the previous call.
     } else {
 		if (fstatus == FUNAVAILABLE)
@@ -1620,7 +1619,7 @@ int main(int argc, char ** argv)
 	}
 		
 	//if (! g_gotFocus) {
-	//	g_focus = STL_PA_SELECT_ERR_INTEG;
+	//	g_focus = STL_PA_SELECT_CATEGORY_INTEG;
 	//	fprintf(stderr, "Using Focus: integrity\n");
 	//}
 	if (! g_gotRange) {
@@ -1710,7 +1709,7 @@ int main(int argc, char ** argv)
 #endif
 	OutputHeading();
 	ArrayDestroy(&g_Columns);
-	oib_close_port(g_portHandle);
+	omgt_close_port(g_portHandle);
 	g_portHandle = NULL;
 	exit(0);
 
@@ -1722,7 +1721,7 @@ release:
 exit:
 	OutputHeading();
 	ArrayDestroy(&g_Columns);
-	oib_close_port(g_portHandle);
+	omgt_close_port(g_portHandle);
 	g_portHandle = NULL;
 	exit(1);
 }

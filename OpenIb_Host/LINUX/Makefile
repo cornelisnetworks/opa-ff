@@ -81,7 +81,6 @@ INSTALL_SOURCES= \
 				 $(TL_DIR)/CommonInstall/util_hosttools.pl \
 				 $(TL_DIR)/CommonInstall/util_rpm.pl \
 				 $(TL_DIR)/CommonInstall/ofed_firmware.pl \
-				 $(TL_DIR)/CommonInstall/mpi_apps.pl \
 				 $(TL_DIR)/CommonInstall/comp_oftools.pl \
 				 $(TL_DIR)/CommonInstall/comp_fastfabric.pl \
 				 $(TL_DIR)/CommonInstall/main_openibff.pl
@@ -100,7 +99,6 @@ ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES122"
 endif
 
 COMP_SOURCES= \
-				 $(TL_DIR)/CommonInstall/mpi_apps.pl \
 				 $(TL_DIR)/CommonInstall/comp_oftools.pl \
 				 $(TL_DIR)/CommonInstall/comp_fastfabric.pl
 # Source files to include in DSP File
@@ -184,6 +182,8 @@ INSTALL.pl: $(INSTALL_SOURCES)
 comp.pl:
 	cat $(PREREQ_SOURCE) $(COMP_SOURCES) > comp.pl
 	chmod +x comp.pl
+	cp comp.pl $(TL_DIR)/OpenIb_Host/.comp_fastfabric.pl
+	cp comp.pl $(TL_DIR)/OpenIb_Host/.comp_oftools.pl
 
 # install for stage phase
 #include $(TL_DIR)/Makerules/Maketargets.stage
@@ -211,8 +211,7 @@ package:
 	rm -rf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
 	mkdir -p $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
 	cp -r $$dir/arch $$dir/distro $$dir/distro_version $$dir/os_id $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
-	cp -r $$dir/config $$dir/INSTALL $$dir/comp.pl $$dir/README $$dir/version $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
-	cp -r $$dir/src/shmem $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
+	cp -r $$dir/INSTALL $$dir/comp.pl $$dir/README $$dir/version $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
 	cp -r $$dir/Lsf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
 	cp -r $$dir/Moab $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
 	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
@@ -243,9 +242,13 @@ final_package:
 	cp SRPMS/opa-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$basicsrpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
 	cp RPMS/$$arch/opa-basic-tools-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
 	cp RPMS/$$arch/opa-address-resolution-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
+	cp RPMS/$$arch/opa-libopamgt-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
+	cp RPMS/$$arch/opa-libopamgt-devel-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
 	cp RPMS/$$arch/opa-fastfabric-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
 	cp RPMS/$$arch/opa-basic-tools-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
 	cp RPMS/$$arch/opa-address-resolution-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
+	cp RPMS/$$arch/opa-libopamgt-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
+	cp RPMS/$$arch/opa-libopamgt-devel-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
 	cp RPMS/$$arch/opa-mpi-apps-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
 	if [ "$(BUILD_TARGET_OS_VENDOR)" = "redhat" ]; then \
 		cp RPMS/$$arch/opa-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \

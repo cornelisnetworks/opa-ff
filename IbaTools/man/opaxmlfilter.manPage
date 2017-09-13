@@ -16,7 +16,7 @@ opaxmlfilter
 Processes an XML file and removes all specified XML tags. The remaining tags are output and indentation can also be reformatted. opaxmlfilter is the opposite of opaxmlextract.
 .SH Syntax
 .NL
-opaxmlfilter [-t|-k] [-l] [-i \fIindent\fR] [-s \fIelement\fR] [-P \fIparam\(ulfile\fR]
+opaxmlfilter [-t|-k] [-l] [-i \fIindent\fR] [-s \fIelement\fR]
 .br
 [ \fIinput\(ulfile\fR]
 .SH Options 
@@ -50,12 +50,7 @@ Sets indentation to use per level. Default is 4.
 .TP 10
 -s \fIelement\fR 
 .NL
-Specifies the name of the XML element to suppress. Can be used multiple times (in any order).
-
-.TP 10
--P \fIparam\(ulfile\fR 
-.NL
-Uses input command line options (parameters) from param\(ulfile.
+Specifies the name of the XML element to suppress. Can be used multiple times (maximum of 100) in any order.
 
 .TP 10
  \fIinput\(ulfile\fR 

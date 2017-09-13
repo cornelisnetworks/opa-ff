@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
 #include <iba/ibt.h>
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include "opaswcommon.h"
 #include "opaswmetadata.h"
 
@@ -268,7 +268,7 @@ FSTATUS parseDataTable(table_meta_data_t *metaData, uint8 *dataBuffer, uint16 ta
 	return(status);
 }
 
-uint32 getModuleType(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID)
+uint32 getModuleType(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID)
 {
 	FSTATUS						status = FSUCCESS;
 	uint8						*p;
@@ -311,7 +311,7 @@ uint32 getModuleType(struct oib_port *port, IB_PATH_RECORD *path, uint16 session
 	return retValue;
 }
 
-uint32 getNumPorts(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID)
+uint32 getNumPorts(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID)
 {
 	FSTATUS						status = FSUCCESS;
 	uint8						*p;
@@ -354,7 +354,7 @@ uint32 getNumPorts(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID
 	return retValue;
 }
 
-FSTATUS getNodeDescription(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, uint8 *nodeDesc)
+FSTATUS getNodeDescription(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, uint8 *nodeDesc)
 {
 	FSTATUS						status = FSUCCESS;
 	uint8						*p;
@@ -397,7 +397,7 @@ FSTATUS getNodeDescription(struct oib_port *port, IB_PATH_RECORD *path, uint16 s
 	return(status);
 }
 
-FSTATUS getGuid(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, EUI64 *guid, int which)
+FSTATUS getGuid(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, EUI64 *guid, int which)
 {
 	FSTATUS						status = FSUCCESS;
 	uint8						*p;

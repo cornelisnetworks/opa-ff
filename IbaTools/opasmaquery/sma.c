@@ -30,7 +30,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* [ICS VERSION STRING: unknown] */
 #include "stl_mad.h"
 #include "stl_helper.h"
-#include <oib_utils.h>
+#include <opamgt_priv.h>
 #include "opasmaquery.h"
 
 #define MSG_SMP_SEND_RECV_FAILURE	"failed SMP Send or Receive"
@@ -161,7 +161,7 @@ static FSTATUS perform_sma_query(uint16 attrid, uint32 attrmod, argrec *args, SM
     // Determine which pkey to use (full or limited)
     // Attempt to use full at all times, otherwise, can
     // use the limited for queries of the local port.
-    uint16_t pkey = oib_get_mgmt_pkey(args->oib_port, args->dlid, args->drpaths);
+    uint16_t pkey = omgt_get_mgmt_pkey(args->omgt_port, args->dlid, args->drpaths);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -175,14 +175,14 @@ static FSTATUS perform_sma_query(uint16 attrid, uint32 attrmod, argrec *args, SM
 
 	BSWAP_SMP_HEADER(smp);
 	{
-		struct oib_mad_addr addr = {
+		struct omgt_mad_addr addr = {
 			lid : args->dlid,
 			qpn : 0,
 			qkey : 0,
 			pkey : pkey
 		};
         size_t recv_size = sizeof(*smp);
-		status = oib_send_recv_mad_no_alloc(args->oib_port, (uint8_t *)smp, sizeof(*smp), &addr,
+		status = omgt_send_recv_mad_no_alloc(args->omgt_port, (uint8_t *)smp, sizeof(*smp), &addr,
 											(uint8_t *)smp, &recv_size, RESP_WAIT_TIME, 0);
 	}
 	BSWAP_SMP_HEADER(smp);
@@ -207,13 +207,13 @@ static FSTATUS perform_stl_aggregate_query(argrec *args, STL_SMP *smp)
     // Determine which pkey to use (full or limited)
     // Attempt to use full at all times, otherwise, can
     // use the limited for queries of the local port.
-    uint16_t pkey = oib_get_mgmt_pkey(args->oib_port, args->dlid, args->drpaths);
+    uint16_t pkey = omgt_get_mgmt_pkey(args->omgt_port, args->dlid, args->drpaths);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : args->dlid,
 		qpn : 0,
 		qkey : 0,
@@ -248,7 +248,7 @@ static FSTATUS perform_stl_aggregate_query(argrec *args, STL_SMP *smp)
 
 	STL_BSWAP_SMP_HEADER(smp);
     recv_size = sizeof(*smp);
-	status = oib_send_recv_mad_no_alloc(args->oib_port, (uint8_t *)smp, 
+	status = omgt_send_recv_mad_no_alloc(args->omgt_port, (uint8_t *)smp, 
 		sizeof(*smp), &addr, (uint8_t *)smp, &recv_size, RESP_WAIT_TIME, 0);
 
 	STL_BSWAP_SMP_HEADER(smp);
@@ -297,16 +297,21 @@ static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args
 		PrintSeparator(&g_dest);
 	}
 
-	if (oib_get_port_state(args->oib_port) == IB_PORT_DOWN && ((args->dlid && args->dlid != args->slid) || args->drpaths)) {
-		fprintf(stderr, "WARNING port (%s:%d) is DOWN!\n",
-			oib_get_hfi_name(args->oib_port), 
-			oib_get_hfi_port_num(args->oib_port));
+	uint8_t port_state;
+	(void)omgt_port_get_port_state(args->omgt_port, &port_state);
+	if (port_state == IB_PORT_DOWN && ((args->dlid && args->dlid != args->slid) || args->drpaths)) {
+		uint8_t port_num;
+		char hfi_name[IBV_SYSFS_NAME_MAX] = {0};
+		(void)omgt_port_get_hfi_port_num(args->omgt_port, &port_num);
+		(void)omgt_port_get_hfi_name(args->omgt_port, hfi_name);
+		fprintf(stderr, "WARNING port (%s:%d) is not ACTIVE!\n",
+			hfi_name, port_num);
 	}
 
     // Determine which pkey to use (full or limited)
     // Attempt to use full at all times, otherwise, can
     // use the limited for queries of the local port.
-    uint16_t pkey = oib_get_mgmt_pkey(args->oib_port, args->dlid, args->drpaths);
+    uint16_t pkey = omgt_get_mgmt_pkey(args->omgt_port, args->dlid, args->drpaths);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -316,14 +321,14 @@ static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args
     attr_len = ROUNDUP_TYPE(size_t, attr_len, 8);
 	STL_BSWAP_SMP_HEADER(smp);
 	{
-		struct oib_mad_addr addr = {
+		struct omgt_mad_addr addr = {
 			lid : args->dlid,
 			qpn : 0,
 			qkey : 0,
             pkey : pkey
 		};
         size_t recv_size = sizeof(*smp);
-		status = oib_send_recv_mad_no_alloc(args->oib_port, (uint8_t *)smp, attr_len, &addr,
+		status = omgt_send_recv_mad_no_alloc(args->omgt_port, (uint8_t *)smp, attr_len, &addr,
 											(uint8_t *)smp, &recv_size, RESP_WAIT_TIME, 0);
 	}
 	STL_BSWAP_SMP_HEADER(smp);
@@ -2117,7 +2122,7 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 
 		pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
 		
-		portType = pPortInfo->PortPhyConfig.s.PortType;
+		portType = pPortInfo->PortPhysConfig.s.PortType;
 	}
 
 	for (; len > 0; startAddr += get_len, len -= get_len) {

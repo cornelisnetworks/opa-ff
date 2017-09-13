@@ -85,13 +85,14 @@ void Usage_full()
 	fprintf(stderr, "\t-h/--hfi\t<arg>\tThe HFI to use (Defaults to the first hfi)\n");
 	fprintf(stderr, "\t-p/--port\t<arg>\tThe port to use (Defaults to the first port)\n");
 	fprintf(stderr, "\t--help\t\t\tProvide full help text\n");
-	
 	fprintf(stderr,"\n"
 				"This tool allows you to create an arbitrary path\n"
 				"query and view the result. \n\n"
 				"All arguments are optional, but ill-formed\n"
 				"queries can be expected to fail. You must provide\n"
 				"at least a pair of lids, or a pair of gids.\n\n"
+				"Mixing of lids and gid in query is not permitted.\n\n"
+				"SID or PKey can also be provided but not both.\n\n"
 				"If you have multiple HFIs, the same lid can appear on\n"
 				"more than one HFI, so you must specify which HFI to use\n"
 				"when searching by lids and you have multiple HFIs.\n\n"
@@ -158,26 +159,28 @@ int main(int argc, char **argv)
 			break;
 		case 'D': 
 			if (!parse_gid(optarg, &query.dgid)) {
-				fprintf(stderr, "Badly formatted DGID.\n"); 
+				fprintf(stderr, "Badly formatted DGID.\n");
 				return -1;
 			}
 			break;
-		case '$': 
-			Usage_full(); //exits	
-			break; 
-		default: 
-			Usage(); //exits	
-			break;		
-
-		}
-			
+		case '$':
+			Usage_full(); //exits
+			break;
+		default:
+			Usage(); //exits
+			break;
+		}			
 	} while (1);
 
 	if ((query.pkey == 0) && (query.service_id == 0)) {
 		query.service_id = hton64(DEFAULT_SID);
 	}
 	print_path_record("Query Parameters", &query);
-		
+
+	if ((query.pkey != 0) && (query.service_id != 0)) {
+                fprintf(stderr, "Query using both Service ID and PKey not supported\n");
+                return -1;
+	}
 	/*
  	 * Finds and opens the HFI.
 	 */

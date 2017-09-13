@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 
@@ -62,19 +62,22 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 extern int g_verbose;
 
 
-FSTATUS getDestPath(struct oib_port *port, EUI64 destPortGuid, char *cmd, IB_PATH_RECORD *pathp)
+FSTATUS getDestPath(struct omgt_port *port, EUI64 destPortGuid, char *cmd, IB_PATH_RECORD *pathp)
 {
 	FSTATUS					fstatus;
 	EUI64					portGuid		= -1;
-	QUERY					query;
+	EUI64					portPrefix		= -1;
+	OMGT_QUERY				query;
 	PQUERY_RESULT_VALUES	pq				= NULL;
 
-	portGuid = oib_get_port_guid(port);
+	(void)omgt_port_get_port_guid(port, &portGuid);
+	(void)omgt_port_get_port_prefix(port, &portPrefix);
 
 	memset(&query, 0, sizeof(query));		// initialize reserved fields
 	query.InputType = InputTypePortGuidPair;
-	query.InputValue.PortGuidPair.SourcePortGuid = portGuid;
-	query.InputValue.PortGuidPair.DestPortGuid = destPortGuid;
+	query.InputValue.IbPathRecord.PortGuidPair.SourcePortGuid = portGuid;
+	query.InputValue.IbPathRecord.PortGuidPair.DestPortGuid = destPortGuid;
+	query.InputValue.IbPathRecord.PortGuidPair.SharedSubnetPrefix = portPrefix;
 	query.OutputType = OutputTypePathRecord;
 
 	DBGPRINT("Query: Input=%s, Output=%s\n",
@@ -82,7 +85,7 @@ FSTATUS getDestPath(struct oib_port *port, EUI64 destPortGuid, char *cmd, IB_PAT
 						iba_sd_query_result_type_msg(query.OutputType));
 
 	// this call is synchronous
-	fstatus = oib_query_sa(port, &query, &pq);
+	fstatus = omgt_query_sa(port, &query, &pq);
 
 	if (! pq)
 	{
@@ -141,7 +144,7 @@ void opaswDisplayBuffer(char *buffer, int dataLen)
 	return;
 }
 
-uint16 getSessionID(struct oib_port *port, IB_PATH_RECORD *path)
+uint16 getSessionID(struct omgt_port *port, IB_PATH_RECORD *path)
 {
 
 	VENDOR_MAD		mad;
@@ -155,7 +158,7 @@ uint16 getSessionID(struct oib_port *port, IB_PATH_RECORD *path)
 		return((uint16)-1);
 }
 
-void releaseSession(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID)
+void releaseSession(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID)
 {
 	VENDOR_MAD		mad;
 	FSTATUS			status;
@@ -270,7 +273,7 @@ int compareFwVersion(uint8 *version1, uint8 *version2)
 	return(0);
 }
 
-FSTATUS getFwVersion(struct oib_port *port, 
+FSTATUS getFwVersion(struct omgt_port *port, 
 					 IB_PATH_RECORD *path, 
 					 VENDOR_MAD *mad, 
 					 uint16 sessionID, 
@@ -299,7 +302,7 @@ FSTATUS getFwVersion(struct oib_port *port,
 #define ADDRESS_CHANGE_VERSION "5.0.3.0.4"
 #define DEVELOPMENT_VERSION "0.0.0.0.0"
 
-FSTATUS getVPDInfo(struct oib_port *port, 
+FSTATUS getVPDInfo(struct omgt_port *port, 
 				   IB_PATH_RECORD *path, 
 				   VENDOR_MAD *mad, 
 				   uint16 sessionID, 
@@ -488,7 +491,7 @@ int ltc2974_L11_to_Celsius(uint16 half16)
         return celsius;
 }
 
-FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
+FSTATUS getTempReadings(struct omgt_port *port, IB_PATH_RECORD *path,
 		VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH], uint8 BoardID)
 {
 	FSTATUS status = FSUCCESS;
@@ -563,7 +566,7 @@ FSTATUS getTempReadings(struct oib_port *port, IB_PATH_RECORD *path,
 
 }
 
-FSTATUS getFanSpeed(struct oib_port *port, 
+FSTATUS getFanSpeed(struct omgt_port *port, 
 					IB_PATH_RECORD *path, 
 					VENDOR_MAD *mad, 
 					uint16 sessionID, 
@@ -610,7 +613,7 @@ int getNumPS() {
 	//This function will always return 2 for now, but in the future this number may change based upon manufacturer or design.
 }
 
-FSTATUS getPowerSupplyStatus(struct oib_port *port, 
+FSTATUS getPowerSupplyStatus(struct omgt_port *port, 
 							 IB_PATH_RECORD *path, 
 							 VENDOR_MAD *mad, 
 							 uint16 sessionID, 
@@ -675,7 +678,7 @@ FSTATUS getPowerSupplyStatus(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS getMaxQsfpTemperatureMaxDetected(struct oib_port *port, 
+FSTATUS getMaxQsfpTemperatureMaxDetected(struct omgt_port *port, 
 					   IB_PATH_RECORD *path, 
 					   VENDOR_MAD *mad, 
 					   uint16 sessionID, 
@@ -710,7 +713,7 @@ FSTATUS getMaxQsfpTemperatureMaxDetected(struct oib_port *port,
 }
 
 
-FSTATUS getAsicVersion(struct oib_port *port, 
+FSTATUS getAsicVersion(struct omgt_port *port, 
 					   IB_PATH_RECORD *path, 
 					   VENDOR_MAD *mad, 
 					   uint16 sessionID, 
@@ -728,7 +731,7 @@ FSTATUS getAsicVersion(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS getBoardID(struct oib_port *port,
+FSTATUS getBoardID(struct omgt_port *port,
 				   IB_PATH_RECORD *path, 
 				   VENDOR_MAD *mad, 
 				   uint16 sessionID, 
@@ -751,7 +754,7 @@ FSTATUS getBoardID(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS doPingSwitch(struct oib_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad)
+FSTATUS doPingSwitch(struct omgt_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad)
 {
 
 	FSTATUS			status;
@@ -762,7 +765,7 @@ FSTATUS doPingSwitch(struct oib_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *
 }
 
 
-FSTATUS getEMFWFileNames(struct oib_port *port, 
+FSTATUS getEMFWFileNames(struct omgt_port *port, 
 						 IB_PATH_RECORD *path, 
 						 uint16 sessionID, 
 						 char *fwFileName, 
@@ -807,7 +810,7 @@ FSTATUS getEMFWFileNames(struct oib_port *port,
 
 /* opaswEepromRW: Reads from or Writes to the switch EEPROM
    based on prrEepromRW in prrFwUpdate.c */
-FSTATUS opaswEepromRW(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, int timeout,
+FSTATUS opaswEepromRW(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, int timeout,
 					  uint32 len, uint32 offset, uint8 *data, boolean writeData, boolean secondary) {
 	uint32 maxXfer = 128;
 	uint32 xferLen;

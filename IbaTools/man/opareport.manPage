@@ -805,7 +805,7 @@ opareport -o nodes -F \[aq]iocpat:*Slot 2*:port:2\[aq]
 .br
 opareport -o nodes -F ioctype:SRP opareport -o nodes -F ioctype:SRP:port:2
 .br
-opareport -o extlinks -F rate:5g
+opareport -o extlinks -F rate:100g
 .br
 opareport -o extlinks -F portstate:armed
 .br

@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <infiniband/umad.h>
 #include <infiniband/verbs.h>
 #include "ib_notice_net.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include "dsap.h"
 #include "dsap_notifications.h"
 
@@ -176,7 +176,7 @@ static void * dsap_notification_event_thread(void *arg)
 	while (!port->terminating) {
 		pthread_testcancel();
 		action = DSAP_NOTIFY_NO_ACTION;
-		if (oib_get_sa_event(port->oib_handle, &event) == 0) {
+		if (omgt_get_sa_event(port->omgt_handle, &event) == 0) {
 			/* Make sure we get the right context */
 			if (port == event->context) {
 				action = dsap_handle_event(event);
@@ -185,7 +185,7 @@ static void * dsap_notification_event_thread(void *arg)
 					   "pointer from ib_usa: 0x%p\n",
 					event->context);
 			}
-			oib_ack_sa_event(event);
+			omgt_ack_sa_event(event);
 		}
 		
 		dsap_take_action(action);
@@ -207,9 +207,9 @@ void dsap_terminate_notification(struct dsap_port *port)
 	}
 	
 
-	if (port->oib_handle != NULL) {
-		oib_close_port(port->oib_handle);
-		port->oib_handle = NULL;
+	if (port->omgt_handle != NULL) {
+		omgt_close_port(port->omgt_handle);
+		port->omgt_handle = NULL;
 	}
 }
 
@@ -317,22 +317,22 @@ FSTATUS dsap_notification_register_port(struct dsap_port *port)
 	acm_log(2, "port %s/%d\n", port->dev->device->verbs->device->name,
 		port->port->port_num);
 
-	/* open the oib port object */
+	/* open the opamgt port object */
 	if (acm_get_gid((struct acm_port *) port->port, 0, &gid)) {
 		acm_log(0, "Failed to get gid\n");
 		goto error;
 	}
-	if ((rval = oib_open_port_by_guid(&port->oib_handle, 
-					   ntohll(gid.global.interface_id)))) {
-		acm_log(0, "Cannot open oib port object. (%d)\n", rval);
+	if ((rval = omgt_open_port_by_guid(&port->omgt_handle,
+					   ntohll(gid.global.interface_id), NULL))) {
+		acm_log(0, "Cannot open opamgt port object. (%d)\n", rval);
 		goto error;
 	}
 
-	if (dsap_no_subscribe) {
-		oib_close_port(port->oib_handle);
-		port->oib_handle = NULL;
+	//set logging
+	dsap_omgt_log_init(port->omgt_handle);
+
+	if (dsap_no_subscribe)
 		return FSUCCESS;
-	}
 
 	/* spawn the notification thread before registering for the traps */
 	port->terminating = 0;
@@ -342,7 +342,7 @@ FSTATUS dsap_notification_register_port(struct dsap_port *port)
 		goto error;
 	}
 
-	rval = oib_sa_register_trap(port->oib_handle,
+	rval = omgt_sa_register_trap(port->omgt_handle,
 				    ntoh16(IBV_SA_SM_TRAP_GID_IN_SERVICE),
 				    port);
 	if (rval) {
@@ -351,7 +351,7 @@ FSTATUS dsap_notification_register_port(struct dsap_port *port)
 		goto error1;
 	}
 
-	rval = oib_sa_register_trap(port->oib_handle,
+	rval = omgt_sa_register_trap(port->omgt_handle,
 				    ntoh16(IBV_SA_SM_TRAP_GID_OUT_OF_SERVICE),
 				    port);
 	if (rval) {
@@ -368,10 +368,6 @@ error1:
 	pthread_cancel(port->notice_thread);
 	pthread_join(port->notice_thread, NULL);
 error:
-	if (port->oib_handle != NULL) {
-		oib_close_port(port->oib_handle);
-		port->oib_handle = NULL;
-	}
 	port->notice_started = 0;
 
 	return FERROR;
@@ -388,13 +384,13 @@ FSTATUS dsap_notification_reregister_port(struct dsap_port *port)
 		return FSUCCESS;
 
 	pthread_mutex_lock(&m_context);
-	if (!port || !port->oib_handle) {
+	if (!port || !port->omgt_handle) {
 		fstatus = FERROR;
 		acm_log(0, "Invalid parameters.\n");
 		goto error;
 	}
 
-	rval = oib_sa_register_trap(port->oib_handle, 
+	rval = omgt_sa_register_trap(port->omgt_handle, 
 				    ntoh16(IBV_SA_SM_TRAP_GID_IN_SERVICE), 
 				    port);
 	if (rval) {
@@ -404,7 +400,7 @@ FSTATUS dsap_notification_reregister_port(struct dsap_port *port)
 		goto error;
 	}
 
-	rval = oib_sa_register_trap(port->oib_handle, 
+	rval = omgt_sa_register_trap(port->omgt_handle, 
 				    ntoh16(IBV_SA_SM_TRAP_GID_OUT_OF_SERVICE),
 				    port);
 	if (rval) {

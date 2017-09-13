@@ -40,7 +40,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils.h"
+#include "opamgt_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 
@@ -53,20 +53,20 @@ static int				g_transID = 0x0114;
 extern int				g_debugMode;
 extern int				g_verbose;
 
-FSTATUS sendClassPortInfoMad(struct oib_port *port, 
+FSTATUS sendClassPortInfoMad(struct omgt_port *port, 
 							 IB_PATH_RECORD *path, 
 							 VENDOR_MAD *mad)
 {
 	FSTATUS				status = FSUCCESS;
 	uint16				madStatus;
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -99,7 +99,7 @@ FSTATUS sendClassPortInfoMad(struct oib_port *port,
 	}
 
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -122,7 +122,7 @@ FSTATUS sendClassPortInfoMad(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS sendSessionMgmtGetMad(struct oib_port *port, 
+FSTATUS sendSessionMgmtGetMad(struct omgt_port *port, 
 							  IB_PATH_RECORD *path, 
 							  VENDOR_MAD *mad, 
 							  uint16 *sessionID)
@@ -132,13 +132,13 @@ FSTATUS sendSessionMgmtGetMad(struct oib_port *port,
 	opasw_session_mgmt_t *sessionMgmtDataP;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -175,7 +175,7 @@ FSTATUS sendSessionMgmtGetMad(struct oib_port *port,
 	}
 
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -195,7 +195,7 @@ FSTATUS sendSessionMgmtGetMad(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS sendSessionMgmtReleaseMad(struct oib_port *port, 
+FSTATUS sendSessionMgmtReleaseMad(struct omgt_port *port, 
 								  IB_PATH_RECORD *path, 
 								  VENDOR_MAD *mad, 
 								  uint16 sessionID)
@@ -206,13 +206,13 @@ FSTATUS sendSessionMgmtReleaseMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -250,7 +250,7 @@ FSTATUS sendSessionMgmtReleaseMad(struct oib_port *port,
 	}
 
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -273,7 +273,7 @@ FSTATUS sendSessionMgmtReleaseMad(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS sendMemAccessGetMad(struct oib_port *port, 
+FSTATUS sendMemAccessGetMad(struct omgt_port *port, 
 							IB_PATH_RECORD *path, 
 							VENDOR_MAD *mad, 
 							uint16 sessionID, 
@@ -287,13 +287,13 @@ FSTATUS sendMemAccessGetMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -332,7 +332,7 @@ FSTATUS sendMemAccessGetMad(struct oib_port *port,
 	}
 
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -360,7 +360,7 @@ FSTATUS sendMemAccessGetMad(struct oib_port *port,
 
 }
 
-FSTATUS sendSysTableAccessGetMad(struct oib_port *port, 
+FSTATUS sendSysTableAccessGetMad(struct omgt_port *port, 
 								 IB_PATH_RECORD *path, 
 								 VENDOR_MAD *mad, 
 								 uint16 sessionID, 
@@ -374,13 +374,13 @@ FSTATUS sendSysTableAccessGetMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -424,7 +424,7 @@ FSTATUS sendSysTableAccessGetMad(struct oib_port *port,
 	}
 
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -453,7 +453,7 @@ FSTATUS sendSysTableAccessGetMad(struct oib_port *port,
 
 }
 
-FSTATUS sendSysTableAccessSetMad(struct oib_port *port, 
+FSTATUS sendSysTableAccessSetMad(struct omgt_port *port, 
 								 IB_PATH_RECORD *path, 
 								 VENDOR_MAD *mad, 
 								 uint16 sessionID, 
@@ -467,13 +467,13 @@ FSTATUS sendSysTableAccessSetMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -510,7 +510,7 @@ FSTATUS sendSysTableAccessSetMad(struct oib_port *port,
 	// opaswDisplayBuffer((char *)mad, sizeof(VENDOR_MAD));
 
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -529,7 +529,7 @@ FSTATUS sendSysTableAccessSetMad(struct oib_port *port,
 	return(status);
 
 }
-FSTATUS sendPortTableAccessSetMad(struct oib_port *port, 
+FSTATUS sendPortTableAccessSetMad(struct omgt_port *port, 
 								  IB_PATH_RECORD *path, 
 								  VENDOR_MAD *mad, 
 								  uint16 sessionID, 
@@ -544,13 +544,13 @@ FSTATUS sendPortTableAccessSetMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -595,7 +595,7 @@ FSTATUS sendPortTableAccessSetMad(struct oib_port *port,
 	}
 
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -619,7 +619,7 @@ FSTATUS sendPortTableAccessSetMad(struct oib_port *port,
 
 }
 
-FSTATUS sendIniDescriptorGetMad(struct oib_port *port, 
+FSTATUS sendIniDescriptorGetMad(struct omgt_port *port, 
 								IB_PATH_RECORD *path, 
 								VENDOR_MAD *mad, 
 								uint16 sessionID, 
@@ -631,13 +631,13 @@ FSTATUS sendIniDescriptorGetMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -670,7 +670,7 @@ FSTATUS sendIniDescriptorGetMad(struct oib_port *port,
 
 	// opaswDisplayBuffer((char *)mad, sizeof(VENDOR_MAD));
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -712,7 +712,7 @@ FSTATUS sendIniDescriptorGetMad(struct oib_port *port,
 
 }
 
-FSTATUS sendGetFwVersionMad(struct oib_port *port, 
+FSTATUS sendGetFwVersionMad(struct omgt_port *port, 
 							IB_PATH_RECORD *path, 
 							VENDOR_MAD *mad, 
 							uint16 sessionID, 
@@ -724,13 +724,13 @@ FSTATUS sendGetFwVersionMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -763,7 +763,7 @@ FSTATUS sendGetFwVersionMad(struct oib_port *port,
 
 	// opaswDisplayBuffer((char *)mad, sizeof(VENDOR_MAD));
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -785,7 +785,7 @@ FSTATUS sendGetFwVersionMad(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS sendRegisterAccessMad(struct oib_port *port, 
+FSTATUS sendRegisterAccessMad(struct omgt_port *port, 
 							  IB_PATH_RECORD *path, 
 							  VENDOR_MAD *mad, 
 							  uint16 sessionID, 
@@ -799,13 +799,13 @@ FSTATUS sendRegisterAccessMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -844,7 +844,7 @@ FSTATUS sendRegisterAccessMad(struct oib_port *port,
 
 	// opaswDisplayBuffer((char *)mad, sizeof(VENDOR_MAD));
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -866,7 +866,7 @@ FSTATUS sendRegisterAccessMad(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS sendRebootMad(struct oib_port *port, 
+FSTATUS sendRebootMad(struct omgt_port *port, 
 					  IB_PATH_RECORD *path, 
 					  uint16 sessionID, 
 					  VENDOR_MAD *mad, 
@@ -880,13 +880,13 @@ FSTATUS sendRebootMad(struct oib_port *port,
 #endif
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -924,7 +924,7 @@ FSTATUS sendRebootMad(struct oib_port *port,
 	}
 #ifndef RESET_NORSP
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -944,7 +944,7 @@ FSTATUS sendRebootMad(struct oib_port *port,
 	}
 #else
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -960,7 +960,7 @@ FSTATUS sendRebootMad(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS sendI2CAccessMad(struct oib_port *port,
+FSTATUS sendI2CAccessMad(struct omgt_port *port,
 						 IB_PATH_RECORD *path, 
 						 uint16 sessionID, 
 						 void *mp, 
@@ -981,13 +981,13 @@ FSTATUS sendI2CAccessMad(struct oib_port *port,
 	VENDOR_MAD			*mad = (VENDOR_MAD *)mp;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -1036,7 +1036,7 @@ FSTATUS sendI2CAccessMad(struct oib_port *port,
 		}
 
         recv_size = sizeof(*mad);
-		status = oib_send_recv_mad_no_alloc(port, 
+		status = omgt_send_recv_mad_no_alloc(port, 
 											(uint8_t *)mad, sizeof(*mad), 
 											&addr,
 											(uint8_t *)mad, &recv_size,
@@ -1076,7 +1076,7 @@ FSTATUS sendI2CAccessMad(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS sendSaveConfigMad(struct oib_port *port,
+FSTATUS sendSaveConfigMad(struct omgt_port *port,
 						  IB_PATH_RECORD *path, 
 						  VENDOR_MAD *mad, 
 						  uint16 sessionID)
@@ -1087,13 +1087,13 @@ FSTATUS sendSaveConfigMad(struct oib_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -1125,7 +1125,7 @@ FSTATUS sendSaveConfigMad(struct oib_port *port,
 
 	// Send mad & recv response
     recv_size = sizeof(*mad);
-	status = oib_send_recv_mad_no_alloc(port, 
+	status = omgt_send_recv_mad_no_alloc(port, 
 										(uint8_t *)mad, sizeof(*mad), 
 										&addr,
 										(uint8_t *)mad, &recv_size,
@@ -1144,7 +1144,7 @@ FSTATUS sendSaveConfigMad(struct oib_port *port,
 	return(status);
 }
 
-FSTATUS sendSTLPortStatsPort1Mad(struct oib_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad)
+FSTATUS sendSTLPortStatsPort1Mad(struct omgt_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad)
 {
 	FSTATUS status = FSUCCESS;
 	STL_DATA_PORT_COUNTERS_REQ *portCounters;
@@ -1152,17 +1152,18 @@ FSTATUS sendSTLPortStatsPort1Mad(struct oib_port *port, IB_PATH_RECORD *path, ST
 
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = oib_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
     }
 
-	struct oib_mad_addr addr = {
+	struct omgt_mad_addr addr = {
 		.lid = path->DLID,
 		.qpn = GSI_QUEUE_PAIR,
 		.qkey = QP1_WELL_KNOWN_Q_KEY,
 		.pkey = pkey,
+		.sl = path->u2.s.SL
 	};
 
 	memset(mad, 0, sizeof(STL_PERF_MAD));
@@ -1182,7 +1183,7 @@ FSTATUS sendSTLPortStatsPort1Mad(struct oib_port *port, IB_PATH_RECORD *path, ST
 	
 	BSWAP_MAD_HEADER((MAD*)mad);
 	
-	status = oib_send_recv_mad_no_alloc(port, (uint8_t *)mad, sizeof(*mad), &addr,
+	status = omgt_send_recv_mad_no_alloc(port, (uint8_t *)mad, sizeof(*mad), &addr,
 										(uint8_t *)mad, &recv_size, RESP_WAIT_TIME, 0);
 	BSWAP_MAD_HEADER((MAD*)mad);
 

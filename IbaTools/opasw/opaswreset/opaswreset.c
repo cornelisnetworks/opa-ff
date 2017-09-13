@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	uint16				sessionID = 0;
 	VENDOR_MAD			mad;
 	FSTATUS				status = FSUCCESS;
-	struct              oib_port *oib_port_session = NULL;
+	struct              omgt_port *omgt_port_session = NULL;
 
 	// determine how we've been invoked
 	cmdName = strrchr(argv[0], '/');			// Find last '/' in path
@@ -122,7 +122,6 @@ int main(int argc, char *argv[])
 		switch (c) {
 			case 'D':
 				g_debugMode = 1;
-				oib_set_dbg(stderr);
 				break;
 
 			case 't':
@@ -146,7 +145,6 @@ int main(int argc, char *argv[])
 				break;
 
 			case 'v':
-				oib_set_dbg(stderr);
 				g_verbose = 1;
 				break;
 
@@ -210,13 +208,15 @@ int main(int argc, char *argv[])
 	}
 
 	// Get the path
-	status = oib_open_port_by_num(&oib_port_session, hfi, port);
+
+	struct omgt_params params = {.debug_file = (g_verbose || g_debugMode) ? stderr : NULL};
+	status = omgt_open_port_by_num(&omgt_port_session, hfi, port, &params);
 	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}
 
-	if (getDestPath(oib_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
+	if (getDestPath(omgt_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to get destination path\n", cmdName);
 		status = FERROR;
 		goto err_exit;
@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
 
 	// Send a ClassPortInfo to see if the switch is responding
 
-	status = sendClassPortInfoMad(oib_port_session, &path, &mad);
+	status = sendClassPortInfoMad(omgt_port_session, &path, &mad);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to send/rcv ClassPortInfo\n", cmdName);
 		goto err_exit;
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 
 	// Get a session ID
 
-	sessionID = getSessionID(oib_port_session, &path);
+	sessionID = getSessionID(omgt_port_session, &path);
 	if (sessionID == (uint16)-1) {
 		fprintf(stderr, "%s: Error: Failed to obtain sessionID\n", cmdName);
 		status = FERROR;
@@ -241,16 +241,14 @@ int main(int argc, char *argv[])
 
 	// Send a reboot MAD to the LID
 
-	status = sendRebootMad(oib_port_session, &path, sessionID, &mad, delay);
+	status = sendRebootMad(omgt_port_session, &path, sessionID, &mad, delay);
 	if (status != FSUCCESS) {
-		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 	} 
 	printf("opaswreset completed\n");
 
 err_exit:
-	if (oib_port_session != NULL) {
-		oib_close_port(oib_port_session);
-	}
+	omgt_close_port(omgt_port_session);
 
 	if (status == FSUCCESS)
 		exit(0);

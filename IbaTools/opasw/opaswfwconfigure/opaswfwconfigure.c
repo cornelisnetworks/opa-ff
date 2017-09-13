@@ -46,7 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 #include "opaswmetadata.h"
@@ -953,7 +953,7 @@ static void usage(char *app_name)
 	exit(2);
 }
 
-int s20ReadMem(struct oib_port *port, U32_t addr, U32_t words, uint32 *data) {
+int s20ReadMem(struct omgt_port *port, U32_t addr, U32_t words, uint32 *data) {
 	U32_t remainingWords = words;
 	int status = FSUCCESS;
 	U32_t xferWords;
@@ -1017,7 +1017,7 @@ uint32 getLocationOfEeprom(int eeprom) {
 	}
 }
 
-FSTATUS EepromRW(struct oib_port *port, IB_PATH_RECORD *path, uint16 sessionID,
+FSTATUS EepromRW(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID,
 	void *mad, uint8 jumbo, uint8 method, int timeout, uint32 locationDescriptor,
 	uint16 dataLen, uint16 dataOffset, uint8 *data)
 {
@@ -1079,7 +1079,7 @@ int main(int argc, char *argv[])
 	int					primary = 1;
 	int					overwriteFactoryDefaults = 0;
 	struct stat			fileStat;
-	struct              oib_port *oib_port_session = NULL;
+	struct              omgt_port *omgt_port_session = NULL;
 	int					currentEeprom;
 
 
@@ -1096,7 +1096,6 @@ int main(int argc, char *argv[])
 		switch (c) {
 			case 'D':
 				g_debugMode = 1;
-				oib_set_dbg(stderr);
 				break;
 
 			case 't':
@@ -1204,13 +1203,14 @@ int main(int argc, char *argv[])
 
 	// Get the path
 
-	status = oib_open_port_by_num(&oib_port_session, hfi, port);
+	struct omgt_params params = {.debug_file = g_debugMode ? stderr : NULL};
+	status = omgt_open_port_by_num(&omgt_port_session, hfi, port, &params);
 	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}
 
-	if (getDestPath(oib_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
+	if (getDestPath(omgt_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to get destination path\n", cmdName);
 		status = FERROR;
 		goto err_exit;
@@ -1218,7 +1218,7 @@ int main(int argc, char *argv[])
 
 	// Send a ClassPortInfo to see if the switch is responding
 
-	status = sendClassPortInfoMad(oib_port_session, &path, &mad);
+	status = sendClassPortInfoMad(omgt_port_session, &path, &mad);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to send/rcv ClassPortInfo\n", cmdName);
 		goto err_exit;
@@ -1226,7 +1226,7 @@ int main(int argc, char *argv[])
 
 	// Get a session ID
 
-	sessionID = getSessionID(oib_port_session, &path);
+	sessionID = getSessionID(omgt_port_session, &path);
 	if (sessionID == (uint16)-1) {
 		fprintf(stderr, "%s: Error: Failed to obtain sessionID\n", cmdName);
 		status = FERROR;
@@ -1238,7 +1238,7 @@ int main(int argc, char *argv[])
 	if (g_dirParam) {
 		if (chdir(dirName) < 0) {
 			fprintf(stderr, "Error: cannot change directory to %s: %s\n", dirName, strerror(errno));
-			if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+			if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 			goto err_exit;
 		}
 		strcpy(inibinFileName, PRR_INIBIN);
@@ -1247,53 +1247,53 @@ int main(int argc, char *argv[])
 				strcpy(inibinFileName, OPASW_INIBIN);
 			} else {
 				fprintf(stderr, "Error: cannot validate emfwMapFile: %s\n", strerror(errno));
-				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 				status = FERROR;
 				goto err_exit;
 			}
 		} else {
-			getEMFWFileNames(oib_port_session, &path, sessionID, fwFileName, inibinFileName);
+			getEMFWFileNames(omgt_port_session, &path, sessionID, fwFileName, inibinFileName);
 		}
 	}
 
 	if (strstr(inibinFileName, ".inibin") == NULL) {
 		fprintf(stderr, "Error: old style EMFW not valid with this release\n");
-		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 		status = FERROR;
 		goto err_exit;
 	}
 
 	iniBinSize = readIniBinFile(inibinFileName, iniBinBuf);
 	if (iniBinSize < 0) {
-		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 		goto err_exit;
 	}
 
 	S20iniBinToText(NULL, iniBinBuf, iniBinSize, 0, "metaFn", "dataFn");
 
 
-	status = getNodeDescription(oib_port_session, &path, sessionID, switchNodeDesc);
+	status = getNodeDescription(omgt_port_session, &path, sessionID, switchNodeDesc);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "Error: Failed to acquire node description - status %d\n", status);
 	}
 
-	status = getGuid(oib_port_session, &path, sessionID, &switchSystemImageGuid, SYSTEM_IMAGE_GUID);
+	status = getGuid(omgt_port_session, &path, sessionID, &switchSystemImageGuid, SYSTEM_IMAGE_GUID);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "Error: Failed to acquire system image guid - status %d\n", status);
 	}
 
-	status = getGuid(oib_port_session, &path, sessionID, &switchNodeGuid, NODE_GUID);
+	status = getGuid(omgt_port_session, &path, sessionID, &switchNodeGuid, NODE_GUID);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "Error: Failed to acquire node guid - status %d\n", status);
 	}
 
-	status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
+	status = sendIniDescriptorGetMad(omgt_port_session, &path, &mad, sessionID, &tableDescriptors);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
-		if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+		if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 		goto err_exit;
 	}
-	oldNumPorts = getNumPorts(oib_port_session, &path, sessionID);
+	oldNumPorts = getNumPorts(omgt_port_session, &path, sessionID);
 	oldPortEntrySize = tableDescriptors.portDataLen / oldNumPorts;
 	newNumPorts = s20iniFieldIsolate(ini.metaDataTables[INI_TYPE_SYSTEM_TABLE].ptr,
 			ini.dataTables[INI_TYPE_SYSTEM_TABLE].ptr, SYSTEM_TABLE_FIELD_NUM_PORTS),
@@ -1301,11 +1301,11 @@ int main(int argc, char *argv[])
 
 	// fetch the port meta data
 	oldPortMetaTable = (uint32 *)malloc(tableDescriptors.portMetaDataLen * sizeof(uint32));
-	status = s20ReadMem(oib_port_session, tableDescriptors.portMetaDataAddr, tableDescriptors.portMetaDataLen, oldPortMetaTable);
+	status = s20ReadMem(omgt_port_session, tableDescriptors.portMetaDataAddr, tableDescriptors.portMetaDataLen, oldPortMetaTable);
 
 	// fetch the port table data
 	oldPortDataTable = (uint32 *)malloc(tableDescriptors.portDataLen * sizeof(uint32));
-	status = s20ReadMem(oib_port_session, tableDescriptors.portDataAddr, tableDescriptors.portDataLen, oldPortDataTable);
+	status = s20ReadMem(omgt_port_session, tableDescriptors.portDataAddr, tableDescriptors.portDataLen, oldPortDataTable);
 
 	if (g_verbose) {
 		printf("Port Data dump:\n");
@@ -1316,12 +1316,12 @@ int main(int argc, char *argv[])
 	currentEeprom = adjustEepromOffset(totalEepromOffset, &eepromOffset, &locationDescriptor);
 
 	if (overwriteFactoryDefaults == 0) {
-		status = EepromRW(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_GET, 
+		status = EepromRW(omgt_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_GET, 
 								  g_respTimeout, locationDescriptor, sizeof(trailer),
 								  eepromOffset, trailer);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: Error: Failed to get eeprom trailer - status %d\n", cmdName, status);
-			if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+			if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 			goto err_exit;
 		}
 		U32_t signature = ntoh32(*(U32_t *)&trailer[0]);
@@ -1399,7 +1399,7 @@ int main(int argc, char *argv[])
 
 		if (g_verbose)
 			printf("Sending offset %d (0x%04x)\n", eepromOffset, eepromOffset);
-		status = EepromRW(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_SET, 
+		status = EepromRW(omgt_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_SET, 
 								  g_respTimeout, locationDescriptor,
 								  xferLen, eepromOffset, ep);
 		if (status == FSUCCESS) {
@@ -1439,7 +1439,7 @@ int main(int argc, char *argv[])
 		if (g_verbose)
 			printf("Reading offset %d (0x%04x)\n", eepromReadOffset, eepromReadOffset);
 
-		status = EepromRW(oib_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_GET, 
+		status = EepromRW(omgt_port_session, &path, sessionID, (void *)&mad, NOJUMBOMAD, MMTHD_GET, 
 								  g_respTimeout, locationDescriptor,
 								  xferLen, eepromReadOffset, ep);
 		if (status == FSUCCESS) {
@@ -1457,14 +1457,12 @@ int main(int argc, char *argv[])
 	crcIn = crc32Calculate(eepromBuffer2, crcSize);
 	printf("%s: Config block in EEPROM is %s\n", cmdName, (crcOut == crcIn) ? "valid" : "invalid");
 
-	if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+	if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 
 	printf("opaswfwconfigure completed\n");
 
 err_exit:
-	if (oib_port_session != NULL) {
-		oib_close_port(oib_port_session);
-	}
+	omgt_close_port(omgt_port_session);
 
 	if (status == FSUCCESS)
 		exit(0);

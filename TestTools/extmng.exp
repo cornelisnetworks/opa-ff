@@ -27,7 +27,7 @@
 # 
 # END_ICS_COPYRIGHT8   ****************************************
 
-# [ICS VERSION STRING: @(#) ./fastfabric/tools/extmng.exp 0rkme [02/10/16 14:12]
+# [ICS VERSION STRING: @(#) ./fastfabric/tools/extmng.exp 10_4_0_0_168 [03/04/17 07:32]
 
 # This is an expect (tcl) library of procedures to aid OPASW operations
 
@@ -572,8 +572,8 @@ proc get_switch_info { ibnode } {
 			append_punchlist "$ibnode" "Not an Intel OPA device"
 			fail_test "$ibnode: Not an Intel OPA device"
 		}
-		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\"" } { "Error"}]
-		regexp {([VPD]+) "([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)"} $out p1 p2 p3 partnumber p4 hwversion
+		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\"" } { "Error"}]
+		regexp {([VPD]+) "([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)"} $out p1 p2 p3 partnumber p4 hwversion
 
         # use verbose option so we have a predictable output to expect
 		if { [ string equal "$brand" "OPA"] } {
@@ -735,7 +735,7 @@ proc get_switch_info { ibnode } {
 			}
 			check_exit_status 60 0
 			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 8 -i 2"
-			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 2: [A-Z\/ ]+" } { "Error" }]
+			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "PS 2: [A-Z\/  ]+" } { "Error" }]
 			regexp {([PS 2:]+) ([A-Z\/ ]+)} $out p1 p2 p3
 			if { ! [ string equal "$p3" "ONLINE" ] &&
 			     ! [ string equal "$p3" "OFFLINE" ] &&

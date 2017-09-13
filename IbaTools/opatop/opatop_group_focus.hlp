@@ -12,9 +12,9 @@ modify the focus port list.  An index value, shown with each port, can be
 used to select the port and show the port's counters in a Port Stats screen.
 A symbol may be present on the first character of the line to indicate a
 non-ideal condition was observed when calculating this ports data. The
-possible conditions are, the PM was told to ignore this port ('~'), the PM
-failed to query this port ('!'), and the PM topology does not know this
-port’s identity ('?').
+possible conditions are, the PM was told to ignore this port ('~'), the port
+did not respond to the PM query('!'), and the PM topology does not know
+this port's identity ('?').
 
 The Group/VF Focus screen accepts the following input commands.
   S: Scroll forward (s*) or backward (S*) through port list

@@ -52,7 +52,8 @@ Includes one of the following:
 
 .sp
 reboot 
-Reboots the TMM.
+Reboots the TMM.Note: Data traffic is not interrupted during a TMM reboot.
+
 .RE
 
 .RS
@@ -76,7 +77,8 @@ Reports the file version. Requires -f \fIfw\(ulfile\fR option.
 
 .sp
 update 
-Performs a firmware update. Requires -f \fIfw\(ulfile\fR option.
+Performs a firmware update. Requires -f \fIfw\(ulfile\fR option.Note: After updating the firmware, use "opatmmtool reboot" to restart the TMM.
+
 .RE
 
 .RS

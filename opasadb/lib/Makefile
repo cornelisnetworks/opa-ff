@@ -123,7 +123,7 @@ LDLOCAL	= -Wl,--version-script=libopasadb.map
 #MIDLLOCAL	= User flags for IDL compiler [Empty]
 #RSCLOCAL	= User flags for resource compiler [Empty]
 # User libraries to include in dependencies
-LOCALDEPLIBS	= oib_utils $(IBACCESS_USER_LIBS)
+LOCALDEPLIBS	= opamgt-priv $(IBACCESS_USER_LIBS)
 # User libraries to use when linking (in addition to LOCALDEPLIBS)
 #LOCALLIBS	= $(OPENIB_USER_LIBS) $(IBACCESS_USER_LIBS)
 LOCALLIBS	= $(OPENIB_USER_LIBS) rt

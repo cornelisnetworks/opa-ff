@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 #include "opaswmetadata.h"
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
 	uint8				bigDataBuffer[4 * EEPROMSIZE];
 	uint8				*data;
 	uint16				boardID;
-	struct              oib_port *oib_port_session = NULL;
+	struct              omgt_port *omgt_port_session = NULL;
 	FILE				*fp;
 	char				dumpFileName[64];
 
@@ -199,7 +199,6 @@ int main(int argc, char *argv[])
 		switch (c) {
 			case 'D':
 				g_debugMode = 1;
-				oib_set_dbg(stderr);
 				break;
 
 			case 't':
@@ -222,7 +221,6 @@ int main(int argc, char *argv[])
 				break;
 
 			case 'v':
-				oib_set_dbg(stderr);
 				g_verbose = 1;
 				break;
 
@@ -327,13 +325,14 @@ int main(int argc, char *argv[])
 
 	// Get the LID
 
-	status = oib_open_port_by_num(&oib_port_session, hfi, port);
+	struct omgt_params params = {.debug_file = (g_verbose || g_debugMode) ? stderr : NULL};
+	status = omgt_open_port_by_num(&omgt_port_session, hfi, port, &params);
 	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}
 
-	if (getDestPath(oib_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
+	if (getDestPath(omgt_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
 		fprintf(stderr, "%s: Error finding destination path\n", cmdName);
 		status = FERROR;
 		goto err_exit;
@@ -341,7 +340,7 @@ int main(int argc, char *argv[])
 
 	// Send a ClassPortInfo to see if the switch is responding
 
-	status = sendClassPortInfoMad(oib_port_session, &path, &mad);
+	status = sendClassPortInfoMad(omgt_port_session, &path, &mad);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to send/rcv ClassPortInfo\n", cmdName);
 		goto err_exit;
@@ -349,7 +348,7 @@ int main(int argc, char *argv[])
 
 	// Get a session ID
 
-	sessionID = getSessionID(oib_port_session, &path);
+	sessionID = getSessionID(omgt_port_session, &path);
 	if (sessionID == (uint16)-1) {
 		fprintf(stderr, "%s: Error: Failed to obtain sessionID\n", cmdName);
 		status = FERROR;
@@ -367,16 +366,16 @@ int main(int argc, char *argv[])
 #endif
 			dataLen = 2;
 			sysTableData[0] = 'A';
-			status = sendSysTableAccessGetMad(oib_port_session, &path, &mad, sessionID, sysTableIndex, dataLen, sysTableData);
+			status = sendSysTableAccessGetMad(omgt_port_session, &path, &mad, sessionID, sysTableIndex, dataLen, sysTableData);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to access Sys table data - status %d\n", cmdName, status);
-				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			break;
 
 		case 2:
-			status = getFwVersion(oib_port_session, &path, &mad, sessionID, fwVersion);
+			status = getFwVersion(omgt_port_session, &path, &mad, sessionID, fwVersion);
 #if 0
 			printf("fw version is %s\n", fwVersion);
 			opaswDisplayBuffer((char *)fwVersion, FWVERSION_SIZE);
@@ -385,10 +384,10 @@ int main(int argc, char *argv[])
 			break;
 
 		case 3:
-			status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
+			status = sendIniDescriptorGetMad(omgt_port_session, &path, &mad, sessionID, &tableDescriptors);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
-				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			printf("Sys Meta Data               : addr 0x%08x len %d\n", tableDescriptors.sysMetaDataAddr, tableDescriptors.sysMetaDataLen);
@@ -401,7 +400,7 @@ int main(int argc, char *argv[])
 #if 0
 			status = sendMemAccessGetMad(&path, &mad, sessionID, tableDescriptors.sysDataAddr, (uint8)200, memoryData);
 #else
-			status = sendMemAccessGetMad(oib_port_session, &path, &mad, sessionID, tableDescriptors.sysDataAddr, (uint8)(tableDescriptors.sysDataLen * 4) + 8, memoryData);
+			status = sendMemAccessGetMad(omgt_port_session, &path, &mad, sessionID, tableDescriptors.sysDataAddr, (uint8)(tableDescriptors.sysDataLen * 4) + 8, memoryData);
 #endif
 			status = parseDataTable(&systemMetaData[0], memoryData, systemMetaDataSize, &sysParsedDataTable[0], 1);
 			break;
@@ -431,7 +430,7 @@ int main(int argc, char *argv[])
 
 #if 0
 		case 5:
-			moduleType = getModuleType(oib_port_session, &path, sessionID);
+			moduleType = getModuleType(omgt_port_session, &path, sessionID);
 			switch(moduleType) {
 				case ENC_MOD_TYPE_OPASW:
 					printf("module type of dlid %d is OPASW\n", path.DLID);
@@ -451,24 +450,24 @@ int main(int argc, char *argv[])
 
 #define EEPROM_MASK		0x100
 		case 6:
-			status = sendRegisterAccessMad(oib_port_session, &path, &mad, sessionID, 
+			status = sendRegisterAccessMad(omgt_port_session, &path, &mad, sessionID, 
 										   (uint8)0x6f, &regValue, 1);
 			printf("Reg value is 0x%08x\n", regValue);
 			printf("Switch has booted from %s EEPROM\n", (regValue & EEPROM_MASK) ? "secondary" : "primary");
 			break;
 
 		case 7:
-			status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
+			status = sendIniDescriptorGetMad(omgt_port_session, &path, &mad, sessionID, &tableDescriptors);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
-				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			printf("Sys Meta Data               : addr 0x%08x len %d\n", tableDescriptors.sysMetaDataAddr, tableDescriptors.sysMetaDataLen);
 			printf("Sys Data                    : addr 0x%08x len %d\n", tableDescriptors.sysDataAddr, tableDescriptors.sysDataLen);
 			printf("Port Meta Data              : addr 0x%08x len %d\n", tableDescriptors.portMetaDataAddr, tableDescriptors.portMetaDataLen);
 			printf("Port Data                   : addr 0x%08x len %d\n", tableDescriptors.portDataAddr, tableDescriptors.portDataLen);
-			numPorts = getNumPorts(oib_port_session, &path, sessionID);
+			numPorts = getNumPorts(omgt_port_session, &path, sessionID);
 			printf("numPorts is %d\n", numPorts);
 
 #if 0
@@ -479,7 +478,7 @@ int main(int argc, char *argv[])
 			printf("portEntrySize is %d\n", (int)portEntrySize);
 			portPtrs = malloc(numPorts * sizeof(void *));
 			for (i = 0; i < numPorts; i++) {
-				status = sendMemAccessGetMad(oib_port_session, &path, &mad, sessionID, tableDescriptors.portDataAddr + (i * portEntrySize), portEntrySize*4, memoryData);
+				status = sendMemAccessGetMad(omgt_port_session, &path, &mad, sessionID, tableDescriptors.portDataAddr + (i * portEntrySize), portEntrySize*4, memoryData);
 				if (g_verbose) {
 					printf("MemoryData dump:\n");
 					opaswDisplayBuffer((char *)memoryData, portEntrySize * 4);
@@ -507,16 +506,16 @@ int main(int argc, char *argv[])
 			break;
 
 		case 8:
-			status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
+			status = sendIniDescriptorGetMad(omgt_port_session, &path, &mad, sessionID, &tableDescriptors);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
-				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 				goto err_exit;
 			}
-			numPorts = getNumPorts(oib_port_session, &path, sessionID);
+			numPorts = getNumPorts(omgt_port_session, &path, sessionID);
 			printf("numPorts is %d\n", numPorts);
 
-			status = sendMemAccessGetMad(oib_port_session, &path, &mad, sessionID, tableDescriptors.portDataAddr, tableDescriptors.portDataLen * 4, memoryData);
+			status = sendMemAccessGetMad(omgt_port_session, &path, &mad, sessionID, tableDescriptors.portDataAddr, tableDescriptors.portDataLen * 4, memoryData);
 			if (g_verbose) {
 				printf("MemoryData dump:\n");
 				opaswDisplayBuffer((char *)memoryData, tableDescriptors.portDataLen * 4);
@@ -549,7 +548,7 @@ int main(int argc, char *argv[])
 				}
 				printf("sending read access to 0x%08x for size %d offset %d\n", 
 					   VPDEEPROMLOCATION, vpdReadSize, vpdOffset);
-				status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+				status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 										  NOJUMBOMAD, MMTHD_GET, 10000, VPDEEPROMLOCATION, vpdReadSize, 
 										  vpdOffset, v);
 				if (status == FSUCCESS) {
@@ -711,7 +710,7 @@ int main(int argc, char *argv[])
 			fgets(buf, 20, stdin);
 			if ((buf[0] == 'Y') || (buf[0] == 'y')) {
 				printf("sending save config mad\n");
-				status = sendSaveConfigMad(oib_port_session, &path, &mad, sessionID);
+				status = sendSaveConfigMad(omgt_port_session, &path, &mad, sessionID);
 				if (status != FSUCCESS) {
 					fprintf(stderr, "%s: Error: Failed to send/rcv SaveConfig MAD\n", cmdName);
 					status = FERROR;
@@ -735,7 +734,7 @@ int main(int argc, char *argv[])
 #endif
 			printf("reading fan status: FT1 0x%08x FT2 0x%08x\n", FT1LOCATION, FT2LOCATION);
 			status = FSUCCESS;
-			status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+			status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 									  NOJUMBOMAD, MMTHD_GET, 2000, FT1LOCATION, 4, 0, 
 									  statusBuffer);
 #if 0
@@ -751,7 +750,7 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 			}
 			if (status == FSUCCESS) {
 				status = FSUCCESS;
-				status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+				status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 										  NOJUMBOMAD, MMTHD_GET, 2000, FT2LOCATION, 4, 0, 
 										  statusBuffer);
 				if (status == FSUCCESS) {
@@ -769,7 +768,7 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 		case 12:
 			printf("reading ps status: PS 0x%08x\n", PSLOCATION);
 			status = FSUCCESS;
-			status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+			status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 									  NOJUMBOMAD, MMTHD_GET, 2000, I2C_OPASW_PS_ADDR, 4, PS_MGMT_FPGA_OFFSET, 
 									  statusBuffer);
 			if (status == FSUCCESS) {
@@ -797,30 +796,30 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 #endif
 
 		case 13:
-			status = sendIniDescriptorGetMad(oib_port_session, &path, &mad, sessionID, &tableDescriptors);
+			status = sendIniDescriptorGetMad(omgt_port_session, &path, &mad, sessionID, &tableDescriptors);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "%s: Error: Failed to get ini descriptors - status %d\n", cmdName, status);
-				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			printf("Sys Meta Data               : addr 0x%08x len %d\n", tableDescriptors.sysMetaDataAddr, tableDescriptors.sysMetaDataLen);
 			printf("Sys Data                    : addr 0x%08x len %d\n", tableDescriptors.sysDataAddr, tableDescriptors.sysDataLen);
 			printf("Port Meta Data              : addr 0x%08x len %d\n", tableDescriptors.portMetaDataAddr, tableDescriptors.portMetaDataLen);
 			printf("Port Data                   : addr 0x%08x len %d\n", tableDescriptors.portDataAddr, tableDescriptors.portDataLen);
-			numPorts = getNumPorts(oib_port_session, &path, sessionID);
+			numPorts = getNumPorts(omgt_port_session, &path, sessionID);
 			printf("numPorts is %d\n", numPorts);
 			portMTUMetaIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portDataLen, "MTU_CAP");
 			printf("portMTUMetaIndex is %d\n", portMTUMetaIndex);
 			if (portMTUMetaIndex < 0) {
 				fprintf(stderr, "%s: Error: can not find MTU in metaData table\n", cmdName);
-				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 				goto err_exit;
 			}
 			portVLCAPMetaIndex = getMetaDataIndexByField(&portMetaData[0], tableDescriptors.portDataLen, "VL_CAP");
 			printf("portVLCAPMetaIndex is %d\n", portVLCAPMetaIndex);
 			if (portVLCAPMetaIndex < 0) {
 				fprintf(stderr, "%s: Error: can not find VLCAP in metaData table\n", cmdName);
-				if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+				if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 				goto err_exit;
 			}
 #if 1
@@ -833,11 +832,11 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 			status = sendPortTableAccessSetMad(&path, &mad, sessionID, (uint8)portVLCAPMetaIndex, 1, 4, (uint8 *)&vlCap);
 #endif
 			for (i = 1; i <= numPorts; i++) {
-				status = sendPortTableAccessSetMad(oib_port_session, &path, &mad, sessionID, 
+				status = sendPortTableAccessSetMad(omgt_port_session, &path, &mad, sessionID, 
 												   (uint8)portMTUMetaIndex, i, 4, (uint8 *)&mtuCap);
 				if (status != FSUCCESS) {
 					fprintf(stderr, "%s: Error: Failed to set port table - status %d\n", cmdName, status);
-					if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+					if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 					goto err_exit;
 				}
 			}
@@ -846,7 +845,7 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 		case 14:
 #define EEPROMLOCATION 0x00000000
 			for (i = EEPROMLOCATION; i <= EEPROMLOCATION + 0xffffffff; i++) {
-				status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+				status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 										  NOJUMBOMAD, MMTHD_GET, 2000, i, 4, 0, statusBuffer);
 				if (status == FSUCCESS) {
 					printf("Success reading 0x%08x - buffer:\n", i);
@@ -860,7 +859,7 @@ sendI2CAccessMad(uint16 &path, uint16 sessionID, VENDOR_MAD *mad, uint8 jumbo, u
 
 		case 15:
 			location = 0x1040;
-			status = sendMemAccessGetMad(oib_port_session, &path, &mad, sessionID, location, (uint8)200, memoryData);
+			status = sendMemAccessGetMad(omgt_port_session, &path, &mad, sessionID, location, (uint8)200, memoryData);
 			if (g_verbose) {
 				printf("MemoryData dump:\n");
 				opaswDisplayBuffer((char *)memoryData, 10);
@@ -890,7 +889,7 @@ printf("TEST 16!!!\n");
 				else
 					readLen = 192;
 				printf("reading loc 0x%08x offset %d len %d\n", location, dataOffset, readLen);
-				status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+				status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 										  NOJUMBOMAD, MMTHD_GET, 2000, location, readLen, dataOffset, data);
 				if (status == FSUCCESS) {
 					data += readLen;
@@ -909,7 +908,7 @@ printf("TEST 16!!!\n");
 			location = 0x80407200;
 			data = dataBuffer;
 			memset(dataBuffer, 0, EEPROMSIZE);
-			status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+			status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 									  NOJUMBOMAD, MMTHD_GET, 2000, location, 4, 0x0b00, data);
 			boardID = (uint16)data[0];
 			printf("board ID is 0x%04x\n", boardID);
@@ -918,7 +917,7 @@ printf("TEST 16!!!\n");
 
 		case 18:
 			data = bigDataBuffer;
-			status = opaswEepromRW(oib_port_session, &path, sessionID, &mad, 2000, 4 * EEPROMSIZE, 0, data, FALSE, FALSE);
+			status = opaswEepromRW(omgt_port_session, &path, sessionID, &mad, 2000, 4 * EEPROMSIZE, 0, data, FALSE, FALSE);
 			data = bigDataBuffer;
 			for (i = 0; i < 4; i++) {
 				sprintf(dumpFileName, "dumpEEPROM-%d", i);
@@ -954,14 +953,14 @@ printf("TEST 16!!!\n");
 				data = dataBuffer;
 				printf("probing register 0x%x\n", i);
 				dataOffset = (0xb << 8) | i;
-				status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+				status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 									  NOJUMBOMAD, MMTHD_GET, 2000, location, 1, dataOffset, data);
 				printf("returned 0x%x\n", dataBuffer[0] & 0xff);
 			}
 			break;
 
 		case 20:
-			status = sendMemAccessGetMad(oib_port_session, &path, &mad, sessionID, 0x12d6, (uint8)4, memoryData);
+			status = sendMemAccessGetMad(omgt_port_session, &path, &mad, sessionID, 0x12d6, (uint8)4, memoryData);
 			p = memoryData;
 			asicVal2 = ntoh32(*(uint32 *)p);
 			printf("Value for asic rev is 0x%08x\n", asicVal2);
@@ -978,13 +977,13 @@ printf("TEST 16!!!\n");
 	opaswDisplayBuffer((char *)sysTableData, dataLen);
 #endif
 
-	if (sessionID>0) releaseSession(oib_port_session, &path, sessionID);
+	if (sessionID>0) releaseSession(omgt_port_session, &path, sessionID);
 
 	printf("opaswtest completed\n");
 
 err_exit:
-	if (oib_port_session != NULL) {
-		oib_close_port(oib_port_session);
+	if (omgt_port_session != NULL) {
+		omgt_close_port(omgt_port_session);
 	}
 
 	if (status == FSUCCESS)

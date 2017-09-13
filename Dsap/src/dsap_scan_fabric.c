@@ -277,7 +277,7 @@ uintn dsap_publish_paths(void)
 				(char *) vfab->vfinfo_record.vfName,
 				subnet->subnet_prefix,
 				vfab->vfinfo_record.pKey,
-				vfab->vfinfo_record.s1.sl);
+				vfab->vfinfo_record.s1.slBase);
 			if (err) {
 				acm_log(0, "Failed to add vfab: %s\n",
 					strerror(err));

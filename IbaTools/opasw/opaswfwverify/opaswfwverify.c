@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/ib_sm.h"
 #include "iba/ib_pm.h"
 #include "iba/ib_helper.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 #include "zlib.h"
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 	uint32				crc;
 	VENDOR_MAD			mad;
 	FSTATUS				status = FSUCCESS;
-	struct              oib_port *oib_port_session = NULL;
+	struct              omgt_port *omgt_port_session = NULL;
 
 	// determine how we've been invoked
 	cmdName = strrchr(argv[0], '/');			// Find last '/' in path
@@ -151,7 +151,6 @@ int main(int argc, char *argv[])
 		switch (c) {
 			case 'D':
 				g_debugMode = 1;
-				oib_set_dbg(stderr);
 				break;
 
 			case 't':
@@ -271,13 +270,14 @@ int main(int argc, char *argv[])
 
 	// Get the path
 
-	status = oib_open_port_by_num(&oib_port_session, hfi, port);
+	struct omgt_params params = {.debug_file = g_debugMode ? stderr : NULL};
+	status = omgt_open_port_by_num(&omgt_port_session, hfi, port, &params);
 	if (status != 0) {
 		fprintf(stderr, "%s: Error: Unable to open fabric interface.\n", cmdName);
 		exit(1);
 	}
 
-	if (getDestPath(oib_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
+	if (getDestPath(omgt_port_session, destPortGuid, cmdName, &path) != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to get destination path\n", cmdName);
 		status = FERROR;
 		goto err_exit;
@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
 
 	// Send a ClassPortInfo to see if the switch is responding
 
-	status = sendClassPortInfoMad(oib_port_session, &path, &mad);
+	status = sendClassPortInfoMad(omgt_port_session, &path, &mad);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: Error: Failed to send/rcv ClassPortInfo\n", cmdName);
 		goto err_exit;
@@ -293,7 +293,7 @@ int main(int argc, char *argv[])
 
 	// Get a session ID
 
-	sessionID = getSessionID(oib_port_session, &path);
+	sessionID = getSessionID(omgt_port_session, &path);
 	if (sessionID == (uint16)-1) {
 		fprintf(stderr, "%s: Error: Failed to obtain sessionID\n", cmdName);
 		status = FERROR;
@@ -312,11 +312,11 @@ int main(int argc, char *argv[])
 		
 		for (currentEEPROM = 0; currentEEPROM < STL_EEPROM_COUNT; currentEEPROM++) {
 
-			status = opaswEepromRW(oib_port_session, &path, sessionID, (void *)&mad, g_respTimeout, 
+			status = opaswEepromRW(omgt_port_session, &path, sessionID, (void *)&mad, g_respTimeout, 
 								   STL_MAX_EEPROM_SIZE, currentEEPROM * STL_MAX_EEPROM_SIZE, 
 								   (uint8 *)primaryBuf, FALSE, FALSE);
 
-			status = opaswEepromRW(oib_port_session, &path, sessionID, (void *)&mad, g_respTimeout, 
+			status = opaswEepromRW(omgt_port_session, &path, sessionID, (void *)&mad, g_respTimeout, 
 								   STL_MAX_EEPROM_SIZE, currentEEPROM * STL_MAX_EEPROM_SIZE, 
 								   (uint8 *)secondaryBuf, FALSE, TRUE);
 
@@ -336,7 +336,7 @@ int main(int argc, char *argv[])
 
 	// first, read 16 bytes to access the firmware size
 
-	status = sendI2CAccessMad(oib_port_session, &path, sessionID, &mad, 
+	status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad, 
 							  NOJUMBOMAD, MMTHD_GET, g_respTimeout, locationDescriptor, 16, 
 							  dataOffset + CSS_HEADER_SIZE + 4, initialBuffer);
 	if (status == FSUCCESS) {
@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
 	data = (uint8 *)fwBuffer;
 	dataOffset = 0;
 
-	status = opaswEepromRW(oib_port_session, &path, sessionID, &mad, g_respTimeout, 
+	status = opaswEepromRW(omgt_port_session, &path, sessionID, &mad, g_respTimeout, 
 						   dataLen + 4, dataOffset, data, FALSE, g_gotSecondary);
 	if (!g_quiet && (status == FSUCCESS)) {
 		printf("\n");
@@ -386,11 +386,9 @@ int main(int argc, char *argv[])
 
 err_exit:
 	if (sessionID != (uint16)-1)
-		releaseSession(oib_port_session, &path, sessionID);
+		releaseSession(omgt_port_session, &path, sessionID);
 
-	if (oib_port_session != NULL) {
-		oib_close_port(oib_port_session);
-	}
+	omgt_close_port(omgt_port_session);
 
 	if (status == FSUCCESS) {
 		printf("opaswfwverify completed\n");

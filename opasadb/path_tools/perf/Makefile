@@ -110,7 +110,7 @@ LOCAL_INCLUDE_DIRS	= ..
 #MIDLLOCAL	= User flags for IDL compiler [Empty]
 #RSCLOCAL	= User flags for resource compiler [Empty]
 # User libraries to include in dependencies
-LOCALDEPLIBS	= IbPrint $(IBACCESS_USER_LIBS) oib_utils
+LOCALDEPLIBS	= IbPrint $(IBACCESS_USER_LIBS) opamgt-priv
 # User libraries to use when linking (in addition to LOCALDEPLIBS)
 # opasadb is a shared library, not needed in LOCALDEPLIBS
 LOCALLIBS	= $(OPENIB_USER_LIBS) opasadb rt

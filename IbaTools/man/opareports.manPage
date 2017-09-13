@@ -91,7 +91,7 @@ Specifies any of the other opareport arguments listed below (see
 \fIopareport Options\fR
 ):
 .br
-[-v][-q] [-h \fIhfi\fR] [-p \fIport\fR]
+opareport [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR]
 .br
 [-o \fIreport\fR] [-d \fIdetail\fR] [-P|-H] [-N] [-x]
 .br
@@ -151,6 +151,8 @@ File containing topology\(ulinput (may have %P marker in filename), used in abse
 .SH opareport Options
 .NL
 
+.PP
+For reference:
 .TP 10
 --help 
 .NL
@@ -180,7 +182,7 @@ Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Def
 -o/--output \fIreport\fR 
 .NL
 Specifies the report type for output. Refer to
-\fIReport Types\fR
+\fIopareport Report Types\fR
 for details.
 
 .TP 10
@@ -284,21 +286,21 @@ Limits operation to exact specified focus with -F for port error counters check 
 -F/--focus \fIpoint\fR 
 .NL
 Specifies the focus area for report. Used for all reports except route to limit scope of report. Refer to
-\fIPoint Syntax\fR
+\fIopareport Point Syntax\fR
 for details.
 
 .TP 10
 -S/--src \fIpoint\fR 
 .NL
 Specifies the source for trace route. Default is local port. Refer to
-\fIPoint Syntax\fR
+\fIopareport Point Syntax\fR
 for details.
 
 .TP 10
 -D/--dest \fIpoint\fR 
 .NL
 Specifies the destination for trace route. Refer to
-\fIPoint Syntax\fR
+\fIopareport Point Syntax\fR
 for details.
 
 .TP 10
@@ -308,9 +310,11 @@ Excludes focus description from report.
 
 .NL
 
-.SH Snapshot-Specific Options
+.SH opareport Snapshot-Specific Options
 .NL
 
+.PP
+For reference:
 .TP 10
 -r/--routes 
 .NL
@@ -323,9 +327,11 @@ Gets the P-Key tables for all nodes and the QoS VL-related tables for all ports.
 
 .NL
 
-.SH Report Types
+.SH opareport Report Types
 .NL
 
+.PP
+For reference:
 .TP 10
 comps 
 .NL
@@ -591,9 +597,11 @@ No report, useful to clear statistics.
 
 .NL
 
-.SH Point Syntax
+.SH opareport Point Syntax
 .NL
 
+.PP
+For reference:
 .TP 10
 gid:value 
 .NL
@@ -835,6 +843,8 @@ Specifies the ports with a link quality greater than or equal to  \fIvalue\fR.
 .NL
 
 .PP
+For reference:
+.PP
 opareport can generate hundreds of different reports. Commonly generated reports include the following:opareport -o comps -d 3
 .br
 opareport -o errors -o slowlinks
@@ -887,7 +897,7 @@ opareport -o nodes -F \[aq]iocpat:*Slot 2*:port:2\[aq]
 .br
 opareport -o nodes -F ioctype:SRP opareport -o nodes -F ioctype:SRP:port:2
 .br
-opareport -o extlinks -F rate:5g
+opareport -o extlinks -F rate:100g
 .br
 opareport -o extlinks -F portstate:armed
 .br

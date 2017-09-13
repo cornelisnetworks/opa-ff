@@ -193,7 +193,8 @@ proc local_set_env { } {
 	#target_set_intr
 	# get rid of cr and control characters in logs for easier reading
 	#unix_cmd 60 0 {unset PROMPT_COMMAND; export PS1='[\u@\h]\$ '; stty -onlcr columns 500}
-	unix_cmd 60 0 {unset PROMPT_COMMAND; export PS1='[\u@\h]\$ '}
+	unix_cmd 60 0 {unset PROMPT_COMMAND HISTFILE; set +o history; export PS1='[\u@\h]\$ '}
+
 }
 
 proc target_rlogin { target usercode password } {
@@ -782,7 +783,7 @@ proc target_set_env { } {
 	#unix_cmd 60 "" "umask 0"
 	#target_set_intr
 	# get rid of cr and control characters in logs for easier reading
-	unix_cmd 60 0 {unset PROMPT_COMMAND; export PS1='[\u@\h]\$ '; stty -onlcr columns 500}
+	unix_cmd 60 0 {unset PROMPT_COMMAND HISTFILE; set +o history; export PS1='[\u@\h]\$ '; stty -onlcr columns 500}
 }
 
 proc target_root_sh { target } {

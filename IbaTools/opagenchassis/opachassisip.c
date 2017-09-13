@@ -46,7 +46,7 @@ extern "C" {
 #endif
 
 #include <topology.h>
-#include <oib_utils.h>
+#include <opamgt_priv.h>
 #include "iba/ib_types.h"
 #include "iba/ib_sm.h"
 #include "iba/ib_helper.h"
@@ -82,6 +82,7 @@ uint8_t g_hfi = 0;
 uint8_t g_port = 0;
 uint64_t g_bkey = 0;
 uint8_t g_verbose = 0;
+uint8_t g_omgt_debug = 0;
 EUI64 g_portGuid = -1;				// local port to use to access fabric
 IB_PORT_ATTRIBUTES	*g_portAttrib;	// attributes for our local port
 PrintDest_t g_dest;
@@ -296,7 +297,7 @@ static FSTATUS ipv6_ip_list(NodeData *nodep, PortData *portp)
 	return FSUCCESS;
 }
 
-static FSTATUS chassis_ip_sweep(struct oib_port *port, FabricData_t *fabric)
+static FSTATUS chassis_ip_sweep(struct omgt_port *port, FabricData_t *fabric)
 {
 	FSTATUS fstatus = FSUCCESS;
 	cl_map_item_t *p;
@@ -361,7 +362,7 @@ int main (int argc, char *argv[])
 	unsigned long temp;
 	char *endptr;
 	FabricData_t fabric;
-	struct oib_port *chas_oib_session;
+	struct omgt_port *chas_omgt_session;
 
 	Top_setcmdname(APP_NAME);
 
@@ -373,8 +374,8 @@ int main (int argc, char *argv[])
 			g_verbose = 1;
 			break;
 
-		case 'o':	// enable oib level debug reporting
-			(void)oib_set_dbg(stderr);
+		case 'o':	// enable opamgt level debug reporting
+			g_omgt_debug = 1;
 			break;
 
 		case '?':	// help
@@ -419,12 +420,16 @@ int main (int argc, char *argv[])
 	signal(SIGINT, signal_handler);
 	signal(SIGPIPE, signal_handler);
 
-	rc = oib_open_port_by_num(&chas_oib_session,g_hfi,g_port);
+	struct omgt_params params = {.debug_file = g_omgt_debug ? stderr : NULL};
+	rc = omgt_open_port_by_num(&chas_omgt_session, g_hfi, g_port, &params);
 	if (rc) {
-		fprintf(stderr, "Error, could not open oib session (%d).\n",rc); 
+		fprintf(stderr, "Error, could not open opamgt session (%d).\n",rc); 
 		exit(rc);
 	}
-	g_portGuid = oib_get_port_guid(chas_oib_session);
+
+	if ((rc = omgt_port_get_port_guid(chas_omgt_session, &g_portGuid)) != 0) {
+		fprintf(stderr, "Error, could not determine PortGuid: %u\n", rc);
+	}
 
 	InitSweepVerbose(g_verbose?stderr:NULL);
 
@@ -438,12 +443,12 @@ int main (int argc, char *argv[])
 		PrintDestInitFile(&g_dest, stdout);
 
 		// generate chassis IP list 
-		chassis_ip_sweep(chas_oib_session,&fabric);
+		chassis_ip_sweep(chas_omgt_session,&fabric);
 	}
 
 	// deallocate connections to IB related entities 
 	DestroyMad();
-	oib_close_port(chas_oib_session);
+	omgt_close_port(chas_omgt_session);
 
 	exit(0);
 }

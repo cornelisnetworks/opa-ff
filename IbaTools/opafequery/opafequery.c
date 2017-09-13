@@ -46,10 +46,10 @@ extern "C" {
 #endif
 #include <iba/public/datatypes.h>
 
-#include "fe_connections.h"
-#include "fe_sa.h"
+#include "opamgt_sa_priv.h"
+#include "opamgt_pa_priv.h"
+#include "opamgt_pa.h"
 #include "fe_pa.h"
-#include "fe_ssl.h"
 
 #include "stl_print.h"
 #include "iba/ipublic.h"
@@ -152,7 +152,6 @@ uint8_t g_CSV = 0;  /* Output should use CSV style */
 
 IB_GID g_sourceGid;
 uint32_t g_gotSourceGid = 0;
-uint16_t g_primaryPmLid= 0;
 uint32_t g_nodeLid = 0;
 uint8_t g_portNumber = 0;
 uint32_t g_deltaFlag = 0;
@@ -188,8 +187,8 @@ uint32_t g_gotvfName	= 0;
 char g_groupName[STL_PM_GROUPNAMELEN];
 char g_vfName[MAX_VFABRIC_NAME];
 void *g_SDHandle = NULL;
-char* g_sslParmsFile = "/etc/opa/opaff.xml";
-sslParametersData_t g_sslParmsData;
+char *g_sslParmsFile = "/etc/opa/opaff.xml";
+struct omgt_ssl_params g_sslParmsData = {0};
 
 static char g_ipAdr[48] = {DEFAULT_HOST};
 static uint16 g_port = DEFAULT_PORT;
@@ -198,15 +197,15 @@ static void *sslParmsXmlParserStart(IXmlParserState_t *state, void *parent, cons
 static void sslParmsXmlParserEnd(IXmlParserState_t *state, const IXML_FIELD *field, void *object, void *parent, XML_Char *content, unsigned len, boolean valid);
 
 static IXML_FIELD sslSecurityFields[] = {
-	{ tag:"SslSecurityEnabled", format:'u', IXML_FIELD_INFO(sslParametersData_t, sslSecurityEnabled) },
-	{ tag:"SslSecurityDir", format:'s', IXML_FIELD_INFO(sslParametersData_t, sslSecurityDir) },
-	{ tag:"SslSecurityFFCertificate", format:'s', IXML_FIELD_INFO(sslParametersData_t, sslSecurityFFCertificate) },
-	{ tag:"SslSecurityFFPrivateKey", format:'s', IXML_FIELD_INFO(sslParametersData_t, sslSecurityFFPrivateKey) },
-	{ tag:"SslSecurityFFCaCertificate", format:'s', IXML_FIELD_INFO(sslParametersData_t, sslSecurityFFCaCertificate) },
-	{ tag:"SslSecurityFFCertChainDepth", format:'u', IXML_FIELD_INFO(sslParametersData_t, sslSecurityFFCertChainDepth) },
-	{ tag:"SslSecurityFFDHParameters", format:'s', IXML_FIELD_INFO(sslParametersData_t, sslSecurityFFDHParameters) },
-	{ tag:"SslSecurityFFCaCRLEnabled", format:'u', IXML_FIELD_INFO(sslParametersData_t, sslSecurityFFCaCRLEnabled) },
-	{ tag:"SslSecurityFFCaCRL", format:'s', IXML_FIELD_INFO(sslParametersData_t, sslSecurityFFCaCRL) },
+	{ tag:"SslSecurityEnabled", format:'u', IXML_FIELD_INFO(struct omgt_ssl_params, enable) },
+	{ tag:"SslSecurityDir", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, directory) },
+	{ tag:"SslSecurityFFCertificate", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, certificate) },
+	{ tag:"SslSecurityFFPrivateKey", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, private_key) },
+	{ tag:"SslSecurityFFCaCertificate", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, ca_certificate) },
+	{ tag:"SslSecurityFFCertChainDepth", format:'u', IXML_FIELD_INFO(struct omgt_ssl_params, cert_chain_depth) },
+	{ tag:"SslSecurityFFDHParameters", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, dh_params) },
+	{ tag:"SslSecurityFFCaCRLEnabled", format:'u', IXML_FIELD_INFO(struct omgt_ssl_params, ca_crl_enable) },
+	{ tag:"SslSecurityFFCaCRL", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, ca_crl) },
 	{ NULL }
 };
 
@@ -269,9 +268,9 @@ struct option options[] = {
 
 static void *sslParmsXmlParserStart(IXmlParserState_t *state, void *parent, const char **attr)
 {
-	sslParametersData_t *sslParmsData = IXmlParserGetContext(state);
-    memset(sslParmsData, 0, sizeof(sslParametersData_t));
-    return sslParmsData;
+	struct omgt_ssl_params *sslParmsData = IXmlParserGetContext(state);
+	memset(sslParmsData, 0, sizeof(struct omgt_ssl_params));
+	return sslParmsData;
 }
 
 static void sslParmsXmlParserEnd(IXmlParserState_t *state, const IXML_FIELD *field, void *object, void *parent, XML_Char *content, unsigned len, boolean valid)
@@ -371,12 +370,12 @@ void Usage(void)
 	fprintf(stderr, "           utilhigh           - sorted by utilization - highest first\n");                  // STL_PA_SELECT_UTIL_HIGH         0x00020001
 	fprintf(stderr, "           pktrate            - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_UTIL_PKTS_HIGH    0x00020082
 	fprintf(stderr, "           utillow            - sorted by utilization - lowest first\n");                   // STL_PA_SELECT_UTIL_LOW          0x00020101
-	fprintf(stderr, "           integrity          - sorted by integrity category - highest first\n");             // STL_PA_SELECT_ERR_INTEG         0x00030001
-	fprintf(stderr, "           congestion         - sorted by congestion category - highest first\n");            // STL_PA_SELECT_ERR_CONG          0x00030002
-	fprintf(stderr, "           smacongestion      - sorted by sma congestion category - highest first\n");        // STL_PA_SELECT_ERR_SMA_CONG      0x00030003
-	fprintf(stderr, "           bubbles            - sorted by bubble category - highest first\n");                // STL_PA_SELECT_ERR_BUBBLE        0x00030004
-	fprintf(stderr, "           security           - sorted by security category - highest first\n");              // STL_PA_SELECT_ERR_SEC           0x00030005
-	fprintf(stderr, "           routing            - sorted by routing category - highest first\n");               // STL_PA_SELECT_ERR_ROUT          0x00030006
+	fprintf(stderr, "           integrity          - sorted by integrity category - highest first\n");             // STL_PA_SELECT_CATEGORY_INTEG         0x00030001
+	fprintf(stderr, "           congestion         - sorted by congestion category - highest first\n");            // STL_PA_SELECT_CATEGORY_CONG          0x00030002
+	fprintf(stderr, "           smacongestion      - sorted by sma congestion category - highest first\n");        // STL_PA_SELECT_CATEGORY_SMA_CONG      0x00030003
+	fprintf(stderr, "           bubbles            - sorted by bubble category - highest first\n");                // STL_PA_SELECT_CATEGORY_BUBBLE        0x00030004
+	fprintf(stderr, "           security           - sorted by security category - highest first\n");              // STL_PA_SELECT_CATEGORY_SEC           0x00030005
+	fprintf(stderr, "           routing            - sorted by routing category - highest first\n");               // STL_PA_SELECT_CATEGORY_ROUT          0x00030006
 	fprintf(stderr, "    -w/--start                - start of window for focus ports - should always\n");
 	fprintf(stderr, "                                be 0 for now\n");
 	fprintf(stderr, "    -r/--range                - size of window for focus ports list\n");
@@ -489,12 +488,12 @@ OutputFocusMap_t OutputFocusTable[]= {
 	{"utilhigh",        STL_PA_SELECT_UTIL_HIGH },        // 0x00020001
 	{"pktrate",         STL_PA_SELECT_UTIL_PKTS_HIGH },   // 0x00020082
 	{"utillow",         STL_PA_SELECT_UTIL_LOW },         // 0x00020101
-	{"integrity",       STL_PA_SELECT_ERR_INTEG },        // 0x00030001
-	{"congestion",      STL_PA_SELECT_ERR_CONG },         // 0x00030002
-	{"smacongestion",   STL_PA_SELECT_ERR_SMA_CONG },     // 0x00030003
-	{"bubbles",         STL_PA_SELECT_ERR_BUBBLE },       // 0x00030004
-	{"security",        STL_PA_SELECT_ERR_SEC },          // 0x00030005
-	{"routing",         STL_PA_SELECT_ERR_ROUT },         // 0x00030006
+	{"integrity",       STL_PA_SELECT_CATEGORY_INTEG },        // 0x00030001
+	{"congestion",      STL_PA_SELECT_CATEGORY_CONG },         // 0x00030002
+	{"smacongestion",   STL_PA_SELECT_CATEGORY_SMA_CONG },     // 0x00030003
+	{"bubbles",         STL_PA_SELECT_CATEGORY_BUBBLE },       // 0x00030004
+	{"security",        STL_PA_SELECT_CATEGORY_SEC },          // 0x00030005
+	{"routing",         STL_PA_SELECT_CATEGORY_ROUT },         // 0x00030006
 	{ NULL, 0},
 };
 
@@ -868,13 +867,13 @@ int fe_getSAOutputTypeFromQueryType(int queryType)
 	}
 }
 
-FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connection)
+FSTATUS fe_runPAQueryFromQueryType(int queryType, struct omgt_port *port)
 {
 	FSTATUS fstatus = FERROR;
 	STL_CLASS_PORT_INFO *portInfo;
 
 	//verify PA has necessary capabilities
-	if ((portInfo = fe_GetClassPortInfo(connection)) == NULL){
+	if (omgt_pa_get_classportinfo(port, &portInfo) != FSUCCESS){
 		fprintf(stderr, "%s: failed to determine PA capabilities\n", APP_NAME);
 		return fstatus;
 	}
@@ -893,91 +892,91 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 	switch (queryType)
 	{
 		case Q_PA_GETGROUPLIST:
-			fstatus = fe_GetGroupList(connection);
+			fstatus = fe_GetGroupList(port);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get group list\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETGROUPINFO:
-			fstatus = fe_GetGroupInfo(connection, g_groupName, g_imageNumber, g_imageOffset, g_imageTime);
+			fstatus = fe_GetGroupInfo(port, g_groupName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get group info\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETGROUPCONFIG:
-			fstatus = fe_GetGroupConfig(connection, g_groupName, g_imageNumber, g_imageOffset, g_imageTime);
+			fstatus = fe_GetGroupConfig(port, g_groupName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get group configuration\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETPORTCOUNTERS:
-			fstatus = fe_GetPortCounters(connection, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_imageNumber, g_imageOffset, g_beginTime, g_endTime);
+			fstatus = fe_GetPortCounters(port, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_imageNumber, g_imageOffset, g_beginTime, g_endTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get port counters\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_CLRPORTCOUNTERS:
-			fstatus = fe_ClrPortCounters(connection, g_nodeLid, g_portNumber, g_selectFlag);
+			fstatus = fe_ClrPortCounters(port, g_nodeLid, g_portNumber, g_selectFlag);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to clear port counters\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_CLRALLPORTCOUNTERS:
-			fstatus = fe_ClrAllPortCounters(connection, g_selectFlag);
+			fstatus = fe_ClrAllPortCounters(port, g_selectFlag);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to clear all port counters\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETPMCONFIG:
-			fstatus = fe_GetPMConfig(connection);
+			fstatus = fe_GetPMConfig(port);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get PM configuration\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_FREEZEIMAGE:
-			fstatus = fe_FreezeImage(connection, g_imageNumber, g_imageOffset, g_imageTime);
+			fstatus = fe_FreezeImage(port, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to freeze image\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_RELEASEIMAGE:
-			fstatus = fe_ReleaseImage(connection, g_imageNumber, g_imageOffset);
+			fstatus = fe_ReleaseImage(port, g_imageNumber, g_imageOffset);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to release image\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_RENEWIMAGE:
-			fstatus = fe_RenewImage(connection, g_imageNumber, g_imageOffset);
+			fstatus = fe_RenewImage(port, g_imageNumber, g_imageOffset);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to renew image\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_MOVEFREEZE:
-			fstatus = fe_MoveFreeze(connection, g_imageNumber, g_imageOffset, g_moveImageNumber, g_moveImageOffset);
+			fstatus = fe_MoveFreeze(port, g_imageNumber, g_imageOffset, g_moveImageNumber, g_moveImageOffset);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to move freeze image\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETFOCUSPORTS:
-			fstatus = fe_GetFocusPorts(connection, g_groupName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset, g_imageTime);
+			fstatus = fe_GetFocusPorts(port, g_groupName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get focus ports\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETIMAGECONFIG:
-			fstatus = fe_GetImageInfo(connection, g_imageNumber, g_imageOffset, g_imageTime);
+			fstatus = fe_GetImageInfo(port, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get image info\n", APP_NAME);
 			}
@@ -988,42 +987,42 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 			break;
 
 		case Q_PA_GETVFLIST:
-			fstatus = fe_GetVFList(connection);
+			fstatus = fe_GetVFList(port);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get vf list\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETVFINFO:
-			fstatus = fe_GetVFInfo(connection, g_vfName, g_imageNumber, g_imageOffset, g_imageTime);
+			fstatus = fe_GetVFInfo(port, g_vfName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get VF info\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETVFCONFIG:
-			fstatus = fe_GetVFConfig(connection, g_vfName, g_imageNumber, g_imageOffset, g_imageTime);
+			fstatus = fe_GetVFConfig(port, g_vfName, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get vf configuration\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETVFPORTCOUNTERS:
-			fstatus = fe_GetVFPortCounters(connection, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_vfName, g_imageNumber, g_imageOffset, g_beginTime, g_endTime);
+			fstatus = fe_GetVFPortCounters(port, g_nodeLid, g_portNumber, g_deltaFlag, g_userCntrsFlag, g_vfName, g_imageNumber, g_imageOffset, g_beginTime, g_endTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get vf port counters\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_CLRVFPORTCOUNTERS:
-			fstatus = fe_ClrVFPortCounters(connection, g_nodeLid, g_portNumber, g_selectFlag, g_vfName);
+			fstatus = fe_ClrVFPortCounters(port, g_nodeLid, g_portNumber, g_selectFlag, g_vfName);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to clear vf port counters\n", APP_NAME);
 			}
 			break;
 
 		case Q_PA_GETVFFOCUSPORTS:
-			fstatus = fe_GetVFFocusPorts(connection, g_vfName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset, g_imageTime);
+			fstatus = fe_GetVFFocusPorts(port, g_vfName, g_focus, g_start, g_range, g_imageNumber, g_imageOffset, g_imageTime);
 			if (fstatus != FSUCCESS) {
 				fprintf(stderr, "%s: failed to get VF focus ports\n", APP_NAME);
 			}
@@ -1038,7 +1037,7 @@ FSTATUS fe_runPAQueryFromQueryType(int queryType, struct net_connection *connect
 	return fstatus;
 }
 
-FSTATUS fe_xml2ParseSslParmsFile(const char *input_file, int g_verbose, sslParametersData_t *sslParmsData)
+FSTATUS fe_xml2ParseSslParmsFile(const char *input_file, int g_verbose, struct omgt_ssl_params *sslParmsData)
 {
 	unsigned tags_found, fields_found;
 	const char *filename=input_file;
@@ -1067,41 +1066,69 @@ FSTATUS fe_xml2ParseSslParmsFile(const char *input_file, int g_verbose, sslParam
  * @param sa_query Pointer to the QUERY structure inputs built when issuing an SA query
  * @return FSTATUS return code
  */
-FSTATUS fe_processQuery(int queryType, PQUERY saQuery)
+FSTATUS fe_processQuery(int queryType, POMGT_QUERY saQuery, PQUERY_INPUT_VALUE old_input_value)
 {
 	FSTATUS fstatus = FSUCCESS; /* Return status */
 	int queryManager = fe_getManagerFromQueryType(queryType); /* The manager this request goes to */
-	struct net_connection *connection = NULL; /* Our connection to the FE */
-	struct login_attr attr; /* Login information */
-	attr.host = g_ipAdr;
-	attr.port = g_port;
+	struct omgt_port *port = NULL; /* Our port to the FE */
+	struct omgt_oob_input oob_input = {
+		.host = g_ipAdr,
+		.port = g_port,
+		.ssl_params = g_sslParmsData,
+		.is_esm_fe = g_feESM
+	};
+	struct omgt_params session_params = {
+		.debug_file = (g_verbose > 1 ? stderr : NULL),
+		.error_file = stderr
+	};
 
 	/* Connect to the FE */
-	if(fe_oob_connect(&attr, &connection) != FSUCCESS)
-		return FERROR;
+	if((fstatus = omgt_oob_connect(&port, &oob_input, &session_params)) != FSUCCESS)
+		goto fail;
 
 	/* Process the request and send it to the appropriate manager */
 	switch(queryManager){
 	case Q_UNDEFINED_QUERY:
 		/* This should never be reached */
-		return FERROR;
+		goto fail;
 	case Q_SA_QUERY:
 		{
-			PQUERY_RESULT_VALUES pQueryResults;
+			PQUERY_RESULT_VALUES pQueryResults = NULL;
 
 			saQuery->OutputType = fe_getSAOutputTypeFromQueryType(queryType);
-			fstatus = fe_processSAQuery(saQuery, connection, &pQueryResults);
+			fstatus = omgt_input_value_conversion(saQuery, old_input_value, g_sourceGid);
+			if (fstatus) {
+				fprintf(stderr, "%s: Error: InputValue conversion failed: Status %u\n"
+					"Query: Input=%s (0x%x), Output=%s (0x%x)\n"
+					"SourceGid: 0x%.16"PRIx64":%.16"PRIx64"\n", __func__, fstatus,
+					iba_sd_query_input_type_msg(saQuery->InputType), saQuery->InputType,
+					iba_sd_query_result_type_msg(saQuery->OutputType), saQuery->OutputType,
+					g_sourceGid.AsReg64s.H, g_sourceGid.AsReg64s.L);
+				if (fstatus == FERROR) {
+					fprintf(stderr, "Source Gid (-x) must be supplied for Input/Output combination.\n");
+				}
+				goto fail;
+			}
+			fstatus = omgt_query_sa(port, saQuery, &pQueryResults); 
 
 			PrintQueryResult(&g_dest, 0, &g_dbgDest, saQuery->OutputType, g_CSV, fstatus, pQueryResults);
+
+			if (pQueryResults)
+				omgt_free_query_result_buffer(pQueryResults);
 		}
 		break;
 	case Q_PA_QUERY:
-		fe_runPAQueryFromQueryType(queryType, connection);
+		fe_runPAQueryFromQueryType(queryType, port);
 		break;
 	}
 
+fail:
 	/* Disconnect from the FE and return the error code (if any) */
-	fe_oob_disconnect(connection);
+	if (port) {
+		omgt_close_port(port);
+		port = NULL;
+	}
+
 	return fstatus;
 }
 
@@ -1123,7 +1150,8 @@ int main (int argc, char *argv[])
 	uint8 temp8;
 
 	/* Allocate an SA query in case we need it */
-	QUERY query;
+	OMGT_QUERY query;
+	QUERY_INPUT_VALUE old_input_value;
 	memset(&query, 0, sizeof(query));
 	query.InputType = InputTypeNoInput;
 	query.OutputType = OutputTypeStlNodeRecord;
@@ -1136,8 +1164,8 @@ int main (int argc, char *argv[])
         case '$':
             Usage();
             break;
-        case 'v':
-            g_verbose = 1;
+		case 'v':
+			g_verbose++;
             break;
 
 		/* (General) IP Address */
@@ -1205,7 +1233,7 @@ int main (int argc, char *argv[])
             }
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypeLid;
-			query.InputValue.Lid = (uint16_t)temp32;
+			old_input_value.Lid = (uint16_t)temp32;
             g_nodeLid = temp32;
             g_gotLid = TRUE;
             break;
@@ -1219,7 +1247,7 @@ int main (int argc, char *argv[])
 		case 'k':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypePKey;
-			if (FSUCCESS != StringToUint16(&query.InputValue.PKey, optarg, NULL, 0, TRUE)) {
+			if (FSUCCESS != StringToUint16(&old_input_value.PKey, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "opafequery: Invalid PKey: %s\n", optarg);
 				Usage();
 			}
@@ -1229,7 +1257,7 @@ int main (int argc, char *argv[])
 		case 'i':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypeIndex;
-			if (FSUCCESS != StringToUint16(&query.InputValue.vfIndex, optarg, NULL, 0, TRUE)) {
+			if (FSUCCESS != StringToUint16(&old_input_value.vfIndex, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "opafequery: Invalid vfIndex: %s\n", optarg);
 				Usage();
 			}
@@ -1239,7 +1267,7 @@ int main (int argc, char *argv[])
 		case 'S':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypeServiceId;
-			if (FSUCCESS != StringToUint64(&query.InputValue.ServiceId, optarg, NULL, 0, TRUE)) {
+			if (FSUCCESS != StringToUint64(&old_input_value.ServiceId, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "opafequery: Invalid ServiceId: %s\n", optarg);
 				Usage();
 			}
@@ -1249,8 +1277,8 @@ int main (int argc, char *argv[])
 		case 'L':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypeSL;
-			if (FSUCCESS != StringToUint8(&query.InputValue.SL, optarg, NULL, 0, TRUE)
-				|| query.InputValue.SL > 15) {
+			if (FSUCCESS != StringToUint8(&old_input_value.SL, optarg, NULL, 0, TRUE)
+				|| old_input_value.SL > 15) {
 				fprintf(stderr, "opafequery: Invalid SL: %s\n", optarg);
 				Usage();
 			}
@@ -1260,14 +1288,14 @@ int main (int argc, char *argv[])
 		case 't':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypeNodeType;
-			query.InputValue.TypeOfNode = checkNodeType(optarg);
+			old_input_value.TypeOfNode = checkNodeType(optarg);
 			break;
 
 		/* (SA) sysguid */
         case 's':	// query by system image guid
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeSystemImageGuid;
-				if (FSUCCESS != StringToUint64(&query.InputValue.Guid, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint64(&old_input_value.Guid, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opafequery: Invalid GUID: %s\n", optarg);
 					Usage();
 				}
@@ -1278,7 +1306,7 @@ int main (int argc, char *argv[])
 		case 'n':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypeNodeGuid;
-			if (FSUCCESS != StringToUint64(&query.InputValue.Guid, optarg, NULL, 0, TRUE)) {
+			if (FSUCCESS != StringToUint64(&old_input_value.Guid, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "opafequery: Invalid GUID: %s\n", optarg);
 				Usage();
 			}
@@ -1288,7 +1316,7 @@ int main (int argc, char *argv[])
 		case 'p':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypePortGuid;
-			if (FSUCCESS != StringToUint64(&query.InputValue.Guid, optarg, NULL, 0, TRUE)) {
+			if (FSUCCESS != StringToUint64(&old_input_value.Guid, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "opafequery: Invalid GUID: %s\n", optarg);
 				Usage();
 			}
@@ -1298,7 +1326,7 @@ int main (int argc, char *argv[])
 		case 'u':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypePortGid;
-			if (FSUCCESS != StringToGid(&query.InputValue.Gid.AsReg64s.H,&query.InputValue.Gid.AsReg64s.L, optarg, NULL, TRUE)) {
+			if (FSUCCESS != StringToGid(&old_input_value.Gid.AsReg64s.H,&old_input_value.Gid.AsReg64s.L, optarg, NULL, TRUE)) {
 				fprintf(stderr, "opafequery: Invalid GID: %s\n", optarg);
 				Usage();
 			}
@@ -1308,7 +1336,7 @@ int main (int argc, char *argv[])
 		case 'm':
 			multiInputCheck(query.InputType);
 			query.InputType = InputTypeMcGid;
-			if (FSUCCESS != StringToGid(&query.InputValue.Gid.AsReg64s.H,&query.InputValue.Gid.AsReg64s.L, optarg, NULL, TRUE)) {
+			if (FSUCCESS != StringToGid(&old_input_value.Gid.AsReg64s.H,&old_input_value.Gid.AsReg64s.L, optarg, NULL, TRUE)) {
 				fprintf(stderr, "opafequery: Invalid GID: %s\n", optarg);
 				Usage();
 			}
@@ -1318,8 +1346,8 @@ int main (int argc, char *argv[])
 		case 'd':
 		multiInputCheck(query.InputType);
 			query.InputType = InputTypeNodeDesc;
-			query.InputValue.NodeDesc.NameLength = MIN(strlen(optarg), STL_NODE_DESCRIPTION_ARRAY_SIZE);
-			strncpy((char*)query.InputValue.NodeDesc.Name, optarg, STL_NODE_DESCRIPTION_ARRAY_SIZE);
+			old_input_value.NodeDesc.NameLength = MIN(strlen(optarg), STL_NODE_DESCRIPTION_ARRAY_SIZE);
+			strncpy((char*)old_input_value.NodeDesc.Name, optarg, STL_NODE_DESCRIPTION_ARRAY_SIZE);
             break;
 
 		/* (SA) guidpair */
@@ -1328,12 +1356,12 @@ int main (int argc, char *argv[])
 				char *p;
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypePortGuidPair;
-				if (FSUCCESS != StringToUint64(&query.InputValue.PortGuidPair.SourcePortGuid, optarg, &p, 0, TRUE)
+				if (FSUCCESS != StringToUint64(&old_input_value.PortGuidPair.SourcePortGuid, optarg, &p, 0, TRUE)
 					|| ! p || *p == '\0') {
 					fprintf(stderr, "opafequery: Invalid GUID Pair: %s\n", optarg);
 					Usage();
 				}
-				if (FSUCCESS != StringToUint64(&query.InputValue.PortGuidPair.DestPortGuid, p, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint64(&old_input_value.PortGuidPair.DestPortGuid, p, NULL, 0, TRUE)) {
 					fprintf(stderr, "opafequery: Invalid GUID Pair: %s\n", optarg);
 					Usage();
 				}
@@ -1346,12 +1374,12 @@ int main (int argc, char *argv[])
 				char *p;
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeGidPair;
-				if (FSUCCESS != StringToGid(&query.InputValue.GidPair.SourceGid.AsReg64s.H,&query.InputValue.GidPair.SourceGid.AsReg64s.L, optarg, &p, TRUE)
+				if (FSUCCESS != StringToGid(&old_input_value.GidPair.SourceGid.AsReg64s.H,&old_input_value.GidPair.SourceGid.AsReg64s.L, optarg, &p, TRUE)
 					|| ! p || *p == '\0') {
 					fprintf(stderr, "opafequery: Invalid GID Pair: %s\n", optarg);
 					Usage();
 				}
-				if (FSUCCESS != StringToGid(&query.InputValue.GidPair.DestGid.AsReg64s.H,&query.InputValue.GidPair.DestGid.AsReg64s.L, p, NULL, TRUE)) {
+				if (FSUCCESS != StringToGid(&old_input_value.GidPair.DestGid.AsReg64s.H,&old_input_value.GidPair.DestGid.AsReg64s.L, p, NULL, TRUE)) {
 					fprintf(stderr, "opafequery: Invalid GID Pair: %s\n", optarg);
 					Usage();
 				}
@@ -1367,22 +1395,22 @@ int main (int argc, char *argv[])
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypePortGuidList;
 				do {
-					if (FSUCCESS != StringToUint64(&query.InputValue.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
+					if (FSUCCESS != StringToUint64(&old_input_value.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
 						fprintf(stderr, "opafequery: Invalid GUID List: %s\n", optarg);
 						Usage();
 					}
 					i++;
-					query.InputValue.PortGuidList.SourceGuidCount++;
+					old_input_value.PortGuidList.SourceGuidCount++;
 				} while (p && *p != '\0' && *p++ != ';');
 				if (p && *p != '\0')
 				{
 					do {
-						if (FSUCCESS != StringToUint64(&query.InputValue.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
+						if (FSUCCESS != StringToUint64(&old_input_value.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
 							fprintf(stderr, "opafequery: Invalid GUID List: %s\n", optarg);
 							Usage();
 						}
 						i++;
-						query.InputValue.PortGuidList.DestGuidCount++;
+						old_input_value.PortGuidList.DestGuidCount++;
 					} while (p && *p++ != '\0');
 				} else {
 					Usage();
@@ -1399,22 +1427,22 @@ int main (int argc, char *argv[])
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeGidList;
 				do {
-					if (FSUCCESS != StringToGid(&query.InputValue.GidList.GidList[i].AsReg64s.H,&query.InputValue.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
+					if (FSUCCESS != StringToGid(&old_input_value.GidList.GidList[i].AsReg64s.H,&old_input_value.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
 						fprintf(stderr, "opafequery: Invalid GID List: %s\n", optarg);
 						Usage();
 					}
 					i++;
-					query.InputValue.GidList.SourceGidCount++;
+					old_input_value.GidList.SourceGidCount++;
 				} while (p && *p != '\0' && *p++ != ';');
 				if (p && *p != '\0')
 				{
 					do {
-						if (FSUCCESS != StringToGid(&query.InputValue.GidList.GidList[i].AsReg64s.H,&query.InputValue.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
+						if (FSUCCESS != StringToGid(&old_input_value.GidList.GidList[i].AsReg64s.H,&old_input_value.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
 							fprintf(stderr, "opafequery: Invalid GID List: %s\n", optarg);
 							Usage();
 						}
 						i++;
-						query.InputValue.GidList.DestGidCount++;
+						old_input_value.GidList.DestGidCount++;
 					} while (p && *p++ != '\0');
 				} else {
 					Usage();
@@ -1714,9 +1742,10 @@ int main (int argc, char *argv[])
 		PrintDestInitNone(&g_dbgDest);
 
 	/* Process the query */
-	fstatus = fe_processQuery(queryType, &query);
+	fstatus = fe_processQuery(queryType, &query, &old_input_value);
 
-	/* Print success and exit */
-    fprintf(stderr, "%s completed: %s\n", APP_NAME, (fstatus == FSUCCESS) ? "OK" : "FAILED");
-    exit(0);
+	if (g_verbose || (fstatus != FSUCCESS)) {
+		fprintf(stderr, "%s completed: %s\n", APP_NAME, (fstatus == FSUCCESS) ? "OK" : "FAILED");
+	}
+	return (fstatus);
 }

@@ -47,7 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iba/ibt.h>
 #include <iba/public/ilist.h>
 #include "ispinlock_osd.h"
-#include "oib_utils_sa.h"
+#include "opamgt_sa_priv.h"
 
 #include "dsap_topology.h"
 
@@ -88,7 +88,7 @@ struct dsap_port {
 	pthread_t               notice_thread;
 	int                     notice_started;
 	int                     terminating;
-	struct oib_port         *oib_handle;
+	struct omgt_port         *omgt_handle;
 	void                    *lib_handle;
 };
 
@@ -129,6 +129,7 @@ extern uint32 dsap_default_fabric;
 void dsap_get_config(char *filename);
 void dsap_cleanup(void);
 FSTATUS dsap_init(void);
+void dsap_omgt_log_init(struct omgt_port *omgt_port);
 
 int dsap_default_fabric_parser(char *str, void *ptr);
 char *dsap_default_fabric_printer(void *ptr);

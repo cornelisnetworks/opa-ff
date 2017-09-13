@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <getopt.h>
 
 #include <iba/ibt.h>
-#include <oib_utils_sa.h>
+#include <opamgt_sa_priv.h>
 #include <ibprint.h>
 #include <stl_print.h>
 #include <infiniband/umad.h>
@@ -60,25 +60,41 @@ int				g_CSV			= 0;	// output should use CSV style
 #define DBGPRINT(format, args...) \
 	do { if (g_verbose) { fflush(stdout); fprintf(stderr, format, ##args); } } while (0)
 
-static struct oib_port *sa_oib_session;
+static struct omgt_port *sa_omgt_session;
 PrintDest_t g_dest;
 PrintDest_t g_dbgDest;
 
 // perform the given query and display the results
 // if portGuid is -1, 1st active port is used to issue query
 //void do_query(EUI64 portGuid, QUERY *pQuery)
-void do_query(struct oib_port *port, QUERY *pQuery)
+void do_query(struct omgt_port *port, OMGT_QUERY *pQuery, QUERY_INPUT_VALUE *old_input_value)
 {
 	FSTATUS status;
 	PQUERY_RESULT_VALUES pQueryResults = NULL;
+	IB_GID local_gid;
 	DBGPRINT("Query: Input=%s (0x%x), Output=%s (0x%x)\n",
 				   		iba_sd_query_input_type_msg(pQuery->InputType),
 						pQuery->InputType,
 					   	iba_sd_query_result_type_msg(pQuery->OutputType),
 						pQuery->OutputType);
 
+	(void)omgt_port_get_port_guid(port, &local_gid.Type.Global.InterfaceID);
+	(void)omgt_port_get_port_prefix(port, &local_gid.Type.Global.SubnetPrefix);
+	status = omgt_input_value_conversion(pQuery, old_input_value, local_gid);
+	if (status) {
+		fprintf(stderr, "%s: Error: InputValue conversion failed: Status %u\n"
+			"Query: Input=%s (0x%x), Output=%s (0x%x)\n"
+			"SourceGid: 0x%.16"PRIx64":%.16"PRIx64"\n", __func__, status,
+			iba_sd_query_input_type_msg(pQuery->InputType), pQuery->InputType,
+			iba_sd_query_result_type_msg(pQuery->OutputType), pQuery->OutputType,
+			local_gid.AsReg64s.H, local_gid.AsReg64s.L);
+		if (status == FERROR) {
+			fprintf(stderr, "Source Gid must be supplied for Input/Output combination.\n");
+		}
+		return;
+	}
 	// this call is synchronous
-	status = oib_query_sa(port, pQuery, &pQueryResults);
+	status = omgt_query_sa(port, pQuery, &pQueryResults);
 
 	g_exitstatus = PrintQueryResult(&g_dest, 0, &g_dbgDest,
 			   		pQuery->OutputType, g_CSV, status, pQueryResults);
@@ -86,7 +102,7 @@ void do_query(struct oib_port *port, QUERY *pQuery)
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
+		omgt_free_query_result_buffer(pQueryResults);
 }
 
 // command line options, each has a short and long flag name
@@ -355,16 +371,6 @@ typedef struct InputFlags {
 	QUERY_INPUT_TYPE flags[MAX_NUM_INPUT_ARGS];
 } InputFlags_t;
 //last element must be zero
-InputFlags_t SystemGuidInput= {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
-		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t NodeGuidInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
-		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t PortGuidInput =  {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
-		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t LidInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
-		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t DescInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
-		InputTypeNodeDesc, 0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t NodeInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
 		InputTypeNodeDesc,0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t PathInput = {{InputTypeLid,InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,
@@ -386,56 +392,56 @@ typedef struct OutputStringMap {
 
 #define NO_OUTPUT_TYPE 0xffff
 OutputStringMap_t OutputTypeTable[] = {
-//--input string--------StlOutputType-----------------------IbOutputType------------------InputFlags----csv-//
-	{"systemguid",      NO_OUTPUT_TYPE,                     OutputTypeSystemImageGuid,	&SystemGuidInput,0},
-	{"classportinfo",   OutputTypeStlClassPortInfo,         OutputTypeClassPortInfo, 	NULL,			0},
-	{"nodeguid",        NO_OUTPUT_TYPE,                     OutputTypeNodeGuid, 		&NodeGuidInput,	0},
-	{"portguid",        OutputTypeStlPortGuid,              OutputTypePortGuid, 		&PortGuidInput,	0},
-	{"lid",             OutputTypeStlLid,                   NO_OUTPUT_TYPE, 			&LidInput,		0},
-	{"desc",            OutputTypeStlNodeDesc,              OutputTypeNodeDesc, 		&DescInput,		0},
-	{"path",            NO_OUTPUT_TYPE,                     OutputTypePathRecord, 		&PathInput,		0},
-	{"node",            OutputTypeStlNodeRecord,            OutputTypeNodeRecord, 		&NodeInput,		0},
-	{"portinfo",        OutputTypeStlPortInfoRecord,        OutputTypePortInfoRecord,	&MiscInput,		0},
-	{"sminfo",          OutputTypeStlSMInfoRecord,          OutputTypeSMInfoRecord, 	NULL,			0},
-	{"link",            OutputTypeStlLinkRecord,            OutputTypeLinkRecord, 		NULL,		0},
+//--input string--------StlOutputType-------------------------IbOutputType----------------InputFlags----csv-//
+    {"systemguid",      OutputTypeStlSystemImageGuid,         NO_OUTPUT_TYPE,             &NodeInput, 0},
+    {"classportinfo",   OutputTypeStlClassPortInfo,           OutputTypeClassPortInfo,    NULL, 0},
+    {"nodeguid",        OutputTypeStlNodeGuid,                NO_OUTPUT_TYPE,             &NodeInput, 0},
+    {"portguid",        OutputTypeStlPortGuid,                NO_OUTPUT_TYPE,             &NodeInput, 0},
+    {"lid",             OutputTypeStlLid,                     NO_OUTPUT_TYPE,             &NodeInput, 0},
+    {"desc",            OutputTypeStlNodeDesc,                NO_OUTPUT_TYPE,             &NodeInput, 0},
+    {"path",            NO_OUTPUT_TYPE,                       OutputTypePathRecord,       &PathInput, 0},
+    {"node",            OutputTypeStlNodeRecord,              OutputTypeNodeRecord,       &NodeInput, 0},
+    {"portinfo",        OutputTypeStlPortInfoRecord,          OutputTypePortInfoRecord,   &MiscInput, 0},
+    {"sminfo",          OutputTypeStlSMInfoRecord,            NO_OUTPUT_TYPE,             NULL, 0},
+    {"link",            OutputTypeStlLinkRecord,              NO_OUTPUT_TYPE,             NULL, 0},
 #ifndef NO_STL_SERVICE_OUTPUT       // Don't output STL Service if defined
-	{"service",         OutputTypeStlServiceRecord,         OutputTypeServiceRecord, 	&ServiceInput,	0},
+    {"service",         OutputTypeStlServiceRecord,           OutputTypeServiceRecord,    &ServiceInput, 0},
 #else
-	{"service",         OutputTypeServiceRecord,         	OutputTypeServiceRecord, 	&ServiceInput,	0},
+    {"service",         NO_OUTPUT_TYPE,                       OutputTypeServiceRecord,    &ServiceInput, 0},
 #endif
 #ifndef NO_STL_MCMEMBER_OUTPUT      // Don't output STL McMember (use IB format) if defined
-	{"mcmember",        OutputTypeStlMcMemberRecord,        OutputTypeMcMemberRecord, 	&McmemberInput,	0},
+    {"mcmember",        OutputTypeStlMcMemberRecord,          OutputTypeMcMemberRecord,   &McmemberInput, 0},
 #else
-	{"mcmember",        OutputTypeMcMemberRecord,        	OutputTypeMcMemberRecord, 	&McmemberInput,	0},
+    {"mcmember",        NO_OUTPUT_TYPE,                       OutputTypeMcMemberRecord,   &McmemberInput, 0},
 #endif
-	{"inform",          OutputTypeStlInformInfoRecord,      OutputTypeInformInfoRecord, &InformInput,	0},
-	{"trace",           OutputTypeStlTraceRecord,           NO_OUTPUT_TYPE,		&TraceInput,	0},
-	{"scsc",            OutputTypeStlSCSCTableRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"slsc",            OutputTypeStlSLSCTableRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"scsl",            OutputTypeStlSCSLTableRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"scvlt",           OutputTypeStlSCVLtTableRecord,      NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"scvlnt",          OutputTypeStlSCVLntTableRecord,     NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"swinfo",          OutputTypeStlSwitchInfoRecord,      OutputTypeSwitchInfoRecord, &MiscInput,	0},
-	{"linfdb",          OutputTypeStlLinearFDBRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"mcfdb",           OutputTypeStlMCastFDBRecord,        NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"vlarb",           OutputTypeStlVLArbTableRecord,      NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"pkey",            OutputTypeStlPKeyTableRecord,       NO_OUTPUT_TYPE,		&MiscInput,		0},
-	{"vfinfo",          OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE,		&VfinfoInput,	0},
-	{"vfinfocsv",       OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE,		&VfinfoInput,	1},
-	{"vfinfocsv2",      OutputTypeStlVfInfoRecord,          NO_OUTPUT_TYPE,		&VfinfoInput,	2},
-	{"fabricinfo",      OutputTypeStlFabricInfoRecord,      NO_OUTPUT_TYPE,		NULL,	0},
-	{"quarantine",      OutputTypeStlQuarantinedNodeRecord, NO_OUTPUT_TYPE,		NULL,	0},
-	{"conginfo",        OutputTypeStlCongInfoRecord,        NO_OUTPUT_TYPE,		&MiscInput,	0},
-	{"swcongset",       OutputTypeStlSwitchCongRecord,      NO_OUTPUT_TYPE,		&MiscInput,	0},
-	{"swportcong",      OutputTypeStlSwitchPortCongRecord,  NO_OUTPUT_TYPE,		&MiscInput,	0},
-	{"hficongset",      OutputTypeStlHFICongRecord,         NO_OUTPUT_TYPE,		&MiscInput,	0},
-	{"hficongcon",      OutputTypeStlHFICongCtrlRecord,     NO_OUTPUT_TYPE,		&MiscInput,	0},
-	{"bfrctrl",         OutputTypeStlBufCtrlTabRecord,      NO_OUTPUT_TYPE,		&MiscInput,	0},
-	{"cableinfo",       OutputTypeStlCableInfoRecord,       NO_OUTPUT_TYPE,		&MiscInput,	0},
-	{"portgroup",       OutputTypeStlPortGroupRecord,       NO_OUTPUT_TYPE,		&MiscInput,	0},
-	{"portgroupfdb",    OutputTypeStlPortGroupFwdRecord,    NO_OUTPUT_TYPE,		&MiscInput,	0},
-	//Last entry must be null, insert new attributes above here!
-	{NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, NULL, 0}
+    {"inform",          OutputTypeStlInformInfoRecord,        OutputTypeInformInfoRecord, &InformInput, 0},
+    {"trace",           OutputTypeStlTraceRecord,             NO_OUTPUT_TYPE,             &TraceInput, 0},
+    {"scsc",            OutputTypeStlSCSCTableRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"slsc",            OutputTypeStlSLSCTableRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"scsl",            OutputTypeStlSCSLTableRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"scvlt",           OutputTypeStlSCVLtTableRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"scvlnt",          OutputTypeStlSCVLntTableRecord,       NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"swinfo",          OutputTypeStlSwitchInfoRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"linfdb",          OutputTypeStlLinearFDBRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"mcfdb",           OutputTypeStlMCastFDBRecord,          NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"vlarb",           OutputTypeStlVLArbTableRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"pkey",            OutputTypeStlPKeyTableRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"vfinfo",          OutputTypeStlVfInfoRecord,            NO_OUTPUT_TYPE,             &VfinfoInput, 0},
+    {"vfinfocsv",       OutputTypeStlVfInfoRecord,            NO_OUTPUT_TYPE,             &VfinfoInput, 1},
+    {"vfinfocsv2",      OutputTypeStlVfInfoRecord,            NO_OUTPUT_TYPE,             &VfinfoInput, 2},
+    {"fabricinfo",      OutputTypeStlFabricInfoRecord,        NO_OUTPUT_TYPE,             NULL, 0},
+    {"quarantine",      OutputTypeStlQuarantinedNodeRecord,   NO_OUTPUT_TYPE,             NULL, 0},
+    {"conginfo",        OutputTypeStlCongInfoRecord,          NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"swcongset",       OutputTypeStlSwitchCongRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"swportcong",      OutputTypeStlSwitchPortCongRecord,    NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"hficongset",      OutputTypeStlHFICongRecord,           NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"hficongcon",      OutputTypeStlHFICongCtrlRecord,       NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"bfrctrl",         OutputTypeStlBufCtrlTabRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"cableinfo",       OutputTypeStlCableInfoRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"portgroup",       OutputTypeStlPortGroupRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"portgroupfdb",    OutputTypeStlPortGroupFwdRecord,      NO_OUTPUT_TYPE,             &MiscInput, 0},
+    //Last entry must be null, insert new attributes above here!
+    { NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, NULL, 0 }
 };
 
 OutputStringMap_t *GetOutputTypeMap(const char* name) {
@@ -506,7 +512,7 @@ InputStringMap_t InputStrTable[] = {
 		{NULL, 0}
 };
 
-FSTATUS CheckInputOutput(QUERY *pQuery, OutputStringMap_t *in) {
+FSTATUS CheckInputOutput(OMGT_QUERY *pQuery, OutputStringMap_t *in) {
 
 	int i=0;
 	int j=0;
@@ -559,7 +565,8 @@ int main(int argc, char ** argv)
     uint8               hfi         = 0;
     uint8               port        = 0;
 	int					index;
-	QUERY				query;
+	OMGT_QUERY			query;
+	QUERY_INPUT_VALUE old_input_values;
 	OutputStringMap_t	*outputTypeMap = NULL;
 
 	memset(&query, 0, sizeof(query));	// initialize reserved fields
@@ -578,7 +585,6 @@ int main(int argc, char ** argv)
                 break;
             case 'v':
                 g_verbose++;
-				if (g_verbose>1) oib_set_dbg(stderr);
 				if (g_verbose>2) umad_debug(g_verbose-2);
                 break;
 			case 'I':   // issue query in legacy InfiniBand format (IB)
@@ -601,7 +607,7 @@ int main(int argc, char ** argv)
             case 'l':	// query by lid
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeLid;
-				if (FSUCCESS != StringToUint16(&query.InputValue.Lid, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint16(&old_input_values.Lid, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid LID: %s\n", optarg);
 					Usage();
 				}
@@ -609,7 +615,7 @@ int main(int argc, char ** argv)
             case 'k':	// query by pkey
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypePKey;
-				if (FSUCCESS != StringToUint16(&query.InputValue.PKey, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint16(&old_input_values.PKey, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid PKey: %s\n", optarg);
 					Usage();
 				}
@@ -617,7 +623,7 @@ int main(int argc, char ** argv)
             case 'i':	// query by vfindex
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeIndex;
-				if (FSUCCESS != StringToUint16(&query.InputValue.vfIndex, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint16(&old_input_values.vfIndex, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid vfIndex: %s\n", optarg);
 					Usage();
 				}
@@ -625,7 +631,7 @@ int main(int argc, char ** argv)
             case 'S':	// query by serviceId
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeServiceId;
-				if (FSUCCESS != StringToUint64(&query.InputValue.ServiceId, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint64(&old_input_values.ServiceId, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid ServiceId: %s\n", optarg);
 					Usage();
 				}
@@ -633,8 +639,8 @@ int main(int argc, char ** argv)
             case 'L':	// query by service level
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeSL;
-				if (FSUCCESS != StringToUint8(&query.InputValue.SL, optarg, NULL, 0, TRUE)
-					|| query.InputValue.SL > 15) {
+				if (FSUCCESS != StringToUint8(&old_input_values.SL, optarg, NULL, 0, TRUE)
+					|| old_input_values.SL > 15) {
 					fprintf(stderr, "opasaquery: Invalid SL: %s\n", optarg);
 					Usage();
 				}
@@ -642,12 +648,12 @@ int main(int argc, char ** argv)
             case 't':	// query by node type
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeNodeType;
-				query.InputValue.TypeOfNode = checkNodeType(optarg);
+				old_input_values.TypeOfNode = checkNodeType(optarg);
                 break;
             case 's':	// query by system image guid
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeSystemImageGuid;
-				if (FSUCCESS != StringToUint64(&query.InputValue.Guid, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint64(&old_input_values.Guid, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid GUID: %s\n", optarg);
 					Usage();
 				}
@@ -655,7 +661,7 @@ int main(int argc, char ** argv)
             case 'n':	// query by node guid
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeNodeGuid;
-				if (FSUCCESS != StringToUint64(&query.InputValue.Guid, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint64(&old_input_values.Guid, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid GUID: %s\n", optarg);
 					Usage();
 				}
@@ -663,7 +669,7 @@ int main(int argc, char ** argv)
             case 'g':	// query by port guid
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypePortGuid;
-				if (FSUCCESS != StringToUint64(&query.InputValue.Guid, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint64(&old_input_values.Guid, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid GUID: %s\n", optarg);
 					Usage();
 				}
@@ -671,7 +677,7 @@ int main(int argc, char ** argv)
             case 'u':	// query by gid
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypePortGid;
-				if (FSUCCESS != StringToGid(&query.InputValue.Gid.AsReg64s.H,&query.InputValue.Gid.AsReg64s.L, optarg, NULL, TRUE)) {
+				if (FSUCCESS != StringToGid(&old_input_values.Gid.AsReg64s.H,&old_input_values.Gid.AsReg64s.L, optarg, NULL, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid GID: %s\n", optarg);
 					Usage();
 				}
@@ -679,7 +685,7 @@ int main(int argc, char ** argv)
             case 'm':	// query by multicast gid
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeMcGid;
-				if (FSUCCESS != StringToGid(&query.InputValue.Gid.AsReg64s.H,&query.InputValue.Gid.AsReg64s.L, optarg, NULL, TRUE)) {
+				if (FSUCCESS != StringToGid(&old_input_values.Gid.AsReg64s.H,&old_input_values.Gid.AsReg64s.L, optarg, NULL, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid GID: %s\n", optarg);
 					Usage();
 				}
@@ -687,20 +693,20 @@ int main(int argc, char ** argv)
             case 'd':	// query by node description
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeNodeDesc;
-				query.InputValue.NodeDesc.NameLength = MIN(strlen(optarg), NODE_DESCRIPTION_ARRAY_SIZE);
-				strncpy((char*)query.InputValue.NodeDesc.Name, optarg, NODE_DESCRIPTION_ARRAY_SIZE);
+				old_input_values.NodeDesc.NameLength = MIN(strlen(optarg), NODE_DESCRIPTION_ARRAY_SIZE);
+				strncpy((char*)old_input_values.NodeDesc.Name, optarg, NODE_DESCRIPTION_ARRAY_SIZE);
                 break;
 			case 'P':	// query by source:dest port guids
 				{
 					char *p;
 					multiInputCheck(query.InputType);
 					query.InputType = InputTypePortGuidPair;
-					if (FSUCCESS != StringToUint64(&query.InputValue.PortGuidPair.SourcePortGuid, optarg, &p, 0, TRUE)
+					if (FSUCCESS != StringToUint64(&old_input_values.PortGuidPair.SourcePortGuid, optarg, &p, 0, TRUE)
 						|| ! p || *p == '\0') {
 						fprintf(stderr, "opasaquery: Invalid GUID Pair: %s\n", optarg);
 						Usage();
 					}
-					if (FSUCCESS != StringToUint64(&query.InputValue.PortGuidPair.DestPortGuid, p, NULL, 0, TRUE)) {
+					if (FSUCCESS != StringToUint64(&old_input_values.PortGuidPair.DestPortGuid, p, NULL, 0, TRUE)) {
 						fprintf(stderr, "opasaquery: Invalid GUID Pair: %s\n", optarg);
 						Usage();
 					}
@@ -711,12 +717,12 @@ int main(int argc, char ** argv)
 					char *p;
 					multiInputCheck(query.InputType);
 					query.InputType = InputTypeGidPair;
-					if (FSUCCESS != StringToGid(&query.InputValue.GidPair.SourceGid.AsReg64s.H,&query.InputValue.GidPair.SourceGid.AsReg64s.L, optarg, &p, TRUE)
+					if (FSUCCESS != StringToGid(&old_input_values.GidPair.SourceGid.AsReg64s.H,&old_input_values.GidPair.SourceGid.AsReg64s.L, optarg, &p, TRUE)
 						|| ! p || *p == '\0') {
 						fprintf(stderr, "opasaquery: Invalid GID Pair: %s\n", optarg);
 						Usage();
 					}
-					if (FSUCCESS != StringToGid(&query.InputValue.GidPair.DestGid.AsReg64s.H,&query.InputValue.GidPair.DestGid.AsReg64s.L, p, NULL, TRUE)) {
+					if (FSUCCESS != StringToGid(&old_input_values.GidPair.DestGid.AsReg64s.H,&old_input_values.GidPair.DestGid.AsReg64s.L, p, NULL, TRUE)) {
 						fprintf(stderr, "opasaquery: Invalid GID Pair: %s\n", optarg);
 						Usage();
 					}
@@ -730,23 +736,23 @@ int main(int argc, char ** argv)
 					multiInputCheck(query.InputType);
 					query.InputType = InputTypePortGuidList;
 					do {
-						if (FSUCCESS != StringToUint64(&query.InputValue.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
+						if (FSUCCESS != StringToUint64(&old_input_values.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
 							fprintf(stderr, "opasaquery: Invalid GUID List: %s\n", optarg);
 							Usage();
 						}
 						i++;
-						query.InputValue.PortGuidList.SourceGuidCount++;
+						old_input_values.PortGuidList.SourceGuidCount++;
 					} while (p && *p != '\0' && *p != ';');
 					if (p && *p != '\0')
 					{
 						p++; // skip the semi-colon.
 						do {
-							if (FSUCCESS != StringToUint64(&query.InputValue.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
+							if (FSUCCESS != StringToUint64(&old_input_values.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
 								fprintf(stderr, "opasaquery: Invalid GUID List: %s\n", optarg);
 								Usage();
 							}
 							i++;
-							query.InputValue.PortGuidList.DestGuidCount++;
+							old_input_values.PortGuidList.DestGuidCount++;
 						} while (p && *p != '\0');
 					} else {
 						Usage();
@@ -761,23 +767,23 @@ int main(int argc, char ** argv)
 					multiInputCheck(query.InputType);
 					query.InputType = InputTypeGidList;
 					do {
-						if (FSUCCESS != StringToGid(&query.InputValue.GidList.GidList[i].AsReg64s.H,&query.InputValue.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
+						if (FSUCCESS != StringToGid(&old_input_values.GidList.GidList[i].AsReg64s.H,&old_input_values.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
 							fprintf(stderr, "opasaquery: Invalid GID List: %s\n", optarg);
 							Usage();
 						}
 						i++;
-						query.InputValue.GidList.SourceGidCount++;
+						old_input_values.GidList.SourceGidCount++;
 					} while (p && *p != '\0' && *p != ';');
 					if (p && *p != '\0')
 					{
 						p++; // skip the semi-colon
 						do {
-							if (FSUCCESS != StringToGid(&query.InputValue.GidList.GidList[i].AsReg64s.H,&query.InputValue.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
+							if (FSUCCESS != StringToGid(&old_input_values.GidList.GidList[i].AsReg64s.H,&old_input_values.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
 								fprintf(stderr, "opasaquery: Invalid GID List: %s\n", optarg);
 								Usage();
 							}
 							i++;
-							query.InputValue.GidList.DestGidCount++;
+							old_input_values.GidList.DestGidCount++;
 						} while (p && *p != '\0');
 					} else {
 						Usage();
@@ -812,16 +818,17 @@ int main(int argc, char ** argv)
 		PrintDestInitNone(&g_dbgDest);
 
 	FSTATUS status;
-	status = oib_open_port_by_num(&sa_oib_session,hfi,port);
+	struct omgt_params params = {.debug_file = g_verbose > 1 ? stderr : NULL };
+	status = omgt_open_port_by_num(&sa_omgt_session,hfi,port,&params);
 	if (status != 0) {
 		fprintf(stderr, "opasaquery: Failed to open port hfi %d:%d: %s\n", hfi, port, strerror(status));
 		exit(1);
 	}
 
 	// perform the query and display output
-	do_query(sa_oib_session, &query);
+	do_query(sa_omgt_session, &query, &old_input_values);
 
-	oib_close_port(sa_oib_session);
+	omgt_close_port(sa_omgt_session);
 
 	if (g_exitstatus == 2)
 		Usage();

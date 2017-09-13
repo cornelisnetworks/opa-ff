@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "opareport.h"
 #ifdef IB_STACK_OPENIB
-#include <oib_utils.h>
-#include <oib_utils_sa.h>
+#include <opamgt_priv.h>
+#include <opamgt_sa_priv.h>
 #endif
 #include <getopt.h>
 #include <limits.h>
@@ -42,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <umad.h>
 #include <time.h>
 #include <string.h>
+#include "stl_print.h"
 
 // libmad debugging.
 void madrpc_show_errors(int set);
@@ -745,7 +746,7 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			
 		}
 		if (detail > 1 && portp->pCableInfoData)
-			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail-1, portp->PortInfo.PortPhyConfig.s.PortType);
+			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail-1, portp->PortInfo.PortPhysConfig.s.PortType);
 
 		break;
 	case FORMAT_XML:
@@ -772,7 +773,7 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 		}
 
 		if (detail > 1 && portp->pCableInfoData)
-			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail-1, portp->PortInfo.PortPhyConfig.s.PortType);
+			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail-1, portp->PortInfo.PortPhysConfig.s.PortType);
 
 		break;
 	default:
@@ -986,7 +987,7 @@ FSTATUS ShowTraceRoute(EUI64 portGuid, PortData *portp1, PortData *portp2,
 	PortData *p = portp1;
 	int p_shown = 0;
 	PQUERY_RESULT_VALUES pQueryResults = NULL;
-	struct oib_port *oib_port_session = NULL;
+	struct omgt_port *omgt_port_session = NULL;
 
 	if (format == FORMAT_XML) {
 		printf("%*s<Route>\n", indent, "");
@@ -1055,12 +1056,13 @@ FSTATUS ShowTraceRoute(EUI64 portGuid, PortData *portp1, PortData *portp2,
 
 
 	if (! g_snapshot_in_file) {
-		status = oib_open_port_by_guid(&oib_port_session, portGuid);
+		struct omgt_params params = {.debug_file = g_verbose > 2 ? stdout : NULL};
+		status = omgt_open_port_by_guid(&omgt_port_session, portGuid, &params);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "Unable to open fabric interface.\n");
 			goto done;
 		} else {
-			status = GetTraceRoute(oib_port_session, pathp, &pQueryResults);
+			status = GetTraceRoute(omgt_port_session, pathp, &pQueryResults);
 			if (FSUCCESS != status) {
 				g_exitstatus = 1;
 				goto done;
@@ -1243,9 +1245,9 @@ done:
 	}
 
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
-	if (oib_port_session != NULL)
-		oib_close_port(oib_port_session);
+		omgt_free_query_result_buffer(pQueryResults);
+	if (omgt_port_session != NULL)
+		omgt_close_port(omgt_port_session);
 	if (g_snapshot_in_file && pTraceRecords)
 		MemoryDeallocate(pTraceRecords);
 	return status;
@@ -1271,7 +1273,7 @@ FSTATUS ShowPortsTraceRoutes(EUI64 portGuid, PortData *portp1, PortData *portp2,
 	PQUERY_RESULT_VALUES pQueryResults = NULL;
 	uint32 NumPathRecords;
 	IB_PATH_RECORD *pPathRecords = NULL;
-	struct oib_port *oib_port_session = NULL;
+	struct omgt_port *omgt_port_session = NULL;
 
 	switch (format) {
 	case FORMAT_TEXT:
@@ -1289,10 +1291,11 @@ FSTATUS ShowPortsTraceRoutes(EUI64 portGuid, PortData *portp1, PortData *portp2,
 	}
 
 	if (! g_snapshot_in_file) {
-		status = oib_open_port_by_guid(&oib_port_session, portGuid);
+		struct omgt_params params = {.debug_file = g_verbose > 2 ? stdout : NULL};
+		status = omgt_open_port_by_guid(&omgt_port_session, portGuid, &params);
 		if (FSUCCESS != status)
 			goto done;
-		status = GetPaths(oib_port_session, portp1, portp2, &pQueryResults);
+		status = GetPaths(omgt_port_session, portp1, portp2, &pQueryResults);
 		if (FSUCCESS != status)
 			goto done;
 		NumPathRecords = ((PATH_RESULTS*)pQueryResults->QueryResult)->NumPathRecords;
@@ -1326,9 +1329,9 @@ done:
 		printf("%*s</PortRoutes>\n", indent, "");
 
 	if (pQueryResults)
-		oib_free_query_result_buffer(pQueryResults);
-	if (oib_port_session != NULL)
-		oib_close_port(oib_port_session);
+		omgt_free_query_result_buffer(pQueryResults);
+	if (omgt_port_session != NULL)
+		omgt_close_port(omgt_port_session);
 	if (g_snapshot_in_file && pPathRecords)
 		MemoryDeallocate(pPathRecords);
 
@@ -2667,7 +2670,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 						pPortInfo->PortStates.s.IsSMConfigurationStarted?"True":"False",
 						pPortInfo->PortStates.s.NeighborNormal?"True":"False");
 			}
-			printf("%*sPortType: %-3s\n", indent+4, "", StlPortTypeToText(pPortInfo->PortPhyConfig.s.PortType));
+			printf("%*sPortType: %-3s\n", indent+4, "", StlPortTypeToText(pPortInfo->PortPhysConfig.s.PortType));
 			if (g_hard) {
 				printf( "%*sLID:    xxxxxx              LMC: x               Subnet: xxxxxxxxxxxxxxxxxx\n",
 					indent+4, "");
@@ -2905,10 +2908,11 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 					pPortInfo->FlitControl.Preemption.SmallPktLimit,
 					pPortInfo->FlitControl.Preemption.MaxSmallPktLimit,
 					pPortInfo->FlitControl.Preemption.PreemptionLimit);
-				printf("%*sFlitCtrlPreemption MinInital: 0x%04x MinTail: 0x%04x LargePktLim: 0x%02x\n",
+				// Convert Flits to bytes and display in decimal
+				printf("%*sFlitCtrlPreemption MinInital: %"PRIu64" MinTail: %"PRIu64" LargePktLim: 0x%02x\n",
 					indent+4, "",
-					pPortInfo->FlitControl.Preemption.MinInitial,
-					pPortInfo->FlitControl.Preemption.MinTail,
+					(uint64_t)(pPortInfo->FlitControl.Preemption.MinInitial * BYTES_PER_FLIT),
+					(uint64_t)(pPortInfo->FlitControl.Preemption.MinTail * BYTES_PER_FLIT),
 					pPortInfo->FlitControl.Preemption.LargePktLimit);
 			}
 			if (g_hard)
@@ -2991,7 +2995,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 		}
 
 		if (detail && portp->pCableInfoData)
-			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail, pPortInfo->PortPhyConfig.s.PortType);
+			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail, pPortInfo->PortPhysConfig.s.PortType);
 		break;
 	case FORMAT_XML:
 		printf("%*s<PortInfo id=\"0x%016"PRIx64":%u\">\n", indent, "",
@@ -3020,8 +3024,8 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 			if (g_hard) {
 				// noop
 				XmlPrintDec("LocalPort", pPortInfo->LocalPortNum, indent+4);
-				XmlPrintStr("PortType", StlPortTypeToText(pPortInfo->PortPhyConfig.s.PortType), indent+4);
-				XmlPrintHex("PortType_Int", pPortInfo->PortPhyConfig.s.PortType, indent+4);
+				XmlPrintStr("PortType", StlPortTypeToText(pPortInfo->PortPhysConfig.s.PortType), indent+4);
+				XmlPrintHex("PortType_Int", pPortInfo->PortPhysConfig.s.PortType, indent+4);
 			} else {
 				XmlPrintDec("LocalPort", pPortInfo->LocalPortNum, indent+4);
 				XmlPrintStr("PortState",
@@ -3034,8 +3038,8 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 					XmlPrintDec("InitReason_Int",
 						pPortInfo->s3.LinkInitReason, indent+4);
 				}
-				XmlPrintStr("PortType", StlPortTypeToText(pPortInfo->PortPhyConfig.s.PortType), indent+4);
-				XmlPrintHex("PortType_Int", pPortInfo->PortPhyConfig.s.PortType, indent+4);
+				XmlPrintStr("PortType", StlPortTypeToText(pPortInfo->PortPhysConfig.s.PortType), indent+4);
+				XmlPrintHex("PortType_Int", pPortInfo->PortPhysConfig.s.PortType, indent+4);
 
 				XmlPrintStr("PhysState",
 					StlPortPhysStateToText(pPortInfo->PortStates.s.PortPhysicalState),
@@ -3273,8 +3277,10 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 			if (! g_hard) {
 				XmlPrintDec("SmallPktLimit", pPortInfo->FlitControl.Preemption.SmallPktLimit, indent+4);
 				XmlPrintDec("PreemptionLimit", pPortInfo->FlitControl.Preemption.PreemptionLimit, indent+4);
-				XmlPrintDec("MinInitial", pPortInfo->FlitControl.Preemption.MinInitial, indent+4);
-				XmlPrintDec("MinTail", pPortInfo->FlitControl.Preemption.MinTail, indent+4);
+				// Convert Flits to bytes and display in decimal 
+				XmlPrintDec("MinInitial", (pPortInfo->FlitControl.Preemption.MinInitial * BYTES_PER_FLIT), indent+4);
+				// Convert Flits to bytes and display in decimal
+				XmlPrintDec("MinTail", (pPortInfo->FlitControl.Preemption.MinTail * BYTES_PER_FLIT), indent+4);
 				XmlPrintDec("LargePktLimit", pPortInfo->FlitControl.Preemption.LargePktLimit, indent+4);
 			}
 
@@ -3336,7 +3342,7 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 			}
 		}
 		if (detail && portp->pCableInfoData)
-			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail, pPortInfo->PortPhyConfig.s.PortType);
+			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail, pPortInfo->PortPhysConfig.s.PortType);
 		printf("%*s</PortInfo>\n", indent, "");
 		break;
 	default:
@@ -6004,7 +6010,7 @@ static void ValidateCLRouteCallback(PortData *portp1, PortData *portp2, void *co
    uint32 NumPathRecords; 
    IB_PATH_RECORD *pPathRecords = NULL; 
    ValidateCreditLoopRoutesContext_t *cp = (ValidateCreditLoopRoutesContext_t *) context;
-   struct oib_port *oib_port_session = NULL;
+   struct omgt_port *omgt_port_session = NULL;
    
    if (cp) {
       format = cp->format; 
@@ -6082,10 +6088,11 @@ static void ValidateCLRouteCallback(PortData *portp1, PortData *portp2, void *co
    }
    
    if (!g_snapshot_in_file) {
-	   status = oib_open_port_by_guid(&oib_port_session, g_portGuid);
+	   struct omgt_params params = {.debug_file = g_verbose > 2 ? stdout : NULL};
+	   status = omgt_open_port_by_guid(&omgt_port_session, g_portGuid, &params);
 	   if (FSUCCESS != status) 
 		   goto done; 
-	   status = GetPaths(oib_port_session, portp1, portp2, &pQueryResults); 
+	   status = GetPaths(omgt_port_session, portp1, portp2, &pQueryResults); 
 	   if (FSUCCESS != status) 
 		   goto done; 
 	   NumPathRecords = ((PATH_RESULTS *)pQueryResults->QueryResult)->NumPathRecords; 
@@ -6119,9 +6126,9 @@ done:
       printf("%*s</PortRoutes>\n", indent, ""); 
    
    if (pQueryResults) 
-      oib_free_query_result_buffer(pQueryResults); 
-   if (oib_port_session != NULL)
-	   oib_close_port(oib_port_session);
+      omgt_free_query_result_buffer(pQueryResults); 
+   if (omgt_port_session != NULL)
+	   omgt_close_port(omgt_port_session);
    if (g_snapshot_in_file && pPathRecords) 
       MemoryDeallocate(pPathRecords); 
    
@@ -6430,7 +6437,7 @@ static void ValidateCLPathSummaryCallback(FabricData_t *fabricp, clConnData_t *c
    uint32 NumTraceRecords; 
    STL_TRACE_RECORD	*pTraceRecords = NULL; 
    PQUERY_RESULT_VALUES pQueryResults = NULL; 
-   struct oib_port *oib_port_session = NULL;
+   struct omgt_port *omgt_port_session = NULL;
 
    //      
    // display path record associated with the route       
@@ -6443,10 +6450,11 @@ static void ValidateCLPathSummaryCallback(FabricData_t *fabricp, clConnData_t *c
    //    
    // retrieve trace records associated with the route       
    if (!((fabricp->flags & FF_ROUTES) && g_snapshot_in_file)) {
-	   if(oib_open_port_by_guid(&oib_port_session, g_portGuid))
+	   struct omgt_params params = {.debug_file = g_verbose > 2 ? stdout : NULL};
+	   if(omgt_open_port_by_guid(&omgt_port_session, g_portGuid, &params))
 		  return;
-	   if (GetTraceRoute(oib_port_session, &connp->PathInfo.path, &pQueryResults)) {
-		   oib_close_port(oib_port_session);
+	   if (GetTraceRoute(omgt_port_session, &connp->PathInfo.path, &pQueryResults)) {
+		   omgt_close_port(omgt_port_session);
 		   return;
 	   }
 	   NumTraceRecords = ((STL_TRACE_RECORD_RESULTS *)pQueryResults->QueryResult)->NumTraceRecords; 
@@ -6491,9 +6499,9 @@ static void ValidateCLPathSummaryCallback(FabricData_t *fabricp, clConnData_t *c
 
 done:
    if (pQueryResults) 
-	  oib_free_query_result_buffer(pQueryResults); 
-   if (oib_port_session != NULL)
-	   oib_close_port(oib_port_session);
+	  omgt_free_query_result_buffer(pQueryResults); 
+   if (omgt_port_session != NULL)
+	   omgt_close_port(omgt_port_session);
 }
 
 // output summary of all IB Links with errors > threshold
@@ -6642,8 +6650,8 @@ FSTATUS ClearAllPortCountersAndShow(EUI64 portGuid, Point *focus, boolean cleara
 {
 	uint32 node_count=0;
 	uint32 port_count=0;
-	uint32 fail_node_count=0;
-	uint32 fail_port_count=0;
+	uint32 nrsp_node_count=0;
+	uint32 nrsp_port_count=0;
 	int indent = 0;
 
 	if (! quiet) {
@@ -6691,20 +6699,20 @@ FSTATUS ClearAllPortCountersAndShow(EUI64 portGuid, Point *focus, boolean cleara
 	(void)ClearAllPortCounters(portGuid, g_portAttrib->GIDTable[0], &g_Fabric, focus,
 							clearall?0xffffffff:g_CounterSelectMask.CounterSelectMask.AsReg32,
 							g_limitstats, g_quiet, &node_count, &port_count,
-							&fail_node_count, &fail_port_count);
+							&nrsp_node_count, &nrsp_port_count);
 	if (! quiet) {
 		switch (format) {
 		case FORMAT_TEXT:
 			printf("%*sCleared %u Ports on %u Nodes\n", indent, "", port_count, node_count);
-			if (fail_port_count)
-				printf("%*sUnable to clear %u Ports on %u Nodes\n", indent, "", fail_port_count, fail_node_count);
+			if (nrsp_port_count)
+				printf("%*sUnable to clear %u Ports on %u Nodes\n", indent, "", nrsp_port_count, nrsp_node_count);
 			break;
 		case FORMAT_XML:
 			XmlPrintDec("ClearedPorts", port_count, indent);
 			XmlPrintDec("ClearedNodes", node_count, indent);
-			if (fail_port_count) {
-				XmlPrintDec("FailedPorts", fail_port_count, indent);
-				XmlPrintDec("FailedNodes", fail_node_count, indent);
+			if (nrsp_port_count) {
+				XmlPrintDec("NoRespPorts", nrsp_port_count, indent);
+				XmlPrintDec("NoRespNodes", nrsp_node_count, indent);
 			}
 			indent-=4;
 			printf("</ClearCounters>\n");
@@ -6714,8 +6722,8 @@ FSTATUS ClearAllPortCountersAndShow(EUI64 portGuid, Point *focus, boolean cleara
 		}
 	} else {
 		PROGRESS_PRINT(TRUE, "Cleared %u Ports on %u Nodes\n", port_count, node_count);
-		if (fail_port_count)
-			PROGRESS_PRINT(TRUE, "Unable to clear %u Ports on %u Nodes\n", fail_port_count, fail_node_count);
+		if (nrsp_port_count)
+			PROGRESS_PRINT(TRUE, "Unable to clear %u Ports on %u Nodes\n", nrsp_port_count, nrsp_node_count);
 	}
 
 	done:
@@ -7662,7 +7670,7 @@ static int compare_masks(const void *a, const void *b)
 	return 0;
 }
 
-void ShowValidatePGReport(Point *focus, Format_t format, int indent, int detail)
+void ShowValidatePGReport(Format_t format, int indent, int detail)
 {
 	LIST_ITEM *pList;
 	uint32_t routeCount = 0;
@@ -7744,7 +7752,7 @@ void ShowValidatePGReport(Point *focus, Format_t format, int indent, int detail)
 			ShowNodeBriefSummaryHeadings(format, indent, 0);
 			ct_node++;
 		}
-		ShowNodeBriefSummary(nodep, focus, FALSE, format, indent, 0);
+		ShowNodeBriefSummary(nodep, NULL, FALSE, format, indent, 0);
 
 		if (nodep->pSwitchInfo &&
 			nodep->pSwitchInfo->SwitchInfoData.AdaptiveRouting.s.Enable &&
@@ -8214,7 +8222,7 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 
 
 //output multicast groups
-void ShowMulticastGroupsReport(Point *focus, Format_t format, int indent, int detail)
+void ShowMulticastGroupsReport(Format_t format, int indent, int detail)
 {
 	FSTATUS status;
 
@@ -9506,7 +9514,7 @@ void PrintMCRouteMembers(McNodeLoopInc *LoopIncp, void *context)
 			StlNodeTypeToText(LoopIncp->pPort->nodep->NodeInfo.NodeType),
 			NODE_DESCRIPTION_ARRAY_SIZE,
 			g_noname?g_name_marker:(char*)LoopIncp->pPort->nodep->NodeDesc.NodeString,
-			LoopIncp->pPort->PortNum,
+			LoopIncp->entryPort,
 			LoopIncp->exitPort);
 
 		break;
@@ -9520,7 +9528,7 @@ void PrintMCRouteMembers(McNodeLoopInc *LoopIncp, void *context)
 		XmlPrintNodeType(LoopIncp->pPort->nodep->NodeInfo.NodeType,
 				indent+8);
 		XmlPrintNodeDesc((char*)LoopIncp->pPort->nodep->NodeDesc.NodeString, indent+8);
-		XmlPrintDec("EntryPort", LoopIncp->pPort->PortNum, indent+8);
+		XmlPrintDec("EntryPort", LoopIncp->entryPort, indent+8);
 		XmlPrintDec("ExitPort", LoopIncp->exitPort, indent+8);
 		printf("%*s</Port>\n", indent+4, "");
 		break;
@@ -9568,24 +9576,24 @@ void PrintInitMCRoute(uint32 count,void *context)
 	else {
 		switch (mcstatus) {
 		case MC_NO_TRACE:
-			strncpy(statusstr,"Unable to trace route",sizeof("Unable to trace route"));
-			strncpy(statusxml,"UnableToTraceRoute",sizeof("UnableToTraceRoute"));
+			strncpy(statusstr,"Unable to trace route",sizeof(statusstr));
+			strncpy(statusxml,"UnableToTraceRoute",sizeof(statusxml));
 			break;
 		case MC_NOT_FOUND:
-			strncpy(statusstr,"No start point",sizeof("No start point"));
-			strncpy(statusxml,"NoStartPoint",sizeof("NoStartPoint"));
+			strncpy(statusstr,"No start point",sizeof(statusstr));
+			strncpy(statusxml,"NoStartPoint",sizeof(statusxml));
 			break;
 		case MC_UNAVAILABLE:
-			strncpy(statusstr,"No MFT Route Table",sizeof("No MFT Route Table"));
-			strncpy(statusxml,"NoMFTRouteTable",sizeof("NoMFTRouteTable"));
+			strncpy(statusstr,"No MFT Route Table",sizeof(statusstr));
+			strncpy(statusxml,"NoMFTRouteTable",sizeof(statusxml));
 			break;
 		case MC_LOOP:
-			strncpy(statusstr,"Found Loop",sizeof("Found Loop"));
-			strncpy(statusxml,"FoundLoop",sizeof("FoundLoop"));
+			strncpy(statusstr,"Found Loop",sizeof(statusstr));
+			strncpy(statusxml,"FoundLoop",sizeof(statusxml));
 			break;
 		case MC_NOGROUP:
-			strncpy(statusstr,"HFI does not belong to MCGROUP",sizeof("HFI does not belong to MCGROUP"));
-			strncpy(statusxml,"HFINoGroup",sizeof("HFINoGroup"));
+			strncpy(statusstr,"End-node does not belong to McGroup",sizeof(statusstr));
+			strncpy(statusxml,"EndNodeNoGroup",sizeof(statusxml));
 			break;
 		default:
 			strcpy(statusstr,"");
@@ -9595,7 +9603,7 @@ void PrintInitMCRoute(uint32 count,void *context)
 
 		switch (MCRoutesContext->format) {
 		case FORMAT_TEXT:
-			printf("%s: Num. of paths: %d\n",statusstr,count);
+			printf("%s. Num. of paths: %d\n",statusstr,count);
 			if (MCRoutesContext->detail >= 2) {
 				printf(" NodeGUID\t\tType\tName\tEntry Port\tExitPort\n");
 			} else
@@ -9668,7 +9676,7 @@ void ValidateRouteCallback2(PortData *portp, uint8 vl, void *context)
 	} 
 }
 // Validate all routes in linear FDBs
-void ShowValidateRoutesReport(Point *focus, Format_t format, int indent, int detail)
+void ShowValidateRoutesReport(Format_t format, int indent, int detail)
 {
 	FSTATUS status;
 	uint32 totalPaths;
@@ -9700,8 +9708,7 @@ void ShowValidateRoutesReport(Point *focus, Format_t format, int indent, int det
 	default:
 		break;
 	}
-	// TBD - what if anything should focus select?
-	//ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
+
 	switch (format) {
 	case FORMAT_TEXT:
 		printf( "%*s%u LID(s) in Fabric%s\n", indent, "",
@@ -9821,7 +9828,7 @@ void PrintHeadGroup(IB_LID mlid, void *context)
 
 
 // Validate MC routes in multicast tables MCDBs
-void ShowValidateMCRoutesReport(Point *focus, Format_t format, int indent, int detail)
+void ShowValidateMCRoutesReport(Format_t format, int indent, int detail)
 {
 	FSTATUS status;
 	uint32 totalPaths, badPaths=0, listcount=0;
@@ -9879,7 +9886,9 @@ void ShowValidateMCRoutesReport(Point *focus, Format_t format, int indent, int d
 
 	if (status != FSUCCESS) {
 		fprintf(stderr, "opareport: -o validatemcroutes: Unable to validate multicast routes (status=0x%x): %s\n", status, iba_fstatus_msg(status));
+		FreeValidateMCRoutes(&g_Fabric);
 		g_exitstatus = 1;
+		return;
 	}
 
 	// Display all MC routes with problems:
@@ -9942,7 +9951,7 @@ void ShowValidateMCRoutesReport(Point *focus, Format_t format, int indent, int d
 
 
 // Validate all routes for credit loops
-void ShowValidateCreditLoopsReport(Point *focus, Format_t format, int indent, int detail) 
+void ShowValidateCreditLoopsReport(Format_t format, int indent, int detail) 
 { 
    FSTATUS status; 
    ValidateCreditLoopRoutesContext_t ValidateCreditLoopRoutesContext = { format:format, detail:detail }; 
@@ -10154,6 +10163,9 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 		break;
 	}
 
+	PrintDest_t print;
+	PrintDestInitFile(&print, stdout);
+
 	// Report vFabric records
 	if (detail) {
 		for (p = QListHead(&g_Fabric.AllVFs); p; p = QListNext(&g_Fabric.AllVFs, p), cnt++)
@@ -10161,73 +10173,15 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 			VFData_t *pVFData = (VFData_t *)QListObj(p);
 			STL_VFINFO_RECORD *pR = &pVFData->record;
 			char buf[8];
-			char buf2[8];
-	
-			if ( (pR->routingSLs > 1) &&
-					((pR->routingSLs + pR->s1.sl) <= 16) )
-				snprintf(buf2, sizeof(buf2), "%d-%d", pR->s1.sl, pR->s1.sl + pR->routingSLs - 1);
-			else
-				snprintf(buf2, sizeof(buf2), "%d", pR->s1.sl);
-	
+
 			switch (format) {
 			case FORMAT_TEXT:
 				if (cnt)
 					printf("\n");
-				printf("%*sIndex:%d Name:%s\n", indent, "", pR->vfIndex, pR->vfName);
-				// ServiceID and MGID are always zero when SA query asks for
-				// all VFs
-				//printf( "%*sServiceID:0x%016"PRIx64" MGID:0x%016"PRIx64":0x%016"PRIx64"\n",
-				//	indent, "", pR->ServiceID, pR->MGID.AsReg64s.H, pR->MGID.AsReg64s.L );
-				if (detail >1) {
-					snprintf(buf, sizeof(buf), "%d", 1 << pR->s1.pktLifeTimeInc);
-					printf( "%*sPKey:0x%x   SL:%s  Select:0x%x%s %s%s  ",
-						indent, "", pR->pKey, buf2, pR->s1.selectFlags,
-						pR->s1.selectFlags ? ":" : "", 
-						(pR->s1.selectFlags & VEND_PKEY_SEL) ? "PKEY " : "",
-						(pR->s1.selectFlags & VEND_SL_SEL) ? "SL ": "" );
-					if(pR->s1.pktLifeSpecified)
-						printf("PktLifeTimeMult:%s\n", buf);
-					else
-						printf("PktLifeTimeMult:unspecified\n");
-	
-					if (pR->s1.mtuSpecified)
-						printf( "%*sMaxMtu:%5s  ", indent, "",
-							IbMTUToText(pR->s1.mtu) );
-					else
-						printf("%*sMaxMtu:unlimited  ", indent, "");
-	
-					printf( "MaxRate:%s   ",
-						pR->s1.rateSpecified ? StlStaticRateToText(pR->s1.rate) : "unlimited" );
-	
-					printf( "%*sOptions:0x%02x%s %s%s%s\n", indent, "", pR->optionFlags,
-						pR->optionFlags ? ":" : "",
-						(pR->optionFlags & OPT_VF_SECURITY) ? "Security " : "",
-						(pR->optionFlags & OPT_VF_QOS) ? "QoS " : "",
-						(pR->optionFlags & OPT_VF_FLOW_DISABLE) ? "FlowCtrlDisable " : "" );
-	
-					FormatTimeoutMult(buf, pR->hoqLife);
-					if (pR->optionFlags & OPT_VF_QOS)
-					{
-						if (pR->priority)
-							if (pR->bandwidthPercent)
-								printf("%*sQOS: Bandwidth: %3d%%  Priority: %s  PreemptionRank: %u  HoQLife: %s\n",
-									indent, "", pR->bandwidthPercent, "high", pR->preemptionRank, buf);
-							else
-								printf("%*sQOS: HighPriority  PreemptionRank: %u  HoQLife: %s\n", indent, "", pR->preemptionRank, buf);
-	
-						else
-							printf("%*sQOS: Bandwidth: %3d%%  PreemptionRank: %u  HoQLife: %s\n",
-								indent, "", pR->bandwidthPercent, pR->preemptionRank, buf);
-					}
-					else
-						printf("%*sQOS: Disabled  PreemptionRank: %u  HoQLife: %s\n",
-								indent, "", pR->preemptionRank, buf);
-				} else {
-					printf( "%*sPKey:0x%x   SL:%s\n",
-						indent, "", pR->pKey, buf2);
-				}
+
+				PrintStlVfInfoRecord_detail(&print, indent, detail, pR, 0);
 				break;
-	
+
 			case FORMAT_XML:
 				printf("%*s<vFabric>\n", indent, "");
 				indent += 4;
@@ -10239,12 +10193,21 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 				//printf( "%*s<MGID>0x%016"PRIx64":0x%016"PRIx64"</MGID>\n",
 				//	indent, "", pR->MGID.AsReg64s.H, pR->MGID.AsReg64s.L );
 				XmlPrintPKey("PKey", pR->pKey, indent);
-				XmlPrintDec("SL", pR->s1.sl, indent);
+				XmlPrintDec("SL", pR->s1.slBase, indent);
+
+				if (pR->slResponseSpecified)
+					XmlPrintDec("RespSL", pR->slResponse, indent);
+
+				if (pR->slMulticastSpecified)
+					XmlPrintDec("MulticastSL", pR->slMulticast, indent);
+
 				printf( "%*s<Select>%s%s</Select>\n", indent, "",
 					(pR->s1.selectFlags & VEND_PKEY_SEL) ? "PKEY " : "",
 					(pR->s1.selectFlags & VEND_SL_SEL) ? "SL " : "" );
 				XmlPrintHex8("Select_Hex", pR->s1.selectFlags, indent);
 				if (detail >1) {
+					// get the value of Packet Lifetime Multiplier
+					snprintf(buf, sizeof(buf), "%d", 1<<pR->s1.pktLifeTimeInc);
 					XmlPrintStr( "PktLifeTimeMult",
 						pR->s1.pktLifeSpecified ? buf : "unspecified",
 						indent );
@@ -10503,6 +10466,7 @@ void ShowAllBCTReports(Point *focus, Format_t format, int indent, int detail)
 	int ct_port = 0;
 	LIST_ITEM *p;
 
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 	switch (format) {
 		case FORMAT_TEXT:
 			printf("%*sBufferControlTable Report\n", indent, "");
@@ -10598,185 +10562,221 @@ done:
 void CheckVFAllocation(PortData *port, int indent, int format, int detail)
 {
 	// caller checks FF_QOSDATA, but play it safe
-	
+	if (detail <= 3 || !(g_Fabric.flags & FF_QOSDATA))
+		return;
+
 	// we need QOSDATA to have the SL2SC and PKey tables which are used by
 	// isVFMember
-	if (detail>3 && (g_Fabric.flags & FF_QOSDATA)) {
-		int sl, sc, vl, ded, share;
-		STL_VFINFO_RECORD *pR;
-		LIST_ITEM *p;
-		// this array will keep track of how many vFabrics are mapped to each VL
-		int vls[STL_MAX_VLS];
-		memset(vls, 0, STL_MAX_VLS*sizeof(int));
+	int sl, sc, vl, ded, share;
+	STL_VFINFO_RECORD *pR;
+	LIST_ITEM *p;
 
-		for (p = QListHead(&g_Fabric.AllVFs); p; p = QListNext(&g_Fabric.AllVFs, p)) {
-			VFData_t *pVFData = (VFData_t *)QListObj(p);
-			STL_VFINFO_RECORD *pR = &pVFData->record;
-			// check that every VF that the port is a member of has a VL assigned to it
-			if (!isVFMember(port, pVFData)) 
-				continue;
-			sl = pR->s1.sl;
-			sc = port->pQOS->SL2SCMap->SLSCMap[sl].SC;
-			vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
-			if (vl == 15) {
-				// no VL allocated for this VF
-				switch (format) {
-				case FORMAT_TEXT:
-					printf("%*sNo VL allocated for VF: %s\n", indent, "", pR->vfName);
-					break;
-				case FORMAT_XML:
-					printf("%*s<VFNoVLAllocated>%s</VFNoVLAllocated>", indent, "", pR->vfName);
-					break;
-				default:
-					break;
-				}
-				continue;
-			}
+	uint8_t vfsPerVl[STL_MAX_VLS] = {0};
+	uint8_t slsPerVl[STL_MAX_VLS] = {0};
+	uint32_t vlSlsMap[STL_MAX_VLS] = {0};
+	for (p = QListHead(&g_Fabric.AllVFs); p; p = QListNext(&g_Fabric.AllVFs, p)) {
+		VFData_t *pVFData = (VFData_t *)QListObj(p);
+		STL_VFINFO_RECORD *pR = &pVFData->record;
+		// check that every VF that the port is a member of has a VL assigned to it
+		if (!isVFMember(port, pVFData))
+			continue;
 
-			// if qos is enabled, make note that this VL has a vfabric mapped
-			// to it, so we can check for contracted links
-			if (pR->optionFlags & OPT_VF_QOS)
-				vls[vl]++;	
-			
-			// check that every VF that the port is a member of has buffers
-			// allocated to it
-			// skip port 0 since it doesn't get configured for buffers
-			// and will confuse user by saying no buffers allocated
-			if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
-				&& (vl != 15) && port->PortNum) {
-				ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
-				share = port->pBufCtrlTable->VL[vl].TxSharedLimit;
-				if (!ded && !share) {
-					switch (format) {
-					case FORMAT_TEXT:
-						printf("%*sNo buffers allocated for VF: %s\n", indent, "", pR->vfName);
-						break;
-					case FORMAT_XML:
-						printf("%*s<VFNoBufferAllocated>%s</VFNoBufferAllocated>", indent, "", pR->vfName);
-						break;
-					default:
-						break;
-					}
-				}
+		sl = pR->s1.slBase;
+		sc = port->pQOS->SL2SCMap->SLSCMap[sl].SC;
+		vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
+		if (vl == 15) {
+			// no VL allocated for this VF
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*sNo VL allocated for VF: %s\n", indent, "", pR->vfName);
+				break;
+			case FORMAT_XML:
+				printf("%*s<VFNoVLAllocated>%s</VFNoVLAllocated>", indent, "", pR->vfName);
+				break;
+			default:
+				break;
 			}
+			continue;
 		}
 
-		// check for contracted links
-		for (vl = 0; vl < STL_MAX_VLS; vl++) {
-			if (vls[vl]>1){
-				switch (format) {
-				case FORMAT_TEXT:
-					printf("%*sContracted link: %d Virtual Fabrics mapped to VL %d\n", indent, "", vls[vl], vl);
-					break;
-				case FORMAT_XML:
-					printf("%*s<ContractedLink VL=\"%d\">%d</ContractedLink>\n", indent, "", vl, vls[vl]);
-					break;
-				default:
-					break;
-				}	
-			}
-		}
-
-		// check that every allocated buffer is mapped to a VF
+		// check that every VF that the port is a member of has buffers
+		// allocated to it
 		// skip port 0 since it doesn't get configured for buffers
 		// and will confuse user by saying no buffers allocated
 		if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
 			&& port->PortNum) {
-			for (vl=0; vl<STL_MAX_VLS; vl++) {
-				// skip VL 15
-				if (vl==15) 
-					continue;
-				ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
-				share = port->pBufCtrlTable->VL[vl].TxSharedLimit;
-				if (!ded && !share) 
-					continue;
-				// this VL has buffers dedicated to it
-				// first need to find out if there is an SC for this VL
-				boolean match_found = FALSE;
-				for (sc=0; sc<STL_MAX_VLS; sc++) {
-					if (vl == port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL) {
+			ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
+			share = port->pBufCtrlTable->VL[vl].TxSharedLimit;
+			if (!ded && !share) {
+				switch (format) {
+				case FORMAT_TEXT:
+					printf("%*sNo buffers allocated for VF: %s\n", indent, "", pR->vfName);
+					break;
+				case FORMAT_XML:
+					printf("%*s<VFNoBufferAllocated>%s</VFNoBufferAllocated>", indent, "", pR->vfName);
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		int slSet[3] = { pR->s1.slBase,
+			(pR->slResponseSpecified? pR->slResponse: -1),
+			(pR->slMulticastSpecified? pR->slMulticast: -1)
+		};
+
+		// if qos is enabled, make note that this VL has a vfabric mapped
+		// to it, so we can check for contracted links
+		if (pR->optionFlags & OPT_VF_QOS) {
+			uint32_t vls = 0;
+
+			int i;
+			for (i = 0; i < 3; ++i) {
+				sl = slSet[i];
+				if (sl == -1) continue;
+
+				sc = port->pQOS->SL2SCMap->SLSCMap[sl].SC;
+				vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
+				if (vl == 15) continue;
+
+
+				if (!(vlSlsMap[vl] & (1 << sl))) {
+					// Only count VFs that reach this VL via an SL
+					// that hasn't been shared before
+					if (!(vls & (1 << vl))) {
+						// Only count this (VF,VL) pair once
+						++vfsPerVl[vl];
+						vls |= 1 << vl;
+					}
+
+					// Only count this (SL,VL) pair once
+					slsPerVl[vl]++;
+					vlSlsMap[vl] |= (1 << sl);
+				}
+			}
+		}
+	}
+
+	// check for contracted links
+	for (vl = 0; vl < STL_MAX_VLS; vl++) {
+		if (slsPerVl[vl]>1){
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*sContracted link: %d unique SLs in %d unique VFs (not counting shared SLs) mapped to VL %d\n", indent, "", slsPerVl[vl], vfsPerVl[vl], vl);
+				break;
+			case FORMAT_XML:
+				printf("%*s<ContractedLink VL=\"%d\">%d</ContractedLink>\n", indent, "", vl, slsPerVl[vl]);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	// check that every allocated buffer is mapped to a VF
+	// skip port 0 since it doesn't get configured for buffers
+	// and will confuse user by saying no buffers allocated
+	if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
+		&& port->PortNum) {
+
+		for (vl=0; vl<STL_MAX_VLS; vl++) {
+			// skip VL 15
+			if (vl==15)
+				continue;
+			ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
+			share = port->pBufCtrlTable->VL[vl].TxSharedLimit;
+			if (!ded && !share)
+				continue;
+			// this VL has buffers dedicated to it
+			// first need to find out if there is an SC for this VL
+			boolean match_found = FALSE;
+			for (sc=0; sc<STL_MAX_SCS; sc++) {
+				if (vl == port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL) {
+					match_found = TRUE;
+					break;
+				}
+			}
+			if (match_found) {
+				// now find the Sl for this SC
+				match_found = FALSE;
+				for (sl=0; sl<STL_MAX_SLS; sl++) {
+					if (sc == port->pQOS->SL2SCMap->SLSCMap[sl].SC) {
 						match_found = TRUE;
 						break;
 					}
 				}
 				if (match_found) {
-					// now find the Sl for this SC
+					// now find the vfabric
 					match_found = FALSE;
-					for (sl=0; sl<STL_MAX_SCS; sl++) {
-						if (sc == port->pQOS->SL2SCMap->SLSCMap[sl].SC) {
+					for (p = QListHead(&g_Fabric.AllVFs); p; p = QListNext(&g_Fabric.AllVFs, p)) {
+						pR = &((VFData_t *)QListObj(p))->record;
+						if (sl == pR->s1.slBase ||
+							(pR->slResponseSpecified && sl == pR->slResponse) ||
+							(pR->slMulticastSpecified && sl == pR->slMulticast)) {
 							match_found = TRUE;
 							break;
 						}
 					}
-					if (match_found) {
-						// now find the vfabric
-						match_found = FALSE;
-						for (p = QListHead(&g_Fabric.AllVFs); p; p = QListNext(&g_Fabric.AllVFs, p)) {
-							pR = &((VFData_t *)QListObj(p))->record;
-							if (sl == pR->s1.sl) {
-								match_found = TRUE;
-								break;
-							}
-						}
-					}
 				}
-				// we never found a match
-				if (!match_found) {
-					switch (format) {
-					case FORMAT_TEXT:
-						printf("%*sBuffers allocated to VL: %d, but it is not mapped to any VirtualFabric\n",indent, "", vl);
-						break;
-					case FORMAT_XML:
-						printf("%*s<VLExtraBuffersAllocated>%d</VLExtraBuffersAllocated>\n", indent, "", vl);
-						break;
-					default:
-						break;
-					}
-				}		
+			}
+			// we never found a match
+			if (!match_found) {
+				switch (format) {
+				case FORMAT_TEXT:
+					printf("%*sBuffers allocated to VL: %d, but it is not mapped to any VirtualFabric\n",indent, "", vl);
+					break;
+				case FORMAT_XML:
+					printf("%*s<VLExtraBuffersAllocated>%d</VLExtraBuffersAllocated>\n", indent, "", vl);
+					break;
+				default:
+					break;
+				}
 			}
 		}
+	}
 
-		if (port->neighbor) {
-			// check that SCVLt matches SCVLnt of the neighbor
-			for (sc=0; sc<STL_MAX_VLS; sc++) {
-				int vl1 = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
-				int vl2 = port->neighbor->pQOS->SC2VLMaps[Enum_SCVLnt].SCVLMap[sc].VL;
-				if (vl1!=vl2) {
-					switch (format) {
-					case FORMAT_TEXT:
-						printf("%*sSCVLt/SCVLnt mapping mismatch:\n", indent, ""); 
-						printf("%*s%s Port %d: SC %d -> VL %d\n", indent+4, "", 
-						   	port->nodep->NodeDesc.NodeString, port->PortNum, sc, vl1);
-						printf("%*sNeighbor %s Port %d: SC %d -> VL %d\n", indent+4, "",
-						   	port->neighbor->nodep->NodeDesc.NodeString, port->neighbor->PortNum, sc, vl2);
-						break;
-					case FORMAT_XML:
-						printf("%*s<SCVLMismatch>\n", indent, "");
-						printf("%*s<Local SC=%d>%d</Local>\n", indent+4, "",
-						   	sc, vl1);
-						printf("%*s<Neighbor SC=%d>%d</Neighbor>\n", indent+4, "",
-						   	sc, vl2);
-						printf("%*s</SCVLMismatch>\n", indent, "");
-						break;
-					default:
-						break;
-					}
+	if (port->neighbor) {
+		// check that SCVLt matches SCVLnt of the neighbor
+		for (sc=0; sc<STL_MAX_VLS; sc++) {
+			int vl1 = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
+			int vl2 = port->neighbor->pQOS->SC2VLMaps[Enum_SCVLnt].SCVLMap[sc].VL;
+			if (vl1!=vl2) {
+				switch (format) {
+				case FORMAT_TEXT:
+					printf("%*sSCVLt/SCVLnt mapping mismatch:\n", indent, "");
+					printf("%*s%s Port %d: SC %d -> VL %d\n", indent+4, "",
+						port->nodep->NodeDesc.NodeString, port->PortNum, sc, vl1);
+					printf("%*sNeighbor %s Port %d: SC %d -> VL %d\n", indent+4, "",
+						port->neighbor->nodep->NodeDesc.NodeString, port->neighbor->PortNum, sc, vl2);
+					break;
+				case FORMAT_XML:
+					printf("%*s<SCVLMismatch>\n", indent, "");
+					printf("%*s<Local SC=%d>%d</Local>\n", indent+4, "",
+						sc, vl1);
+					printf("%*s<Neighbor SC=%d>%d</Neighbor>\n", indent+4, "",
+						sc, vl2);
+					printf("%*s</SCVLMismatch>\n", indent, "");
+					break;
+				default:
+					break;
 				}
 			}
 		}
-		switch (format) {
-		case FORMAT_TEXT:
-			printf("%*sVF Allocation Validated\n", indent, "");
-			break;
-		default:
-			break;
-		}
+	}
+
+	switch (format) {
+	case FORMAT_TEXT:
+		printf("%*sVF Allocation Validated\n", indent, "");
+		break;
+	default:
+		break;
 	}
 }
 
 void ShowPortVFMembershipText(PortData *port, int indent, int detail)
 {
-	int sl, sc, vl, ded, share;
+	int sc, vl, ded, share;
 	LIST_ITEM *p;
 
 	// we need QOSDATA to have the SL2SC and PKey tables which are used by
@@ -10785,8 +10785,8 @@ void ShowPortVFMembershipText(PortData *port, int indent, int detail)
 		return;
 	printf("%*sVF Membership:\n", indent, "");
 	indent+=4;
-	printf("%*sVF Name\tVF Index\tBase SL", indent, "");
-	printf("\tBase SC\tVL");
+	printf("%*sVF Name\tVF Index\tBaseSL\tBaseSC\tBaseVL", indent, "");
+	printf("\t\tRespSL\tRespSC\tRespVL\t\tMcastSL\tMcastSC\tMcastVL");
 	if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
 		&& detail>2 && port->PortNum)
 		printf("\tDedicated\tShared");
@@ -10798,11 +10798,25 @@ void ShowPortVFMembershipText(PortData *port, int indent, int detail)
 		if (!isVFMember(port, pVFData))
 			continue;
 
-		sl = pR->s1.sl;
-		printf("%*s%s\t%d\t\t%d", indent, "", pR->vfName, pR->vfIndex, sl);
-		sc = port->pQOS->SL2SCMap->SLSCMap[sl].SC;
-		vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
-		printf("\t%d\t%d", sc, vl);
+		printf("%*s%s\t%d", indent, "", pR->vfName, pR->vfIndex);
+		uint8_t sls[3] = {
+			pR->s1.slBase,
+			(pR->slResponseSpecified? pR->slResponse: pR->s1.slBase),
+			(pR->slMulticastSpecified? pR->slMulticast: pR->s1.slBase)
+		};
+
+		int i;
+		for (i = 0; i < 3; ++i) {
+			int sl = sls[i];
+			sc = port->pQOS->SL2SCMap->SLSCMap[sl].SC;
+			vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
+
+			if (i > 0 && sl == pR->s1.slBase)
+				printf("\t\tN/A\tN/A\tN/A");
+			else
+				printf("\t\t%d\t%d\t%d", sl, sc, vl);
+		}
+
 		if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
 			&& detail>2 && port->PortNum) {
 			ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
@@ -10817,7 +10831,7 @@ void ShowPortVFMembershipText(PortData *port, int indent, int detail)
 
 void ShowPortVFMembershipXML(PortData *port, int indent, int detail)
 {
-	int sl, sc, vl, ded, share;
+	int sc, vl, ded, share;
 	LIST_ITEM *p;
 
 	// we need QOSDATA to have the SL2SC and PKey tables which are used by
@@ -10832,16 +10846,33 @@ void ShowPortVFMembershipXML(PortData *port, int indent, int detail)
 		STL_VFINFO_RECORD *pR = &pVFData->record;
 		if (!isVFMember(port, pVFData)) 
 			continue;
-		sl = pR->s1.sl;
+
 		printf("%*s<VirtualFabric id=\"%d\">\n", indent, "", pR->vfIndex);
 		indent+=4;
 		XmlPrintStr("Name", (char *)pR->vfName, indent);
 		XmlPrintDec("Index", pR->vfIndex, indent);
-		XmlPrintDec("BaseSL", sl, indent);
-		sc = port->pQOS->SL2SCMap->SLSCMap[sl].SC;
+		XmlPrintDec("BaseSL", pR->s1.slBase, indent);
+		sc = port->pQOS->SL2SCMap->SLSCMap[pR->s1.slBase].SC;
 		vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
 		XmlPrintDec("BaseSC", sc, indent);
 		XmlPrintDec("VL", vl, indent);
+
+		if (pR->slResponseSpecified) {
+			sc = port->pQOS->SL2SCMap->SLSCMap[pR->slResponse].SC;
+			vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
+			XmlPrintDec("RespSL", pR->slResponse, indent);
+			XmlPrintDec("RespSC", sc, indent);
+			XmlPrintDec("RespVL", vl, indent);
+		}
+
+		if (pR->slMulticastSpecified) {
+			sc = port->pQOS->SL2SCMap->SLSCMap[pR->slMulticast].SC;
+			vl = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
+			XmlPrintDec("MulticastSL", pR->slMulticast, indent);
+			XmlPrintDec("MulticastSC", sc, indent);
+			XmlPrintDec("MulticastVL", vl, indent);
+		}
+
 		if ((g_Fabric.flags & FF_BUFCTRLTABLE) && port->pBufCtrlTable
 			&& detail>2 && port->PortNum) {
 			ded = port->pBufCtrlTable->VL[vl].TxDedicatedLimit;
@@ -11072,14 +11103,15 @@ void ShowQuarantineNodeReport(Point *focus, Format_t format, int indent, int det
 	PQUERY_RESULT_VALUES	pQueryResults = NULL;
 	STL_QUARANTINED_NODE_RECORD_RESULTS *pQNRR;
 	STL_QUARANTINED_NODE_RECORD	*pR;
-	struct oib_port *oib_port_session = NULL;
+	struct omgt_port *omgt_port_session = NULL;
 
 	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
 
-	if(oib_open_port_by_guid(&oib_port_session, g_portGuid) != FSUCCESS)
+	struct omgt_params params = {.debug_file = g_verbose > 2 ? stdout : NULL};
+	if(omgt_open_port_by_guid(&omgt_port_session, g_portGuid, &params) != FSUCCESS)
 		return;
 	if ( !(( pQueryResults =
-			GetAllQuarantinedNodes(oib_port_session, &g_Fabric, focus, g_quiet) )) )
+			GetAllQuarantinedNodes(omgt_port_session, &g_Fabric, focus, g_quiet) )) )
 		return;
 
 	pQNRR = (STL_QUARANTINED_NODE_RECORD_RESULTS *)pQueryResults->QueryResult;
@@ -11209,9 +11241,9 @@ void ShowQuarantineNodeReport(Point *focus, Format_t format, int indent, int det
 	}
 
 	if (pQueryResults != NULL)
-		oib_free_query_result_buffer(pQueryResults);
-	if (oib_port_session != NULL)
-		oib_close_port(oib_port_session);
+		omgt_free_query_result_buffer(pQueryResults);
+	if (omgt_port_session != NULL)
+		omgt_close_port(omgt_port_session);
 }
 
 // command line options, each has a short and long flag name
@@ -11320,8 +11352,11 @@ void Usage_full(void)
 	fprintf(stderr, "                                port would also be checked/cleared\n");
 	fprintf(stderr, "                                Does not affect other reports\n");
 	fprintf(stderr, "    -F/--focus point          - focus area for report\n");
-	fprintf(stderr, "                                used for all reports except route to\n");
-	fprintf(stderr, "                                limit scope of report\n");
+	fprintf(stderr, "                                Limits output to reflect a subsection of\n");
+	fprintf(stderr, "                                the fabric. May not work with all reports.\n");
+	fprintf(stderr, "                                (For example, route, mcgroups, and the verify*\n");
+	fprintf(stderr, "                                reports may ignore the option or not generate\n");
+	fprintf(stderr, "                                useful results.)\n");
 	fprintf(stderr, "    -S/--src point            - source for trace route, default is local port\n");
 	fprintf(stderr, "    -D/--dest point           - destination for trace route\n");
 	fprintf(stderr, "    -Q/--quietfocus           - do not include focus description in report\n");
@@ -11483,7 +11518,7 @@ void Usage_full(void)
 	fprintf(stderr, "   cabinfvendrevpat:value     - value is glob pattern for cable info vendor rev\n");
 	fprintf(stderr, "   cabinfvendsnpat:value      - value is glob pattern for cable info vendor SN\n");
 	fprintf(stderr, "   cabinftype:value           - value is either 'optical', 'passive_copper',\n");
-	fprintf(stderr, "                              - 'active_copper' or 'unknown'\n");
+	fprintf(stderr, "                                'active_copper' or 'unknown'\n");
 	fprintf(stderr, "   linkdetpat:value           - value is glob pattern for link details\n");
 	fprintf(stderr, "   portdetpat:value           - value is glob pattern for port details\n");
 	fprintf(stderr, "   sm                         - master SM\n");
@@ -11526,7 +11561,7 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -o nodes -F 'iocpat:*Slot 2*:port:2'\n");
 	fprintf(stderr, "   opareport -o nodes -F ioctype:SRP\n");
 	fprintf(stderr, "   opareport -o nodes -F ioctype:SRP:port:2\n");
-	fprintf(stderr, "   opareport -o extlinks -F rate:5g\n");
+	fprintf(stderr, "   opareport -o extlinks -F rate:100g\n");
 	fprintf(stderr, "   opareport -o extlinks -F portstate:armed\n");
 	fprintf(stderr, "   opareport -o extlinks -F portphysstate:linkup\n");
 	fprintf(stderr, "   opareport -o extlinks -F 'labelpat:S1345*'\n");
@@ -11906,7 +11941,6 @@ int main(int argc, char ** argv)
             case 'v':
 				g_verbose++;
 				if (g_verbose > 1) madrpc_show_errors(1);
-				if (g_verbose > 2) oib_set_dbg(stdout);
 				if (g_verbose > 3) umad_debug(g_verbose-2);
                 break;
             case 'q':
@@ -12125,23 +12159,32 @@ int main(int argc, char ** argv)
 		route_src = NULL;
 		route_dest = NULL;
 	}
-	if (report == REPORT_ROUTE && focus_arg) {
-		fprintf(stderr, "opareport: -F ignored for -o route, using -S and -D\n");
-		focus_arg = NULL;
+
+	if (focus_arg) {
+		char *name = "report";
+		int suppress = 0;
+		if (report & REPORT_ROUTE) { suppress = 1; name = "route"; }
+		if (report & REPORT_SNAPSHOT) { suppress = 1; name = "snapshot"; }
+		if (report & REPORT_MCGROUPS) { suppress = 1; name = "mcgroups"; }
+		if (report & REPORT_VALIDATEROUTES) { suppress = 1; name = "validateroutes"; }
+		if (report & REPORT_VALIDATECREDITLOOPS) { suppress = 1; name = "validatecreditloops"; }
+		if (report & REPORT_VALIDATEVLCREDITLOOPS) { suppress = 1; name = "validatevlcreditloops"; }
+		if (report & REPORT_VALIDATEMCROUTES) { suppress = 1; name = "validatemcroutes"; }
+		if (report & REPORT_VERIFYPGS) { suppress = 1; name = "validatepgs"; }
+		if (report & REPORT_SKIP) { suppress = 1; name = "none"; }
+
+		if (suppress) {
+			fprintf(stderr,"opareport: %s does not support -F option.\n", name);
+			fprintf(stderr,"           -F ignored for all reports.\n");
+			focus_arg = NULL;
+		}
 	}
-	if (report == REPORT_SNAPSHOT && focus_arg) {
-		fprintf(stderr, "opareport: -F ignored for -o snapshot\n");
-		focus_arg = NULL;
+
+	if (report == REPORT_SNAPSHOT && g_limitstats) {
+		fprintf(stderr, "opareport: -L ignored for -o snapshot\n");
+		g_limitstats = 0;
 	}
-        if (report == REPORT_SNAPSHOT && g_limitstats) {
-                fprintf(stderr, "opareport: -L ignored for -o snapshot\n");
-                g_limitstats = 0;
-        }
-	//if (report == REPORT_ROUTE && g_snapshot_in_file) {
-	//	fprintf(stderr, "opareport: -o route not permitted with -X\n");
-	//	Usage();
-	//	// NOTREACHED
-	//}
+	
 	if (g_limitstats && ! focus_arg) {
 		fprintf(stderr, "opareport: -L ignored when -F not specified\n");
 		g_limitstats = 0;
@@ -12314,7 +12357,7 @@ int main(int argc, char ** argv)
 
 	// parse topology input file and cross reference to fabric data
 	if (g_topology_in_file) {
-		if (FSUCCESS != Xml2ParseTopology(g_topology_in_file, g_quiet, &g_Fabric)) {
+		if (FSUCCESS != Xml2ParseTopology(g_topology_in_file, g_quiet, &g_Fabric, TOPOVAL_NONE)) {
 			g_exitstatus = 1;
 			goto done_fabric;
 		}
@@ -12536,6 +12579,7 @@ int main(int argc, char ** argv)
 				g_exitstatus = 1;
 				goto done_fabric;
 			}
+
 			ShowRoutesReport(g_portGuid, &point1, &point2, format, 0, detail);
 		}
 		PointDestroy(&point1);
@@ -12550,7 +12594,6 @@ int main(int argc, char ** argv)
 		info.argc = argc;
 		info.argv = argv;
 
-		// info.focus = &focus;
 		Xml2PrintSnapshot(stdout, &info);
 	}
 
@@ -12563,8 +12606,9 @@ int main(int argc, char ** argv)
 	if (report & REPORT_MCASTFDBS)
 		ShowMulticastFDBReport(&focus, format, 0, detail);
 
-	if (report & REPORT_MCGROUPS)
-		ShowMulticastGroupsReport(&focus, format, 0, detail);
+	if (report & REPORT_MCGROUPS) {
+		ShowMulticastGroupsReport(format, 0, detail);
+	}
 	
 	if (report & REPORT_PORTUSAGE)
 		ShowPortUsageReport(&focus, format, 0, detail);
@@ -12575,14 +12619,17 @@ int main(int argc, char ** argv)
 	if (report & REPORT_TREEPATHUSAGE)
 		ShowTreePathUsageReport(&focus, format, 0, detail);
 
-	if (report & REPORT_VALIDATEROUTES || report & REPORT_VALIDATEVLROUTES)
-		ShowValidateRoutesReport(&focus, format, 0, detail);
+	if (report & REPORT_VALIDATEROUTES || report & REPORT_VALIDATEVLROUTES) {
+		ShowValidateRoutesReport(format, 0, detail);
+	}
 
-	if (report & REPORT_VALIDATECREDITLOOPS || report & REPORT_VALIDATEVLCREDITLOOPS) 
-		ShowValidateCreditLoopsReport(&focus, format, 0, detail); 
-
-	if (report & REPORT_VALIDATEMCROUTES)
-		ShowValidateMCRoutesReport(&focus, format, 0, detail);
+	if (report & REPORT_VALIDATECREDITLOOPS || report & REPORT_VALIDATEVLCREDITLOOPS) {
+		ShowValidateCreditLoopsReport(format, 0, detail);
+	}
+ 
+	if (report & REPORT_VALIDATEMCROUTES) {
+		ShowValidateMCRoutesReport(format, 0, detail);
+	}
 
 	if (report & REPORT_VFINFO)
 		ShowVFInfoReport(&focus, format, 0, detail);
@@ -12591,7 +12638,7 @@ int main(int argc, char ** argv)
 		ShowPGReport(&focus, format, 0, detail);
 
 	if (report & REPORT_VERIFYPGS)
-		ShowValidatePGReport(&focus, format, 0, detail);
+		ShowValidatePGReport(format, 0, detail);
 
 	// Undocumented LID usage report
 	if (report & REPORT_LIDUSAGE)

@@ -16,7 +16,7 @@ opainfo
 Provides summary information for local HFI port(s).
 .SH Syntax
 .NL
-opainfo [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g] [-d \fIdetail\fR] [-v [-v]...]
+opainfo [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g] [-d \fIdetail\fR] [-s pm\(ulsl] [-v [-v]...]
 .NL
 
 .SH Options
@@ -128,6 +128,11 @@ Verbose output
 Verbose and debug output. Lists all settings both statically and dynamically configured in the cable.
 
 .RE
+
+.TP 10
+-s \fIpm\(ulsl\fR 
+.NL
+Specifies different Service Level for PMA traffic.
 
 .NL
 
