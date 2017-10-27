@@ -35,18 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dumppath.h"
 #include "opasadb_path.h"
 
-int verbosemode = 0;
-static PrintDest_t printdest;
-
-void dump_gid(FILE *f, op_gid_t *gid)
-{
-	char gid_str[INET6_ADDRSTRLEN];
-
-	fprintf(f,"%s",
-		inet_ntop(AF_INET6, gid->raw, gid_str, sizeof gid_str));
-
-}
-
 /* Returns 0 on error, non-zero on success. */
 int parse_gid(char *s, op_gid_t *gid)
 {
@@ -115,6 +103,7 @@ static void network_to_host_path_record(IB_PATH_RECORD_NO *p_net,
 void fprint_path_record(FILE *f, char *str, op_path_rec_t *p_path)
 {
 	IB_PATH_RECORD path;
+	PrintDest_t printdest;
 
 	network_to_host_path_record((IB_PATH_RECORD_NO*)p_path, &path);
 

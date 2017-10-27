@@ -32,6 +32,7 @@
 . $ICSBIN/funcs.sh
 settl
 
+export BUILD_WITH_STACK=${BUILD_WITH_STACK:-OPENIB}
 export PRODUCT=${PRODUCT:-OPENIB_FF}
 export PROJ_FILE_DIR=${PROJ_FILE_DIR:-OpenIb_Host}
 

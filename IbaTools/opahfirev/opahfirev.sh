@@ -70,7 +70,7 @@ fi
 
 BASEDIR=/sys/bus/pci/devices
 
-hfis=`/sbin/lspci -Dd '8086:*' | egrep -e "24f[01]|Omni-Path" | grep -vi bridge | cut -d\  -f1`
+hfis=`/sbin/lspci -nn -D -d '8086:*' | egrep -e "24f[01]|Omni-Path" | grep -vi bridge | cut -d\  -f1`
 
 if [ -z "$hfis" ]
 then 
@@ -132,7 +132,7 @@ else
 			fi
 		fi
 
-		pci_id=`lspci -n -d 0x8086:* | egrep -o -m1 24f[01]`
+		pci_id=`lspci -n -D -d 0x8086:* | grep ${hfi} | egrep -o 24f[01]`
 		if [ -z "${pci_id}" ]
 		then
 			echo "Error identifying HFI's on the PCI bus">&2

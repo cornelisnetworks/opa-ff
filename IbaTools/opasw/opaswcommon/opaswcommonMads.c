@@ -36,15 +36,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* work around conflicting names */
 
-#include "iba/ib_types.h"
-#include "iba/ib_sm.h"
-#include "iba/ib_pm.h"
-#include "iba/ib_helper.h"
+#include "iba/stl_types.h"
+#include "iba/stl_sm_priv.h"
+#include "iba/stl_pm.h"
+#include "iba/stl_helper.h"
 #include "opamgt_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 
-#define NEED_TO_RETRY(madStatus)	((madStatus == VM_MAD_STATUS_NACK) || (madStatus == VM_MAD_STATUS_BUS_BUSY) || (madStatus == VM_MAD_STATUS_BUS_HUNG) || (madStatus == VM_MAD_STATUS_LOST_ARB) || (madStatus == VM_MAD_STATUS_TIMEOUT))
+#define NEED_TO_RETRY(madStatus)	((madStatus == MAD_STATUS_BUSY) || (madStatus == VM_MAD_STATUS_NACK) || (madStatus == VM_MAD_STATUS_BUS_BUSY) || (madStatus == VM_MAD_STATUS_BUS_HUNG) || (madStatus == VM_MAD_STATUS_LOST_ARB) || (madStatus == VM_MAD_STATUS_TIMEOUT))
 
 // globals
 

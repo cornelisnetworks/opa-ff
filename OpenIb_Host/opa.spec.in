@@ -68,7 +68,7 @@ This package contains the necessary headers for opamgt development.
 
 %build
 cd OpenIb_Host
-./ff_build.sh %{_builddir} $FF_BUILD_ARGS
+./ff_build.sh %{_builddir} $BUILD_ARGS
 
 
 %install

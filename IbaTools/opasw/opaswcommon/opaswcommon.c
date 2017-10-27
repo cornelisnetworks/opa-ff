@@ -37,8 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* work around conflicting names */
 
 #include "iba/ib_types.h"
-#include "iba/ib_sm.h"
-#include "iba/ib_pm.h"
+#include "iba/ib_sm_priv.h"
 #include "iba/ib_helper.h"
 #include "opamgt_sa_priv.h"
 #include <iba/ibt.h>

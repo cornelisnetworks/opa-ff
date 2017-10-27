@@ -772,9 +772,6 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			
 		}
 
-		if (detail > 1 && portp->pCableInfoData)
-			ShowCableSummary(portp->pCableInfoData, FORMAT_XML, indent+4, detail-1, portp->PortInfo.PortPhysConfig.s.PortType);
-
 		break;
 	default:
 		break;
@@ -927,6 +924,8 @@ void ShowLinkToBriefSummary(PortData *portp2, const char* toprefix, boolean clos
 		DEBUG_ASSERT(portp2->elinkp == portp2->neighbor->elinkp);
 		if (detail && format != FORMAT_XML)
 			ShowExpectedLinkBriefSummary(portp2->elinkp, format, indent+4, detail-1);
+		else if ((detail > 1 && portp2->pCableInfoData) && format==FORMAT_XML)
+                        ShowCableSummary(portp2->pCableInfoData, FORMAT_XML, indent, detail-1, portp2->PortInfo.PortPhysConfig.s.PortType);
 	}
 	if (format == FORMAT_XML && close_link)
 		printf("%*s</Link>\n", indent-4, "");
@@ -4961,8 +4960,11 @@ void ShowPortCounterBelowThreshold(const char* field, uint32 value, uint32 thres
 				indent, "", field, value, threshold);
 			break;
 		case FORMAT_XML:
-			printf("%*s<%s><Value>%u</Value><LowerThreshold>%u</LowerThreshold></%s>\n",
-				indent, "", field, value, threshold, field);
+			printf("%*s<%s>\n", indent, "", field);
+			XmlPrintDec("Value", value, indent+4);
+			XmlPrintDec("LowerThreshold", threshold, indent+4);
+			printf("%*s</%s>\n", indent, "", field);
+
 			break;
 		default:
 			break;
@@ -10202,8 +10204,8 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 					XmlPrintDec("MulticastSL", pR->slMulticast, indent);
 
 				printf( "%*s<Select>%s%s</Select>\n", indent, "",
-					(pR->s1.selectFlags & VEND_PKEY_SEL) ? "PKEY " : "",
-					(pR->s1.selectFlags & VEND_SL_SEL) ? "SL " : "" );
+					(pR->s1.selectFlags & STL_VFINFO_REC_SEL_PKEY_QUERY) ? "PKEY " : "",
+					(pR->s1.selectFlags & STL_VFINFO_REC_SEL_SL_QUERY) ? "SL " : "" );
 				XmlPrintHex8("Select_Hex", pR->s1.selectFlags, indent);
 				if (detail >1) {
 					// get the value of Packet Lifetime Multiplier
@@ -10219,14 +10221,14 @@ void ShowVFInfoReport(Point *focus, Format_t format, int indent, int detail)
 						pR->s1.rateSpecified ? StlStaticRateToText(pR->s1.rate) : "unlimited",
 						indent );
 					printf( "%*s<Options>%s%s%s</Options>\n", indent, "",
-						(pR->optionFlags & OPT_VF_SECURITY) ? "Security " : "",
-						(pR->optionFlags & OPT_VF_QOS) ? "QoS " : "",
-						(pR->optionFlags & OPT_VF_FLOW_DISABLE) ? "FlowCtrlDisable " : "" );
+						(pR->optionFlags & STL_VFINFO_REC_OPT_SECURITY) ? "Security " : "",
+						(pR->optionFlags & STL_VFINFO_REC_OPT_QOS) ? "QoS " : "",
+						(pR->optionFlags & STL_VFINFO_REC_OPT_FLOW_DISABLE) ? "FlowCtrlDisable " : "" );
 					XmlPrintHex8("Options_Hex", pR->optionFlags, indent);
 	
 					printf("%*s<QOS>\n", indent, "");
 					indent += 4;
-					if (pR->optionFlags & OPT_VF_QOS)
+					if (pR->optionFlags & STL_VFINFO_REC_OPT_QOS)
 					{
 						XmlPrintDec("Bandwidth_Percent", pR->bandwidthPercent, indent);
 						XmlPrintBool("Priority", pR->priority, indent);
@@ -10628,7 +10630,7 @@ void CheckVFAllocation(PortData *port, int indent, int format, int detail)
 
 		// if qos is enabled, make note that this VL has a vfabric mapped
 		// to it, so we can check for contracted links
-		if (pR->optionFlags & OPT_VF_QOS) {
+		if (pR->optionFlags & STL_VFINFO_REC_OPT_QOS) {
 			uint32_t vls = 0;
 
 			int i;
@@ -10797,8 +10799,7 @@ void ShowPortVFMembershipText(PortData *port, int indent, int detail)
 		STL_VFINFO_RECORD *pR = &pVFData->record;
 		if (!isVFMember(port, pVFData))
 			continue;
-
-		printf("%*s%s\t%d", indent, "", pR->vfName, pR->vfIndex);
+		printf("%*s%-4s\t%d", indent, "", pR->vfName, pR->vfIndex);
 		uint8_t sls[3] = {
 			pR->s1.slBase,
 			(pR->slResponseSpecified? pR->slResponse: pR->s1.slBase),

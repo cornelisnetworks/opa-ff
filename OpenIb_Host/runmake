@@ -38,33 +38,22 @@
 ## full checkout of the product to be built
 ##
 ## Usage:
-##	runmake [-B 'build_config ...'] [-V 'os_version os_version ...']
-##			[-f options_file] [-T PROJ_FILE_DIR]
+##	runmake [-B 'build_config'] [-n]
 ##			or
-##	runmake -r [-iCRP] [-B 'build_config ...'] [-V 'os_version os_version ...']
-##			[-f options_file] [-T PROJ_FILE_DIR]
+##	runmake -r [-B 'build_config'] [-iCRP] [-n]
 ##
 ## Arguments:
-##	-f options_file - file to use prior	to BuildOptons
-##	-B build_config	release types to build, (debug/release). default is
-##		based on $BUILD_TARGET_OS/$BUILD_TARGET.BuildOptions
-##		or $BUILD_TARGET_OS/$BUILD_TARGET.Supported
-##	-V os_version	operating system versions to build for, default is
-##		based on $BUILD_TARGET_OS/$BUILD_TARGET.BuildOptions
-##		or $BUILD_TARGET_OS/$BUILD_TARGET.Supported
-##		if more than 1 version is specified, must be separated with spaces
-##		and quoted
-##		This should be a version string such as 2.4.7-10
-##	-r 		rerun the build in place without doing a new checkout/tag
-##	-i 		allow incremental builds by building in-place before package rpm
-##	-R 		skip building rpm, just leave in-place files
+##	-f options_file - depricated, see -B
+##	-B build_config	release types to build, (debug/release). default is release
+##	-V os_version	- depricated, N/A
+##	-r		rerun the build in place without doing a new checkout/tag
+##	-i		allow incremental builds by building in-place before package rpm
+##	-R		skip building rpm, just leave in-place files
 ##	-C		don't clobber prior to the rerun
 ##	-P		skip building and packaging IntelOPA-Tests
-##	-O		Override to build despite kernel install not matching
-##			Config file
+##	-O		depricated, N/A
 ##	-n		No build.  Useful for checking build machine
-##	-T PROJ_FILE_DIR - PROJ_FILE_DIR value to use, useful when doing a build
-##		within an ALL checkout
+##	-T PROJ_FILE_DIR - depricated, PROJ_FILE_DIR always set to OpenIb_Host
 ##
 ## In addition, the following environment variables are expected to be set:
 ##	RELEASE_TAG, BRANCH_TAG, BUILD_TARGET, PRODUCT, RELEASE_HOME, BUILD_CONFIG 
@@ -91,13 +80,13 @@
 ##			- IntelOpa-Tests tree is not cleaned, so will do incremental build
 ##	-r -i [-C] - incremental build mode for developer builds
 ##			- clobbers any existing built files (unless -C specified)
-##			- builds FF code in place in source tree
+##			- builds code in place in source tree
 ##			- src rpm contains pre-built code
 ##			- rpmbuild ends up using pre-built code, creates binary rpm
 ##			- IntelOpa-Tests built in a tests_build area using
 ##				pre-built code from FF and previous tests build
 ##			After this build, the developer may do incremental sub-tree builds
-##			using . OpenIb_Hosts/setenv and then running make in the subtree
+##			using . setenv and then running make in the subtree
 ##			For subtree builds in tests_build, also export PROJ_FILE_DIR=.
 ##	-r -i [-C] -R - incremental build mode for developer builds with no rpms
 ##			- same as -r -i [-C] except no rpms are created
@@ -120,15 +109,15 @@
 ##			directly tested.
 ##			If IntelOPA-Tests is not needed also use -P option
 ##			after initial attempt, if compile errors are limited to a subtree:
-##				create a new bash shell, use . ./OpenIb_Host/setenv and then
+##				create a new bash shell, use . setenv and then
 ##				iterate on make in the subtree and code changes until compiles
 ## -r -i -C - performs a build to generate rpms
 ##			install the rpms and continue testing
-##			if focused on a few executables,:
-##				create a new bash shell, use . ./OpenIb_Host/setenv and then
+##			if focused on a few executables:
+##				create a new bash shell, use . setenv and then
 ##				iterate on make in the subtree and code changes and test of
 ##				the individual binary until works properly
-## -r 		- perform a full build and generate rpms
+## -r		- perform a full build and generate rpms
 ##			install the rpms, confirm clean build, proper install and function
 ##
 ##	Since weeklybuild and target commands always set BUILD_CONFIG, this
@@ -137,135 +126,55 @@
 
 . $ICSBIN/funcs.sh
 
-# a given release will be targeted for a specific version of ofed
+# A given release will be targeted for a specific version of ofed
 # however we allow build.config to override if needed
-export OFED_STACK_PREFIX=${OFED_STACK_PREFIX:-/usr/ofed-1.5.2}
-export BUILD_TARGET=${BUILD_TARGET:-X86_64}
+#export OFED_STACK_PREFIX=${OFED_STACK_PREFIX:-/usr/ofed-1.5.2}
+export OFED_STACK_PREFIX=${OFED_STACK_PREFIX:-/usr}
+
+# typically exported by build.config
+export BUILD_WITH_STACK=${BUILD_WITH_STACK:-OPENIB}
 
 Usage()
 {
 	# include "ERROR" in message so weeklybuild catches it in error log
 	echo "ERROR: runmake failed" >&2
-	echo "Usage: runmake [-B 'build_config ...'] [-V 'os_version os_version ...']" >&2
- 	echo "               [-f options_file] [-T PROJ_FILE_DIR]" >&2
+	echo "Usage: runmake [-B 'build_config'] [-n]" >&2
 	echo "            OR" >&2
-	echo "       runmake -r [-iCRP] [-B 'build_config ...'] [-V 'os_version os_version ...']" >&2
- 	echo "               [-f options_file] [-T PROJ_FILE_DIR]" >&2
+	echo "       runmake -r [-B 'build_config'] [-iCRP] [-n]" >&2
 	exit 2
 }
 
-get_option()
-{
-	# determine the given option line in BuildOptions
-	# if not found in BuildOptions, use Supported
-	# $1 = option name
-	# $2 = default value if not specified in files
-	value=
-	if [ $fflag = y ]
-	then
-		value=`grep "^$1" $build_options 2>/dev/null|cut -f2 -d:`
-	fi
-	if [ -z "$value" -a -f $TL_DIR/$(basename $PWD)/$BUILD_TARGET_OS/${BUILD_TARGET}.BuildOptions ]
-	then
-		value=`grep "^$1:" $TL_DIR/$(basename $PWD)/$BUILD_TARGET_OS/${BUILD_TARGET}.BuildOptions 2>/dev/null|cut -f2 -d:`
-	fi
-	if [ -z "$value" -a -f $TL_DIR/$(basename $PWD)/$BUILD_TARGET_OS/${BUILD_TARGET}.Supported ]
-	then
-		value=`grep "^$1:" $TL_DIR/$(basename $PWD)/$BUILD_TARGET_OS/${BUILD_TARGET}.Supported 2>/dev/null|cut -f2 -d:`	
-	fi
-	if [ -z "$value" ]
-	then
-		value="$2"
-	fi
-	echo "$value"
-	return 0
-}
-
-setbuildconfig()
-{
-	# determine appropriate default build config
-
-	if [ -z "$build_configs" ]
-	then
-		#if [ ! -z "$BUILD_CONFIG" ]
-		#then
-		#	# weeklybuild environment can override defaults
-		#	export build_configs="$BUILD_CONFIG"
-		#else
-		build_configs=$(get_option BUILD_CONFIG debug)
-	fi
-}
-
-# TBD - dead code, this and -O flag are not used
-setosversion()
-{
-	# determine appropriate default os version(s)
-
-	if [ -z "$os_versions" ]
-	then
-		os_vendor_ver=`echo $BUILD_PLATFORM_OS_VENDOR_VERSION | tr '.' '_'`
-		os_tmp=$(get_option BUILD_TARGET_OS_VERSION_$BUILD_TARGET_OS_VENDOR$os_vendor_ver "")
-		if [ "$BUILD_PLATFORM_OS_VENDOR" == apple ]
-		then
-			os_versions="$os_tmp"
-		else
-			for rel in $os_tmp
-			do
-				if [ -d /lib/modules/$rel/build ]
-				then
-					os_versions="$os_versions $rel"
-				else
-					if [ -z "$Oflag" ]
-					then
-						echo "ERROR: kernel for $rel not installed"
-						exit 1
-					fi
-				fi
-			done
-		fi
-	fi
-}
-
-build_configs=
-os_versions=
+build_config=
 rerun=n
 Cflag=n
-Bflag=n
-Vflag=n
-fflag=n
 nflag=n
 inplace=n
 rpm=y
 buildtests=y
-build_options=
-proj_file_dir=OpenIb_Host
 while getopts f:B:V:riRPCOnT: param
 do
 	case $param in
-	V)
-		Vflag=y
-                os_versions="`echo $OPTARG | sed 's/,/ /g'`";;
-	B)
-		Bflag=y
-		build_configs="$OPTARG";;
+	V)	echo "Depricated -V os_versions ignored." >&2 ;;
 	f)
-		fflag=y
-		build_options="$OPTARG";;
+		echo "Depricated -f options_file ignored." >&2 ;;
 	r)
 		rerun=y;;
-	C)
-		Cflag=y;;
+	B)
+		build_config="$OPTARG";;
 	i)
 		inplace=y;;
 	R)
 		rpm=n;;
+	C)
+		Cflag=y;;
+	n)
+		nflag=y;;
 	P)
 		buildtests=n;;
 	O)
-		Oflag=y;;
-	n)
-		nflag=y;;
-	T)	proj_file_dir="$OPTARG";;
+		echo "Depricated -O ignored." >&2 ;;
+	T)
+		echo "Depricated -T PROJ_FILE_DIR ignored." >&2 ;;
 	?)
 		Usage
 	esac
@@ -287,32 +196,18 @@ then
 fi
 
 # these are special cases
-if [ "$SUBPRODUCT" = "GPL" ]
+if [ "$SUBPRODUCT" = "TESTS" ]
 then
-	echo "ERROR: GPL build not supported for OPENIB_HOST at this time" >&2
-	exit 1
-	dir=$PWD
-	cd ..
-	rm -rf C_* SH_* GPL_* LGPL_* InfiniSer*
-	$dir/MakeTools/gpl_source.sh $RELEASE_TAG
-	# gpl_source script produces packaged_files
-	cp $dir/packaged_files $dir/dist_files
-	exit $?
-elif [ "$SUBPRODUCT" = "SRC" ]
-then
-	COPYRIGHT_NOTICE=${COPYRIGHT_NOTICE:-CodeTemplates/copyright.txt}
-	insert_notice $COPYRIGHT_NOTICE
-	dir=$PWD
-	( cd ..; tar cvfz InfiniServFFSrc.$RELEASE_TAG.tgz --exclude CVS --exclude '*.bak' `basename $dir`; [ $? = 0 ] || echo "ERROR: tar command failed" )
-	echo "../InfiniServFFSrc.$RELEASE_TAG.tgz" > packaged_files
-	echo "../InfiniServFFSrc.$RELEASE_TAG.tgz" > dist_files
-	exit $?
-elif [ "$SUBPRODUCT" = "TESTS" ]
-then
+	# build the IntelOPA-IntTests (aka HostTests) for use by validation and
+	# DST testing
+	# This builds so quick there is no need for incremental builds nor packaging
+	# options like -r -i -C and -R
+	# simply always clobber any old packaging and start fresh
 	settl
 	PRODUCT_DIR=$PWD
 	cd $TL_DIR
 	dir=release.$PRODUCT.$SUBPRODUCT
+	rm -rf $dir
 	mkdir $dir
 	cp -R HostTestCases $dir/HostTests
 	cp -R Makerules MakeTemplates MakeTools TestTools TestOnly CodeTemplates $dir/HostTests
@@ -321,14 +216,15 @@ then
 	# this should not be distributed, so create an empty dist_files
 	> $PRODUCT_DIR/dist_files
 	exit $?
-elif [ "$SUBPRODUCT" = "OPEN12200" ]
+elif [ "$SUBPRODUCT" = "GPL" -o "$SUBPRODUCT" = "SRC" \
+		-o "$SUBPRODUCT" = "MCLX" -o "$SUBPRODUCT" = "OPEN12200" ]
 then
-	echo "ERROR: OPEN12200 build no longer supported for OPENIB_HOST" >&2
+	echo "ERROR: $SUBPRODUCT build no longer supported for OPENIB_HOST" >&2
 	exit 1
-elif [ "$SUBPRODUCT" = "MCLX" ]
-then
-	export BUILD_BRAND="Mercury Computer Systems, Inc."
 fi
+# other values of SUBPRODUCT are ignored in the compilation, however can set
+# the destination directory in the Integration and System_Test areas, so we
+# allow them, but do nothing special with them
 
 resetct
 resetbsp
@@ -339,67 +235,53 @@ else
 	target $BUILD_TARGET
 fi
 
-# determine the correct default build config(s) if any
-setbuildconfig
-
-echo "---------------------------------------"
-showenv
-echo "---------------------------------------"
-
 # the kernel rev is not important.  We simply use the kernel rev
 # of the running kernel.  While BUILD_TARGET_OS_VERSION is needed by Makerules
 # it will have no impact on what is actually built
 export BUILD_TARGET_OS_VERSION=${BUILD_TARGET_OS_VERSION:-`uname -r`}
 setver $BUILD_TARGET_OS_VENDOR $BUILD_TARGET_OS_VERSION
 
-if [ -z "$build_configs" ]
+export PROJ_FILE_DIR=OpenIb_Host
+echo "Using PROJ_FILE_DIR=$PROJ_FILE_DIR"
+
+if [ -z "$build_config" ]
 then
 	# default to release build
 	export BUILD_CONFIG=release
-elif [ "$build_configs" != debug -a "$build_configs" != release ]
+elif [ "$build_config" != debug -a "$build_config" != release ]
 then
 	Usage
 else
-	export BUILD_CONFIG="$build_configs"
+	export BUILD_CONFIG="$build_config"
 fi
 
-export PROJ_FILE_DIR=$proj_file_dir
-echo "Using PROJ_FILE_DIR=$PROJ_FILE_DIR"
-
-if [ -z "$build_configs" ]
-then
-	# default to release build
-	#setrel
-	echo "$0: ERROR: Unable to determine BUILD_CONFIGs to build" >&2
-	exit 1
-fi
-#if [ -z "$os_versions" ]
-#then
-#	echo "$0: ERROR: Unable to determine os version to build" >&2
-#	exit 1
-#fi
 if [ ! -d $OFED_STACK_PREFIX ]
 then
 	echo "$0: ERROR: OFED stack not found: $OFED_STACK_PREFIX" >&2
 	exit 1
 fi
-echo "Building for OFED: $OFED_STACK_PREFIX" >&2
+
+echo "---------------------------------------"
+showenv
+echo "---------------------------------------"
+
+echo "build for: $BUILD_TARGET"
+echo "Stack to build for: $BUILD_WITH_STACK ($OFED_STACK_PREFIX)"
 
 if [ "$nflag" = "y" ]
 then
 	exit 0
 fi
 
-if [ -z "$RELEASE_TAG" ]
+if [ "$BUILD_TARGET_OS" = "VXWORKS" ]
 then
-	export MODULEVERSION=`patch_engineer_version`
-	export RPM_VER=`echo $MODULEVERSION|cut -d"." -f1-2` 
-	export RPM_REL=`echo $MODULEVERSION.999.999|cut -d"." -f3`
-else
-	export MODULEVERSION=`patch_version $RELEASE_TAG`
-	export RPM_VER=`echo $MODULEVERSION|cut -d"." -f1-4`
-	export RPM_REL=`echo $MODULEVERSION.999.999.999.999|cut -d"." -f5`
+	echo "ERROR: Wrong runmake file"
+	exit 1
 fi
+
+MODULEVERSION=`$TL_DIR/MakeTools/convert_releasetag.pl $RELEASE_TAG`
+RPM_VER=`echo $MODULEVERSION|cut -d"." -f1-4`
+RPM_REL=`echo $MODULEVERSION.999.999.999.999|cut -d"." -f5`
 export MKRPM_VER=$RPM_VER
 export MKRPM_REL=$RPM_REL`rpm --eval %{?dist}`
 
@@ -409,64 +291,101 @@ export MKRPM_REL=$RPM_REL`rpm --eval %{?dist}`
 if [ "$rerun" = y -a "$Cflag" != y ]
 then
 	# force full rebuild
-	# this clobber is only necessary if we have ever built inplace
-	# otherwise each rpm build will get a fresh workplace for its build
-	# so to save some time, only do the clobber if needed
-	for build_config in $build_configs
-	do
-		export BUILD_CONFIG=$build_config
-		#if [ -e $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG \
-		#	-o  -e $TL_DIR/builtinclude.$PRODUCT.$BUILD_CONFIG \
-		#	-o  -e $TL_DIR/builtlibs.$PRODUCT.$BUILD_CONFIG \
-		#	-o  -e $TL_DIR/builtbin.$PRODUCT.$BUILD_CONFIG ]
-		#then
-			export REMOVE_DEPENDS=yes
-			make clobber clobber_stage clobber_release
-			rm -f $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG
-		#fi
-	done
+	# Clobber is really only necessary if we have ever built inplace
+	# but to be safe we always clobber just in case an aborted inplace
+	# build has previously occurred.
+	#if [ -e $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG \
+	#	-o  -e $TL_DIR/builtinclude.$PRODUCT.$BUILD_CONFIG \
+	#	-o  -e $TL_DIR/builtlibs.$PRODUCT.$BUILD_CONFIG \
+	#	-o  -e $TL_DIR/builtbin.$PRODUCT.$BUILD_CONFIG ]
+	#then
+		export REMOVE_DEPENDS=yes
+		make clobber clobber_stage clobber_release
+		rm -f $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG
+	#fi
 fi
-clobber_arg=
 
 rm -rf $TL_DIR/$PROJ_FILE_DIR/packaged_files $TL_DIR/$PROJ_FILE_DIR/dist_files
 
 args=
 if [ "$inplace" = y ]
 then
-	echo "Building $build_configs for allkernels for $BUILD_TARGET_OS $BUILD_TARGET ..."
-	echo "==============================================================================="
-	for build_config in $build_configs
-	do
-		# setup environment using BUILD_CONFIG
-		export BUILD_CONFIG=$build_config
-
-		#for os_version in $os_versions
-		#do
-			#setver $BUILD_TARGET_OS_VENDOR $os_version
-			echo > $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG
-			./rpm_runmake -r -C -B $BUILD_CONFIG
-		#done
-	done
+	# Do not use unifdef for inplace build
+	export USE_UNIFDEF="no"
+	echo > $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG
+	./rpm_runmake -r -C -B $BUILD_CONFIG
 	args="-r -C"	# we pre-built, so skip clobber in rpmbuild
 fi
 
-if [ "$BUILD_TARGET_OS" != "VXWORKS" -a "$rpm" = y ]
+if [ "$rpm" = y ]
 then
+	USE_UNIFDEF=${USE_UNIFDEF:-"no"}
+	set -x
+
+	# Pass env variables to rpmbuild. In integration build,
+	# most of the rpmbuild environment variables remains the same except
+	# a few (like TL_DIR). However, when the SRPM is built on another
+	# different machine, the environment variables may be totally
+	# different. In that case, we may want to pass (hardcode) some
+	# environment variables.
 	echo "# Adjust the environment variables if necessary" > build.env
-	echo "export PRODUCT=${PRODUCT:-OPENIB_FF}" >> build.env
+	echo "export PRODUCT=${PRODUCT}" >> build.env
 	echo "export RELEASE_TAG=${RELEASE_TAG}" >> build.env
 	echo "export BUILD_CONFIG=\${BUILD_CONFIG:-\"${BUILD_CONFIG}\"}" >> build.env
 	echo "export BUILD_WITH_STACK=${BUILD_WITH_STACK}" >> build.env
-	echo "export MODULEVERSION=${MODULEVERSION}" >> build.env
 
-	./package_script.sh $args
+	FILES_TO_TAR=
+	# if in-place build left builtbin, builtinclude and builtlibs, pick them up
+	# to accelerate incremental builds
+	for i in builtbin builtinclude builtlibs builtinplace
+	do
+		if [ -e $TL_DIR/$i.$PRODUCT.$BUILD_CONFIG ]
+		then
+			FILES_TO_TAR="$FILES_TO_TAR $i.$PRODUCT.$BUILD_CONFIG"
+		fi
+	done
+
+	FILES_TO_TAR="$FILES_TO_TAR -T tar_manifest"
+	MPIAPPS_FILES_TO_TAR="-T mpiapps_tar_manifest" 
+
+	RPMDIR="$TL_DIR/rpmbuild"
+	mkdir -p $RPMDIR/{BUILD,SPECS,BUILDROOT,SOURCES,RPMS,SRPMS}
+
+	# Update the spec file
+	cp opa.spec.in opa.spec
+	sed -i "s/^Version:.*/Version: ${RPM_VER}/g" opa.spec
+	sed -i "s/^Release:.*/Release: ${RPM_REL}%{?dist}/g" opa.spec
+	# TBD - this is odd, do we need to edit .spec or should we just change
+	# the input to always look like this?
+	sed -i "s/.\/ff_install/OpenIb_Host\/ff_install/g" opa.spec
+	./update_opa_spec.sh
+	mv opa.spec $RPMDIR/SPECS/
+
+	cp mpi-apps.spec.in mpi-apps.spec
+	sed -i "s/^Version:.*/Version: ${RPM_VER}/g" mpi-apps.spec
+	sed -i "s/^Release:.*/Release: ${RPM_REL}%{?dist}/g" mpi-apps.spec
+	./update_mpi_spec.sh
+	mv mpi-apps.spec $RPMDIR/SPECS/
+
+	# Create source tar ball. Update licenses if needed.
+	$TL_DIR/MakeTools/make_src_tar.sh "${RELEASE_TYPE}" "${TL_DIR}" "$USE_UNIFDEF" "$RPMDIR/SOURCES/opa.tgz" "$FILES_TO_TAR" " -X tar_excludes" || exit 1
+
+	# Do same for MpiApps
+	$TL_DIR/MakeTools/make_src_tar.sh "${RELEASE_TYPE}" "${TL_DIR}" "$USE_UNIFDEF" "$RPMDIR/SOURCES/opa-mpi-apps.tgz" "$MPIAPPS_FILES_TO_TAR" "" || exit 1
+
+	(
+		export BUILD_ARGS="$args"
+		cd $RPMDIR
+		rpmbuild -ba --define "_topdir $RPMDIR" SPECS/opa.spec
+		rpmbuild -ba --define "_topdir $RPMDIR" SPECS/mpi-apps.spec
+	) || exit 1
 
 	make final_package
 fi
 
-if [ "$BUILD_TARGET_OS" != "VXWORKS" -a "$buildtests" = y ]
+if [ "$buildtests" = y ]
 then
-	echo "Building IntelOPA-Tests $build_configs for allkernels for $BUILD_TARGET_OS $BUILD_TARGET ..."
+	echo "Building IntelOPA-Tests $build_config for allkernels for $BUILD_TARGET_OS $BUILD_TARGET ..."
 	echo "==============================================================================="
 	./build_tests.sh $args
 	echo "Done IntelOPA-Tests $BUILD_TARGET_OS $BUILD_TARGET allkernels $(date)"

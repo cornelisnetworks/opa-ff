@@ -51,7 +51,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <infiniband/umad.h>
 #include "opasadb_path.h"
 #include "opasadb_debug.h"
-#include "dumppath.h"
 
 #define MAX_SOURCE_PORTS (UMAD_CA_MAX_PORTS * UMAD_MAX_DEVICES)
 #define MAX_SIDS 8

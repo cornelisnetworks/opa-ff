@@ -36,7 +36,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _OPASW_COMMON_H_
 #define _OPASW_COMMON_H_
 
-#include "iba/stl_mad.h"
+#include "iba/stl_mad_priv.h"
+#include "iba/stl_pm.h"
 
 /***********************
  *   CONSTANTS
@@ -394,7 +395,6 @@ FSTATUS sendRegisterAccessMad(struct omgt_port *port, IB_PATH_RECORD *path, VEND
 FSTATUS sendRebootMad(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, VENDOR_MAD *mad, uint32 delay);
 FSTATUS sendI2CAccessMad(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, uint8 jumbo, uint8 method, int timeout, uint32 locationDescriptor, uint16 dataLen, 
 						 uint16 dataOffset, uint8 *data);
-FSTATUS sendPortStatsPort1Mad(struct omgt_port *port, IB_PATH_RECORD *path, PERF_MAD *mad);
 FSTATUS sendSTLPortStatsPort1Mad(struct omgt_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad);
 FSTATUS sendSaveConfigMad(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID);
 uint16 getMadStatus(VENDOR_MAD *mad);

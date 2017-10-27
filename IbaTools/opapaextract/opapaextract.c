@@ -41,8 +41,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <opamgt_sa_priv.h>
 #endif
 #include "ib_status.h"
-#include "stl_mad.h"
-#include "iba/stl_pa.h"
+#include "stl_mad_priv.h"
+#include "iba/stl_pa_priv.h"
 #include "opamgt_priv.h"
 #include "opamgt_pa_priv.h"
 #include "opamgt_pa.h"
@@ -139,21 +139,28 @@ struct option options[] = {
 
 static FSTATUS opa_pa_init(uint8 hfi, uint8 port)
 {
-    FSTATUS				fstatus = FERROR;
+	FSTATUS fstatus = FERROR;
+	int pa_service_state;
 
 	// Open the port
-    struct omgt_params params = {.debug_file = (g_verbose > 3 ? stderr : NULL)};
-    if (!(omgt_open_port_by_num( &g_portHandle, (int)hfi, port, &params)) &&
-			(PACLIENT_OPERATIONAL == omgt_pa_client_connect(g_portHandle)))
-    {
-        fstatus = FSUCCESS;
-    }
-    else
-    {
-        fprintf(stderr, "%s: failed to open the port: hfi %d, port %d\n", __func__, hfi, port);
-    }
+	struct omgt_params params = { .debug_file = (g_verbose > 1 ? stderr : NULL) };
+	fstatus = omgt_open_port_by_num(&g_portHandle, (int)hfi, port, &params);
+	if (fstatus == OMGT_STATUS_SUCCESS) {
+		fstatus = omgt_port_get_pa_service_state(g_portHandle, &pa_service_state, OMGT_REFRESH_SERVICE_BAD_STATE);
+		if (fstatus == OMGT_STATUS_SUCCESS) {
+			if (pa_service_state != OMGT_SERVICE_STATE_OPERATIONAL) {
+				fprintf(stderr, "%s: failed to connect, PA Service State is Not Operational: %s (%d)\n",
+					__func__, omgt_service_state_totext(pa_service_state), pa_service_state);
+				fstatus = FUNAVAILABLE;
+			}
+		} else {
+			fprintf(stderr, "%s: failed to get and refresh pa service state: %u\n", __func__, fstatus);
+		}
+	} else {
+		fprintf(stderr, "%s: failed to open hfi %d, port %d: %u\n", __func__, hfi, port, fstatus);
+	}
 
-    return fstatus;
+	return fstatus;
 }
 
 #if 0
@@ -1593,17 +1600,6 @@ int main(int argc, char ** argv)
 
 	if (g_verbose > 3)
 		set_opapaquery_debug(g_portHandle);
-
-	// Read and set the primary pa master
-    if (FSUCCESS == (fstatus = iba_pa_query_master_pm_lid(g_portHandle))) {
-        // The LID value of the Primary PM has been set in the port object as a side effect of the previous call.
-    } else {
-		if (fstatus == FUNAVAILABLE)
-			fprintf(stderr, "opapaquery: cannot communicate with PM/PA ... PM Engine not running\n");
-		else
-			fprintf(stderr, "opapaquery: failed to set master PM lid - status = %d\n", fstatus);
-        exit(-1);
-	}
 
 	ArrayInitState(&g_Columns);
 	ArrayInit(&g_Columns, 0, 50, sizeof(ColumnEntry_t), IBA_MEM_FLAG_NONE);

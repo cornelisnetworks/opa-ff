@@ -1,6 +1,6 @@
 Name: opa
-Version: 10.5.0.0
-Release: 140%{?dist}
+Version: 10.6.0.0
+Release: 131%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
@@ -68,7 +68,7 @@ This package contains the necessary headers for opamgt development.
 
 %build
 cd OpenIb_Host
-./ff_build.sh %{_builddir} $FF_BUILD_ARGS
+./ff_build.sh %{_builddir} $BUILD_ARGS
 
 
 %install

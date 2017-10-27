@@ -76,41 +76,42 @@ boolean PortVerify(PortData *portp, Format_t format, int indent, int detail)
 	} else if (elinkp->portp2 == portp) {
 		portselp = elinkp->portselp2;
 	}
-	ASSERT(portselp);
-	if (portselp->NodeGUID && portselp->NodeGUID != portp->nodep->NodeInfo.NodeGUID) {
-		ret = FALSE;
-		ShowProblem(format, indent, detail, 
-			"NodeGuid mismatch: expected: 0x%016"PRIx64" found: 0x%016"PRIx64,
-			portselp->NodeGUID, portp->nodep->NodeInfo.NodeGUID);
-	}
-	if (portselp->NodeDesc
-		&& 0 != strncmp(portselp->NodeDesc,
-						(char*)portp->nodep->NodeDesc.NodeString,
-						NODE_DESCRIPTION_ARRAY_SIZE)) {
-		ret = FALSE;
-		ShowProblem(format, indent, detail, 
-			"NodeDesc mismatch: expected: '%s' found: '%.*s'",
-			portselp->NodeDesc, NODE_DESCRIPTION_ARRAY_SIZE,
-			(char*)portp->nodep->NodeDesc.NodeString);
-	}
-	if (portselp->gotPortNum && portselp->PortNum != portp->PortNum) {
-		ret = FALSE;
-		ShowProblem(format, indent, detail, 
-			"PortNum mismatch: expected: %3u found: %3u",
-			portselp->PortNum, portp->PortNum);
-	}
-	if (portselp->PortGUID && portselp->PortGUID != portp->PortGUID) {
-		ret = FALSE;
-		ShowProblem(format, indent, detail, 
-			"PortGuid mismatch: expected: 0x%016"PRIx64" found: 0x%016"PRIx64,
-			portselp->PortGUID, portp->PortGUID);
-	}
-	if (portselp->NodeType && portselp->NodeType != portp->nodep->NodeInfo.NodeType) {
-		ret = FALSE;
-		ShowProblem(format, indent, detail, 
-			"NodeType mismatch: expected: %s found: %s",
-			StlNodeTypeToText(portselp->NodeType),
-			StlNodeTypeToText(portp->nodep->NodeInfo.NodeType));
+	if (portselp) { // not specified in input topology xml file; accept any port on the other end of the link
+		if (portselp->NodeGUID && portselp->NodeGUID != portp->nodep->NodeInfo.NodeGUID) {
+			ret = FALSE;
+			ShowProblem(format, indent, detail,
+				"NodeGuid mismatch: expected: 0x%016"PRIx64" found: 0x%016"PRIx64,
+				portselp->NodeGUID, portp->nodep->NodeInfo.NodeGUID);
+		}
+		if (portselp->NodeDesc
+			&& 0 != strncmp(portselp->NodeDesc,
+							(char*)portp->nodep->NodeDesc.NodeString,
+							NODE_DESCRIPTION_ARRAY_SIZE)) {
+			ret = FALSE;
+			ShowProblem(format, indent, detail,
+				"NodeDesc mismatch: expected: '%s' found: '%.*s'",
+				portselp->NodeDesc, NODE_DESCRIPTION_ARRAY_SIZE,
+				(char*)portp->nodep->NodeDesc.NodeString);
+		}
+		if (portselp->gotPortNum && portselp->PortNum != portp->PortNum) {
+			ret = FALSE;
+			ShowProblem(format, indent, detail,
+				"PortNum mismatch: expected: %3u found: %3u",
+				portselp->PortNum, portp->PortNum);
+		}
+		if (portselp->PortGUID && portselp->PortGUID != portp->PortGUID) {
+			ret = FALSE;
+			ShowProblem(format, indent, detail, 
+				"PortGuid mismatch: expected: 0x%016"PRIx64" found: 0x%016"PRIx64,
+				portselp->PortGUID, portp->PortGUID);
+		}
+		if (portselp->NodeType && portselp->NodeType != portp->nodep->NodeInfo.NodeType) {
+			ret = FALSE;
+			ShowProblem(format, indent, detail, 
+				"NodeType mismatch: expected: %s found: %s",
+				StlNodeTypeToText(portselp->NodeType),
+				StlNodeTypeToText(portp->nodep->NodeInfo.NodeType));
+		}
 	}
 	/* to get here the port must have a neighbor and hence should be linkup
 	 * but it could be quarantined or failing to move to Active

@@ -66,20 +66,65 @@ show_info()
 	if /usr/sbin/opasmaquery $port_opts -o pkey 2>/dev/null|grep 0xffff >/dev/null 2>&1
 	then
 		# Mgmt Node
-		/usr/sbin/opasaquery $port_opts -o sminfo|grep "Guid:"|while read trash lid trash guid trash state
+		tmp=`/usr/sbin/opasaquery $port_opts -o sminfo`
+		if [ "$?" -ne 0 ]
+		then
+			echo "ERROR: opasaquery failed"
+			return 1
+		fi
+		echo "$tmp" | grep "Guid:"|while read trash lid trash guid trash state
 		do
-			echo "SM:" `/usr/sbin/opasaquery $port_opts -g $guid -o desc|head -1` "Guid: $guid State: $state"
+			tmp=`/usr/sbin/opasaquery $port_opts -g $guid -o desc`
+			if [ "$?" -ne 0 ]
+			then
+				echo "ERROR: opasaquery failed"
+				return 1
+			fi
+			tmp=`echo "$tmp"|head -1`
+			echo "SM: $tmp Guid: $guid State: $state"
 		done
 		/usr/sbin/opasaquery $port_opts -o fabricinfo
+		if [ "$?" -ne 0 ]
+		then
+			echo "ERROR: opasaquery failed"
+			return 1
+		fi
 	else
 		# Non-Mgmt Node
-		/usr/sbin/opaportinfo $port_opts|grep "SMLID:"|while read trash lid trash smlid
+		tmp=`/usr/sbin/opaportinfo $port_opts`
+		if [ "$?" -ne 0 ]
+		then
+			echo "ERROR: opaportinfo failed"
+			return 1
+		fi
+		echo "$tmp" | grep "SMLID:"|while read trash lid trash smlid
 		do
-			echo "Master SM:" `/usr/sbin/opasaquery $port_opts -l $smlid -o desc|head -1`
+			tmp=`/usr/sbin/opasaquery $port_opts -l $smlid -o desc`
+			if [ "$?" -ne 0 ]
+			then
+				echo "ERROR: opasaquery failed"
+				return 1
+			fi
+			tmp=`echo "$tmp" | head -1`
+			echo "Master SM: $tmp" 
 		done
-	
-		echo "Number of HFIs:" `/usr/sbin/opasaquery $port_opts -t fi -o nodeguid|sort -u|wc -l`
-	 	echo "Number of HFI Ports:" `/usr/sbin/opasaquery $port_opts -t fi -o desc|wc -l`
+
+		tmp=`/usr/sbin/opasaquery $port_opts -t fi -o nodeguid`
+		if [ "$?" -ne 0 ]
+		then
+			echo "ERROR: opasaquery failed"
+			return 1
+		fi
+		tmp=`echo "$tmp" | sort -u | wc -l`
+		echo "Number of HFIs: $tmp"
+		tmp=`/usr/sbin/opasaquery $port_opts -t fi -o desc`
+		if [ "$?" -ne 0 ]
+		then
+			echo "ERROR: opasaquery failed"
+			return 1
+		fi
+		tmp=`echo "$tmp" | wc -l`
+	 	echo "Number of HFI Ports: $tmp"
 	fi
 	echo "-------------------------------------------------------------------------------"
 }
@@ -216,6 +261,10 @@ do
 	fi
 
 	show_info "$hfi" "$port"
+	if [ $? -ne 0 ]
+	then
+		status=bad
+	fi
 done
 
 if [ "$status" != "ok" ]

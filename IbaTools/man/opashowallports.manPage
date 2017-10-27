@@ -105,7 +105,7 @@ opashowallports -C
 .br
 opashowallports -H \[aq]chassis1 chassis2\[aq]
 .br
-CHASSIS=\[aq]chassis1 chasssi2\[aq] opashowallports
+CHASSIS=\[aq]chassis1 chassis2\[aq] opashowallports -C
 .SH Notes
 .NL
 

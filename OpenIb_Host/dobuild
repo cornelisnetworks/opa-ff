@@ -31,22 +31,10 @@
 . $ICSBIN/funcs.sh
 
 # Simple script to perform builds for current system/OS type
-
-export BUILD_WITH_STACK=${BUILD_WITH_STACK:-OPENIB}
-
-# A given release will be targeted for a specific version of ofed
-# however we allow build.config to override if needed
-#
-# Its also OK to leave this blank as the makefiles have 
-# defaults in them, and thus you will run with the INSTALLED OFED
-# whatever version that is... 
-#export OFED_STACK_PREFIX=${OFED_STACK_PREFIX:-/usr/ofed-1.5}
-
+export PRODUCT=${PRODUCT:-OPENIB_FF}
 export BUILD_TARGET=${BUILD_TARGET:-`uname -m`}
 
 export BUILD_CONFIG=${BUILD_CONFIG:-"debug"}
-
-#unset MAKEFLAGS
 
 set -x
 {
@@ -54,8 +42,15 @@ set -x
 	env
 	echo "----------------------------------------------------------------------------"
 	echo
-	./runmake -B $BUILD_CONFIG $*
+	./runmake -B $BUILD_CONFIG $* || exit 1
 } 2>&1|tee build.res
+
+# Check Exit Status
+exit_status=${PIPESTATUS[0]}
+if [ $exit_status -ne 0 ] ; then
+	echo "FAILED BUILD: A command exited with non-zero status: $exit_status" >> build.res
+fi
+
 set +x
 
 # Check the results of the build for errors and unexpected warnings.

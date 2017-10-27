@@ -1,10 +1,8 @@
 CommonInstall
 IbAccess
-IbaTests
 IbaTools
 IbPrint
 Iih
-InicTools
 Lsf
 Makerules
 MakeTools
@@ -16,12 +14,9 @@ OpenIb_Host
 opasadb
 opamgt
 ShmemApps
-SrpTools
-Tests
 TestTools
 Topology
 Xml
-zlib
 Dsap
 Esm/ib/include
 Esm/ib/Makerules.module
@@ -34,3 +29,4 @@ Esm/ib/src/linux/log/usr
 Esm/ib/src/linux/startup/fm_config
 Esm/ib/src/pm/pm
 Esm/ib/src/smi/include
+buildFeatureDefs

@@ -213,6 +213,7 @@ FSTATUS parseDataTable(table_meta_data_t *metaData, uint8 *dataBuffer, uint16 ta
 uint32 getModuleType(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID);
 uint32 getNumPorts(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID);
 FSTATUS getNodeDescription(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, uint8 *nodeDesc);
+FSTATUS getFmPushButtonState(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, uint32 *state);
 FSTATUS getGuid(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, EUI64 *guid, int which);
 
 #endif /* _XEDGE_METADATA_H_ */

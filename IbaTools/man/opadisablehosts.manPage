@@ -18,7 +18,7 @@ opadisablehosts
 Searches for a set of hosts in the fabric and disables their corresponding switch port.
 .SH Syntax 
 .NL
-opadisablehosts [-h \fIhfi\fR] [-p \fIport\fR] \fIreason\fR host
+opadisablehosts [-h \fIhfi\fR] [-p \fIport\fR] \fIreason\fR \fIhost ...\fR
 .SH Options 
 .NL
 
@@ -38,14 +38,19 @@ Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port 
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
 
 .TP 10
- \fIreason\fR 
+\fIreason\fR 
 .NL
-Specifies the text describing the reason hosts are being disabled.  \fIreason\fR is saved in the reason field of the output file.
+Specifies the text describing the reason hosts are being disabled. \fIreason\fR is saved in the reason field of the output file.
 
 .IP
 Information about the links disabled is written to a CSV file. By default, this file is named /opa/disabled:hfi:port.csv where the hfi:port part of the file name is replaced by the HFI number and the port number being operated on (such as 1:1 or 2:1). This CSV file can be used as input to opaenableports.
 .IP
 The list is of the form: NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID; PortNum;NodeType;NodeDesc;Reason For each listed link, the switch port closer to this is the one that has been disabled.
+.TP 10
+\fIhost ...\fR 
+.NL
+Defines one or more hosts that are affected by the \fIreason\fR.
+
 .NL
 
 .SH -h and -p options permit a variety of selections:

@@ -38,18 +38,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* work around conflicting names */
 
 #include "iba/ib_types.h"
-#include "iba/ib_sm.h"
-#include "iba/ib_pm.h"
+#include "iba/ib_sm_priv.h"
 #include "iba/ib_helper.h"
 #include "opamgt_priv.h"
 #include <iba/ibt.h>
-#include "Md5.h"
+#include <openssl/md5.h>
 #include "opaswcommon.h"
 
 int vkey_prompt_user(uint8 *vendorKey, int vkeyChange)
 {
 	int					status = 1;
-	Md5_Context_t		state;
+	MD5_CTX				state;
 	char				*password;
 	char				password1[65];
 	char				password2[65];
@@ -84,9 +83,9 @@ int vkey_prompt_user(uint8 *vendorKey, int vkeyChange)
 			if (strlen(password1) == 0 && strlen(password2) == 0) {
 				memset(vendorKey, 0, MAX_VENDOR_KEY_LEN);
 			} else {
-				Md5_Start(&state);
-				Md5_Update(&state, (uint8 *)password1, strlen(password1));
-				Md5_Finish(&state, vendorKey);
+				MD5_Init(&state);
+				MD5_Update(&state, (uint8 *)password1, strlen(password1));
+				MD5_Final(vendorKey, &state);
 			}
 		} else {
 			fprintf(stderr, "Password entries do not match\n");

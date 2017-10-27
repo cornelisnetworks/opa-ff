@@ -43,8 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* work around conflicting names */
 
 #include "iba/ib_types.h"
-#include "iba/ib_sm.h"
-#include "iba/ib_pm.h"
+#include "iba/ib_sm_priv.h"
 #include "iba/ib_helper.h"
 #include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
@@ -111,6 +110,7 @@ uint8					switchNodeDesc[64];
 EUI64					switchNodeGuid;
 EUI64					switchSystemImageGuid;
 uint32					newNumPorts;
+uint32					fmPushButtonState;
 uint32					newPortEntrySize;
 uint32					oldNumPorts;
 uint32					oldPortEntrySize;
@@ -131,6 +131,7 @@ uint32					max_data_table_type;
 #define SYSTEM_TABLE_FIELD_SYSTEM_IMAGE_GUID                         2 
 #define SYSTEM_TABLE_FIELD_NODE_GUID                                 3 
 #define SYSTEM_TABLE_FIELD_NUM_PORTS								 8
+#define SYSTEM_TABLE_FIELD_FM_PUSH_BUTTON_STATE                      33
 
 // PORT_TABLE definitions
 #define PORT_TABLE_FIELD_LINK_SPEED_SUPPORTED                       7
@@ -141,6 +142,7 @@ uint32					max_data_table_type;
 #if defined(PRODUCT_STL2)
 #define PORT_TABLE_FIELD_PORT_MODE_SUPPORTED								15
 #define PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED							21
+#define PORT_TABLE_FIELD_ETH_DEFAULT_PORTSTATE								55
 #endif
 #define PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED					30
 
@@ -775,6 +777,8 @@ int buildNewIniBin(U8_t *binBuffer)
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_PORT_MODE_SUPPORTED));
 		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED,
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED));
+		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_ETH_DEFAULT_PORTSTATE,
+				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_ETH_DEFAULT_PORTSTATE));
 #endif
 		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED,
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED));
@@ -814,6 +818,9 @@ int buildNewIniBin(U8_t *binBuffer)
 	// insert node GUID
 	startBit = S20iniMetaDataEntryStartGet(newSystemMetaTable[SYSTEM_TABLE_FIELD_NODE_GUID]);
 	memcpy(&newSystemDataTable[(startBit >> 5)], guidBuf, 8);
+
+	//insert FM Push Button State
+	s20iniFieldInsert(newSystemMetaTable, &newSystemDataTable[0], SYSTEM_TABLE_FIELD_FM_PUSH_BUTTON_STATE, fmPushButtonState);
 
 	for(ini.tableType = 1; ini.tableType < INI_TYPE_META_DATA_TABLE_MAX; ++ini.tableType) {
 		S20INI_TABLE_REF *newMetaTableRef;
@@ -1050,7 +1057,7 @@ FSTATUS EepromRW(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID,
 
 int main(int argc, char *argv[])
 {
-	const char			*opts="DFvqKBbt:l:h:o:d:m:f:";
+	const char			*opts="DFvqKBbt:l:h:o:d:m:f:T:";
 	char				parameter[100];
 	char				*p;
 	EUI64				destPortGuid = -1;
@@ -1166,6 +1173,14 @@ int main(int argc, char *argv[])
 				g_gotSecondary = 1;
 				break;
 
+			case 'T':
+				if (FSUCCESS != StringToInt32(&g_respTimeout, optarg, NULL, 0, TRUE)
+					|| g_respTimeout < 0) {
+					fprintf(stderr, "%s: Error: Invalid delay value: %s\n", cmdName, optarg);
+					usage(cmdName);
+				}
+				break;
+
 			default:
 				usage(cmdName);
 				break;
@@ -1276,6 +1291,11 @@ int main(int argc, char *argv[])
 	if (status != FSUCCESS) {
 		fprintf(stderr, "Error: Failed to acquire node description - status %d\n", status);
 	}
+
+	status = getFmPushButtonState(omgt_port_session, &path, sessionID, &fmPushButtonState);
+        if (status != FSUCCESS) {
+                fprintf(stderr, "Error: Failed to acquire FM Push Button Status - status %d\n", status);
+        }
 
 	status = getGuid(omgt_port_session, &path, sessionID, &switchSystemImageGuid, SYSTEM_IMAGE_GUID);
 	if (status != FSUCCESS) {

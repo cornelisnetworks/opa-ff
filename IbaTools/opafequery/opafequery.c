@@ -55,7 +55,7 @@ extern "C" {
 #include "iba/ipublic.h"
 #include "ibprint.h"
 
-#include "iba/stl_sa.h"
+#include "iba/stl_sa_priv.h"
 #include "iba/stl_sd.h"
 #include "iba/ib_mad.h"
 
@@ -116,29 +116,30 @@ extern "C" {
 #define Q_SA_HFICONG			37
 #define Q_SA_HFICONGCTRL		38
 #define Q_SA_FABRICINFO			39
-#define Q_LAST_SA 				39
+#define Q_SA_SWCOST				40
+#define Q_LAST_SA 				40
 
-#define Q_PA_GETGROUPLIST		40
-#define Q_PA_GETGROUPINFO		41
-#define Q_PA_GETGROUPCONFIG		42
-#define Q_PA_GETPORTCOUNTERS	43
-#define Q_PA_CLRPORTCOUNTERS	44
-#define Q_PA_CLRALLPORTCOUNTERS	45
-#define Q_PA_GETPMCONFIG		46
-#define Q_PA_FREEZEIMAGE		47
-#define Q_PA_RELEASEIMAGE		48
-#define Q_PA_RENEWIMAGE			49
-#define Q_PA_GETFOCUSPORTS		50
-#define Q_PA_GETIMAGECONFIG		51
-#define Q_PA_MOVEFREEZE			52
-#define Q_PA_CLASSPORTINFO		53
-#define Q_PA_GETVFLIST			54
-#define Q_PA_GETVFINFO			55
-#define Q_PA_GETVFCONFIG		56
-#define Q_PA_GETVFPORTCOUNTERS	57
-#define Q_PA_CLRVFPORTCOUNTERS	58
-#define Q_PA_GETVFFOCUSPORTS	59
-#define Q_LAST_PA 				59
+#define Q_PA_GETGROUPLIST		41
+#define Q_PA_GETGROUPINFO		42
+#define Q_PA_GETGROUPCONFIG		43
+#define Q_PA_GETPORTCOUNTERS	44
+#define Q_PA_CLRPORTCOUNTERS	45
+#define Q_PA_CLRALLPORTCOUNTERS	46
+#define Q_PA_GETPMCONFIG		47
+#define Q_PA_FREEZEIMAGE		48
+#define Q_PA_RELEASEIMAGE		49
+#define Q_PA_RENEWIMAGE			50
+#define Q_PA_GETFOCUSPORTS		51
+#define Q_PA_GETIMAGECONFIG		52
+#define Q_PA_MOVEFREEZE			53
+#define Q_PA_CLASSPORTINFO		54
+#define Q_PA_GETVFLIST			55
+#define Q_PA_GETVFINFO			56
+#define Q_PA_GETVFCONFIG		57
+#define Q_PA_GETVFPORTCOUNTERS	58
+#define Q_PA_CLRVFPORTCOUNTERS	59
+#define Q_PA_GETVFFOCUSPORTS	60
+#define Q_LAST_PA 				60
 
 /* Global variables */
 PrintDest_t g_dest;
@@ -435,6 +436,7 @@ void Usage(void)
 	fprintf(stderr ,"    cableinfo                 - list of Cable Info records\n");
 	fprintf(stderr ,"    portgroup                 - list of AR Port Group records\n");
 	fprintf(stderr ,"    portgroupfdb              - list of AR Port Group FWD records\n");
+	fprintf(stderr ,"    swcost                    - list of switch cost records\n");
 
 	fprintf(stderr, "PA Output Types:\n");
 	fprintf(stderr, "    paclassPortInfo           - class port info\n");
@@ -604,6 +606,8 @@ int getOutputType(const char* outputType)
 		return Q_SA_HFICONG;
 	} else if (0 == strcmp(optarg, "hficongcon")) {
 		return Q_SA_HFICONGCTRL;
+	} else if (0 == strcmp(optarg, "swcost")) {
+		return Q_SA_SWCOST;
 	} else if (0 == strcasecmp(optarg, "groupList")) {
 		return Q_PA_GETGROUPLIST;
 	} else if (0 == strcasecmp(optarg, "groupInfo")) {
@@ -809,12 +813,7 @@ int fe_getSAOutputTypeFromQueryType(int queryType)
 	case Q_SA_LINK:
 		return OutputTypeStlLinkRecord;
 	case Q_SA_SERVICE:
-#ifndef NO_STL_SERVICE_OUTPUT       // Don't output STL Service if defined
-		if (g_IB) return OutputTypeServiceRecord;
-		else return OutputTypeStlServiceRecord;
-#else
-		return OutputTypeServiceRecord;
-#endif
+		return OutputTypeServiceRecord; 
 	case Q_SA_PKEY:
 		return OutputTypeStlPKeyTableRecord;
 	case Q_SA_PATH:
@@ -858,10 +857,12 @@ int fe_getSAOutputTypeFromQueryType(int queryType)
 		return OutputTypeStlSwitchCongRecord;
 	case Q_SA_SWPORTCONG:
 		return OutputTypeStlSwitchPortCongRecord;
-    case Q_SA_HFICONG:
-        return OutputTypeStlHFICongRecord;
-    case Q_SA_HFICONGCTRL:
-        return OutputTypeStlHFICongCtrlRecord;
+	case Q_SA_HFICONG:
+		return OutputTypeStlHFICongRecord;
+	case Q_SA_HFICONGCTRL:
+		return OutputTypeStlHFICongCtrlRecord;
+	case Q_SA_SWCOST:
+		return OutputTypeStlSwitchCostRecord;
 	default:
 		return OutputTypeStlNodeRecord;
 	}

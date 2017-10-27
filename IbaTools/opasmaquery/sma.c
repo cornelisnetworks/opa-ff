@@ -28,7 +28,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** END_ICS_COPYRIGHT7   ****************************************/
 
 /* [ICS VERSION STRING: unknown] */
-#include "stl_mad.h"
+#include "stl_mad_priv.h"
 #include "stl_helper.h"
 #include <opamgt_priv.h>
 #include "opasmaquery.h"
@@ -247,7 +247,7 @@ static FSTATUS perform_stl_aggregate_query(argrec *args, STL_SMP *smp)
 
 
 	STL_BSWAP_SMP_HEADER(smp);
-    recv_size = sizeof(*smp);
+	recv_size = sizeof(*smp);
 	status = omgt_send_recv_mad_no_alloc(args->omgt_port, (uint8_t *)smp, 
 		sizeof(*smp), &addr, (uint8_t *)smp, &recv_size, RESP_WAIT_TIME, 0);
 
@@ -790,8 +790,8 @@ static boolean get_led_info(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boolean print)
 {
 	FSTATUS status;
-    uint8 startPort = args->inport;
-    uint8 endPort = args->outport;
+	uint8 startPort = args->inport;
+	uint8 endPort = args->outport;
 	STL_SMP *smp = (STL_SMP *)mad;
 	uint32_t amod;
 	uint8_t count;
@@ -816,12 +816,12 @@ static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boole
 		pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
 		BSWAP_STL_NODE_INFO(pNodeInfo);
 
-        nodetype = pNodeInfo->NodeType;
+		nodetype = pNodeInfo->NodeType;
 		maxPort = pNodeInfo->NumPorts;
 
 		if (nodetype == STL_NODE_FI) {
 			if (args->mflag)
-				fprintf(stderr, "%s: -m ignored for pstateinfo againts an HFI\n", g_cmdname);
+				fprintf(stderr, "%s: -m ignored for pstateinfo against an HFI\n", g_cmdname);
 			startPort = endPort = 0;
 			firstPort = pNodeInfo->u1.s.LocalPortNum;
 		} else {
@@ -1594,6 +1594,7 @@ static boolean get_portgroup(argrec *args, uint8_t *mad, size_t mad_len, boolean
 			return FALSE;
 		}
 		pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
+		DBGPRINT("STL_NODE_INFO\n");
 		if (pNodeInfo->NodeType != STL_NODE_SW) {
 			fprintf(stderr, "get_portgroup failed: node is not a switch\n");
 			return FALSE;
@@ -2207,6 +2208,7 @@ optypes_t sma_query [] = {
 
 void sma_Usage(boolean displayAbridged)
 {
+	DBGPRINT("sma_Usage\n");
 	int i = 0;
 
 	fprintf(stderr, "Usage: %s -o otype [standard options] [otype options] [hop hop hop...]\n", g_cmdname);

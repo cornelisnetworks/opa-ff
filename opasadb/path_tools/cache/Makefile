@@ -43,7 +43,7 @@ EXECUTABLE		= $(BUILDDIR)/opp_cache_test$(EXE_SUFFIX)
 DIRS			= 
 # C files (.c)
 CFILES			= \
-				../dumppath.c \
+				mydumppath.c \
 				opp_cache_test.c \
 				# Add more c files here
 # C++ files (.cpp)

@@ -423,6 +423,11 @@ portgroupfdb
 .NL
 Lists the AR Port Group FWD records.
 
+.TP 10
+swcost 
+.NL
+Lists the switch cost records.
+
 .PP
 The vfinfocsv and vfinfocsv2 output formats are designed to make it easier to script vfinfo queries. One line is output per vFabric of the form:
 .PP

@@ -159,7 +159,7 @@ job_cleanup()
 		echo "Killing hostverify and xhpl on hosts..."
 		# we use patterns so the pkill doesn't kill this script or opacmdall itself
 		# use an echo at end so exit status is good
-		opacmdall -p -T 60 "pkill -9 -f 'host[v]erify.sh'; pkill -9 '[x]hpl'; echo -n"
+		opacmdall -p -T 60 "pkill -9 -f -x 'host[v]erify.*.sh'; pkill -9 '[x]hpl'; echo -n"
 	fi
 }
 

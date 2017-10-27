@@ -63,7 +63,6 @@ DIRS			= \
 	$(TL_DIR)/IbPrint \
 	$(TL_DIR)/Topology \
 	$(TL_DIR)/opasadb \
-	$(TL_DIR)/Md5 \
 	$(TL_DIR)/Lsf \
 	$(TL_DIR)/Moab \
 	$(TL_DIR)/Dsap \

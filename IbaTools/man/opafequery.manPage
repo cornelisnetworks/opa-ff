@@ -14,6 +14,11 @@ opafequery
 
 .PP
 
+.B NOTE:
+This tool is being deprecated. Functionality will be moved to opasaquery and opapaquery in V10.7.
+
+.PP
+
 \fB(All)\fR
 Used for testing or debugging performance administration (PA) operations to the Fabric Executive (FE). This tool performs custom PA client/server queries. The output formats and arguments are very similar to opapaquery.
 .SH Syntax 
@@ -615,6 +620,11 @@ Lists the AR Port Group records.
 portgroupfdb 
 .NL
 Lists the AR Port Group FWD records.
+
+.TP 10
+swcost 
+.NL
+Lists the switch cost records.
 
 .SH PA Output Types 
 .NL

@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <infiniband/umad.h>
 #include <infiniband/verbs.h>
 #include "ib_notice_net.h"
-#include "opamgt_sa_priv.h"
+#include "opamgt_sa_notice.h"
 #include "dsap.h"
 #include "dsap_notifications.h"
 
@@ -57,59 +57,42 @@ static pthread_mutex_t m_context = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t m_reinitialize = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t c_reinitialize;
 
-static int report_inform_callback(int status, struct dsap_port *port);
+static int report_notice_callback(uint16_t trap_num, IB_GID *gid, struct dsap_port *port);
 
-static int report_notice_callback(int status, uint16_t trap_num, 
-				  union ibv_gid *gid, struct dsap_port *port);
-
-static int dsap_handle_event(struct ibv_sa_event *event)
+static int dsap_handle_event(struct dsap_port *port, STL_NOTICE *notice, size_t len,
+	void *context, OMGT_STATUS_T status)
 {
-	struct dsap_port *evt_port = event->context;
+	struct dsap_port *evt_port = context;
 	int action = DSAP_NOTIFY_NO_ACTION;
-	struct ibv_sa_net_notice *notice;
-	struct ibv_sa_net_notice_data_gid *data_details;
-	union ibv_gid gid;
+	STL_TRAP_GID *data_details;
+	IB_GID gid;
 
-	switch (event->attr_id) {
-	case IBV_SA_ATTR_NOTICE:
-		notice = event->attr;
-		data_details = (struct ibv_sa_net_notice_data_gid *)
-				notice->data_details;
-
-		acm_log(2, "NOTICE: source lid = %d, status = %d, "
-			   "attr_count = %d, attr_size = %d, "
-			   "attr_offset = %d, attr_id = 0x%d, context = %p\n",
-			ntohs(notice->issuer_lid), event->status,
-			event->attr_count, event->attr_size,
-			event->attr_offset, ntohs(event->attr_id), evt_port);
-		memcpy(gid.raw, data_details->gid, sizeof(gid.raw));
-		action = report_notice_callback(event->status,
-						notice->trap_num_device_id, 
-						&gid, evt_port);
-		break;
-
-	case IBV_SA_ATTR_INFORM_INFO:
-		if (event->status != 0) {
- 			acm_log(2, "INFORM_INFO: status = %d, attr_count = %d,"
-				   " attr_size = %d, attr_offset = %d,"
-				   " attr_id = 0x%x, context = %p\n",
-				event->status, event->attr_count,
-				event->attr_size, event->attr_offset,
-				ntohs(event->attr_id), evt_port);
-			action = report_inform_callback(event->status, 
-							evt_port);
+	if (status == OMGT_STATUS_SUCCESS) {
+		if (port != evt_port) {
+			/* Verify context matches */
+			acm_log(1, "Received an invalid context pointer from ib_usa: 0x%p\n",
+				context);
+			if (notice) free(notice);
+			return action;
 		}
-		break;
+		/* NOTICE */
+		data_details = (STL_TRAP_GID *)notice->Data;
 
-	default:
-		acm_log(2, "Unhandled notification: status = %d, "
-			   "attr_count = %d, attr_size = %d, "
-			   "attr_offset = %d, attr_id = 0x%x, "
-			   "context = %p\n",
-			event->status, event->attr_count,
-			event->attr_size, event->attr_offset,
-			ntohs(event->attr_id), evt_port);
-		break;
+		acm_log(2, "NOTICE: source lid = %d, status = %d, attr_size = %d, context = %p\n",
+			notice->IssuerLID, status, len, evt_port);
+		memcpy(gid.Raw, data_details->Gid.Raw, sizeof(gid.Raw));
+		action = report_notice_callback(notice->Attributes.Generic.TrapNumber,
+			&gid, evt_port);
+		free(notice);
+	} else if (status == OMGT_STATUS_DISCONNECT) {
+		/* INFORM INFO */
+		acm_log(2, "INFORM_INFO: Timeout\n\n");
+		acm_log(0, "Port %u has timed out trying to contact with the SM.\n",
+			port->port->port_num);
+
+		action = DSAP_NOTIFY_REINITIALIZE;
+	} else {
+		acm_log(2, "Unhandled notification: status = %u\n", status);
 	}
 	return action;
 }
@@ -151,7 +134,10 @@ static void * dsap_notification_event_thread(void *arg)
 {
 	struct dsap_port *port;
 	int action;
-	struct ibv_sa_event *event;
+	STL_NOTICE *notice = NULL;
+	size_t notice_len = 0;
+	OMGT_STATUS_T status;
+	void *context = NULL;
 
 	acm_log(2, "\n");
 
@@ -176,17 +162,10 @@ static void * dsap_notification_event_thread(void *arg)
 	while (!port->terminating) {
 		pthread_testcancel();
 		action = DSAP_NOTIFY_NO_ACTION;
-		if (omgt_get_sa_event(port->omgt_handle, &event) == 0) {
-			/* Make sure we get the right context */
-			if (port == event->context) {
-				action = dsap_handle_event(event);
-			} else {
-				acm_log(1, "Received an invalid context "
-					   "pointer from ib_usa: 0x%p\n",
-					event->context);
-			}
-			omgt_ack_sa_event(event);
-		}
+		status = omgt_sa_get_notice_report(port->omgt_handle, &notice, &notice_len,
+			&context, -1);
+
+		action = dsap_handle_event(port, notice, notice_len, context, status);
 		
 		dsap_take_action(action);
 	}
@@ -214,8 +193,7 @@ void dsap_terminate_notification(struct dsap_port *port)
 }
 
 static int
-report_notice_callback(int status, uint16_t trap_num, union ibv_gid *gid, 
-		       struct dsap_port *port)
+report_notice_callback(uint16_t trap_num, IB_GID *gid, struct dsap_port *port)
 {
 	char gid_str[INET6_ADDRSTRLEN];
 	union ibv_gid src_gid;
@@ -230,83 +208,31 @@ report_notice_callback(int status, uint16_t trap_num, union ibv_gid *gid,
 	{
 	case IBV_SA_SM_TRAP_GID_IN_SERVICE:
 		acm_log(1, "Received GID Now In Service = 0x%016"PRIx64"/%s\n",
-			ntoh64(src_gid.global.interface_id), 
-			inet_ntop(AF_INET6, gid->raw, gid_str, sizeof gid_str));
+			ntoh64(src_gid.global.interface_id),
+			inet_ntop(AF_INET6, gid->Raw, gid_str, sizeof gid_str));
 		dsap_port_event(src_gid.global.interface_id,
 				src_gid.global.subnet_prefix,
-				gid->global.interface_id,
+				gid->Type.Global.InterfaceID,
 				DSAP_PT_EVT_DST_PORT_UP);
 		break;
 	case IBV_SA_SM_TRAP_GID_OUT_OF_SERVICE:
 		acm_log(1, "Received GID Out Of Service = 0x%016"PRIx64"/%s\n", 
 			ntoh64(src_gid.global.interface_id), 
-			inet_ntop(AF_INET6, gid->raw, gid_str, sizeof gid_str));
+			inet_ntop(AF_INET6, gid->Raw, gid_str, sizeof gid_str));
 		dsap_port_event(src_gid.global.interface_id,
 				src_gid.global.subnet_prefix,
-				gid->global.interface_id,
+				gid->Type.Global.InterfaceID,
 				DSAP_PT_EVT_DST_PORT_DOWN);
 		break;
 	default:
 		acm_log(0, "Received Unknown Notice = %u. Gid = %016"PRIx64"/%s\n", 
 			trap_num, src_gid.global.interface_id, 
-			inet_ntop(AF_INET6, gid->raw, gid_str, sizeof gid_str));
+			inet_ntop(AF_INET6, gid->Raw, gid_str, sizeof gid_str));
 		break;
 	}
 
 cb_exit:
 	return DSAP_NOTIFY_NO_ACTION;
-}
-
-static int 
-report_inform_callback(int status, struct dsap_port *port)
-{
-	int rval = DSAP_NOTIFY_NO_ACTION;
-
-	acm_log(2, "\n");
-
-	switch (status) {
-	case -ECONNABORTED:
-		/* In this case, we're hoping the async code will tell us when
-		   the port is back up. */
-		acm_log(0, "Port %u has lost contact with the SM.\n",
-			port->port->port_num);
-		break;
-	case -ETIMEDOUT:
-		acm_log(0, "Port %u has timed out trying to contact with the "
-			   "SM.\n",
-			port->port->port_num);
-
-		rval = DSAP_NOTIFY_REINITIALIZE;
-		break;
-	case -ENETRESET:
-		/* No action. The Async layer will tell us when the port is
-		   back up.*/
-		acm_log(0, "Lost contact with the SM due to port down.\n");
-		break;
-	case -EINVAL:
-		acm_log(0, "Got an \"illegal value\" error on Port %u while "
-			   "trying to contact with the SM.\n",
-			port->port->port_num);
-
-		rval = DSAP_NOTIFY_REINITIALIZE;
-		break;
-	case -EAGAIN:
-		acm_log(0, "Got an EAGAIN error trying to subscribe for "
-			   "notifications.\n");
-
-		rval = DSAP_NOTIFY_REINITIALIZE; 
-		break;
-	default:
-		acm_log(0, "Got an unknown error (%d) on Port %u while trying "
-			   "to contact with the SM.\n",
-			status, port->port->port_num);
-
-		/* We don't know what the error means, we had better assume the
-		   worst. */
-		rval = DSAP_NOTIFY_REINITIALIZE; 
-	}
-
-	return rval;
 }
 
 FSTATUS dsap_notification_register_port(struct dsap_port *port)

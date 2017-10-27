@@ -43,7 +43,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <infiniband/verbs.h>
 #include <opasadb_path.h>
 
-void dump_gid(FILE *f, op_gid_t *gid);
 void print_path_record(char *str, op_path_rec_t *p_path);
 void fprint_path_record(FILE *f, char *str, op_path_rec_t *p_path);
 int parse_gid(char *s, op_gid_t *gid);

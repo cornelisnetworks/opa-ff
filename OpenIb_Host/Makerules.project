@@ -67,12 +67,8 @@
 # of using MODULEVERSION
 ifeq "$(RELEASE_TAG)" ""
 MODULEVERSION=$(shell $(PATCH_ENG_VERSION))
-RPM_REL=$(shell echo $(MODULEVERSION)|cut -d"." -f1-2)
-RPM_VER=$(shell echo $(MODULEVERSION).999.999|cut -d"." -f3)$(shell rpm --eval %{?dist})
 else
 MODULEVERSION=$(shell $(CONVERT_RELEASETAG) $(RELEASE_TAG))
-RPM_REL=$(shell echo $(MODULEVERSION)|cut -d"." -f1-4)
-RPM_VER=$(shell echo $(MODULEVERSION).999.999.999.999|cut -d"." -f5)$(shell rpm --eval %{?dist})
 endif
 
 PROJ_DIR		= $(GLOBAL_DIR)
@@ -121,6 +117,8 @@ BSCPROJ			=
 
 # strict-prototypes - treat extern int foo() as function with no args
 CPROJ			= -DPRODUCT=$(PRODUCT) -DPRODUCT_$(PRODUCT) -DMODULEVERSION=$(MODULEVERSION) -DIB_STACK_OPENIB
+# include buildFeatureDefs to let inplace build work for stream consistency
+CPROJ			+= -include $(TL_DIR)/buildFeatureDefs
 ifeq ($(__GNUC__),2)
 CPROJ   += -fstrict-prototypes
 endif

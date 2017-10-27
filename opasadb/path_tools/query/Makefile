@@ -43,7 +43,7 @@ EXECUTABLE		= $(BUILDDIR)/opa_osd_query$(EXE_SUFFIX)
 DIRS			= 
 # C files (.c)
 CFILES			= \
-				../dumppath.c \
+				mydumppath.c \
 				opa_osd_query.c \
 				# Add more c files here
 # C++ files (.cpp)

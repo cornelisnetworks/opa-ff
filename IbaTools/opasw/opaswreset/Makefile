@@ -112,9 +112,9 @@ INCLUDE_SUBDIR		=
 #LOCAL_LIB_DIRS	= User library directories for libpaths [Empty]
 
 CLOCAL = $(CPIE)
-LOCALDEPLIBS=$(IBACCESS_USER_LIBS) opaswcommon opamgt-priv Md5
+LOCALDEPLIBS=$(IBACCESS_USER_LIBS) opaswcommon opamgt-priv
 LOCAL_INCLUDE_DIRS=
-LOCALLIBS=$(OPENIB_USER_LIBS)
+LOCALLIBS=$(OPENIB_USER_LIBS) crypto
 LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
 
 # Include Make Rules definitions and rules

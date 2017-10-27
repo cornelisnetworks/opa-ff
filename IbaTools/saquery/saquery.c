@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -230,6 +230,7 @@ void Usage_full(void)
 	fprintf(stderr ,"    cableinfo     - list of Cable Info records\n");
 	fprintf(stderr ,"    portgroup     - list of AR Port Group records\n");
 	fprintf(stderr ,"    portgroupfdb  - list of AR Port Group FWD records\n");
+	fprintf(stderr ,"    swcost        - list of switch cost records\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage examples:\n");
 	fprintf(stderr, "    opasaquery -o desc -t fi\n");
@@ -376,7 +377,7 @@ InputFlags_t NodeInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGu
 InputFlags_t PathInput = {{InputTypeLid,InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,
 		InputTypeGidPair,InputTypeServiceId,InputTypeSL,InputTypePortGuidList,InputTypeGidList,0,0,0,0,0,0,0,}};
 InputFlags_t ServiceInput = {{InputTypeLid,InputTypePortGuid,InputTypePortGid,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t McmemberInput = {{InputTypeLid, InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeMcGid,0,0,0,0,0,0,0,0,0,0,0,0}};
+InputFlags_t McmemberInput = {{InputTypeLid, InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeMcGid,InputTypeSL,0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t InformInput = {{InputTypePortGuid,InputTypePortGid,InputTypeLid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,}};
 InputFlags_t TraceInput =  {{InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,InputTypeGidPair,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t VfinfoInput = {{InputTypePKey,InputTypeIndex,InputTypeMcGid,InputTypeServiceId,InputTypeSL,InputTypeNodeDesc,0,0,0,0,0,0,0,0,0,0,0}};
@@ -389,7 +390,7 @@ typedef struct OutputStringMap {
 	InputFlags_t *valid_input_types;
 	int csv;
 } OutputStringMap_t;
-
+ 
 #define NO_OUTPUT_TYPE 0xffff
 OutputStringMap_t OutputTypeTable[] = {
 //--input string--------StlOutputType-------------------------IbOutputType----------------InputFlags----csv-//
@@ -440,6 +441,7 @@ OutputStringMap_t OutputTypeTable[] = {
     {"cableinfo",       OutputTypeStlCableInfoRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"portgroup",       OutputTypeStlPortGroupRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"portgroupfdb",    OutputTypeStlPortGroupFwdRecord,      NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"swcost",          OutputTypeStlSwitchCostRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
     //Last entry must be null, insert new attributes above here!
     { NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, NULL, 0 }
 };

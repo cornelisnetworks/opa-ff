@@ -64,7 +64,6 @@
 ##	script ignores BUILD_CONFIG.  As such the BuildOptions file
 ##	or the -B argument completely control BUILD_CONFIG for this product.
 
-
 # A given release will be targeted for a specific version of ofed
 # however we allow build.config to override if needed
 export OFED_STACK_PREFIX=${OFED_STACK_PREFIX:-/usr}
@@ -89,7 +88,7 @@ showbuild()
 build_config=
 rerun=n
 Cflag=n
-while getopts B:rCnS param
+while getopts B:rCn param
 do
 	case $param in
 	r)
@@ -142,7 +141,7 @@ then
 fi
 
 # when inplace developer builds have been done, the src rpm will include
-# prebuilt code.  if the -C option is not specified (via FF_BUILD_ARGS)
+# prebuilt code.  if the -C option is not specified (via BUILD_ARGS)
 # clobber any such files if they are present (indicated by builtinplace file).
 # The clobber allows a src.rpm packaged with an in-place build to still
 # generate normally when -C not given.

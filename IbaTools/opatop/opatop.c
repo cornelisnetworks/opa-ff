@@ -796,11 +796,14 @@ void DisplayScreen(void)
 
 	if (!fb_valid_pa_client)
 	{
-		struct omgt_params params = {.debug_file = (g_verbose & VERBOSE_PACLIENT ? stderr : NULL)};
-		if (!omgt_open_port_by_num(&g_portHandle, hfi, port, &params) &&
-				(PACLIENT_OPERATIONAL == omgt_pa_client_connect(g_portHandle)))
+		int pa_service_state = OMGT_SERVICE_STATE_UNKNOWN;
+		struct omgt_params params = { .debug_file = (g_verbose & VERBOSE_PACLIENT ? stderr : NULL) };
+		if (!omgt_open_port_by_num(&g_portHandle, hfi, port, &params))
 		{
-			fb_valid_pa_client = TRUE;
+			if (!omgt_port_get_pa_service_state(g_portHandle, &pa_service_state, OMGT_REFRESH_SERVICE_BAD_STATE))
+			{
+				fb_valid_pa_client = (pa_service_state == OMGT_SERVICE_STATE_OPERATIONAL);
+			}
 		}
 	}
 
@@ -2385,6 +2388,7 @@ int main(int argc, char ** argv)
 	int n_cmd;
 	char tb_cmd[64];
 	time_t time_start;
+	int pa_service_state = OMGT_SERVICE_STATE_UNKNOWN;
 
 	Top_setcmdname(NAME_PROG);
 	g_quiet = ! isatty(2);	// disable progress if stderr is not tty
@@ -2469,16 +2473,19 @@ int main(int argc, char ** argv)
 	fb_error_displayed = FALSE;
 
 	struct omgt_params params = {.debug_file = (g_verbose & VERBOSE_PACLIENT ? stderr : NULL)};
-	if (!omgt_open_port_by_num(&g_portHandle, hfi, port, &params) &&
-				(PACLIENT_OPERATIONAL != omgt_pa_client_connect(g_portHandle)))
+	if (!omgt_open_port_by_num(&g_portHandle, hfi, port, &params))
 	{
-		printf(NAME_PROG " PaClient Not Operational\n");
-		g_exitstatus = 1;
-		goto done;
+		/* Port is open, check PA Service */
+		fstatus = omgt_port_get_pa_service_state(g_portHandle, &pa_service_state, OMGT_REFRESH_SERVICE_BAD_STATE);
+		if (fstatus != FSUCCESS || pa_service_state != OMGT_SERVICE_STATE_OPERATIONAL)
+		{
+			printf(NAME_PROG " PA Service Not Operational: %s (%d)\n",
+				omgt_service_state_totext(pa_service_state), pa_service_state );
+			g_exitstatus = 1;
+			goto done;
+		}
+		fb_valid_pa_client = TRUE;
 	}
-
-	fb_valid_pa_client = TRUE;
-
 	// Configure terminal for single character at a time input
 	if (tcgetattr(fileno(stdin), &g_term_save) < 0)
 	{

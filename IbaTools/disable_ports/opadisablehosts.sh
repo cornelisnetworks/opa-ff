@@ -39,7 +39,7 @@ trap "rm -f $tempfile" EXIT
 
 Usage_full()
 {
-	echo "Usage: opadisablehosts [-h hfi] [-p port] reason host" >&2
+	echo "Usage: opadisablehosts [-h hfi] [-p port] reason host ..." >&2
 	echo "              or" >&2
 	echo "       opadisablehosts --help" >&2
 	echo " " >&2
@@ -76,7 +76,7 @@ Usage_full()
 
 Usage()
 {
-	echo "Usage: opadisablehosts [-h hfi] [-p port] reason host" >&2
+	echo "Usage: opadisablehosts [-h hfi] [-p port] reason host ..." >&2
 	echo "              or" >&2
 	echo "       opadisablehosts --help" >&2
 	echo " " >&2

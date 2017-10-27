@@ -50,7 +50,7 @@ Specifies alternate root directory; default is /.
 .TP 10
 -G 
 .NL
-Installs GPU Direct components.
+Installs GPU Direct components (must have NVidia drivers installed).
 
 .TP 10
 -v 
@@ -93,7 +93,7 @@ Disables autostart of given component. This option can appear with -E or more th
 Outputs list of supported components.
 
 .IP
-Supported components include: opa\(ulstack ibacm mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev fastfabric delta\(ulipoib opafm opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulintel\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi gasnet openshmem mvapich2 openmpi delta\(ulmpisrc hfi1\(uluefi delta\(uldebug 
+Supported components include: opa\(ulstack ibacm mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev fastfabric delta\(ulipoib opafm opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulintel\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi gasnet openshmem sandiashmem mvapich2 openmpi delta\(ulmpisrc hfi1\(uluefi delta\(uldebug 
 .IP
 Supported component name aliases include: opa ipoib mpi mpisrc opadev 
 .TP 10

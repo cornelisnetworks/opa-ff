@@ -40,7 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "iba/ibt.h"
 #include "iba/stl_sd.h"
-#include "iba/ib_sd.h"
 #include "iba/public/ievent.h"
 #include "iba/public/ilist.h"
 #include "opasadb_debug.h"

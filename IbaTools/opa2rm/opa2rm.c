@@ -1097,7 +1097,8 @@ void ShowSlurmFakeISLs(name_mode_t switch_name_mode)
 	LIST_ITEM *p;
 	ExpectedNode fake = {
 		NodeType: STL_NODE_SW,
-		NodeDesc: "fake"
+		NodeDesc: "fake",
+		NodeGUID: 0x00066A0102FFFFFF
 	};
 
 	// build list of neighbors for "fake" core switch listing all switches
@@ -1319,7 +1320,7 @@ void Usage_full(void)
 	fprintf(stderr, "   opa2rm -o slurm -p 'opa-' topology.xml\n");
 	fprintf(stderr, "   opa2rm -o slurm -s '-opa' topology.xml\n");
 	fprintf(stderr, "   opa2rm -o slurm -F 'nodepat:compute*' -F 'nodepat:opacore1 *' topology.xml\n");
-	fprintf(stderr, "   opa2rm -o nodes -F 'nodedetpat:compute*' topology.xml\n");
+	fprintf(stderr, "   opa2rm -o hosts -F 'nodedetpat:compute*' topology.xml\n");
 	fprintf(stderr, "   opa2rm -o hosts topology.xml\n");
 	exit(0);
 }

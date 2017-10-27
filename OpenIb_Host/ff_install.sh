@@ -52,6 +52,8 @@ cp -t ${DESTDIR}/usr/include/opamgt/iba $opamgt_iba_headers
 cp -t ${DESTDIR}/usr/include/opamgt/iba/public $opamgt_iba_public_headers
 cp -t ${DESTDIR}/usr/src/opamgt $opamgt_examples
 
+OPAMGT_VERNO_MAJOR=$(cat version | cut -d . -f 1)
+
 cd ../bin
 cp -t ${DESTDIR}/usr/lib/opa/tools/ $ff_tools_opt
 
@@ -102,8 +104,7 @@ cd $(cat $BUILDDIR/LIB_PATH)
 cp -t ${DESTDIR}/usr/lib libopasadb.so.*
 cp -t ${DESTDIR}/usr/lib/ibacm libdsap.so.*
 cp -t ${DESTDIR}/usr/lib libopamgt.so.*
-ln -s libopamgt.so.* ${DESTDIR}/usr/lib/libopamgt.so.0
-ln -s libopamgt.so.0 ${DESTDIR}/usr/lib/libopamgt.so
+ln -s libopamgt.so.${OPAMGT_VERNO_MAJOR} ${DESTDIR}/usr/lib/libopamgt.so
 
 
 # Now that we've put everything in the buildroot, copy any default config files to their expected location for user

@@ -1,8 +1,4 @@
 *VXWORKS*
-*InicTools*
-*SrpTools*
-*Tests*
-*zlib*
 Xml/XmlParser
 MakeTools/zisofs-tools
 MakeTools/makeself-header.sh

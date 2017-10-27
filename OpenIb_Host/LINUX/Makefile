@@ -80,22 +80,30 @@ INSTALL_SOURCES= \
 				 $(TL_DIR)/CommonInstall/util_linuxconfig.pl \
 				 $(TL_DIR)/CommonInstall/util_hosttools.pl \
 				 $(TL_DIR)/CommonInstall/util_rpm.pl \
+				 $(TL_DIR)/CommonInstall/util_build.pl \
 				 $(TL_DIR)/CommonInstall/ofed_firmware.pl \
 				 $(TL_DIR)/CommonInstall/comp_oftools.pl \
 				 $(TL_DIR)/CommonInstall/comp_fastfabric.pl \
-				 $(TL_DIR)/CommonInstall/main_openibff.pl
+				 $(TL_DIR)/CommonInstall/overrides_ff.pl \
+				 $(TL_DIR)/CommonInstall/main_omnipathwrap_delta.pl
 
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES72"
 	PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL72.pl
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES73"
-        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL72.pl
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL73.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES74"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL74.pl
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES121"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES121.pl
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES122"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES122.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES123"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES123.pl
 endif
 
 COMP_SOURCES= \

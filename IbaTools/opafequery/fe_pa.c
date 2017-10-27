@@ -28,9 +28,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * ** END_ICS_COPYRIGHT5   ****************************************/
 /* [ICS VERSION STRING: unknown] */
 #include <stdio.h>
-#include "stl_pa.h"
+#include "stl_pa_priv.h"
 #include "stl_pm.h"
-#include "ib_pm.h"
 #include "ib_mad.h"
 #include "stl_print.h"
 #include "opamgt_pa_priv.h"

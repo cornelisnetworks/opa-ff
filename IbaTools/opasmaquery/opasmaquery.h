@@ -38,14 +38,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "infiniband/mad.h"
 
 #include "iba/ib_types.h"
-#include "iba/ib_sm.h"
+#include "iba/ib_sm_priv.h"
 #include "iba/ib_helper.h"
 #include "iba/ib_ibt.h"
 #include "iba/ipublic.h"
 #include "ibprint.h"
 
-#include "iba/stl_mad.h"
-#include "iba/stl_sm.h"
+#include "iba/stl_mad_priv.h"
+#include "iba/stl_sm_priv.h"
 #include "iba/stl_pm.h"
 #include "stl_print.h"
 

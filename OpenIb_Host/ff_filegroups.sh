@@ -79,19 +79,18 @@ opasadb_header="opasadb_path.h opasadb_route.h opasadb_route2.h"
 
 opasadb_mans="opa_osd_dump.1 opa_osd_exercise.1 opa_osd_perf.1 opa_osd_query.1"
 
-opamgt_headers="opamgt.h opamgt_pa.h opamgt_sa.h" 
+opamgt_headers="opamgt.h opamgt_pa.h opamgt_sa.h opamgt_sa_notice.h"
 
-opamgt_iba_headers="ib_avtracker.h ib_cm.h ib_debug_osd.h ib_generalServices.h ib_ibt.h
-	ib_pa.h ib_pm.h ib_sa_records.h ib_sm.h ibt.h stl_helper.h stl_pa.h
-	stl_pm.h stl_sd.h stl_t.h umadt.h vpi.h ib_bm.h ib_debug.h ib_dm.h ib_helper.h
-	ib_mad.h ib_pkt.h ib_rmpp.h ib_sd.h ib_status.h ib_types.h stl_mad.h stl_pkt.h
-	stl_sa.h stl_sm.h stl_types.h vpi_export.h"
+opamgt_iba_headers="ib_mad.h ib_sa_records.h ib_sd.h ib_sm_types.h
+	ib_status.h ib_types.h stl_mad_types.h stl_pa_types.h
+	stl_sa_types.h stl_sd.h stl_sm_types.h stl_types.h vpi.h"
 
 opamgt_iba_public_headers="datatypes.h datatypes_osd.h ibyteswap.h ibyteswap_osd.h
 	ilist.h imath.h imemory.h imemory_osd.h ipackoff.h ipackon.h ispinlock.h
 	ispinlock_osd.h statustext.h"
 
-opamgt_examples="paquery.c saquery.c simple_sa_query.c simple_pa_query.c Makefile README"
+opamgt_examples="paquery.c saquery.c simple_sa_query.c simple_sa_notice.c simple_pa_query.c
+	job_schedule.c show_switch_cost_matrix.c Makefile README"
 
 mpi_apps_files="Makefile mpi_hosts.sample README prepare_run select_mpi run_bw
 	get_selected_mpi.sh get_mpi_cc.sh *.params gen_group_hosts gen_mpi_hosts

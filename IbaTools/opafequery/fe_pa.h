@@ -33,7 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FE_PA_INCLUDE
 
 #include "ib_types.h"
-#include "ib_pa.h"
 #include "iba/ib_generalServices.h"
 #include "opamgt.h"
 

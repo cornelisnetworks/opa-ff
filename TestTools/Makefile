@@ -119,7 +119,12 @@ INCLUDE_SUBDIR		=
 #				(in addition to LOCALDEPLIBS)
 #LOCAL_LIB_DIRS	= User library directories for libpaths [Empty]
 CLOCAL=-DUSE_TCL_STUBS $(CPIC)
-LOCALLIBS=$(shell if [ -e /usr/lib64/libtclstub.a -o -e /usr/lib/libtclstub.a ]; then echo tclstub; elif [ -e /usr/lib64/libtclstub8.6.a -o -e /usr/lib/libtclstub8.6.a ]; then echo tclstub8.6; elif [ -e /usr/lib64/libtclstub8.5.a -o -e /usr/lib/libtclstub8.5.a ]; then echo tclstub8.5; else echo tclstub8.4; fi)
+# tcl.h is located in /usr/include for RedHat and in /usr/include/tcl for Ubuntu
+LOCAL_INCLUDE_DIRS = /usr/include/tcl
+LOCALLIBS=$(shell if [ -e /usr/lib64/libtclstub.a -o -e /usr/lib/libtclstub.a -o -e /usr/lib/x86_64-linux-gnu/libtclstub.a ]; then echo tclstub; \
+		elif [ -e /usr/lib64/libtclstub8.6.a -o -e /usr/lib/libtclstub8.6.a -o -e /usr/lib/x86_64-linux-gnu/libtclstub8.6.a ]; then echo tclstub8.6; \
+		elif [ -e /usr/lib64/libtclstub8.5.a -o -e /usr/lib/libtclstub8.5.a -o -e /usr/lib/x86_64-linux-gnu/libtclstub8.5.a ]; then echo tclstub8.5; \
+		else echo tclstub8.4; fi)
 
 # Include Make Rules definitions and rules
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makerules.project

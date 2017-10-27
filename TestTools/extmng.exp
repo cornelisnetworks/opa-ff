@@ -1122,7 +1122,8 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 		local_sh
 		set brand [get_switch_brand "$ibnode"]
 		if { [ string equal "$brand" "OPA"] } {
-			set modifyParam "-z 60 -u 10"
+			set modifyParam "-z 60 -u 10 -T 15000"
+			set modifyParamCfg "-T 15000"
 			set node_desc [ strip_nodeguid_from_desc "$trimmed_ibnode" ]
 			set length [string length $node_desc]
 			if { $length > 0 } {
@@ -1136,7 +1137,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 			}
 			if { [ file exists $env(CFG_FWTEMPDIR)] } {
 				check_exit_status 60 0
-				send_unix_cmd "$toolsdir/opaswfwconfigure -t $trimmed_ibnode $hfi_port_args -d $env(CFG_FWTEMPDIR)"
+				send_unix_cmd "$toolsdir/opaswfwconfigure -t $trimmed_ibnode $hfi_port_args $modifyParamCfg -d $env(CFG_FWTEMPDIR)"
 				if { $norecords } {
 					expect_list_with_punchlist "$ibnode" "Unable to configure switch" 60 { "opaswfwconfigure completed"} { "Error" } 
 				} else {

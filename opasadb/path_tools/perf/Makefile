@@ -104,7 +104,7 @@ INCLUDE_SUBDIR		=
 #DEPENDLOCAL	= user defined makedepend flags [Empty]
 #LINTLOCAL	= User defined lint flags [Empty]
 # User include directories to search for C/C++ headers
-LOCAL_INCLUDE_DIRS	= ..
+LOCAL_INCLUDE_DIRS	= 
 #LDLOCAL	= User defined C flags for linking [Empty]
 #IMPLIBLOCAL	= User flags for Object Lirary Manager [Empty]
 #MIDLLOCAL	= User flags for IDL compiler [Empty]

@@ -437,7 +437,6 @@ proc test_case_run_intelmpi_mpi_app { transport host host_list timelimit dir mpi
 		upvar perf perf
 		upvar transport transport
 		global env
-		set paramfile ""
 
 		target_root_sh $host
 		set target_stack [ target_get_stack_type "y" "$host"]
@@ -480,7 +479,7 @@ proc test_case_run_intelmpi_mpi_app { transport host host_list timelimit dir mpi
 			unix_cmd 20 0 "export MPI_CMD_ARGS="
 		}
 		
-		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun $paramfile -np $np -hostfile mpi_hosts \$MPI_CMD_ARGS $add_mpi_env ./$mpi_cmd $mpi_args; echo DONE"
+		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun -np $np -hostfile mpi_hosts \$MPI_CMD_ARGS $add_mpi_env ./$mpi_cmd $mpi_args; echo DONE"
 		if { $show_perf } {
 			set perf_var perf
 		} else {

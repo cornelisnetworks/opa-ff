@@ -150,6 +150,14 @@ File containing list of SM chassis, used if -G and -E options are not supplied.
 \fBFF\(ulANALYSIS\(ulDIR\fR 
 .NL
 Top level directory for baselines and failed health checks.
+.TP 10
+\fBFF\(ulCHASSIS\(ulCMDS\fR 
+.NL
+List of commands to issue during analysis, unused if -e option supplied.
+.TP 10
+\fBFF\(ulCHASSIS\(ulHEALTH\fR 
+.NL
+Single command to issue to check overall health during analysis, unused if -b option supplied
 .SH Details
 .NL
 

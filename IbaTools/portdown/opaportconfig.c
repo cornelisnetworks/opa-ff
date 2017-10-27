@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <opamgt_priv.h>
 
 #include "iba/ib_types.h"
-#include "iba/ib_sm.h"
+#include "iba/ib_sm_priv.h"
 #include "iba/ib_helper.h"
 #include "iba/ib_ibt.h"
 

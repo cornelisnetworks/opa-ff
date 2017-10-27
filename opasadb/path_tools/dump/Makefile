@@ -43,7 +43,7 @@ EXECUTABLE		= $(BUILDDIR)/opa_osd_dump$(EXE_SUFFIX)
 DIRS			= 
 # C files (.c)
 CFILES			= \
-				../dumppath.c \
+				mydumppath.c \
 				opa_osd_dump.c \
 				# Add more c files here
 # C++ files (.cpp)
