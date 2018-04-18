@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaswitchadmin 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaswitchadmin 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaswitchadmin
 
@@ -77,7 +77,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -86,7 +86,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -95,7 +95,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
@@ -128,9 +128,9 @@ Ensures firmware is in primary and running.
 Specifies the override for firmware upgrades, bypasses the previous firmware version checks, and forces the update unconditionally.
 
 .TP 10
- \fIoperation\fR 
+\fIoperation\fR 
 .NL
-Performs the specified  \fIoperation\fR, which can be one or more of the following:
+Performs the specified \fIoperation\fR, which can be one or more of the following:
 
 .RS
 .TP 10
@@ -147,6 +147,14 @@ Reboots switches, ensures they go down and come back.
 .sp
 configure 
 Runs wizard to set up switch configuration.
+
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+You must reboot the switch for any new settings to be applied.
 
 .RE
 
@@ -327,6 +335,13 @@ OPA Node Description
 .B NOTE:
 Typically, the Node Description is updated automatically during a firmware upgrade, if it is configured properly in the switches file. Updating the node description is also available using the configure option without performing a firmware upgrade.
 
+.TP 10
+.BR
+
+.PP
+
+.B NOTE:
+You must reboot the switch for any new settings to be applied.
 
 .TP 10
 info 

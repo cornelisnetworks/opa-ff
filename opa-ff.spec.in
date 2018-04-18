@@ -1,6 +1,6 @@
 Name: opa
-Version: 10.6.0.0
-Release: 131%{?dist}
+Version: 10.7.0.0
+Release: 133%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
@@ -56,7 +56,7 @@ This package contains the library necessary to build applications that interface
 %package libopamgt-devel
 Summary: Omni-Path library development headers
 Group: System Environment/Libraries
-Requires: opa-libopamgt
+Requires: __RPM_RQ3
 
 %description libopamgt-devel
 This package contains the necessary headers for opamgt development.
@@ -72,7 +72,7 @@ cd OpenIb_Host
 
 
 %install
-BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=/usr/lib ./OpenIb_Host/ff_install.sh
+BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=/usr/lib DSAP_LIBDIR=%{_libdir} ./OpenIb_Host/ff_install.sh
 
 %post address-resolution -p /sbin/ldconfig
 %postun address-resolution -p /sbin/ldconfig
@@ -90,6 +90,7 @@ make -k clean >/dev/null 2>&1 || :
 
 %files basic-tools
 __RPM_BASIC_FILES
+%config(noreplace) %{_sysconfdir}/opa/opamgt_tls.xml
 
 %files fastfabric
 __RPM_FF_FILES
@@ -103,7 +104,6 @@ __RPM_FF_FILES
 %config(noreplace) %{_sysconfdir}/opa/hosts
 %config(noreplace) %{_sysconfdir}/opa/ports
 %config(noreplace) %{_sysconfdir}/opa/switches
-%config(noreplace) %{_sysconfdir}/opa/opaff.xml
 %config(noreplace) /usr/lib/opa/tools/osid_wrapper
 
 
@@ -112,8 +112,8 @@ __RPM_FF_FILES
 %{_bindir}/opa_osd_exercise
 %{_bindir}/opa_osd_perf
 %{_bindir}/opa_osd_query
-/usr/lib/ibacm
-/usr/lib/libopasadb.so.*
+%{_libdir}/ibacm
+%{_libdir}/libopasadb.so.*
 %{_includedir}/infiniband
 %{_mandir}/man1/opa_osd_dump.1*
 %{_mandir}/man1/opa_osd_exercise.1*

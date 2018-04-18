@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -340,7 +340,12 @@ int main(int argc, char *argv[])
 			break;
 
 		case 4:
-			status = getVPDInfo(omgt_port_session, &path, &mad, sessionID, OPASW_MODULE, &vpdInfo);
+			status = getBoardID(omgt_port_session, &path, &mad, sessionID, &boardID);
+			if (status != FSUCCESS) {
+				fprintf(stderr, "Error, Failed to get board id - status %d\n",status);
+				break;
+			}
+			status = getVPDInfo(omgt_port_session, &path, &mad, sessionID, OPASW_MODULE, boardID, &vpdInfo);
 			if (status != FSUCCESS) {
 				fprintf(stderr, "Error: Failed to access vpd info - status %d\n", status);
 				break;
@@ -371,10 +376,10 @@ int main(int argc, char *argv[])
 		case 6:
 			status = getBoardID(omgt_port_session, &path, &mad, sessionID, &boardID);
 			if (status != FSUCCESS) {
-				fprintf(stderr, "Error: Failed to get board id - status %d\n", status);
+				fprintf(stderr, "Error, Failed to get board id - status %d\n",status);
 				break;
 			}
-			status = getTempReadings(omgt_port_session, &path, &mad, sessionID, tempStrs,boardID);
+			status = getTempReadings(omgt_port_session, &path, &mad, sessionID, tempStrs, boardID);
 
 			for (i=0; i<I2C_OPASW_TEMP_SENSOR_COUNT; i++) {
 				printf("SENSOR %d: %s ", i, tempStrs[i]);
@@ -388,11 +393,11 @@ int main(int argc, char *argv[])
 		case 7:
 			status = getBoardID(omgt_port_session, &path, &mad, sessionID, &boardID);
 			if (status != FSUCCESS) {
-				fprintf(stderr, "Error: Failed to get board id - status %d\n", status);
+				fprintf(stderr, "Error, Failed to get board id - status %d\n",status);
 				break;
 			}
-			if (boardID == STL_BOARD_ID_HPE7K) {
-
+			fanStatus =0;
+			if (boardID == STL_PRR_BOARD_ID_HPE7K) {
 				printf("FAN 0:NOTAVAIL ");
 				printf("FAN 1:NOTAVAIL ");
 				printf("FAN 2:NOTAVAIL ");
@@ -402,68 +407,58 @@ int main(int argc, char *argv[])
 				printf("\n");
 			}
 			else {
-			fanStatus =0;
-			for (i = 0; i < OPASW_PSOC_FAN_CTRL_TACHS; i++) {
-				status = getFanSpeed(omgt_port_session, &path, &mad, sessionID,
+				for (i = 0; i < OPASW_PSOC_FAN_CTRL_TACHS; i++) {
+					status = getFanSpeed(omgt_port_session, &path, &mad, sessionID,
 									 (uint32)i, &fanSpeed[i]);
-				if (status != FSUCCESS) {
-					fprintf(stderr, "Error: Failed to get fan speed for fan %d - status %d\n", i, status);
-					break;
-				}
-				if (g_verbose) {
-					printf("Fan speed is %d\n", fanSpeed[i]);
-				}
+					if (status != FSUCCESS) {
+						fprintf(stderr, "Error: Failed to get fan speed for fan %d - status %d\n", i, status);
+						break;
+					}
+					if (g_verbose) {
+						printf("Fan speed is %d\n", fanSpeed[i]);
+					}
 				// TODO: stl1baseboard.c only reports the speed itself, not FAST/SLOW/NORMAL, so I can't confirm that this matches
-				if (fanSpeed[i] == 0 ) {
-					fanStatus |= 1 << i;
+					if (fanSpeed[i] == 0 ) {
+						fanStatus |= 1 << i;
+					}
 				}
-			}
-			// print results
-			if ((fanStatus & FAN_STATUS_TRAY1) == FAN_STATUS_TRAY1) {
-				printf("FAN 0:NOTPRESENT ");
-				printf("FAN 1:NOTPRESENT ");
-				printf("FAN 2:NOTPRESENT ");
-			}
-			else {
-				for (i=0; i<3; i++) {
-					if (fanSpeed[i] > MAX_FAN_SPEED)
-						printf("FAN %d:FAST ", i);
-					else if (fanSpeed[i] < MIN_FAN_SPEED)
-						printf("FAN %d:SLOW ", i);
-					else
-						printf("FAN %d:NORMAL ", i);
+				// print results
+				if ((fanStatus & FAN_STATUS_TRAY1) == FAN_STATUS_TRAY1) {
+					printf("FAN 0:NOTPRESENT ");
+					printf("FAN 1:NOTPRESENT ");
+					printf("FAN 2:NOTPRESENT ");
 				}
-			}// end else TRAY1
-			if ((fanStatus & FAN_STATUS_TRAY2) == FAN_STATUS_TRAY2) {
-				printf("FAN 3:NOTPRESENT ");
-				printf("FAN 4:NOTPRESENT ");
-				printf("FAN 5:NOTPRESENT ");
-			}
-			else {
-				for (i=3; i<6; i++) {
-					if (fanSpeed[i] > MAX_FAN_SPEED)
-						printf("FAN %d:FAST ", i);
-					else if (fanSpeed[i] < MIN_FAN_SPEED)
-						printf("FAN %d:SLOW ", i);
-					else
-						printf("FAN %d:NORMAL ", i);
+				else {
+					for (i=0; i<3; i++) {
+						if (fanSpeed[i] > MAX_FAN_SPEED)
+							printf("FAN %d:FAST ", i);
+						else if (fanSpeed[i] < MIN_FAN_SPEED)
+							printf("FAN %d:SLOW ", i);
+						else
+							printf("FAN %d:NORMAL ", i);
+					}
+				}// end else TRAY1
+				if ((fanStatus & FAN_STATUS_TRAY2) == FAN_STATUS_TRAY2) {
+					printf("FAN 3:NOTPRESENT ");
+					printf("FAN 4:NOTPRESENT ");
+					printf("FAN 5:NOTPRESENT ");
 				}
-			}// end els TRAY2
+				else {
+					for (i=3; i<6; i++) {
+						if (fanSpeed[i] > MAX_FAN_SPEED)
+							printf("FAN %d:FAST ", i);
+						else if (fanSpeed[i] < MIN_FAN_SPEED)
+							printf("FAN %d:SLOW ", i);
+						else
+							printf("FAN %d:NORMAL ", i);
+					}
+				}// end els TRAY2
 
 			printf("\n");
 			}
 			break;
 
 		case 8:
-			status = getBoardID(omgt_port_session, &path, &mad, sessionID, &boardID);
-			if (status != FSUCCESS) {
-				fprintf(stderr, "Error: Failed to get board id - status %d\n", status);
-				break;
-			}
-			if (boardID == STL_BOARD_ID_HPE7K) {
-					printf("PS %d: N/A\n", g_intParam);
-			}
-			else {
 			status = getPowerSupplyStatus(omgt_port_session, &path, &mad, sessionID, g_intParam, 
 										  &psStatus);
 			if (status != FSUCCESS) {
@@ -486,7 +481,6 @@ int main(int argc, char *argv[])
 				default:  
 					fprintf(stderr, "Error: Failed to get power supply status for ps %d\n", g_intParam); 
 					break;
-			}
 			}
 			break;
 

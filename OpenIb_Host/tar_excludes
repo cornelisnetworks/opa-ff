@@ -5,6 +5,7 @@ MakeTools/makeself-header.sh
 MakeTools/makeself.sh
 MakeTools/regdll.bat
 MakeTools/regexe.bat
+Makerules/Rules.buildFeatureDefs
 IbAccess/Common/Ibt/ibt.vssscc
 MpiApps/apps/osu2
 MpiApps/apps/osu-micro-benchmarks-3.8-July12

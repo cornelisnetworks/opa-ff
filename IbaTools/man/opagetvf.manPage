@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagetvf 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagetvf 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagetvf
 
@@ -75,7 +75,7 @@ opagetvf -h 2 -p 2 -d \[aq]Compute\[aq]
 .NL
 
 .PP
-The output is of the form: name:index:pkey:sl:mtu:rate:optionflag as shown in the following example.
+The output is of the form: name:index:pkey:sl:mtu:rate:optionflag::mcastSl as shown in the following example.
 .PP
 Option flag (bitmask) values include:
 .IP \(bu
@@ -91,6 +91,6 @@ Option flag (bitmask) values include:
 .br
 # opagetvf -d Default
 .br
-Default:0:0xffff:0:unlimited:unlimited:0x0
+Default:0:0xffff:0:unlimited:unlimited:0x0::
 
 .br

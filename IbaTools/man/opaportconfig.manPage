@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaportconfig 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaportconfig 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaportconfig
 
@@ -16,6 +16,11 @@ opaportconfig
 
 \fB(Host or Switch)\fR
 Controls the configuration and state of a specified Intel(R) Omni-Path Host Fabric Interface (HFI) port on the local host or a remote switch.
+.PP
+
+.B NOTE:
+This tool is designed for expert users only. Non-expert users should use other tools such as opaenableports, opadisableports and opaportinfo for basic functionality.
+
 .SH Syntax
 .NL
 opaportconfig [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-r \fIsecs\fR] [-z]
@@ -57,7 +62,7 @@ Specifies the port to send through/to. Default is first port.
 Specifies the SM management key to access remote ports.
 
 .TP 10
- \fIsub command\fR 
+\fIsub command\fR 
 .NL
 Specifies the one of the following choices:
 
@@ -419,9 +424,7 @@ To access switch ports using this command, the -l and -m options must be given. 
 .B NOTE:
 The /etc/init.d/opaportconfig script is provided as an example of changing port speed every time the server boots. This script can be edited, then scheduled, using chkconfig to control link settings on any set of HFI ports.
 
-
 .PP
 
 .B CAUTION:
 When using this command to disable or reconfigure switch ports, if the final port in the path between the Fabric Management Node and the switch is disabled or fails to come online, then opaenableports is not able to reenable it. In this case, the switch CLI and/or a switch reboot may be needed to correct the situation.
-

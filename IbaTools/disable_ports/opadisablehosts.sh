@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -32,6 +32,15 @@
 # [ICS VERSION STRING: unknown]
 
 # disable the specified set of hosts
+
+if [ -f /etc/opa/opafastfabric.conf ]
+then
+	. /etc/opa/opafastfabric.conf
+fi
+
+. /usr/lib/opa/tools/opafastfabric.conf.def
+
+. /usr/lib/opa/tools/ff_funcs
 
 tempfile="$(mktemp)"
 trap "rm -f $tempfile; exit 1" SIGHUP SIGTERM SIGINT

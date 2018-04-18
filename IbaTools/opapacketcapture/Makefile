@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -115,7 +115,7 @@ INCLUDE_SUBDIR		=
 CLOCAL = $(CPIE)
 LOCALDEPLIBS =  $(IBACCESS_USER_LIBS)
 LOCAL_INCLUDE_DIRS=
-LOCALLIBS= $(IBACCESS_USER_LIBS)
+LOCALLIBS= $(IBACCESS_USER_LIBS) rt
 #LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
 LOCAL_LIB_DIRS=$(IBACCESS_USER_LIB_DIRS)
 

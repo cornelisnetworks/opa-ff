@@ -1,18 +1,18 @@
  /* BEGIN_ICS_COPYRIGHT4 ****************************************
- 
-Copyright (c) 2015, Intel Corporation
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
+Copyright (c) 2015-2017, Intel Corporation
 
-     * Redistributions of source code must retain the above copyright notice,
-       this list of conditions and the following disclaimer.
-     * Redistributions in binary form must reproduce the above copyright
-       notice, this list of conditions and the following disclaimer in the
-       documentation and/or other materials provided with the distribution.
-     * Neither the name of Intel Corporation nor the names of its contributors
-       may be used to endorse or promote products derived from this software
-       without specific prior written permission.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of Intel Corporation nor the names of its contributors
+      may be used to endorse or promote products derived from this software
+      without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -245,7 +245,7 @@ static int dsap_open_dev(const struct acm_device *device, void **dev_context)
 	struct ibv_device_attr attr;
 	int i, ret;
 
-	acm_log(1, "dev_guid 0x%llx %s\n", device->dev_guid, 
+	acm_log(1, "dev_guid 0x%"PRIx64" %s\n", device->dev_guid, 
 		device->verbs->device->name);
 
 	ret = ibv_query_device(device->verbs, &attr);
@@ -284,7 +284,7 @@ static void dsap_close_dev(void *dev_context)
 {
 	struct dsap_device *dev = dev_context;
 
-	acm_log(1, "dev_guid 0x%llx\n", dev->device->dev_guid);
+	acm_log(1, "dev_guid 0x%"PRIx64"\n", dev->device->dev_guid);
 	SpinLockAcquire(&dsap_dev_lock);
 	QListRemoveItem(&dsap_dev_list, &dev->item);
 	SpinLockRelease(&dsap_dev_lock);
@@ -515,7 +515,7 @@ dsap_resolve_response(uint64_t id, struct acm_msg *req_msg,
 {
 	struct acm_msg msg;
 
-	acm_log(2, "client %lld, status 0x%x\n", id, status);
+	acm_log(2, "client %"PRId64", status 0x%x\n", id, status);
 	memset(&msg, 0, sizeof msg);
 
 	if (ep) {
@@ -576,12 +576,12 @@ dsap_resolve_dest(struct dsap_ep *ep, struct acm_msg *msg, uint64_t id)
 	query.pkey = htons(ep->endpoint->pkey);
 	acm_get_gid((struct acm_port *) ep->port->port, 0, &query.sgid);
 	memcpy(&query.dgid, &dest->gid, sizeof(query.dgid));
-	acm_log(2, "slid %04x pkey %04x sgid %llx:%llx dgid %llx:%llx\n",
+	acm_log(2, "slid %04x pkey %04x sgid %"PRIx64":%"PRIx64" dgid %"PRIx64":%"PRIx64"\n",
 		ntohs(query.slid), ntohs(query.pkey),
-		ntohll(query.sgid.global.subnet_prefix),
-		ntohll(query.sgid.global.interface_id),
-		ntohll(query.dgid.global.subnet_prefix),
-		ntohll(query.dgid.global.interface_id));
+		ntoh64(query.sgid.global.subnet_prefix),
+		ntoh64(query.sgid.global.interface_id),
+		ntoh64(query.dgid.global.subnet_prefix),
+		ntoh64(query.dgid.global.interface_id));
 
 	/* If we have not opened libopasadb previously, do it now */
 	if (!ep->port->lib_handle) {
@@ -746,7 +746,7 @@ static void dsap_query_perf(void *ep_context, uint64_t *values, uint8_t *cnt)
 	int i;
 
 	for (i = 0; i < ACM_MAX_COUNTER; i++)
-		values[i] = htonll(ep->counters[i]);
+		values[i] = hton64(ep->counters[i]);
 	*cnt = ACM_MAX_COUNTER;
 }
 
@@ -826,7 +826,7 @@ static void dsap_set_options(void)
 	FILE *f;
 	char s[120];
 	char opt[32], value[256];
-	char *opts_file = acm_get_opts_file();
+	const char *opts_file = acm_get_opts_file();
 
 	if (!(f = fopen(opts_file, "r")))
 		return;

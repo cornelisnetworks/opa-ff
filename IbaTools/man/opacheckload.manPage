@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacheckload
 
@@ -16,7 +16,9 @@ opacheckload
 Returns load information on hosts in the fabric.
 .SH Syntax
 .NL
-opacheckload [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r] [-a|-n numprocs] [-d uploaddir]
+opacheckload [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r] [-a|-n numprocs]
+.br
+[-d uploaddir]
 .SH Options
 .NL
 
@@ -42,7 +44,7 @@ Reverses output to show the least busy hosts. Default is busiest hosts.
 .TP 10
 -n \fInumprocs\fR 
 .NL
-Shows the specified number of top  \fInumprocs\fR hosts. Default is 10.
+Shows the specified number of top \fInumprocs\fR hosts. Default is 10.
 .TP 10
 -a 
 .NL

@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -61,6 +61,7 @@
 #  Lines m+2 - z  core specification(s)
 
 # Links Fields:
+#  Minimal Fields Required
 #  Source Rack Group: 01
 #  Source Rack:       02
 #  Source Name:       03
@@ -77,6 +78,13 @@
 #  Cable Length:      14
 #  Cable Details:     15
 
+#  Additional Fields (Optional)
+#  Link Rate:         16
+#  Link MTU:          17
+#  Link Details:      18
+#  Node Fields:       19 and above
+#  Node/PortNum Field Calculated
+
 # Core specifications (same line):
 #  Core Name:X
 #  Core Size:X (288 or 1152)
@@ -84,6 +92,7 @@
 #  Core Rack:X
 #  Core Full:X (0 or 1)
 
+FIELD_COUNT=18
 
 ## Defines:
 XML_GENERATE="/usr/sbin/opaxmlgenerate"
@@ -105,6 +114,7 @@ FILE_TOPOLOGY_OUT="topology.0:0.xml"
 FILE_RESERVE="file_reserve"
 FILE_TEMP=$(mktemp "opaxlattopo-1.XXXX")
 FILE_TEMP2=$(mktemp "opaxlattopo-2.XXXX")
+FILE_TOPOLOGY_TEMP="topology_temp.xml"
 # Note: there are no real limits on numbers of groups, racks or switches;
 #  these defines simply allow error messages before too much thrashing
 #  takes place in cases where FILE_TOPOLOGY_LINKS has bad data
@@ -120,6 +130,8 @@ NODETYPE_HFI="FI"
 NODETYPE_EDGE="SW"
 NODETYPE_LEAF="CL"
 NODETYPE_SPINE="CS"
+NODETYPE_ENDPOINT="EN"
+NODETYPE_SWITCH="SW"
 DUMMY_CORE_NAME="ZzNAMEqQ"
 CORE_GROUP="Core Group:"
 CORE_RACK="Core Rack:"
@@ -131,14 +143,14 @@ HFI_SUFFIX_REGEX="hfi[1-9]_[0-9]+$"
 HOST_HFI_REGEX="^[a-zA-Z0-9_-]+[ ]hfi[1-9]_[0-9]+$"
 CAT_CHAR=" "
 
-MTU_SW_SW=${MTU_SW_SW:-10240}
-MTU_SW_HFI=${MTU_SW_HFI:-10240}
+MTU_SW_SW_DEFAULT=${MTU_SW_SW:-10240}
+MTU_SW_HFI_DEFAULT=${MTU_SW_HFI:-10240}
 
 ## Global variables:
 hfi_suffix="hfi1_0"
 
 # Parsing tokens:
-declare -a t=("" "" "" "" "" "" "" "" "" "" "" "" "" "" "")
+declare -a t=()
 
 t_srcgroup=""
 t_srcrack=""
@@ -155,6 +167,8 @@ t_dsttype=""
 t_cablelabel=""
 t_cablelength=""
 t_cabledetails=""
+t_linkdetails=""
+output_section="all"
 
 # Output CSV values:
 rate=""
@@ -190,6 +204,9 @@ core_full=
 rack=""
 switch=""
 leaves=""
+additional_fields=0
+portnum_field=0
+ix_line=0
 group_cnt=1
 rack_cnt=1
 
@@ -213,7 +230,7 @@ core=()
 partially_populated_core=()
 spine_array=()
 leaf_array=()
-external_leafs=()
+external_leaves=()
 expected_sm=()
 hfi=()
 
@@ -233,7 +250,7 @@ array_contains() {
     local seeking=$2
     local found=1
     for element in "${array[@]}"; do
-        if [[ $element == $seeking ]]; then
+        if [[ "$element" == "$seeking" ]] ; then
             found=0
             break
         fi
@@ -241,23 +258,43 @@ array_contains() {
     return $found
 }
 
-function clean_tempfiles() {
-  if [ $fl_clean == 1 ]
-    then
-    rm -f $FILE_TEMP
-    rm -f $FILE_TEMP2
-    rm -f $FILE_LINKSUM
-    rm -f $FILE_LINKSUM_NOCORE
-    rm -f $FILE_LINKSUM_NOCABLE
-    rm -f $FILE_NODEFIS
-    rm -f $FILE_NODESWITCHES
-    rm -f $FILE_NODELEAVES
-    rm -f $FILE_NODECHASSIS
-    rm -f $FILE_NODESM
+misc_params=""
+
+declare -A misc_sw_table
+declare -A misc_fi_table
+declare -A sw_portlist_table
+
+declare -a misc_param_index
+
+remove_file() {
+  if [ -f $1 ]; then
+   rm -f $1
   fi
 }
 
-trap 'clean_tempfiles; exit 1' SIGINT SIGHUP SIGTERM
+clean_tempfiles() {
+  if [ $fl_clean == 1 ]
+    then
+    remove_file "$FILE_TEMP"
+    remove_file "$FILE_TEMP2"
+    remove_file "$FILE_LINKSUM"
+    remove_file "$FILE_LINKSUM_NOCORE"
+    remove_file "$FILE_LINKSUM_NOCABLE"
+    remove_file "$FILE_NODEFIS"
+    remove_file "$FILE_NODESWITCHES"
+    remove_file "$FILE_NODELEAVES"
+    remove_file "$FILE_NODECHASSIS"
+    remove_file "$FILE_NODESM"
+  fi
+}
+
+topology_file_cleanup() {
+  if [ -f $FILE_TOPOLOGY_TEMP ]; then
+    remove_file "$FILE_TOPOLOGY_TEMP"
+  fi
+}
+
+trap 'clean_tempfiles; topology_file_cleanup; exit 1' SIGINT SIGHUP SIGTERM
 trap 'clean_tempfiles' EXIT
 
 ## Local functions:
@@ -292,6 +329,11 @@ usage_full()
   echo "                        For Multi-Plane fabric, use the tool multiple" >&2
   echo "                        times with different hfi-suffix. For Multi-Rail" >&2
   echo "                        specify HostName as \"HostName HfiName\" in spreadsheet" >&2
+  echo "       -o report     -  report type for output; by default, all the sections" >&2
+  echo "                        are generated" >&2
+  echo "                        Report Types:" >&2
+  echo "                        brnodes  - Creates <Node> section xml for the csv input" >&2
+  echo "                        links    - Creates <LinkSummary> section xml for the csv input" >&2
   echo "" >&2
   echo "   The following environment variables allow user-specified MTU" >&2
   echo "      MTU_SW_SW  -  If set will override default MTU on switch<->switch links" >&2
@@ -318,16 +360,19 @@ cvt_nodetype()
   local nodetype=$(echo "$1" | awk '{print toupper($0)}')
   case $nodetype in
   $NODETYPE_HFI)
-    echo "FI"
+    echo "$NODETYPE_HFI"
     ;;
   $NODETYPE_EDGE)
-    echo "SW"
+    echo "$NODETYPE_SWITCH"
     ;;
   $NODETYPE_LEAF)
-    echo "SW"
+    echo "$NODETYPE_SWITCH"
     ;;
   $NODETYPE_SPINE)
-    echo "SW"
+    echo "$NODETYPE_SWITCH"
+    ;;
+  $NODETYPE_ENDPOINT)
+    echo "$NODETYPE_ENDPOINT"
     ;;
   *)
     echo ""
@@ -375,109 +420,154 @@ display_progress()
 #   FILE_CHASSIS
 gen_topology()
 {
+  local args=""
   if [ -f $FILE_LINKSUM ]
     then
-    rm -f $FILE_TEMP
+    remove_file "$FILE_TEMP"
     mv $FILE_LINKSUM $FILE_TEMP
     sort -u $FILE_TEMP > $FILE_LINKSUM
   fi
   if [ -f $FILE_LINKSUM_NOCORE ]
     then
-    rm -f $FILE_TEMP
+    remove_file "$FILE_TEMP"
     mv $FILE_LINKSUM_NOCORE $FILE_TEMP
     sort -u $FILE_TEMP > $FILE_LINKSUM_NOCORE
   fi
   if [ -f $FILE_LINKSUM_NOCABLE ]
     then
-    rm -f $FILE_TEMP
+    remove_file "$FILE_TEMP"
     mv $FILE_LINKSUM_NOCABLE $FILE_TEMP
     sort -u $FILE_TEMP > $FILE_LINKSUM_NOCABLE
   fi
 
   if [ -f $FILE_NODEFIS ]
     then
-    rm -f $FILE_HOSTS
-    rm -f $FILE_TEMP
+    remove_file "$FILE_HOSTS"
+    remove_file "$FILE_TEMP"
+    remove_file "$FILE_TEMP2"
     mv $FILE_NODEFIS $FILE_TEMP
-    sort -u $FILE_TEMP > $FILE_NODEFIS
+    sort -u $FILE_TEMP > $FILE_TEMP2
+
+    # Read list of FI node data
+    while IFS='' read -r node_in
+    do
+      # Extract node detail content from FI node data
+      details=""
+      if [[ "$node_in" =~ ";" ]]; then
+        details=`echo "$node_in" | cut -d ';' -f 2 -`
+      fi
+      # Use node desc to lookup optional XML data (misc entries)
+      node=${node_in/;*/}
+      lookup_misc_table_entry "$node" "$NODETYPE_HFI" args
+      # opaxmlgenerate is pedantic about the exact number of delimiters ';'
+      if [ "$args" == "" ]; then
+        echo "$node;$details" >> $FILE_NODEFIS
+      else
+        echo "$node;$details;$args" >> $FILE_NODEFIS
+      fi
+    done < $FILE_TEMP2
     cut -d ';' -f 1 $FILE_NODEFIS | sed -e "s/$CAT_CHAR$HFI_SUFFIX_REGEX//" > $FILE_HOSTS
   fi
 
   if [ -f $FILE_NODESWITCHES ]
     then
-    rm -f $FILE_TEMP
+    remove_file "$FILE_TEMP"
     mv $FILE_NODESWITCHES $FILE_TEMP
-    sort -u $FILE_TEMP > $FILE_NODESWITCHES
+    sort -u $FILE_TEMP > $FILE_TEMP2
+
+    # Read list of SW node data
+    while IFS='' read -r node_in
+    do
+      # Use node desc to lookup optional XML data (misc entries)
+      node=${node_in/;*/}
+
+      # Destination Node Descriptions might be blank if it is an endpoint (ignore them)
+      if [[ "${node//[[:space:]]/}" == "" ]]; then
+        continue
+      fi
+
+      lookup_misc_table_entry "$node" "$NODETYPE_EDGE" args
+
+      if [ "$args" != "" ]; then
+        echo "$node;$args" >> $FILE_NODESWITCHES
+      else
+        echo "$node" >> $FILE_NODESWITCHES
+      fi
+    done < $FILE_TEMP2
   fi
   if [ -f $FILE_NODECHASSIS ]
     then
-    rm -f $FILE_CHASSIS
-    rm -f $FILE_TEMP
+    remove_file "$FILE_CHASSIS"
+    remove_file "$FILE_TEMP"
     mv $FILE_NODECHASSIS $FILE_TEMP
     sort -u $FILE_TEMP > $FILE_NODECHASSIS
     cp -p $FILE_NODECHASSIS $FILE_CHASSIS
   fi
   if [ -f $FILE_NODESM ]
     then
-    rm -f $FILE_TEMP
+    remove_file "$FILE_TEMP"
     mv $FILE_NODESM $FILE_TEMP
     sort -u $FILE_TEMP > $FILE_NODESM
   fi
 
-  rm -f $FILE_TOPOLOGY_OUT
-  echo '<?xml version="1.0" encoding="utf-8" ?>' >> $FILE_TOPOLOGY_OUT
-  echo "<Report>" >> $FILE_TOPOLOGY_OUT
+  remove_file "$FILE_TOPOLOGY_TEMP"
+  echo '<?xml version="1.0" encoding="utf-8" ?>' >> $FILE_TOPOLOGY_TEMP
+  echo "<Report>" >> $FILE_TOPOLOGY_TEMP
 
-  # Generate LinkSummary section
-  echo "<LinkSummary>" >> $FILE_TOPOLOGY_OUT
-  if [ -s $FILE_LINKSUM -a $1 == 1 ]
-    then
-    $XML_GENERATE -X $FILE_LINKSUM -d \; -i 2 -h Link -g Rate -g MTU -g Internal -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
-  elif [ -s $FILE_LINKSUM_NOCORE -a $1 == 0 ]
-    then
-    $XML_GENERATE -X $FILE_LINKSUM_NOCORE -d \; -i 2 -h Link -g Rate -g MTU -g Internal -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
+  if [ "$output_section" == "all"  ] || [ "$output_section" == "links" ] ; then
+    # Generate LinkSummary section
+    echo "<LinkSummary>" >> $FILE_TOPOLOGY_TEMP
+    if [ -s $FILE_LINKSUM -a $1 == 1 ]
+      then
+      $XML_GENERATE -X $FILE_LINKSUM -d \; -i 2 -h Link -g Rate -g MTU -g LinkDetails -g Internal -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_TEMP
+    elif [ -s $FILE_LINKSUM_NOCORE -a $1 == 0 ]
+      then
+      $XML_GENERATE -X $FILE_LINKSUM_NOCORE -d \; -i 2 -h Link -g Rate -g MTU -g LinkDetails -g Internal -h Cable -g CableLength -g CableLabel -g CableDetails -e Cable -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_TEMP
+    fi
+
+    if [ -s $FILE_LINKSUM_NOCABLE -a $2 == 1 ]
+      then
+      # Note: <Cable> header not needed because cable data is null
+      $XML_GENERATE -X $FILE_LINKSUM_NOCABLE -d \; -i 2 -h Link -g Rate -g MTU -g LinkDetails -g Internal -g CableLength -g CableLabel -g CableDetails -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_TEMP
+    fi
+    echo "</LinkSummary>" >> $FILE_TOPOLOGY_TEMP
   fi
 
-  if [ -s $FILE_LINKSUM_NOCABLE -a $2 == 1 ]
-    then
-    # Note: <Cable> header not needed because cable data is null
-    $XML_GENERATE -X $FILE_LINKSUM_NOCABLE -d \; -i 2 -h Link -g Rate -g MTU -g Internal -g CableLength -g CableLabel -g CableDetails -h Port -g PortNum -g NodeType -g NodeDesc -e Port -h Port -g PortNum -g NodeType -g NodeDesc -e Port -e Link >> $FILE_TOPOLOGY_OUT
-  fi
-  echo "</LinkSummary>" >> $FILE_TOPOLOGY_OUT
+  if [ "$output_section" == "all"  ] || [ "$output_section" == "brnodes" ] ; then
+    # Generate Nodes/FIs section
+    echo "<Nodes>" >> $FILE_TOPOLOGY_TEMP
+    echo "<FIs>" >> $FILE_TOPOLOGY_TEMP
+    if [ -s $FILE_NODEFIS ]
+      then
+      $XML_GENERATE -X $FILE_NODEFIS -d \; -i 2 -h Node -g NodeDesc -g NodeDetails $misc_params -e Node >> $FILE_TOPOLOGY_TEMP
+    fi
+    echo "</FIs>" >> $FILE_TOPOLOGY_TEMP
 
-  # Generate Nodes/FIs section
-  echo "<Nodes>" >> $FILE_TOPOLOGY_OUT
-  echo "<FIs>" >> $FILE_TOPOLOGY_OUT
-  if [ -s $FILE_NODEFIS ]
-    then
-    $XML_GENERATE -X $FILE_NODEFIS -d \; -i 2 -h Node -g NodeDesc -g NodeDetails -e Node >> $FILE_TOPOLOGY_OUT
-  fi
-  echo "</FIs>" >> $FILE_TOPOLOGY_OUT
+    # Generate Switch Section
+    generate_switch_section
 
-  # Generate Nodes/Switches section
-  echo "<Switches>" >> $FILE_TOPOLOGY_OUT
-  if [ -s $FILE_NODESWITCHES ]
-    then
-    $XML_GENERATE -X $FILE_NODESWITCHES -d \; -i 2 -h Node -g NodeDesc -e Node >> $FILE_TOPOLOGY_OUT
+    # Generate SM section
+    echo "<SMs>" >> $FILE_TOPOLOGY_TEMP
+    if [ -s $FILE_NODESM ]
+      then
+      $XML_GENERATE -X $FILE_NODESM -i 2 -h SM -g NodeDesc -g PortNum -e SM >> $FILE_TOPOLOGY_TEMP
+    fi
+    echo "</SMs>" >> $FILE_TOPOLOGY_TEMP
+    echo "</Nodes>" >> $FILE_TOPOLOGY_TEMP
   fi
-  echo "</Switches>" >> $FILE_TOPOLOGY_OUT
 
-  # Generate SM section
-  echo "<SMs>" >> $FILE_TOPOLOGY_OUT
-  if [ -s $FILE_NODESM ]
-    then
-    $XML_GENERATE -X $FILE_NODESM -i 2 -h SM -g NodeDesc -g PortNum -e SM >> $FILE_TOPOLOGY_OUT
-  fi
-  echo "</SMs>" >> $FILE_TOPOLOGY_OUT
-  echo "</Nodes>" >> $FILE_TOPOLOGY_OUT
+  echo "</Report>" >> $FILE_TOPOLOGY_TEMP
 
-  echo "</Report>" >> $FILE_TOPOLOGY_OUT
+  # trim leading and trailing whitespace from tag contents and add indent
+  $XML_INDENT -t $FILE_TOPOLOGY_TEMP -i $indent > $FILE_TEMP 2>/dev/null
+  cat $FILE_TEMP > $FILE_TOPOLOGY_OUT
 
   # Clean temporary files
   clean_tempfiles
+  topology_file_cleanup
 }  # End of gen_topology
 
-# Append to LINKSUM_NOCABLE file using parameter as input.
+# Append to LINKSUM_NOCABLE file using parameter as input.  
 # Inputs:
 #   $1 = FILE_LINKSUM_SWD06 or FILE_LINKSUM_SWD24
 # Outputs: FILE_LINKSUM_NOCABLE
@@ -486,16 +576,22 @@ generate_linksum_nocable()
   if ! [ -z "$1" ]
   then
     local IFS=";"
-    cat $1|sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$CAT_CHAR/g" | grep -E "$leaves"| while read t[0] t[1] t[2] t[3] t[4] t[5] t[6] t[7] t[8] t[9] t[10] t[11]
+    cat $1 | sed -e "s/$DUMMY_CORE_NAME/$core_name/g" -e "s/$CAT_CHAR_CORE/$CAT_CHAR/g" | grep -E "$leaves" > $FILE_TEMP
+
+    while read -a t
     do
-      if [ "${t[7]}" == "SW" ] && [ "${t[10]}" == "SW" ]; then
-        local IFS="|" link="${t[0]};${MTU_SW_SW};${t[2]};${t[3]};${t[4]};${t[5]};${t[6]};${t[7]};${t[8]};${t[9]};${t[10]};${t[11]}"
+      if [ "${t[7]}" == "$NODETYPE_SWITCH" ] && [ "${t[10]}" == "$NODETYPE_SWITCH" ]; then
+        local IFS="|" link="${t[0]};${MTU_SW_SW};;${t[2]};${t[3]};${t[4]};${t[5]};${t[6]};${t[7]};${t[8]};${t[9]};${t[10]};${t[11]}"
+        # Add Source Spine
+        add_portnum_to_switchportlist "${t[6]}" "${t[8]}" "1"
+        # Add Destination Leaf
+        add_portnum_to_switchportlist "${t[9]}" "${t[11]}" "1"
       else
-        local IFS="|" link="${t[0]};${MTU_SW_HFI};${t[2]};${t[3]};${t[4]};${t[5]};${t[6]};${t[7]};${t[8]};${t[9]};${t[10]};${t[11]}"
+        local IFS="|" link="${t[0]};${MTU_SW_HFI};;${t[2]};${t[3]};${t[4]};${t[5]};${t[6]};${t[7]};${t[8]};${t[9]};${t[10]};${t[11]}"
       fi
       echo "$link" >> ${FILE_LINKSUM_NOCABLE}
       local IFS=";"
-    done
+    done < $FILE_TEMP
   fi
 }
 
@@ -712,10 +808,454 @@ process_sm()
   done
 }
 
+
+# Join miscellaneous fields of global $t[] into a user specified delimited string
+join_fields_into_string()
+{
+  local __res=$1
+  local delimiter=$2
+  local entry=""
+  local string=""
+  local args=""
+  local i=""
+  local start=$FIELD_COUNT
+  local end=$((FIELD_COUNT+additional_fields))
+  local IFS
+
+  eval $__res="''"
+
+  ((end--))
+  for i in `seq $start $end`; do
+    entry="${t[$i]}"
+    if [ "$string" == "" ]; then
+      string=$entry
+    else
+      string="${string}${delimiter}${entry}"
+    fi
+  done
+
+  # Add a terminating delimeter (this helps parsers account for empty last column cells)
+  if [ "$string" != "" ]; then
+    string="${string}${delimiter}"
+  fi
+
+  eval $__res="'$string'"
+}
+
+parse_table_header()
+{
+  local IFS=","
+  declare -a element_list
+  declare -a subelement_list
+  declare -a misc_hdr_list
+  local misc_column_list=""
+  local element=""
+  local subelement=""
+  local subelement_test=""
+  local nested_element=""
+  local entry=""
+  local index_pos=-1
+  misc_param_index=()
+
+  join_fields_into_string misc_column_list ","
+
+  # Excel will put a cell in quotes if it contains a comma during CSV generation
+  if [[ "$misc_column_list" =~ "\"" ]]; then
+    echo "Parse error no quoted strings in miscellaneous header cell: $misc_column_list" >&2
+    exit 2
+    return
+  fi
+
+  if [[ "$misc_column_list" =~ ";" ]]; then
+    echo "Parse error no semicolons in miscellaneous header: $misc_column_list" >&2
+    exit 2
+    return
+  fi
+
+  for element in $misc_column_list; do
+    if [[ "$element" == "" ]]; then
+      echo "Parse error empty element in miscellaneous header" >&2
+      exit 2
+    fi
+
+    if [[ $element =~ [[:space:]] ]]; then
+      echo "Parse error whitespace in miscellaneous element '${element}'" >&2
+      exit 2
+    fi
+
+    element_list+=($element)
+
+    # check if entry is part of subelement
+    if [[ "$element" =~ ":" ]]; then
+       # sanity check subelement
+       subelement=${element/:*/}
+       if [[ "$subelement" == "" ]]; then
+          echo "Parse error subelement name not specified '${element}'" >&2
+          exit 2
+       fi
+
+       # sanity check nested element
+       nested_element=`echo $element | cut -d ':' -f 2`
+       if [[ "$nested_element" == "" ]]; then
+          echo "Parse error nested element name not specified '${element}'" >&2
+          exit 2
+       fi
+       subelement_list+=($subelement)
+    fi
+  done
+
+  IFS=' '
+  # sort subelements and remove duplicates
+  subelement_list=($(echo ${subelement_list[@]} | tr ' ' '\n' | sort -u| tr '\n' ' '))
+
+  # add the root element too beginning of list
+  subelement_list=($(echo "__root ${subelement_list[@]}"))
+
+  for subelement in "${subelement_list[@]}"; do
+     for element in "${element_list[@]}"; do
+
+       if [[ "$subelement" == "__root" ]]; then
+         # a root element has is a element without : seperator
+         if ! [[ "$element" =~ ":" ]]; then
+           misc_hdr_list+=($element)
+           continue
+         fi
+       fi
+
+       # check if entry is a member of subelement
+       subelement_test=${element/:*/}
+       if [[ "$subelement" == "$subelement_test" ]]; then
+         misc_hdr_list+=($element)
+       fi
+     done
+  done
+
+  # Build parameter list for opaxmlgenerate
+  subelement="__root"
+  args=""
+  subelement_test=""
+  nested_element=""
+
+  for entry in "${misc_hdr_list[@]}"; do
+    if [[ "$entry" =~ ":" ]]; then
+       subelement_test=${entry/:*/}
+       nested_element=`echo $entry | cut -d ':' -f 2`
+       if [[ "$subelement" != "$subelement_test" ]]; then
+          if [[ "$subelement" == "__root" ]]; then
+            args="$args -h $subelement_test -g $nested_element"
+          else
+            args="$args -e $subelement -h $subelement_test -g $nested_element"
+          fi
+          subelement=$subelement_test;
+       else
+          args="$args -g $nested_element"
+       fi
+    else
+      if [[ "$subelement" != "__root" ]]; then
+        echo "Unexpected error root element" >&2
+        exit 2
+      fi
+      args="$args -g $entry"
+    fi
+  done
+  if [[ "$nested_element" != "" ]]; then
+      args="$args -e $subelement"
+  fi
+
+  misc_params=$args
+
+  # Now that columns are in a different order build an index to map the data set
+  index_pos=-1
+  for element in "${element_list[@]}"; do
+     ((index_pos++))
+     entry_pos=0
+     for entry in "${misc_hdr_list[@]}"; do
+        if [[ "$entry" == "$element" ]]; then
+           misc_param_index[$index_pos]=$entry_pos
+           break
+        fi
+        ((entry_pos++))
+     done
+  done
+}
+
+add_fields_to_misc_table()
+{
+  # save entry $3 to lookup table via node desc $1 and type $2
+  local node_desc=$1
+  local node_type=$2
+  local arg=""
+  local node_misc_entry=""
+  local i=0
+  local index_pos=0
+  local cnt=0
+  local IFS
+  declare -a node_misc_entry_array=()
+  declare -a sorted_node_misc_entry_array=()
+
+  if [ "$node_desc" == "" ]; then
+    return
+  fi
+
+  # Join node field arguments into a comma-delimited string
+  join_fields_into_string node_misc_entry ","
+
+  if [ "$node_misc_entry" == "" ]; then
+    return
+  fi
+
+  # Excel will put a cell in quotes if it contains a comma during CSV generation
+  if [[ "$node_misc_entry" =~ "\"" ]]; then
+    echo "Parse error no quoted strings in cell $node_misc_entry" >&2
+    exit 2
+    return
+  fi
+
+  # Convert comma delimiter to semicolon delimiter for opaxmlgenerate
+  IFS="," node_misc_entry_array=($node_misc_entry)
+
+  cnt=${#node_misc_entry_array[@]}
+  ((cnt--))
+
+  # Sort input entries using the parameter index for opaxmlgenerate
+  # Create a semicolon delmited string
+  unset IFS
+
+  if [[ "$cnt" -ge 0 ]]; then
+    for i in `seq 0 $cnt`
+    do
+      index_pos=${misc_param_index[$i]}
+      if [[ "$index_pos" == "" ]]; then
+        echo "Unexpected error index not defined for position $i" >&2
+        exit 2
+      fi
+      sorted_node_misc_entry_array[$index_pos]=${node_misc_entry_array[$i]}
+    done
+
+    node_misc_entry="${sorted_node_misc_entry_array[0]}"
+    for i in `seq 1 $cnt`
+    do
+      node_misc_entry="$node_misc_entry;${sorted_node_misc_entry_array[$i]}"
+    done
+  fi
+
+  # Remove whitespace in node description for associative array lookup (required by Bash)
+  node_desc=${node_desc//[[:space:]]/_}
+
+  case $node_type in
+    $NODETYPE_EDGE )
+      misc_sw_table[$node_desc]="$node_misc_entry"
+    ;;
+    $NODETYPE_LEAF )
+      misc_sw_table[$node_desc]="$node_misc_entry"
+    ;;
+    $NODETYPE_SPINE )
+      misc_sw_table[$node_desc]="$node_misc_entry"
+    ;;
+    $NODETYPE_HFI )
+      misc_fi_table[$node_desc]="$node_misc_entry"
+    ;;
+    *)
+      echo "Error invalid node type '${node_type}'" >&2
+      exit 2
+    ;;
+  esac
+}
+
+add_portnum_to_switchportlist()
+{
+  local portnum=$1
+  local node_desc=$2
+  local internal=$3
+  local portlist=""
+  local IFS
+
+  if [ "$node_desc" == "" ]; then
+    return
+  fi
+
+  # Remove whitespace in node description for associative array lookup (required by Bash)
+  node_desc=${node_desc//[[:space:]]/_}
+  portlist=${sw_portlist_table[$node_desc]}
+
+  # Make sure internal parameter numerical value
+  if [[ ${internal//[[:digit:]]/} ]]; then
+    echo "Internal Error: internal parameter is non-numerical \"$internal\"" >&2
+    exit 1
+  fi
+
+  # Make sure port number is numerical value
+  if [[ ${portnum//[[:digit:]]/} ]]; then
+    echo "Error port number is non-numerical \"$portnum\" (line:$ix_line)" >&2
+    exit 2
+  fi
+
+  # Make sure this port is not already in the portlist
+  IFS=','
+  for port in $portlist
+  do
+    if [ "$port" == "$portnum" ]; then
+       # check to make sure there are not duplicate entries in the CSV files
+       # accept duplicate internal ports and drop them from list
+       if [ "$internal" == "1" ]; then
+         return
+       else
+         echo "Error port number \"$portnum\" is already in the list of ports processed for \"$node_desc\" (line:$ix_line)" >&2
+         exit 2
+       fi
+    fi
+  done
+
+  if [ "$portlist" == "" ]; then
+    portlist="$portnum"
+  else
+    portlist="${portlist},${portnum}"
+  fi
+
+  sw_portlist_table[$node_desc]="$portlist"
+}
+
+lookup_portnum_from_switchportlist()
+{
+  local node_desc=$1
+  local __res=$2
+  local portlist=""
+
+  if [ "$node_desc" == "" ]; then
+    return
+  fi
+
+  # Remove whitespace in node description for associative array lookup (required by Bash)
+  node_desc=${node_desc//[[:space:]]/_}
+  portlist=${sw_portlist_table[$node_desc]}
+
+  eval $__res="'$portlist'"
+}
+
+generate_switch_section()
+{
+  local line=""
+  local node_desc=""
+  local node_desc_key=""
+  local port_list=""
+  declare -a port_array
+  local portnum=""
+  local switch_entry=""
+  local portnum_entry=""
+  local IFS
+
+  # Generate Nodes/Switches section in XML
+  echo "<Switches>" >> $FILE_TOPOLOGY_TEMP
+  if [ -s $FILE_NODESWITCHES ]
+    then
+    while read -r line; do
+        portnum_entry=""
+        switch_entry=""
+        node_desc=${line//;*}
+        if [ "$node_desc" == "" ]; then
+          echo "Internal Error: Node Description Empty" >&2
+          exit 1
+        fi
+
+        # Sanity check Switch Node ports
+        lookup_portnum_from_switchportlist "$node_desc" port_list
+        if [ "$port_list" == "" ]; then
+          echo "Internal Error: Switch defined (${node_desc}) with no ports" >&2
+          exit 1
+        fi
+
+        # If Switch entry has additional parameters, generate XML entry with $XML_GENERATE
+        unset IFS
+        if [[ "$line" =~ ";" ]]; then
+          switch_entry=`echo $line | $XML_GENERATE -X - -d \; -i 2 -h Node -g NodeDesc $misc_params`
+        else
+          # Otherwise manually create Switch entries
+          switch_entry="<Node>"$'\n'
+          switch_entry=${switch_entry}"<NodeDesc>${node_desc}</NodeDesc>"
+          switch_entry=${switch_entry}$'\n'
+
+          # Add required PortNum 0 definition
+          if [ "$port_field" == "required" ]; then
+            portnum_entry=${portnum_entry}$'\n'
+            portnum_entry=${portnum_entry}"<Port>"
+            portnum_entry=${portnum_entry}$'\n'
+            portnum_entry=${portnum_entry}"<PortNum>0</PortNum>"
+            portnum_entry=${portnum_entry}$'\n'
+            portnum_entry=${portnum_entry}"</Port>"
+          fi
+        fi
+
+        if [ "$port_field" == "required" ]; then
+          # Sort Port number list to make output more readable
+          IFS=','
+          for portnum in $port_list; do
+            port_array+=($portnum)
+          done
+          port_array=($(echo ${port_array[@]} | tr ' ' '\n' | sort -n -u| tr '\n' ' '))
+
+          unset IFS
+          # Insert Port number list to XML
+          for portnum in ${port_array[@]}
+          do
+            portnum_entry=${portnum_entry}$'\n'
+            portnum_entry=${portnum_entry}"<Port>"
+            portnum_entry=${portnum_entry}$'\n'
+            portnum_entry=${portnum_entry}"<PortNum>${portnum}</PortNum>"
+            portnum_entry=${portnum_entry}$'\n'
+            portnum_entry=${portnum_entry}"</Port>"
+          done
+        fi
+
+        # Write entry to XML file
+        echo $switch_entry >> $FILE_TOPOLOGY_TEMP
+        echo $portnum_entry >> $FILE_TOPOLOGY_TEMP
+        echo "</Node>" >> $FILE_TOPOLOGY_TEMP
+    done < $FILE_NODESWITCHES
+  fi
+  echo "</Switches>" >> $FILE_TOPOLOGY_TEMP
+}
+
+lookup_misc_table_entry()
+{
+  # lookup entry via node desc $1 and type $2 and return by updating $3
+  local node_desc=$1
+  local node_type=$2
+  local __res=$3
+  local entry=""
+
+  if [ "$node_desc" == "" ]; then
+    return
+  fi
+
+  # Remove whitespace in node description for associative array lookup (required by Bash)
+  node_desc=${node_desc//[[:space:]]/_}
+
+  case $node_type in
+    $NODETYPE_EDGE )
+      entry=${misc_sw_table[$node_desc]}
+    ;;
+    $NODETYPE_LEAF )
+      entry=${misc_sw_table[$node_desc]}
+    ;;
+    $NODETYPE_SPINE )
+      entry=${misc_sw_table[$node_desc]}
+    ;;
+    $NODETYPE_HFI )
+      entry=${misc_fi_table[$node_desc]}
+    ;;
+    *)
+      echo "Error invalid node type '${node_type}'" >&2
+      exit 2
+    ;;
+  esac
+
+  eval $__res="'$entry'"
+}
+
 ## Main function:
 
 # Get options
-while getopts d:i:Kv:s: option
+while getopts d:i:Kv:s:o: option
 do
   case $option in
   d)
@@ -742,10 +1282,32 @@ do
     n_verbose=$OPTARG
     ;;
 
+  o)
+    output_section=$OPTARG
+    if [ "$output_section" != "brnodes" ] && [ "$output_section" != "links" ] ; then
+      echo "opaxlattopology -o: Invalid Argument - $output_section"
+      usage_full "2"
+      exit 1
+    fi
+    ;;
+
   s)
     hfi_suffix=$OPTARG
+    if [[ "$hfi_suffix" =~ $HFI_SUFFIX_REGEX ]] ; then
+        hfiNum=`echo "$hfi_suffix" | cut -d "_" -f2`
+        # Change the name of FILE_TOPOLOGY_OUT as per the hfi name
+        # This can be overwritten by specifying output file name through command line
+        FILE_TOPOLOGY_OUT="topology.$((hfiNum+1)):0.xml"
+    elif [[ "$hfi_suffix" == "" ]] ; then
+        # Do nothing
+        :
+    else
+        echo "opaxlattopology -s: Invalid Argument, should be like hfi1_0 or empty string"
+        usage_full "2"
+        exit 1
+    fi
     ;;
-  
+
   *)
     usage_full "2"
     ;;
@@ -765,28 +1327,52 @@ fi
 # Parse FILE_TOPOLOGY_LINKS2
 display_progress "Parsing $FILE_TOPOLOGY_LINKS"
 
-rm -f ${FILE_LINKSUM}
-rm -f ${FILE_LINKSUM_NOCORE}
-rm -f ${FILE_LINKSUM_NOCABLE}
-rm -f ${FILE_NODEFIS}
-rm -f ${FILE_NODESWITCHES}
-rm -f ${FILE_NODELEAVES}
-rm -f ${FILE_NODECHASSIS}
+remove_file "$FILE_LINKSUM"
+remove_file "$FILE_LINKSUM_NOCORE"
+remove_file "$FILE_LINKSUM_NOCABLE"
+remove_file "$FILE_NODEFIS"
+remove_file "$FILE_NODESWITCHES"
+remove_file "$FILE_NODELEAVES"
+remove_file "$FILE_NODECHASSIS"
 
-# TBD - add support for rate
-rate="100g"
-ix_line=1
+# default rate
+RATE_DEFAULT=${RATE_DEFAULT:-"100g"}
 
 while IFS="," read -a t
 do
+  ((ix_line++))
+
   case $cts_parse in
   # Syncing to beginning of link data
   0)
     if [ "${t[0]}" == "Rack Group" ]
-      then
+    then
+      # Parse remaining optional (CSV formatted) column headers
+      # Generate additional parameters for opaxmlgenerate
+      # based on the optional column headers
+      # Count additional optional fields
+      additional_fields=${#t[@]}
+      additional_fields=$((additional_fields-FIELD_COUNT))
+      # This may happen if user is using minimal sample csv
+      if [[ "$additional_fields" -lt "0" ]]; then
+         additional_fields=0
+         portnum_field=FIELD_COUNT
+      else
+        # Topology XMLs require a Node/Port/PortNum Field
+        portnum_field=${#t[@]}
+        if [[ "$additional_fields" -gt "0" ]] ; then
+          t_additional=${t[@]:$FIELD_COUNT}
+          if array_contains t_additional[@] "Port:LID" || array_contains t_additional[@] "Port:LMC" ; then
+            port_field="required"
+            t[$portnum_field]="Port:PortNum"
+            ((additional_fields++))
+          fi
+        fi
+      fi
+      parse_table_header
       cts_parse=1
     fi
-    ;;
+  ;;
 
   # Process link tokens
   1)
@@ -832,9 +1418,49 @@ do
       t_dstport=`trim_trailing_whitespace "${t[10]}"`
     fi
 
+    if [ `cvt_nodetype "$t_srctype"` == "$NODETYPE_SWITCH" ]; then
+      t[$portnum_field]=0
+    else
+      t[$portnum_field]=$t_srcport
+    fi
+
     t_cablelabel=`trim_trailing_whitespace "${t[12]}"`
     t_cablelength=`trim_trailing_whitespace "${t[13]}"`
     t_cabledetails=`trim_trailing_whitespace "${t[14]}"`
+
+    rate=`trim_trailing_whitespace "${t[15]}"`
+
+    if [ "$rate" == "" ]; then
+      rate=$RATE_DEFAULT
+    fi
+    if [ `cvt_nodetype "$t_srctype"` == "$NODETYPE_HFI" ]; then
+      MTU_SW_HFI=`trim_trailing_whitespace "${t[16]}"`
+
+      if [ "$MTU_SW_HFI" == "" ]; then
+       MTU_SW_HFI=$MTU_SW_HFI_DEFAULT
+      fi
+
+      # Make sure MTU is numerical value
+      if [[ "${MTU_SW_HFI//[[:digit:]]/}" != "" ]]; then
+        echo "Error MTU is non-numerical \"$MTU_SW_HFI\"" >&2
+        exit 2
+      fi
+
+    else
+      MTU_SW_SW=`trim_trailing_whitespace "${t[16]}"`
+
+      if [ "$MTU_SW_SW" == "" ]; then
+       MTU_SW_SW=$MTU_SW_SW_DEFAULT
+      fi
+
+      # Make sure MTU is numerical value
+      if [[ "${MTU_SW_SW//[[:digit:]]/}" != "" ]]; then
+        echo "Error MTU is non-numerical \"$MTU_SW_SW\"" >&2
+        exit 2
+      fi
+
+    fi
+    t_linkdetails=`trim_trailing_whitespace "${t[17]}"`
 
     if [ "$t_srctype" == "$NODETYPE_SPINE" ]
       then
@@ -908,34 +1534,50 @@ do
 
       # Validate sources and destinations
       if [ "$t_dsttype" == "$NODETYPE_HFI" ]; then
-        echo "Error: HFIs cannot be destination nodes" >&2
+        echo "Error: HFIs cannot be destination nodes (line:$ix_line)" >&2
         usage_full "2"
       fi
 
       if [[ "$t_srctype" == "$NODETYPE_HFI" ]] && [[ "$t_dsttype" != "$NODETYPE_EDGE" && "$t_dsttype" != "$NODETYPE_LEAF" ]]; then
-          echo "Error: HFIs must connect to Edge/Leaf Switches" >&2
+          echo "Error: HFIs must connect to Edge/Leaf Switches (line:$ix_line)" >&2
           usage_full "2"
       fi
 
       if [ "$t_srctype" != "$NODETYPE_LEAF" ] && [ "$t_dsttype" == "$NODETYPE_SPINE" ]; then
-        echo "Error: Only Leaf switches can connect to Spine switches" >&2
+        echo "Error: Only Leaf switches can connect to Spine switches (line:$ix_line)" >&2
         usage_full "2"
       fi
 
       if [ "$t_srctype" == "$NODETYPE_SPINE" ]; then
-        echo "Error: Spine switches cannot be source nodes" >&2
+        echo "Error: Spine switches cannot be source nodes (line:$ix_line)" >&2
         usage_full "2"
       fi
 
-      # Output CSV FILE_LINKSUM
-      if [ $nodetype1 == "SW" ] && [ $nodetype2 == "SW" ]; then
-        link="${rate};${MTU_SW_SW};${internal};${t_cablelength};${t_cablelabel};${t_cabledetails};${t_srcport};${nodetype1};${nodedesc1};${t_dstport};${nodetype2};${nodedesc2}"
-      else  
-        #$nodetype1 == "FI" || $nodetype2 == "FI"
-        #$MTU_SW_HFI should be the same as $MTU_HFI_HFI
-        link="${rate};${MTU_SW_HFI};${internal};${t_cablelength};${t_cablelabel};${t_cabledetails};${t_srcport};${nodetype1};${nodedesc1};${t_dstport};${nodetype2};${nodedesc2}"
+      # Add miscellaneous content to lookup table (keyed by node desc and node type)
+      # This will be used in XML output generation
+
+      add_fields_to_misc_table "$nodedesc1" "$t_srctype"
+
+      if [ "$nodetype1" == "$NODETYPE_SWITCH" ]; then
+        # Add Source Port to PortList if Source Node is Switch
+        add_portnum_to_switchportlist "$t_srcport" "$nodedesc1" "$internal"
       fi
-      echo "${link}" >> ${FILE_LINKSUM}
+
+      if [ "$nodetype2" == "$NODETYPE_SWITCH" ]; then
+        # Add Destination Port to PortList if Destination Node is Switch
+        add_portnum_to_switchportlist "$t_dstport" "$nodedesc2" "$internal"
+      fi
+
+      # Output CSV FILE_LINKSUM
+      if [ $nodetype2 != "$NODETYPE_ENDPOINT" ]; then
+        if [ $nodetype1 == "$NODETYPE_SWITCH" ] && [ $nodetype2 == "$NODETYPE_SWITCH" ]; then
+          link="${rate};${MTU_SW_SW};${t_linkdetails};${internal};${t_cablelength};${t_cablelabel};${t_cabledetails};${t_srcport};${nodetype1};${nodedesc1};${t_dstport};${nodetype2};${nodedesc2}"
+        else
+          link="${rate};${MTU_SW_HFI};${t_linkdetails};${internal};${t_cablelength};${t_cablelabel};${t_cabledetails};${t_srcport};${nodetype1};${nodedesc1};${t_dstport};${nodetype2};${nodedesc2}"
+        fi
+        echo "${link}" >> ${FILE_LINKSUM}
+      fi
+
       if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
         then
         echo "${link}" >> ${tb_group[$ix_srcgroup]}${FILE_LINKSUM}
@@ -1052,14 +1694,16 @@ do
       fi
 
       # Output CSV nodedesc2
-      echo "${nodedesc2}" >> ${FILE_NODESWITCHES}
+      if [ "$nodetype2" != "$NODETYPE_ENDPOINT" ]; then
+        echo "${nodedesc2}" >> ${FILE_NODESWITCHES}
+      fi
       if [ "$t_dsttype" == "$NODETYPE_LEAF" ]
         then
         echo "${nodedesc2}" >> ${FILE_NODELEAVES}
         echo "${t_dstname}" >> ${FILE_NODECHASSIS}
-        external_leafs+=("`echo "${nodedesc2}" | sed -e 's/[AB]$//'`")
+        external_leaves+=("`echo "${nodedesc2}" | sed -e 's/[AB]$//'`")
       fi
-      if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
+      if [ $((n_detail & OUTPUT_GROUPS)) != 0 ] && [ "$nodetype2" != "$NODETYPE_ENDPOINT" ]
         then
         echo "${nodedesc2}" >> ${tb_group[$ix_dstgroup]}${FILE_NODESWITCHES}
         if [ "$t_dsttype" == "$NODETYPE_LEAF" ]
@@ -1069,7 +1713,7 @@ do
         fi
       fi
 
-      if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
+      if [ $((n_detail & OUTPUT_RACKS)) != 0 ] && [ "$nodetype2" != "$NODETYPE_ENDPOINT" ]
         then
         echo "${nodedesc2}" >> ${tb_group[$ix_dstgroup]}${tb_rack[$ix_dstrack]}${FILE_NODESWITCHES}
         if [ "$t_dsttype" == "$NODETYPE_LEAF" ]
@@ -1079,7 +1723,7 @@ do
         fi
       fi
 
-      if [ $((n_detail & OUTPUT_SWITCHES)) != 0 ]
+      if [ $((n_detail & OUTPUT_SWITCHES)) != 0 ] && [ "$nodetype2" != "$NODETYPE_ENDPOINT" ]
         then
         if [ "$t_dsttype" == "$NODETYPE_EDGE" ]
           then
@@ -1106,7 +1750,7 @@ do
       if [[ "$core_name" =~ [[:space:]] ]]
         then
         echo "opaxlattopology: Error - core name cannot have space char: $core_name" >&2
-        exit 1
+        exit 2
       fi
       core+=("$core_name")
       display_progress "Generating links for Core:$core_name"
@@ -1124,7 +1768,7 @@ do
       if [[ "$core_group" =~ [[:space:]] ]]
         then
         echo "opaxlattopology: Error - core group name cannot have space char: $core_group" >&2
-        exit 1
+        exit 2
       fi
       # Store core group
       core_name_group["$core_name"]="$core_group"
@@ -1142,7 +1786,7 @@ do
       if [[ "$core_rack" =~ [[:space:]] ]]
         then
         echo "opaxlattopology: Error - core rack name cannot have space char: $core_rack" >&2
-        exit 1
+        exit 2
       fi
       # Store core rack
       core_name_rack["$core_name"]="$core_rack"
@@ -1186,9 +1830,9 @@ do
       else
 	generate_linksum_nocable $FILE_LINKSUM_SWD24
       fi
-      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> ${FILE_NODESWITCHES}
-      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> ${FILE_NODESWITCHES}
-      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> ${FILE_NODECHASSIS}
+      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 10 | sort -u >> ${FILE_NODESWITCHES}
+      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | sort -u >> ${FILE_NODESWITCHES}
+      cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | cut -d "$CAT_CHAR" -f 1 | sort -u >> ${FILE_NODECHASSIS}
 
       if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
         then
@@ -1199,9 +1843,9 @@ do
           leaves=`cat $core_group/$FILE_NODELEAVES | tr '\012' '|' | sed -e 's/|$//'`
         fi
         cp ${FILE_LINKSUM_NOCABLE} "$core_group"/${FILE_LINKSUM_NOCABLE}
-        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
-        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
-        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/${FILE_NODECHASSIS}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 10 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/${FILE_NODECHASSIS}
       fi
 
       if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
@@ -1213,9 +1857,9 @@ do
           leaves=`cat "$core_group"/"$core_rack"/$FILE_NODELEAVES | tr '\012' '|' | sed -e 's/|$//'`
         fi
         cp ${FILE_LINKSUM_NOCABLE} "$core_group"/"$core_rack"/${FILE_LINKSUM_NOCABLE}
-        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
-        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
-        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODECHASSIS}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 10 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODESWITCHES}
+        cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | cut -d "$CAT_CHAR" -f 1 | sort -u >> "$core_group"/"$core_rack"/${FILE_NODECHASSIS}
       fi
 
     # End of core switch information
@@ -1228,9 +1872,9 @@ do
     fi
     ;;
 
-    # Finding "Present Leafs" or "Omitted Spine" or "SM" tag. Process if "SM" tag is found
+    # Finding "Present Leaves" or "Omitted Spine" or "SM" tag. Process if "SM" tag is found
   3)
-    if [ "${t[0]}" == "Present Leafs" ]
+    if [ "${t[0]}" == "Present Leafs" ] || [ "${t[0]}" == "Present Leaves" ]
       then
       cts_parse=4
     elif [ "${t[0]}" == "Omitted Spines" ]
@@ -1245,34 +1889,34 @@ do
     fi
     ;;
 
-    # Process Present Leafs
+    # Process Present Leaves
   4)
-    if echo "${t[0]}" | grep -e "$CORE_NAME" > /dev/null 2>&1 
+    if echo "${t[0]}" | grep -e "$CORE_NAME" > /dev/null 2>&1
       then
       core_name=`echo ${t[0]} | cut -d ':' -f 2`
       if ! array_contains core[@] $core_name
         then
-        echo "opaxlattopology: Error - No Core details found for $core_name, specified in \"Present Leafs\" section">&2
-        exit 1
+        echo "opaxlattopology: Error - No Core details found for $core_name, specified in \"Present Leaves\" section">&2
+        exit 2
       fi
       if array_contains partially_populated_core[@] $core_name
         then
-        display_progress "Processing leafs of partially populated Core:$core_name"
-        # add external leafs to the leaf_array
-        for element in "${external_leafs[@]}"
+        display_progress "Processing Leaves of partially populated Core:$core_name"
+        # add external leaves to the leaf_array
+        for element in "${external_leaves[@]}"
         do
           if [[ "$element" =~ "$core_name"" "L[0-9]+$ ]]
             then
             leaf_array+=("$element")
           fi
         done
-        for element in "${t[@]:1}" 
+        for element in "${t[@]:1}"
         do
           if [ -n "$element" ]; then
             leaf_array+=("$core_name ${element}")
           fi
         done
-        # Adding present leafs to temporary files
+        # Adding present leaves to temporary files
         if [ ${#leaf_array[@]} != 0 ]
           then
           leaves=""
@@ -1287,24 +1931,24 @@ do
           else
             generate_linksum_nocable $FILE_LINKSUM_SWD24
           fi
-          cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> ${FILE_NODESWITCHES}
-          cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> ${FILE_NODESWITCHES}
+          cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 10 | sort -u >> ${FILE_NODESWITCHES}
+          cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | sort -u >> ${FILE_NODESWITCHES}
           if [ $((n_detail & OUTPUT_GROUPS)) != 0 ]
             then
-            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "${core_name_group["$core_name"]}"/${FILE_NODESWITCHES}
-            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
+            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 10 | sort -u >> "${core_name_group["$core_name"]}"/${FILE_NODESWITCHES}
+            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | sort -u >> "$core_group"/${FILE_NODESWITCHES}
           fi
           if [ $((n_detail & OUTPUT_RACKS)) != 0 ]
             then
-            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 9 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
-            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 12 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
+            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 10 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
+            cat ${FILE_LINKSUM_NOCABLE} | cut -d ';' -f 13 | sort -u >> "${core_name_group["$core_name"]}"/"${core_name_rack["$core_name"]}"/${FILE_NODESWITCHES}
           fi
         fi
         leaf_array=()
       else
-          echo "opaxlattopology: Warning - Listed \"Present Leafs\" for Fully Populated Core. Ignoring this row"
+          echo "opaxlattopology: Warning - Listed \"Present Leaves\" for Fully Populated Core. Ignoring this row"
       fi
-    # End of Present Leafs information
+    # End of Present Leaves information
     else
         cts_parse=3
     fi
@@ -1318,12 +1962,12 @@ do
       if ! array_contains core[@] $core_name
         then
         echo "opaxlattopology: Error - No Core details found for $core_name, specified in \"Omitted Spines\" section" >&2
-        exit 1
+        exit 2
       fi
       if array_contains partially_populated_core[@] $core_name
         then
         display_progress "Processing spines of partially populated Core:$core_name"
-        for element in "${t[@]:1}" 
+        for element in "${t[@]:1}"
         do
           if [ -n "$element" ]; then
             spine_array+=("$core_name ${element}")
@@ -1358,9 +2002,6 @@ do
    ;;
 
   esac  # end of case $cts_parse in
-
-  ix_line=$((ix_line+1))
-
 done < <( cat $FILE_TOPOLOGY_LINKS | tr -d '\015' )  # End of while read ... do
 
 # Generate topology file(s)
@@ -1369,7 +2010,6 @@ display_progress "Generating $FILE_TOPOLOGY_OUT file(s)"
 # Generate top-level topology file
 gen_topology "$fl_output_edge_leaf" "$fl_output_spine_leaf"
 
-# Output rack groups
 if [ "$n_detail" != "0" ]; then
   # iterate through groups
   for (( iy=1 ; $iy<$group_cnt ; iy=$((iy+1)) )); do
@@ -1410,11 +2050,5 @@ if [ "$n_detail" != "0" ]; then
 
 fi # detail output
 
-# trim leading and trailing whitespace from tag contents and add indent
-$XML_INDENT -t $FILE_TOPOLOGY_OUT -i $indent > $FILE_TEMP
-cat $FILE_TEMP > $FILE_TOPOLOGY_OUT
-rm -f $FILE_TEMP
-
 display_progress "Done"
 exit 0
-

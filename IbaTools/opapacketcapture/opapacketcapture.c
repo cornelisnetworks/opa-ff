@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -29,20 +29,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* [ICS VERSION STRING: unknown] */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
-#ifdef __GUNC__
-#include <features.h>
-#endif
-#if __GNUC_PREREQ(4,8)
-#include <time.h>
-#else
 #include <sys/time.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -50,6 +44,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <features.h>
 
 #include "iba/public/ibyteswap.h"
 #include "iba/stl_types.h"
@@ -57,6 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/stl_pkt.h"
 #include "opapacketcapture.h"
 #include <umad.h> /* for ioctl commands */
+#include <dirent.h>
 
 uint8					*blocks;
 packet					*packets;
@@ -74,7 +70,7 @@ int				 		numPacketsRead = 0;
 int				 		numPacketsTaken = 0;
 uint64			 		numPacketsMax = (uint64)-1;
 int gotModeArg = 0;
-uint8					mode = WFR_MODE;
+uint8					mode = 0;
 int				 		numPacketsStored = 0;
 int				 		stopcapture = 0;
 int				 		triggerSeen = 0;
@@ -122,7 +118,7 @@ static void my_handler(int signal)
 
 int filterSLID(packet *p, uint32 val)
 {
-	int lid = (IB_LID)val;
+	IB_LID lid = STL2IB_LID(val);
 	IB_LRH *lrh;
 	int res = 0;
 
@@ -135,7 +131,7 @@ int filterSLID(packet *p, uint32 val)
 
 int filterDLID(packet *p, uint32 val)
 {
-	int lid = (IB_LID)val;
+	IB_LID lid = STL2IB_LID(val);
 	IB_LRH *lrh;
 	int res = 0;
 
@@ -880,13 +876,13 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 	 */
 	StoreLeU64((uint8*)&ext.ts, ((uint64) sec << 32) + (((uint64) nsec << 32) / 1000 / 1000 / 1000));
 
-	if (verbose > 1 && mode == WFR_MODE) {
-		fprintf(stderr, "Direction:  %u\n", snc->Direction);
-		fprintf(stderr, "PortNumber: %u\n", snc->PortNumber);
-		fprintf(stderr, "PBC/RHF:    0x%"PRIx64"\n", snc->u.AsReg64);
-		fprintf(stderr, "pktLen:     %"PRIu64"\n", pktLen);
-	}
-	if (mode == WFR_MODE) {
+	if (IS_FI_MODE(mode)) {
+		if (verbose > 1) {
+			fprintf(stderr, "Direction:  %u\n", snc->Direction);
+			fprintf(stderr, "PortNumber: %u\n", snc->PortNumber);
+			fprintf(stderr, "PBC/RHF:    0x%"PRIx64"\n", snc->u.AsReg64);
+			fprintf(stderr, "pktLen:     %"PRIu64"\n", pktLen);
+		}
 		ext.flags |= (snc->PortNumber & 0x1);
 	} else {
 		ext.flags |= 1;
@@ -1019,6 +1015,47 @@ void writePacketData()
 
 	return;
 }
+int debugtool_capture_device_filter(const struct dirent *d) {
+	int hfi = -1;
+	int port = -1;
+
+	if (2 == sscanf(d->d_name,  "ipath_capture_%02d_%02d", &hfi, &port)) {
+		return (hfi != -1 && port != -1 ? 1 : 0);
+	}
+	return 0;
+}
+int wfr_capture_device_filter(const struct dirent *d) {
+	int gen = -1;
+	int hfi = -1;
+
+	if (2 == sscanf(d->d_name, "hfi%d_diagpkt%d", &gen, &hfi)) {
+		return (gen == 1 && hfi != -1 ? 1 : 0);
+	}
+	return 0;
+}
+int all_capture_device_filter(const struct dirent *d) {
+	int gen = -1;
+	int hfi = -1;
+	int port = -1;
+
+	if (2 == sscanf(d->d_name, "hfi%d_diagpkt%d", &gen, &hfi)) {
+		return ((gen == 1) && hfi != -1 ? 1 : 0);
+
+	}
+	if (2 == sscanf(d->d_name,  "ipath_capture_%02d_%02d", &hfi, &port)) {
+		return (hfi != -1 && port != -1 ? 1 : 0);
+	}
+	return 0;
+}
+
+static char *modeToText(uint8 mode){
+	switch (mode) {
+	case 0: return "All";
+	case DEBUG_TOOL_MODE: return "DebugTool";
+	case WFR_MODE: return "WFR";
+	default: return "Unknown";
+	}
+}
 
 static void Usage(int exitcode)
 {
@@ -1028,14 +1065,14 @@ static void Usage(int exitcode)
 	fprintf(stderr, "       opapacketcapture --help\n");
 	fprintf(stderr, "   --help - produce full help text\n");
 	fprintf(stderr, "   -o - output file for captured packets - default is "PACKET_OUT_FILE"\n");
-	fprintf(stderr, "   -d - device file for capturing packets - default is "WFR_CAPTURE_FILE"\n");
+	fprintf(stderr, "   -d - device file for capturing packets\n");
 	fprintf(stderr, "   -f - filter file used for filtering - if absent, no filtering\n");
 	fprintf(stderr, "   -t - trigger file used for triggering a stop capture - if absent, normal triggering \n");
 	fprintf(stderr, "   -l - trigger lag: number of packets to collect after trigger condition met before dump and exit (default is 10)\n");
 	fprintf(stderr, "   -a - number of seconds for alarm trigger to dump capture and exit\n");
 	fprintf(stderr, "   -p - number of packets for alarm trigger to dump capture and exit\n");
 	fprintf(stderr, "   -s - number of blocks to allocate for ring buffer (in Millions) [block = 64 Bytes] - default is 2 (128 MiB)\n");
-//	fprintf(stderr, "   -m - protocol mode: 1=DebugTool, 2=WFR; default is WFR\n");
+//	fprintf(stderr, "   -m - protocol mode: 0=All, 1=DebugTool, 2=WFR; default is All\n");
 	fprintf(stderr, "   -v - verbose output (Use verbose Level 1+ to show levels)\n");
 	if (verbose) {
 		fprintf(stderr, "        Level 1: Live Packet Count\n");
@@ -1050,10 +1087,10 @@ static void Usage(int exitcode)
 	exit(exitcode);
 }
 
-
 int main (int argc, char *argv[])
 {
 	int	    	numRead;
+	int	    	numDevs = 0;
 	int		    i;
 	int		    c;
 	packet	    *newPacket;
@@ -1063,13 +1100,11 @@ int main (int argc, char *argv[])
 						{0, 0, 0, 0}};
 	FILE	    *fp = NULL;
 	int		    fd = 0;
-#if __GNUC_PREREQ(4,8)
 	struct timespec ts = {0};
-#else
-	struct timeval tv;
-#endif
 	uint64      numblocks = DEFAULT_NUMBLOCKS;
 	unsigned    lasttime=0;
+	struct dirent **d;
+	char deviceCmpStr[80] = {0};
 
 	while (-1 != (c = getopt_long(argc, argv, opts, longopts, NULL))) {
 		switch (c) {
@@ -1147,25 +1182,76 @@ int main (int argc, char *argv[])
 		alarmArg *= alarmMult;
 	}
 
-	if (gotdevfile) {
-		if (strncmp(devfile, WFR_CAPTURE_FILE, strlen(WFR_CAPTURE_FILE)-1) == 0
-			&& strlen(devfile) == strlen(WFR_CAPTURE_FILE))
-			mode = (gotModeArg ? mode : WFR_MODE);
-		else if (strncmp(devfile, DEBUG_TOOL_CAPTURE_FILE, strlen(DEBUG_TOOL_CAPTURE_FILE)-5) == 0
-			&& strlen(devfile) == strlen(DEBUG_TOOL_CAPTURE_FILE))
-			mode = (gotModeArg ? mode : DEBUG_TOOL_MODE);
-		else {
-			fprintf(stderr, "opapacketcapture: Error device string [%s] does not match expected string [%s]\n",
-				devfile, WFR_CAPTURE_FILE);
-			Usage(3);
+	/* Scan "/dev/" directory for capture devices */
+	if (gotModeArg) {
+		switch (mode) {
+		case DEBUG_TOOL_MODE:
+			numDevs = scandir("/dev/", &d, debugtool_capture_device_filter, alphasort);
+			break;
+		case WFR_MODE:
+			numDevs = scandir("/dev/", &d, wfr_capture_device_filter, alphasort);
+			break;
+		default:
+			numDevs = scandir("/dev/", &d, all_capture_device_filter, alphasort);
 		}
+	} else {
+		numDevs = scandir("/dev/", &d, all_capture_device_filter, alphasort);
 	}
-	
-	if (!gotdevfile) {
-		if (mode == WFR_MODE) strncpy(devfile, WFR_CAPTURE_FILE, sizeof(devfile));
-		else strncpy(devfile, DEBUG_TOOL_CAPTURE_FILE, sizeof(devfile));
+	if (numDevs == 0) {
+		fprintf(stderr, "opapacketcapture: No capture devices found on system: Mode %s\n", modeToText(mode));
+		exit(1);
 	}
 
+	/* Check if supplied devfile matches one of the possible found devices */
+	if (gotdevfile) {
+		boolean isFound = FALSE;
+		for (i = 0; i < numDevs; i++) {
+			snprintf(deviceCmpStr, sizeof(deviceCmpStr), "/dev/%s", d[i]->d_name);
+			if (strncmp(devfile, deviceCmpStr, sizeof(deviceCmpStr)) == 0) {
+				isFound = TRUE;
+				break;
+			}
+		}
+		if (!isFound) {
+			fprintf(stderr, "opapacketcapture: Error %s does not match 1 of %u devices found on system: mode %s\n", devfile, numDevs, modeToText(mode));
+			for (i = 0; verbose && i < numDevs; i++) {
+				fprintf(stderr, "  /dev/%s\n", d[i]->d_name);
+			}
+			exit(1);
+		}
+	} else if (numDevs > 1) {
+		fprintf(stderr, "opapacketcapture: Error %u devices found on system, please choose one: mode %s\n", numDevs, modeToText(mode));
+		for (i = 0; verbose && i < numDevs; i++) {
+			fprintf(stderr, "  /dev/%s\n", d[i]->d_name);
+		}
+		exit(1);
+	} else {
+		snprintf(devfile, sizeof(devfile), "/dev/%s", d[0]->d_name);
+	}
+
+	/* now that devfile is known try to determine operating mode */
+	if (!gotModeArg) {
+		int gen = -1;
+		int hfi = -1;
+		int port = -1;
+		if (2 == sscanf(devfile, "/dev/hfi%d_diagpkt%d", &gen, &hfi)) {
+			switch (gen) {
+			case 1:
+				mode = WFR_MODE;
+				break;
+			default:
+				fprintf(stderr, "opapacketcapture: Error could not determine operating mode from devfile: %s\n", devfile);
+				exit(1);
+			}
+		} else if (2 == sscanf(devfile, "/dev/ipath_capture_%02d_%02d", &hfi, &port) && (hfi != -1 && port != -1)) {
+			mode = DEBUG_TOOL_MODE;
+		} else {
+			fprintf(stderr, "opapacketcapture: Error could not determine operating mode from devfile: %s\n", devfile);
+			exit(1);
+		}
+	}
+
+	printf("opapacketcapture: Capturing from %s using %s mode\n", devfile, modeToText(mode));
 
 	blocksTableSize = BLOCKSIZE * numblocks;
 	blocks = (uint8 *)malloc(blocksTableSize);
@@ -1237,7 +1323,6 @@ int main (int argc, char *argv[])
 		}
 	}
 
-#if __GNUC_PREREQ(4,8)
 	if (!clock_getres(CLOCK_REALTIME, &ts)) {
 		if (verbose)
 			printf("opapacketcapture: Clock precision: %ldns\n", ts.tv_nsec);
@@ -1247,9 +1332,6 @@ int main (int argc, char *argv[])
 		fprintf(stderr, "opapacketcapture: Error getting clock precision: %s\n", strerror(errno));
 		exit(1);
 	}
-#else
-	printf("opapacketcapture: Clock precision: %dns\n", 1000);
-#endif
 
 	printf("opapacketcapture: Capturing packets using %llu MiB buffer\n", (long long unsigned int)blocksTableSize/(1024*1024));
 
@@ -1274,11 +1356,7 @@ int main (int argc, char *argv[])
 
 		retryCount = 0;
 
-#if __GNUC_PREREQ(4,8)
 		clock_gettime(CLOCK_REALTIME, &ts);
-#else
-		gettimeofday(&tv, NULL);
-#endif
 		numPacketsRead++;
 		if (verbose > 1) {
 			fprintf(stderr, "Packet %u", numPacketsRead);
@@ -1298,13 +1376,8 @@ int main (int argc, char *argv[])
 		newPacket->blockNum = (currentBlock - blocks) / BLOCKSIZE;
 		newPacket->size = numRead;
 		newPacket->numBlocks = (numRead / BLOCKSIZE) + ((numRead % BLOCKSIZE) ? 1 : 0);
-#if __GNUC_PREREQ(4,8)
 		newPacket->ts_sec = ts.tv_sec;
 		newPacket->ts_nsec = ts.tv_nsec;
-#else
-		newPacket->ts_sec = tv.tv_sec;
-		newPacket->ts_nsec = tv.tv_usec * 1000;
-#endif
 		newPacket->next = NULL;
 
 		addNewPacket(newPacket);
@@ -1316,13 +1389,8 @@ int main (int argc, char *argv[])
 
 		advanceCurrentBlock(newPacket);
 
-#if __GNUC_PREREQ(4,8)
 		if (verbose == 1 && ts.tv_sec > lasttime+5) {
 			lasttime = ts.tv_sec;
-#else
-		if (verbose == 1 && tv.tv_sec > lasttime+5) {
-			lasttime = tv.tv_sec;
-#endif
 			printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%10u packets", numPacketsRead);
 			fflush(stdout);
 		}

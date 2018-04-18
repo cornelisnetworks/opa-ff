@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opachassisadmin
 
@@ -270,12 +270,12 @@ Securely prompts for password for user on chassis.
 .TP 10
 -s \fIsecurityFiles\fR 
 .NL
-Specifies the security files to install. Default is *.pem. For Chassis  \fIfmsecurityfiles\fR, filenames/directories of security files to install. For directories specified, all security files in directory tree are used. Shell wildcards may also be used within quotes.
+Specifies the security files to install. Default is *.pem. For Chassis \fIfmsecurityfiles\fR, filenames/directories of security files to install. For directories specified, all security files in directory tree are used. Shell wildcards may also be used within quotes.
 
 .IP
-For Chassis  \fIfmgetsecurityfiles\fR, filename to upload to. Default is *.pem 
+For Chassis \fIfmgetsecurityfiles\fR, filename to upload to. Default is *.pem 
 .TP 10
- \fIoperation\fR 
+\fIoperation\fR 
 .NL
 Specifies the operation to perform. Can be one or more of:
 .RS
@@ -419,10 +419,10 @@ Directory to upload to, used in absence of -d.
 \fB(Switch)\fR
 All chassis operations log into the chassis as chassis user admin. Intel recommends using the -S option to securely prompt for a password, in which case the same password is used for all chassis. Alternately, the password may be put in the environment or the opafastfabric.conf file using \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR.
 .PP
-All versions of Intel(R) Omni-Path Switch 100 Series firmware permit SSH keys to be configured within the chassis for secure password-less login. In this case, there is no need to configure a \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR and \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR can be SSH. Refer to the 
-\fIIntel(R) Omni-Path Fabric Switches Command Line Interface Reference Guide\fR
+All versions of Intel(R) Omni-Path Switch 100 Series firmware permit SSH keys to be configured within the chassis for secure password-less login. In this case, there is no need to configure a \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR ; and, \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR can be SSH. Refer to the 
+\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
 
-for more information.
+ for more information.
 .TP 10
 upgrade 
 .NL

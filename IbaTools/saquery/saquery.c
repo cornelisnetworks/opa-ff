@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -43,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ibprint.h>
 #include <stl_print.h>
 #include <infiniband/umad.h>
+#include "ixml.h"
 
 #define MAX_NUM_INPUT_ARGS 17
 
@@ -53,6 +54,14 @@ int				g_CSV			= 0;	// output should use CSV style
 										// only valid for OutputTypeVfInfoRecord
 										// 1=absolute value for mtu and rate
 										// 2=enum value for mtu and rate
+char *g_oob_address = "127.0.0.1";
+uint16 g_oob_port = 3245;
+char *g_sslParmsFile = "/etc/opa/opamgt_tls.xml";
+struct omgt_ssl_params g_ssl_params = {0};
+IB_GID g_src_gid = {{0}};
+boolean g_isOOB = FALSE;
+boolean g_isFEESM = FALSE;
+boolean g_isOOBSSL = FALSE;
 
 #ifdef DBGPRINT
 #undef DBGPRINT
@@ -71,33 +80,33 @@ void do_query(struct omgt_port *port, OMGT_QUERY *pQuery, QUERY_INPUT_VALUE *old
 {
 	FSTATUS status;
 	PQUERY_RESULT_VALUES pQueryResults = NULL;
-	IB_GID local_gid;
 	DBGPRINT("Query: Input=%s (0x%x), Output=%s (0x%x)\n",
-				   		iba_sd_query_input_type_msg(pQuery->InputType),
-						pQuery->InputType,
-					   	iba_sd_query_result_type_msg(pQuery->OutputType),
-						pQuery->OutputType);
+		iba_sd_query_input_type_msg(pQuery->InputType), pQuery->InputType,
+		iba_sd_query_result_type_msg(pQuery->OutputType), pQuery->OutputType);
 
-	(void)omgt_port_get_port_guid(port, &local_gid.Type.Global.InterfaceID);
-	(void)omgt_port_get_port_prefix(port, &local_gid.Type.Global.SubnetPrefix);
-	status = omgt_input_value_conversion(pQuery, old_input_value, local_gid);
+	if (!g_isOOB) {
+		(void)omgt_port_get_port_guid(port, &g_src_gid.Type.Global.InterfaceID);
+		(void)omgt_port_get_port_prefix(port, &g_src_gid.Type.Global.SubnetPrefix);
+	}
+	status = omgt_input_value_conversion(pQuery, old_input_value, g_src_gid);
 	if (status) {
 		fprintf(stderr, "%s: Error: InputValue conversion failed: Status %u\n"
 			"Query: Input=%s (0x%x), Output=%s (0x%x)\n"
 			"SourceGid: 0x%.16"PRIx64":%.16"PRIx64"\n", __func__, status,
 			iba_sd_query_input_type_msg(pQuery->InputType), pQuery->InputType,
 			iba_sd_query_result_type_msg(pQuery->OutputType), pQuery->OutputType,
-			local_gid.AsReg64s.H, local_gid.AsReg64s.L);
+			g_src_gid.AsReg64s.H, g_src_gid.AsReg64s.L);
 		if (status == FERROR) {
-			fprintf(stderr, "Source Gid must be supplied for Input/Output combination.\n");
+			fprintf(stderr, "Source Gid (-x) must be supplied for Input/Output combination.\n");
 		}
+		g_exitstatus = 1;
 		return;
 	}
 	// this call is synchronous
 	status = omgt_query_sa(port, pQuery, &pQueryResults);
 
-	g_exitstatus = PrintQueryResult(&g_dest, 0, &g_dbgDest,
-			   		pQuery->OutputType, g_CSV, status, pQueryResults);
+	g_exitstatus = PrintQueryResult(&g_dest, 0, &g_dbgDest, pQuery->OutputType,
+		g_CSV, status, pQueryResults);
 
 	// iba_sd_query_port_fabric_info will have allocated a result buffer
 	// we must free the buffer when we are done with it
@@ -111,7 +120,11 @@ struct option options[] = {
 		{ "verbose", no_argument, NULL, 'v' },
 		{ "IB", no_argument, NULL, 'I' },
 		{ "hfi", required_argument, NULL, 'h' },
+		{ "oob", required_argument, NULL, 'b' },
 		{ "port", required_argument, NULL, 'p' },
+		{ "source-gid", required_argument, NULL, 'x' },
+		{ "feEsm", no_argument, NULL, 'E' },
+		{ "ssl-params", required_argument, NULL, 'T' },
 
 		// input data
 		{ "lid", required_argument, NULL, 'l' },
@@ -128,9 +141,6 @@ struct option options[] = {
 		{ "desc", required_argument, NULL, 'd' },
 		{ "guidpair", required_argument, NULL, 'P' },
 		{ "gidpair", required_argument, NULL, 'G' },
-		{ "guidlist", required_argument, NULL, 'a' },
-		{ "gidlist", required_argument, NULL, 'A' },
-
 		// output type
 		{ "output", required_argument, NULL, 'o' },
 		{ "help", no_argument, NULL, '$' },	// use an invalid option character
@@ -151,8 +161,19 @@ void Usage_full(void)
 	fprintf(stderr, "    -I/--IB                   - issue query in legacy InfiniBand format\n");
 	fprintf(stderr, "    -h/--hfi hfi              - hfi, numbered 1..n, 0= -p port will be a\n");
 	fprintf(stderr, "                                system wide port num (default is 0)\n");
-	fprintf(stderr, "    -p/--port port            - port, numbered 1..n, 0=1st active (default\n");
-	fprintf(stderr, "                                is 1st active)\n");
+	fprintf(stderr, "    -b/--oob address          - Out-of-Band address of node running the FE. Can be\n"
+					"                                either hostname, IPv4, or IPv6 address.\n"
+					"                                (default is \"%s\"\n", g_oob_address);
+	fprintf(stderr, "    -p/--port port            - port, \n"
+					"                                 In-band: numbered 1..n, 0=1st active (default\n"
+					"                                     is 1st active)\n"
+					"                                 Out-of-band: Port FE is listening on (default\n"
+					"                                     is %u)\n", g_oob_port);
+	fprintf(stderr, "    -x/--source-gid src_gid   - Source GID of the local GID [required for most\n");
+	fprintf(stderr, "                                Path and Trace Record Queries when Out-of-Band]\n");
+	fprintf(stderr, "    -E/--feEsm                - ESM FE\n");
+	fprintf(stderr, "    -T/--ssl-params file      - SSL/TLS parameters XML file\n"
+					"                                (default is \"%s\")\n", g_sslParmsFile);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "SA Options:\n");
 	fprintf(stderr, "    -l/--lid lid              - query a specific lid\n");
@@ -169,8 +190,6 @@ void Usage_full(void)
 	fprintf(stderr, "    -d/--desc name            - query by node name/description\n");
 	fprintf(stderr, "    -P/--guidpair 'guid guid' - query by a pair of port Guids\n");
 	fprintf(stderr, "    -G/--gidpair 'gid gid'    - query by a pair of Gids\n");
-	fprintf(stderr, "    -a/--guidlist 'sguid ...;dguid ...' - query by a list of port Guids\n");
-	fprintf(stderr, "    -A/--gidlist 'sgid ...;dgid ...'    - query by a list of Gids\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "The -h and -p options permit a variety of selections:\n");
 	fprintf(stderr, "    -h 0       - 1st active port in system (this is the default)\n");
@@ -227,23 +246,20 @@ void Usage_full(void)
 	fprintf(stderr, "    hficongset    - list of HFI Congestion Settings\n");
 	fprintf(stderr, "    hficongcon    - list of HFI Congesting Control Settings\n");
 	fprintf(stderr, "    bfrctrl       - list of buffer control tables\n");
-	fprintf(stderr ,"    cableinfo     - list of Cable Info records\n");
-	fprintf(stderr ,"    portgroup     - list of AR Port Group records\n");
-	fprintf(stderr ,"    portgroupfdb  - list of AR Port Group FWD records\n");
+	fprintf(stderr, "    cableinfo     - list of Cable Info records\n");
+	fprintf(stderr, "    portgroup     - list of AR Port Group records\n");
+	fprintf(stderr, "    portgroupfdb  - list of AR Port Group FWD records\n");
 	fprintf(stderr ,"    swcost        - list of switch cost records\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage examples:\n");
 	fprintf(stderr, "    opasaquery -o desc -t fi\n");
-	fprintf(stderr, "    opasaquery -o portinfo -l 2\n");
-	fprintf(stderr, "    opasaquery -o sminfo\n");
-	fprintf(stderr, "    opasaquery -o pkey\n");
-
 	exit(0);
+
 }
 
 void Usage(void)
 {
-	fprintf(stderr, "Usage: opasaquery [-v] [-o type] [-l lid] [-t nodetype] [-s guid] [-n guid]\n");
+	fprintf(stderr, "Usage: opasaquery [-v] [-o type] [-l lid] [-t type] [-s guid] [-n guid]\n");
 	fprintf(stderr, "                  [-k pkey] [-g guid] [-u gid] [-m gid] [-d name]\n");
 	fprintf(stderr, "              or\n");
 	fprintf(stderr, "       opasaquery --help\n");
@@ -259,7 +275,7 @@ void Usage(void)
 	fprintf(stderr, "    -d/--desc name            - query by node name/description\n");
 	fprintf(stderr, "    -o/--output type          - output type for query (default is node)\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "nodetype:\n");
+	fprintf(stderr, "Node Type:\n");
 	fprintf(stderr, "    fi  - fabric interface\n");
 	fprintf(stderr, "    sw  - switch\n");
 	fprintf(stderr, "\n");
@@ -292,6 +308,55 @@ void Usage(void)
 	fprintf(stderr, "    opasaquery -o sminfo\n");
 	exit(2);
 }
+/* SSL Paramters XML parse code */
+static void *sslParmsXmlParserStart(IXmlParserState_t *state, void *parent, const char **attr)
+{
+	struct omgt_ssl_params *sslParmsData = IXmlParserGetContext(state);
+	memset(sslParmsData, 0, sizeof(struct omgt_ssl_params));
+	return sslParmsData;
+}
+static void sslParmsXmlParserEnd(IXmlParserState_t *state, const IXML_FIELD *field, void *object, void *parent, XML_Char *content, unsigned len, boolean valid)
+{
+}
+static IXML_FIELD sslSecurityFields[] = {
+	{ tag:"SslSecurityEnabled", format:'u', IXML_FIELD_INFO(struct omgt_ssl_params, enable) },
+	{ tag:"SslSecurityEnable", format:'u', IXML_FIELD_INFO(struct omgt_ssl_params, enable) },
+	{ tag:"SslSecurityDir", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, directory) },
+	{ tag:"SslSecurityFFCertificate", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, certificate) },
+	{ tag:"SslSecurityFFPrivateKey", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, private_key) },
+	{ tag:"SslSecurityFFCaCertificate", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, ca_certificate) },
+	{ tag:"SslSecurityFFCertChainDepth", format:'u', IXML_FIELD_INFO(struct omgt_ssl_params, cert_chain_depth) },
+	{ tag:"SslSecurityFFDHParameters", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, dh_params) },
+	{ tag:"SslSecurityFFCaCRLEnabled", format:'u', IXML_FIELD_INFO(struct omgt_ssl_params, ca_crl_enable) },
+	{ tag:"SslSecurityFFCaCRL", format:'s', IXML_FIELD_INFO(struct omgt_ssl_params, ca_crl) },
+	{ NULL }
+};
+static IXML_FIELD sslTopLevelFields[] = {
+	{ tag:"SslSecurityParameters", format:'K', subfields:sslSecurityFields, start_func:sslParmsXmlParserStart, end_func:sslParmsXmlParserEnd }, // structure
+	{ NULL }
+};
+FSTATUS ParseSslParmsFile(const char *input_file, int g_verbose, struct omgt_ssl_params *sslParmsData)
+{
+	unsigned tags_found, fields_found;
+	const char *filename=input_file;
+
+	if (strcmp(input_file, "-") == 0) {
+		filename="stdin";
+		if (FSUCCESS != IXmlParseFile(stdin, "stdin", IXML_PARSER_FLAG_NONE, sslTopLevelFields, NULL, sslParmsData, NULL, NULL, &tags_found, &fields_found)) {
+			return FERROR;
+		}
+	} else {
+		if (FSUCCESS != IXmlParseInputFile(input_file, IXML_PARSER_FLAG_NONE, sslTopLevelFields, NULL, sslParmsData, NULL, NULL, &tags_found, &fields_found)) {
+			return FERROR;
+		}
+	}
+	if (tags_found != 1 || fields_found != 1) {
+		fprintf(stderr, "Warning: potentially inaccurate input '%s': found %u recognized top level tags, expected 1\n", filename, tags_found);
+	}
+
+	return FSUCCESS;
+}
+/* END SSL Paramters XML parse code */
 
 // convert a node type argument to the proper constant
 NODE_TYPE checkNodeType(const char* name)
@@ -355,12 +420,6 @@ void multiInputCheck(int inputType) {
         case InputTypeGidPair:
 			typestr = "GidPair";
 			break;
-        case InputTypePortGuidList:
-			typestr = "PortGuidList";
-			break;
-        case InputTypeGidList:
-			typestr = "GidList";
-			break;
         default:
 			typestr = "parameter";
 		}
@@ -368,15 +427,17 @@ void multiInputCheck(int inputType) {
 }
 
 
+ 
+
 typedef struct InputFlags {
 	QUERY_INPUT_TYPE flags[MAX_NUM_INPUT_ARGS];
 } InputFlags_t;
-//last element must be zero
+
 InputFlags_t NodeInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
 		InputTypeNodeDesc,0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t PathInput = {{InputTypeLid,InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,
-		InputTypeGidPair,InputTypeServiceId,InputTypeSL,InputTypePortGuidList,InputTypeGidList,0,0,0,0,0,0,0,}};
-InputFlags_t ServiceInput = {{InputTypeLid,InputTypePortGuid,InputTypePortGid,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+		InputTypeGidPair,InputTypeServiceId,InputTypeSL,0,0,0,0,0,0,0,}};
+InputFlags_t ServiceInput = {{InputTypePortGuid,InputTypePortGid,InputTypeServiceId,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t McmemberInput = {{InputTypeLid, InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeMcGid,InputTypeSL,0,0,0,0,0,0,0,0,0,0,0}};
 InputFlags_t InformInput = {{InputTypePortGuid,InputTypePortGid,InputTypeLid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,}};
 InputFlags_t TraceInput =  {{InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,InputTypeGidPair,0,0,0,0,0,0,0,0,0,0,0,0,0}};
@@ -390,7 +451,7 @@ typedef struct OutputStringMap {
 	InputFlags_t *valid_input_types;
 	int csv;
 } OutputStringMap_t;
- 
+
 #define NO_OUTPUT_TYPE 0xffff
 OutputStringMap_t OutputTypeTable[] = {
 //--input string--------StlOutputType-------------------------IbOutputType----------------InputFlags----csv-//
@@ -404,17 +465,13 @@ OutputStringMap_t OutputTypeTable[] = {
     {"node",            OutputTypeStlNodeRecord,              OutputTypeNodeRecord,       &NodeInput, 0},
     {"portinfo",        OutputTypeStlPortInfoRecord,          OutputTypePortInfoRecord,   &MiscInput, 0},
     {"sminfo",          OutputTypeStlSMInfoRecord,            NO_OUTPUT_TYPE,             NULL, 0},
+#ifdef GEN2_EM_ENABLE
+    {"link",            OutputTypeStlLinkRecord,              NO_OUTPUT_TYPE,             &LinkConditionInput, 0},
+#else
     {"link",            OutputTypeStlLinkRecord,              NO_OUTPUT_TYPE,             NULL, 0},
-#ifndef NO_STL_SERVICE_OUTPUT       // Don't output STL Service if defined
-    {"service",         OutputTypeStlServiceRecord,           OutputTypeServiceRecord,    &ServiceInput, 0},
-#else
+#endif /* GEN2_FM_ENABLE */
     {"service",         NO_OUTPUT_TYPE,                       OutputTypeServiceRecord,    &ServiceInput, 0},
-#endif
-#ifndef NO_STL_MCMEMBER_OUTPUT      // Don't output STL McMember (use IB format) if defined
-    {"mcmember",        OutputTypeStlMcMemberRecord,          OutputTypeMcMemberRecord,   &McmemberInput, 0},
-#else
     {"mcmember",        NO_OUTPUT_TYPE,                       OutputTypeMcMemberRecord,   &McmemberInput, 0},
-#endif
     {"inform",          OutputTypeStlInformInfoRecord,        OutputTypeInformInfoRecord, &InformInput, 0},
     {"trace",           OutputTypeStlTraceRecord,             NO_OUTPUT_TYPE,             &TraceInput, 0},
     {"scsc",            OutputTypeStlSCSCTableRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
@@ -443,25 +500,8 @@ OutputStringMap_t OutputTypeTable[] = {
     {"portgroupfdb",    OutputTypeStlPortGroupFwdRecord,      NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"swcost",          OutputTypeStlSwitchCostRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
     //Last entry must be null, insert new attributes above here!
-    { NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, NULL, 0 }
+    {NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, NULL, 0}
 };
-
-OutputStringMap_t *GetOutputTypeMap(const char* name) {
-
-	int i =0;
-	while(OutputTypeTable[i].string != NULL) {
-		if (0 == strcmp(name, OutputTypeTable[i].string)) {
-			return &OutputTypeTable[i];
-		}
-		i++;
-	}
-
-	fprintf(stderr, "opasaquery: Invalid Output Type: %s\n", name);
-	Usage();
-	// NOTREACHED
-	return NULL;
-}
-
 
 // convert a output type argument to the proper constant
 QUERY_RESULT_TYPE GetOutputType(OutputStringMap_t *in)
@@ -487,6 +527,22 @@ QUERY_RESULT_TYPE GetOutputType(OutputStringMap_t *in)
 	return res;
 }
 
+OutputStringMap_t *GetOutputTypeMap(const char* name) {
+
+	int i =0;
+	while(OutputTypeTable[i].string != NULL) {
+		if (0 == strcmp(name, OutputTypeTable[i].string)) {
+			return &OutputTypeTable[i];
+		}
+		i++;
+	}
+
+	fprintf(stderr, "opasaquery: Invalid Output Type: %s\n", name);
+	Usage();
+	// NOTREACHED
+	return NULL;
+}
+ 
 typedef struct InputStringMap {
 	char *string;
 	QUERY_INPUT_TYPE in_type;
@@ -508,8 +564,6 @@ InputStringMap_t InputStrTable[] = {
         { "NodeDesc", InputTypeNodeDesc },
         { "PortGuidPair", InputTypePortGuidPair },
         { "GidPair", InputTypeGidPair },
-        { "PortGuidList", InputTypePortGuidList },
-        { "GidList", InputTypeGidList },
 		//Last entry must be null, insert new attributes above here!
 		{NULL, 0}
 };
@@ -520,7 +574,7 @@ FSTATUS CheckInputOutput(OMGT_QUERY *pQuery, OutputStringMap_t *in) {
 	int j=0;
 	boolean found;
 
-	if ( pQuery->InputType == InputTypeNoInput)
+	if ( pQuery->InputType == InputTypeNoInput && (strcmp(in->string, "trace") != 0 ) )
 		return FSUCCESS;
 
 	if (in->valid_input_types != NULL) {
@@ -541,7 +595,7 @@ FSTATUS CheckInputOutput(OMGT_QUERY *pQuery, OutputStringMap_t *in) {
 	j=0;
 	fprintf(stderr, "opasaquery: for the selected output option (%s), the following \n",in->string);
 	fprintf(stderr, "input types are valid: ");
-	while ((j < MAX_NUM_INPUT_ARGS) && (in->valid_input_types->flags[j] != 0)){
+	while ( (j < MAX_NUM_INPUT_ARGS) && (in->valid_input_types->flags[j] != 0) ){
 			// look for the string corresponding to the flag
 		i=0;
 		found=FALSE;
@@ -560,12 +614,13 @@ FSTATUS CheckInputOutput(OMGT_QUERY *pQuery, OutputStringMap_t *in) {
 	return FERROR;
 
 }
+ 
 
 int main(int argc, char ** argv)
 {
     int                 c;
     uint8               hfi         = 0;
-    uint8               port        = 0;
+    uint16              port        = 0;
 	int					index;
 	OMGT_QUERY			query;
 	QUERY_INPUT_VALUE old_input_values;
@@ -578,38 +633,58 @@ int main(int argc, char ** argv)
 	query.OutputType 	= OutputTypeStlNodeRecord;
 
 	// process command line arguments
-	while (-1 != (c = getopt_long(argc,argv, "vIh:p:l:k:i:t:s:n:g:u:m:d:P:G:a:A:o:S:L:", options, &index)))
+	while (-1 != (c = getopt_long(argc,argv, "vIh:p:b:x:ET:l:k:i:t:s:n:g:u:m:d:P:G:o:S:L:D:H:", options, &index)))
     {
         switch (c)
         {
-            case '$':
-                Usage_full();
-                break;
-            case 'v':
-                g_verbose++;
-				if (g_verbose>2) umad_debug(g_verbose-2);
-                break;
+			case '$':
+				Usage_full();
+				break;
+			case 'v':
+				g_verbose++;
+				if (g_verbose > 2) umad_debug(g_verbose - 2);
+				break;
 			case 'I':   // issue query in legacy InfiniBand format (IB)
 				g_IB = 1;
 				query.OutputType = OutputTypeNodeRecord;
 				break;
-            case 'h':	// hfi to issue query from
+			case 'h':   // hfi to issue query from
 				if (FSUCCESS != StringToUint8(&hfi, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid HFI Number: %s\n", optarg);
 					Usage();
 				}
-                break;
-            case 'p':	// port to issue query from
-				if (FSUCCESS != StringToUint8(&port, optarg, NULL, 0, TRUE)) {
+				g_isOOB = FALSE;
+				break;
+			case 'p':   // port to issue query from
+				if (FSUCCESS != StringToUint16(&port, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid Port Number: %s\n", optarg);
 					Usage();
 				}
-                break;
+				break;
+			case 'b': // OOB address of FE
+				g_oob_address = optarg;
+				g_isOOB = TRUE;
+				break;
+			case 'E': // FE is ESM
+				g_isFEESM = TRUE;
+				g_isOOB = TRUE;
+				break;
+			case 'T': // FE Uses SSL
+				g_sslParmsFile = optarg;
+				g_isOOBSSL = TRUE;
+				g_isOOB = TRUE;
+				break;
+			case 'x': // Source GID
+				if (FSUCCESS != StringToGid(&g_src_gid.AsReg64s.H, &g_src_gid.AsReg64s.L, optarg, NULL, TRUE)) {
+					fprintf(stderr, "opasaquery: Invalid Source Gid: %s\n", optarg);
+					Usage();
+				}
+				break; 
 
             case 'l':	// query by lid
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeLid;
-				if (FSUCCESS != StringToUint16(&old_input_values.Lid, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint32(&old_input_values.Lid, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid LID: %s\n", optarg);
 					Usage();
 				}
@@ -642,7 +717,7 @@ int main(int argc, char ** argv)
 				multiInputCheck(query.InputType);
 				query.InputType = InputTypeSL;
 				if (FSUCCESS != StringToUint8(&old_input_values.SL, optarg, NULL, 0, TRUE)
-					|| old_input_values.SL > 15) {
+					|| old_input_values.SL > 31) {
 					fprintf(stderr, "opasaquery: Invalid SL: %s\n", optarg);
 					Usage();
 				}
@@ -730,68 +805,6 @@ int main(int argc, char ** argv)
 					}
 				}
 				break;
-			case 'a':	// multipath query by src1:src2:...;dest1:dest2:... port guids
-				{
-					char *p =optarg;
-					int i = 0;
-					errno = 0;
-					multiInputCheck(query.InputType);
-					query.InputType = InputTypePortGuidList;
-					do {
-						if (FSUCCESS != StringToUint64(&old_input_values.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
-							fprintf(stderr, "opasaquery: Invalid GUID List: %s\n", optarg);
-							Usage();
-						}
-						i++;
-						old_input_values.PortGuidList.SourceGuidCount++;
-					} while (p && *p != '\0' && *p != ';');
-					if (p && *p != '\0')
-					{
-						p++; // skip the semi-colon.
-						do {
-							if (FSUCCESS != StringToUint64(&old_input_values.PortGuidList.GuidList[i], p, &p, 0, TRUE)) {
-								fprintf(stderr, "opasaquery: Invalid GUID List: %s\n", optarg);
-								Usage();
-							}
-							i++;
-							old_input_values.PortGuidList.DestGuidCount++;
-						} while (p && *p != '\0');
-					} else {
-						Usage();
-					}
-				}
-                break;
-			case 'A':	// multipath query by src1:src2:...;dest1:dest2:... gids
-				{
-					char *p=optarg;
-					int i = 0;
-					errno = 0;
-					multiInputCheck(query.InputType);
-					query.InputType = InputTypeGidList;
-					do {
-						if (FSUCCESS != StringToGid(&old_input_values.GidList.GidList[i].AsReg64s.H,&old_input_values.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
-							fprintf(stderr, "opasaquery: Invalid GID List: %s\n", optarg);
-							Usage();
-						}
-						i++;
-						old_input_values.GidList.SourceGidCount++;
-					} while (p && *p != '\0' && *p != ';');
-					if (p && *p != '\0')
-					{
-						p++; // skip the semi-colon
-						do {
-							if (FSUCCESS != StringToGid(&old_input_values.GidList.GidList[i].AsReg64s.H,&old_input_values.GidList.GidList[i].AsReg64s.L, p, &p, TRUE)) {
-								fprintf(stderr, "opasaquery: Invalid GID List: %s\n", optarg);
-								Usage();
-							}
-							i++;
-							old_input_values.GidList.DestGidCount++;
-						} while (p && *p != '\0');
-					} else {
-						Usage();
-					}
-				}
-                break;
             case 'o':	// select output record desired
 				outputTypeMap = GetOutputTypeMap(optarg);
                 break;
@@ -806,26 +819,92 @@ int main(int argc, char ** argv)
 	{
 		Usage();
 	}
+
 	if (NULL != outputTypeMap){
 		if  (CheckInputOutput(&query, outputTypeMap )!= 0)
 			Usage();
 		else
-			query.OutputType = GetOutputType(outputTypeMap); 
+			query.OutputType = GetOutputType(outputTypeMap);
+		}
+ 
+	if (g_IB && query.InputType == InputTypeLid &&
+		old_input_values.Lid > IB_MAX_UCAST_LID &&
+		query.OutputType != OutputTypeMcMemberRecord) {
+
+		fprintf(stderr, "opasaquery: lid value must be less than or equal to 0x%x for IB queries\n",IB_MAX_UCAST_LID);
+		Usage();
+	}
+
+	if (g_IB && query.InputType == InputTypeSL)
+		if (old_input_values.SL > 15)
+		{
+			fprintf(stderr, "opasaquery: SL value must be less than or equal to 15 for IB queries\n");
+			Usage();
 		}
 
-	PrintDestInitFile(&g_dest, stdout);
-	if (g_verbose)
+	if (query.InputType == InputTypeLid &&
+		query.OutputType == OutputTypeMcMemberRecord) {
+
+		if (IS_MCAST32(old_input_values.Lid)) {
+			// allow 32-bit as long as it only uses the IB MLID subset
+			IB_LID mlid16 = MCAST32_TO_MCAST16(old_input_values.Lid);
+			STL_LID mlid32 = MCAST16_TO_MCAST32(mlid16);
+			if (mlid32 != old_input_values.Lid ||
+				(mlid16 & LID_PERMISSIVE) == LID_PERMISSIVE) {
+
+				fprintf(stderr, "opasaquery: MLID 0x%x is outside acceptable range"
+					" (0xf0000000 to 0xf003ffe) for using 32-bit MLID format with"
+					" IB MulticastMemberRecord query\n", old_input_values.Lid);
+				Usage();
+			}
+
+			old_input_values.Lid = MCAST32_TO_MCAST16(old_input_values.Lid);
+		} else if (!IS_MCAST16(old_input_values.Lid)) {
+			fprintf(stderr, "opasaquery: must use either 16-bit or 32-bit MLID"
+				" format for IB MulticastMemberRecord queries\n");
+			Usage();
+		}
+	}
+
+
+ 	PrintDestInitFile(&g_dest, stdout);
+ 	if (g_verbose)
 		PrintDestInitFile(&g_dbgDest, stdout);
 	else
 		PrintDestInitNone(&g_dbgDest);
 
 	FSTATUS status;
-	struct omgt_params params = {.debug_file = g_verbose > 1 ? stderr : NULL };
-	status = omgt_open_port_by_num(&sa_omgt_session,hfi,port,&params);
-	if (status != 0) {
-		fprintf(stderr, "opasaquery: Failed to open port hfi %d:%d: %s\n", hfi, port, strerror(status));
-		exit(1);
+	struct omgt_params params = {
+		.debug_file = (g_verbose > 1 ? stderr : NULL),
+		.error_file = stderr
+	};
+	if (g_isOOB) {
+		if (g_sslParmsFile) {
+			if ((status = ParseSslParmsFile(g_sslParmsFile, g_verbose, &g_ssl_params)) != FSUCCESS) {
+				fprintf(stderr, "opasaquery: Must provide a valid SSL/TLS parameters XML file: %s\n", g_sslParmsFile);
+				Usage();
+			}
+		}
+		struct omgt_oob_input oob_input = {
+			.host = g_oob_address,
+			.port = (port ? port : g_oob_port),
+			.is_esm_fe = g_isFEESM,
+			.ssl_params = g_ssl_params
+		};
+		status = omgt_oob_connect(&sa_omgt_session, &oob_input, &params);
+		if (status != 0) {
+			fprintf(stderr, "opasaquery: Failed to open connection to FE %s:%u: %s\n",
+				oob_input.host, oob_input.port, omgt_status_totext(status));
+			exit(1);
+		}
+	} else {
+		status = omgt_open_port_by_num(&sa_omgt_session, hfi, port, &params);
+		if (status != 0) {
+			fprintf(stderr, "opasaquery: Failed to open port hfi %d:%d: %s\n", hfi, port, omgt_status_totext(status));
+			exit(1);
+		}
 	}
+
 
 	// perform the query and display output
 	do_query(sa_omgt_session, &query, &old_input_values);

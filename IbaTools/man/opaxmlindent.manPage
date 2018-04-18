@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlindent 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxmlindent 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxmlindent
 
@@ -43,6 +43,6 @@ In tags with purely whitespace that contain newlines, keeps newlines as-is. Defa
 Sets indentation to use per level. Default is 4.
 
 .TP 10
- \fIinput\(ulfile\fR 
+\fIinput\(ulfile\fR 
 .NL
 Specifies the XML file to read. Default is stdin.

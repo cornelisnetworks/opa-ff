@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT5 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -51,7 +51,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define ERF_TYPE_OPA_SNC        28
 #define ERF_TYPE_OPA_9B         29
-#define ERF_TYPE_OPA_BYPASS     30
 
 #define FILTER_COND			0
 #define FILTER_DLID			1
@@ -88,6 +87,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUG_TOOL_MODE 1
 #define WFR_MODE        2
+
+#define IS_FI_MODE(m) (m == WFR_MODE)
 
 typedef struct _packet {
 	uint64				blockNum;
@@ -166,26 +167,6 @@ typedef struct _WFR_SnC_HDR {
 	} u;
 } WFR_SnC_HDR;
 
-/* The Missing Byte that the hardware strips off from the 9B packets
- * The Byte is in revers order 
- */
-typedef union _STL_9B_HDR_B1 {
-	uint8 AsReg8;
-	struct {	
-#ifdef CPU_LE			// Byte needs to be in Big Endian format for wireshark
-		uint8 SC4:1;
-		uint8 R:4;
-		uint8 L2:2;
-		uint8 LT:1;
-#else
-		uint8 LT:1;
-		uint8 L2:2;
-		uint8 R:4;
-		uint8 SC4:1;
-#endif
-	} PACK_SUFFIX s;
-} STL_9B_HDR_B1;
-
 #define DESTQP_MASK 0x00ffffff
 
 typedef struct _filterFunc_s {
@@ -235,8 +216,6 @@ enum qib_packet_filter_opcodes {
 #define STL_MAX_PACKET_SIZE		16*1024 // 16K
 #define WIRESHARK_MAX_LENGTH	65535
 
-#define DEBUG_TOOL_CAPTURE_FILE "/dev/ipath_capture_00_01"
-#define WFR_CAPTURE_FILE "/dev/hfi1_diagpkt0"
 
 #define PACKET_OUT_FILE 		"packetDump.pcap"
 

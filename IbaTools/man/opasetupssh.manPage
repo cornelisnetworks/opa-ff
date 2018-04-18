@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasetupssh 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opasetupssh 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opasetupssh
 
@@ -167,10 +167,7 @@ Password for admin on all chassis. Used in absence of -S option.
 .NL
 
 .PP
-The Intel(R) Omni-Path Fabric Suite FastFabric Toolset provides additional flexibility in the translation between IPoIB and management network hostnames. Refer to "Configuration of IPoIB Name Mapping" section in the 
-\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
-
-for more information.
+The Intel(R) Omni-Path Fabric Suite FastFabric Toolset provides additional flexibility in the translation between IPoIB and management network hostnames.
 .PP
 opasetupssh provides an easy way to create SSH keys and distribute them to the hosts or chassis in the cluster. Many of the FastFabric tools (as well as many versions of MPI) require that SSH is set up for password-less operation. Therefore, opasetupssh is an important setup step.
 .PP
@@ -185,7 +182,14 @@ When run without the -U option, opasetupssh performs the initial key exchange an
 .PP
 opasetupssh configures password-less SSH/SCP for both the management network and IPoIB. Typically, the management network is used for FastFabric Toolset operations while IPoIB is used for MPI and other applications.
 .PP
-During initial cluster installation, where the Intel(R) Omni-Path Fabric software is not yet installed on all the hosts, IPoIB is not yet running. In this situation, use the -i option with an empty string as follows:opasetupssh -i \[aq]\[aq]
+During initial cluster installation, where the Intel(R) Omni-Path Fabric software is not yet installed on all the hosts, IPoIB is not yet running. In this situation, use the -i option with an empty string as follows:
+.PP
+
+.br
+opasetupssh -i \[aq]\[aq]
+
+.br
+
 .PP
 This causes the last part of the setup of SSH for IPoIB to be skipped.
 .SH Refreshing Local Systems Known Hosts

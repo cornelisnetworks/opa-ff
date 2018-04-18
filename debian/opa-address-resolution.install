@@ -1,0 +1,14 @@
+/etc/rdma/dsap.conf
+/usr/bin/opa_osd_dump
+/usr/bin/opa_osd_exercise
+/usr/bin/opa_osd_perf
+/usr/bin/opa_osd_query
+/usr/include/infiniband/opasadb_path.h
+/usr/include/infiniband/opasadb_route.h
+/usr/include/infiniband/opasadb_route2.h
+/usr/lib/libopasadb.so.1.0.0
+/usr/lib/ibacm/libdsap.so.1.0.0
+/usr/share/man/man1/opa_osd_dump.1*
+/usr/share/man/man1/opa_osd_exercise.1*
+/usr/share/man/man1/opa_osd_perf.1*
+/usr/share/man/man1/opa_osd_query.1*

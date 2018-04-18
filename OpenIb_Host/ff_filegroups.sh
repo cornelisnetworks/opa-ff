@@ -1,6 +1,6 @@
 basic_tools_sbin="opacapture opafabricinfo opagetvf opagetvf_env opahfirev
 	opapacketcapture opaportinfo oparesolvehfiport opasaquery opasmaquery
-	opainfo opatmmtool"
+	opainfo"
 
 basic_tools_sbin_sym="opapmaquery opaportconfig"
 
@@ -11,7 +11,11 @@ basic_lib_opa_opt=".comp_fastfabric.pl .comp_oftools.pl"
 basic_mans="opacapture.1 opaconfig.1 opafabricinfo.1 opagetvf.1
 	opagetvf_env.1 opahfirev.1 opainfo.1 opapacketcapture.1 opapmaquery.1
 	opaportconfig.1 opaportinfo.1 oparesolvehfiport.1 opasaquery.1
-	opasmaquery.1 opatmmtool.1"
+	opasmaquery.1"
+
+basic_configs="opamgt_tls.xml"
+
+basic_samples="opamgt_tls.xml-sample"
 
 ff_tools_opt="opaswquery opaswconfigure opaswfwconfigure opaswfwupdate
 	opaswfwverify opaswping opaswreset"
@@ -30,14 +34,14 @@ ff_tools_exp="basic.exp chassis.exp chassis_configure.exp chassis_fmconfig.exp
 ff_tools_sbin="opacabletest opacheckload opaextracterror opaextractlink
 	opaextractperf opaextractstat opaextractstat2 opafindgood opafirmware
 	opagenchassis opagenesmchassis opagenswitches opalinkanalysis opareport
-	opareports opasorthosts opatop opaxlattopology opaxlattopology_cust opaxmlextract
+	opareports opasorthosts opatop opaxlattopology opaxmlextract
 	opaxmlfilter opaxmlgenerate opaxmlindent opaallanalysis opacaptureall
 	opachassisanalysis opacmdall opadownloadall opaesmanalysis opafabricanalysis
 	opafastfabric opahostsmanalysis opadisablehosts opadisableports opaenableports
 	opaledports opaexpandfile opaextractbadlinks opaextractlids opaextractsellinks
 	opaextractmissinglinks opaswenableall opaswdisableall opaverifyhosts opahostadmin
 	opachassisadmin opaswitchadmin opapingall opascpall opasetupssh opashowallports
-	opauploadall opapaquery opashowmc opafequery opa2rm"
+	opauploadall opapaquery opashowmc opa2rm"
 
 ff_tools_misc="ff_funcs opachassisip opagenswitcheshelper chassis_setup
 	switch_setup opagetipaddrtype opafastfabric.conf.def show_counts"
@@ -52,20 +56,20 @@ ff_mans="opaallanalysis.8 opacabletest.8 opacaptureall.8 opachassisadmin.8
 	opaesmanalysis.8 opaexpandfile.8 opaextractbadlinks.8 opaextracterror.8
 	opaextractlids.8 opaextractlink.8 opaextractperf.8 opaextractsellinks.8
 	opaextractstat.8 opaextractstat2.8 opafabricanalysis.8 opafastfabric.8
-	opafequery.8 opafindgood.8 opafmconfigcheck.8 opafmconfigdiff.8 opagenchassis.8
+	opafindgood.8 opafmconfigcheck.8 opafmconfigdiff.8 opagenchassis.8
 	opagenesmchassis.8 opagenswitches.8 opagentopology.8 opahostadmin.8
 	opahostsmanalysis.8 opalinkanalysis.8 opapaquery.8 opapingall.8 opareport.8
 	opareports.8 opascpall.8 opasetupssh.8 opashowallports.8 opasorthosts.8
 	opaswitchadmin.8 opatop.8 opauploadall.8 opaverifyhosts.8 opaxlattopology.8
-	opaxlattopology_cust.8 opashowmc.8 opaxmlextract.8 opaxmlfilter.8
+	opashowmc.8 opaxmlextract.8 opaxmlfilter.8
 	opaxmlgenerate.8 opaxmlindent.8 opaswdisableall.8 opaswenableall.8
 	opafirmware.8 opaextractmissinglinks.8 opa2rm.8"
 
 ff_iba_samples="hostverify.sh opatopology_FIs.txt opatopology_links.txt opatopology_SMs.txt
 	opatopology_SWs.txt linksum_swd06.csv linksum_swd24.csv README.topology
-	README.xlat_topology topology_cust.xlsx topology.xlsx allhosts-sample chassis-sample
-	hosts-sample switches-sample ports-sample opaff.xml-sample mac_to_dhcp filterFile.txt
-	triggerFile.txt opamon.conf-sample opamon.si.conf-sample opafastfabric.conf-sample
+	README.xlat_topology minimal_topology.xlsx detailed_topology.xlsx allhosts-sample chassis-sample
+	hosts-sample switches-sample ports-sample mac_to_dhcp filterFile.txt triggerFile.txt
+	opamon.conf-sample opamon.si.conf-sample opafastfabric.conf-sample
 	opa_ca_openssl.cnf-sample opa_comp_openssl.cnf-sample opagentopology esm_chassis-sample"
 
 help_doc="opatop_group_bw.hlp opatop_group_config.hlp opatop_group_ctg.hlp
@@ -83,11 +87,11 @@ opamgt_headers="opamgt.h opamgt_pa.h opamgt_sa.h opamgt_sa_notice.h"
 
 opamgt_iba_headers="ib_mad.h ib_sa_records.h ib_sd.h ib_sm_types.h
 	ib_status.h ib_types.h stl_mad_types.h stl_pa_types.h
-	stl_sa_types.h stl_sd.h stl_sm_types.h stl_types.h vpi.h"
+	stl_sa_types.h stl_sd.h stl_sm_types.h stl_types.h"
 
 opamgt_iba_public_headers="datatypes.h datatypes_osd.h ibyteswap.h ibyteswap_osd.h
 	ilist.h imath.h imemory.h imemory_osd.h ipackoff.h ipackon.h ispinlock.h
-	ispinlock_osd.h statustext.h"
+	ispinlock_osd.h statustext.h iethernet.h"
 
 opamgt_examples="paquery.c saquery.c simple_sa_query.c simple_sa_notice.c simple_pa_query.c
 	job_schedule.c show_switch_cost_matrix.c Makefile README"
@@ -103,4 +107,4 @@ mpi_apps_files="Makefile mpi_hosts.sample README prepare_run select_mpi run_bw
 
 shmem_apps_files="Makefile mpi_hosts.sample prepare_run README select_mpi run_barrier
 	run_get_bibw run_get_bw run_get_latency run_put_bibw run_put_bw run_put_latency
-	run_reduce run_hello run_alltoall run_rand shmem-hello.c"
+	run_reduce run_hello run_alltoall shmem-hello.c"

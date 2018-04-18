@@ -56,7 +56,7 @@ This package contains the library necessary to build applications that interface
 %package libopamgt-devel
 Summary: Omni-Path library development headers
 Group: System Environment/Libraries
-Requires: opa-libopamgt
+Requires:  __RPM_RQ3
 
 %description libopamgt-devel
 This package contains the necessary headers for opamgt development.
@@ -72,7 +72,7 @@ cd OpenIb_Host
 
 
 %install
-BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=/usr/lib ./ff_install.sh
+BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=/usr/lib DSAP_LIBDIR=%{_libdir} ./OpenIb_Host/ff_install.sh
 
 %post address-resolution -p /sbin/ldconfig
 %postun address-resolution -p /sbin/ldconfig
@@ -90,6 +90,7 @@ make -k clean >/dev/null 2>&1 || :
 
 %files basic-tools
 __RPM_BASIC_FILES
+%config(noreplace) %{_sysconfdir}/opa/opamgt_tls.xml
 
 %files fastfabric
 __RPM_FF_FILES
@@ -103,7 +104,6 @@ __RPM_FF_FILES
 %config(noreplace) %{_sysconfdir}/opa/hosts
 %config(noreplace) %{_sysconfdir}/opa/ports
 %config(noreplace) %{_sysconfdir}/opa/switches
-%config(noreplace) %{_sysconfdir}/opa/opaff.xml
 %config(noreplace) /usr/lib/opa/tools/osid_wrapper
 
 

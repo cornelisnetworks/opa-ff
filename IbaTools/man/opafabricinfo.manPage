@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafabricinfo 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafabricinfo 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafabricinfo
 
@@ -25,11 +25,7 @@ In this situation, the command performs analysis against the first active port o
 .PP
 opafabricinfo can be very useful as a quick assessment of the fabric state. It can be run against a known good fabric to identify its components and then later run to see if anything has changed about the fabric configuration or state.
 .PP
-For more extensive fabric analysis, use
-\fIopareport\fR
-and
-\fIopareports\fR
-. Also see opatop in the 
+For more extensive fabric analysis, use opareport, opareports, and opatop. These tools can be found in the 
 \fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
 
 .
@@ -70,7 +66,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -79,7 +75,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -88,7 +84,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2016, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -50,17 +50,19 @@ fi
 
 source ./OpenIb_Host/ff_filegroups.sh
 
-if [ "$id" = "rhel" ]
+if [ "$id" = "rhel"  -o "$id" = "centos" ]
 then
 	GE_7_4=$(echo "$versionid >= 7.4" | bc)
 	if [ $GE_7_4 = 1 ]
 	then
-		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, libibmad-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_RQ3/rdma-core-devel, openssl-devel, opa-libopamgt/g" $to
 	else
-		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_RQ3/libibumad-devel, libibverbs-devel, openssl-devel, opa-libopamgt/g" $to
 	fi
 	sed -i "s/__RPM_REQ/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}, libibmad%{?_isa}/g" $to
-	sed -i "s/__RPM_RQ2/libibumad/g" $to
+	sed -i "s/__RPM_RQ2/libibumad%{?_isa}, libibverbs%{?_isa}, openssl%{?_isa}/g" $to
 	sed -i "/__RPM_DEBUG/,+1d" $to
 elif [ "$id" = "sles" ]
 then
@@ -76,12 +78,14 @@ then
 	if [ $GE_12_3 = 1 ]
 	then
 		sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
-		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, libibmad-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_RQ3/rdma-core-devel, libopenssl-devel, opa-libopamgt/g" $to
 	else
 		sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
-		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_RQ3/libibumad-devel, libibverbs-devel, libopenssl-devel, opa-libopamgt/g" $to
 	fi
-	sed -i "s/__RPM_RQ2/libibumad3/g" $to
+	sed -i "s/__RPM_RQ2/libibumad3, libibverbs1, openssl/g" $to
 else
 	echo ERROR: Unsupported distribution: $id $versionid
 	exit 1
@@ -107,6 +111,10 @@ do
 		for i in $basic_mans
 		do
 			echo "%{_mandir}/man1/${i}.gz" >> .tmpspec
+		done
+		for i in $basic_samples
+		do
+			echo "/usr/share/opa/samples/$i" >> .tmpspec
 		done
 	else
 		echo "$line" >> .tmpspec

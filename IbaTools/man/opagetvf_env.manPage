@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagetvf\(ulenv 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagetvf\(ulenv 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagetvf\(ulenv
 
@@ -94,9 +94,9 @@ RATE=
 .br
 opagetvf\(ulfunc "-d \[aq]Compute\[aq]" PKEY SERVICE\(ulLEVEL MTU RATE
 .br
-echo "The Compute Virtual Fabric has pkey: $PKEY SL:$SERVICE\(ulLEVEL MTU: $MTU
+echo "The Compute Virtual Fabric has pkey: $PKEY SL:$SERVICE\(ulLEVEL MTU:
 .br
-rate:$RATE"
+$MTU rate:$RATE"
 .PP
 
 .B NOTE:

@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -71,6 +71,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ICS_IMAGE_HEADER_RECORD_TYPE_MBC_FILE_INFO 5
 #define ICS_IMAGE_HEADER_RECORD_TYPE_ACM_FILE_INFO 6
 #define ICS_IMAGE_HEADER_RECORD_TYPE_XIO_FPGA_CFG  7
+#define ICS_IMAGE_HEADER_RECORD_TYPE_Q7IMAGETYPE   8
 
 #define ICS_IMAGE_HEADER_VERSION_SIZE 20
 #define ICS_IMAGE_HEADER_FILE_VERSION_SIZE 40
@@ -88,9 +89,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ICS_IMAGE_HEADER_PAYLOAD_SIZE_MBC_FILE_INFO ICS_IMAGE_HEADER_PAYLOAD_SIZE(FileInfo)
 #define ICS_IMAGE_HEADER_PAYLOAD_SIZE_ACM_FILE_INFO ICS_IMAGE_HEADER_PAYLOAD_SIZE(FileInfo)
 #define ICS_IMAGE_HEADER_PAYLOAD_SIZE_XIO_FPGA_CFG ICS_IMAGE_HEADER_PAYLOAD_SIZE(XioFpgaCfgType)
+#define ICS_IMAGE_HEADER_PAYLOAD_SIZE_Q7IMAGETYPE ICS_IMAGE_HEADER_PAYLOAD_SIZE(q7ImageType)
 
 #define ICS_IMAGE_HEADER_ENUM_VXWORKSIMAGETYPE_BOOTROM     1
 #define ICS_IMAGE_HEADER_ENUM_VXWORKSIMAGETYPE_LOADABLE    2
+#define ICS_IMAGE_HEADER_ENUM_Q7IMAGETYPE_BIOS             3
+#define ICS_IMAGE_HEADER_ENUM_Q7IMAGETYPE_BOARD_CONTROLLER 4
 #define ICS_IMAGE_HEADER_ENUM_XIO_FPGA_CFG_SUBTYPE         1
 
 typedef struct IcsImageHeaderInfoPayloadStruct {
@@ -115,6 +119,8 @@ typedef UINT32 IcsImageHeader_VxWorksImageTypePayload_t;
 
 typedef UINT32 IcsImageHeader_XioFpgaCfgTypePayload_t;
 
+typedef UINT32 IcsImageHeader_q7ImageTypePayload_t;
+
 typedef struct FileInfoPayloadStruct {
   UINT32 offset;
   UINT32 size;
@@ -133,6 +139,7 @@ typedef struct IcsImageHeaderRecordStruct {
     IcsImageHeader_VxWorksImageTypePayload_t vxWorksImageType;
     IcsImageHeader_FileInfoPayload_t fileInfo;
 	IcsImageHeader_XioFpgaCfgTypePayload_t xioFpgaCfgType;
+	IcsImageHeader_q7ImageTypePayload_t q7ImageType;
   } payload;
 } __attribute__ ((packed)) IcsImageHeader_Record_t ;
 

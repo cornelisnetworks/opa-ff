@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -47,6 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <iba/ibt.h>
 #include "opaswcommon.h"
 #include "zlib.h"
+#include <openssl/sha.h>
 
 #define FW_FILENAME_BASE		"prrFw"
 
@@ -85,7 +86,11 @@ uint32 loadFirmwareBuffer(struct omgt_port *port, char **fwBuffer, IB_PATH_RECOR
 	uint32 bufSize;
 	char *p;
 	struct stat fileStat;
-
+	uint32 oemHash[8],binaryHash[8];
+	VENDOR_MAD                      mad;
+	FSTATUS                         status = FSUCCESS;
+	int				isValid = 1;
+	uint32				acb;
 	if (g_dirParam) {
 		if (chdir(fwDirName) < 0) {
 			fprintf(stderr, "Error: cannot change directory to %s: %s\n", fwDirName, strerror(errno));
@@ -117,37 +122,59 @@ uint32 loadFirmwareBuffer(struct omgt_port *port, char **fwBuffer, IB_PATH_RECOR
 			getEMFWFileNames(port, path, sessionID, fwFileName, inibinFileName);
 		}
 	}
-
-	if (stat(fwFileName, &fileStat) < 0) {
-		fprintf(stderr, "Error taking stat of file {%s}: %s\n",
-			fwFileName, strerror(errno));
+	status = getOemHash(port,path,&mad,sessionID,oemHash,&acb);
+	if (status == FSUCCESS) {
+		if (acb & 0x10000000) {
+			if (getBinaryHash(fwFileName,binaryHash) == FSUCCESS) {
+				if (memcmp(binaryHash, oemHash, sizeof(binaryHash)))
+					isValid = 0;
+			}
+			else {
+				fprintf(stderr,"Unable to get Signature from Binary\n");
+				return(0);
+			}
+		}
+	}
+	else {
+			fprintf(stderr,"Unable to get OEM hash\n");
 			return(0);
 	}
 
-	bufSize = (uint32)fileStat.st_size + 1024; /* pad by 1K to be safe */
+	if(isValid){
+		if (stat(fwFileName, &fileStat) < 0) {
+			fprintf(stderr, "Error taking stat of file {%s}: %s\n",
+				fwFileName, strerror(errno));
+				return(0);
+		}
 
-	if ((*fwBuffer = malloc(bufSize)) == NULL) {
-        fprintf(stderr, "Error allocating memory for firmware buffer\n");
-        return(0);
-    }
+		bufSize = (uint32)fileStat.st_size + 1024; /* pad by 1K to be safe */
 
-	if ((fp = fopen(fwFileName, "r")) == NULL) {
-		fprintf(stderr, "Error opening file %s for input: %s\n", fwFileName, strerror(errno));
+		if ((*fwBuffer = malloc(bufSize)) == NULL) {
+			fprintf(stderr, "Error allocating memory for firmware buffer\n");
+			return(0);
+		}
+
+		if ((fp = fopen(fwFileName, "r")) == NULL) {
+			fprintf(stderr, "Error opening file %s for input: %s\n", fwFileName, strerror(errno));
+			return(0);
+		}
+		memset(*fwBuffer, 0, bufSize);
+		p = *fwBuffer + 4;
+		while ((nread = fread(p, 1, 1024, fp)) > 0) {
+			totalRead += nread;
+			p += nread;
+		}
+
+		fclose(fp);
+
+		//	xedgeDisplayBuffer(fwBuffer, totalRead);
+
+		return(totalRead);
+	}
+	else{
+		fprintf(stderr,"Firmware signature mismatch\n");
 		return(0);
 	}
-
-	memset(*fwBuffer, 0, bufSize);
-	p = *fwBuffer + 4;
-	while ((nread = fread(p, 1, 1024, fp)) > 0) {
-		totalRead += nread;
-		p += nread;
-	}
-
-	fclose(fp);
-
-//	xedgeDisplayBuffer(fwBuffer, totalRead);
-
-	return(totalRead);
 }
 
 #define LIST_FILE_SUPPORTED 0

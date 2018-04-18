@@ -1,7 +1,7 @@
 #!/bin/sh
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -40,12 +40,10 @@ SHMEM_PREFIX=${SHMEM_PREFIX:-`cat .shmem_prefix 2>/dev/null`}
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
 if [ -z "$1" ]
-then 
-	echo " Usage: run_put_latency number_processes [args ...]"
+then
+	echo " Usage: run_put_latency <number_of_processes> [args ...]"
 	echo " args - additional test program options, -h will provide help"
 	echo " For example: ./run_put_latency 2"
-	echo "number_processes may be 'all' in which case one rank will be started for"
-	echo "every process in the mpi_hosts file"
 	echo "This application requires an even number of processes"
 	exit 1
 fi
@@ -53,11 +51,11 @@ fi
 NUM_PROCESSES=$1
 shift
 MULT_PROCESSES=2
-APP=shmem-put-latency
+APP=shmem_latency_put_perf
 LOGFILE=
 . ./prepare_run
 
-SAMPLE_DIR=${SAMPLE_DIR:-`get_shmem_bench_dir`}
+SAMPLE_DIR=${SAMPLE_DIR:-`get_shmem_bench_dir $APP`}
 EXECUTABLE="$SAMPLE_DIR/$APP"
 CMD="$EXECUTABLE $@"
 if [ ! -x $EXECUTABLE ]

@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -113,15 +113,18 @@ INCLUDE_SUBDIR		=
 CLOCAL=$(CIBACCESS) $(CPIE)
 LOCAL_INCLUDE_DIRS=
 ifeq "$(IB_STACK)" "IBACCESS"
-LOCALDEPLIBS =$(IBACCESS_USER_LIBS) IbPrint
+LOCALDEPLIBS =$(IBACCESS_USER_LIBS) IbPrint Xml
 LOCALLIBS=
 LOCAL_LIB_DIRS=$(IBACCESS_USER_LIB_DIRS)
 else
-LOCALDEPLIBS =$(IBACCESS_USER_LIBS) opamgt-priv IbPrint Xml Topology
+LOCALDEPLIBS =$(IBACCESS_USER_LIBS) opamgt-priv IbPrint Xml
 LOCALLIBS=$(OPENIB_USER_LIBS)
 LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
 endif
 
+ifneq "$(BUILD_TARGET_OS)" "VXWORKS"
+LOCALLIBS+= expat
+endif
 
 # Include Make Rules definitions and rules
 include $(TL_DIR)/IbaTools/Makerules.module

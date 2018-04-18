@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacmdall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacmdall 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacmdall
 
@@ -23,7 +23,9 @@ opacmdall depends on the Linux* convention that utilities return 0 for success a
 
 .SH Syntax
 .NL
-opacmdall [-CpqPS] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \fIhosts\fR] [-H \fIchassis\fR] [-u \fIuser\fR] [-m \fImarker\fR] [-T \fItimelimit\fR] \fIcmd\fR
+opacmdall [-CpqPS] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \fIhosts\fR]
+.br
+[-H \fIchassis\fR] [-u \fIuser\fR] [-m \fImarker\fR] [-T \fItimelimit\fR] \fIcmd\fR
 .SH Options
 .NL
 
@@ -182,6 +184,4 @@ When performing opacmdall against hosts, internally SSH is used. The command opa
 .PP
 When performing opacmdall against a set of chassis, all chassis must be configured with the same admin password. Alternatively, the opasetupssh FastFabric tool can be used to set up password-less SSH to the chassis.
 .PP
-When performing operations against chassis, Intel recommends that you set up SSH keys (see
-\fIopasetupssh\fR
-). If SSH keys are not set up, Intel recommends that you use the -S option, to avoid keeping the password in configuration files.
+When performing operations against chassis, Intel recommends that you set up SSH keys using opasetupssh. If SSH keys are not set up, Intel recommends that you use the -S option to avoid keeping the password in configuration files.

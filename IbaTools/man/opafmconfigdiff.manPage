@@ -1,19 +1,19 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafmconfigdiff 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafmconfigdiff 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafmconfigdiff
 
 .NL
 
 .PP
-Performs a file difference between two configuration files corresponding to two FM instances described by  \fIfile1\fR and  \fIfile2\fR.
+Performs a file difference between two configuration files corresponding to two FM instances described by \fIfile1\fR and \fIfile2\fR.
 .SH Syntax
 .NL
 opafmconfigdiff [-f] [-l] [-d \[aq]\fIdiff\(ulargs\fR\[aq]] \fIfile1 file2\fR
@@ -41,7 +41,7 @@ Includes comments in XML to indicate original line numbers.
 Specifies additional arguments to add to diff command. For example, enter uw for unified format ignoring whitespace.
 
 .TP 10
- \fIfile1 file2\fR 
+\fIfile1 file2\fR 
 .NL
 Specifies the names of the configuration files to be compared.
 
@@ -51,4 +51,6 @@ opafmconfigdiff /etc/opa-fm/opafm.xml /usr/share/opa-fm/opafm.xml
 .br
 opafmconfigdiff -f /etc/opa-fm/opafm.xml /usr/share/opa-fm/opafm.xml
 .br
-opafmconfigdiff -d -uw /etc/opa-fm/opafm.xml /usr/share/opa-fm/opafm.xml
+opafmconfigdiff -d -uw /etc/opa-fm/opafm.xml /usr/share/opa-fm/
+.br
+opafm.xml

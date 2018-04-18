@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -158,13 +158,22 @@ done
 
 opahfirev > /$dir/opahfirev 2>&1
 
-opatmmtool 2>/dev/null 1>/dev/null
-tmm=$?
-if [ $tmm -ne 3 ]
-then
-	echo "Getting TMM information..."
-	opatmmtool -v status > /$dir/f4status 2>&1
-	opatmmtool -f /$dir/f4otpdump dumpotp 2>&1
+echo "Capturing Firmware info if available"
+type hfi1_eprom > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+	hfi1_eprom -d all -V > /$dir/uefi_version 2>&1
+fi
+
+type opatmmtool > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+	opatmmtool 2>/dev/null 1>/dev/null
+	tmm=$?
+	if [ $tmm -ne 3 ]
+	then
+		echo "Getting TMM information..."
+		opatmmtool -v status > /$dir/f4status 2>&1
+		opatmmtool -f /$dir/f4otpdump dumpotp 2>&1
+	fi
 fi
 
 echo "Obtaining OS configuration ..."
@@ -187,7 +196,7 @@ dmesg > /$dir/dmesg
 echo "Obtaining present process and module list ..."
 lsmod > /$dir/lsmod 2>&1
 depmod -a 2>&1
-cp /lib/modules/`uname -r`/modules.dep /$dir/modules.dep
+cp -p /lib/modules/`uname -r`/modules.dep /$dir/modules.dep
 ps -welf > /$dir/ps 2>&1
 
 echo "Obtaining PCI device list ..."
@@ -229,7 +238,7 @@ for proc_file in cmdline cpuinfo ksyms meminfo mtrr modules net/arp net/dev net/
 do
 	if [ -e /proc/$proc_file ]
 	then
-		cp -r /proc/$proc_file /$dir/proc
+		cp -p -r /proc/$proc_file /$dir/proc
 	fi
 done
 
@@ -246,21 +255,21 @@ then
 
 	mkdir -p /${dir}${HFI_DEBUGDIR}
 	echo "Copying kernel debug information from ${HFI_DEBUGDIR}..."
-	cp -r ${HFI_DEBUGDIR}/* /${dir}/${HFI_DEBUGDIR} 2>/dev/null
+	cp -p -r ${HFI_DEBUGDIR}/* /${dir}/${HFI_DEBUGDIR} 2>/dev/null
 fi
 
 mkdir -p /$dir/sys/class
 if [ -e /sys/class/infiniband ]
 then
 	echo "Copying configuration and statistics for ib_ drivers from /sys ..."
-	cp -r /sys/class/*infiniband* /$dir/sys/class 2>/dev/null
+	cp -p -r /sys/class/*infiniband* /$dir/sys/class 2>/dev/null
 	mkdir -p /$dir/sys/class/infiniband
 	for f in /sys/class/infiniband/*
 	do
 		if [ -h $f ]
 		then
 			rm -f /$dir/$f
-			cp -r $f/ /$dir/sys/class/infiniband/ 2>/dev/null
+			cp -p -r $f/ /$dir/sys/class/infiniband/ 2>/dev/null
 			if [ -h $f/device ]
 			then
 				dev=`basename $f`
@@ -272,7 +281,7 @@ then
 				fi
 			#	rm -f /$dir/$f/device
 			#	mkdir -p /$dir/sys/class/infiniband/$dev/ 2>/dev/null
-			#	cp -r $f/device/ /$dir/sys/class/infiniband/$dev/ 2>/dev/null
+			#	cp -p -r $f/device/ /$dir/sys/class/infiniband/$dev/ 2>/dev/null
 			fi
 		fi
 	done
@@ -280,17 +289,17 @@ fi
 
 if [ -e /sys/class/scsi_host ]
 then
-	cp -r /sys/class/scsi_host /$dir/sys/class 2>/dev/null
+	cp -p -r /sys/class/scsi_host /$dir/sys/class 2>/dev/null
 fi
 if [ -e /sys/class/scsi_device ]
 then
-	cp -r /sys/class/scsi_device /$dir/sys/class 2>/dev/null
+	cp -p -r /sys/class/scsi_device /$dir/sys/class 2>/dev/null
 fi
 
 if [ -e /sys/module ]
 then
 	echo "Copying configuration and statistics for OPA from /sys/module ..."
-	cp -r /sys/module /$dir/sys 2>/dev/null 
+	cp -p -r /sys/module /$dir/sys 2>/dev/null 
 fi
 
 if [ -f /usr/lib/opa-fm/bin/fm_capture ]

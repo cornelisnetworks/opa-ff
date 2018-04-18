@@ -1,22 +1,19 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opatop 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opatop 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opatop
 
 .NL
 
 .PP
-Starts the Fabric Performance Monitor (opatop) Text User Interface (TUI) menu to display performance, congestion, and error information about a fabric. Refer to 
-\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
-
-for additional details.
+Starts the Fabric Performance Monitor (opatop) Text-based User Interface (TUI) menu to display performance, congestion, and error information about a fabric.
 .SH Syntax
 .NL
 opatop [-v] [-q] [-h \fIhfi\fR] [-p \fIport\fR] [-i \fIseconds\fR]
@@ -73,7 +70,7 @@ Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Def
 .TP 10
 -i/--interval \fIseconds\fR 
 .NL
-Interval in  \fIseconds\fR at which PA queries are performed to refresh to the latest PA image. Default = 10 seconds.
+Interval in \fIseconds\fR at which PA queries are performed to refresh to the latest PA image. Default = 10 seconds.
 
 .NL
 

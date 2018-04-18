@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -369,8 +369,9 @@ void CopyName(NameData_t *namep, const char *name, EUI64 guid, name_mode_t mode,
 			DEBUG_ASSERT(isspace(*s));
 			s++; l--;
 			// copy remaining characters to start of string
-			for (; l && *s; s++, d++, l--)
-				*d = isspace(*s)?'_':*s;
+			for (; l && *s; s++, l--)
+				if(!isspace(*s))
+					*d++ = *s;
 			*d++ = '_';
 		}
 		// now copy up to the 1st space into the remainder
@@ -1288,7 +1289,8 @@ void Usage_full(void)
 	fprintf(stderr, "                                treats any resolution errors as fatal.\n");
 	fprintf(stderr, "    -S/--strict               - perform strict topology file validation.\n");
 	fprintf(stderr, "                                Performs all checks in -C, and\n");;
-	fprintf(stderr, "                                requires all links list PortNum.\n");
+	fprintf(stderr, "                                requires all nodes list PortNum and\n");
+	fprintf(stderr, "                                all nodes list ports used.\n");
 	fprintf(stderr, "    topology_input            - topology_input file to use\n");
 	fprintf(stderr, "                                '-' may be used to specify stdin\n");
 // list only subset of formats applicable to ExpectedLink and useful here

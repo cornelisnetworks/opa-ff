@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -63,7 +63,7 @@ DEFFILE			=
 INCLUDE_TARGETS	= \
 				# Add more h hpp files here
 # Non-compiled files
-MISC_FILES		= 
+MISC_FILES		= opamgt_tls.xml opamgt_tls.xml-sample
 # all source files
 SOURCES			= $(CFILES) $(CCFILES) $(LFILES) $(RSCFILES) $(IDLFILE)
 # Source files to include in DSP File
@@ -113,13 +113,17 @@ INCLUDE_SUBDIR		=
 CLOCAL=$(CIBACCESS) $(CPIE)
 LOCAL_INCLUDE_DIRS=
 ifeq "$(IB_STACK)" "IBACCESS"
-LOCALDEPLIBS=$(IBACCESS_USER_LIBS) IbPrint
+LOCALDEPLIBS=$(IBACCESS_USER_LIBS) IbPrint Xml
 LOCALLIBS=
 LOCAL_LIB_DIRS=$(IBACCESS_USER_LIB_DIRS)
 else
-LOCALDEPLIBS=$(IBACCESS_USER_LIBS) IbPrint opamgt-priv
+LOCALDEPLIBS=$(IBACCESS_USER_LIBS) IbPrint opamgt-priv Xml
 LOCALLIBS=$(OPENIB_USER_LIBS)
 LOCAL_LIB_DIRS=$(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
+endif
+
+ifneq "$(BUILD_TARGET_OS)" "VXWORKS"
+LOCALLIBS+= expat
 endif
 
 # Include Make Rules definitions and rules
@@ -139,6 +143,10 @@ include $(TL_DIR)/IbaTools/Makerules.module
 #=============================================================================#
 # Rules:
 #-----------------------------------------------------------------------------#
+
+opamgt_tls.xml-sample: opamgt_tls.xml
+	$(CP) $< $@
+
 # process Sub-directories
 include $(TL_DIR)/Makerules/Maketargets.toplevel
 
@@ -152,7 +160,9 @@ include $(TL_DIR)/Makerules/Maketargets.install
 include $(TL_DIR)/Makerules/Maketargets.stage
 STAGE::
 	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_SAMPLES_DIR)/saquery $(CFILES) README Makefile.sample doqueries.sh
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) opashowmc
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) opashowmc opamgt_tls.xml
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR)/samples opamgt_tls.xml-sample
+
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

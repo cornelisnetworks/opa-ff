@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacaptureall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacaptureall 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacaptureall
 
@@ -138,7 +138,7 @@ Detail levels 2-4 can be used when fabric operational problems occur. If the pro
 For detail levels 2-4, the additional information is only gathered on the node running the opacaptureall command. The information is gathered for every fabric specified in the /etc/opa/ports file.
 
 .TP 10
- \fIfile\fR 
+\fIfile\fR 
 .NL
 Specifies the name for capture file. The suffix .tgz is appended if it is not specified in the name.
 
@@ -242,11 +242,8 @@ Password for administrator on all chassis. Used in absence of -S option.
 .PP
 When performing opacaptureall against hosts, internally SSH is used. The command opacaptureall requires that password-less SSH be set up between the host running Intel(R) Omni-Path Fabric Suite FastFabric Toolset and the hosts opacaptureall is operating against. The opasetupssh command can aid in setting up password-less SSH.
 .PP
-When performing operations against chassis, set up of SSH keys is recommended (see
-\fIopasetupssh\fR
-). If SSH keys are not set up, all chassis must be configured with the same admin password and use of the -S option is recommended. The -S option avoids the need to keep the password in configuration files.
+When performing operations against chassis, Intel recommends that you set up SSH keys using opasetupssh. If SSH keys are not set up, Intel recommends that all chassis be configured with the same admin password and that you use of the -S option to avoid keeping the password in configuration files.
 .PP
 
 .B NOTE:
 The resulting host capture files can require significant amounts of space on the Intel(R) Omni-Path Fabric Suite FastFabric Toolset host. Actual size varies, but sizes can be multiple megabytes per host. Intel recommends that you ensure adequate space is available on the Intel(R) Omni-Path Fabric Suite FastFabric Toolset system. In many cases, it may not be necessary to run opacaptureall against all hosts or chassis; instead, a representative subset may be sufficient. Consult with your support representative for further information.
-

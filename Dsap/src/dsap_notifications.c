@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT5 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -78,7 +78,7 @@ static int dsap_handle_event(struct dsap_port *port, STL_NOTICE *notice, size_t 
 		/* NOTICE */
 		data_details = (STL_TRAP_GID *)notice->Data;
 
-		acm_log(2, "NOTICE: source lid = %d, status = %d, attr_size = %d, context = %p\n",
+		acm_log(2, "NOTICE: source lid = %d, status = %d, attr_size = %lu, context = %p\n",
 			notice->IssuerLID, status, len, evt_port);
 		memcpy(gid.Raw, data_details->Gid.Raw, sizeof(gid.Raw));
 		action = report_notice_callback(notice->Attributes.Generic.TrapNumber,
@@ -118,8 +118,8 @@ static void dsap_take_action(int action)
 		delay.tv_sec = now.tv_sec + dsap_unsub_scan_frequency;
 		delay.tv_nsec = 0;
 		
-		acm_log(1, "Re-initializing in %d seconds.\n", 
-			delay.tv_sec - now.tv_sec);
+		acm_log(1, "Re-initializing in %u seconds.\n", 
+			(unsigned int)(delay.tv_sec - now.tv_sec));
 
 		pthread_cond_timedwait(&c_reinitialize, &m_reinitialize, 
 				       &delay);
@@ -249,7 +249,7 @@ FSTATUS dsap_notification_register_port(struct dsap_port *port)
 		goto error;
 	}
 	if ((rval = omgt_open_port_by_guid(&port->omgt_handle,
-					   ntohll(gid.global.interface_id), NULL))) {
+					   ntoh64(gid.global.interface_id), NULL))) {
 		acm_log(0, "Cannot open opamgt port object. (%d)\n", rval);
 		goto error;
 	}

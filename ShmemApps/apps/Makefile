@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -29,36 +29,36 @@
 
 # Makefile for SHMEM application/benchmark source for end user system
 # targets:
-# 	full 	- build all targets.
-# 	quick 	- build commonly used apps.
-# 	all		- synonym for quick
-# 	clobber - remove all built files.
+#	full	- build all targets.
+#	quick	- build commonly used apps.
+#	all		- synonym for quick
+#	clobber - remove all built files.
 #
-# 	The following targets build the matching applications. If the
-# 	application name differs from the target name, it is listed
-# 	in parens.
+#	The following targets build the matching applications. If the
+#	application name differs from the target name, it is listed
+#	in parens.
 #
-# 	HELLO
+#	HELLO
 #
 
 ifndef SHMEM_PREFIX
-
-export SHMEM_PREFIX=$(shell pkg-config --variable=prefix openshmem)
-ifeq ($(strip$(SHMEM_PREFIX)),)
-# Fallback: openshmem.pc may not found in pkg-config search path
-export SHMEM_PREFIX=/usr/shmem/gcc/openshmem-1.3-hfi/
+SOS_DEVEL_RPM=sandia-openshmem_gcc_hfi-devel
+export SHMEM_PREFIX=$(shell rpm -ql $(SOS_DEVEL_RPM) |grep -e "bin/oshcc" |sed -e "s%/bin/oshcc%%")
+ifeq ($(SHMEM_PREFIX),)
+$(error SHMEM_PREFIX not set)
 endif
 
 endif
+
 
 ifndef SHMEMCC
-export SHMEMCC=$(SHMEM_PREFIX)/bin/oshcc 
+export SHMEMCC=$(SHMEM_PREFIX)/bin/oshcc
 endif
 ifndef SHMEM_INCLUDE_DIR
 export SHMEM_INCLUDE_DIR=$(SHMEM_PREFIX)/include
 endif
 ifndef SHMEM_LIB_DIR
-export SHMEM_LIB_DIR=$(SHMEM_PREFIX)/lib
+export SHMEM_LIB_DIR=$(SHMEM_PREFIX)/lib64
 endif
 
 all:: INCLUDES LIBS CMDS
@@ -87,7 +87,7 @@ depend::
 force::
 INCLUDES::
 # do the real work during LIBS
-LIBS:: 
+LIBS::
 .PHONY: depend force INCLUDES LIBS
 
 quick:: HELLO
@@ -95,7 +95,7 @@ quick:: HELLO
 .PHONY: quick
 
 CMDS:: HELLO
-	@echo "Built sample applications"
+	@echo "Built sample application"
 .PHONY: CMDS
 
 full:: CMDS

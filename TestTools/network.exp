@@ -94,7 +94,7 @@ File: TestTools/network.exp" case_setup case_cleanup {
 					set PING "ping6"
 				}
 
-				send_unix_cmd "$PING -w 5 -c 1 -s $ping_size $netdest"
+				send_unix_cmd "$PING -W 5 -c 1 -s $ping_size $netdest"
 
 				# AS2.1 ping has slightly different output than 7.3 ping
 				expect_any 60 { "1 packets transmitted" "1 transmitted" } { "unknown" "refused" "error" "timeout" " 0 packets received" " 0 received" "nreachable" "duplicates" }

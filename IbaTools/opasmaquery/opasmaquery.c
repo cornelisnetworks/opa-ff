@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -42,7 +42,7 @@ char *g_cmdname;
 
 /* for pmaquery */
 uint32	g_counterSelectMask = 0xffffffff;	// default is all counters, so set all bits
-uint64	g_portSelectMask = 0;
+uint64	g_portSelectMask[4] = {0}; // 256 bitmask
 uint64	g_vlSelectMask = 0;
 
 /* for pma/sma query*/
@@ -50,6 +50,39 @@ uint64_t g_transactID = 0xffffffff12340000; // Upper half overwritten by driver.
 
 
 optypes_t *g_optypes;
+
+static FSTATUS parsePortMask(const char *str)
+{
+	unsigned int cnt = 0;
+	size_t len = 0;
+	char tempStr[65] = {0};
+
+	if (!str)
+		return FINVALID_PARAMETER;
+
+	while (isspace(*str)) ++str;
+		
+	/* Require leading '0x' */
+	if (str[0] != '0' || str[1] != 'x')
+		return FINVALID_PARAMETER;
+
+	str = &str[2];
+
+	len = strlen(str);
+
+	snprintf(tempStr, sizeof(tempStr), "%.*s%s",
+		(int)(64-len), "0000000000000000000000000000000000000000000000000000000000000000",
+		str);
+
+	cnt = sscanf(tempStr, "%16"SCNx64"%16"SCNx64"%16"SCNx64"%16"SCNx64,
+		&g_portSelectMask[0], &g_portSelectMask[1], &g_portSelectMask[2],
+		&g_portSelectMask[3]);
+
+	if (cnt != 4)
+		return FINVALID_PARAMETER;
+
+	return FSUCCESS;
+}
 
 void Usage(boolean displayAbridged)
 {
@@ -98,7 +131,7 @@ int main(int argc, char** argv)
 	}
 
 	if ( (strcmp(g_cmdname, "opasmaquery") == 0)) {
-		options = "vd:nl:m:h:p:K:o:b:f:g?";
+		options = "vd:nl:m:h:p:K:o:b:f:gt:i?";
 		g_optypes = sma_query;
 		otype = string_to_otype("nodeinfo");
 	} else if ( (strcmp(g_cmdname, "opapmaquery") == 0)) {
@@ -130,9 +163,11 @@ int main(int argc, char** argv)
 				Usage(FALSE);
 			}
 			break;
+		case 'i':
+			args.iflag = TRUE;
+			break;
 		case 'v':
 			g_verbose++;
-			madrpc_show_errors(1);
 			if (g_verbose>3) umad_debug(g_verbose-3);
 			break;
 		case 's':
@@ -143,10 +178,17 @@ int main(int argc, char** argv)
 			}
 			break;
 		case 'l':
-			if (FSUCCESS != StringToUint16(&args.dlid, optarg, NULL, 0, TRUE)) {
+			if (FSUCCESS != StringToUint32(&args.dlid, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "%s: Invalid DLID: %s\n", g_cmdname, optarg);
 				Usage(FALSE);
 			}
+			break;
+		case 't':
+			if (FSUCCESS != StringToUint8(&args.table, optarg, NULL, 0, TRUE)) {
+				fprintf(stderr, "%s: Invalid table: %s\n", g_cmdname, optarg);
+				Usage(FALSE);
+			}
+			args.tflag = TRUE;
 			break;
 		case 'b':
 			{
@@ -184,7 +226,7 @@ int main(int argc, char** argv)
 			}
 			break;
 		case 'f':
-			if (FSUCCESS != StringToUint16(&args.flid, optarg, NULL, 0, TRUE)) {
+			if (FSUCCESS != StringToUint32(&args.flid, optarg, NULL, 0, TRUE)) {
 				fprintf(stderr, "%s: Invalid FLID: %s\n", g_cmdname, optarg);
 				Usage(FALSE);
 			}
@@ -227,7 +269,7 @@ int main(int argc, char** argv)
 			args.eflag = TRUE;
 			break;
 		case 'n':
-			if (FSUCCESS != StringToUint64(&g_portSelectMask, optarg, NULL, 0, TRUE)) {
+			if (FSUCCESS != parsePortMask(optarg)) {
 				fprintf(stderr, "%s: Invalid port select mask: %s\n", g_cmdname, optarg);
 				Usage(FALSE);
 			}
@@ -276,10 +318,10 @@ int main(int argc, char** argv)
 		fprintf(stderr, "%s: -b ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
 	}
 
-	if(args.eflag && !g_optypes[otype].eflag) {
+	if (args.eflag && ! g_optypes[otype].eflag) {
 		fprintf(stderr, "%s: -e ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
 	}
-
+	
 	if (args.mflag) {
 		if (! g_optypes[otype].mflag && ! g_optypes[otype].mflag2) {
 			fprintf(stderr, "%s: -m ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
@@ -350,7 +392,7 @@ int main(int argc, char** argv)
 
 	(void)omgt_port_get_port_lid(args.omgt_port, &slid);
 	(void)omgt_port_get_hfi_port_num(args.omgt_port, &args.port);
-	args.slid = (IB_LID)slid;
+	args.slid = (STL_LID)slid;
 
 	PrintDestInitFile(&g_dest, stdout);
 

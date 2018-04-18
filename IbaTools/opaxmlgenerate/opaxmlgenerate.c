@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -372,7 +372,7 @@ void getRecu_opt( int argc, char ** argv, const char *pOptShort,
 
 			else if (!optarg || ((lenStr = strlen(optarg) + 1) == 1))
 			{
-				fprintf(stderr, NAME_PROG ": Invalid Element Name: %s\n", optarg);
+				fprintf(stderr, NAME_PROG ": Invalid Element Name: %s\n", optarg ? optarg:"");
 				errUsage();
 			}
 
@@ -411,7 +411,8 @@ void getRecu_opt( int argc, char ** argv, const char *pOptShort,
 				errUsage();
 			}
 
-			strcpy(bfDelimit, optarg);
+			strncpy(bfDelimit, optarg, MAX_DELIMIT_CHARS);
+			bfDelimit[MAX_DELIMIT_CHARS]=0; // Ensure null terminated
 			break;
 
 		// Indent chars specification
@@ -427,7 +428,7 @@ void getRecu_opt( int argc, char ** argv, const char *pOptShort,
 			if ( !optarg || ((lenStr = strlen(optarg)) == 0) ||
 					(lenStr > MAX_FILENAME_CHARS) )
 			{
-				fprintf(stderr, NAME_PROG ": Invalid Input File Name: %s\n", optarg);
+				fprintf(stderr, NAME_PROG ": Invalid Input File Name: %s\n", optarg ? optarg:"");
 				errUsage();
 			}
 
@@ -440,7 +441,8 @@ void getRecu_opt( int argc, char ** argv, const char *pOptShort,
 
 			if (strcmp(optarg, "-"))
 			{
-				strcpy(nameFileInput, optarg);
+				strncpy(nameFileInput, optarg, MAX_FILENAME_CHARS);
+				nameFileInput[MAX_FILENAME_CHARS]=0; // Ensure null terminated
 				hFileInput = fopen(nameFileInput, "r");
 	
 				if (!hFileInput)
@@ -459,12 +461,13 @@ void getRecu_opt( int argc, char ** argv, const char *pOptShort,
 			if (!optarg || ((lenStr = strlen(optarg)) == 0) ||
 					(lenStr > MAX_FILENAME_CHARS) )
 			{
-				fprintf(stderr, NAME_PROG ": Invalid Parameter File Name: %s\n", optarg);
+				fprintf(stderr, NAME_PROG ": Invalid Parameter File Name: %s\n", optarg ? optarg:"");
 				errUsage();
 			}
 
 			// Open parameter file
-			strcpy(nameFileParam, optarg);
+			strncpy(nameFileParam, optarg,MAX_FILENAME_CHARS);
+			nameFileParam[MAX_FILENAME_CHARS]=0; // Ensure null terminated.
 			hFileParam = fopen(nameFileParam, "r");
 
 			if (!hFileParam)
@@ -658,6 +661,7 @@ int main(int argc, char ** argv)
 				fprintf( stderr,
 			NAME_PROG ": WARNING End of Input file (%s) before End of Element List (%d items)\n",
 						nameFileInput, numElementsTable );
+				g_exitstatus = 2;
 				break;
 			}
 

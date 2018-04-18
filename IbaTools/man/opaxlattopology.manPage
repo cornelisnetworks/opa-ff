@@ -1,27 +1,29 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxlattopology
 
 .NL
 
 .PP
-Generates a topology XML file of a cluster using topology.csv, linksum\(ulswd06.csv, and linksum\(ulswd24.csv as input. The topology file can be used to bring up and verify the cluster.
+Generates a topology XML file of a cluster using your customized <topologyfile>.csv, linksum\(ulswd06.csv, and linksum\(ulswd24.csv as input. The output topology XML file can be used to bring up and verify the cluster.
 .PP
 
 .B NOTE:
-The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/share/opa/samples directory.
+The <topologyfile>.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/share/opa/samples directory.
 
 .SH Syntax
 .NL
-opaxlattopology [-d \fIlevel\fR] [-v \fIlevel\fR] [-i \fIlevel\fR] [-K] [-s \fIhfi\(ulsuffix\fR] [source [dest]]
+opaxlattopology [-d \fIlevel\fR] [-v \fIlevel\fR] [-i \fIlevel\fR] [-K] [-s \fIhfi\(ulsuffix\fR]
+.br
+[source [dest]]
 .SH Options
 .NL
 
@@ -117,7 +119,7 @@ Reserved.
 .TP 10
 -i \fIlevel\fR 
 .NL
-Specifies the output indent level. Range = 0 - 15. Default = 0.
+Specifies the output indent level. Default = 4.
 
 .TP 10
 -K 
@@ -135,13 +137,38 @@ Used on Multi-Rail or Multi-Plane fabrics. Can be used to override the default h
 For Multi-Plane fabric, use the tool multiple times with a different hfi-suffix.
 .IP
 For Multi-Rail fabric, specify HostName as "HostName HfiName" in the spreadsheet.
+.TP 10
+-o report 
+.NL
+Specifies the report type for output. By default, all the sections are generated.
+
+.IP
+Report Types:
+.RS
+.TP 10
+
+.sp
+brnodes 
+Creates the <Node> section xml for the csv input.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+links 
+Creates the <LinkSummary> section xml for the csv input.
+
+.RE
+
 .SH Description
 .NL
 
 .PP
-The opaxlattopology script reads the topology.csv file from the local directory, and reads the other files from /usr/share/opa/samples/linksum\(ulswd06.csv and /usr/share/opa/samples/linksum\(ulswd24.csv. The topology.csv file is created from the topology.xlsx spreadsheet by saving the Fabric Links tab as a .CSV file to topology.csv. A sample topology.xlsx is located in the /usr/share/opa/samples/ directory. Inspect the topology.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
+The opaxlattopology script reads your customized <topologyfile>.csv file from the local directory, and reads the other files from /usr/share/opa/samples/linksum\(ulswd06.csv and /usr/share/opa/samples/linksum\(ulswd24.csv. Two sample topology XLSX files, detailed\(ultopology.xlsx and minimal\(ultopology.xlsx, are located in the /usr/share/opa/samples/ directory. You must create your <topologyfile>.csv file by editing one of the sample spreadsheets and saving the Fabric Links tab as a CSV file. Inspect your <topologyfile>.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
 .PP
-The script outputs one or more topology files starting with topology.0:0.xml. The topology.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/share/opa/samples directory.
+The script outputs one or more topology files starting with topology.0:0.xml. Your <topologyfile>.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/share/opa/samples directory.
 .SH Example 
 .NL
 opaxlattopology
@@ -156,7 +183,7 @@ opaxlattopology fabric\(ul2.csv
 .br
 # reads input \[aq]fabric\(ul2.csv\[aq] and creates default output
 .PP
-See topology.xlsx for examples of links between HFI and Edge SW (rows 4-7), HFI and Core SW (rows 8-11), and Edge SW and Core SW (rows 12-15).
+Both sample files contain examples of links between HFI and Edge SW (rows 4-7), HFI and Core SW (rows 8-11), and Edge SW and Core SW (rows 12-15).
 .SH Environment Variables
 .NL
 
@@ -179,36 +206,51 @@ If set, it overrides default MTU on switch-to-HFI links. Default = 10240
 The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone files in the /usr/share/opa/samples directory. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
 
 .IP 1) 4n 
-Save each of the following from the topology.xlsx file as individual .csv files:
+Save each of the following from your custom <topologyfile>.xlsx file as individual .csv files:
 .IP \(bu
 Internal SWD06 Links tab as linksum\(ulswd06.csv 
 .IP \(bu
 Internal SWD24 Links tab as linksum\(ulswd24.csv 
 .IP \(bu
-Fabric Links tab as topology.csv 
+Fabric Links tab as <topologyfile>.csv 
 
 .IP 2) 4n 
-For each saved topology.csv file, run the script with the -K option.
+For each saved <topologyfile>.csv file, run the script with the -K option.
 
 .IP 3) 4n 
 Upon completion of the script, save the top level linksum.csv file as linksum\(ulswd06.csv or linksum\(ulswd24.csv as appropriate.
 
-.SH Multi Rail and Multi Plane Fabrics
+.SH Multi-Rail and Multi-Plane Fabrics
 .NL
 
 .PP
 By default, the opaxlattopology script considers all of the hosts to have a single HFI (hfi1\(ul0).
 .PP
-For Multi Rail/Plane fabrics, the user has following options:
+For Multi-Rail/Multi-Plane fabrics, you have the following options:
 .IP \(bu
-For Multi Rail fabrics or for a Single Plane fabric with some multi-ported hosts, the user can edit the "Host Name" in topology.csv file to include the HFI Name, like "HostName HfiName" and then follow the standard procedure to generate topology.xml.
+For Multi-Rail fabrics or for a Single Plane fabric with some multi-ported hosts, you can edit the Host Name in your customized <topologyfile>.csv file to include the HFI Name (for example: HostName HfiName) and then follow the standard procedure to generate <topologyfile>.xml.
 .IP \(bu
-For a Multi Plane fabric with Identical planes, the tool can be run multiple times on same topology.csv with different "-s hfi\(ulsuffix" options.For example, if there are two identical fabric (fabric\(ul1 and fabric\(ul2) connected to a single host with two HFIs (hfi1\(ul0 and hfi1\(ul1), the tool can be run twice like this:
+For a Multi-Plane fabric with identical planes, the tool can be run multiple times on the same <topologyfile>.csv with different -s hfi\(ulsuffix options.
+For example, if there are two identical fabrics (fabric\(ul1 and fabric\(ul2) connected to a single host with two HFIs (hfi1\(ul0 and hfi1\(ul1), the tool can be run twice like this:
+
+.IP \(bu
 For fabric\(ul1:
-opaxlattopology topology.csv topology.xmlFor fabric\(ul2:
 
 .br
-opaxlattopology -s hfi1\(ul1 topology.csv topology.xml
+opaxlattopology <topologyfile>.csv <topologyfile>.xml
+
+.br
+
 
 .IP \(bu
-For a fabric with both Multi Rail and Multi Plane segments, the user can use a combination of above techniques to generate desired topology.xml file.
+For fabric\(ul2:
+
+.br
+opaxlattopology -s hfi1\(ul1 <topologyfile>.csv <topologyfile>.xml
+
+.br
+
+
+
+.IP \(bu
+For a fabric with both Multi-Rail and Multi-Plane segments, you can use a combination of the above techniques to generate the desired <topologyfile>.xml file.

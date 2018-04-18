@@ -1,0 +1,46 @@
+Source: opa
+Maintainer: Breyer, Scott J <scott.j.breyer@intel.com>
+Section: admin
+Priority: optional
+Standards-Version: 3.9.8
+Build-Depends: debhelper (>= 9), libexpat-dev,
+ dh-systemd (>= 1.5), bash (>= 3), libibverbs-dev, uuid-dev,
+ libibmad-dev, libibumad-dev, ibacm, libncurses5-dev, texinfo
+
+Package: opa-basic-tools
+Architecture: linux-any
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends},
+ bc, libhfi1 (>= 0.5)
+Description: Management level tools and scripts.
+ Contains basic tools for fabric managment necessary on all compute nodes.
+
+Package: opa-address-resolution
+Architecture: linux-any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+ opa-basic-tools (= ${binary:Version}),
+ ibacm
+Description: Contains Address Resolution manager
+ This is to be filled out more concisely later.
+
+Package: opa-fastfabric
+Architecture: linux-any
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends},
+ opa-basic-tools (= ${binary:Version}),
+ opa-mpi-apps (= ${binary:Version}),
+ tcl-expect, tclsh
+Description: Management level tools and scripts.
+ Contains tools for managing fabric on a management node.
+
+Package: opa-libopamgt
+Architecture: linux-any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Omni-Path management API library
+ This package contains the library necessary to build applications that
+ interface with an Omni-Path FM.
+
+Package: opa-libopamgt-dev
+Architecture: linux-any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+ opa-libopamgt
+Description: Omni-Path library development headers
+ This package contains the necessary headers for opamgt development.

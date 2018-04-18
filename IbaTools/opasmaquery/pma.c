@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -39,7 +39,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod, argrec *args, STL_PERF_MAD *mad, size_t send_size)
 {
 	FSTATUS status;
-	uint32_t dlid;
+	STL_LID dlid;
 	uint8_t sl = args->sl;
 	uint8_t port_state;
 	if (sl == 0xff) {
@@ -113,15 +113,20 @@ static FSTATUS perform_stl_pma_query(uint8 method, uint16 attrid, uint32 attrmod
 	return status;
 } //perform_stl_pma_query
 
-static int getNumPortsFromSelMask(uint64 portSelectMask)
+static int getNumPortsFromSelMask(uint64 portSelectMask[])
 {
-	int i;
+	int i = 0;
 	int numPorts = 0;
 
-	for (i = 0; i < MAX_PM_PORTS; i++) {
-		if ((portSelectMask >> i) & (uint64)1)
-			numPorts++;
+	while (i < 4) {
+		uint64 temp = portSelectMask[i++];
+
+		while (temp) {
+			if ( temp & (uint64)1 ) ++numPorts;
+			temp>>=1;
+		}
 	}
+
 	return(numPorts);
 }
 
@@ -146,19 +151,22 @@ static uint8 pma_get_portNum(argrec *args)
 	return port;
 }
 
-static uint64 getStlPortSelectMask(uint64 portSelectMask, argrec *args)
+static void getStlPortSelectMask(uint64 *dest, argrec *args)
 {
-	if (portSelectMask) {
+	if (g_portSelectMask[3] || g_portSelectMask[2] ||
+		g_portSelectMask[1] || g_portSelectMask[0]) {
 		// ok as is
+		memcpy(dest, g_portSelectMask, sizeof(g_portSelectMask));
 	} else if (! args->dlid) {
 		// local query, use same port as local HFI port for query
-		portSelectMask = (1 << args->port);
+		memset(dest, 0, sizeof(uint64) * 4);
+		dest[3] = (1 << args->port);
 	} else {
 		fprintf(stderr, "Error: portSelectMask must be non-zero - must select at least one port\n");
 		Usage(FALSE);	// exits application
 	}
-	VRBSE_PRINT("PortSelectMask=0x%016"PRIx64"\n", portSelectMask);
-	return(portSelectMask);
+	VRBSE_PRINT("PortSelectMask=0x%016"PRIx64" 0x%016"PRIx64" 0x%016"PRIx64" 0x%016"PRIx64"\n",
+				dest[0], dest[1], dest[2], dest[3]);
 }
 
 #if 0
@@ -232,14 +240,12 @@ static boolean stl_pma_clear_PortStatus(argrec *args, uint8_t *pm, size_t pm_len
 {
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
 	uint32	attrmod;
-	uint64 portSelectMask;
 	FSTATUS status = FSUCCESS;
 
 	STL_CLEAR_PORT_STATUS *pStlClearPortStatus = (STL_CLEAR_PORT_STATUS *)&(mad->PerfData);
 	MemoryClear(mad, sizeof(*mad));
 
-	portSelectMask = getStlPortSelectMask(g_portSelectMask, args);
-	pStlClearPortStatus->PortSelectMask[3] = portSelectMask;
+	getStlPortSelectMask(pStlClearPortStatus->PortSelectMask, args);
 	attrmod = 1 << 24;
 	pStlClearPortStatus->CounterSelectMask.AsReg32 = g_counterSelectMask;
 	BSWAP_STL_CLEAR_PORT_STATUS_REQ(pStlClearPortStatus);
@@ -259,16 +265,14 @@ static boolean stl_pma_get_DataCounters(argrec *args, uint8_t *pm, size_t pm_len
 {
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
 	uint32		 attrmod;
-	uint64 portSelectMask;
 	FSTATUS status = FSUCCESS;
 
 	STL_DATA_PORT_COUNTERS_REQ *pStlDataPortCountersReq = (STL_DATA_PORT_COUNTERS_REQ *)&(mad->PerfData);
 	STL_DATA_PORT_COUNTERS_RSP *pStlDataPortCountersRsp;
 	MemoryClear(mad, sizeof(*mad));
 
-	portSelectMask = getStlPortSelectMask(g_portSelectMask, args);
-	pStlDataPortCountersReq->PortSelectMask[3] = portSelectMask;
-	attrmod = getNumPortsFromSelMask(portSelectMask) << 24;
+	getStlPortSelectMask(pStlDataPortCountersReq->PortSelectMask, args);
+	attrmod = getNumPortsFromSelMask(pStlDataPortCountersReq->PortSelectMask) << 24;
 	pStlDataPortCountersReq->VLSelectMask = g_vlSelectMask;
 	BSWAP_STL_DATA_PORT_COUNTERS_REQ(pStlDataPortCountersReq);
 
@@ -288,16 +292,14 @@ static boolean stl_pma_get_ErrorCounters(argrec *args, uint8_t *pm, size_t pm_le
 {
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
 	uint32		 attrmod;
-	uint64 portSelectMask;
 	FSTATUS status = FSUCCESS;
 
 	STL_ERROR_PORT_COUNTERS_REQ *pStlErrorPortCountersReq = (STL_ERROR_PORT_COUNTERS_REQ *)&(mad->PerfData);
 	STL_ERROR_PORT_COUNTERS_RSP *pStlErrorPortCountersRsp;
 	MemoryClear(mad, sizeof(*mad));
 
-	portSelectMask = getStlPortSelectMask(g_portSelectMask, args);
-	pStlErrorPortCountersReq->PortSelectMask[3] = portSelectMask;
-	attrmod = getNumPortsFromSelMask(portSelectMask) << 24;
+	getStlPortSelectMask(pStlErrorPortCountersReq->PortSelectMask, args);
+	attrmod = getNumPortsFromSelMask(pStlErrorPortCountersReq->PortSelectMask) << 24;
 	pStlErrorPortCountersReq->VLSelectMask = g_vlSelectMask;
 
 	BSWAP_STL_ERROR_PORT_COUNTERS_REQ(pStlErrorPortCountersReq);
@@ -318,17 +320,15 @@ static boolean stl_pma_get_ErrorInfo(argrec *args, uint8_t *pm, size_t pm_len, b
 {
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
 	uint32		 attrmod;
-	uint64 portSelectMask;
 	uint32 portCount = 0;
 	FSTATUS status = FSUCCESS;
 
 	STL_ERROR_INFO_REQ *pStlErrorInfoReq = (STL_ERROR_INFO_REQ *)&(mad->PerfData);
 	MemoryClear(mad, sizeof(*mad));
 
-	portSelectMask = getStlPortSelectMask(g_portSelectMask, args);
-	pStlErrorInfoReq->PortSelectMask[3] = portSelectMask;
+	getStlPortSelectMask(pStlErrorInfoReq->PortSelectMask, args);
 	pStlErrorInfoReq->ErrorInfoSelectMask.AsReg32 = g_counterSelectMask;
-	portCount = getNumPortsFromSelMask(portSelectMask);
+	portCount = getNumPortsFromSelMask(pStlErrorInfoReq->PortSelectMask);
 	attrmod = portCount << 24;
 
 	if (portCount == 0)
@@ -352,17 +352,15 @@ static boolean stl_pma_clear_ErrorInfo(argrec *args, uint8_t *pm, size_t pm_len,
 {
 	STL_PERF_MAD *mad = (STL_PERF_MAD*)pm;
 	uint32		 attrmod;
-	uint64 portSelectMask;
 	uint32 portCount = 0;
 	FSTATUS status = FSUCCESS;
 
 	STL_ERROR_INFO_REQ *pStlErrorInfoReq = (STL_ERROR_INFO_REQ *)&(mad->PerfData);
 	MemoryClear(mad, sizeof(*mad));
 
-	portSelectMask = getStlPortSelectMask(g_portSelectMask, args);
-	pStlErrorInfoReq->PortSelectMask[3] = portSelectMask;
+	getStlPortSelectMask(pStlErrorInfoReq->PortSelectMask, args);
 	pStlErrorInfoReq->ErrorInfoSelectMask.AsReg32 = g_counterSelectMask;
-	portCount = getNumPortsFromSelMask(portSelectMask);
+	portCount = getNumPortsFromSelMask(pStlErrorInfoReq->PortSelectMask);
 	attrmod = portCount << 24;
 
 	if (portCount == 0)
@@ -383,15 +381,18 @@ static boolean stl_pma_clear_ErrorInfo(argrec *args, uint8_t *pm, size_t pm_len,
 	}
 }
 
+
 optypes_t stl_pma_query [] = {
-//name				func					       displayAbridged, description, Flags				m,     m2,    f,     b,     g,     n,     l,     e,    w      
-{ "classportinfo",	stl_pma_get_class_port_info, 	TRUE,           "list of port info records", 	FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE},
-{ "getportstatus",	stl_pma_get_PortStatus,			TRUE,           "list of port status records", 	TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE},
-{ "clearportstatus",stl_pma_clear_PortStatus,		FALSE,          "clears the port status", 		FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE,  TRUE, TRUE},
-{ "getdatacounters",stl_pma_get_DataCounters,		TRUE,           "list of data counters", 		FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE, FALSE, TRUE},
-{ "geterrorcounters",stl_pma_get_ErrorCounters,		TRUE,           "list of error counters", 		FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE, FALSE, TRUE},
-{ "geterrorinfo",	stl_pma_get_ErrorInfo,			TRUE,           "list of error info", 			FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE, FALSE, FALSE},
-{ "clearerrorinfo",	stl_pma_clear_ErrorInfo,		FALSE,          "clears the error info", 		FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE, TRUE,  FALSE},
+//name					func							displayAbridged, description, Flags				m,     m2,    f,     b,     i,     t,     g,     n,     l,     e,    w
+{ "classportinfo",		stl_pma_get_class_port_info,	TRUE,	"class of port info", 					FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE},
+{ "getportstatus",		stl_pma_get_PortStatus,			TRUE,   "list of port counters",			 	TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE},
+{ "clearportstatus",	stl_pma_clear_PortStatus,		FALSE,	"clears the port counters",				FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE,  TRUE, TRUE},
+{ "getdatacounters",	stl_pma_get_DataCounters,		TRUE,	"list of data counters", 				FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE, FALSE, TRUE},
+{ "geterrorcounters",	stl_pma_get_ErrorCounters,		TRUE,	"list of error counters", 				FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE, FALSE, TRUE},
+{ "geterrorinfo",		stl_pma_get_ErrorInfo,			TRUE,	"list of error info", 					FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE, FALSE, FALSE},
+{ "clearerrorinfo",		stl_pma_clear_ErrorInfo,		FALSE,	"clears the error info", 				FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE, TRUE,  FALSE},
+
+
 { NULL }
 };
 
@@ -408,7 +409,7 @@ void pma_Usage(boolean displayAbridged)
 	fprintf(stderr, "    -o otype Output type. See below for list.\n");
 	fprintf(stderr, "    -v       Verbose output. Can be specified more than once for\n");
 	fprintf(stderr, "             additional openib debugging and libibumad debugging.\n");
-    fprintf(stderr, "    -s       Specify different Service Level (default is SM SL)\n");
+	fprintf(stderr, "    -s       Specify different Service Level (default is SM SL)\n");
 	fprintf(stderr, "    -l lid   Destination lid, default is local port\n");
 	fprintf(stderr, "    -h hfi   hfi, numbered 1..n, 0= -p port will be a\n");
 	fprintf(stderr, "             system wide port num (default is 0)\n");
@@ -431,7 +432,7 @@ void pma_Usage(boolean displayAbridged)
 		fprintf(stderr, "    -e mask  Counter/error Select Mask, select bit positions as shown below\n");
 		fprintf(stderr, "             0 is least significant (rightmost)\n");
 		fprintf(stderr, "             default is all bits set (e.g. 0xffffffe0)\n");
-		fprintf(stderr, "                              (for Counters):      (for Error Info):\n");
+		fprintf(stderr, "                         (for Counters):           (for Error Info):\n");
 		fprintf(stderr, "             mask	  bit location  \n");
 		fprintf(stderr, "             0x80000000  31    Xmit Data           Rcv Error Info\n");
 		fprintf(stderr, "             0x40000000  30    Rcv Data            Excessive Buffer Overrun\n");

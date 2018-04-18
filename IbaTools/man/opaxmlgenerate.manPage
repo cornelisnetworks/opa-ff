@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlgenerate 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxmlgenerate 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxmlgenerate
 
@@ -18,9 +18,9 @@ opaxmlgenerate
 Takes comma-separated-values (CSV) data as input and generates sequences of XML containing user-specified element names and element values within start and end tag specifications. Use this tool to create an XML representation of fabric data from its CSV form.
 .SH Syntax
 .NL
-opaxmlgenerate [-v] [-d \fIdelimiter\fR] [-i \fInumber\fR] [-g \fIelement\fR] [-h \fIelement\fR]
+opaxmlgenerate [-v] [-d \fIdelimiter\fR] [-i \fInumber\fR] [-g \fIelement\fR]
 .br
-[-e \fIelement\fR] [-X \fIinput\(ulfile\fR] [-P \fIparam\(ulfile\fR]
+[-h \fIelement\fR] [-e \fIelement\fR] [-X \fIinput\(ulfile\fR] [-P \fIparam\(ulfile\fR]
 .SH Options 
 .NL
 
@@ -32,7 +32,7 @@ Produces full help text.
 .TP 10
 -g/--generate \fIelement\fR 
 .NL
-Generates value for  \fIelement\fR using value in next field from the input file. Can be used multiple times on the command line. Values are assigned to elements in order.
+Generates value for \fIelement\fR using value in next field from the input file. Can be used multiple times on the command line. Values are assigned to elements in order.
 
 .TP 10
 -h/--header \fIelement\fR 

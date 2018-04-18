@@ -1,16 +1,16 @@
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2017, Intel Corporation
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
- are permitted provided that the following conditions are met: 
+ are permitted provided that the following conditions are met:
 - Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer. 
+  this list of conditions and the following disclaimer.
 - Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution. 
+  and/or other materials provided with the distribution.
 - Neither the name of Intel Corporation nor the names of its contributors may
   be used to endorse or promote products derived from this software without
-  specific prior written permission. 
+  specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -33,17 +33,17 @@ to U.S. embargoed destinations which include Cuba, Iraq, Libya, North Korea,
 Iran, Syria, Sudan, Afghanistan and any other country to which the U.S. has
 embargoed goods and services.
 
-This package contains SHMEM applications and packages for testing and 
+This package contains SHMEM applications and packages for testing and
 evaluation.
 
 
 MPICH_PREFIX ENVIRONMENT VARIABLE:
 ----------------------------------
 
-The SHMEM samples require an MPI implementation to run. The
-OpenSHMEM/GASNet samples at present only supports OpenMPI. The
-select_mpi script will look for OpenMPI directories matching either
-openmpi*hfi (first) or openmpi* (second).
+The SHMEM samples require an MPI implementation to run. Sandia
+OpenSHMEM requires a Hydra* based MPI to run. The select_mpi script
+will look for MVAPICH2 directories matching either
+mvapich2*hfi (first) or mvapich* (second).
 
 If desired the MPICH_PREFIX may be exported to control the selection.
 Alternatively, a .prefix file can be created in this directory with the
@@ -52,8 +52,8 @@ preferred selection.
 SHMEM_PREFIX ENVIRONMENT VARIABLE:
 ----------------------------------
 
-By default, Make will build these programs with SHMEM installed in
-/usr/shmem/gcc/openshmem-1.0h-hfi. SHMEM_PREFIX is also used by the
+By default, Make will build these programs with Sandia OpenSHMEM installed
+by RPM sandia-openshmem_gcc_hfi-devel. SHMEM_PREFIX is also used by the
 run_* scripts to define where bin/oshrun is found.
 
 You can override this by setting SHMEM_PREFIX in your environment. For
@@ -63,53 +63,34 @@ export SHMEM_PREFIX=/my/copy_of_shmem
 
 The run_* sample runner scripts set SHMEM_PREFIX from a file
 .shmem_prefix in the current working directory if that
-SHMEM_PREFIX is not already set. If not present, SHMEM_PREFIX will
-default to /usr/shmem/gcc/openshmem-1.0h-hfi.
-
-GASNET LIBRARIES AND BINARIES:
-----------------------------------
-
-The GASNet libraries and binaries must be installed and present in the
-environment in order to run the SHMEM samples. The path to the GASNet
-binaries should be added to the PATH environment variable while the path
-to the GASNet libraries should be added to the LD_LIBRARY_PATH variable.
+SHMEM_PREFIX is not already set.
 
 USING THESE TOOLS WITH MPI-SELECTOR:
 ------------------------------------
 
 SHMEM applications are started using the mpirun from an MPI
-implementation such as openmpi, or mvapich2.
+implementation such mvapich2.
 
 In OFED (and Intel IFS), the normal method of selecting an MPI is to
 use the mpi-selector commands (type "man mpi-selector-menu" and "man
-mpi-selector" for details on those commmands).
+mpi-selector" for details on those commands).
 
 To use mpi-selector with these scripts, add this line to your .bashrc
 file:
 
 source /usr/src/opa/mpi_apps/get_selected_mpi.sh
 
-
-
 COMPILING THE TEST PROGRAMS:
 ----------------------------
 
-The top level Makefile will build all the applications and benchmarks,
+The top level Makefile will build a simple SHMEM hello_worl application,
 using the default (described above) or the value of SHMEM_PREFIX (also
 described above).
-
-Some useful make targets include:
-
-	clean	- remove all binaries.
-	all 	- will build everything
-	quick	- builds popular applications (same as all at this time)
-
-
 
 RUNNING THE TEST PROGRAMS:
 --------------------------
 
-A "run_*" script is provided for each application/benchmark.  These
+A "run_*" script is provided for the applications/benchmark.  These
 scripts assume the existence of a local "shmem_hosts" file [alternate name can be
 exported in MPI_HOSTS if desired] (in mpirun mode)
 and that mpd is already running (if you're using mvapich2 in mpd mode).
@@ -117,5 +98,5 @@ For example, to run the barrier test, simply type:
 
 # ./run_barrier 2
 
-The scripts log the output of the SHMEM programs to the 
+The scripts log the output of the SHMEM programs to the
 /usr/src/opa/shmem_apps/logs directory.

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapaquery
 
@@ -20,20 +20,20 @@ Performs various queries of the performance management (PM)/performance administ
 
 for a description of the operation and client services of the PM/PA.
 .PP
-By default, opapaquery queries the most recent data. However, if an image number ( \fIimgNum\fR) and/or image offset ( \fIimgOff\fR) is provided, the query returns previous sweep data. Queries that access previous sweep data return with the absolute image number representing that data, and therefore have an image offset of zero.
+By default, opapaquery queries the most recent data. However, if an image number (\fIimgNum\fR) and/or image offset (\fIimgOff\fR) is provided, the query returns previous sweep data. Queries that access previous sweep data return with the absolute image number representing that data, and therefore have an image offset of zero.
 .PP
 opapaquery\[aq]s operation is dependent on an Intel(R) Omni-Path Fabric Suite Fabric Manager version 6.0 or greater running as master SM/PM in the fabric.
 .PP
 By default, opapaquery uses the first active port on the local system. However, if the Fabric Management Node is connected to more than one fabric (for example, a subnet), the HFI and port may be specified to select the fabric whose PA is to be queried.
 .SH Syntax 
 .NL
-opapaquery [-v] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g \fIgroupName\fR] [-l \fInodeLid\fR]
+opapaquery [-v] [-h hfi|-b addr] [-p port] [-x gid] [-E]
 .br
-[-P \fIportNumber\fR] [-d \fIdelta\fR] [-j \fIdate\(ultime\fR] [-q \fIdate\(ultime\fR] [-U] [-s \fIselect\fR]
+[-T ssl\(ulparams] -o type [-g groupName] [-l nodeLid] [-P portNumber]
 .br
-[-f \fIfocus\fR] [-S \fIstart\fR] [-r \fIrange\fR] [-n \fIimgNum\fR] [-O \fIimgOff\fR] [-y \fIimgTime\fR]
+[-G nodeGuid] [-D nodeDesc] [-d delta] [-j date\(ultime][-q date\(ultime] [-U] [-s select] [-f focus] [-S start] [-r range] [-n imgNum]
 .br
-[-m \fImoveImgNum\fR] [-M \fImoveImgOff\fR] [-V vfName]
+[-O imgOff] [-y imgTime] [-m moveImgNum] [-M moveImgOff] [-V vfName]
 .SH Options 
 .NL
 
@@ -48,9 +48,38 @@ Specifies the verbose output.
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
 
 .TP 10
+-b/--oob \fIaddress\fR 
+.NL
+Specifies Out-of-Band address of node running the FE. Can be either hostname, IPv4, or IPv6 address. (Default is "127.0.0.1")
+
+.TP 10
 -p/--port \fIport\fR 
 .NL
-Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
+Specifies the port.
+.RS
+
+.IP \(bu
+In-band: Numbered 1...n. Using 0 specifies the first active port. (Default is 0.)
+.IP \(bu
+Out-of-band: Port FE is listening on. (Default is 3245.)
+
+.RE
+
+
+.TP 10
+-x/--source-gid \fIsrc\(ulgid\fR 
+.NL
+Specifies the source GID of the local GID. (This is required for most Path and Trace Record Queries when Out-of-Band.)
+
+.TP 10
+-E/--feEsm 
+.NL
+Specifies the ESM FE.
+
+.TP 10
+-T/--ssl-params \fIfile\fR 
+.NL
+Specifies the SSL/TLS parameters XML file. (Default is /etc/opa/opamgt\(ultls.xml)
 
 .TP 10
 -o/--output \fItype\fR 
@@ -67,12 +96,22 @@ Specifies the group name for groupInfo query.
 .TP 10
 -l/--lid \fIlid\fR 
 .NL
-Specifies the LID of node for portCounters query.
+Specifies the LID of the node.
 
 .TP 10
 -P/--portNumber \fIportNumber\fR 
 .NL
-Specifies the port number for portCounters query.
+Specifies the port number.
+
+.TP 10
+-G/--nodeGuid 
+.NL
+Specifies the GUID of the node.
+
+.TP 10
+-D/--nodeDesc 
+.NL
+Specifies the description of the node.
 
 .TP 10
 -d/--delta \fIdelta\fR 
@@ -82,12 +121,12 @@ Specifies the delta flag for portCounters query - 0 or 1.
 .TP 10
 -j / --begin \fIdate\(ultime\fR 
 .NL
-Obtains portCounters over an interval beginning at  \fIdate\(ultime\fR.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+Obtains portCounters over an interval beginning at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
 -q / --end \fIdate\(ultime\fR 
 .NL
-Obtains portCounters over an interval ending at  \fIdate\(ultime\fR.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+Obtains portCounters over an interval ending at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
 -U / --userCntrs 
@@ -242,7 +281,34 @@ Bits 17-0 reserved
 .TP 10
 -f/--focus \fIfocus\fR 
 .NL
-Specifies the focus select value for getting  \fIfocus\fR ports.  \fIfocus\fR select values are:
+Specifies the focus select value for getting \fIfocus\fR ports. \fIfocus\fR select values are:
+.RS
+.TP 10
+
+.sp
+unexpclrport 
+Lists unexpectedly cleared ports - LID ordered.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+norespport 
+Lists no response ports - LID ordered.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+skippedport 
+Lists skipped ports - LID ordered.
+
+.RE
+
 .RS
 .TP 10
 
@@ -334,14 +400,36 @@ Specifies the start of window for focus ports, should always be 0.
 Specifies the size of window for focus ports list.
 
 .TP 10
+-Q/--tuple 
+.NL
+Specifies a tuple that identifies a focus select value, comparator and argument in the form select: comparator:argument. Up to 8 tuples may be specified as: -Q s1:c1:a1 -Q s2:c2:a2 ... -Q s8:c8:a8 
+
+.IP
+Valid focus select values are: utilization, pktrate, integrity, congestion, smacongestion, bubbles, security and routing.
+.IP
+Valid comparator values are: GT, GE, LT, LE 
+.IP
+Valid arguments are: Any 64-bit value in hexadecimal or decimal.
+.IP
+When specifying more than one tuple, a logical operator -Z/--operator must also be specified.
+.TP 10
+-Z/--operator 
+.NL
+Specifies a logical operator used to join the results of the specified tuples.
+
+.IP
+and - Specifies a port is returned if it meets all of the tuple filter criteria.
+.IP
+or - Specifies a port is returned if it meets one or more of the tuple filter criteria.
+.TP 10
 -n/--imgNum \fIimgNum\fR 
 .NL
-Specifies the 64-bit image number. Can be used with groupInfo, groupConfig, portCounters (delta).
+Specifies the 64-bit image number.
 
 .TP 10
 -O/--imgOff \fIimgOff\fR 
 .NL
-Specifies the image offset. Can be used with groupInfo, groupConfig, portCounters (delta).
+Specifies the image offset.
 
 .TP 10
 -y / --imgTime 
@@ -414,17 +502,27 @@ Specifies the list of PA groups.
 .TP 10
 groupInfo 
 .NL
-Specifies the summary statistics of a PA group. Requires -g option for  \fIgroupName\fR.
+Specifies the summary statistics of a PA group. Requires -g option for \fIgroupName\fR.
 
 .TP 10
 groupConfig 
 .NL
-Specifies the configuration of a PA group. Requires -g option for  \fIgroupName\fR.
+Specifies the configuration of a PA group. Requires -g option for \fIgroupName\fR.
+
+.TP 10
+groupNodeInfo 
+.NL
+Specifies the node information of a PA group. Requires -g option for \fIgroupName\fR. Options -l \fIlid\fR, -G \fInodeGuid\fR and -D \fInodeDesc\fR are optional.
+
+.TP 10
+groupLinkInfo 
+.NL
+Specifies the link Information of a PA group. Requires -g option for \fIgroupName\fR. Options -l \fIlid\fR and -P \fIport\fR are optional. Note that -P 255 specifies all ports.
 
 .TP 10
 portCounters 
 .NL
-Specifies the port counters of fabric port. Requires -l \fIlid\fR and -P \fIport\fR options, -d \fIdelta\fR is optional.
+Specifies the port counters of fabric port. Requires -l \fIlid\fR and -P \fIport\fR options. -d \fIdelta\fR is optional.
 
 .TP 10
 clrPortCounters 
@@ -479,12 +577,12 @@ Specifies the list of virtual fabrics.
 .TP 10
 vfInfo 
 .NL
-Specifies the summary statistics of a virtual fabric. Requires -V option for  \fIvfName\fR.
+Specifies the summary statistics of a virtual fabric. Requires -V option for \fIvfName\fR.
 
 .TP 10
 vfConfig 
 .NL
-Specifies the configuration of a virtual fabric. Requires -V option for  \fIvfName\fR.
+Specifies the configuration of a virtual fabric. Requires -V option for \fIvfName\fR.
 
 .TP 10
 vfPortCounters 
@@ -511,6 +609,20 @@ opapaquery -o groupInfo -g All
 .br
 opapaquery -o groupConfig -g All
 .br
+opapaquery -o groupNodeInfo -g All -G <nodeGuid>
+.br
+opapaquery -o groupNodeInfo -g All -D <nodeDesc>
+.br
+opapaquery -o groupNodeInfo -g All -l 1
+.br
+opapaquery -o groupNodeInfo -g All -l 1 -G <nodeGuid>
+.br
+opapaquery -o groupLinkInfo -g All
+.br
+opapaquery -o groupLinkInfo -g All -l 1 -P 1
+.br
+opapaquery -o groupLinkInfo -g All -l 1 -P 255
+.br
 opapaquery -o portCounters -l 1 -P 1 -d 1
 .br
 opapaquery -o portCounters -l 1 -P 1 -d 1 -n 0x20000000d02 -O 1
@@ -519,13 +631,13 @@ opapaquery -o portCounters -l 1 -P 1 -d 1 -j 13:30 -q 14:20
 .br
 opapaquery -o clrPortCounters -l 1 -P 1 -s 0xC0000000
 .br
-   #clears XmitData & RcvData
+(clears XmitData & RcvData)
 .br
 opapaquery -o clrAllPortCounters -s 0xC0000000
 .br
-   #clears XmitData & RcvData on all ports
+(clears XmitData & RcvData on all ports)
 .br
-opapaquery -o PMConfig
+opapaquery -o pmConfig
 .br
 opapaquery -o freezeImage -n 0x20000000d02
 .br
@@ -535,7 +647,11 @@ opapaquery -o renewImage -n 0xd01
 .br
 opapaquery -o moveFreeze -n 0xd01 -m 0x20000000d02 -M -2
 .br
-opapaquery -o focusPorts -g All -f 0x00030001 -S 0 -r 20
+opapaquery -o focusPorts -g All -f integrity -S 0 -r 20
+.br
+opapaquery -o focusPorts -g All -S 0 -r 20 -Z AND -Q integrity:ge:20 -Q bubbles:lt:10
+.br
+opapaquery -o focusPorts -g All -f skippedport -S 0 -r 20
 .br
 opapaquery -o imageInfo -n 0x20000000d02
 .br
@@ -549,8 +665,8 @@ opapaquery -o vfConfig -V Default
 .br
 opapaquery -o vfPortCounters -l 1 -P 1 -d 1 -V Default
 .br
-opapaquery -o clrVfPortCounters -l 1 -P 1 -s 0xC0000000
+opapaquery -o clrVfPortCounters -l 1 -P 1 -s 0xC0000000 -V Default
 .br
--V Default    #clears VLXmitData & VLRcvData
+(clears VLXmitData & VLRcvData)
 .br
-opapaquery -o vfFocusPorts -V Default -f 0x00030001 -S 0 -r 20
+opapaquery -o vfFocusPorts -V Default -f integrity -S 0 -r 20

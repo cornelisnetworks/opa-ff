@@ -1,0 +1,18 @@
+opa (10.7.0.0-1) UNRELEASED; urgency=medium
+
+  * Import OPA from upstream
+
+ -- Tymoteusz Kielan <tymoteusz.kielan@intel.com>  Wed, 8 Feb 2017 14:02:27 +0100
+
+opa (10.1.0.0) UNRELEASED; urgency=medium
+
+  * Import OPA from upstream
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Fri, 10 Jun 2016 18:28:35 -0500
+
+opa (10.0.0.0) UNRELEASED; urgency=medium
+
+  * Initial release
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 14 Mar 2016 12:26:35 -0500
+

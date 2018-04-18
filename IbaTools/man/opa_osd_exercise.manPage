@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa\(ulosd\(ulexercise 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opa\(ulosd\(ulexercise 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opa\(ulosd\(ulexercise
 
@@ -16,9 +16,7 @@ opa\(ulosd\(ulexercise
 Performs stress test on SM and distributed SA query system.
 .SH Syntax
 .NL
-opa\(ulosd\(ulexercise [-d | -s | -r | -x | -X | -D | -p | -S | -t |
-.br
--e] \fIguidlist\fR
+opa\(ulosd\(ulexercise [-d | -s | -r | -x | -X | -D | -p | -S | -t | -e] \fIguidlist\fR
 .SH Options
 .NL
 
@@ -35,7 +33,7 @@ Sets debugging level.
 .TP 10
 -s \fIseconds\fR 
 .NL
-Specifies running for at least  \fIseconds\fR seconds.
+Specifies running for at least \fIseconds\fR seconds.
 .TP 10
 -r \fIremote\fR 
 .NL
@@ -59,7 +57,7 @@ Specifies how long to sleep after each pass. This value gives the Subnet Manager
 .TP 10
 -p \fIpkey\fR 
 .NL
-Specifies to include  \fIpkey\fR in the searches. Can be specified up to 8 times.
+Specifies to include \fIpkey\fR in the searches. Can be specified up to 8 times.
 .TP 10
 -S \fIsid\fR 
 .NL
@@ -67,15 +65,15 @@ Specifies to include SID in the searches.
 .TP 10
 -t \fIerror threshold\fR 
 .NL
-Cancels the test if the number of path errors to a single destination exceeds  \fIerror threshold\fR. The count is reset to zero when a correct result is retrieved. Can be specified up to 8 times. Note that providing both SIDs and pkeys may cause problems.
+Cancels the test if the number of path errors to a single destination exceeds \fIerror threshold\fR. The count is reset to zero when a correct result is retrieved. Can be specified up to 8 times. Note that providing both SIDs and pkeys may cause problems.
 .TP 10
 -e 
 .NL
 Instructs simulator to enable all ports before starting.
 .TP 10
- \fIguidlist\fR 
+\fIguidlist\fR 
 .NL
-Text file that lists the source and destination GUIDs and LIDs.  \fIguidlist\fR format is:
+Text file that lists the source and destination GUIDs and LIDs. \fIguidlist\fR format is:
 
 .RS
 

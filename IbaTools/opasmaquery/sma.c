@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -39,7 +39,7 @@ static void set_route(argrec *args, SMP* smp)
 {
 	int i;
 
-	DBGPRINT("-> set_route: dlid=0x%04x slid=0x%04x drpaths=%d\n", args->dlid,args->slid,args->drpaths);
+	DBGPRINT("-> set_route: dlid=0x%08x slid=0x%08x drpaths=%d\n", args->dlid,args->slid,args->drpaths);
  
 	if (args->dlid && !args->drpaths)	//lid routed only
 	{
@@ -93,7 +93,7 @@ static void stl_set_route(argrec *args, STL_SMP* smp)
 {
 	int i;
 
-	DBGPRINT("-> stl_set_route: dlid=0x%04x slid=0x%04x drpaths=%d\n", args->dlid,args->slid,args->drpaths);
+	DBGPRINT("-> stl_set_route: dlid=0x%08x slid=0x%08x drpaths=%d\n", args->dlid,args->slid,args->drpaths);
  
 	if (args->dlid && !args->drpaths)	//lid routed only
 	{
@@ -269,7 +269,7 @@ static FSTATUS perform_stl_aggregate_query(argrec *args, STL_SMP *smp)
 
 
 static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args,
-                            STL_SMP *smp, size_t attr_len)
+                            STL_SMP *smp, size_t attr_len, STL_PORTMASK *portMask)
 {
 	FSTATUS status;
 	int i;
@@ -286,6 +286,11 @@ static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args
 	smp->common.AttributeModifier = attrmod;
 	smp->M_Key = g_mkey;
 	smp->common.TransactionID = (++g_transactID);
+
+	if (portMask) {
+		STL_PORTMASK *pMask = (STL_PORTMASK *)stl_get_smp_data((STL_SMP *)smp);
+		memcpy(pMask, portMask, STL_PORT_SELECTMASK_SIZE);
+	}
 
 	if (smp->common.MgmtClass == MCLASS_SM_DIRECTED_ROUTE) {
 		memcpy(requestInitPath, smp->SmpExt.DirectedRoute.InitPath, sizeof(requestInitPath));
@@ -596,9 +601,8 @@ static boolean get_switch_aggr(argrec *args, uint8_t *mad, size_t mad_len, boole
 	if (aggr->Result.s.Error != 0) {
 		fprintf(stderr,"get_switch_aggr: Switch Info query failed.\n");
 	} else if (print || g_verbose) {
-		STL_SWITCH_INFO *pSwitchInfo = (STL_SWITCH_INFO *)stl_get_smp_data(smp);
+		STL_SWITCH_INFO *pSwitchInfo = (STL_SWITCH_INFO *)(aggr->Data);
 		BSWAP_STL_SWITCH_INFO(pSwitchInfo);
-
 		PrintStlSwitchInfo(&g_dest, 0/*indent*/, pSwitchInfo, 0/*lid*/, args->printLineByLine );
 	}
 	return TRUE;
@@ -615,7 +619,7 @@ static boolean get_node_desc(argrec *args, uint8_t *mad, size_t mad_len, boolean
 	
 	DBGPRINT("-->get_node_desc");
 	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_NODE_DESCRIPTION, 0, args,
-                            smp, sizeof(STL_NODE_DESCRIPTION));
+                            smp, sizeof(STL_NODE_DESCRIPTION), NULL);
 
 
 	if (status != FSUCCESS) {
@@ -667,18 +671,18 @@ static boolean get_node_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 
 	DBGPRINT("-->get_node_info\n");
 	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_NODE_INFO, 0,
-                    args, smp, sizeof(STL_NODE_INFO));
+                    args, smp, sizeof(STL_NODE_INFO), NULL);
 
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
 	}
 
+	STL_NODE_INFO *pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
+	BSWAP_STL_NODE_INFO(pNodeInfo);
+
 	if (print || g_verbose) {
-		STL_NODE_INFO *pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
-		BSWAP_STL_NODE_INFO(pNodeInfo);
 		PrintStlNodeInfo(&g_dest, 0 /* indent */, pNodeInfo, args->printLineByLine );
-		BSWAP_STL_NODE_INFO(pNodeInfo); // restore byte order, other funcs may use this data.
 	}
 	return TRUE;
 }	//get_node_info
@@ -694,11 +698,10 @@ static boolean get_port_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 	uint16_t firstPort = 0;
 
 	if (!get_node_info(args, (uint8_t *)smp, sizeof(*smp), g_verbose)) {
-		fprintf(stderr, "%s failed: unabled to get_node_info\n", __func__);
+		fprintf(stderr, "%s failed: unable to get_node_info\n", __func__);
 		return FALSE;
 	}
 	pNodeInfo = (STL_NODE_INFO*)stl_get_smp_data(smp);
-	BSWAP_STL_NODE_INFO(pNodeInfo);
 
 	if (args->mflag) {
 		if (pNodeInfo->NodeType == STL_NODE_SW) {
@@ -718,12 +721,12 @@ static boolean get_port_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 	
 
 	DBGPRINT("---->get_port_info\n");
-	DBGPRINT("->dlid=0x%04x slid=0x%04x dport=%d,%d drpaths=%d\n",
+	DBGPRINT("->dlid=0x%08x slid=0x%08x dport=%d,%d drpaths=%d\n",
 				args->dlid,args->slid,args->dport,args->mcount,args->drpaths);
 
 	// Get PortInfo using attrmod
 	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_PORT_INFO, amod, args,
-                                    smp, sizeof(*pPortInfo));
+                                    smp, sizeof(*pPortInfo), NULL);
 
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
@@ -756,7 +759,6 @@ static boolean get_led_info(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 		return FALSE;
 	}
 	pNodeInfo = (STL_NODE_INFO*)stl_get_smp_data(smp);
-	BSWAP_STL_NODE_INFO(pNodeInfo);
 	
 	if (args->mflag) {
 		if (pNodeInfo->NodeType == STL_NODE_FI)
@@ -766,11 +768,11 @@ static boolean get_led_info(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 	}
 
 	DBGPRINT("---->get_led_info\n");
-	DBGPRINT("->dlid=0x%04x slid=0x%04x dport=%d drpaths=%d\n", 
+	DBGPRINT("->dlid=0x%08x slid=0x%08x dport=%d drpaths=%d\n", 
 			args->dlid,args->slid,args->dport,args->drpaths);
 
 	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_LED_INFO, amod, args,
-                                    smp, sizeof(*pLedInfo));
+                                    smp, sizeof(*pLedInfo), NULL);
 
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
@@ -810,11 +812,10 @@ static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boole
 		STL_NODE_INFO *pNodeInfo;
 
 		if (!get_node_info(args, (uint8_t *)smp, sizeof(*smp), g_verbose)) {
-			fprintf(stderr, "get_pstate_info failed: unable to get_ib_node_info\n");
+			fprintf(stderr, "get_pstate_info failed: unable to get_node_info\n");
 			return FALSE;
 		}
 		pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
-		BSWAP_STL_NODE_INFO(pNodeInfo);
 
 		nodetype = pNodeInfo->NodeType;
 		maxPort = pNodeInfo->NumPorts;
@@ -847,7 +848,7 @@ static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boole
 	amod = (count<<24) | startPort;
 	STL_PORT_STATE_INFO *psip;
 	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_PORT_STATE_INFO, amod, args,
-                            smp, sizeof(STL_PORT_STATE_INFO)*count);
+                            smp, sizeof(STL_PORT_STATE_INFO)*count, NULL);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
@@ -874,7 +875,7 @@ static boolean get_sm_info(argrec *args, uint8_t *mad, size_t mad_len, boolean p
 	DBGPRINT("-->get_sm_info\n");
 
 	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SM_INFO, 0, args,
-                            smp, sizeof(*pSmInfo));
+                            smp, sizeof(*pSmInfo), NULL);
 
 	pSmInfo = (STL_SM_INFO *)stl_get_smp_data(smp);
 	BSWAP_STL_SM_INFO(pSmInfo);
@@ -913,7 +914,7 @@ static boolean get_sw_info(argrec *args, uint8_t *mad, size_t mad_len, boolean p
 	}
 
 	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SWITCH_INFO, 0, args,
-                                smp, sizeof(STL_SWITCH_INFO));
+                                smp, sizeof(STL_SWITCH_INFO), NULL);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
@@ -939,7 +940,7 @@ static boolean get_slsc_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 
 	STL_SLSCMAP *pSLSCMap;
 	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SL_SC_MAPPING_TABLE, 0, args,
-                                smp, sizeof(*pSLSCMap));
+                                smp, sizeof(*pSLSCMap), NULL);
 	pSLSCMap = (STL_SLSCMAP *)stl_get_smp_data(smp);
 	BSWAP_STL_SLSCMAP(pSLSCMap);
 	if (status != FSUCCESS)
@@ -961,6 +962,7 @@ static boolean get_scsc_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 	FSTATUS status = FSUCCESS;
 	STL_SMP *smp = (STL_SMP *)mad;
 	NODE_TYPE nodetype;
+	int i, extended = 0;
 	uint8 maxPort;
 	uint8 inport, startInPort, endInPort;
 	uint8 outport, startOutPort, endOutPort;
@@ -977,7 +979,6 @@ static boolean get_scsc_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 			return FALSE;
 
 		pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
-		BSWAP_STL_NODE_INFO(pNodeInfo);
 		nodetype = pNodeInfo->NodeType;
 		maxPort = pNodeInfo->NumPorts;
 	}
@@ -985,6 +986,8 @@ static boolean get_scsc_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 		fprintf(stderr, "get_scsc_map failed: node is not a switch\n");
 		return FALSE;
 	}
+
+
 	uint8 firstPort = 1;
 	if (args->mflag && !args->mflag2) {
 		// Get the set of tables for [inport, *]
@@ -1016,28 +1019,30 @@ static boolean get_scsc_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 		endInPort = endOutPort = maxPort;
 	}
 
-	for (inport = startInPort; inport <= endInPort; inport++) {
-		/**
-		 * Technically we could fit 4 more blocks (ports) in a LID
-		 * routed SMP.  But it is not worth it in this tool.
-		 */
-		for (outport = startOutPort; outport <= endOutPort; outport += STL_NUM_SCSC_BLOCKS_PER_DRSMP) { 
-			STL_SCSCMAP *pSCSCMap;
-			uint16_t numBlocks = 1;
-			uint32_t attrmod = 0;
+	for (i=0; i<=extended; i++) {
+		for (inport = startInPort; inport <= endInPort; inport++) {
+			/**
+			* Technically we could fit 4 more blocks (ports) in a LID
+			* routed SMP.  But it is not worth it in this tool.
+			*/
+			for (outport = startOutPort; outport <= endOutPort; outport += STL_NUM_SCSC_BLOCKS_PER_DRSMP) { 
+				STL_SCSCMAP *pSCSCMap;
+				uint16_t numBlocks = 1;
+				uint32_t attrmod = 0;
 
-			numBlocks = MIN(STL_NUM_SCSC_BLOCKS_PER_DRSMP, (endOutPort - outport)+1);
-			attrmod = (numBlocks << 24) | (inport << 8) | outport;
+				numBlocks = MIN(STL_NUM_SCSC_BLOCKS_PER_DRSMP, (endOutPort - outport)+1);
+				attrmod = (numBlocks << 24) | (i << 20) | (inport << 8) | outport;
 
-			status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SC_SC_MAPPING_TABLE, attrmod, args,
-                                            smp, sizeof(*pSCSCMap)*numBlocks);
-			pSCSCMap = (STL_SCSCMAP *)stl_get_smp_data(smp);
-			BSWAP_STL_SCSCMAP(pSCSCMap);
-			if (status != FSUCCESS)
-				goto done;
-			if (print || g_verbose)
-				PrintStlSCSCMapSmp(&g_dest, 0 /* indent */, smp,
+				status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SC_SC_MAPPING_TABLE, attrmod, args,
+								smp, sizeof(*pSCSCMap)*numBlocks, NULL);
+				pSCSCMap = (STL_SCSCMAP *)stl_get_smp_data(smp);
+				BSWAP_STL_SCSCMAP(pSCSCMap);
+				if (status != FSUCCESS)
+					goto done;
+				if (print || g_verbose)
+					PrintStlSCSCMapSmp(&g_dest, 0 /* indent */, smp,
 						(inport==startInPort && outport==startOutPort), args->printLineByLine);
+			}
 		}
 	}
 done:
@@ -1061,7 +1066,7 @@ static boolean get_scsl_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 
 	STL_SCSLMAP *pSCSLMap;
 	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SC_SL_MAPPING_TABLE, 0, args,
-                                smp, sizeof(*pSCSLMap));
+                                smp, sizeof(*pSCSLMap), NULL);
 	pSCSLMap = (STL_SCSLMAP *)stl_get_smp_data(smp);
 	BSWAP_STL_SCSLMAP(pSCSLMap);
 	if (status != FSUCCESS)
@@ -1090,7 +1095,7 @@ static boolean get_scvlx_map(argrec *args, uint8_t *mad, size_t mad_len,
 	NODE_TYPE nodetype;
 	STL_NODE_INFO *pNodeInfo;
 	uint8 maxPort;
-	uint8 port = 0;
+	uint16 port = 0;
 	uint8 startPort = 0;
 	uint8 endPort = 0;
 
@@ -1105,7 +1110,6 @@ static boolean get_scvlx_map(argrec *args, uint8_t *mad, size_t mad_len,
 			return FALSE;
 
 		pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
-		BSWAP_STL_NODE_INFO(pNodeInfo);
 		nodetype = pNodeInfo->NodeType;
 		maxPort = pNodeInfo->NumPorts;
 	}
@@ -1152,7 +1156,7 @@ static boolean get_scvlx_map(argrec *args, uint8_t *mad, size_t mad_len,
 		uint32_t attrmod = (numBlocks << 24) | port;
 
 		status = perform_stl_sma_query (attribute, attrmod, args,
-                                    smp, sizeof(*pSCVLMap)*numBlocks);
+                                    smp, sizeof(*pSCVLMap)*numBlocks, NULL);
 		pSCVLMap = (STL_SCVLMAP *)stl_get_smp_data(smp);
 		BSWAP_STL_SCVLMAP(pSCVLMap);
 		if (status != FSUCCESS)
@@ -1185,12 +1189,13 @@ static boolean get_scvlnt_map(argrec *args, uint8_t *mad, size_t mad_len, boolea
 	return (rc);
 } //get_scvlnt_map
 
+
 static boolean print_vlarb_element(argrec *args, STL_SMP *smp, uint8_t startPort,
 					uint8_t endPort, uint8_t section,
 					uint8_t nodeType)
 {
 	int indent = 0;
-	uint8_t port;
+	uint16_t port;
 	FSTATUS status;
 
 	/**
@@ -1201,7 +1206,7 @@ static boolean print_vlarb_element(argrec *args, STL_SMP *smp, uint8_t startPort
 		uint8_t numPorts = MIN(STL_NUM_VLARB_PORTS_PER_DRSMP, endPort - port + 1);
 		uint32_t attrmod = (numPorts << 24) | (section << 16) | port;
 		status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_VL_ARBITRATION,
-						attrmod, args, smp, sizeof(STL_VLARB_TABLE)*numPorts);
+						attrmod, args, smp, sizeof(STL_VLARB_TABLE)*numPorts, NULL);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: %s: %s\n", "get_vlarb", MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 			return status;
@@ -1223,6 +1228,7 @@ static boolean get_vlarb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 	STL_PORT_INFO *pPortInfo;
 	STL_SWITCH_INFO *pSwitchInfo;
 	uint8_t numPorts;
+	int vlarb = 1;
 
 	if (mad_len < sizeof(SMP))
 		return FALSE;
@@ -1236,12 +1242,24 @@ static boolean get_vlarb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 	nodeType = pNodeInfo->NodeType;
 	numPorts = pNodeInfo->NumPorts;
 
-	
+	if (nodeType == STL_NODE_SW) {
+		argrec argsCpy = *args;
+		argsCpy.mflag = 1;
+		argsCpy.dport = 0;
+		argsCpy.mcount = 1;
+
+		if (!get_port_info(&argsCpy, (uint8_t *)smp, sizeof(*smp), g_verbose))
+			return FALSE;
+
+		pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
+		vlarb = pPortInfo->CapabilityMask3.s.VLSchedulingConfig == STL_VL_SCHED_MODE_VLARB;
+	}
+
 	if (!get_port_info(args, (uint8_t *)smp, sizeof(*smp), g_verbose))
 		return FALSE;
 
 	pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
-	DBGPRINT("get_vlarb: dlid 0x%04x dport %d has VLCap=%d\n",
+	DBGPRINT("get_vlarb: dlid 0x%08x dport %d has VLCap=%d\n",
 			pPortInfo->LID, args->dport, pPortInfo->VL.s2.Cap);
 
 	vlCap = pPortInfo->VL.s2.Cap;
@@ -1250,6 +1268,15 @@ static boolean get_vlarb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 			fprintf(stderr, "get_vlarb failed: no vlarbtable as this port only has 1 vl; VL0\n");
 			return FALSE;
 	}
+
+	if (nodeType != STL_NODE_SW)
+		vlarb = pPortInfo->CapabilityMask3.s.VLSchedulingConfig == STL_VL_SCHED_MODE_VLARB;
+
+	if (!vlarb) {
+		fprintf(stderr, "get_vlarb failed: vlarbtable not supported\n");
+		return FALSE;
+	}
+
 	if (nodeType == STL_NODE_SW) {
 		if (!get_sw_info(args,(uint8_t *)smp, sizeof(*smp), g_verbose))
 			return FALSE;
@@ -1291,6 +1318,7 @@ static boolean get_vlarb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 	return TRUE;
 } //get_vlarb
 
+
 static boolean get_pkey(argrec *args, uint8_t *mad, size_t mad_len, boolean print)
 {
 	FSTATUS status = FSUCCESS;
@@ -1313,7 +1341,7 @@ static boolean get_pkey(argrec *args, uint8_t *mad, size_t mad_len, boolean prin
 
 		pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
 		nodetype = pNodeInfo->NodeType;
-		cap = ntohs(pNodeInfo->PartitionCap);
+		cap = pNodeInfo->PartitionCap;
 	}
 	if (nodetype == STL_NODE_SW) {
 		STL_SWITCH_INFO *pSwInfo;
@@ -1358,7 +1386,7 @@ static boolean get_pkey(argrec *args, uint8_t *mad, size_t mad_len, boolean prin
 		attrmod |= (0xff & numBlocks) << 24;
 		status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_PART_TABLE, attrmod, args,
                                         smp,
-                                        sizeof(STL_PARTITION_TABLE)*numBlocks);
+                                        sizeof(STL_PARTITION_TABLE)*numBlocks, NULL);
 		if (status != FSUCCESS)
 			break;
 
@@ -1385,7 +1413,7 @@ static boolean get_pkey(argrec *args, uint8_t *mad, size_t mad_len, boolean prin
 static boolean get_linfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean print)
 {
 	FSTATUS status = FSUCCESS;
-	STL_LID_32 maxLid;
+	STL_LID maxLid;
 	uint16 block, startBlock, endBlock;
 	uint32 attribute = STL_MCLASS_ATTRIB_ID_LINEAR_FWD_TABLE;
 	STL_SMP *smp = (STL_SMP *)mad;
@@ -1449,7 +1477,7 @@ static boolean get_linfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pr
 		attrmod |= (0xff & numBlocks) << 24;
 
 		status = perform_stl_sma_query (attribute, attrmod, args,
-                                        smp, sizeof(*pForwardBlock)*numBlocks);
+                                        smp, sizeof(*pForwardBlock)*numBlocks, NULL);
 		if (status != FSUCCESS)
 			break;
 
@@ -1466,10 +1494,11 @@ static boolean get_linfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pr
 		return TRUE;
 } //get_linfdb
 
+
 static boolean get_mcfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean print)
 {
 	FSTATUS status = FSUCCESS; 
-	STL_LID_32 maxLid;
+	STL_LID maxLid;
 	uint32 block, startBlock, endBlock;
 	uint8 maxPosition;
 	uint8 maxPort;
@@ -1507,13 +1536,13 @@ static boolean get_mcfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 		maxLid = pSwInfo->MulticastFDBTop;
 	}
 
-	if (maxLid == 0 || (maxLid < LID_MCAST_START)) {
+	if (maxLid == 0 || (maxLid < STL_LID_MULTICAST_BEGIN)) {
 		fprintf(stderr, "get_mcfdb failed: Multicast FDB Top is zero.\n");
 		return FALSE;
 	} 
 	if (args->flid) {
-		if ((args->flid < LID_MCAST_START) || (args->flid > LID_MCAST_END)) {
-			fprintf(stderr, "get_mcfdb failed: Multicast LID specified: 0x%x must be 0x%x - 0x%x\n", args->flid, LID_MCAST_START, LID_MCAST_END);
+		if ((args->flid < STL_LID_MULTICAST_BEGIN) || (args->flid > STL_LID_MULTICAST_END)) {
+			fprintf(stderr, "get_mcfdb failed: Multicast LID specified: 0x%x must be 0x%x - 0x%x\n", args->flid, STL_LID_MULTICAST_BEGIN, STL_LID_MULTICAST_END);
 			return FALSE;
 		}
 		if (args->flid > maxLid) {
@@ -1522,13 +1551,15 @@ static boolean get_mcfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 			return FALSE;
 		} 
 
-		startBlock = endBlock = (args->flid - LID_MCAST_START) / STL_NUM_MFT_ELEMENTS_BLOCK;
+		startBlock = endBlock = (args->flid - STL_LID_MULTICAST_BEGIN) / STL_NUM_MFT_ELEMENTS_BLOCK;
+
 	} else if (args->bflag) {
 		startBlock = args->block;
 		endBlock = startBlock + args->bcount - 1;
+
 	} else {
 		startBlock = 0;
-		endBlock = (maxLid - LID_MCAST_START) / STL_NUM_MFT_ELEMENTS_BLOCK;
+		endBlock = (maxLid - STL_LID_MULTICAST_BEGIN) / STL_NUM_MFT_ELEMENTS_BLOCK;
 	}
 
 	if (args->mflag) {
@@ -1545,22 +1576,18 @@ static boolean get_mcfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 
 	for (block = startBlock; block <= endBlock; block += STL_NUM_MFT_BLOCKS_PER_DRSMP) {
         uint16_t numBlocks = MIN(STL_NUM_MFT_BLOCKS_PER_DRSMP, (endBlock - block)+1);
-		STL_MULTICAST_FORWARDING_TABLE *pMCastBlock;
 
 		for (position = startPosition; position <= endPosition; position++) {
-			uint16_t sub;
         	uint32_t attrmod = ((0xff & numBlocks) << 24) | (position << 22) |
 								(0x0fffff & block);
 			status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_MCAST_FWD_TABLE, 
 											attrmod, args, smp,
-                                            sizeof(STL_MULTICAST_FORWARDING_TABLE)*numBlocks);
+                                            sizeof(STL_MULTICAST_FORWARDING_TABLE)*numBlocks, NULL);
 			if (status != FSUCCESS)
 				break;
-			if (print) for (sub = 0, pMCastBlock = (STL_MULTICAST_FORWARDING_TABLE*)stl_get_smp_data(smp);
-							sub < numBlocks; sub++, pMCastBlock++) {
-				BSWAP_STL_MULTICAST_FORWARDING_TABLE(pMCastBlock);
-				PrintStlMCastFDB(&g_dest, 0, pMCastBlock, (block + sub), args->printLineByLine);
-			}
+
+			if (print)
+				PrintStlMCastSmp(&g_dest, 0, smp, position, block, numBlocks, args->printLineByLine);
 		}
 		if (status != FSUCCESS)
 			break;
@@ -1571,6 +1598,7 @@ static boolean get_mcfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
 	} else
 		return TRUE;
 } //get_mcfdb
+
 
 
 static boolean get_portgroup(argrec *args, uint8_t *mad, size_t mad_len, boolean print)
@@ -1612,8 +1640,7 @@ static boolean get_portgroup(argrec *args, uint8_t *mad, size_t mad_len, boolean
 		}
 
 		// Use cap for now..
-		//uint8_t pgtop = pSwInfo->PortGroupTop;
-		uint8_t pgtop = pSwInfo->PortGroupCap;
+		uint8_t pgtop = pSwInfo->PortGroupTop;
 		if (pgtop==0) {
 			fprintf(stderr, "get_portgroup failed: No port groups defined\n");
 			return FALSE;
@@ -1647,7 +1674,7 @@ static boolean get_portgroup(argrec *args, uint8_t *mad, size_t mad_len, boolean
 		attrmod |= (0xff & numBlocks) << 24;
 
 		status = perform_stl_sma_query (attribute, attrmod, args, smp,
-                                        sizeof(*pPortGroupBlock) * numBlocks);
+                                        sizeof(*pPortGroupBlock) * numBlocks, NULL);
 		if (status != FSUCCESS)
 			break;
 
@@ -1667,7 +1694,7 @@ static boolean get_portgroup(argrec *args, uint8_t *mad, size_t mad_len, boolean
 static boolean get_portgroupfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean print)
 {
 	FSTATUS status = FSUCCESS;
-	STL_LID_32 maxLid;
+	STL_LID maxLid;
 	uint16 block, startBlock, endBlock;
 	uint32 attribute = STL_MCLASS_ATTRIB_ID_PORT_GROUP_FWD_TABLE;
 	STL_SMP *smp = (STL_SMP *)mad;
@@ -1738,7 +1765,7 @@ static boolean get_portgroupfdb(argrec *args, uint8_t *mad, size_t mad_len, bool
 		attrmod |= (0xff & numBlocks) << 24;
 
 		status = perform_stl_sma_query (attribute, attrmod, args, smp,
-                                    sizeof(*pPortGroupBlock) * numBlocks);
+                                    sizeof(*pPortGroupBlock) * numBlocks, NULL);
 		if (status != FSUCCESS)
 			break;
 
@@ -1768,7 +1795,7 @@ static boolean get_cong_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 	DBGPRINT("--->get_cong_info\n");
 	
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_CONGESTION_INFO, 0, args,
-                                smp, sizeof(*pCongestionInfo)) != FSUCCESS) {
+                                smp, sizeof(*pCongestionInfo), NULL) != FSUCCESS) {
 		fprintf(stderr, "get_cong_info failed: unable to obtain congestion info\n");
 		return FALSE;
 	}
@@ -1781,6 +1808,7 @@ static boolean get_cong_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 	return TRUE;
 
 }
+
 static boolean get_sw_cong_log(argrec *args, uint8_t *mad, size_t mad_len, boolean print)
 {
 	STL_SWITCH_CONGESTION_LOG *pSwitchCongestionLog;
@@ -1805,7 +1833,7 @@ static boolean get_sw_cong_log(argrec *args, uint8_t *mad, size_t mad_len, boole
 	
 
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_CONGESTION_LOG, 0, args,
-                                smp, sizeof(*pSwitchCongestionLog)) != FSUCCESS) {
+                                smp, sizeof(*pSwitchCongestionLog), NULL) != FSUCCESS) {
 		fprintf(stderr, "get_sw_cong_log failed: unable to obtain switch congestion log\n");
 		return FALSE;
 	}
@@ -1817,6 +1845,7 @@ static boolean get_sw_cong_log(argrec *args, uint8_t *mad, size_t mad_len, boole
 
 	return TRUE;
 }
+
 
 static boolean get_hfi_cong_log(argrec *args, uint8_t *mad, size_t mad_len, boolean print)
 {
@@ -1839,7 +1868,7 @@ static boolean get_hfi_cong_log(argrec *args, uint8_t *mad, size_t mad_len, bool
 			STL_SWITCH_INFO *pSwitchInfo = NULL;
 			
 			if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_INFO, 0, args,
-                                    smp, sizeof(*pSwitchInfo)) != FSUCCESS) {
+                                    smp, sizeof(*pSwitchInfo), NULL) != FSUCCESS) {
 				fprintf(stderr, "get_hfi_cong_log failed: Couldn't get SwitchInfo for switch\n");
 				return FALSE;
 			}
@@ -1855,7 +1884,7 @@ static boolean get_hfi_cong_log(argrec *args, uint8_t *mad, size_t mad_len, bool
 	}
 
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_HFI_CONGESTION_LOG, 0, args,
-                                smp, sizeof(*pHfiCongestionLog)) != FSUCCESS) {
+                                smp, sizeof(*pHfiCongestionLog), NULL) != FSUCCESS) {
 		fprintf(stderr, "get_hfi_cong_sett failed: unable to get HFI congestion log\n");
 		return FALSE;
 	}
@@ -1880,7 +1909,7 @@ static boolean get_hfi_cong_sett(argrec *args, uint8_t *mad, size_t mad_len, boo
 	DBGPRINT("--->get_hfi_cong_sett\n");
 	
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_HFI_CONGESTION_SETTING, 0, args,
-                                smp, sizeof(*pHfiCongestionSetting)) != FSUCCESS) {
+                                smp, sizeof(*pHfiCongestionSetting), NULL) != FSUCCESS) {
 		fprintf(stderr, "get_hfi_cong_sett failed: unable to obtain hfi congestion setting\n");
 		return FALSE;
 	}
@@ -1904,7 +1933,7 @@ static boolean get_sw_cong_sett(argrec *args, uint8_t *mad, size_t mad_len, bool
 	DBGPRINT("--->get_sw_cong_sett\n");
 	
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_CONGESTION_SETTING, 0, args,
-                                smp, sizeof(*pSwitchCongestionSetting)) != FSUCCESS) {
+                                smp, sizeof(*pSwitchCongestionSetting), NULL) != FSUCCESS) {
 		fprintf(stderr, "get_sw_cong_sett failed: unable to obtain switch congestion setting\n");
 		return FALSE;
 	}
@@ -1932,13 +1961,13 @@ static boolean get_swport_cong_sett(argrec *args, uint8_t *mad, size_t mad_len, 
 	DBGPRINT("--->get_swport_cong_sett\n");
 
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_PORT_CONGESTION_SETTING, amod, args,
-                                smp, sizeof(*pSwitchPortCongestionSetting)) != FSUCCESS) {
+                                smp, sizeof(*pSwitchPortCongestionSetting), NULL) != FSUCCESS) {
 		fprintf(stderr, "get_swport_cong_sett failed: unable to obtain switch congestion setting\n");
 		return FALSE;
 	}
 
 	pSwitchPortCongestionSetting = (STL_SWITCH_PORT_CONGESTION_SETTING *) stl_get_smp_data(smp);
-	BSWAP_STL_SWITCH_PORT_CONGESTION_SETTING(pSwitchPortCongestionSetting, amod);
+	BSWAP_STL_SWITCH_PORT_CONGESTION_SETTING(pSwitchPortCongestionSetting, (amod >> 24));
 
 	if (print)
 		PrintStlSwitchPortCongestionSettingSmp(&g_dest, 0, smp, args->printLineByLine);
@@ -1955,7 +1984,7 @@ static boolean get_hfi_congcont_table(argrec *args, uint8_t *mad, size_t mad_len
 
 	if (mad_len < sizeof(STL_SMP))
 		return FALSE;
-
+	
 	if (args->bcount > 14) { // 14 blocks is approximately the maximum number of blocks per MAD
 		fprintf(stderr, "get_hfi_congcont_table failed: Requested number of blocks for this query is too large. Maximum of 14 blocks.\n");
 		return FALSE;
@@ -1966,7 +1995,7 @@ static boolean get_hfi_congcont_table(argrec *args, uint8_t *mad, size_t mad_len
 	DBGPRINT("--->get_hfi_congcont_table\n");
 
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_HFI_CONGESTION_CONTROL_TABLE, amod, args,
-                            smp, sizeof(*pHfiCongestionControl)) != FSUCCESS) {
+                            smp, sizeof(*pHfiCongestionControl), NULL) != FSUCCESS) {
 		fprintf(stderr, "get_hfi_congcont_table failed: unable to obtain HFI congestion control table\n");
 		return FALSE;
 	}
@@ -2002,11 +2031,10 @@ static boolean get_bfr_ctrl_table(argrec *args, uint8_t *mad, size_t mad_len, bo
 		STL_NODE_INFO *pNodeInfo;
 
 		if (!get_node_info(args, (uint8_t *)smp, sizeof(*smp), g_verbose)) {
-			fprintf(stderr, "get_bfr_ctrl_table failed: unable to get_ib_node_info\n");
+			fprintf(stderr, "get_bfr_ctrl_table failed: unable to get_node_info\n");
 			return FALSE;
 		}
 		pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
-		BSWAP_STL_NODE_INFO(pNodeInfo);
 
         nodetype = pNodeInfo->NodeType;
 		maxPort = pNodeInfo->NumPorts;
@@ -2034,7 +2062,7 @@ static boolean get_bfr_ctrl_table(argrec *args, uint8_t *mad, size_t mad_len, bo
 		uint8_t n = MIN(maxcount, (endPort - block)+1);
 		uint32_t amod = (n << 24) | block;
 		status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_BUFFER_CONTROL_TABLE, amod, args,
-                        smp, sizeof(STL_BUFFER_CONTROL_TABLE)*n);
+                        smp, sizeof(STL_BUFFER_CONTROL_TABLE)*n, NULL);
 
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
@@ -2062,7 +2090,8 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 	uint8_t get_len = 0;
 	uint8_t bufoffset = 0;	// where to add next data to cableInfoData
 	uint16_t bufstart = 0;	// startAddr for cableInfoData[0]
-	uint8_t buflen = 0;		// amount of data in cableInfoData
+	uint8_t buflen = 0;	// amount of data in cableInfoData
+	boolean hexOnly = FALSE;	//indicates if only hexdump of cableInfoData should be produced
 
 	if (args->bflag) {
 		startAddr = args->block;
@@ -2071,6 +2100,7 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 			return FALSE;
 		}
 		len = args->bcount;
+		hexOnly = TRUE;
 	}
 	uint8_t portType;
 	
@@ -2084,7 +2114,6 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 		}
 
 		pNodeInfo = (STL_NODE_INFO *)stl_get_smp_data(smp);
-		BSWAP_STL_NODE_INFO(pNodeInfo);
 		nodetype = pNodeInfo->NodeType;
 		maxPort = pNodeInfo->NumPorts;
 	}
@@ -2140,7 +2169,7 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 		uint32_t amod = (startAddr & 0x0fff)<<19 | ((get_len-1) & 0x3f)<<13 | (args->dport & 0xff);
 
 		status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_CABLE_INFO, amod, args,
-                                smp, sizeof(STL_CABLE_INFO));
+                                smp, sizeof(STL_CABLE_INFO), NULL);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 			return FALSE;
@@ -2158,7 +2187,7 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 			if (len <= get_len /* final SMP */
 				|| ((startAddr + get_len) % STL_CABLE_INFO_PAGESZ) == 0 /* page end */
 				) {
-				PrintStlCableInfo(&g_dest, 0, cableInfoData, bufstart, buflen, portType, detail, args->printLineByLine);
+				PrintStlCableInfo(&g_dest, 0, cableInfoData, bufstart, buflen, portType, detail, args->printLineByLine,hexOnly);
 				bufoffset = 0;
 			} else {
 				bufoffset += get_len;
@@ -2170,7 +2199,7 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 } //get_cable_info
 
 optypes_t sma_query [] = {
-//name			func			        displayAbridged, description,    mflag mflag2 fflag bflag
+//name			func			        displayAbridged, description,    mflag mflag2 fflag bflag iflag tflag
 { "bfrctrl",	 get_bfr_ctrl_table,	TRUE,  "Buffer control tables", TRUE, TRUE, },
 { "cableinfo",	 get_cable_info,		TRUE,  "Cable info", TRUE, FALSE, FALSE, TRUE}, 
 { "conginfo",	 get_cong_info, 	    TRUE,  "Congestion info", FALSE },
@@ -2246,7 +2275,7 @@ void sma_Usage(boolean displayAbridged)
 	fprintf(stderr, "             Default is to show entire table\n");
 	fprintf(stderr, "    -b b     display block or byte \"b\" of a larger table\n");
 	fprintf(stderr, "    -b b,c   display \"c\" blocks or bytes of data starting with block/byte \"b\"\n");
-	fprintf(stderr, "    -b ,c    display \"c\" blocks or bytes of data starting with block/byte 0\n\n");
+	fprintf(stderr, "    -b ,c    display \"c\" blocks or bytes of data starting with block/byte 0\n");
 
 	fprintf(stderr, "Possible output types (default is nodeinfo):\n");
 	i=0;
@@ -2257,13 +2286,15 @@ void sma_Usage(boolean displayAbridged)
 		if ( (displayAbridged && sma_query[i].displayWithAbridged) || (!displayAbridged) ) {
 			fprintf(stderr, "         %-12s: %-55s\n",sma_query[i].name,sma_query[i].description);
 
-			if ((sma_query[i].gflag)||(sma_query[i].mflag)||(sma_query[i].mflag2)||(sma_query[i].bflag)||(sma_query[i].fflag)) {
+			if ((sma_query[i].gflag)||(sma_query[i].mflag)||(sma_query[i].mflag2)||(sma_query[i].bflag)||(sma_query[i].fflag)||
+				(sma_query[i].tflag)||(sma_query[i].iflag)) {
 				fprintf(stderr, "         %-12s:", " ");
 				if (sma_query[i].mflag) fprintf(stderr, " [-m dest_port]");
 				if (sma_query[i].mflag2) fprintf(stderr, " [-m port1,port2]");
 				if (sma_query[i].bflag) fprintf(stderr, " [-b %s]", 
 					strcmp(sma_query[i].name, "cableinfo") == 0 ? "address[,length]" : "block[,count]");
 				if (sma_query[i].fflag) fprintf(stderr, " [-f flid]");
+//				if (sma_query[i].iflag) fprintf(stderr, " [-i]");
 				fprintf(stderr,"\n");
 			}
 			fprintf(stderr,"\n");

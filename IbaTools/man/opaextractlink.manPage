@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaextractlink 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaextractlink 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaextractlink
 
@@ -28,7 +28,7 @@ Produces full help text.
 .TP 10
 opareport \fIoptions\fR 
 .NL
-The following options are passed to opareport. This subset is considered typical and useful for this command.
+The following options are passed to opareport. This subset is considered typical and useful for this command. By design, the tool ignores -o/--output report option.
 
 .RS
 .TP 10

@@ -1,7 +1,7 @@
 #!/bin/sh
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -40,22 +40,20 @@ SHMEM_PREFIX=${SHMEM_PREFIX:-`cat .shmem_prefix 2>/dev/null`}
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
 if [ -z "$1" ]
-then 
-	echo " Usage: run_reduce number_processes [args ...]"
+then
+	echo " Usage: run_reduce <number_of_processes> [args ...]"
 	echo " args - additional test program options, -h will provide help"
 	echo " For example: ./run_reduce 2"
-	echo "number_processes may be 'all' in which case one rank will be started for"
-	echo "every process in the mpi_hosts file"
 	exit 1
 fi
 
 NUM_PROCESSES=$1
 shift
-APP=shmem-reduce
+APP=reduce_active_set
 LOGFILE=
 . ./prepare_run
 
-SAMPLE_DIR=${SAMPLE_DIR:-`get_shmem_bench_dir`}
+SAMPLE_DIR=${SAMPLE_DIR:-`get_shmem_bench_dir $APP`}
 EXECUTABLE="$SAMPLE_DIR/$APP"
 CMD="$EXECUTABLE $@"
 if [ ! -x $EXECUTABLE ]
@@ -65,7 +63,7 @@ then
 fi
 
 (
-	echo " Running SHMEM Reduce Benchmark ..."
+	echo " Running SHMEM Reduce ..."
 	show_mpi_hosts
 	set -x
 	$SHMEM_RUN -np $NUM_PROCESSES $CMD

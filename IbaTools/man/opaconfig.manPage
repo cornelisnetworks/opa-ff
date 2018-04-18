@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaconfig
 
@@ -15,7 +15,7 @@ opaconfig
 .PP
 
 \fB(Switch and Host)\fR
-Configures the Intel(R) Omni-Path Fabric Suite FastFabric.
+Configures the Intel(R) Omni-Path Software through command line interface or TUI menus.
 .SH Syntax
 .NL
 opaconfig [-r \fIroot\fR] [-G] [-v|-vv] [-u|-s|-e \fIcomp\fR] [-E \fIcomp\fR] [-D \fIcomp\fR]
@@ -45,7 +45,7 @@ Produces full help text.
 .TP 10
 -r \fIroot\fR 
 .NL
-Specifies alternate root directory; default is /. 
+Specifies alternate root directory; default is / .
 
 .TP 10
 -G 
@@ -93,9 +93,11 @@ Disables autostart of given component. This option can appear with -E or more th
 Outputs list of supported components.
 
 .IP
-Supported components include: opa\(ulstack ibacm mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev fastfabric delta\(ulipoib opafm opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulintel\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi gasnet openshmem sandiashmem mvapich2 openmpi delta\(ulmpisrc hfi1\(uluefi delta\(uldebug 
+Supported components include: opa\(ulstack ibacm mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev rdma\(ulndd delta\(ulipoib delta\(ulsrp delta\(ulsrpt opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulintel\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi sandiashmem mvapich2\(ulgcc openmpi\(ulgcc mpisrc delta\(uldebug 
 .IP
-Supported component name aliases include: opa ipoib mpi mpisrc opadev 
+Supported components when using command on a Management Node with Intel(R) Omni-Path Fabric Suite installed, include: fastfabric opafm 
+.IP
+Supported component name aliases include: opa ipoib mpi psm\(ulmpi verbs\(ulmpi pgas opadev 
 .TP 10
 -V 
 .NL
@@ -119,7 +121,7 @@ Provides an answer to a question that may occur during the operation. Answers to
 .IP
 
 \fBPossible Questions\fR
-( \fIkeyword=value\fR):
+(\fIkeyword=value\fR):
 .RS
 .TP 10
 

@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -60,7 +60,7 @@ FSTATUS sendClassPortInfoMad(struct omgt_port *port,
 	FSTATUS				status = FSUCCESS;
 	uint16				madStatus;
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -132,7 +132,7 @@ FSTATUS sendSessionMgmtGetMad(struct omgt_port *port,
 	opasw_session_mgmt_t *sessionMgmtDataP;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -206,7 +206,7 @@ FSTATUS sendSessionMgmtReleaseMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -287,7 +287,7 @@ FSTATUS sendMemAccessGetMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -374,7 +374,7 @@ FSTATUS sendSysTableAccessGetMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -467,7 +467,7 @@ FSTATUS sendSysTableAccessSetMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -544,7 +544,7 @@ FSTATUS sendPortTableAccessSetMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -631,7 +631,7 @@ FSTATUS sendIniDescriptorGetMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -724,7 +724,7 @@ FSTATUS sendGetFwVersionMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -799,7 +799,7 @@ FSTATUS sendRegisterAccessMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -880,7 +880,7 @@ FSTATUS sendRebootMad(struct omgt_port *port,
 #endif
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -981,7 +981,7 @@ FSTATUS sendI2CAccessMad(struct omgt_port *port,
 	VENDOR_MAD			*mad = (VENDOR_MAD *)mp;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -1087,7 +1087,7 @@ FSTATUS sendSaveConfigMad(struct omgt_port *port,
 	uint16				madStatus;
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);
@@ -1152,7 +1152,7 @@ FSTATUS sendSTLPortStatsPort1Mad(struct omgt_port *port, IB_PATH_RECORD *path, S
 
 
     // Determine which pkey to use (full or limited)
-    uint16_t pkey = omgt_get_mgmt_pkey(port, path->DLID, 0);
+    uint16_t pkey = omgt_get_mgmt_pkey(port, get_dlid_from_path(path), 0);
     if (pkey==0) {
         fprintf(stderr, "ERROR: Local port does not have management privileges\n");
         return (FPROTECTION);

@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -35,8 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // work around conflicting names 
 #include "infiniband/umad.h"
-#include "infiniband/mad.h"
-
 #include "iba/ib_types.h"
 #include "iba/ib_sm_priv.h"
 #include "iba/ib_helper.h"
@@ -68,10 +66,10 @@ extern uint64_t g_transactID;
 #define MAX_DR_PATH	63
 
 typedef struct _argrec {
-	uint8				port;	// local port (-p)
-	IB_LID				slid;	//source lid
-	IB_LID				dlid;	//dest lid (-l)
-	IB_LID				flid;	// -f lid to lookup in fwd table to select block
+	uint8			port;	// local port (-p)
+	STL_LID			slid;	//source lid
+	STL_LID			dlid;	//dest lid (-l)
+	STL_LID			flid;	// -f lid to lookup in fwd table to select block
 	boolean				bflag;	// was -b option supplied
 	boolean				eflag;  // was -e option used
 	uint16				block;	// block specified via -b
@@ -79,6 +77,9 @@ typedef struct _argrec {
 	uint8				drpaths;// additional SMA command line arguments
 	boolean				mflag;	// was -m option supplied
 	boolean				mflag2;	// were two ports supplied
+	boolean				iflag;	// switch internal
+	boolean				tflag;	// was -t option supplied
+	uint8				table;	// optional table specification
 	uint8				dport;	// typical -m option
 	uint8				mcount;	// optional count specified via -m
 	uint8				inport; // used for pstate, BCT, SCVL and SCSC maps.
@@ -99,6 +100,8 @@ typedef struct optypes_s {
 	boolean mflag2;	// is -m inport,outport option applicable
 	boolean fflag;	// is -f option applicable
 	boolean bflag;	// is -b block option applicable
+	boolean iflag;	// is -i option applicable
+	boolean tflag;	// is -t option applicable
 	boolean gflag;	// is -g option applicable
 	boolean nflag;  // is -n option applicable
 	boolean lflag;  // is -l option applicable
@@ -116,6 +119,6 @@ extern void sma_Usage(boolean displayAbridged);
 extern optypes_t stl_pma_query [];
 extern void pma_Usage(boolean displayAbridged);
 extern uint32   g_counterSelectMask;
-extern uint64   g_portSelectMask;
+extern uint64   g_portSelectMask[4];
 extern uint64   g_vlSelectMask;
 

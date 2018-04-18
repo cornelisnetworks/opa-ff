@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapacketcapture 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapacketcapture 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapacketcapture
 
@@ -23,7 +23,11 @@ Using opapacketcapture with large amounts of traffic can cause performance issue
 
 .SH Syntax
 .NL
-opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR] [-t \fItriggerfile\fR] [-l \fItriggerlag\fR][-a \fIalarm\fR] [-p \fIpackets\fR] [-s \fImaxblocks\fR] [-v [-v]]
+opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR]
+.br
+[-t \fItriggerfile\fR] [-l \fItriggerlag\fR][-a \fIalarm\fR] [-p \fIpackets\fR] [-s \fImaxblocks\fR]
+.br
+[-v [-v]]
 .SH Options
 .NL
 
@@ -44,7 +48,7 @@ Default = packetDump.pcap
 .NL
 Specifies the device file for capturing packets.
 .br
-Default = /dev/hfi1\(uldiagpkt0 
+
 
 .TP 10
 -f \fIfilterfile\fR 

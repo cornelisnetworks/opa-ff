@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <getopt.h>
 #include <limits.h>
+#include <errno.h>
 
 /* work around conflicting names */
 
@@ -42,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "opamgt_sa_priv.h"
 #include <iba/ibt.h>
 #include "opaswcommon.h"
+#include "openssl/sha.h"
 
 
 #ifndef stringize
@@ -57,6 +59,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #define DBGPRINT(format, args...) \
 	do { if (g_verbose) { fflush(stdout); fprintf(stderr, format, ##args); } } while (0)
+
+#define MODULUS_LEN 256
+#define MODULUS_OFFSET 128
 
 extern int g_verbose;
 
@@ -306,18 +311,23 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 				   VENDOR_MAD *mad, 
 				   uint16 sessionID, 
 				   uint32 module, 
+				   uint8 BoardID,
 				   vpd_fruInfo_rec_t *vpdInfo)
 {
 
 	FSTATUS			status = FSUCCESS;
-	uint8			vpdBuffer[VPD_SIZE];
-	uint8			*v = vpdBuffer;
+	uint8			*vpdBuffer;
+	uint8			devHdrBuf[DEVICE_HDR_SIZE];
+	uint8			*v;
 	uint8			*dp;
 	uint32			vpdOffset = 0;
+	uint32			vpdBufSize;
 	uint32			vpdReadSize;
 	uint32			vpdBytesRead = 0;
 	uint32			vpdAddress = 0;
+	int				oemInfoPresent = (BoardID == STL_PRR_BOARD_ID_HPE7K);
 	int				len;
+	int				numOEMFields;
 
 	switch (module) {
 		case OPASW_MODULE:
@@ -329,9 +339,22 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 			break;
 	}
 
-	while ((status == FSUCCESS) && (vpdBytesRead < VPD_SIZE)) {
-		if ((VPD_SIZE - vpdBytesRead) < VPD_READ_SIZE)
-			vpdReadSize = VPD_SIZE - vpdBytesRead;
+	status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME, vpdAddress, DEVICE_HDR_SIZE, 0, devHdrBuf);
+	if (status == FSUCCESS) {
+		vpdBufSize = (devHdrBuf[5]<<8) + devHdrBuf[4];
+		if ((vpdBuffer = malloc(vpdBufSize)) == NULL) {
+			fprintf(stderr, "getVpdInfo: Error allocating vpd buffer\n");
+			return(FERROR);
+		}
+		v = vpdBuffer;
+	} else {
+		fprintf(stderr, "getVpdInfo: Error sending MAD packet to switch\n");
+			return(FERROR);
+	}
+
+	while ((status == FSUCCESS) && (vpdBytesRead < vpdBufSize)) {
+		if ((vpdBufSize - vpdBytesRead) < VPD_READ_SIZE)
+			vpdReadSize = vpdBufSize - vpdBytesRead;
 		else
 			vpdReadSize = VPD_READ_SIZE;
 		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME, vpdAddress, vpdReadSize, vpdOffset, v);
@@ -341,6 +364,7 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 			vpdOffset += vpdReadSize;
 		} else {
 			fprintf(stderr, "getVpdInfo: Error sending MAD packet to switch\n");
+			return(FERROR);
 		}
 	}
 
@@ -456,6 +480,39 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 			vpdInfo->mfgHours = 0;
 			vpdInfo->mfgMins = 0;
 		}
+
+		dp += 4;
+		numOEMFields = *dp & LEN_MASK;
+		if (oemInfoPresent && (numOEMFields == 3)) {
+			// only process if exactly 3 OEM fields
+
+			dp++;
+
+			// copy serial number
+			len = *dp & LEN_MASK;
+			memcpy(vpdInfo->serialNum, dp + 1, len);
+			vpdInfo->serialNum[len] = '\0';
+			dp += len + 1;
+
+			// copy part number
+			len = *dp & LEN_MASK;
+			memcpy(vpdInfo->partNum, dp + 1, len);
+			vpdInfo->partNum[len] = '\0';
+
+			// oem rev is the last part of part number, after second hyphen
+			if ((dp = (uint8 *)strchr((char *)vpdInfo->partNum, '-')) != NULL) {
+				if ((dp = (uint8 *)strchr((char *)dp + 1, '-')) != NULL) {
+					dp++;
+					len = strlen((char *)dp);
+					memcpy(vpdInfo->version, dp, len);
+					vpdInfo->version[len] = '\0';
+				} else {
+					vpdInfo->version[0] = '\0';
+				}
+			} else {
+				vpdInfo->version[0] = '\0';
+			}
+		}
 	}
 
 	return(status);
@@ -502,24 +559,24 @@ FSTATUS getTempReadings(struct omgt_port *port, IB_PATH_RECORD *path,
 		uint16 u16;
 	} value;
 
-// for GMF modules, LTC2974 may not be there
+//for GMF modules, LTC2974 may not be there
 
-	if (BoardID == STL_BOARD_ID_HPE7K) {	
+	if (BoardID == STL_PRR_BOARD_ID_HPE7K) {
 		snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: N/A");
 	}
 	else {
-	 	// LTC2974
-			// It is possible the LTC2974 temp sensor may need to be initilized
+	 // LTC2974
+		// It is possible the LTC2974 temp sensor may need to be initilized
 		status = sendI2CAccessMad(port, path, sessionID, (void *)mad, NOJUMBOMAD, MMTHD_GET, RESP_WAIT_TIME,
 			I2C_OPASW_LTC2974_TEMP_ADDR, 2, I2C_OPASW_LTC2974_TEMP_OFFSET, &value.u8[0]);
 
 		if (status != FSUCCESS) {
 			//fprintf(stderr, "getTempReadings: Error sending MAD packet to switch to read LTC2974 temp\n");
-				snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: N/A");
+			snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: N/A");
 			ErrorFlags |= (1<<0);
 		} else {
 			snprintf(tempStrs[0], TEMP_STR_LENGTH, "LTC2974: %dC", ltc2974_L11_to_Celsius(value.u16));
-		}	
+		}
 	}
 
 	{ // PRR ASIC
@@ -730,6 +787,34 @@ FSTATUS getAsicVersion(struct omgt_port *port,
 	return(status);
 }
 
+FSTATUS getOemHash(struct omgt_port *port,
+                                           IB_PATH_RECORD *path,
+                                           VENDOR_MAD *mad,
+                                           uint16 sessionID,
+                                           uint32 *oemHash,uint32 *acb)
+{
+
+        FSTATUS                 status;
+        uint32                  location = OEM_HASH_SIGNER_START_ADDRESS;
+        uint8                   memoryData[4];
+	int			i = 0;
+	status = sendMemAccessGetMad(port, path, mad, sessionID, AUTHENTICATION_CONTROL_BIT_ADDRESS, (uint8)4, memoryData);
+	if(status != FSUCCESS)
+		return status;
+	*acb = ntoh32 (*(uint32 *)memoryData);
+	for(location = OEM_HASH_SIGNER_START_ADDRESS; location <= OEM_HASH_SIGNER_END_ADDRESS; location++){
+		status = sendMemAccessGetMad(port, path, mad, sessionID, location, (uint8)sizeof(memoryData), memoryData);
+		if (status == FSUCCESS) {
+			oemHash[i] = ntoh32 (*(uint32 *)memoryData);
+			i++;
+		}
+		else
+			return(status);
+	}
+        return(status);
+}
+
+
 FSTATUS getBoardID(struct omgt_port *port,
 				   IB_PATH_RECORD *path, 
 				   VENDOR_MAD *mad, 
@@ -807,6 +892,34 @@ FSTATUS getEMFWFileNames(struct omgt_port *port,
 	return(status);
 }
 
+FSTATUS  getBinaryHash(char *fwFileName,uint32 *binaryHash)
+{
+	FILE *fp;
+	int nread;
+	char buf[MODULUS_LEN];
+	unsigned char hash[SHA256_DIGEST_LENGTH];
+	if (fwFileName == NULL || strlen(fwFileName) == 0) {
+		fprintf(stderr, "Error: Firmware file name is invalid\n");
+		return FERROR;
+	}
+	else if ((fp = fopen(fwFileName,"rb")) == NULL) {
+		return FERROR;
+	}
+	else if (fseek(fp, MODULUS_OFFSET, 0)) {
+		return FERROR;
+	}
+	else if ((nread = fread(buf,1,MODULUS_LEN,fp)) == MODULUS_LEN) {
+		fclose(fp);
+		int i = 0;
+		(void *)SHA256((unsigned char*)buf,sizeof(buf),hash);
+		for(i = 0; i < (SHA256_DIGEST_LENGTH/sizeof(uint32)); i++)
+			binaryHash[i] = ntoh32(*(uint32 *)(hash +(i * sizeof(uint32))));
+
+		return FSUCCESS;
+	}
+	else
+		return FERROR;
+}
 /* opaswEepromRW: Reads from or Writes to the switch EEPROM
    based on prrEepromRW in prrFwUpdate.c */
 FSTATUS opaswEepromRW(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, void *mad, int timeout,

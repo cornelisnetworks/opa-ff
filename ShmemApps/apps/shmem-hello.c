@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,7 +33,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, char ** argv)
 {
-	start_pes(0);
-	printf("Hello from PE %d out of %d\n", _my_pe(), _num_pes());
+	shmem_init();
+	printf("Hello from PE %d out of %d\n", shmem_my_pe(), shmem_n_pes());
+	shmem_finalize();
 	return 0;
 }

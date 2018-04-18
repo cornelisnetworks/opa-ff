@@ -8,7 +8,8 @@ Makerules
 MakeTools
 MakeTemplates
 Md5
-MpiApps
+MpiApps/apps
+MpiApps/Makefile
 Moab
 OpenIb_Host
 opasadb
@@ -30,3 +31,4 @@ Esm/ib/src/linux/startup/fm_config
 Esm/ib/src/pm/pm
 Esm/ib/src/smi/include
 buildFeatureDefs
+debian

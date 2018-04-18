@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaextractperf 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaextractperf 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaextractperf
 
@@ -28,7 +28,7 @@ Produces full help text.
 .TP 10
 opareport \fIoptions\fR 
 .NL
-The following options are passed to opareport. This subset is considered typical and useful for this command.
+The following options are passed to opareport. This subset is considered typical and useful for this command. By design, the tool ignores -o/--output report option.
 
 .RS
 .TP 10
@@ -71,7 +71,7 @@ Uses topology\(ulinput file to augment and verify fabric information. When used,
 
 .sp
 -i/--interval \fIseconds\fR 
-Obtains performance statistics over interval  \fIseconds\fR. Clears all statistics, waits interval  \fIseconds\fR, then generates report. Implies -s option.
+Obtains performance statistics over interval \fIseconds\fR. Clears all statistics, waits interval \fIseconds\fR, then generates report. Implies -s option.
 
 .RE
 
@@ -80,7 +80,7 @@ Obtains performance statistics over interval  \fIseconds\fR. Clears all statisti
 
 .sp
 -b / --begin \fIdate\(ultime\fR 
-Obtains past performance stats over an interval beginning at  \fIdate\(ultime\fR. Implies -s option.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+Obtains past performance stats over an interval beginning at \fIdate\(ultime\fR. Implies -s option. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .RE
 
@@ -89,10 +89,10 @@ Obtains past performance stats over an interval beginning at  \fIdate\(ultime\fR
 
 .sp
 -e / --end \fIdate\(ultime\fR 
-Obtains past performance stats over an interval ending at  \fIdate\(ultime\fR. Implies -s option.
+Obtains past performance stats over an interval ending at \fIdate\(ultime\fR. Implies -s option.
 
 .IP
- \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+\fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 .RE
 
 .RS
@@ -183,204 +183,204 @@ HFI \fIx\fR, port \fIy\fR.
 .NL
 
 .TP 10
-gid:value 
+gid:\fIvalue\fR 
 .NL
- \fIvalue\fR is numeric port GID of form: subnet:guid.
+\fIvalue\fR is numeric port GID of form: subnet:guid.
 
 .TP 10
-lid:value 
+lid:\fIvalue\fR 
 .NL
- \fIvalue\fR is numeric LID.
+\fIvalue\fR is numeric LID.
 
 .TP 10
 lid:value:node 
 .NL
- \fIvalue\fR is numeric LID, selects entire node with given LID.
+\fIvalue\fR is numeric LID, selects entire node with given LID.
 
 .TP 10
-lid:value:port:value2 
+lid:\fIvalue\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue\fR is numeric LID of node,  \fIvalue2\fR is port number.
+\fIvalue\fR is numeric LID of node, \fIvalue2\fR is port number.
 
 .TP 10
-portguid:value 
+portguid:\fIvalue\fR 
 .NL
- \fIvalue\fR is numeric port GUID.
+\fIvalue\fR is numeric port GUID.
 
 .TP 10
-nodeguid:value 
+nodeguid:\fIvalue\fR 
 .NL
- \fIvalue\fR is numeric node GUID.
+\fIvalue\fR is numeric node GUID.
 
 .TP 10
-nodeguid:value1:port:value2 
+nodeguid:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is numeric node GUID,  \fIvalue2\fR is port number.
+\fIvalue1\fR is numeric node GUID, \fIvalue2\fR is port number.
 
 .TP 10
-iocguid:value 
+iocguid:\fIvalue\fR 
 .NL
- \fIvalue\fR is numeric IOC GUID.
+\fIvalue\fR is numeric IOC GUID.
 
 .TP 10
-iocguid:value1:port:value2 
+iocguid:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is numeric IOC GUID,  \fIvalue2\fR is port number.
+\fIvalue1\fR is numeric IOC GUID, \fIvalue2\fR is port number.
 
 .TP 10
-systemguid:value 
+systemguid:\fIvalue\fR 
 .NL
- \fIvalue\fR is numeric system image GUID.
+\fIvalue\fR is numeric system image GUID.
 
 .TP 10
-systemguid:value1:port:value2 
+systemguid:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is the numeric system image GUID,  \fIvalue2\fR is port number.
+\fIvalue1\fR is the numeric system image GUID, \fIvalue2\fR is port number.
 
 .TP 10
-ioc:value 
+ioc:\fIvalue\fR 
 .NL
- \fIvalue\fR is IOC Profile ID String (IOC Name).
+\fIvalue\fR is IOC Profile ID String (IOC Name).
 
 .TP 10
-ioc:value1:port:value2 
+ioc:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is IOC Profile ID String (IOC Name),  \fIvalue2\fR is port number.
+\fIvalue1\fR is IOC Profile ID String (IOC Name), \fIvalue2\fR is port number.
 
 .TP 10
-iocpat:value 
+iocpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for IOC Profile ID String (IOC Name).
+\fIvalue\fR is glob pattern for IOC Profile ID String (IOC Name).
 
 .TP 10
-iocpat:value1:port:value2 
+iocpat:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is glob pattern for IOC Profile ID String (IOC Name),  \fIvalue2\fR is port number.
+\fIvalue1\fR is glob pattern for IOC Profile ID String (IOC Name), \fIvalue2\fR is port number.
 
 .TP 10
-ioctype:value 
+ioctype:\fIvalue\fR 
 .NL
- \fIvalue\fR is IOC type (SRP or OTHER).
+\fIvalue\fR is IOC type (SRP or OTHER).
 
 .TP 10
-ioctype:value1:port:value2 
+ioctype:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is IOC type (SRP or OTHER);  \fIvalue2\fR is port number.
+\fIvalue1\fR is IOC type (SRP or OTHER); \fIvalue2\fR is port number.
 
 .TP 10
-node:value 
+node:\fIvalue\fR 
 .NL
- \fIvalue\fR is node description (node name).
+\fIvalue\fR is node description (node name).
 
 .TP 10
-node:value1:port:value2 
+node:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is node description (node name),  \fIvalue2\fR is port number.
+\fIvalue1\fR is node description (node name), \fIvalue2\fR is port number.
 
 .TP 10
-nodepat:value 
+nodepat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for node description (node name).
+\fIvalue\fR is glob pattern for node description (node name).
 
 .TP 10
-nodepat:value1:port:value2 
+nodepat:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is the glob pattern for the node description (node name),  \fIvalue2\fR is port number.
+\fIvalue1\fR is the glob pattern for the node description (node name), \fIvalue2\fR is port number.
 
 .TP 10
-nodedetpat:value 
+nodedetpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for node details.
+\fIvalue\fR is glob pattern for node details.
 
 .TP 10
-nodedetpat:value1:port:value2 
+nodedetpat:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is the glob pattern for the node details,  \fIvalue2\fR is port number.
+\fIvalue1\fR is the glob pattern for the node details, \fIvalue2\fR is port number.
 
 .TP 10
-nodetype:value 
+nodetype:\fIvalue\fR 
 .NL
- \fIvalue\fR is node type (SW, FI, or RT).
+\fIvalue\fR is node type (SW, FI, or RT).
 
 .TP 10
-nodetype:value1:port:value2 
+nodetype:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
- \fIvalue1\fR is node type (SW, FI, or RT),  \fIvalue2\fR is port number.
+\fIvalue1\fR is node type (SW, FI, or RT), \fIvalue2\fR is port number.
 
 .TP 10
-rate:value 
+rate:\fIvalue\fR 
 .NL
- \fIvalue\fR is string for rate (25g, 50g, 75g, 100g), omits switch mgmt port 0.
+\fIvalue\fR is string for rate (25g, 50g, 75g, 100g), omits switch mgmt port 0.
 
 .TP 10
-portstate:value 
+portstate:\fIvalue\fR 
 .NL
- \fIvalue\fR is a string for state (down, init, armed, active, notactive, initarmed).
+\fIvalue\fR is a string for state (down, init, armed, active, notactive, initarmed).
 
 .TP 10
-portphysstate:value 
+portphysstate:\fIvalue\fR 
 .NL
- \fIvalue\fR is a string for PHYs state (polling, disabled, training, linkup, recovery, offline, test)
+\fIvalue\fR is a string for PHYs state (polling, disabled, training, linkup, recovery, offline, test)
 
 .TP 10
-mtucap:value 
+mtucap:\fIvalue\fR 
 .NL
- \fIvalue\fR is MTU size (2048, 4096, 8192, 10240), omits switch mgmt port 0.
+\fIvalue\fR is MTU size (2048, 4096, 8192, 10240), omits switch mgmt port 0.
 
 .TP 10
-labelpat:value 
+labelpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for cable label.
+\fIvalue\fR is glob pattern for cable label.
 
 .TP 10
-lengthpat:value 
+lengthpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for cable length.
+\fIvalue\fR is glob pattern for cable length.
 
 .TP 10
-cabledetpat:value 
+cabledetpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for cable details.
+\fIvalue\fR is glob pattern for cable details.
 
 .TP 10
-cabinflenpat:value 
+cabinflenpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for cable info length.
+\fIvalue\fR is glob pattern for cable info length.
 
 .TP 10
-cabinfvendnamepat:value 
+cabinfvendnamepat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for cable info vendor name.
+\fIvalue\fR is glob pattern for cable info vendor name.
 
 .TP 10
-cabinfvendpnpat:value 
+cabinfvendpnpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for cable info vendor part number.
+\fIvalue\fR is glob pattern for cable info vendor part number.
 
 .TP 10
-cabinfvendrevpat:value 
+cabinfvendrevpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for cable info vendor revision.
+\fIvalue\fR is glob pattern for cable info vendor revision.
 
 .TP 10
-cabinfvendsnpat:value 
+cabinfvendsnpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for cable info vendor serial number.
+\fIvalue\fR is glob pattern for cable info vendor serial number.
 
 .TP 10
-cabinftype:value 
+cabinftype:\fIvalue\fR 
 .NL
- \fIvalue\fR is either optical, passive\(ulcopper, active\(ulcopper, or unknown.
+\fIvalue\fR is either optical, passive\(ulcopper, active\(ulcopper, or unknown.
 
 .TP 10
-linkdetpat:value 
+linkdetpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for link details.
+\fIvalue\fR is glob pattern for link details.
 
 .TP 10
-portdetpat:value 
+portdetpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for port details.
+\fIvalue\fR is glob pattern for port details.
 
 .TP 10
 sm 
@@ -388,34 +388,34 @@ sm
 Specifies the master subnet manager (SM).
 
 .TP 10
-smdetpat:value 
+smdetpat:\fIvalue\fR 
 .NL
- \fIvalue\fR is glob pattern for SM details.
+\fIvalue\fR is glob pattern for SM details.
 
 .TP 10
-route:point1:point2 
+route:\fIpoint1\fR:\fIpoint2\fR 
 .NL
 Specifies all ports along the routes between the two given points.
 
 .TP 10
-led:value 
+led:\fIvalue\fR 
 .NL
- \fIvalue\fR is either on or off for LED port beacon.
+\fIvalue\fR is either on or off for LED port beacon.
 
 .TP 10
-linkqual:value 
+linkqual:\fIvalue\fR 
 .NL
-Specifies the ports with a link quality equal to  \fIvalue\fR.
+Specifies the ports with a link quality equal to \fIvalue\fR.
 
 .TP 10
-linkqualLE:value 
+linkqualLE:\fIvalue\fR 
 .NL
-Specifies the ports with a link quality less than or equal to  \fIvalue\fR.
+Specifies the ports with a link quality less than or equal to \fIvalue\fR.
 
 .TP 10
-linkqualGE:value 
+linkqualGE:\fIvalue\fR 
 .NL
-Specifies the ports with a link quality greater than or equal to  \fIvalue\fR.
+Specifies the ports with a link quality greater than or equal to \fIvalue\fR.
 
 .NL
 

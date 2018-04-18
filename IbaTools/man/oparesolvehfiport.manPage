@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH oparesolvehfiport 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH oparesolvehfiport 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 oparesolvehfiport
 
@@ -51,12 +51,12 @@ Prints the hfi number.
 .RE
 
 .TP 10
- \fIhfi\fR 
+\fIhfi\fR 
 .NL
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p port port is a system-wide port number. (Default is 0.)
 
 .TP 10
- \fIport\fR 
+\fIport\fR 
 .NL
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
 
@@ -75,7 +75,7 @@ First active port in system.
 .TP 10
 
 .sp
- \fIx\fR 0 
+\fIx\fR 0 
 First active port on HFI \fIx\fR.
 
 .RE
@@ -93,7 +93,7 @@ Port \fIy\fR within system (no matter which ports are active).
 .TP 10
 
 .sp
- \fIx y\fR 
+\fIx y\fR 
 HFI \fIx\fR, port \fIy\fR
 
 .RE

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagenchassis 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagenchassis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagenchassis
 
@@ -53,7 +53,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -62,7 +62,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -71,7 +71,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opainfo 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opainfo 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opainfo
 
@@ -16,7 +16,9 @@ opainfo
 Provides summary information for local HFI port(s).
 .SH Syntax
 .NL
-opainfo [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g] [-d \fIdetail\fR] [-s pm\(ulsl] [-v [-v]...]
+opainfo [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-g] [-d \fIdetail\fR] [-s pm\(ulsl]
+.br
+[-v [-v]...]
 .NL
 
 .SH Options
@@ -69,12 +71,12 @@ Outputs detailed port counters.
 .TP 10
 -g 
 .NL
-Output is displayed in line-by-line format. Default = summary format.
+Output is displayed in line-by-line format. Default is summary format.
 
 .TP 10
 -d \fIdetail\fR 
 .NL
-Output detail level. Range = 0 - 4. CableInfo only. Default = 0.
+Output detail level. Range = 0 - 2. CableInfo only. Default is 0.
 
 .TP 10
 .BR
@@ -108,24 +110,6 @@ Brief summary
 .sp
 2
 Extended brief summary
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-3
-Verbose output
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-4
-Verbose and debug output. Lists all settings both statically and dynamically configured in the cable.
 
 .RE
 

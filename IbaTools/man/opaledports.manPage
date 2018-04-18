@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaledports 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaledports 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaledports
 
@@ -40,14 +40,10 @@ Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Def
 .NL
 Clears beaconing LED on all ports.
 
-.TP 10
-.BR
+.IP
 
-.PP
-
-.B NOTE:
+\fBNOTE:\fR
 If -C is entered, no other options are valid.
-
 .TP 10
 -s 
 .NL
@@ -87,9 +83,9 @@ portlist.csv
 Specifies the file listing the links to process. The list is of the form:
 
 .IP
-NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID;PortNum;NodeType;
+NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID;PortNum;
 .br
-NodeDesc;Dontcare 
+NodeType;NodeDesc;Dontcare 
 .SH Examples 
 .NL
 echo "0x001175010165ac1d;1;FI;phkpstl035 hfi1\(ul0"|opaledports on

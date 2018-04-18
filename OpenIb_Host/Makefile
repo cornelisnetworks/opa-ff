@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -121,7 +121,7 @@ CMD_TARGETS_MISC	=
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
 # other files to remove during clobber phase
-CLOBBER_TARGETS_MISC=
+CLOBBER_TARGETS_MISC= 
 # sub-directory to install to within bin
 BIN_SUBDIR		= 
 # sub-directory to install to within include
@@ -177,9 +177,9 @@ include $(TL_DIR)/Makerules/Maketargets.install
 include $(TL_DIR)/Makerules/Maketargets.stage
 STAGE::
 ifeq "$(RELEASE_TAG)" ""
-	echo $(MODULEVERSION) | tr '_-' '..' > $(PROJ_STAGE_DIR)/version
+	$(CONVERT_RELEASETAG) $(MODULEVERSION) > $(PROJ_STAGE_DIR)/version
 else
-	echo $(RELEASE_TAG) | tr '_-' '..' > $(PROJ_STAGE_DIR)/version
+	$(CONVERT_RELEASETAG) $(RELEASE_TAG) > $(PROJ_STAGE_DIR)/version
 endif
 	echo $(BUILD_TARGET) > $(PROJ_STAGE_DIR)/arch
 	echo $(BUILD_TARGET_OS_VENDOR) > $(PROJ_STAGE_DIR)/distro

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opalinkanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opalinkanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opalinkanalysis
 
@@ -64,7 +64,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -73,7 +73,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -82,7 +82,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
@@ -109,7 +109,7 @@ Creates a snapshot file per selected port. The files are created in FF\(ulRESULT
 Specifies the error thresholds configuration file. The default is /etc/opa/opamon.si.conf.
 
 .TP 10
- \fIreports\fR 
+\fIreports\fR 
 .NL
 Supports the following reports:
 .RS
@@ -224,15 +224,6 @@ Verifies switches against topology input.
 .TP 10
 
 .sp
-verifyrtrs 
-Verifies routers against topology input.
-
-.RE
-
-.RS
-.TP 10
-
-.sp
 verifynodes 
 Verifies FIs, switches, and routers against topology input.
 
@@ -311,4 +302,4 @@ File containing list of ports, used in absence of -t and -p.
 .TP 10
 \fBFF\(ulTOPOLOGY\(ulFILE\fR 
 .NL
-File containing  \fItopology\(ulinput\fR, used in absence of -T.
+File containing \fItopology\(ulinput\fR, used in absence of -T.

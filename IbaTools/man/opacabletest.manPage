@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacabletest 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacabletest 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacabletest
 
@@ -18,7 +18,11 @@ opacabletest
 Initiates or stops Cable Bit Error Rate stress tests for Intel(R) Omni-Path Host Fabric Interface (HFI)-to-switch links and/or ISLs.
 .SH Syntax
 .NL
-opacabletest [-C|-A] [-c \fIfile\fR] [-f \fIhostfile\fR] [-h \fI\[aq]hosts\[aq]\fR] [-n \fInumprocs\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi| stop\(ulisl] ...
+opacabletest [-C|-A] [-c \fIfile\fR] [-f \fIhostfile\fR] [-h \fI\[aq]hosts\[aq]\fR] [-n \fInumprocs\fR]
+.br
+[-t \fIportsfile\fR] [-p \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi|
+.br
+stop\(ulisl] ...
 .SH Options
 .NL
 
@@ -85,7 +89,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -94,7 +98,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -103,7 +107,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 

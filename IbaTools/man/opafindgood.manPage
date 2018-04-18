@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafindgood 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafindgood 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafindgood
 
@@ -15,9 +15,9 @@ opafindgood
 .PP
 Checks for hosts that are able to be pinged, accessed via SSH, and active on the Intel(R) Omni-Path Fabric. Produces a list of good hosts meeting all criteria. Typically used to identify good hosts to undergo further testing and benchmarking during initial cluster staging and startup.
 .PP
-The resulting good file lists each good host exactly once and can be used as input to create  \fImpi\(ulhosts\fR files for running mpi\(ulapps and the HFI-SW cable test. The files alive, running, active, good, and bad are created in the selected directory listing hosts passing each criteria.
+The resulting good file lists each good host exactly once and can be used as input to create \fImpi\(ulhosts\fR files for running mpi\(ulapps and the HFI-SW cable test. The files alive, running, active, good, and bad are created in the selected directory listing hosts passing each criteria.
 .PP
-This command assumes the Node Description for each host is based on the  \fIhostname\fR-s output in conjunction with an optional hfi1\(ul# suffix. When using a /etc/opa/hosts file that lists the hostnames, this assumption may not be correct.
+This command assumes the Node Description for each host is based on the \fIhostname\fR-s output in conjunction with an optional hfi1\(ul# suffix. When using a /etc/opa/hosts file that lists the hostnames, this assumption may not be correct.
 .PP
 This command automatically generates the file FF\(ulRESULT\(ulDIR/punchlist.csv. This file provides a concise summary of the bad hosts found. This can be imported into Excel directly as a *.csv file. Alternatively, it can be cut/pasted into Excel, and the
 \fBData/Text to Columns\fR
@@ -126,7 +126,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -135,7 +135,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -144,7 +144,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 

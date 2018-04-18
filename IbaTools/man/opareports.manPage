@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opareports 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opareports 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opareports
 
@@ -18,9 +18,7 @@ opareports
 opareports is a front end to opareport that provides many of the same options and capabilities. It can also run a report against multiple fabrics or subnets (for example, local host HFI ports). opareports can use an input file to augment the reports using additional details from the topology\(ulinput file.
 .SH Syntax
 .NL
-opareports [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR]
-.br
-[opareport \fIarguments\fR]
+opareports [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR] [opareport \fIarguments\fR]
 .SH Options 
 .NL
 
@@ -55,7 +53,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -64,7 +62,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -73,7 +71,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
@@ -91,17 +89,17 @@ Specifies any of the other opareport arguments listed below (see
 \fIopareport Options\fR
 ):
 .br
-opareport [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR]
+opareport [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fIreport\fR]
 .br
-[-o \fIreport\fR] [-d \fIdetail\fR] [-P|-H] [-N] [-x]
+[-d \fIdetail\fR] [-P|-H] [-N] [-x] [-X \fIsnapshot\(ulinput\fR]
 .br
-[-X \fIsnapshot\(ulinput\fR] [-T \fItopology\(ulinput\fR] [-s] [-r] [-V]
+[-T \fItopology\(ulinput\fR] [-s] [-r] [-V] [-i \fIseconds\fR]
 .br
-[-i \fIseconds\fR] [-b \fIdate\(ultime\fR] [-e \fIdate\(ultime\fR] [-C]
+[-b \fIdate\(ultime\fR] [-e \fIdate\(ultime\fR] [-C] [-a] [-m] [-M] [-A]
 .br
-[-a] [-m] [-K \fImkey\fR] [-M] [-A] [-c \fIfile\fR] [-L]
+[-c \fIfile\fR] [-L] [-F \fIpoint\fR] [-S \fIpoint\fR]
 .br
-[-F \fIpoint\fR] [-S \fIpoint\fR] [-D \fIpoint\fR] [-Q] 
+[-D \fIpoint\fR] [-Q] 
 
 .br
 
@@ -128,7 +126,9 @@ When run against multiple fabrics, the -F option is applied to all fabrics.
 
 .SH Examples 
 .NL
-opareports opareports -p \[aq]1:1 2:1\[aq]
+opareports
+.br
+opareports -p \[aq]1:1 2:1\[aq]
 .SH Environment Variables 
 .NL
 
@@ -228,20 +228,20 @@ Gets performance statistics for all ports.
 .TP 10
 -i/--interval \fIseconds\fR 
 .NL
-Obtains performance statistics over interval  \fIseconds\fR. Clears all statistics, waits interval  \fIseconds\fR, then generates report. Implies -s option.
+Obtains performance statistics over interval \fIseconds\fR. Clears all statistics, waits interval \fIseconds\fR, then generates report. Implies -s option.
 
 .TP 10
 -b / --begin \fIdate\(ultime\fR 
 .NL
-Obtains past performance stats over an interval beginning at  \fIdate\(ultime\fR. Implies -s option.  \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+Obtains past performance stats over an interval beginning at \fIdate\(ultime\fR. Implies -s option. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
 -e / --end \fIdate\(ultime\fR 
 .NL
-Obtains past performance stats over an interval ending at  \fIdate\(ultime\fR. Implies -s option.
+Obtains past performance stats over an interval ending at \fIdate\(ultime\fR. Implies -s option.
 
 .IP
- \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+\fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 .TP 10
 -C/--clear 
 .NL
@@ -256,11 +256,6 @@ Clears all performance statistics for all ports.
 -m/--smadirect 
 .NL
 Accesses fabric information directly from SMA.
-
-.TP 10
--K/--mkey \fImkey\fR 
-.NL
-Specifies the SMA M\(ulKey for direct SMA query. Default is 0.
 
 .TP 10
 -M/--pmadirect 
@@ -285,23 +280,19 @@ Limits operation to exact specified focus with -F for port error counters check 
 .TP 10
 -F/--focus \fIpoint\fR 
 .NL
-Specifies the focus area for report. Used for all reports except route to limit scope of report. Refer to
-\fIopareport Point Syntax\fR
-for details.
+Specifies the focus area for report.
 
+.IP
+Limits output to reflect a subsection of the fabric. May not work with all reports. (For example, route, mcgroups, and the verify* reports may ignore the option or not generate useful results.)
 .TP 10
 -S/--src \fIpoint\fR 
 .NL
-Specifies the source for trace route. Default is local port. Refer to
-\fIopareport Point Syntax\fR
-for details.
+Specifies the source for trace route. Default is local port.
 
 .TP 10
 -D/--dest \fIpoint\fR 
 .NL
-Specifies the destination for trace route. Refer to
-\fIopareport Point Syntax\fR
-for details.
+Specifies the destination for trace route.
 
 .TP 10
 -Q/--quietfocus 
@@ -505,7 +496,8 @@ Validates topology configuration of the fabric including SLSC, SCSC, and SCVL ta
 .TP 10
 validatemcroutes 
 .NL
-Validates multicast routes of the fabric.
+Validates multicast routes of the fabric to identify loops in multicast forwarding tables and detect MFT-multicast membership inconsistencies.
+
 .TP 10
 vfinfo 
 .NL
@@ -584,12 +576,13 @@ Reports Buffer Control Tables for all ports.
 .TP 10
 snapshot 
 .NL
-Outputs snapshot of the fabric state for later use as  \fIsnapshot\(ulinput\fR. This implies -x. May not be combined with other reports. When selected, -F, -P, -H, and -N options are ignored.
+Outputs snapshot of the fabric state for later use as \fIsnapshot\(ulinput\fR. This implies -x. May not be combined with other reports. When selected, -F, -P, -H, and -N options are ignored.
 
 .TP 10
 topology 
 .NL
-Outputs the topology of the fabric for later use as  \fItopology\(ulinput\fR. This implies -x. May not be combined with other reports.
+Outputs the topology of the fabric for later use as \fItopology\(ulinput\fR. This implies -x. May not be combined with other reports. Use with detail level 3 or more to get Port element under Node in output xml.
+
 .TP 10
 none 
 .NL
@@ -605,202 +598,202 @@ For reference:
 .TP 10
 gid:value 
 .NL
- \fIvalue\fR is numeric port GID of form: subnet:guid.
+\fIvalue\fR is numeric port GID of form: subnet:guid.
 
 .TP 10
 lid:value 
 .NL
- \fIvalue\fR is numeric LID.
+\fIvalue\fR is numeric LID.
 
 .TP 10
 lid:value:node 
 .NL
- \fIvalue\fR is numeric LID, selects entire node with given LID.
+\fIvalue\fR is numeric LID, selects entire node with given LID.
 
 .TP 10
 lid:value:port:value2 
 .NL
- \fIvalue\fR is numeric LID of node,  \fIvalue2\fR is port number.
+\fIvalue\fR is numeric LID of node, \fIvalue2\fR is port number.
 
 .TP 10
 portguid:value 
 .NL
- \fIvalue\fR is numeric port GUID.
+\fIvalue\fR is numeric port GUID.
 
 .TP 10
 nodeguid:value 
 .NL
- \fIvalue\fR is numeric node GUID.
+\fIvalue\fR is numeric node GUID.
 
 .TP 10
 nodeguid:value1:port:value2 
 .NL
- \fIvalue1\fR is numeric node GUID,  \fIvalue2\fR is port number.
+\fIvalue1\fR is numeric node GUID, \fIvalue2\fR is port number.
 
 .TP 10
 iocguid:value 
 .NL
- \fIvalue\fR is numeric IOC GUID.
+\fIvalue\fR is numeric IOC GUID.
 
 .TP 10
 iocguid:value1:port:value2 
 .NL
- \fIvalue1\fR is numeric IOC GUID,  \fIvalue2\fR is port number.
+\fIvalue1\fR is numeric IOC GUID, \fIvalue2\fR is port number.
 
 .TP 10
 systemguid:value 
 .NL
- \fIvalue\fR is numeric system image GUID.
+\fIvalue\fR is numeric system image GUID.
 
 .TP 10
 systemguid:value1:port:value2 
 .NL
- \fIvalue1\fR is the numeric system image GUID,  \fIvalue2\fR is port number.
+\fIvalue1\fR is the numeric system image GUID, \fIvalue2\fR is port number.
 
 .TP 10
 ioc:value 
 .NL
- \fIvalue\fR is IOC Profile ID String (IOC Name).
+\fIvalue\fR is IOC Profile ID String (IOC Name).
 
 .TP 10
 ioc:value1:port:value2 
 .NL
- \fIvalue1\fR is IOC Profile ID String (IOC Name),  \fIvalue2\fR is port number.
+\fIvalue1\fR is IOC Profile ID String (IOC Name), \fIvalue2\fR is port number.
 
 .TP 10
 iocpat:value 
 .NL
- \fIvalue\fR is glob pattern for IOC Profile ID String (IOC Name).
+\fIvalue\fR is glob pattern for IOC Profile ID String (IOC Name).
 
 .TP 10
 iocpat:value1:port:value2 
 .NL
- \fIvalue1\fR is glob pattern for IOC Profile ID String (IOC Name),  \fIvalue2\fR is port number.
+\fIvalue1\fR is glob pattern for IOC Profile ID String (IOC Name), \fIvalue2\fR is port number.
 
 .TP 10
 ioctype:value 
 .NL
- \fIvalue\fR is IOC type (SRP or OTHER).
+\fIvalue\fR is IOC type (SRP or OTHER).
 
 .TP 10
 ioctype:value1:port:value2 
 .NL
- \fIvalue1\fR is IOC type (SRP or OTHER);  \fIvalue2\fR is port number.
+\fIvalue1\fR is IOC type (SRP or OTHER); \fIvalue2\fR is port number.
 
 .TP 10
 node:value 
 .NL
- \fIvalue\fR is node description (node name).
+\fIvalue\fR is node description (node name).
 
 .TP 10
 node:value1:port:value2 
 .NL
- \fIvalue1\fR is node description (node name),  \fIvalue2\fR is port number.
+\fIvalue1\fR is node description (node name), \fIvalue2\fR is port number.
 
 .TP 10
 nodepat:value 
 .NL
- \fIvalue\fR is glob pattern for node description (node name).
+\fIvalue\fR is glob pattern for node description (node name).
 
 .TP 10
 nodepat:value1:port:value2 
 .NL
- \fIvalue1\fR is the glob pattern for the node description (node name),  \fIvalue2\fR is port number.
+\fIvalue1\fR is the glob pattern for the node description (node name), \fIvalue2\fR is port number.
 
 .TP 10
 nodedetpat:value 
 .NL
- \fIvalue\fR is glob pattern for node details.
+\fIvalue\fR is glob pattern for node details.
 
 .TP 10
 nodedetpat:value1:port:value2 
 .NL
- \fIvalue1\fR is the glob pattern for the node details,  \fIvalue2\fR is port number.
+\fIvalue1\fR is the glob pattern for the node details, \fIvalue2\fR is port number.
 
 .TP 10
 nodetype:value 
 .NL
- \fIvalue\fR is node type (SW, FI, or RT).
+\fIvalue\fR is node type (SW, FI, or RT).
 
 .TP 10
 nodetype:value1:port:value2 
 .NL
- \fIvalue1\fR is node type (SW, FI, or RT),  \fIvalue2\fR is port number.
+\fIvalue1\fR is node type (SW, FI, or RT), \fIvalue2\fR is port number.
 
 .TP 10
 rate:value 
 .NL
- \fIvalue\fR is string for rate (25g, 50g, 75g, 100g), omits switch mgmt port 0.
+\fIvalue\fR is string for rate (25g, 50g, 75g, 100g), omits switch mgmt port 0.
 
 .TP 10
 portstate:value 
 .NL
- \fIvalue\fR is a string for state (down, init, armed, active, notactive, initarmed).
+\fIvalue\fR is a string for state (down, init, armed, active, notactive, initarmed).
 
 .TP 10
 portphysstate:value 
 .NL
- \fIvalue\fR is a string for PHYs state (polling, disabled, training, linkup, recovery, offline, test)
+\fIvalue\fR is a string for PHYs state (polling, disabled, training, linkup, recovery, offline, test)
 
 .TP 10
 mtucap:value 
 .NL
- \fIvalue\fR is MTU size (2048, 4096, 8192, 10240), omits switch mgmt port 0.
+\fIvalue\fR is MTU size (2048, 4096, 8192, 10240), omits switch mgmt port 0.
 
 .TP 10
 labelpat:value 
 .NL
- \fIvalue\fR is glob pattern for cable label.
+\fIvalue\fR is glob pattern for cable label.
 
 .TP 10
 lengthpat:value 
 .NL
- \fIvalue\fR is glob pattern for cable length.
+\fIvalue\fR is glob pattern for cable length.
 
 .TP 10
 cabledetpat:value 
 .NL
- \fIvalue\fR is glob pattern for cable details.
+\fIvalue\fR is glob pattern for cable details.
 
 .TP 10
 cabinflenpat:value 
 .NL
- \fIvalue\fR is glob pattern for cable info length.
+\fIvalue\fR is glob pattern for cable info length.
 
 .TP 10
 cabinfvendnamepat:value 
 .NL
- \fIvalue\fR is glob pattern for cable info vendor name.
+\fIvalue\fR is glob pattern for cable info vendor name.
 
 .TP 10
 cabinfvendpnpat:value 
 .NL
- \fIvalue\fR is glob pattern for cable info vendor part number.
+\fIvalue\fR is glob pattern for cable info vendor part number.
 
 .TP 10
 cabinfvendrevpat:value 
 .NL
- \fIvalue\fR is glob pattern for cable info vendor revision.
+\fIvalue\fR is glob pattern for cable info vendor revision.
 
 .TP 10
 cabinfvendsnpat:value 
 .NL
- \fIvalue\fR is glob pattern for cable info vendor serial number.
+\fIvalue\fR is glob pattern for cable info vendor serial number.
 
 .TP 10
 cabinftype:value 
 .NL
- \fIvalue\fR is either optical, passive\(ulcopper, active\(ulcopper, or unknown.
+\fIvalue\fR is either optical, passive\(ulcopper, active\(ulcopper, or unknown.
 
 .TP 10
 linkdetpat:value 
 .NL
- \fIvalue\fR is glob pattern for link details.
+\fIvalue\fR is glob pattern for link details.
 
 .TP 10
 portdetpat:value 
 .NL
- \fIvalue\fR is glob pattern for port details.
+\fIvalue\fR is glob pattern for port details.
 
 .TP 10
 sm 
@@ -810,7 +803,7 @@ Specifies the master subnet manager (SM).
 .TP 10
 smdetpat:value 
 .NL
- \fIvalue\fR is glob pattern for SM details.
+\fIvalue\fR is glob pattern for SM details.
 
 .TP 10
 route:point1:point2 
@@ -820,22 +813,22 @@ Specifies all ports along the routes between the two given points.
 .TP 10
 led:value 
 .NL
- \fIvalue\fR is either on or off for LED port beacon.
+\fIvalue\fR is either on or off for LED port beacon.
 
 .TP 10
 linkqual:value 
 .NL
-Specifies the ports with a link quality equal to  \fIvalue\fR.
+Specifies the ports with a link quality equal to \fIvalue\fR.
 
 .TP 10
 linkqualLE:value 
 .NL
-Specifies the ports with a link quality less than or equal to  \fIvalue\fR.
+Specifies the ports with a link quality less than or equal to \fIvalue\fR.
 
 .TP 10
 linkqualGE:value 
 .NL
-Specifies the ports with a link quality greater than or equal to  \fIvalue\fR.
+Specifies the ports with a link quality greater than or equal to \fIvalue\fR.
 
 .NL
 

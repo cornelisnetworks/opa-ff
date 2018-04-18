@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT4 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 
 /* work around conflicting names */
-#include <infiniband/mad.h>
 #include <infiniband/umad.h>
 #include <infiniband/verbs.h>
 
@@ -88,8 +87,8 @@ int dsap_service_id_range_parser(char *str, void *ptr)
 	upper = (k)? strtoull(k+1, NULL, 0) : 0;
 
 	record->service_id_range.warned = 0;
-	record->service_id_range.lower_service_id = htonll(lower);
-	record->service_id_range.upper_service_id = htonll(upper);
+	record->service_id_range.lower_service_id = hton64(lower);
+	record->service_id_range.upper_service_id = hton64(upper);
 
 	QListSetObj(&record->item, record);
 	QListInsertTail(&sid_range_args, &record->item);
@@ -123,12 +122,12 @@ char *dsap_service_id_range_printer(void *ptr)
 			hi = record->service_id_range.upper_service_id;
 			p += sprintf(&buffer[p],
 				     "[0x%016"PRIx64"-0x%016"PRIx64"] ",
-				     ntohll(lo), ntohll(hi));
+				     ntoh64(lo), ntoh64(hi));
 			count += 2;
 		} else {
 			lo = record->service_id_range.lower_service_id;
 			p +=  sprintf(&buffer[p],"0x%016"PRIx64" ",
-				      ntohll(lo));
+				      ntoh64(lo));
 			count++;
 		}
 		if (!(count % 4))
@@ -614,8 +613,8 @@ FSTATUS dsap_remove_src_port(union ibv_gid *src_gid)
 	if (dsap_remove_dst_port(src_gid)) {
 		acm_log(0, "Failure Removing Dst Port 0x%016"PRIx64":0x%016"
 			   PRIx64"\n",
-			ntohll(src_gid->global.subnet_prefix),
-			ntohll(src_gid->global.interface_id));
+			ntoh64(src_gid->global.subnet_prefix),
+			ntoh64(src_gid->global.interface_id));
 	}
 
 	dsap_empty_pkey_list(src_port);
@@ -732,12 +731,12 @@ FSTATUS dsap_add_dst_port(union ibv_gid *dst_port_gid, NODE_TYPE node_type,
 #ifdef PRINT_PORTS_FOUND
 	if (dst_port->node_type == STL_NODE_FI) {
 		acm_log(2, "Added HFI Port 0x%016"PRIx64":0x%016"PRIx64"\n",
-			ntohll(dst_port->gid.global.subnet_prefix),
-			ntohll(dst_port->gid.global.interface_id));
+			ntoh64(dst_port->gid.global.subnet_prefix),
+			ntoh64(dst_port->gid.global.interface_id));
 	} else {
 		acm_log(2, "Added Switch Port 0x%016"PRIx64":0x%016"PRIx64"\n",
-			ntohll(dst_port->gid.global.subnet_prefix),
-			ntohll(dst_port->gid.global.interface_id));
+			ntoh64(dst_port->gid.global.subnet_prefix),
+			ntoh64(dst_port->gid.global.interface_id));
 	}
 #endif
 

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa\(ulosd\(ulquery 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opa\(ulosd\(ulquery 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opa\(ulosd\(ulquery
 
@@ -16,7 +16,11 @@ opa\(ulosd\(ulquery
 Queries the opasadb for path records. This tool allows you to create an arbitrary path query and view the result.
 .SH Syntax
 .NL
-opa\(ulosd\(ulquery [-v | -verbose] | [-s | --slid] | [-d | --dlid] | [-S | --sgid] | [-D | --dgid]| [-k | --pkey] | [-i | --sid] | [-h | --hfi] | [-p | --port]
+opa\(ulosd\(ulquery [-v | -verbose] | [-s | --slid] | [-d | --dlid] | [-S |
+.br
+--sgid] | [-D | --dgid]| [-k | --pkey] | [-i | --sid] | [-h | --hfi] |
+.br
+[-p | --port]
 .SH Options
 .NL
 

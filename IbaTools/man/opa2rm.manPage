@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa2rm 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opa2rm 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opa2rm
 
@@ -116,69 +116,69 @@ Specifies the topology\(ulinput file to use. \[aq]-\[aq] may be used to specify 
 .NL
 
 .TP 10
-node:value 
+node:\fIvalue\fR 
 .NL
-Value is node description (node name).
+\fIvalue\fR is node description (node name).
 
 .TP 10
-node:value1:port:value2 
+node:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
-Value1 is node description (node name); value2 is port number.
+\fIvalue1\fR is node description (node name); \fIvalue2\fR is port number.
 
 .TP 10
-nodepat:value 
+nodepat:\fIvalue\fR 
 .NL
-Value is glob pattern for node description (node name).
+\fIvalue\fR is glob pattern for node description (node name).
 
 .TP 10
-nodepat:value1:port:value2 
+nodepat:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
-Value1 is glob pattern for node description (node name); value2 is port number.
+\fIvalue1\fR is glob pattern for node description (node name); \fIvalue2\fR is port number.
 
 .TP 10
-nodetype:value 
+nodetype:\fIvalue\fR 
 .NL
-Value is node type (SW, FI, or RT).
+\fIvalue\fR is node type (SW, FI, or RT).
 
 .TP 10
-nodetype:value1:port:value2 
+nodetype:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
-Value1 is node type (SW, FI or RT); value2 is port number.
+\fIvalue1\fR is node type (SW, FI or RT); \fIvalue2\fR is port number.
 
 .TP 10
-rate:value 
+rate:\fIvalue\fR 
 .NL
-Value is string for rate (25g, 50g, 75g, 100g).
+\fIvalue\fR is string for rate (25g, 50g, 75g, 100g).
 
 .TP 10
-mtucap:value 
+mtucap:\fIvalue\fR 
 .NL
-Value is MTU size (2048, 4096, 8192, 10240); omits switch mgmt port 0.
+\fIvalue\fR is MTU size (2048, 4096, 8192, 10240); omits switch mgmt port 0.
 
 .TP 10
-labelpat:value 
+labelpat:\fIvalue\fR 
 .NL
-Value is glob pattern for cable label.
+\fIvalue\fR is glob pattern for cable label.
 
 .TP 10
-lengthpat:value 
+lengthpat:\fIvalue\fR 
 .NL
-Value is glob pattern for cable length.
+\fIvalue\fR is glob pattern for cable length.
 
 .TP 10
-cabledetpat:value 
+cabledetpat:\fIvalue\fR 
 .NL
-Value is glob pattern for cable details.
+\fIvalue\fR is glob pattern for cable details.
 
 .TP 10
-linkdetpat:value 
+linkdetpat:\fIvalue\fR 
 .NL
-Value is glob pattern for link details.
+\fIvalue\fR is glob pattern for link details.
 
 .TP 10
-portdetpat:value 
+portdetpat:\fIvalue\fR 
 .NL
-Value is glob pattern for port details to value.
+\fIvalue\fR is glob pattern for port details to value.
 
 .SH Examples
 .NL
@@ -188,7 +188,9 @@ opa2rm -o slurm -p \[aq]opa-\[aq] topology.xml
 .br
 opa2rm -o slurm -s \[aq]-opa\[aq] topology.xml
 .br
-opa2rm -o slurm -F \[aq]nodepat:compute*\[aq] -F \[aq]nodepat:opacore1 *\[aq] topology.xml
+opa2rm -o slurm -F \[aq]nodepat:compute*\[aq] -F \[aq]nodepat:opacore1 *\[aq]
+.br
+topology.xml
 .br
 opa2rm -o nodes -F \[aq]nodedetpat:compute*\[aq] topology.xml
 .br

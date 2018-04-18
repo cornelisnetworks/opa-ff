@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opasmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opasmaquery
 
@@ -20,7 +20,9 @@ Performs Intel(R) Omni-Path Architecture-defined SMA queries and displays the re
 .NL
 opasmaquery [-v] [-d \fIdetail\fR][-g] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR]
 .br
-[-o \fIotype\fR] [-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR] [hop hop ...]
+[-o \fIotype\fR] [-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR]
+.br
+[hop hop ...]
 .SH Options
 .NL
 
@@ -429,7 +431,7 @@ Specifies the port in destination device to query.
 .TP 10
 -m \fIport1,port2\fR 
 .NL
-For some reports, specifies a range of ports between  \fIport1\fR and  \fIport2\fR. For others, this describes an inport/outport pair.
+For some reports, specifies a range of ports between \fIport1\fR and \fIport2\fR. For others, this describes an inport/outport pair.
 
 .TP 10
 -f \fIflid\fR 
@@ -450,7 +452,7 @@ For example:
 
 .sp
 -b \fIblock\fR 
-Displays all of block  \fIblock\fR of a larger table.
+Displays all of block \fIblock\fR of a larger table.
 
 .RE
 
@@ -459,7 +461,7 @@ Displays all of block  \fIblock\fR of a larger table.
 
 .sp
 -b \fIblock,count\fR 
-Displays  \fIcount\fR blocks of data starting with block  \fIblock\fR.
+Displays \fIcount\fR blocks of data starting with block \fIblock\fR.
 
 .RE
 
@@ -468,7 +470,7 @@ Displays  \fIcount\fR blocks of data starting with block  \fIblock\fR.
 
 .sp
 -b, \fIcount\fR 
-Displays  \fIcount\fR blocks of data starting with block 0.
+Displays \fIcount\fR blocks of data starting with block 0.
 
 .RE
 

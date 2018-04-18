@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -111,12 +111,14 @@ typedef enum {
 	REPORT_VFMEMBER				=0x40000000000ULL,
 	REPORT_QUARANTINE_NODES		=0x80000000000ULL,
 	REPORT_TOPOLOGY				=0x100000000000ULL,
-	REPORT_MCGROUPS				=0x200000000000ULL,
-	REPORT_VALIDATEVLCREDITLOOPS=0x400000000000ULL,
-	REPORT_VALIDATEVLROUTES		=0x800000000000ULL,
-	REPORT_VALIDATEMCROUTES		=0x1000000000000ULL,
+	REPORT_MCGROUPS				=0x400000000000ULL,
+	REPORT_VALIDATEVLCREDITLOOPS=0x800000000000ULL,
+	REPORT_VALIDATEVLROUTES		=0x1000000000000ULL,
+	REPORT_VALIDATEMCROUTES		=0x2000000000000ULL,
+	REPORT_DGMEMBER				=0x4000000000000ULL,
 } report_t;
 
+// convert a output type argument to the proper constant
 extern char *g_name_marker;					// what to output when g_noname set
 extern uint8			g_verbose;
 extern int				g_quiet;			// omit progress output
@@ -151,6 +153,8 @@ extern void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			uint64 context, LinkPortSummaryDetailCallback_t *callback,
 			Format_t format, int indent, int detail);
 extern void ShowCableSummary(uint8_t *pCable, Format_t format, 
+			int indent, int detail, uint8 portType);
+extern void ShowCableSummaryDD(uint8_t *pCable, Format_t format, 
 			int indent, int detail, uint8 portType);
 // show cable information for a link in brief summary format
 extern void ShowExpectedLinkBriefSummary(ExpectedLink *elinkp,
@@ -217,7 +221,7 @@ extern void XmlPrintHex(const char *tag, unsigned value, int indent);
 extern void XmlPrintStrLen(const char *tag, const char* value, int len, int indent);
 extern void XmlPrintStr(const char *tag, const char* value, int indent);
 extern void XmlPrintOptionalStr(const char *tag, const char* value, int indent);
-extern void XmlPrintLID(const char *tag, IB_LID value, int indent);
+extern void XmlPrintLID(const char *tag, STL_LID value, int indent);
 extern void XmlPrintPKey(const char *tag, IB_P_KEY value, int indent);
 extern void XmlPrintGID(const char *tag, IB_GID value, int indent);
 extern void XmlPrintNodeType(uint8 value, int indent);

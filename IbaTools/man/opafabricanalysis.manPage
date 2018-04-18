@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafabricanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafabricanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafabricanalysis
 
@@ -75,7 +75,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -84,7 +84,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -93,7 +93,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
@@ -102,7 +102,7 @@ HFI  \fIx\fR, port  \fIy\fR.
 .NL
 Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on (such as 0:0 or 1:2). Default = /etc/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
 \fIDetails\fR
-and
+and 
 \fIopareport\fR
 for more information.
 .SH Example 
@@ -170,7 +170,7 @@ Using the ff\(ultopology\(ulfile configuration option in opafastfabric.conf.
 .PP
 If the specified file does not exist, no topology\(ulinput file is used. Alternately the filename can be specified as NONE to prevent use of an input file.
 .PP
-For more information, refer to
+For more information on topology\(ulinput, refer to 
 \fIopareport\fR
 .
 .PP
@@ -284,7 +284,7 @@ Changes in port MTU, LMC, number of VLs
 .IP \(bu
 Changes in port speed/width enabled or supported
 .IP \(bu
-Changes in HFI or switch device IDs/revisions/VendorID (for example, ASIC HW changes)
+Changes in HFI or switch device IDs/revisions/VendorID (for example, ASIC hardware changes)
 .IP \(bu
 Changes in port Capability mask (which features/agents run on port/server)
 .IP \(bu

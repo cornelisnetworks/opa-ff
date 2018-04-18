@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT3 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -129,9 +129,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STL_PRR_I2C_LOCATION_ADDR				8
 
 #define STL_PRR_BOARD_ID_MASK					0x1f
-#define STL_BOARD_ID_EDGE48						0x04
-#define STL_BOARD_ID_EDGE24						0x05
-#define STL_BOARD_ID_HPE7K						0x09
+#define STL_PRR_BOARD_ID_EDGE48 				0x04
+#define STL_PRR_BOARD_ID_EDGE24 				0x05
+#define STL_PRR_BOARD_ID_HPE7K					0x09
 
 #define I2C_OPASW_PRI_EEPROM_ADDR				(uint32)0x8000A000
 #define I2C_OPASW_SEC_EEPROM_ADDR				(uint32)0x8001A000
@@ -194,7 +194,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FRU_HANDLE_SIZE							1 // size for fru handle field in fruInfo record
 #define FRUINFO_TYPE							2 // type code for fruInfo record
 #define LEN_MASK								0x3f // mask for encoded length field
-#define VPD_SIZE								256 // size of VPD block
 #define VPD_READ_SIZE							60 // size of VPD read block
 
 #define MAX_FAN_SPEED							25300		// 15% above the max operating speed of 22000 RPM
@@ -209,6 +208,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define JUMBOMAD								1
 
 #define TEMP_STR_LENGTH 64
+#define OEM_HASH_SIGNER_START_ADDRESS					0x12c4
+#define OEM_HASH_SIGNER_END_ADDRESS					0x12cb
+#define AUTHENTICATION_CONTROL_BIT_ADDRESS				0x12c3
 
 /***********************
  *   DATA TYPES
@@ -360,7 +362,14 @@ typedef struct pm_port_counters_s {
 	uint8 portSelect;
 } pm_port_counters_t;
 
-
+static inline STL_LID get_dlid_from_path(IB_PATH_RECORD *path)
+{
+	if((ntoh64(path->DGID.Type.Global.InterfaceID) >> 40) ==
+		OMGT_STL_OUI)
+		return ntoh64(path->DGID.Type.Global.InterfaceID)
+			& 0xFFFFFFFF;
+	return path->DLID;
+}
 
 /***********************
  *   FUNCTION PROTOTYPES
@@ -370,7 +379,7 @@ FSTATUS getDestPath(struct omgt_port *port, EUI64 destPortGuid, char *cmd, IB_PA
 uint16 getSessionID(struct omgt_port *port, IB_PATH_RECORD *path);
 void releaseSession(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID);
 FSTATUS getFwVersion(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *fwVersion);
-FSTATUS getVPDInfo(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 module, vpd_fruInfo_rec_t *vpdInfo);
+FSTATUS getVPDInfo(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 module, uint8 BoardID, vpd_fruInfo_rec_t *vpdInfo);
 FSTATUS getFanSpeed(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 fanNum, uint32 *fanSpeed);
 FSTATUS getTempReadings(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, char tempStrs[I2C_OPASW_TEMP_SENSOR_COUNT][TEMP_STR_LENGTH], uint8 BoardID);
 FSTATUS getPowerSupplyStatus(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 psNum, uint32 *psStatus);
@@ -378,7 +387,9 @@ FSTATUS getAsicVersion(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD 
 FSTATUS getMaxQsfpTemperatureMaxDetected(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, boolean *maxDetected);
 FSTATUS getBoardID(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint8 *boardID);
 FSTATUS doPingSwitch(struct omgt_port *port, IB_PATH_RECORD *path, STL_PERF_MAD *mad);
+FSTATUS getOemHash(struct omgt_port *port, IB_PATH_RECORD *path, VENDOR_MAD *mad, uint16 sessionID, uint32 *oemhash, uint32 *acb);
 FSTATUS getEMFWFileNames(struct omgt_port *port, IB_PATH_RECORD *path, uint16 sessionID, char *fwFileName, char *inibinFileName);
+FSTATUS	getBinaryHash(char *fwFileName, uint32 *binaryHash);
 
 void opaswDisplayBuffer(char *buffer, int dataLen);
 

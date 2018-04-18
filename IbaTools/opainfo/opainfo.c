@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -35,7 +35,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* work around conflicting names */
 #include "infiniband/umad.h"
-#include "infiniband/mad.h"
 #include "infiniband/verbs.h"
 
 #include "iba/ib_types.h"
@@ -75,7 +74,7 @@ const char *get_port_name(struct omgt_port *portHandle)
 	uint8_t port_num;
 	(void)omgt_port_get_hfi_port_num(portHandle, &port_num);
 	(void)omgt_port_get_hfi_name(portHandle, hfi_name);
-	sprintf(buf, "%.*s:%u", IBV_SYSFS_NAME_MAX, hfi_name, port_num);
+	snprintf(buf, sizeof(buf), "%.*s:%u", IBV_SYSFS_NAME_MAX, hfi_name, port_num);
 	return buf;
 }
 
@@ -181,7 +180,7 @@ FSTATUS perform_local_stl_pma_query( IN struct omgt_port *portHandle,
 						   OUT STL_PERF_MAD* mad )
 {
 	FSTATUS status;
-	uint32_t dlid;
+	STL_LID dlid;
 	uint8_t port_state;
 
 	mad->common.BaseVersion = STL_BASE_VERSION;
@@ -298,14 +297,11 @@ void Usage(void)
 	fprintf(stderr, "               (behavior without -o gives a brief summary of portinfo,\n");
 	fprintf(stderr, "               counters and cableinfo)\n");
 	fprintf(stderr, "    -g         Display in line-by-line format (default is summary format)\n");
-	fprintf(stderr, "    -d detail  output detail level 0-4 for CableInfo only (default 0):\n");
+	fprintf(stderr, "    -d detail  output detail level 0-2 for CableInfo only (default 0):\n");
 	fprintf(stderr, "               (-d option ignored when used with -o type)\n");
 	fprintf(stderr, "                   0 - minimal crucial info (e.g. cable length, vendor)\n");
 	fprintf(stderr, "                   1 - brief summary\n");
 	fprintf(stderr, "                   2 - extended brief summary\n");
-	fprintf(stderr, "                   3 - verbose output\n");
-	fprintf(stderr, "                   4 - verbose and debug output. lists all settings both\n");
-	fprintf(stderr, "                       statically and dynamically configured in the cable\n");
 	fprintf(stderr, "    -s pm_sl   Specify different Service Level for PMA traffic\n");
 	fprintf(stderr, "    -v         verbose output. Additional invocations will turn on debugging,\n");
 	fprintf(stderr, "               openib debugging and libibumad debugging.\n");
@@ -400,7 +396,6 @@ int main(int argc, char *argv[])
 			break;
 		case 'v':
 			g_verbose++;
-			madrpc_show_errors(1);
 			if (g_verbose > 3) umad_debug(g_verbose - 3);
 			break;
 		case 's':

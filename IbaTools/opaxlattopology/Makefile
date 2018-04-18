@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -63,7 +63,7 @@ INCLUDE_TARGETS	= \
 				# Add more h hpp files here
 # Non-compiled files
 MISC_FILES		=  \
-				topology.xlsx topology_cust.xlsx \
+				minimal_topology.xlsx detailed_topology.xlsx \
 				linksum_swd06.csv linksum_swd24.csv \
 				README.xlat_topology
 # all source files
@@ -83,7 +83,7 @@ LIB_TARGETS_MISC	=
 # targets to build during CMDS phase
 CMD_TARGETS_SHLIB	= 
 CMD_TARGETS_EXE		= $(EXECUTABLE)
-CMD_TARGETS_MISC	= opaxlattopology opaxlattopology_cust
+CMD_TARGETS_MISC	= opaxlattopology
 # files to remove during clean phase
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
@@ -147,8 +147,8 @@ include $(TL_DIR)/Makerules/Maketargets.install
 # install for stage phase
 #include $(TL_DIR)/Makerules/Maketargets.stage
 STAGE::
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) $(EXECUTABLE) opaxlattopology opaxlattopology_cust
-	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR)/samples topology.xlsx topology_cust.xlsx linksum_swd06.csv linksum_swd24.csv README.xlat_topology
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR) $(EXECUTABLE) opaxlattopology
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_FASTFABRIC_DIR)/samples minimal_topology.xlsx detailed_topology.xlsx linksum_swd06.csv linksum_swd24.csv README.xlat_topology
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

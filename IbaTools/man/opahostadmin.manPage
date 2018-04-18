@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opahostadmin
 
@@ -18,9 +18,11 @@ opahostadmin
 Performs a number of multi-step host initialization and verification operations, including upgrading software or firmware, rebooting hosts, and other operations. In general, operations performed by opahostadmin involve a login to one or more host systems.
 .SH Syntax 
 .NL
-opahostadmin [-c] [-i \fIipoib\(ulsuffix\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r \fIrelease\fR] [-I \fIinstall\(uloptions\fR] [-U \fIupgrade\(uloptions\fR] [-d \fIdir\fR] [-T \fIproduct\fR]
+opahostadmin [-c] [-i \fIipoib\(ulsuffix\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-P \fIpackages\fR] [-m \fInetmask\fR] [-S] \fIoperation\fR...
+[-r \fIrelease\fR] [-I \fIinstall\(uloptions\fR] [-U \fIupgrade\(uloptions\fR] [-d \fIdir\fR]
+.br
+[-T \fIproduct\fR] [-P \fIpackages\fR] [-m \fInetmask\fR] [-S] \fIoperation\fR...
 .SH Options 
 .NL
 
@@ -72,10 +74,8 @@ Specifies the software upgrade options.
 .TP 10
 -T \fIproduct\fR 
 .NL
-Specifies the product type to install. Default = IntelOPA-Basic.RHEL72-x86\(ul64 
+Specifies the product type to install. Default is IntelOPA-Basic. \fI<distro>\fR or IntelOPA-IFS. \fI<distro>\fR where \fI<distro>\fR is the distribution and CPU.
 
-.IP
-Other options include: IntelOPA-Basic. \fI<distro>\fR, IntelOPA-IFS. \fI<distro>\fR where  \fI<distro>\fR is the distribution and CPU.
 .TP 10
 -P \fIpackages\fR 
 .NL
@@ -92,9 +92,9 @@ Specifies the IPoIB netmask to use for configipoib operation.
 Securely prompts for user password on remote system.
 
 .TP 10
- \fIoperation\fR 
+\fIoperation\fR 
 .NL
-Performs the specified  \fIoperation\fR, which can be one or more of the following:
+Performs the specified \fIoperation\fR, which can be one or more of the following:
 
 .RS
 .TP 10

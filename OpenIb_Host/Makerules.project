@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -151,7 +151,7 @@ else
 OPENIB_USER_LIB_DIRS= $(OFED_STACK_PREFIX)/lib
 endif
 endif
-OPENIB_USER_LIBS= ibverbs ibumad ibmad ssl crypto
+OPENIB_USER_LIBS= ibverbs ibumad ssl crypto
 IBACCESS_USER_INCLUDE_DIRS= $(GLOBAL_INCLUDE_DIR)/iba $(GLOBAL_INCLUDE_DIR)/iba/public
 IBACCESS_USER_LIB_DIRS=
 IBACCESS_USER_LIBS= public

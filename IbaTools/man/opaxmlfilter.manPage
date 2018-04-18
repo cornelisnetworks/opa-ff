@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlfilter 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxmlfilter 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxmlfilter
 
@@ -16,9 +16,7 @@ opaxmlfilter
 Processes an XML file and removes all specified XML tags. The remaining tags are output and indentation can also be reformatted. opaxmlfilter is the opposite of opaxmlextract.
 .SH Syntax
 .NL
-opaxmlfilter [-t|-k] [-l] [-i \fIindent\fR] [-s \fIelement\fR]
-.br
-[ \fIinput\(ulfile\fR]
+opaxmlfilter [-t|-k] [-l] [-i \fIindent\fR] [-s \fIelement\fR] \fI[input\(ulfile]\fR
 .SH Options 
 .NL
 
@@ -53,6 +51,6 @@ Sets indentation to use per level. Default is 4.
 Specifies the name of the XML element to suppress. Can be used multiple times (maximum of 100) in any order.
 
 .TP 10
- \fIinput\(ulfile\fR 
+\fIinput\(ulfile\fR 
 .NL
 Specifies the XML file to read. Default is stdin.

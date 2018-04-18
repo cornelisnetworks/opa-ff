@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opauploadall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opauploadall 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opauploadall
 
@@ -20,7 +20,6 @@ Copies one or more files from a group of hosts to this system. Since the file na
 
 .B NOTE:
 To copy files from this host to hosts in the cluster, use opascpall or opadownloadall. user@ style syntax cannot be used when specifying filenames.
-
 
 .SH Syntax 
 .NL
@@ -59,11 +58,11 @@ Specifies the user to perform copy to. Default is current user code.
 .NL
 Specifies the directory to upload to. Default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default, /uploads, is used.
 .TP 10
- \fIsource\(ulfile\fR 
+\fIsource\(ulfile\fR 
 .NL
 Specifies the name of files to copy to this system, relative to the current directory. Multiple files may be listed.
 .TP 10
- \fIdest\(ulfile\fR 
+\fIdest\(ulfile\fR 
 .NL
 Specifies the name of the file or directory on this system to copy to. It is relative to  \fIupload\(uldir\fR/\fIHOSTNAME\fR .A local directory within  \fIupload\(uldir\fR/ is created for each host. Each uploaded file is copied to upload\(uldir/\fIHOSTNAME\fR/\fIdest\(ulfile\fR within the local system. If more than one source file is specified, dest\(ulfile is treated as a directory name.
 .SH Example 

@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -94,7 +94,7 @@ char *cmdname;
  * @param port
  * @param smp
  */
-void set_route(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
+void set_route(STL_LID dlid, STL_LID slid, uint8_t port, STL_SMP* smp)
 {
 	if (dlid) {
 		// lid routed to a remote node
@@ -124,7 +124,7 @@ void set_route(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
  * 
  * @return int
  */
-int get_port_info(STL_LID_32 dlid, STL_LID_32 slid, uint8_t port, STL_SMP* smp)
+int get_port_info(STL_LID dlid, STL_LID slid, uint8_t port, STL_SMP* smp)
 {
 	STL_PORT_INFO* pPortInfo;
 
@@ -212,7 +212,7 @@ void show_port_info(const char* title, EUI64 portGuid, STL_SMP* smp)
  * @param portGuid
  * @param getInfo
  */
-void initialize_set_port_info(STL_LID_32 dlid, STL_LID_32 slid, int have_nlid, STL_LID_32 nlid, uint8_t port,
+void initialize_set_port_info(STL_LID dlid, STL_LID slid, int have_nlid, STL_LID nlid, uint8_t port,
 							  STL_SMP *smp, uint8_t state, uint8_t physstate, uint16_t width, uint16_t speed, uint8_t crc, 
 							  EUI64 portGuid, uint16_t pkey8b, const STL_SMP *getInfo)
 {
@@ -274,7 +274,7 @@ void initialize_set_port_info(STL_LID_32 dlid, STL_LID_32 slid, int have_nlid, S
  * 
  * @return int
  */
-FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dport, STL_LID_32 slid, uint8_t lport)
+FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID dlid, uint8_t dport, STL_LID slid, uint8_t lport)
 {
 	FSTATUS  fstatus = FSUCCESS;
 	
@@ -302,7 +302,7 @@ FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID_32 dli
 	STL_BSWAP_SMP_HEADER(&smp);
 
 
-	str = enabled ? "Enabling LED" : "Disabling Led";
+	str = enabled ? "Enabling LED" : "Disabling LED";
 	if (hfi > 0)
 	{
 		snprintf(hfistr, sizeof(hfistr), " on HFI %u", hfi);
@@ -347,7 +347,7 @@ FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID_32 dli
 
 
 
-FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dport, STL_LID_32 slid, uint8_t lport, STL_SMP* smp)
+FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID dlid, uint8_t dport, STL_LID slid, uint8_t lport, STL_SMP* smp)
 {
 	FSTATUS  fstatus = FSUCCESS;
 	const char *str;
@@ -369,6 +369,7 @@ FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dp
 			str = "Querying Port";
 			break;
 		default:
+			fprintf(stdout,"Designed for use by expert users only!\n");
 			str = "Sending Set(STLPortInfo) to Port";
 			break;
 	}
@@ -427,11 +428,11 @@ FSTATUS send_port_info(unsigned hfi, EUI64 portGuid, STL_LID_32 dlid, uint8_t dp
  * Global param's for the 2 modes
  */
 struct {
-	STL_LID_32 dlid;
+	STL_LID dlid;
 	uint8 dport;
 	int have_dport;	// was dport provided (dport can be provided as 0)
-	STL_LID_32 slid;
-	STL_LID_32 nlid;
+	STL_LID slid;
+	STL_LID nlid;
 	int have_nlid;	// was nlid provided (nlid can be provided as 0)
 	uint8 hfi;
 	uint32 repeat;
@@ -665,7 +666,7 @@ static enum cmd_t determine_invocation(const char *argv0, char **command, const 
 }
 
 static void initialize_opamgt(uint8_t hfi, uint8_t port, int *port_in_hfi,
-						STL_LID_32 *slid, EUI64 *portGuid)
+						STL_LID *slid, EUI64 *portGuid)
 {
 	int status = 0;
 	uint8_t port_num;
@@ -706,7 +707,7 @@ error:
 void Usage(void)
 {
 	if (cmd == portconfig) {
-		fprintf(stderr, "%s manually programs a local port.\n\n", cmdname); 
+		fprintf(stderr, "%s manually programs a local port; Designed for use by expert users only.\n\b Non-expert users should use other tools such as opaenableports, opadisableports and\n\b opaportinfo for basic functionality\n\n", cmdname); 
 		fprintf(stderr, "Usage: %s [-l lid [-m dest_port]] [-h hfi] [-p port] [-r secs] [-z]\n", cmdname);
 		fprintf(stderr, "                      [-z] [-S state] [-P physstate] [-s speed] [-w width]\n");
 		fprintf(stderr, "                      [-c LTPCRC]  [-K mkey] [-v] [-L lid] [<sub command>]\n");
@@ -754,7 +755,7 @@ void Usage(void)
         fprintf(stderr, "    -s speed - new link speeds enabled (default is 0)\n");
         fprintf(stderr, "        To enable multiple speeds, use sum of desired speeds\n"); 
         fprintf(stderr, "          0 - no-op\n");
-        fprintf(stderr, "          2 - 0x0002 - 25 Gb/s\n"); 
+        fprintf(stderr, "          2 - 0x0002 - 25 Gb/s\n");
         fprintf(stderr, "    -w width - new link widths enabled (default is 0)\n");
         fprintf(stderr, "        To enable multiple widths, use sum of desired widths\n");
         fprintf(stderr, "          0 - no-op\n");

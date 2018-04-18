@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2016, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -33,7 +33,7 @@
 id=$(./get_id_and_versionid.sh | cut -f1 -d' ')
 versionid=$(./get_id_and_versionid.sh | cut -f2 -d' ')
 
-if [ "$id" = "rhel" ]
+if [ "$id" = "rhel" -o "$id" = "centos" ]
 then
 	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec
 elif [ "$id" = "sles" ]

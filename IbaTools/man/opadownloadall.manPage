@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opadownloadall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opadownloadall 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opadownloadall
 
@@ -75,19 +75,19 @@ The user@ style syntax cannot be used in the arguments to opadownloadall.
 
 
 .TP 10
- \fIsource\(ulfile\fR 
+\fIsource\(ulfile\fR 
 .NL
 Specifies the list of source files to copy from the system.
 
 .IP
-The option  \fIsource\(ulfile\fR is relative to  \fIdownload\(uldir\fR/\fIhostname\fR. A local directory within  \fIdownload\(uldir\fR/ must exist for each host being downloaded to. Each downloaded file is copied from  \fIdownload\(uldir\fR/\fIhostname\fR/\fIsource\(ulfile\fR.
+The option  \fIsource\(ulfile\fR is relative to  \fIdownload\(uldir\fR/\fIhostname\fR. A local directory within \fIdownload\(uldir\fR/ must exist for each host being downloaded to. Each downloaded file is copied from  \fIdownload\(uldir\fR/\fIhostname\fR/\fIsource\(ulfile\fR.
 .TP 10
- \fIdest\(ulfile\fR 
+\fIdest\(ulfile\fR 
 .NL
 Specifies the name of the file or directory on the destination hosts to copy to.
 
 .IP
-If more than one source file is specified,  \fIdest\(ulfile\fR is treated as a directory name. The given directory must already exist on the destination host. The copy fails for hosts where the directory does not exist.
+If more than one source file is specified, \fIdest\(ulfile\fR is treated as a directory name. The given directory must already exist on the destination host. The copy fails for hosts where the directory does not exist.
 .SH Example 
 .NL
 opadownloadall -h \[aq]arwen elrond\[aq] irqbalance vncservers /etc

@@ -1,6 +1,7 @@
 [ICS VERSION STRING: unknown]
 
-Script opaxlattopology and accompanying spread sheet topology.xlsx
+Script opaxlattopology and accompanying sample spreadsheet minimal_topology.xlsx
+and detailed_topology.xlsx (named as topology.xlsx hence forth)
 provide the capability to document the topology of a customer cluster,
 and generate a topology XML file based on that topology ("translate"
 the spread sheet to a topology file).  The topology file can be used
@@ -36,35 +37,5 @@ if needed, by the following:
    option.  Upon completion of the script save the top-level 'linksum.csv'
    file as 'linksum_swd06.csv' or 'linksum_swd24.csv' as appropriate.
 
-
-Script opaxlattopology_cust and accompanying spread sheet
-topology_cust.xlsx provide a sample alternative to the standard-format
-capability above.  The alternative is provided for situations in which a
-customer chooses not to use the standard format.
-
-topology_cust.xlsx provides an alternative format for representing each
-external link in a cluster.  opaxlattopology_cust translates the CSV
-form of the topology_cust.xlsx tab(s) to the standard CSV form used by
-opaxlattopology.  In using the alternative, a user would modify
-topology_cust.xlsx as needed to fit specific needs, then modify
-opaxlattopology_cust as needed to translate the spread sheet CSV output
-to the standard-format CSV output.
-
-Like topology.xlsx, each link contains source, destination and cable fields
-with one link per line (row) of the spread sheet.  Link fields must not
-contain commas.  'Source' and 'Destination' fields are each a concatenation
-of name and port information in the following forms (N/n is a
-host/switch/port number; names not of the form 'opa' or 'C' are taken to be
-host names):
-  NodeType     Source/Destination
-  Host         hostN
-  Edge Switch  opaNpN
-  Core Leaf    CnLnnnpN
-
-topology_cust.xlsx creates 'CableLabel' automatically as the concatenation
-of Source and Destination.  Rack Group and Rack are not supported in
-topology_cust.xlsx.
-
-See release notes for more information on using opaxlattopology,
-topology.xlsx, opaxlattopology_cust and topology_cust.xlsx.
-
+See release notes for more information on using opaxlattopology and
+topology.xlsx.

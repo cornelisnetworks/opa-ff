@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa\(ulosd\(ulperf 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opa\(ulosd\(ulperf 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opa\(ulosd\(ulperf
 
@@ -33,13 +33,13 @@ Runs at least the specified number of queries.
 .TP 10
 -p \fIpkey\fR 
 .NL
-Specifies to include  \fIpkey\fR in the searches. Can be specified up to 8 times.
+Specifies to include \fIpkey\fR in the searches. Can be specified up to 8 times.
 .TP 10
 -S \fIsid\fR 
 .NL
 Specifies to include SID in the searches. Can be specified up to 8 times. Note that providing both SIDs and pkeys may cause problems.
 .TP 10
- \fIguidtable\fR 
+\fIguidtable\fR 
 .NL
 Text file that lists the destination GUIDs and LIDs. For example, from a build\(ultable.pl file.
 

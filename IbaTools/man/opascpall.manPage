@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opascpall 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opascpall 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opascpall
 
@@ -29,9 +29,25 @@ user@ style syntax cannot be used when specifying filenames.
 
 .SH Syntax 
 .NL
-opascpall [-p] [-r] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR] source\(ulfile ... dest\(ulfile opascpall [-t] [-p] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR]
+
+.PP
+
+.br
+opascpall [-p] [-r] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR]
+.br
+source\(ulfile ... dest\(ulfile
+
+.br
+
+.PP
+
+.br
+opascpall [-t] [-p] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR]
 .br
 [ \fIsource\(uldir\fR[ \fIdest\(uldir\fR]]
+
+.br
+
 .SH Options 
 .NL
 
@@ -50,7 +66,7 @@ Performs recursive copy of directories.
 .TP 10
 -t 
 .NL
-Performs optimized recursive copy of directories using tar.  \fIdest\(uldir\fR is optional. If  \fIdest\(uldir\fR is not specified, it defaults to the current directory name. If both  \fIsource\(uldir\fR and  \fIdest\(uldir\fR are omitted, they both default to the current directory name.
+Performs optimized recursive copy of directories using tar. \fIdest\(uldir\fR is optional. If \fIdest\(uldir\fR is not specified, it defaults to the current directory name. If both \fIsource\(uldir\fR and \fIdest\(uldir\fR are omitted, they both default to the current directory name.
 
 .TP 10
 -h \fIhosts\fR 
@@ -65,17 +81,17 @@ Specifies the file with hosts in cluster. Default is /etc/opa/hosts file.
 .NL
 Specifies the user to perform copy to. Default is current user code.
 .TP 10
- \fIsource\(ulfile\fR 
+\fIsource\(ulfile\fR 
 .NL
 Specifies the a file or list of source files to copy.
 
 .TP 10
- \fIsource\(uldir\fR 
+\fIsource\(uldir\fR 
 .NL
 Specifies the name of the source directory to copy. If omitted. is used.
 
 .TP 10
- \fIdest\(ulfile\fR or  \fIdest\(uldir\fR 
+\fIdest\(ulfile\fR or \fIdest\(uldir\fR 
 .NL
 Specifies the name of the destination file or directory to copy to. If more than one source file, this must be a directory. If omitted current directory name is used.
 

@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -31,10 +31,10 @@
 # Include Make Control Settings
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
 
-DS_SUBPROJECTS	= 
+DS_SUBPROJECTS	=
 DSP_SOURCES = Makefile
 
-DIRS			= 
+DIRS			=
 
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makerules.project
 
@@ -53,7 +53,7 @@ appl shmem_apps.tgz:
 	tar cvfz shmem_apps.tgz --exclude CVS \
 		Makefile mpi_hosts.sample prepare_run README select_mpi \
 		run_barrier run_get_bibw run_get_bw run_get_latency run_put_bibw \
-		run_put_bw run_put_latency run_reduce run_hello run_alltoall run_rand \
+		run_put_bw run_put_latency run_reduce run_hello run_alltoall \
 		shmem-hello.c
 
 cleandepend clean:: clobber

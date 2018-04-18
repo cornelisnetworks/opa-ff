@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -305,7 +305,10 @@ then
 	#fi
 fi
 
-rm -rf $TL_DIR/$PROJ_FILE_DIR/packaged_files $TL_DIR/$PROJ_FILE_DIR/dist_files
+rm -rf $TL_DIR/$PROJ_FILE_DIR/packaged_files $TL_DIR/$PROJ_FILE_DIR/dist_files $TL_DIR/buildFeatureDefs
+
+# make sure buildFeatureDefs is in place for the build
+make $TL_DIR/buildFeatureDefs
 
 args=
 if [ "$inplace" = y ]
@@ -319,7 +322,7 @@ fi
 
 if [ "$rpm" = y ]
 then
-	USE_UNIFDEF=${USE_UNIFDEF:-"no"}
+	USE_UNIFDEF=${USE_UNIFDEF:-"yes"}
 	set -x
 
 	# Pass env variables to rpmbuild. In integration build,
@@ -346,40 +349,107 @@ then
 	done
 
 	FILES_TO_TAR="$FILES_TO_TAR -T tar_manifest"
-	MPIAPPS_FILES_TO_TAR="-T mpiapps_tar_manifest" 
+	MPIAPPS_FILES_TO_TAR="-T mpiapps_tar_manifest"
 
-	RPMDIR="$TL_DIR/rpmbuild"
-	mkdir -p $RPMDIR/{BUILD,SPECS,BUILDROOT,SOURCES,RPMS,SRPMS}
+	if [ "$BUILD_PLATFORM_OS_VENDOR" != "ubuntu" ]
+	then
+		RPMDIR="$TL_DIR/rpmbuild"
+		mkdir -p $RPMDIR/{BUILD,SPECS,BUILDROOT,SOURCES,RPMS,SRPMS}
 
-	# Update the spec file
-	cp opa.spec.in opa.spec
-	sed -i "s/^Version:.*/Version: ${RPM_VER}/g" opa.spec
-	sed -i "s/^Release:.*/Release: ${RPM_REL}%{?dist}/g" opa.spec
-	# TBD - this is odd, do we need to edit .spec or should we just change
-	# the input to always look like this?
-	sed -i "s/.\/ff_install/OpenIb_Host\/ff_install/g" opa.spec
-	./update_opa_spec.sh
-	mv opa.spec $RPMDIR/SPECS/
+		# Update the spec file
+		cp opa.spec.in opa.spec
+		sed -i "s/^Version:.*/Version: ${RPM_VER}/g" opa.spec
+		sed -i "s/^Release:.*/Release: ${RPM_REL}%{?dist}/g" opa.spec
+		# TBD - this is odd, do we need to edit .spec or should we just change
+		# the input to always look like this?
+		sed -i "s/.\/ff_install/OpenIb_Host\/ff_install/g" opa.spec
+		./update_opa_spec.sh
+		mv opa.spec $RPMDIR/SPECS/
 
-	cp mpi-apps.spec.in mpi-apps.spec
-	sed -i "s/^Version:.*/Version: ${RPM_VER}/g" mpi-apps.spec
-	sed -i "s/^Release:.*/Release: ${RPM_REL}%{?dist}/g" mpi-apps.spec
-	./update_mpi_spec.sh
-	mv mpi-apps.spec $RPMDIR/SPECS/
+		cp mpi-apps.spec.in mpi-apps.spec
+		sed -i "s/^Version:.*/Version: ${RPM_VER}/g" mpi-apps.spec
+		sed -i "s/^Release:.*/Release: ${RPM_REL}%{?dist}/g" mpi-apps.spec
+		./update_mpi_spec.sh
+		mv mpi-apps.spec $RPMDIR/SPECS/
 
-	# Create source tar ball. Update licenses if needed.
-	$TL_DIR/MakeTools/make_src_tar.sh "${RELEASE_TYPE}" "${TL_DIR}" "$USE_UNIFDEF" "$RPMDIR/SOURCES/opa.tgz" "$FILES_TO_TAR" " -X tar_excludes" || exit 1
+		# Create source tar ball. Update licenses if needed.
+		$TL_DIR/MakeTools/make_src_tar.sh \
+			"${RELEASE_TYPE}" \
+			"${TL_DIR}" \
+			"$USE_UNIFDEF" \
+			"$RPMDIR/SOURCES/opa.tgz" \
+			"$FILES_TO_TAR" \
+			" -X tar_excludes --transform=s,$PROJ_FILE_DIR/debian,debian," \
+		|| exit 1
 
-	# Do same for MpiApps
-	$TL_DIR/MakeTools/make_src_tar.sh "${RELEASE_TYPE}" "${TL_DIR}" "$USE_UNIFDEF" "$RPMDIR/SOURCES/opa-mpi-apps.tgz" "$MPIAPPS_FILES_TO_TAR" "" || exit 1
+		# Do same for MpiApps
+		$TL_DIR/MakeTools/make_src_tar.sh \
+			"${RELEASE_TYPE}" \
+			"${TL_DIR}" \
+			"$USE_UNIFDEF" \
+			"$RPMDIR/SOURCES/opa-mpi-apps.tgz" \
+			"$MPIAPPS_FILES_TO_TAR" \
+			" --transform=s,MpiApps/debian,debian," \
+		|| exit 1
+		(
+			export BUILD_ARGS="$args"
+			cd $RPMDIR
+			rpmbuild -ba --define "_topdir $RPMDIR" SPECS/opa.spec
+			rpmbuild -ba --define "_topdir $RPMDIR" SPECS/mpi-apps.spec
+		) || exit 1
+	else
+		RPMDIR="$TL_DIR/debbuild"
+		RPMVER=${RPM_VER}-${RPM_REL}
+		mkdir -p $RPMDIR/{build,dists}
 
-	(
-		export BUILD_ARGS="$args"
-		cd $RPMDIR
-		rpmbuild -ba --define "_topdir $RPMDIR" SPECS/opa.spec
-		rpmbuild -ba --define "_topdir $RPMDIR" SPECS/mpi-apps.spec
-	) || exit 1
+		OPA_SOURCE_TARBALL="$RPMDIR/dists/opa.tgz"
+		# Create source tar ball. Update licenses if needed.
+		$TL_DIR/MakeTools/make_src_tar.sh \
+			"${RELEASE_TYPE}" \
+			"${TL_DIR}" \
+			"$USE_UNIFDEF" \
+			"$OPA_SOURCE_TARBALL" \
+			"$FILES_TO_TAR" \
+			" -X tar_excludes --transform=s,$PROJ_FILE_DIR/debian,debian," \
+		|| exit 1
+		(
+			OPA_DIR="$RPMDIR/build/opa-$RPM_VER"
+			mkdir -p "$OPA_DIR"
+			cd "$OPA_DIR"
+			tar xzf "$OPA_SOURCE_TARBALL"
+			# Prepate manifest from template
+			mv debian/changelog.in debian/changelog
+			# Annotate changelog file to get proper version
+			debchange --newversion=$RPMVER "Bump up version to $RPMVER"
+			# Pass build variables into package build environment
+			export BUILD_ARGS="$args"
+			dpkg-buildpackage -uc -us
+		) || exit 1
 
+		OPA_MPI_APPS_SOURCE_TARBALL="$RPMDIR/dists/opa-mpi-apps.tgz"
+		# Do same for MpiApps
+		$TL_DIR/MakeTools/make_src_tar.sh \
+			"${RELEASE_TYPE}" \
+			"${TL_DIR}" \
+			"$USE_UNIFDEF" \
+			"$OPA_MPI_APPS_SOURCE_TARBALL" \
+			"$MPIAPPS_FILES_TO_TAR" \
+			" --transform=s,MpiApps/debian,debian," \
+		|| exit 1
+		(
+			OPA_MPI_APPS_DIR="$RPMDIR/build/opa-mpi-apps-$RPM_VER"
+			mkdir -p "$OPA_MPI_APPS_DIR"
+			cd "$OPA_MPI_APPS_DIR"
+			tar xzf "$OPA_MPI_APPS_SOURCE_TARBALL"
+			# Prepate manifest from template
+			mv debian/changelog.in debian/changelog
+			# Annotate changelog file to get proper version
+			debchange --newversion=$RPMVER "Bump up version to $RPMVER"
+			# Pass build variables into package build environment
+			export BUILD_ARGS="$args"
+			dpkg-buildpackage -uc -us
+		) || exit 1
+	fi
 	make final_package
 fi
 

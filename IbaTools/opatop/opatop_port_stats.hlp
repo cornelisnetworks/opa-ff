@@ -4,18 +4,23 @@ Performance counters are grouped according to the category to which they
 belong.  A trailing asterisk ('*') on the counter name indicates the counter
 will be tabulated against the neighbor ports category statistics.
 
-When the Port Stats screen is entered from the Group Focus or VF Focus screen,
-port neighbor and link information is available.  When the Port Stats screen is
-entered from the Group Config or VF Config screen this information
-is not available.  The second line of the Port Stats screen displays the group
-name, and LID and port number of the port, as well as link rate and MTU (if
-available).  The third line of the screen displays the NodeDesc and node GUID
-of the port.  The fourth line line of the screen displays the NodeDesc, LID
-and port number of the neighbor port (if available).  The last four lines show
-the SmaCongestion category gethered using VF Port Counters query (if available).
-The Port Stats screen accepts the following input command (when neighbor
-information is available).
+The Port Statistics screen is split over two pages, which can be accessed by
+scrolling forward or backward to access more port statistics. When the Port
+Stats screen is entered from the Group Focus or VF Focus screen, port neighbor
+and link information is available.  When the Port Stats screen is entered from
+the Group Config or VF Config screen, this information is not available.  The
+second line of the Port Stats screen displays the group name, and LID and port
+number of the port, as well as link rate and MTU (if available).  The third line
+of the screen displays the NodeDesc and node GUID of the port.  The fourth line
+of the screen displays the NodeDesc, LID and port number of the neighbor port
+(if available). These four lines repeat on both pages of the Port Statistics
+screen.
 
-  N: Switch between statistics for port and port's neighbor
+The remaining lines on the pages are used to display the groups of error
+counters. The last category, SmaCongestion, shows counters gathered using VF
+Port Counters query (if available). The Port Stats screen accepts the following
+input commands.
 
+  N: Switch between statistics for port and port's neighbor (if available)
+  S: Scroll forward (s*) or backward (S*) through counter pages
 

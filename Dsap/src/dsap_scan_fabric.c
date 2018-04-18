@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT4 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -32,7 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <unistd.h>
 
 /* work around conflicting names */
-#include <infiniband/mad.h>
 #include <infiniband/umad.h>
 #include <infiniband/verbs.h>
 
@@ -315,7 +314,7 @@ uintn dsap_publish_paths(void)
 
 			if (sport->state != IBV_PORT_ACTIVE) {
 				acm_log(2, "Skip inact port (0x%016"PRIx64")\n",
-					ntohll(sport->gid.global.interface_id));
+					ntoh64(sport->gid.global.interface_id));
 				sport_item = QListNext(&subnet->src_port_list,
 						       sport_item);
 				continue;
@@ -518,16 +517,16 @@ static FSTATUS dsap_for_each_dst_port(dsap_subnet_t *subnet,
 #ifdef PRINT_PORTS_FOUND
 			acm_log(2,  "Found Switch Port 0x%016"PRIx64":0x%016"
 				    PRIx64".\n",
-				ntohll(dst_port->gid.global.subnet_prefix),
-				ntohll(dst_port->gid.global.interface_id));
+				ntoh64(dst_port->gid.global.subnet_prefix),
+				ntoh64(dst_port->gid.global.interface_id));
 #endif
 			continue;
 		}
 
 #ifdef PRINT_PORTS_FOUND
 		acm_log(2, "Found HFI Port 0x%016"PRIx64":0x%016"PRIx64".\n",
-			ntohll(dst_port->gid.global.subnet_prefix),
-		ntohll(dst_port->gid.global.interface_id));
+			ntoh64(dst_port->gid.global.subnet_prefix),
+		ntoh64(dst_port->gid.global.interface_id));
 #endif
 		rval = dsap_for_each_virtual_fabric(subnet, src_port,
 						    dst_port);
@@ -557,9 +556,9 @@ static FSTATUS dsap_add_path_records(dsap_subnet_t *subnet)
 		if (rval != FSUCCESS) 
 			break;
 		
-		acm_log(2, "Found %d path records on port 0x%016"PRIx64".\n",
-			dsap_path_record_count(src_port),
-			ntohll(src_port->gid.global.interface_id));
+		acm_log(2, "Found %u path records on port 0x%016"PRIx64".\n",
+			(unsigned int)dsap_path_record_count(src_port),
+			ntoh64(src_port->gid.global.interface_id));
 	}
 
 	return rval;
@@ -592,10 +591,10 @@ FSTATUS dsap_scan_subnets(void)
 				continue;
 			} else {
 				prefix = subnet->subnet_prefix;
-				acm_log(0, "Found %d dest ports for subnet "
+				acm_log(0, "Found %u dest ports for subnet "
 					   "0x%016"PRIx64"\n",
-					dsap_dst_port_count(subnet), 
-					ntohll(prefix));
+					(unsigned int)dsap_dst_port_count(subnet),
+					ntoh64(prefix));
 			}
 
 			rval = dsap_add_vfinfo_records(subnet);
@@ -607,10 +606,10 @@ FSTATUS dsap_scan_subnets(void)
 				continue;
 			} else {
 				prefix = subnet->subnet_prefix;
-				acm_log(0, "Found %d vfabs for subnet 0x%016"
+				acm_log(0, "Found %u vfabs for subnet 0x%016"
 					   PRIx64"\n",
-					dsap_virtual_fabric_count(subnet),
-					ntohll(prefix));
+					(unsigned int)dsap_virtual_fabric_count(subnet),
+					ntoh64(prefix));
 			}
 
 			rval = dsap_add_path_records(subnet);
@@ -622,10 +621,10 @@ FSTATUS dsap_scan_subnets(void)
 				continue;
 			} else {
 				prefix = subnet->subnet_prefix;
-				acm_log(0, "Found %d paths for subnet 0x%016"
+				acm_log(0, "Found %u paths for subnet 0x%016"
 					   PRIx64"\n",
-					dsap_subnet_path_record_count(subnet),
-					ntohll(prefix));
+					(unsigned int)dsap_subnet_path_record_count(subnet),
+					ntoh64(prefix));
 			}
 			subnet->current = 1;
 		}
@@ -677,8 +676,8 @@ static boolean dsap_dst_port_up(union ibv_gid *dst_gid, union ibv_gid *src_gid)
 	}
 
 	acm_log(0, "Failure Adding Dest Port 0x%016"PRIx64":0x%016"PRIx64"\n",
-		ntohll(dst_gid->global.subnet_prefix),
-		ntohll(dst_gid->global.interface_id));
+		ntoh64(dst_gid->global.subnet_prefix),
+		ntoh64(dst_gid->global.interface_id));
 
 	return FALSE;
 }
@@ -700,8 +699,8 @@ static boolean dsap_dst_port_down(union ibv_gid *dst_gid)
 	}
 
 	acm_log(1, "Unable To Remove Dst Port 0x%016"PRIx64":0x%016"PRIx64"\n",
-		ntohll(dst_gid->global.subnet_prefix),
-		ntohll(dst_gid->global.interface_id));
+		ntoh64(dst_gid->global.subnet_prefix),
+		ntoh64(dst_gid->global.interface_id));
 
 	return FALSE;
 }
@@ -714,8 +713,8 @@ static boolean dsap_src_port_down(union ibv_gid *src_gid)
 		return TRUE;
 
 	acm_log(0, "Unable To Find Src Port 0x%016"PRIx64":0x%016"PRIx64"\n",
-		ntohll(src_gid->global.subnet_prefix),
-		ntohll(src_gid->global.interface_id));
+		ntoh64(src_gid->global.subnet_prefix),
+		ntoh64(src_gid->global.interface_id));
 
 	return FALSE;
 }
@@ -743,8 +742,8 @@ static boolean dsap_src_port_up(union ibv_gid *src_gid, char *src_desc)
 	}
 
 	acm_log(0, "Unable To Locate Src Port 0x%016"PRIx64":0x%016"PRIx64"\n",
-		ntohll(src_gid->global.subnet_prefix),
-		ntohll(src_gid->global.interface_id));
+		ntoh64(src_gid->global.subnet_prefix),
+		ntoh64(src_gid->global.interface_id));
 
 	dsap_full_rescan();
 
@@ -807,7 +806,7 @@ static boolean dsap_process_port_events(void)
 		case DSAP_PT_EVT_DST_PORT_UP:
 			acm_log(1, "PROCESSING GID(0x%016"PRIx64") IN SERVICE"
 				   "ON PORT 0x%016"PRIx64".\n",
-				ntohll(dest_guid), ntohll(src_guid));
+				ntoh64(dest_guid), ntoh64(src_guid));
 
 			src_port = dsap_find_src_port(&src_gid);
 			if (src_port == NULL) {
@@ -823,29 +822,29 @@ static boolean dsap_process_port_events(void)
 		case DSAP_PT_EVT_DST_PORT_DOWN:
 			acm_log(1, "PROCESSING GID(0x%016"PRIx64") OUT OF"
 				   "SERVICE ON PORT 0x%016"PRIx64".\n",
-				ntohll(dest_guid),
-				ntohll(src_guid));
-			if (dsap_dst_port_down(&dst_gid) == TRUE) 
+				ntoh64(dest_guid),
+				ntoh64(src_guid));
+			if (dsap_dst_port_down(&dst_gid) == TRUE)
 				publish = TRUE;
 			break;
 
 		case DSAP_PT_EVT_SRC_PORT_UP:
 			acm_log(1, "PROCESSING LOCAL PORT(0x%016"PRIx64") "
-				   "ACTIVE.\n", ntohll(src_guid));
+				   "ACTIVE.\n", ntoh64(src_guid));
 			publish = TRUE;
 			dsap_scanner_rescan = 1;
 			break;
 
 		case DSAP_PT_EVT_SRC_PORT_DOWN:
 			acm_log(1, "PROCESSING LOCAL PORT(0x%016"PRIx64") "
-				   "DOWN.\n", ntohll(src_guid));
+				   "DOWN.\n", ntoh64(src_guid));
 			if (dsap_src_port_down(&src_gid) == TRUE)
 				publish = TRUE;
 			break;
 
 		case DSAP_PT_EVT_PORT_RESCAN:
 			acm_log(1, "PROCESSING RESCAN REQUEST FOR PORT(0x%016"
-				   PRIx64").\n", ntohll(src_guid));
+				   PRIx64").\n", ntoh64(src_guid));
 
 			if (dsap_src_port_rescan(&src_gid) == TRUE)
 				publish = TRUE;
@@ -854,7 +853,7 @@ static boolean dsap_process_port_events(void)
 		case DSAP_PT_EVT_FULL_RESCAN:
 			acm_log(1, "PROCESSING FULL FABRIC RESCAN REQUESTED BY"
 				   " PORT(0x%016"PRIx64").\n",
-				ntohll(src_guid));
+				ntoh64(src_guid));
 			dsap_full_rescan();
 			goto exit;
 		}
@@ -870,7 +869,7 @@ void dsap_port_event(uint64 src_guid, uint64 src_subnet, uint64 dest_guid,
 		     port_event_type_t event_type)
 {
 	acm_log(2, "Port Event Src %"PRIx64":%"PRIx64", Dst %"PRIx64", %s.\n",
-		ntohll(src_subnet), ntohll(src_guid), ntohll(dest_guid),
+		ntoh64(src_subnet), ntoh64(src_guid), ntoh64(dest_guid),
 		port_event[event_type]);
 	SpinLockAcquire(&dsap_scanner_lock);
 	scan_ring_put++;
@@ -964,10 +963,10 @@ static void * dsap_scanner(void* dummy)
 				goto delay_scan;
 			}
 
-			acm_log(2, "After adding src ports there are %d "
-				   "subnets %d total src ports\n\t\t%d "
-				   "total dst ports %d total virtual "
-				   "fabrics %d pkeys %d path_records.\n",
+			acm_log(2, "After adding src ports there are %lu "
+				   "subnets %lu total src ports\n\t\t%lu "
+				   "total dst ports %lu total virtual "
+				   "fabrics %lu pkeys %lu path_records.\n",
 				dsap_subnet_count(),
 				dsap_tot_src_port_count(),
 				dsap_tot_dst_port_count(),
@@ -995,9 +994,9 @@ static void * dsap_scanner(void* dummy)
 			else
 				timeout_sec = dsap_scan_frequency;
 
-			acm_log(2, "After fabric scan there are %d local ports"
-				   " on %d subnets,\n\t\t%d destination ports,"
-				   " %d total virtual fabrics, %d pkeys and %d"
+			acm_log(2, "After fabric scan there are %lu local ports"
+				   " on %lu subnets,\n\t\t%lu destination ports,"
+				   " %lu total virtual fabrics, %lu pkeys and %lu"
 				   " path_records.\n",
 				dsap_tot_src_port_count(),
 				dsap_subnet_count(),

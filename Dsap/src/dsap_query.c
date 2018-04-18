@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT4 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 /* work around conflicting names */
-#include <infiniband/mad.h>
 #include <infiniband/umad.h>
 #include <infiniband/verbs.h>
 
@@ -94,11 +93,11 @@ static inline void dump_path_record(IB_PATH_RECORD_NO *path, int byte_order)
 			  inet_ntop(AF_INET6, path->DGID.Raw, gid_str, 
 				    sizeof gid_str),
 			  ntohs(path->DLID),
-			  ntohll(path->ServiceID),
+			  ntoh64(path->ServiceID),
 			  ntohs(path->P_Key));
 	} else {
-		acm_log(2, "Query SGID(%Lx:%Lx) SLID(0x%x) to \n\t\tDGID"
-			   "(%Lx:%Lx) DLID(0x%x) SID(0x%016" PRIx64 ") "
+		acm_log(2, "Query SGID(%"PRIx64":%"PRIx64") SLID(0x%x) to \n\t\tDGID"
+			   "(%"PRIx64":%"PRIx64") DLID(0x%x) SID(0x%016" PRIx64 ") "
 			   "PKEY(0x%x)\n",
 			  path->SGID.Type.Global.InterfaceID,
 			  path->SGID.Type.Global.SubnetPrefix,
@@ -164,14 +163,14 @@ FSTATUS dsap_query_path_records(dsap_src_port_t *src_port,
 		IB_PATH_RECORD_COMP_REVERSIBLE |
 		IB_PATH_RECORD_COMP_NUMBPATH;
 	query.InputValue.IbPathRecord.PathRecord.PathRecord.DGID.Type.Global.SubnetPrefix =
-		ntohll(dst_port->gid.global.subnet_prefix);
+		ntoh64(dst_port->gid.global.subnet_prefix);
 	query.InputValue.IbPathRecord.PathRecord.PathRecord.DGID.Type.Global.InterfaceID  =
-		ntohll(dst_port->gid.global.interface_id);
+		ntoh64(dst_port->gid.global.interface_id);
 	query.InputValue.IbPathRecord.PathRecord.PathRecord.SGID.Type.Global.SubnetPrefix =
-		ntohll(src_port->gid.global.subnet_prefix);
+		ntoh64(src_port->gid.global.subnet_prefix);
 	query.InputValue.IbPathRecord.PathRecord.PathRecord.SGID.Type.Global.InterfaceID  =
-		ntohll(src_port->gid.global.interface_id);
-	query.InputValue.IbPathRecord.PathRecord.PathRecord.ServiceID = ntohll(sid);
+		ntoh64(src_port->gid.global.interface_id);
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.ServiceID = ntoh64(sid);
 	query.InputValue.IbPathRecord.PathRecord.PathRecord.P_Key = ntohs(pkey ) & 0x7fff;
 	query.InputValue.IbPathRecord.PathRecord.PathRecord.Reversible = 1;
 	query.InputValue.IbPathRecord.PathRecord.PathRecord.NumbPath = PATHRECORD_NUMBPATH;
@@ -237,13 +236,13 @@ dsap_process_dst_ports_query_results(dsap_subnet_t *subnet,
 	for (i = 0; i < res->NumNodeRecords; i++) {
 		dst_port_gid.global.subnet_prefix = subnet->subnet_prefix;
 		dst_port_gid.global.interface_id = 
-			htonll(res->NodeRecords[i].NodeInfoData.PortGUID);
+			hton64(res->NodeRecords[i].NodeInfoData.PortGUID);
 
 		rval = dsap_add_dst_port(
 		   &dst_port_gid, res->NodeRecords[i].NodeInfoData.NodeType,
 		   (char *)res->NodeRecords[i].NodeDescData.NodeString);
 		if (rval != FSUCCESS) {
-			acm_log(0, "Failed to add destination port 0x%Lx\n",
+			acm_log(0, "Failed to add destination port 0x%"PRIx64"\n",
 				res->NodeRecords[i].NodeInfoData.PortGUID);
 			break;
 		}
@@ -338,13 +337,13 @@ dsap_add_service_id_range_to_virtual_fabric(
 			if (sid_range->upper_service_id == 0) {
 				acm_log(1, "Added sid 0x%"PRIx64" to vfab "
 					   "%s\n",
-					ntohll(sid_range->lower_service_id),
+					ntoh64(sid_range->lower_service_id),
 					vf_name);
 			} else {
 				acm_log(1, "Added sid range 0x%"PRIx64"..0x%"
 					   PRIx64" to vfab %s.\n",
-					ntohll(sid_range->lower_service_id),
-					ntohll(sid_range->upper_service_id),
+					ntoh64(sid_range->lower_service_id),
+					ntoh64(sid_range->upper_service_id),
 					vf_name);
 			}
 		} else if (rval == FDUPLICATE) {
@@ -404,13 +403,13 @@ dsap_process_service_id_range_and_virtual_fabric(
 		if (sid_range->upper_service_id == 0) {
 			acm_log(1, "Sid 0x%"PRIx64" does not match any vfab "
 				   "that this node is a member of.\n",
-				htonll(sid_range->lower_service_id));
+				hton64(sid_range->lower_service_id));
 		} else {
 			acm_log(1, "Sid range 0x%"PRIx64"-0x%"PRIx64" does "
 				   "not match any vfab that this node is a "
 				   "member of.\n",
-				htonll(sid_range->lower_service_id),
-				htonll(sid_range->upper_service_id));
+				hton64(sid_range->lower_service_id),
+				hton64(sid_range->upper_service_id));
 		}
 	}
 
@@ -594,7 +593,7 @@ FSTATUS dsap_query_vfinfo_records(dsap_subnet_t *subnet,
 				ntoh64(sid_range->lower_service_id),
 				ntoh64(subnet->subnet_prefix));
 		} else {
-			acm_log(1, "Could not match SID range 0x%016"PRIx64
+			acm_log(1, "Could not match SID range 0x%016"PRIx64" - 0x%016"PRIx64
 				   " to any vfab visible on subnet 0x%016"
 				   PRIx64".\n",
 				ntoh64(sid_range->lower_service_id),
@@ -621,7 +620,7 @@ FSTATUS dsap_query_dst_port(union ibv_gid *dst_gid, NODE_TYPE *node_type,
 	acm_log(2, "\n");
 
 	query.InputType = InputTypePortGuid;
-	query.InputValue.IbNodeRecord.PortGUID = ntohll(dst_gid->global.interface_id);
+	query.InputValue.IbNodeRecord.PortGUID = ntoh64(dst_gid->global.interface_id);
 	query.OutputType = OutputTypeNodeRecord;
 
 	subnet = dsap_find_subnet(&dst_gid->global.subnet_prefix);

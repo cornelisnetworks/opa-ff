@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -67,6 +67,12 @@ MISC_FILES		=  \
 				# Add more files here
 # all source files
 SOURCES			= $(CFILES) $(CCFILES) $(LFILES) $(RSCFILES) $(IDLFILE)
+
+ifeq "$(BUILD_TARGET_OS_VENDOR)" "ubuntu"
+	UTIL_PKG = $(TL_DIR)/CommonInstall/util_deb.pl
+else
+	UTIL_PKG = $(TL_DIR)/CommonInstall/util_rpm.pl
+endif
 INSTALL_SOURCES= \
 				 $(TL_DIR)/CommonInstall/util_init.pl \
 				 $(TL_DIR)/CommonInstall/util_basicio.pl \
@@ -79,7 +85,7 @@ INSTALL_SOURCES= \
 				 $(TL_DIR)/CommonInstall/util_ifcfg.pl \
 				 $(TL_DIR)/CommonInstall/util_linuxconfig.pl \
 				 $(TL_DIR)/CommonInstall/util_hosttools.pl \
-				 $(TL_DIR)/CommonInstall/util_rpm.pl \
+                                 $(UTIL_PKG) \
 				 $(TL_DIR)/CommonInstall/util_build.pl \
 				 $(TL_DIR)/CommonInstall/ofed_firmware.pl \
 				 $(TL_DIR)/CommonInstall/comp_oftools.pl \
@@ -229,53 +235,83 @@ package:
 
 # TBD - make some of these "make variables" so this can be a simple sequence
 # of commands and make will test exit codes for us
+
+DIR_ARCH := $(shell echo $(BUILD_TARGET) | tr '[A-Z]' '[a-z]')
+
+ifeq "$(BUILD_TARGET_OS_VENDOR)" "ubuntu"
+	RPM_ARCH := $(subst ia32,i386,$(subst em64t,amd64,$(subst x86_64,amd64,$(DIR_ARCH))))
+	RPMDIR := $(TL_DIR)/debbuild
+	RPM_BUILD_DIR := build
+	SRPMSDIR := $(RPM_BUILD_DIR)
+	RPMSDIR := $(RPM_BUILD_DIR)
+	DEVEL := dev
+	SEPARATOR := _
+	DEBUGINFO := dbgsym
+	SRPM_EXT := {.tar.xz,.dsc,_$(RPM_ARCH).changes}
+	RPM_EXT := _$(RPM_ARCH).deb
+	DEBUG_EXT := _$(RPM_ARCH).ddeb
+else
+	RPM_ARCH := $(DIR_ARCH)
+	RPMDIR := $(TL_DIR)/rpmbuild
+	RPM_BUILD_DIR := BUILD
+	SRPMSDIR := SRPMS
+	RPMSDIR := RPMS/$(RPM_ARCH)
+	DEVEL := devel
+	SEPARATOR := -
+	DEBUGINFO := debuginfo
+	SRPM_EXT := .src.rpm
+	RPM_EXT := .$(RPM_ARCH).rpm
+	DEBUG_EXT := $(RPM_EXT)
+endif
+
 final_package:
-	cd $(TL_DIR)/rpmbuild; \
-	dir=`grep 'IntelOPA-Tools-FF\.' BUILD/opa-$${MKRPM_VER}/packaged_files |xargs dirname`; \
-	filename=`grep 'IntelOPA-Tools-FF\.' BUILD/opa-$${MKRPM_VER}/packaged_files|xargs basename`; \
+	cd $(RPMDIR); \
+	dir=`grep 'IntelOPA-Tools-FF\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs dirname`; \
+	filename=`grep 'IntelOPA-Tools-FF\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs basename`; \
 	subdir=$${filename%.tgz}; \
 	srpmdir=$$dir/$$subdir/SRPMS; \
-	basicdir=`grep 'IntelOPA-Tools\.' BUILD/opa-$${MKRPM_VER}/packaged_files |xargs dirname`; \
-	basic=`grep 'IntelOPA-Tools\.' BUILD/opa-$${MKRPM_VER}/packaged_files|xargs basename`; \
-	arch=`echo $(BUILD_TARGET) | tr '[A-Z]' '[a-z]'`; \
-	rpmdir=$$dir/$$subdir/RPMS/$$arch;\
-	basicrpmdir=$$basicdir/$${basic%.tgz}/RPMS/$$arch;\
-	basicsrpmdir=$$basicdir/$${basic%.tgz}/SRPMS;\
-	mkdir -p $$srpmdir; if [ $$? -ne 0 ]; then echo "ERR""OR: mkdir $$srpmdir."; fi; \
-	mkdir -p $$rpmdir; if [ $$? -ne 0 ]; then echo "ERR""OR: mkdir $$rpmdir."; fi; \
+	basicdir=`grep 'IntelOPA-Tools\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs dirname`; \
+	basic=`grep 'IntelOPA-Tools\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs basename`; \
+	rpmdir=$$dir/$$subdir/RPMS/$(DIR_ARCH); \
+	basicrpmdir=$$basicdir/$${basic%.tgz}/RPMS/$(DIR_ARCH); \
+	basicsrpmdir=$$basicdir/$${basic%.tgz}/SRPMS; \
+	mkdir -p $$srpmdir || echo "ERR""OR: mkdir $$srpmdir."; \
+	mkdir -p $$rpmdir || echo "ERR""OR: mkdir $$rpmdir."; \
 	rm -rf $${basicdir}/$${basic} $${basicdir}/$${basic%.tgz}; \
-	cp -rp $${dir}/$${subdir} $${basicdir}/$${basic%.tgz}; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $${basicdir}/$${basic%.tgz}."; fi; \
-	cp SRPMS/opa-mpi-apps-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$srpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
-	cp SRPMS/opa-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$srpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
-	cp SRPMS/opa-$${MKRPM_VER}-$${MKRPM_REL}.src.rpm $$basicsrpmdir/ ; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$srpmdir."; fi; \
-	cp RPMS/$$arch/opa-basic-tools-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
-	cp RPMS/$$arch/opa-address-resolution-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
-	cp RPMS/$$arch/opa-libopamgt-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
-	cp RPMS/$$arch/opa-libopamgt-devel-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
-	cp RPMS/$$arch/opa-fastfabric-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
-	cp RPMS/$$arch/opa-basic-tools-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
-	cp RPMS/$$arch/opa-address-resolution-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
-	cp RPMS/$$arch/opa-libopamgt-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
-	cp RPMS/$$arch/opa-libopamgt-devel-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$basicrpmdir."; fi; \
-	cp RPMS/$$arch/opa-mpi-apps-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/; if [ $$? -ne 0 ]; then echo "ERR""OR: cp $$rpmdir."; fi; \
+	cp -rp $${dir}/$${subdir} $${basicdir}/$${basic%.tgz} || echo "ERR""OR: cp $${basicdir}/$${basic%.tgz}."; \
+	cp $(SRPMSDIR)/opa-mpi-apps$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(SRPM_EXT) $$srpmdir/ || echo "ERR""OR: cp $$srpmdir."; \
+	cp $(SRPMSDIR)/opa$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(SRPM_EXT) $$srpmdir/ || echo "ERR""OR: cp $$srpmdir."; \
+	cp $(SRPMSDIR)/opa$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(SRPM_EXT) $$basicsrpmdir/ || echo "ERR""OR: cp $$srpmdir."; \
+	cp $(RPMSDIR)/opa-basic-tools$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/ || echo "ERR""OR: cp $$rpmdir."; \
+	cp $(RPMSDIR)/opa-address-resolution$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/ || echo "ERR""OR: cp $$rpmdir."; \
+	cp $(RPMSDIR)/opa-libopamgt$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/ || echo "ERR""OR: cp $$rpmdir."; \
+	cp $(RPMSDIR)/opa-libopamgt-$(DEVEL)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/ || echo "ERR""OR: cp $$rpmdir."; \
+	cp $(RPMSDIR)/opa-fastfabric$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/ || echo "ERR""OR: cp $$rpmdir."; \
+	cp $(RPMSDIR)/opa-basic-tools$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$basicrpmdir/ || echo "ERR""OR: cp $$basicrpmdir."; \
+	cp $(RPMSDIR)/opa-address-resolution$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$basicrpmdir/ || echo "ERR""OR: cp $$basicrpmdir."; \
+	cp $(RPMSDIR)/opa-libopamgt$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$basicrpmdir/ || echo "ERR""OR: cp $$basicrpmdir."; \
+	cp $(RPMSDIR)/opa-libopamgt-$(DEVEL)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$basicrpmdir/ || echo "ERR""OR: cp $$basicrpmdir."; \
+	cp $(RPMSDIR)/opa-mpi-apps$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/ || echo "ERR""OR: cp $$rpmdir."; \
 	if [ "$(BUILD_TARGET_OS_VENDOR)" = "redhat" ]; then \
-		cp RPMS/$$arch/opa-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
+		cp $(RPMSDIR)/opa-$(DEBUGINFO)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(DEBUG_EXT) $$rpmdir/;  \
 	fi; \
 	if [ "$(BUILD_TARGET_OS_VENDOR)" = "SuSE" ]; then \
-		cp RPMS/$$arch/opa-debugsource-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
-		cp RPMS/$$arch/opa-basic-tools-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
-		cp RPMS/$$arch/opa-basic-tools-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/;  \
-		cp RPMS/$$arch/opa-address-resolution-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
-		cp RPMS/$$arch/opa-address-resolution-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$basicrpmdir/;  \
-		cp RPMS/$$arch/opa-fastfabric-debuginfo-$${MKRPM_VER}-$${MKRPM_REL}.$$arch.rpm $$rpmdir/;  \
+		cp $(RPMSDIR)/opa-debugsource$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/;  \
+	fi; \
+	if [ "$(BUILD_TARGET_OS_VENDOR)" = "SuSE" -o "$(BUILD_TARGET_OS_VENDOR)" = "ubuntu" ]; then \
+		cp $(RPMSDIR)/opa-basic-tools-$(DEBUGINFO)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(DEBUG_EXT) $$rpmdir/;  \
+		cp $(RPMSDIR)/opa-basic-tools-$(DEBUGINFO)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(DEBUG_EXT) $$basicrpmdir/;  \
+		cp $(RPMSDIR)/opa-address-resolution-$(DEBUGINFO)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(DEBUG_EXT) $$rpmdir/;  \
+		cp $(RPMSDIR)/opa-address-resolution-$(DEBUGINFO)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(DEBUG_EXT) $$basicrpmdir/;  \
+		cp $(RPMSDIR)/opa-fastfabric-$(DEBUGINFO)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(DEBUG_EXT) $$rpmdir/;  \
 	fi; \
 	cd $$dir; \
 	echo "Packaging $$dir/$$filename ..."; \
 	tar cvfz $$filename $$subdir; \
 	echo "Packaging $$basicdir/$$basic ..."; \
 	tar cvfz $${basic} --exclude mpi --exclude shmem $${basic%.tgz}
-	cp $(TL_DIR)/rpmbuild/BUILD/opa-$${MKRPM_VER}/packaged_files $(TL_DIR)/$(PROJ_FILE_DIR)
-	cp $(TL_DIR)/rpmbuild/BUILD/opa-$${MKRPM_VER}/dist_files $(TL_DIR)/$(PROJ_FILE_DIR)
+	cp "$(RPMDIR)/$(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files" "$(TL_DIR)/$(PROJ_FILE_DIR)/"
+	cp "$(RPMDIR)/$(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/dist_files" "$(TL_DIR)/$(PROJ_FILE_DIR)/"
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

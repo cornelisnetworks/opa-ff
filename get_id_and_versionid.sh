@@ -2,7 +2,7 @@
 
 if [ -f /etc/os-release ]
 then
-	id=$(grep ^ID= /etc/os-release | cut -f2 -d\")
+	id=$(grep ^ID= /etc/os-release | cut -f2 -d= | cut -f2 -d\")
 	versionid=$(grep ^VERSION_ID= /etc/os-release | cut -f2 -d\")
 else
     if [ `uname -s` == "Darwin" ]

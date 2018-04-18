@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlextract 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxmlextract 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxmlextract
 
@@ -91,7 +91,7 @@ Specifies the name of the XML element to suppress extraction. Can be used multip
 .TP 10
 -X/--infile \fIinput\(ulfile\fR 
 .NL
-Parses XML from  \fIinput\(ulfile\fR.
+Parses XML from \fIinput\(ulfile\fR.
 
 .TP 10
 -P/--pfile \fIparam\(ulfile\fR 

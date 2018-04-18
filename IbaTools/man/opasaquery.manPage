@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasaquery 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opasaquery 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opasaquery
 
@@ -17,20 +17,18 @@ opasaquery
 \fB(All)\fR
 Performs various queries of the subnet manager/subnet agent and provides detailed fabric information.
 .PP
-opareport and opareports can provide a more powerful tool, however, in some cases opasaquery is preferred, especially when dealing with virtual fabrics, service records, and multicast.
-.PP
-The command opasaquery is installed on all hosts as part of the Intel(R) Omni-Path Fabric Host Software, but it is also included in Intel(R) Omni-Path Fabric Suite FastFabric Toolset.
+opareport and opareports from the Intel(R) Omni-Path Fabric Suite can provide a more powerful tool. In some cases, opasaquery is preferred, especially when dealing with virtual fabrics, service records, and multicast.
 .PP
 By default, opasaquery uses the first active port on the local system. However, if the node is connected to more than one fabric (for example, a subnet), the Intel(R) Omni-Path Host Fabric Interface (HFI) and port may be specified to select the fabric whose SA is to be queried.
 .SH Syntax
 .NL
-opasaquery [-v [-v] [-v]] [-I] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fItype\fR] [-l \fIlid\fR]
+opasaquery [-v [-v] [-v]] [-I] [-h \fIhfi\fR|-b \fIaddr\fR] [-p \fIport\fR] [-x \fIgid\fR] [-E]
 .br
-[-t \fItype\fR] [-s \fIguid\fR] [-n \fIguid\fR] [-g \fIguid\fR] [-k \fIpkey\fR] [-i \fIvfIndex\fR]
+[-T \fIssl\(ulparams\fR] [-o \fItype\fR] [-l \fIlid\fR] [-t \fItype\fR] [-s \fIguid\fR] [-n \fIguid\fR]
 .br
-[-S \fIserviceId\fR] [-L \fIsl\fR] [-u \fIgid\fR] [-m \fIgid\fR] [-d \fIname\fR] [-P \[aq]\fIguid guid\fR\[aq]]
+[-g \fIguid\fR] [-k \fIpkey\fR] [-i \fIvfIndex\fR] [-S \fIserviceId\fR] [-L \fIsl\fR] [-u \fIgid\fR]
 .br
-[-G \[aq]\fIgid gid\fR\[aq]] [-a \[aq]\fIsguid\fR...; \fIdguid\fR...\[aq]] [-A \[aq]\fIsgid\fR...; \fIdgid\fR...\[aq]]
+[-m \fIgid\fR] [-d \fIname\fR] [-P \[aq]\fIguid guid\fR\[aq]] [-G \[aq]\fIgid gid\fR\[aq]] [-H \fImask\fR]
 .SH Options
 .NL
 
@@ -55,9 +53,38 @@ Issues query in legacy InfiniBand* format.
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
 
 .TP 10
+-b/--oob \fIaddress\fR 
+.NL
+Specifies Out-of-Band address of node running the FE. Can be either hostname, IPv4, or IPv6 address. (Default is "127.0.0.1")
+
+.TP 10
 -p/--port \fIport\fR 
 .NL
-Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
+Specifies the port.
+.RS
+
+.IP \(bu
+In-band: numbered 1..n. Using 0 specifies first active port. (Default is 0.)
+.IP \(bu
+Out-of-band: Port FE is listening on. (Default is 3245.)
+
+.RE
+
+
+.TP 10
+-x/--source-gid \fIsrc\(ulgid\fR 
+.NL
+Specifies the source GID of the local GID (This is required for most Path and Trace Record Queries when Out-of-Band.)
+
+.TP 10
+-E/--feEsm 
+.NL
+Specifies the ESM FE.
+
+.TP 10
+-T/--ssl-params \fIfile\fR 
+.NL
+Specifies the SSL/TLS parameters XML file. (Default is /etc/opa/opamgt\(ultls.xml)
 
 .TP 10
 -o \fItype\fR 
@@ -141,18 +168,6 @@ Queries by a pair of port GUIDs.
 -G/--gidpair \fIgid gid\fR 
 .NL
 Queries by a pair of GIDs. See
-\fIGIDs\fR
-for details.
-
-.TP 10
--a/--guidlist \fIsguid ...;dguid ...\fR 
-.NL
-Queries by a list of port GUIDs.
-
-.TP 10
--A/--gidlist \fIsgid ...;dgid ...\fR 
-.NL
-Queries by a list of GIDs. See
 \fIGIDs\fR
 for details.
 
@@ -435,7 +450,7 @@ The vfinfocsv and vfinfocsv2 output formats are designed to make it easier to sc
 .br
 
 .br
-name:index:pkey:sl:mtu:rate:optionflag
+name:index:pkey:sl:mtu:rate:optionflag::mcastSl
 
 .br
 
@@ -446,12 +461,6 @@ The only difference between these two formats is how the MTU and rate are output
 .SH Example 
 .NL
 opasaquery -o desc -t fi
-.br
-opasaquery -o portinfo -l 2
-.br
-opasaquery -o sminfo
-.br
-opasaquery -o pkey
 .SH Input Options vs. Output Permitted
 .NL
 
@@ -512,7 +521,7 @@ portinfo, sminfo, swinfo, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb,
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, swinfo, slvl, vlarb, pkey, service, mcmember, linfdb, mcfdb 
+systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, swinfo, slvl, vlarb, pkey, mcmember, linfdb, mcfdb 
 
 .RE
 
@@ -521,7 +530,7 @@ systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, swinfo, slvl, v
 
 .sp
 -o output not permitted
-sminfo, link, inform, trace, vfinfo, vfinfocsv, vfinfocsv2 
+sminfo, link, inform, service, trace, vfinfo, vfinfocsv, vfinfocsv2 
 
 .RE
 

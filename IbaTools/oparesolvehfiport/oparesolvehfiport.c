@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -132,7 +132,7 @@ int main(int argc, char ** argv)
 			iba_format_get_portguid_error(hfi, port, caCount, portCount));
 		return 1;
 	} else if (FSUCCESS != fstatus) {
-		fprintf(stderr, "opasaquery: omgt_get_portguid Failed: %s\n", iba_fstatus_msg(fstatus));
+		fprintf(stderr, "opasaquery: iba_get_portguid Failed: %s\n", iba_fstatus_msg(fstatus));
 		return 1;
 	}
     //printf("PORT GUID 0x%016"PRIx64"\n",portGuid);

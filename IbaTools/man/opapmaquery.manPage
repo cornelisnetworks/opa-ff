@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapmaquery
 
@@ -69,17 +69,24 @@ Valid output types are:
 .TP 10
 
 .sp
-getportstatus 
-Specifies the list of port status records. Supported options:
-[-m port] [-w vl mask]
+classportinfo 
+Specifies the class of port info.
+
 .RE
 
 .RS
 .TP 10
 
 .sp
-classportinfo 
-Specifies the list of port info records.
+getportstatus 
+Specifies the list of port counters. Supported options:
+
+.IP
+
+.br
+[-m port] [-w vl mask]
+
+.br
 
 .RE
 
@@ -88,8 +95,15 @@ Specifies the list of port info records.
 
 .sp
 clearportstatus 
-Clears the port status. Supported options:
+Clears the port counters. Supported options:
+
+.IP
+
+.br
 [-n port mask] [-e counter mask] [-w vl mask]
+
+.br
+
 .RE
 
 .RS
@@ -98,7 +112,14 @@ Clears the port status. Supported options:
 .sp
 getdatacounters 
 Specifies the list of data counters. Supported options:
+
+.IP
+
+.br
 [-n port mask] [-w vl mask]
+
+.br
+
 .RE
 
 .RS
@@ -107,7 +128,14 @@ Specifies the list of data counters. Supported options:
 .sp
 geterrorcounters 
 Specifies the list of error counters. Supported options:
+
+.IP
+
+.br
 [-n port mask] [-w vl mask]
+
+.br
+
 .RE
 
 .RS
@@ -116,7 +144,14 @@ Specifies the list of error counters. Supported options:
 .sp
 geterrorinfo 
 Specifies the list of error info. Supported options:
+
+.IP
+
+.br
 [-n port mask]
+
+.br
+
 .RE
 
 .RS
@@ -125,7 +160,14 @@ Specifies the list of error info. Supported options:
 .sp
 clearerrorinfo 
 Clears the error info. Supported options:
+
+.IP
+
+.br
 [-n port mask] [-e counter mask]
+
+.br
+
 .RE
 
 .NL

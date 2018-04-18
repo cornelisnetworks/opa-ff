@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015, Intel Corporation
+Copyright (c) 2015-2017, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -9,7 +9,7 @@ modification, are permitted provided that the following conditions are met:
       this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
-     documentation and/or other materials provided with the distribution.
+      documentation and/or other materials provided with the distribution.
     * Neither the name of Intel Corporation nor the names of its contributors
       may be used to endorse or promote products derived from this software
       without specific prior written permission.
@@ -139,11 +139,6 @@ uint32					max_data_table_type;
 #define PORT_TABLE_FIELD_CRC										22
 #define PORT_TABLE_FIELD_FM_ENABLED									17
 #define PORT_TABLE_FIELD_VCU										28
-#if defined(PRODUCT_STL2)
-#define PORT_TABLE_FIELD_PORT_MODE_SUPPORTED								15
-#define PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED							21
-#define PORT_TABLE_FIELD_ETH_DEFAULT_PORTSTATE								55
-#endif
 #define PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED					30
 
 // INI TABLE types
@@ -415,7 +410,7 @@ BOOL S20iniFieldOut(S20INI *ini) {
 			if (ini->vLenInBits <= 4) {
 				strcpy(s, "field %d=0x%x");
 			} else {
-				sprintf(s, "field %%d=0x%%0%dx", (int)((ini->vLenInBits + 3) >> 2));
+				snprintf(s, sizeof(s), "field %%d=0x%%0%dx", (int)((ini->vLenInBits + 3) >> 2));
 			}
 		}
 		printf(s, ini->field, *ini->v);
@@ -772,14 +767,6 @@ int buildNewIniBin(U8_t *binBuffer)
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_CRC));
 		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_VCU,
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_VCU));
-#if defined(PRODUCT_STL2)
-		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_PORT_MODE_SUPPORTED,
-				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_PORT_MODE_SUPPORTED));
-		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED,
-				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_ETH_LINK_SPEED_SUPPORTED));
-		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_ETH_DEFAULT_PORTSTATE,
-				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_ETH_DEFAULT_PORTSTATE));
-#endif
 		s20iniFieldInsert(newPortMetaTable, &newPortDataTable[newPortBaseIdx], PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED,
 				s20iniFieldIsolate(oldPortMetaTable, &oldPortDataTable[oldPortBaseIdx], PORT_TABLE_FIELD_EXTERNAL_LOOPBACK_ALLOWED));
 		oldPortBaseIdx += oldPortEntrySize;

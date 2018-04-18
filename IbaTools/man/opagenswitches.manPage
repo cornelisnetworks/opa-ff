@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagenswitches 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagenswitches 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagenswitches
 
@@ -55,7 +55,7 @@ First active port in system.
 
 .sp
 0:y 
-Port  \fIy\fR within system.
+Port \fIy\fR within system.
 
 .RE
 
@@ -64,7 +64,7 @@ Port  \fIy\fR within system.
 
 .sp
 x:0 
-First active port on HFI  \fIx\fR.
+First active port on HFI \fIx\fR.
 
 .RE
 
@@ -73,7 +73,7 @@ First active port on HFI  \fIx\fR.
 
 .sp
 x:y 
-HFI  \fIx\fR, port  \fIy\fR.
+HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
@@ -88,23 +88,23 @@ Updates/resolves switch names using topology XML data.
 .TP 10
 -L \fIswitches\(ulfile\fR 
 .NL
-Specifies the name of a pre-existing  \fIswitches\(ulfile\fR to be used as input in conjunction with a topology file. When specified, the file is used instead of switches data obtained from the actual fabric. The updated switches data is output to stdout (common to all opagenswitches operations). Does not generate switches data. Must also use -s option.
+Specifies the name of a pre-existing \fIswitches\(ulfile\fR to be used as input in conjunction with a topology file. When specified, the file is used instead of switches data obtained from the actual fabric. The updated switches data is output to stdout (common to all opagenswitches operations). Does not generate switches data. Must also use -s option.
 
 .TP 10
 -o \fIoutput\(ulfile\fR 
 .NL
-Writes switches data to  \fIoutput\(ulfile\fR. Default is stdout.
+Writes switches data to \fIoutput\(ulfile\fR. Default is stdout.
 .TP 10
 -T \fItopology\(ulfile\fR 
 .NL
-Specifies  \fItopology\(ulfile\fR to use. May contain \[aq]%P\[aq] . Must also use -s.
+Specifies \fItopology\(ulfile\fR to use. May contain \[aq]%P\[aq] . Must also use -s.
 
 .IP
 Link data in the topology file is compared to actual fabric link data (obtained by opareport -o links or opareport -X snapshot -o links). The data is also matched to a list of switch node GUIDs and the switch NodeDesc values are generated. This list is then applied to the switches data to update NodeDesc values. The comparison of topology link data to actual fabric link data starts with the host names. The host names in the actual fabric must match those in the topology file for the comparison to succeed. However, the comparison logic allows for some mismatches, which could be due to swapped or missing cables. Switch NodeDesc values are matched to GUIDs based on which switch has the greater number of matching links.
 .TP 10
 -X \fIsnapshot\(ulfile\fR 
 .NL
-Uses  \fIsnapshot\(ulfile\fR XML for fabric link information.
+Uses \fIsnapshot\(ulfile\fR XML for fabric link information.
 .br
 May contain \[aq]%P\[aq] . Must also use -s.
 .TP 10

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2017, Intel Corporation                *
+.\" .\" *             Copyright 2015-2018, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaallanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2017" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaallanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaallanalysis
 
@@ -18,7 +18,11 @@ opaallanalysis
 opaallanalysis command performs the set of analysis specified in FF\(ulALL\(ulANALYSIS and can be specified for fabric, chassis, esm, or hostsm.
 .SH Syntax
 .NL
-opaallanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR] [-p \fIports\fR] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-G \fIesmchassisfile\fR] [-E \fIesmchassis\fR] [-T \fItopology\(ulinput\fR]
+opaallanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR]
+.br
+[-p \fIports\fR] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-G \fIesmchassisfile\fR]
+.br
+[-E \fIesmchassis\fR] [-T \fItopology\(ulinput\fR]
 .SH Options
 .NL
 
@@ -66,24 +70,24 @@ First active port in system.
 .TP 10
 
 .sp
-0: \fIy\fR 
-Port  \fIy\fR within system.
+0:\fIy\fR 
+Port \fIy\fR within system.
 .RE
 
 .RS
 .TP 10
 
 .sp
- \fIx\fR:0 
-First active port on HFI  \fIx\fR.
+\fIx\fR:0 
+First active port on HFI \fIx\fR.
 .RE
 
 .RS
 .TP 10
 
 .sp
- \fIx\fR: \fIy\fR 
-HFI  \fIx\fR, port  \fIy\fR.
+\fIx\fR:\fIy\fR 
+HFI \fIx\fR, port \fIy\fR.
 .RE
 
 .TP 10
