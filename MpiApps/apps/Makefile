@@ -155,7 +155,7 @@ PMB: SHOWMPI
 
 IMB: SHOWMPI
 	@echo "Building Intel Micro Benchmarks 4.0.2..."
-	cd imb/src; gmake MPI_HOME=$(MPICH_PREFIX) -f make_mpich
+	cd imb/src; make MPI_HOME=$(MPICH_PREFIX) -f make_mpich
 	@echo
 .PHONY: PMB
 
@@ -198,7 +198,7 @@ clobber::
 	rm -f latency/*.o latency/*.d latency/latency
 	rm -f bandwidth/*.o bandwidth/*.d bandwidth/bw
 	if [ -d "PMB2.2.1" ]; then make -C PMB2.2.1/SRC_PMB clean; fi
-	if [ -f "imb/src/make_mpich" ]; then cd imb/src; gmake MPI_HOME=$(MPICH_PREFIX) -f make_mpich clean; fi
+	if [ -f "imb/src/make_mpich" ]; then cd imb/src; make MPI_HOME=$(MPICH_PREFIX) -f make_mpich clean; fi
 	if [ -d hpl-2.0 ]; then find hpl-2.0 -name ICS.`uname -s`.* | xargs rm -rf; rm -rf hpl-2.0/bin hpl-2.0/lib; fi
 	if [ -d hpl-2.0 ]; then find hpl-2.0 -name xerbla.o | xargs rm -rf; fi
 	if [ -d pgfile_test ]; then make -C pgfile_test clean; fi
