@@ -52,7 +52,7 @@ MINSIZE=4194304
 MAXSIZE=4194304
 VERBOSE=
 
-function usage {
+usage() {
 	echo
 	echo "$0 is a specialized stress test for large fabrics. It groups"
 	echo "MPI ranks into sets which are tested against other members of the set."
@@ -139,7 +139,7 @@ GROUP_SIZE=$((GROUP_SIZE * PROCS_PER_NODE))
 export MPI_HOSTS=$MPI_GROUP_HOSTS
 
 if [ $# -ge 1 ] ; then 
-	if [ $1 == "infinite" ]; then
+	if [ $1 = "infinite" ]; then
 		MINUTES=0
 	elif [ $1 -eq $1 ]; then
 		MINUTES=$1

@@ -38,7 +38,7 @@ MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
-if [ -z "$1" -o "$1" == "-h" ]
+if [ -z "$1" -o "$1" = "-h" ]
 then 
 	echo " Usage: run_osu <number_of_processes> <command> <arg1> <arg2>...<argn> "
 	echo " For example: ./run_osu 2 osu_allgatherv"
