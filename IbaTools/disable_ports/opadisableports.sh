@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015-2017, Intel Corporation
+# Copyright (c) 2015-2018, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -336,7 +336,7 @@ disable_ports()
 			then
 				logger -p user.err "Disabled link: $desc:$dport -> $ldesc:$lport due to: $reason"
 				disabled=$(( $disabled + 1))
-				if [ ! -e $CONFIG_DIR/opa/disabled$suffix.csv ] || ! grep "^$guid;$port;" < $CONFIG_DIR/opa/disabled$suffix.csv > /dev/null 2>&1
+				if [ ! -e $CONFIG_DIR/opa/disabled$suffix.csv ] || ! grep "^$guid;$dport;" < $CONFIG_DIR/opa/disabled$suffix.csv > /dev/null 2>&1
 				then
 					# keep a disabled file per local hfi:port
 					# same format as our input but 1st port

@@ -2,10 +2,8 @@ MpiApps/apps/osu-micro-benchmarks-3.8-July12
 MpiApps/apps/osu2
 MpiApps/apps/bandwidth
 MpiApps/apps/latency
-MpiApps/apps/hpl-2.0
-MpiApps/apps/PMB2.2.1
+MpiApps/apps/hpl-2.2
 MpiApps/apps/imb
 MpiApps/apps/mpi_multibw
 MpiApps/debian
-OpenIb_Host/mpi-apps.spec
-debian
+OpenIb_Host/debian

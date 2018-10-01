@@ -156,7 +156,7 @@ failfile:
 	goto fail;
 
 failerrno:
-	sprintf(result, "qlgc_dup failed: %s", Tcl_PosixError(interp));
+	snprintf(result, sizeof(result), "qlgc_dup failed: %s", Tcl_PosixError(interp));
 	Tcl_SetObjResult(interp, Tcl_NewStringObj(result, -1));
 
 fail:

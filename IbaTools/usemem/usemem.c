@@ -63,7 +63,7 @@ void a(int *f)
 int
 main(int cnt, char **args)
 {
-	int mem, i, pages, pgsz, passes;
+	unsigned long mem, i, pages, pgsz, passes;
 	uint64_t tot, totmem=0x1000000000; // 64GB
 	// volatile int val;
 	volatile char *p;
@@ -79,6 +79,14 @@ main(int cnt, char **args)
 		return 1;
 	}
 
+	if (mem > totmem) {
+		printf("mem_incr is larger than totmem.\n");
+		return 1;
+	} else if (totmem > 0x100000000000) { // 16 terabytes...
+		printf("totmem is too large.\n");
+		return 1;
+	}
+		
 	if(0 && mlockall(MCL_CURRENT|MCL_FUTURE))
 		perror("mlockall failed");
 
@@ -87,12 +95,12 @@ main(int cnt, char **args)
 	for(tot=passes=0; tot<totmem; passes++, tot+=mem) {
 		if(!(p = calloc(mem, 1))) {
 			fprintf(stderr,
-				"couldn't calloc %d, pass %d, %lu allocated: %s\n",
+				"couldn't calloc %lu, pass %lu, %lu allocated: %s\n",
 				mem, passes, tot, strerror(errno));
 				break;
 		}
 		else if(verbose)
-			printf("calloc'ed (%x) bytes at %p, tot %lu\n", mem, p, tot);
+			printf("calloc'ed (%lx) bytes at %p, tot %lu\n", mem, p, tot);
 
 		// calloc isn't good enough, since with mmap'ed based calloc,
 		// it "knows" the pages are zero-filled, so you have to actuall

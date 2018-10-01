@@ -7,7 +7,6 @@ Lsf
 Makerules
 MakeTools
 MakeTemplates
-Md5
 MpiApps/apps
 MpiApps/Makefile
 Moab
@@ -31,4 +30,5 @@ Esm/ib/src/linux/startup/fm_config
 Esm/ib/src/pm/pm
 Esm/ib/src/smi/include
 buildFeatureDefs
-debian
+OpenIb_Host/debian
+Fd/buildFeatureDefs.base

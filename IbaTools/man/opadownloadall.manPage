@@ -48,12 +48,12 @@ Performs copy in parallel on all hosts.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file with hosts in cluster. The default is /etc/opa/hosts.
+Specifies the file with hosts in cluster. Default is /etc/opa/hosts.
 
 .TP 10
 -d \fIdownload\(uldir\fR 
 .NL
-Specifies the directory to download files from. The default is downloads. If not specified, the environment variable \fBDOWNLOADS\(ulDIR\fR is used. If that is not exported, the default is used.
+Specifies the directory to download files from. Default is downloads. If not specified, the environment variable \fBDOWNLOADS\(ulDIR\fR is used. If that is not exported, the default is used.
 
 .TP 10
 -h \fIHOSTS\fR 
@@ -63,7 +63,7 @@ Specifies the list of hosts to download files to.
 .TP 10
 -u \fIuser\fR 
 .NL
-Specifies the user to perform the copy. The default is the current user code.
+Specifies the user to perform the copy. Default is the current user code.
 
 .TP 10
 .BR

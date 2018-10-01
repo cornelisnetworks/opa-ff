@@ -49,7 +49,7 @@ Saves history of failures (errors/differences).
 .TP 10
 -d \fIdir\fR 
 .NL
-Specifies the top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa/analysis 
+Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
 .SH Example 
 .NL
 opahostsmanalysis

@@ -1,7 +1,7 @@
-#!/bin/sh
-# BEGIN_ICS_COPYRIGHT8 ****************************************
+#!/usr/bin/perl
+## BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2015-2017, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,49 +26,28 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
-# END_ICS_COPYRIGHT8   ****************************************
+## END_ICS_COPYRIGHT8   ****************************************
+#
+## [ICS VERSION STRING: unknown]
+#use strict;
+##use Term::ANSIColor;
+##use Term::ANSIColor qw(:constants);
+##use File::Basename;
+##use Math::BigInt;
+#
+## ==========================================================================
+#
+#Installation Prequisites array for opafm
+my @opafm_prereq = (
+    "bash",
+    "expat",
+    "glibc",
+    "libibumad",
+    "libibverbs",
+    "openssl-libs",
+    "rdma-core",
+    "systemd",
+    "zlib",
+);
+$comp_prereq_hash{'opafm_prereq'} = \@opafm_prereq;
 
-# [ICS VERSION STRING: unknown]
-
-# BASE PATH TO MPI EXECUTABLES: To use an alternate location,
-# either edit this line or set MPICH_PREFIX in your environment.
-# see select_mpi for the set of default MPI selections
-# default to MPI used for build
-MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
-
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
-if [ -z "$1" ]
-then 
-	echo " Usage: run_pmb number_processes"
-	echo " For example: ./run_pmb 2"
-	echo "number_processes may be 'all' in which case one rank will be started for"
-	echo "every process in the mpi_hosts file"
-	exit 1
-fi
-
-NUM_PROCESSES=$1
-APP=PMB-MPI1
-LOGFILE=
-. ./prepare_run
-
-PMB_CMD="PMB2.2.1/SRC_PMB/PMB-MPI1"
-
-# to run a reduced suite of tests, uncomment a different one of these lines
-# full list of tests
-CMD="$PMB_CMD"
-#CMD="$PMB_CMD Bcast Barrier AllReduce Reduce exchange reduce_scatter pingping pingpong sendrecv alltoall allgather allgatherv"
-# avoid allgather and alltoall, too much memory needed
-#CMD="$PMB_CMD Bcast Barrier AllReduce Reduce exchange reduce_scatter pingping pingpong sendrecv"
-#CMD="$PMB_CMD Bcast Barrier AllReduce Reduce"
-#CMD="$PMB_CMD Bcast Barrier"
-#CMD="$PMB_CMD Barrier"
-
-(
-	echo " Running Pallas ..."
-	show_mpi_hosts
-	set -x
-	$MPI_RUN_CMD $CMD
-	set +x
-) 2>&1 | tee -i -a $LOGFILE
-echo "########################################### " >> $LOGFILE

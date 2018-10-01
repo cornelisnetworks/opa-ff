@@ -18,7 +18,7 @@ opaportinfo
 Displays configuration and state of a specified Intel(R) Omni-Path Host Fabric Interface (HFI) port on the local host or a remote switch.
 .SH Syntax
 .NL
-opaportinfo [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR] [-v]
+opaportinfo [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-v]
 .SH Options
 .NL
 
@@ -42,11 +42,6 @@ Specifies the HFI to send through/to. Default is first HFI.
 .NL
 Specifies the port to send through/to. Default is first port.
 
-.TP 10
--K \fImkey\fR 
-.NL
-Specifies the SM management key to access remote ports.
-
 .NL
 
 .SH -h and -p options permit a variety of selections:
@@ -55,7 +50,7 @@ Specifies the SM management key to access remote ports.
 .TP 10
 -h 0 
 .NL
-First active port in system (default).
+First active port in system (Default).
 
 .TP 10
 -h 0 -p 0 
@@ -101,4 +96,4 @@ opaportinfo -p 2 -h 2 -l 5 -m 18
 .NL
 
 .PP
-To access switch ports using this command, the -l and -m options must be given. The -l option specifies the LID of switch port 0 (the logical management port for the switch) and -m specifies the actual switch port to access. If SMA mkeys are used, the -K option is also needed. However, the Intel(R) Omni-Path Fabric Suite Fabric Manager does not use SMA mkeys by default, therefore this option may not be required.
+To access switch ports using this command, the -l and -m options must be given. The -l option specifies the LID of switch port 0 (the logical management port for the switch) and -m specifies the actual switch port to access.

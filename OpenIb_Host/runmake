@@ -262,6 +262,16 @@ then
 fi
 
 echo "---------------------------------------"
+# Import OPA Build feature settings.
+export OPA_FEATURE_SET=${OPA_FEATURE_SET:-$(cat $TL_DIR/$PROJ_FILE_DIR/DEFAULT_OPA_FEATURE_SET)}
+FEATURE_SETTINGS_FILE=opa_feature_settings.${PRODUCT}.$BUILD_CONFIG
+$TL_DIR/OpaBuildFeatureToggles/opa_build_import_feature_settings.sh
+if [ -e ./$FEATURE_SETTINGS_FILE ]; then
+	. ./$FEATURE_SETTINGS_FILE
+else
+	echo "$0: ERROR: OPA BUILD - $FEATURE_SETTINGS_FILE not found" >&2
+	exit 1
+fi
 showenv
 echo "---------------------------------------"
 
@@ -308,7 +318,22 @@ fi
 rm -rf $TL_DIR/$PROJ_FILE_DIR/packaged_files $TL_DIR/$PROJ_FILE_DIR/dist_files $TL_DIR/buildFeatureDefs
 
 # make sure buildFeatureDefs is in place for the build
-make $TL_DIR/buildFeatureDefs
+make $TL_DIR/buildFeatureDefs || exit 1
+
+# make sure detailed_topology.xlsx is in place for the build
+(cd $TL_DIR/IbaTools/opaxlattopology; make detailed_topology.xlsx) || exit 1
+
+# make sure files from BaseFiles are in place
+while read comp fn
+do
+	if [ "$comp" != "FF" ]
+	then
+		continue
+	fi
+	dir=$(dirname $fn)
+	bn=$(basename $fn)
+	(cd $TL_DIR/$dir;make $bn) || exit 1
+done < $TL_DIR/Fd/BaseFiles
 
 args=
 if [ "$inplace" = y ]
@@ -358,8 +383,8 @@ then
 
 		# Update the spec file
 		cp opa.spec.in opa.spec
-		sed -i "s/^Version:.*/Version: ${RPM_VER}/g" opa.spec
-		sed -i "s/^Release:.*/Release: ${RPM_REL}%{?dist}/g" opa.spec
+		sed -i "s/__RPM_VERSION/${RPM_VER}/g" opa.spec
+		sed -i "s/__RPM_RELEASE/${RPM_REL}%{?dist}/g" opa.spec
 		# TBD - this is odd, do we need to edit .spec or should we just change
 		# the input to always look like this?
 		sed -i "s/.\/ff_install/OpenIb_Host\/ff_install/g" opa.spec
@@ -367,8 +392,8 @@ then
 		mv opa.spec $RPMDIR/SPECS/
 
 		cp mpi-apps.spec.in mpi-apps.spec
-		sed -i "s/^Version:.*/Version: ${RPM_VER}/g" mpi-apps.spec
-		sed -i "s/^Release:.*/Release: ${RPM_REL}%{?dist}/g" mpi-apps.spec
+		sed -i "s/__RPM_VERSION/${RPM_VER}/g" mpi-apps.spec
+		sed -i "s/__RPM_RELEASE/${RPM_REL}%{?dist}/g" mpi-apps.spec
 		./update_mpi_spec.sh
 		mv mpi-apps.spec $RPMDIR/SPECS/
 
@@ -379,7 +404,8 @@ then
 			"$USE_UNIFDEF" \
 			"$RPMDIR/SOURCES/opa.tgz" \
 			"$FILES_TO_TAR" \
-			" -X tar_excludes --transform=s,$PROJ_FILE_DIR/debian,debian," \
+			" -X tar_excludes " \
+			" --transform=s,$PROJ_FILE_DIR/debian,debian," \
 		|| exit 1
 
 		# Do same for MpiApps
@@ -410,7 +436,8 @@ then
 			"$USE_UNIFDEF" \
 			"$OPA_SOURCE_TARBALL" \
 			"$FILES_TO_TAR" \
-			" -X tar_excludes --transform=s,$PROJ_FILE_DIR/debian,debian," \
+			" -X tar_excludes " \
+			" --transform=s,$PROJ_FILE_DIR/debian,debian," \
 		|| exit 1
 		(
 			OPA_DIR="$RPMDIR/build/opa-$RPM_VER"
@@ -451,6 +478,7 @@ then
 		) || exit 1
 	fi
 	make final_package
+	echo "$TL_DIR/$PROJ_FILE_DIR/$FEATURE_SETTINGS_FILE" >> packaged_files
 fi
 
 if [ "$buildtests" = y ]

@@ -316,7 +316,7 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 {
 
 	FSTATUS			status = FSUCCESS;
-	uint8			*vpdBuffer;
+	uint8			*vpdBuffer = NULL;
 	uint8			devHdrBuf[DEVICE_HDR_SIZE];
 	uint8			*v;
 	uint8			*dp;
@@ -344,12 +344,13 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 		vpdBufSize = (devHdrBuf[5]<<8) + devHdrBuf[4];
 		if ((vpdBuffer = malloc(vpdBufSize)) == NULL) {
 			fprintf(stderr, "getVpdInfo: Error allocating vpd buffer\n");
-			return(FERROR);
+			status = FERROR;
+			goto bail;
 		}
 		v = vpdBuffer;
 	} else {
 		fprintf(stderr, "getVpdInfo: Error sending MAD packet to switch\n");
-			return(FERROR);
+		goto bail;
 	}
 
 	while ((status == FSUCCESS) && (vpdBytesRead < vpdBufSize)) {
@@ -364,7 +365,7 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 			vpdOffset += vpdReadSize;
 		} else {
 			fprintf(stderr, "getVpdInfo: Error sending MAD packet to switch\n");
-			return(FERROR);
+			goto bail;
 		}
 	}
 
@@ -384,7 +385,8 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 		if (loopCount == LOOPLIMIT)
 		{
 			fprintf(stderr, "getVpdInfo: Error parsing VPD info\n");
-			return(FERROR);
+			status = FERROR;
+			goto bail;
 		}
 		// Advance to FRU GUID
 		dp += (RECORD_HDR_SIZE + FRU_TYPE_SIZE + FRU_HANDLE_SIZE);
@@ -515,6 +517,8 @@ FSTATUS getVPDInfo(struct omgt_port *port,
 		}
 	}
 
+bail:
+	if (vpdBuffer) free(vpdBuffer);
 	return(status);
 }
 
@@ -803,7 +807,7 @@ FSTATUS getOemHash(struct omgt_port *port,
 		return status;
 	*acb = ntoh32 (*(uint32 *)memoryData);
 	for(location = OEM_HASH_SIGNER_START_ADDRESS; location <= OEM_HASH_SIGNER_END_ADDRESS; location++){
-		status = sendMemAccessGetMad(port, path, mad, sessionID, location, (uint8)sizeof(memoryData), memoryData);
+		status = sendMemAccessGetMad(port, path, mad, sessionID, location, (uint8)4, memoryData);
 		if (status == FSUCCESS) {
 			oemHash[i] = ntoh32 (*(uint32 *)memoryData);
 			i++;
@@ -906,6 +910,7 @@ FSTATUS  getBinaryHash(char *fwFileName,uint32 *binaryHash)
 		return FERROR;
 	}
 	else if (fseek(fp, MODULUS_OFFSET, 0)) {
+		fclose(fp);
 		return FERROR;
 	}
 	else if ((nread = fread(buf,1,MODULUS_LEN,fp)) == MODULUS_LEN) {
@@ -917,8 +922,9 @@ FSTATUS  getBinaryHash(char *fwFileName,uint32 *binaryHash)
 
 		return FSUCCESS;
 	}
-	else
-		return FERROR;
+
+	fclose(fp);
+	return FERROR;
 }
 /* opaswEepromRW: Reads from or Writes to the switch EEPROM
    based on prrEepromRW in prrFwUpdate.c */

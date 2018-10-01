@@ -109,7 +109,7 @@ Specifies an action for firmware file for switch upgrade. The action argument ca
 
 .sp
 select 
-Ensures firmware is in primary (default).
+Ensures firmware is in primary (Default).
 
 .RE
 
@@ -273,7 +273,7 @@ Results from opaswitchadmin are grouped into test suites, test cases, and test i
 .PP
 Each opaswitchadmin run appends to test.res and test.log and creates temporary files in test\(ultmp$PID in the current directory. the test.res file provides an overall summary of operations performed and their results. The same information is also displayed while opaswitchadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files that reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opaswitchadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opaswitchadmin. opaswitchadmin also appends to punchlist.csv for failing switches.
 .PP
-opaswitchadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. Twenty (20) parallel operations is the default.
+opaswitchadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. 1000 parallel operations is the default.
 .NL
 
 .SH Operation Details

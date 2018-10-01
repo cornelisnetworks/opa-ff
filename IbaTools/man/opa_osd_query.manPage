@@ -46,7 +46,7 @@ Produces full help text.
 .TP 10
 -v/--verbose \fIarg\fR 
 .NL
-Sets debugging level. Range = 1 - 7.
+Sets debugging level. Range is 1 - 7.
 
 .TP 10
 -s/--slid \fIarg\fR 
@@ -75,11 +75,11 @@ Specifies service ID.
 .TP 10
 -h/--hfi \fIarg\fR 
 .NL
-Specifies the HFI to use. Default = first HFI. The HFI can be identified by name, for example, hfi1\(ul0 or by number, for example, 1, 2, 3, ... .
+Specifies the HFI to use. Default is first HFI. The HFI can be identified by name, for example, hfi1\(ul0 or by number, for example, 1, 2, 3, ... .
 .TP 10
 -p/--port \fIarg\fR 
 .NL
-Specifies the port to use. Default = first port.
+Specifies the port to use. Default is first port.
 .SH Example 
 .NL
 opa\(ulosd\(ulquery -s2 -d4

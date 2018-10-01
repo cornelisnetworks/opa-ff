@@ -510,6 +510,12 @@ void getRecu_opt( int argc, char ** argv, const char *pOptShort,
 			
 				for (ix = 1; ; ix++, argc_recu++)
 				{
+					if (ix == MAX_PARAMS_FILE)
+					{
+						fprintf( stderr, NAME_PROG ": Parameter file (%s) has too many parameters (> %d)\n",
+										nameFileParam, MAX_PARAMS_FILE );
+						errUsage();
+					}
 					if ( (argv_recu[ix] = strtok((ix == 1) ? bfParam : NULL, WHITE_SPACE))
 							== NULL )
 					{
@@ -526,13 +532,6 @@ void getRecu_opt( int argc, char ** argv, const char *pOptShort,
 					if ( (argv_recu[ix] - bfParam + strlen(argv_recu[ix]) + 1) ==
 							ctCharParam )
 						break;
-
-					if (ix == MAX_PARAMS_FILE)
-					{
-						fprintf( stderr, NAME_PROG ": Parameter file (%s) has too many parameters (> %d)\n",
-							nameFileParam, MAX_PARAMS_FILE );
-						errUsage();
-					}
 
 				}
 

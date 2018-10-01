@@ -33,10 +33,6 @@ mkdir -p ${DESTDIR}/usr/share/man/man1
 mkdir -p ${DESTDIR}/usr/share/man/man8
 mkdir -p ${DESTDIR}/usr/src/opa/{mpi_apps,shmem_apps}
 
-# Copy the comp.pl file before changing directories
-cp -t ${DESTDIR}/usr/lib/opa OpenIb_Host/.comp_fastfabric.pl
-cp -t ${DESTDIR}/usr/lib/opa OpenIb_Host/.comp_oftools.pl
-
 #Binaries and scripts installing (basic tools)
 #cd builtbin.OPENIB_FF.release
 cd $(cat ${BUILDDIR}/RELEASE_PATH)
@@ -61,6 +57,7 @@ OPAMGT_VERNO_MAJOR=$(cat version | cut -d . -f 1)
 
 cd ../bin
 cp -t ${DESTDIR}/usr/lib/opa/tools/ $ff_tools_opt
+cp -t ${DESTDIR}/usr/lib/opa/tools/ $opasnapconfig_bin
 
 cd ../fastfabric
 cp -t ${DESTDIR}/usr/sbin $ff_tools_sbin

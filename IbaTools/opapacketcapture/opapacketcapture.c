@@ -1198,7 +1198,7 @@ int main (int argc, char *argv[])
 		numDevs = scandir("/dev/", &d, all_capture_device_filter, alphasort);
 	}
 	if (numDevs == 0) {
-		fprintf(stderr, "opapacketcapture: No capture devices found on system: Mode %s\n", modeToText(mode));
+		fprintf(stderr, "opapacketcapture: Packet capture not supported by installed hfi driver. No capture devices found on system\n");
 		exit(1);
 	}
 
@@ -1293,8 +1293,11 @@ int main (int argc, char *argv[])
 	fdIn = open(devfile, O_RDONLY);
 	
 	if (fdIn < 0) {
-		fprintf(stderr, "opapacketcapture: Unable to open: %s: mode %u: %s\n",
-			devfile, mode, strerror(errno));
+		if (errno == ENOENT)
+			fprintf(stderr, "opapacketcapture: Packet capture not supported by installed hfi driver\n");
+		else
+			fprintf(stderr, "opapacketcapture: Unable to open: %s: mode %u: %s\n",
+				devfile, mode, strerror(errno));
 		free(packets);
 		return -1;
 	}

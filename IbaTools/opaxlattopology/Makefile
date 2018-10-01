@@ -88,7 +88,7 @@ CMD_TARGETS_MISC	= opaxlattopology
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
 # other files to remove during clobber phase
-CLOBBER_TARGETS_MISC=
+CLOBBER_TARGETS_MISC= detailed_topology.xlsx
 # sub-directory to install to within bin
 BIN_SUBDIR		= 
 # sub-directory to install to within include
@@ -143,6 +143,8 @@ include $(TL_DIR)/Makerules/Maketargets.build
 
 # install for includes, libs and cmds phases
 include $(TL_DIR)/Makerules/Maketargets.install
+
+include $(TL_DIR)/Makerules/Rules.baseFiles
 
 # install for stage phase
 #include $(TL_DIR)/Makerules/Maketargets.stage

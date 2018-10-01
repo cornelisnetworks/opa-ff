@@ -32,7 +32,7 @@ Produces full help text.
 .TP 10
 -C 
 .NL
-Performs a ping against a chassis. The default is hosts.
+Performs a ping against a chassis. Default is hosts.
 
 .TP 10
 -p 

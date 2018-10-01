@@ -44,3 +44,9 @@ Depends: ${misc:Depends}, ${shlibs:Depends},
  opa-libopamgt
 Description: Omni-Path library development headers
  This package contains the necessary headers for opamgt development.
+
+Package: opa-snapconfig
+Architecture: linux-any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Parse information from snapshot file, issue packets to program
+ Contains snapconfig tools

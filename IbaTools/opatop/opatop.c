@@ -107,6 +107,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SCREEN_VF_CONFIG          12
 #define SCREEN_VF_CTG_STATS       13
 #define SCREEN_VF_FOCUS           14
+#define SCREEN_VF_PORT_STATS      15
 
 #define VERBOSE_NONE		0				// No verbose output
 #define VERBOSE_SCREEN		0x0001			// Verbose screen displays
@@ -214,9 +215,11 @@ OPATOP_VF_CFG g_pPmVFConfig = {{0}};
 
 STL_PORT_COUNTERS_DATA g_portCounters = {0};
 STL_PA_VF_PORT_COUNTERS_DATA g_hiddenVfPortCounters;
+STL_PA_VF_PORT_COUNTERS_DATA g_vfPortCounters;
 OPATOP_VF_FOCUS g_pPmVFFocus = {{0}};
 uint32 g_portCounterFlags;
 uint32 g_hiddenVfPortCounterFlags;
+uint32 g_vfPortCounterFlags;
 int g_offset = 0;
 int g_group = -1;
 int g_vf	= -1;
@@ -252,6 +255,8 @@ boolean fb_valid_VF_list = FALSE;
 boolean fb_valid_VF_info = FALSE;
 boolean fb_valid_VF_config = FALSE;
 boolean fb_valid_VF_focus = FALSE;
+boolean fb_valid_VF_port_counters = FALSE;
+
 char bf_error[81];
 
 /*******************************************************************************
@@ -705,7 +710,7 @@ void DisplayScreen_Help(const char* helpfile)
 	}
 
 	cur_line = 1;
-	while (TRUE)
+	if (lines > 0) while (TRUE)
 	{
 		// first line is a title of help page
 		printf("%s" NAME_PROG ": %s: Lines %3d-%3d of %3d\n", bf_clear_screen,
@@ -789,6 +794,8 @@ void DisplayScreen(void)
 			DisplayScreen_Help(PATH_HELP "opatop_vf_bw.hlp");
 		else if (tb_menu[n_level_menu] == SCREEN_VF_CONFIG)
 			DisplayScreen_Help(PATH_HELP "opatop_vf_config.hlp");
+		else if (tb_menu[n_level_menu] == SCREEN_VF_PORT_STATS)
+			DisplayScreen_Help(PATH_HELP "opatop_vf_port_stats.hlp");
 
 		printf("Waiting for screen refresh...\n");
 		fb_help = FALSE;
@@ -979,6 +986,16 @@ void DisplayScreen(void)
 			fb_valid_vf_port_stats_hidden = FALSE;
 		}
 	}
+	if (tb_menu[n_level_menu] == SCREEN_VF_PORT_STATS)
+	{
+		fb_valid_VF_port_counters = FALSE;
+		if ( omgt_pa_get_vf_port_stats2(g_portHandle, g_imageIdQuery, g_PmVFList.vfList[g_vf].vfName,
+			g_portlid, g_portnum, &g_imageIdResp, &g_vfPortCounters,
+			&g_vfPortCounterFlags, 1, 0 ) == FSUCCESS ) {
+			fb_valid_VF_port_counters = TRUE;
+		}
+	}
+
 
 	// Display header lines
 	if (fb_valid_image_info)
@@ -2260,7 +2277,135 @@ void DisplayScreen(void)
 		   	printf("Port Stats: PORT COUNTERS NOT AVAILABLE\n");
 			ct_lines -= 1;
 		}
+		break;
 
+	case SCREEN_VF_PORT_STATS:
+		if (fb_valid_VF_port_counters)
+		{
+			if (tb_menu[n_level_menu - 2] ==  SCREEN_VF_CONFIG) {
+				if (fb_valid_VF_config) {
+					printf( "VF Port Stats: %-.41s%s LID: 0x%X PortNum: %u\n",
+						g_pPmVFConfig.vfName,
+						strgetlaststr(g_pPmVFConfig.vfName, 41),
+						g_pPmVFConfig.portList[g_ix_port - g_start].nodeLid,
+						g_pPmVFConfig.portList[g_ix_port - g_start].portNumber );
+					printf( "NodeDesc: %-.41s%c NodeGUID: 0x%016"PRIX64"\n\n",
+						g_pPmVFConfig.portList[g_ix_port - g_start].nodeDesc,
+						strgetlastchar(g_pPmVFConfig.portList[g_ix_port - g_start].nodeDesc, 41),
+						g_pPmVFConfig.portList[g_ix_port - g_start].nodeGUID );
+					ct_lines -= 3;
+				} else {
+					printf("VF Port Stats: VF CONFIG NOT AVAILABLE\n");
+					ct_lines -= 1;
+				}
+			}
+			else
+			{
+				char* status_color = bf_color_off;
+				char* status_message = "";
+
+				if (tb_menu[n_level_menu - 2] ==  SCREEN_VF_FOCUS) {
+					if (fb_valid_VF_focus)
+					{
+						if (fb_port_neighbor)
+						{
+							printf( "VF Port Stats: %-.7s%s LID: 0x%X PortNum: %u Rate: %4s MTU:%5s%s%s%s\n",
+								g_pPmVFFocus.vfName,
+								strgetlaststr(g_pPmVFFocus.vfName, 10),
+								g_pPmVFFocus.portList[g_ix_port - g_start].neighborLid,
+								g_pPmVFFocus.portList[g_ix_port - g_start].neighborPortNumber,
+								StlStaticRateToText(g_pPmVFFocus.portList[g_ix_port - g_start].rate),
+								IbMTUToText(g_pPmVFFocus.portList[g_ix_port - g_start].maxVlMtu),
+								status_color, status_message, bf_color_off );
+							printf( "NodeDesc: %-.41s%s NodeGUID: 0x%016"PRIX64"\n",
+								g_pPmVFFocus.portList[g_ix_port - g_start].neighborNodeDesc,
+								strgetlaststr(g_pPmVFFocus.portList[g_ix_port - g_start].neighborNodeDesc, 41),
+								g_pPmVFFocus.portList[g_ix_port - g_start].neighborGuid );
+							printf( "Neighbor: %-.41s%s LID: 0x%X PortNum: %u\n",
+								g_pPmVFFocus.portList[g_ix_port - g_start].nodeDesc,
+								strgetlaststr(g_pPmVFFocus.portList[g_ix_port - g_start].nodeDesc, 41),
+								g_pPmVFFocus.portList[g_ix_port - g_start].nodeLid,
+								g_pPmVFFocus.portList[g_ix_port - g_start].portNumber );
+						}
+						else
+						{
+							printf( "VF Port Stats: %-.7s%s LID: 0x%X PortNum: %u Rate: %4s MTU:%5s%s%s%s\n",
+								g_pPmVFFocus.vfName,
+								strgetlaststr(g_pPmVFFocus.vfName, 10),
+								g_pPmVFFocus.portList[g_ix_port - g_start].nodeLid,
+								g_pPmVFFocus.portList[g_ix_port - g_start].portNumber,
+								StlStaticRateToText(g_pPmVFFocus.portList[g_ix_port - g_start].rate),
+								IbMTUToText(g_pPmVFFocus.portList[g_ix_port - g_start].maxVlMtu),
+								status_color, status_message, bf_color_off );
+							printf( "NodeDesc: %-.41s%s NodeGUID: 0x%016"PRIX64"\n",
+								g_pPmVFFocus.portList[g_ix_port - g_start].nodeDesc,
+								strgetlaststr(g_pPmVFFocus.portList[g_ix_port - g_start].nodeDesc, 41),
+								g_pPmVFFocus.portList[g_ix_port - g_start].nodeGUID );
+
+							if (g_pPmVFFocus.portList[g_ix_port - g_start].neighborLid)
+								printf( "Neighbor: %-.41s%s LID: 0x%X PortNum: %u\n",
+									g_pPmVFFocus.portList[g_ix_port - g_start].neighborNodeDesc,
+									strgetlaststr(g_pPmVFFocus.portList[g_ix_port - g_start].neighborNodeDesc, 41),
+									g_pPmVFFocus.portList[g_ix_port - g_start].neighborLid,
+									g_pPmVFFocus.portList[g_ix_port - g_start].neighborPortNumber );
+							else
+								printf("Neighbor: none\n");
+						}
+						ct_lines -= 3;
+					}
+					else
+					{
+						printf("VF Port Stats: VF FOCUS NOT AVAILABLE\n");
+						ct_lines -= 1;
+					}
+				}
+			}
+			printf(" Xmit: Data: %10"PRIu64" MB (%10"PRIu64" Flits) Pkts: %10"PRIu64"\n",
+				g_vfPortCounters.portVFXmitData / FLITS_PER_MB,
+				g_vfPortCounters.portVFXmitData, g_vfPortCounters.portVFXmitPkts);
+			printf( " Recv: Data: %10"PRIu64" MB (%10"PRIu64" Flits) Pkts: %10"PRIu64"\n",
+				g_vfPortCounters.portVFRcvData / FLITS_PER_MB,
+				g_vfPortCounters.portVFRcvData, g_vfPortCounters.portVFRcvPkts );
+			printf("\n\n");
+			//ct_lines -= 4;
+			printf( " Congestion:\n");
+			printf( "  Cong Discards:   %10llu | Rcv FECN*:        %10llu\n",
+				(unsigned long long)g_vfPortCounters.swPortVFCongestion,
+				(unsigned long long)g_vfPortCounters.portVFRcvFECN);
+			printf( "  Mark FECN:       %10llu | Rcv BECN:         %10llu\n",
+				(unsigned long long)g_vfPortCounters.portVFMarkFECN,
+				(unsigned long long)g_vfPortCounters.portVFRcvBECN);
+			printf( "  Xmit Wait:       %10llu | Xmit Time Cong:   %10llu\n",
+				(unsigned long long)g_vfPortCounters.portVFXmitWait,
+				(unsigned long long)g_vfPortCounters.portVFXmitTimeCong);
+			//ct_lines -= 4; //8
+			printf( " Bubble:\n" );
+			printf( "  Xmit Wasted BW:  %10llu | Rcv Bubble*:      %10llu\n",
+				(unsigned long long)g_vfPortCounters.portVFXmitWastedBW,
+				(unsigned long long)g_vfPortCounters.portVFRcvBubble);
+			printf( "  Xmit Wait Data:  %10llu |\n",
+				(unsigned long long)g_portCounters.portXmitWaitData);
+			//ct_lines -= 3; //11
+			printf( " Routing and Others:\n");
+			printf( "  Xmit Discards:   %10llu\n",
+				(unsigned long long)g_vfPortCounters.portVFXmitDiscards);
+			ct_lines -= 13;
+			if (g_vfPortCounterFlags & STL_PA_PC_FLAG_SHARED_VL)
+			{
+				printf("\nCounters may be shared between Virtual Fabrics\n");
+				ct_lines -= 2;
+			}
+			if (g_vfPortCounterFlags & STL_PA_PC_FLAG_CLEAR_FAIL)
+			{
+				printf("\nPort Counter Clear was Unsuccessful\n");
+				ct_lines -= 2;
+			}
+		}
+		else
+		{
+			printf("VF Port Stats: VF PORT COUNTERS NOT AVAILABLE\n");
+			ct_lines -= 1;
+		}
 		break;
 
 	default:
@@ -2345,9 +2490,22 @@ void DisplayScreen(void)
 			if (fb_port_has_neighbor)
 				printf("Neighbor ");
 		}
-		printf("sS:\n");
+		printf("sS%s:\n", ((tb_menu[n_level_menu - 1] == SCREEN_VF_FOCUS )||
+			(tb_menu[n_level_menu - 1] == SCREEN_VF_CONFIG)) ? " vV" : "");
 		fflush(stdout);
 		break;
+
+	case SCREEN_VF_PORT_STATS:
+		if (tb_menu[n_level_menu - 2] == SCREEN_GROUP_FOCUS ||
+			tb_menu[n_level_menu - 2] == SCREEN_VF_FOCUS )
+		{
+			if (fb_port_has_neighbor)
+				printf("Neighbor ");
+		}
+		printf("vV:\n");
+		fflush(stdout);
+		break;
+
 	default:
 		printf("\n ");
 		break;
@@ -2364,6 +2522,7 @@ struct option options[] = {
 		{ "hfi", required_argument, NULL, 'h' },
 		{ "port", required_argument, NULL, 'p' },
 		{ "interval", no_argument, NULL, 'i' },
+		{ "timeout", required_argument, NULL, '!' },
 		{ "help", no_argument, NULL, '$' },	// use an invalid option character
 		{ 0 }
 };
@@ -2383,6 +2542,7 @@ void Usage_full(void)
 	fprintf(stderr, "                                system wide port num (default is 0)\n");
 	fprintf(stderr, "    -p/--port port            - port, numbered 1..n, 0=1st active (default\n");
 	fprintf(stderr, "                                is 1st active)\n");
+	fprintf(stderr, "    --timeout                 - timeout(response wait time) in ms, default is 1000ms\n");
 	fprintf(stderr, "    -i/--interval seconds     - interval at which PA queries will be performed\n");
 	fprintf(stderr, "                                to refresh to the latest PA image (default=10s) \n");
 	fprintf(stderr, "\n");
@@ -2422,6 +2582,7 @@ int main(int argc, char ** argv)
 	char tb_cmd[64];
 	time_t time_start;
 	int pa_service_state = OMGT_SERVICE_STATE_UNKNOWN;
+	int ms_timeout = OMGT_DEF_TIMEOUT_MS;
 
 	Top_setcmdname(NAME_PROG);
 	g_quiet = ! isatty(2);	// disable progress if stderr is not tty
@@ -2467,6 +2628,15 @@ int main(int argc, char ** argv)
 				}
 				port = (uint8)temp;
                 break;
+	    case '!':	// timeout
+				errno = 0;
+				temp = strtoul(optarg, &endptr, 0);
+				if (temp > INT_MAX || errno || ! endptr || *endptr != '\0') {
+					fprintf(stderr, "pm: Invalid timeout value: %s\n", optarg);
+					Usage();
+				}
+				ms_timeout = (int)temp;
+		break;
             case 'i':	// get performance stats over interval
 				errno = 0;
 				temp = strtoul(optarg, &endptr, 0);
@@ -2519,6 +2689,10 @@ int main(int argc, char ** argv)
 		}
 		fb_valid_pa_client = TRUE;
 	}
+
+	//set timeout for PA operations
+	omgt_set_timeout(g_portHandle, ms_timeout);
+
 	// Configure terminal for single character at a time input
 	if (tcgetattr(fileno(stdin), &g_term_save) < 0)
 	{
@@ -3128,6 +3302,14 @@ int main(int argc, char ** argv)
 					}
 				}
 
+				if (tb_menu[n_level_menu] == SCREEN_PORT_STATS) {
+					if (n_cmd == 's') {
+						g_scroll_cntrs = 1;
+					} else if (n_cmd == 'S') {
+						g_scroll_cntrs = 0;
+					}
+				}
+
 				if ( (tb_menu[n_level_menu] == SCREEN_PORT_STATS) &&
 						(tb_menu[n_level_menu - 1] == SCREEN_VF_FOCUS) )
 				{
@@ -3150,13 +3332,63 @@ int main(int argc, char ** argv)
 								g_pPmVFFocus.portList[g_ix_port - g_start].portNumber;
 						}
 					}
+					else if ((toupper(n_cmd) == 'V') && fb_valid_VF_focus)
+					{
+						g_portlid =
+							g_pPmVFFocus.portList[g_ix_port - g_start].nodeLid;
+						g_portnum =
+							g_pPmVFFocus.portList[g_ix_port - g_start].portNumber;
+						fb_port_has_neighbor = (0 != g_pPmVFFocus.portList[g_ix_port - g_start].neighborLid);
+						fb_port_neighbor = FALSE;
+						tb_menu[++n_level_menu] = SCREEN_VF_PORT_STATS;
+					}
 				}
-
-				if (tb_menu[n_level_menu] == SCREEN_PORT_STATS) {
-					if (n_cmd == 's') {
-						g_scroll_cntrs = 1;
-					} else if (n_cmd == 'S') {
-						g_scroll_cntrs = 0;
+				else if ( (tb_menu[n_level_menu] == SCREEN_PORT_STATS) &&
+						(tb_menu[n_level_menu - 1] == SCREEN_VF_CONFIG) )
+				{
+					if ((toupper(n_cmd) == 'V') && fb_valid_VF_focus)
+					{
+						g_portlid =
+							g_pPmVFFocus.portList[g_ix_port - g_start].nodeLid;
+						g_portnum =
+							g_pPmVFFocus.portList[g_ix_port - g_start].portNumber;
+						fb_port_has_neighbor = (0 != g_pPmVFFocus.portList[g_ix_port - g_start].neighborLid);
+						fb_port_neighbor = FALSE;
+						tb_menu[++n_level_menu] = SCREEN_VF_PORT_STATS;
+					}
+				}
+				else if ((tb_menu[n_level_menu] == SCREEN_VF_PORT_STATS) &&
+						(tb_menu[n_level_menu - 2] == SCREEN_VF_FOCUS) )
+				{
+					if ((toupper(n_cmd) == 'N') && fb_valid_VF_focus
+						&& fb_port_has_neighbor)
+					{
+						if ((fb_port_neighbor = !fb_port_neighbor))
+						{
+							g_portlid =
+								g_pPmVFFocus.portList[g_ix_port - g_start].neighborLid;
+							g_portnum =
+								g_pPmVFFocus.portList[g_ix_port - g_start].neighborPortNumber;
+						}
+						else
+						{
+							g_portlid =
+								g_pPmVFFocus.portList[g_ix_port - g_start].nodeLid;
+							g_portnum =
+								g_pPmVFFocus.portList[g_ix_port - g_start].portNumber;
+						}
+					}
+					else if ((toupper(n_cmd) == 'V') && fb_valid_VF_focus)
+					{
+						--n_level_menu;
+					}
+				}
+				else if ( (tb_menu[n_level_menu] == SCREEN_VF_PORT_STATS) &&
+						(tb_menu[n_level_menu - 2] == SCREEN_VF_CONFIG) )
+				{
+					if ((toupper(n_cmd) == 'V') && fb_valid_VF_focus)
+					{
+						--n_level_menu;
 					}
 				}
 

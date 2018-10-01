@@ -163,6 +163,7 @@ struct option options[] = {
 		{ "range", required_argument, NULL, 'r' },
 		{ "operator", required_argument, NULL, 'Z'},
 		{ "tuple", required_argument, NULL, 'Q'},
+		{ "timeout", required_argument, NULL, '!'},
 		{ "help", no_argument, NULL, '$' },
 		{ 0 }
 };
@@ -1150,7 +1151,8 @@ void usage(void)
 	fprintf(stderr, "    -o/--output        - output type, default is groupList\n");
 	fprintf(stderr, "    -g/--groupName     - group name for groupInfo query\n");
 	fprintf(stderr, "    -l/--lid           - lid of node\n");
-	fprintf(stderr, "    -P/--portNumber    - port number\n");
+	fprintf(stderr, "    -P/--portNumber    - port number within node\n");
+	fprintf(stderr, "    --timeout          - timeout(response wait time) in ms, default is 1000ms\n");
 	fprintf(stderr, "    -G/--nodeGuid      - node GUID\n");
 	fprintf(stderr, "    -D/--nodeDesc      - node Description\n");
 	fprintf(stderr, "    -d/--delta         - delta flag for portCounters query - 0 or 1\n");
@@ -1271,7 +1273,8 @@ void usage(void)
 	fprintf(stderr, "                         -D (node description) are optional\n");
 	fprintf(stderr, "    groupLinkInfo      - Link Information of a PA group - requires -g option for\n");
 	fprintf(stderr, "                         groupName, options -l (lid) and -P (port) are optional\n");
-	fprintf(stderr, "                         -P 255 is for all ports\n");
+	fprintf(stderr, "                         -P 255 is for all ports. Option -P (port) without -l (lid)\n");
+	fprintf(stderr, "                         is ignored\n");
 	fprintf(stderr, "    portCounters       - port counters of fabric port - requires -l (lid) and\n");
 	fprintf(stderr, "                         -P (port) options, -d (delta) is optional\n");
 	fprintf(stderr, "    clrPortCounters    - clear port counters of fabric port - requires -l (lid),\n");
@@ -1452,6 +1455,7 @@ int main(int argc, char ** argv)
 	uint8 temp8;
 	char tempstr[64];
 	int queryType = Q_GETGROUPLIST;
+	int ms_timeout = OMGT_DEF_TIMEOUT_MS;
 	g_gotOutput = 1;
 
 	PrintDestInitFile(&g_dest, stdout);
@@ -1479,6 +1483,12 @@ int main(int argc, char ** argv)
 			case 'p':   // port to issue query from
 				if (FSUCCESS != StringToUint16(&port, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opapaquery: Invalid Port Number: %s\n", optarg);
+					usage();
+				}
+				break;
+			case '!':
+				if (FSUCCESS != StringToInt32(&ms_timeout, optarg, NULL, 0, TRUE)) {
+					fprintf(stderr, "opapaquery: Invalid timeout value: %s\n", optarg);
 					usage();
 				}
 				break;
@@ -1517,7 +1527,7 @@ int main(int argc, char ** argv)
 				break;
 
 			case 'l':
-				if (FSUCCESS != StringToUint32(&tempLid, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint32(&tempLid, optarg, NULL, 0, TRUE) || tempLid == 0) {
 					fprintf(stderr, "opapaquery: Invalid Lid Number: %s\n", optarg);
 					usage();
 				}
@@ -1535,7 +1545,7 @@ int main(int argc, char ** argv)
 				break;
 
 			case 'G':
-				if (FSUCCESS != StringToUint64(&g_nodeGuid, optarg, NULL, 0, TRUE)) {
+				if (FSUCCESS != StringToUint64(&g_nodeGuid, optarg, NULL, 0, TRUE) || g_nodeGuid == 0) {
 					fprintf(stderr, "opapaquery: Invalid GUID Number: %s\n", optarg);
 					usage();
 				}
@@ -1543,6 +1553,10 @@ int main(int argc, char ** argv)
 				break;
 
 			case 'D':
+				if(optarg[0] == '\0') {
+					fprintf(stderr,"Illegal node descriptor parameter: Empty String\n");
+					usage();
+				}
 				snprintf(g_nodeDesc, STL_PM_NODEDESCLEN, "%s", optarg);
 				g_gotNodeDesc = TRUE;
 				break;
@@ -1660,8 +1674,7 @@ int main(int argc, char ** argv)
 
 			case 'Q':
 
-				strncpy(tempstr, optarg, sizeof(tempstr));
-				tempstr[sizeof(tempstr)-1] = '\0';
+				StringCopy(tempstr, optarg, sizeof(tempstr));
 
 				if (tupleID >= MAX_NUM_FOCUS_PORT_TUPLES) {
 					fprintf(stderr, "opapaquery: Tuple count exceeded.  Limited to %d tuples\n", MAX_NUM_FOCUS_PORT_TUPLES);
@@ -1870,6 +1883,9 @@ int main(int argc, char ** argv)
 			g_gotBegTime || g_gotEndTime) {
 			fprintf(stderr, "opapaquery: for the selected output type only -[hpvlngPOt] options are valid. Ignoring rest..\n");
 		}
+		if (g_gotPort && !g_gotLid) {
+			fprintf(stderr, "opapaquery: -l (lid) also needed with -P (port). Ignoring -P\n");
+		}
 	}
 
 	/* Open omgt_port */
@@ -1919,6 +1935,9 @@ int main(int argc, char ** argv)
 
 	if (g_verbose)
 		set_opapaquery_debug(g_portHandle);
+
+	//set timeout for PA operations
+	omgt_set_timeout(g_portHandle, ms_timeout);
 
 	// verify PA has necessary capabilities
 	STL_CLASS_PORT_INFO *portInfo;

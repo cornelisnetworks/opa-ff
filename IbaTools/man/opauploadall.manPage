@@ -64,7 +64,12 @@ Specifies the name of files to copy to this system, relative to the current dire
 .TP 10
 \fIdest\(ulfile\fR 
 .NL
-Specifies the name of the file or directory on this system to copy to. It is relative to  \fIupload\(uldir\fR/\fIHOSTNAME\fR .A local directory within  \fIupload\(uldir\fR/ is created for each host. Each uploaded file is copied to upload\(uldir/\fIHOSTNAME\fR/\fIdest\(ulfile\fR within the local system. If more than one source file is specified, dest\(ulfile is treated as a directory name.
+Specifies the name of the file or directory on this system to copy to. It is relative to  \fIupload\(uldir\fR/\fIHOSTNAME\fR .A local directory within  \fIupload\(uldir\fR/ is created for each hostname.
+
+.IP
+Each uploaded file is copied to upload\(uldir/\fIHOSTNAME\fR/\fIdest\(ulfile\fR within the local system.
+.IP
+If more than one source file is specified or dest\(ulfile has a trailing / , a dest\(ulfile directory will be created.
 .SH Example 
 .NL
 # upload two files from 2 hosts

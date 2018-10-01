@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2018, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctype.h>
 #include <limits.h>
 
-// work around conflicting names 
+// work around conflicting names
 #include "infiniband/umad.h"
 #include "iba/ib_types.h"
 #include "iba/ib_sm_priv.h"
@@ -47,7 +47,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "iba/stl_pm.h"
 #include "stl_print.h"
 
-extern uint64	g_mkey;
 extern uint8 g_detail;
 extern unsigned g_verbose;
 extern PrintDest_t g_dest;

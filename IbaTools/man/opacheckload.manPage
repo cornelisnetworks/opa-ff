@@ -30,7 +30,7 @@ Produces full help text.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file with hosts to check. Default = /etc/opa/hosts 
+Specifies the file with hosts to check. Default is /etc/opa/hosts
 
 .TP 10
 -h \fIhosts\fR 

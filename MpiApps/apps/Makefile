@@ -55,11 +55,16 @@ ifndef MPICH_PREFIX
 export MPICH_PREFIX=$(shell . ./select_mpi 2>/dev/null; echo $$MPICH_PREFIX)
 endif
 
+# set MPICC to our own mpicc warpper that will change the real mpicc to use RPATH
+# so that our MPI Apps will stick with the mpi we selected during build.
+# if you want the default RUNPATH, you can set MPICC before calling the Makefile
 ifndef MPICC
-export MPICC=$(MPICH_PREFIX)/bin/mpicc 
+export REAL_MPICC=$(MPICH_PREFIX)/bin/mpicc
+export MPICC=$(PWD)/mpicc
 endif
 ifndef MPIF77
-export MPIF77=$(MPICH_PREFIX)/bin/mpif77 
+export REAL_MPIF77=$(MPICH_PREFIX)/bin/mpif77
+export MPIF77=$(PWD)/mpif77
 endif
 ifndef MPI_INCLUDE_DIR
 export MPI_INCLUDE_DIR=$(MPICH_PREFIX)/include
@@ -145,24 +150,16 @@ OSU2_MPI2: SHOWMPI
 	@echo
 .PHONY: OSU2_MPI2
 
-PMB: SHOWMPI
-	@echo "Building Pallas 2.4..."
-	if [ -f $(MPICH_PREFIX)/lib/libmpich.a -o -f $(MPICH_PREFIX)/lib/shared/libmpich.so ] ; then export MPICH_LIB='-lmpich'; fi ; \
-	export HOME_DIR=$(PWD); \
-	make -C PMB2.2.1/SRC_PMB
-	@echo
-.PHONY: PMB
-
 IMB: SHOWMPI
 	@echo "Building Intel Micro Benchmarks 4.0.2..."
-	cd imb/src; gmake MPI_HOME=$(MPICH_PREFIX) -f make_mpich
+	cd imb/src; gmake MPI_HOME=$(MPICH_PREFIX) CC=$(MPICC) -f make_mpich
 	@echo
-.PHONY: PMB
+.PHONY: IMB
 
 XHPL2: SHOWMPI
-	@echo "Building HPL 2.0 (Linpack)..."
-	export HPL_HOME_DIR=$(PWD)/hpl-2.0;\
-	make -C hpl-2.0 arch=ICS.`uname -s`.`./get_mpi_cc.sh`
+	@echo "Building HPL 2.2 (Linpack)..."
+	export HPL_HOME_DIR=$(PWD)/hpl-2.2;\
+	make -C hpl-2.2 arch=ICS.`uname -s`.`./get_mpi_cc.sh`
 	@echo
 .PHONY: XHPL2
 
@@ -197,10 +194,9 @@ cleandepend clean:: clobber
 clobber::
 	rm -f latency/*.o latency/*.d latency/latency
 	rm -f bandwidth/*.o bandwidth/*.d bandwidth/bw
-	if [ -d "PMB2.2.1" ]; then make -C PMB2.2.1/SRC_PMB clean; fi
-	if [ -f "imb/src/make_mpich" ]; then cd imb/src; gmake MPI_HOME=$(MPICH_PREFIX) -f make_mpich clean; fi
-	if [ -d hpl-2.0 ]; then find hpl-2.0 -name ICS.`uname -s`.* | xargs rm -rf; rm -rf hpl-2.0/bin hpl-2.0/lib; fi
-	if [ -d hpl-2.0 ]; then find hpl-2.0 -name xerbla.o | xargs rm -rf; fi
+	if [ -f "imb/src/make_mpich" ]; then cd imb/src; make MPI_HOME=$(MPICH_PREFIX) -f make_mpich clean; fi
+	if [ -d hpl-2.2 ]; then find hpl-2.2 -name ICS.`uname -s`.* | xargs rm -rf; rm -rf hpl-2.2/bin hpl-2.2/lib; fi
+	if [ -d hpl-2.2 ]; then find hpl-2.2 -name xerbla.o | xargs rm -rf; fi
 	if [ -d pgfile_test ]; then make -C pgfile_test clean; fi
 	if [ -d tachyon ]; then rm -rf tachyon/compile/*; fi
 	if [ -d mandel ]; then make -C mandel clean; rm -f mandel/*.d; fi
@@ -240,7 +236,7 @@ CMDS:: quick
 	@echo "Built sample applications"
 .PHONY: CMDS
 
-full:: CMDS PMB
+full:: CMDS
 	@echo "Built full set of sample applications"
 .PHONY: full
 

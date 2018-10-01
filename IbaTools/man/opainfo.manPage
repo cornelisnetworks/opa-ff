@@ -32,12 +32,12 @@ Produces full help text.
 .TP 10
 -h \fIhfi\fR 
 .NL
-Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
 -p \fIport\fR 
 .NL
-Specifies the port, numbered 1 to n. Using 0 specifies the first active port across all HFIs/ports. Default = 1 which indicates all ports. If selected, the tool returns information on all available ports if p is not defined.
+Specifies the port, numbered 1 to n. Using 0 specifies the first active port across all HFIs/ports. Default is 1 which indicates all ports. If selected, the tool returns information on all available ports if p is not defined.
 
 .TP 10
 -o \fItype\fR 
@@ -76,7 +76,7 @@ Output is displayed in line-by-line format. Default is summary format.
 .TP 10
 -d \fIdetail\fR 
 .NL
-Output detail level. Range = 0 - 2. CableInfo only. Default is 0.
+Output detail level. Range is 0 - 2. CableInfo only. Default is 0.
 
 .TP 10
 .BR
@@ -126,7 +126,7 @@ Specifies different Service Level for PMA traffic.
 .TP 10
 -h 0 
 .NL
-First active port in system (default).
+First active port in system (Default).
 
 .TP 10
 -h 0 -p 0 

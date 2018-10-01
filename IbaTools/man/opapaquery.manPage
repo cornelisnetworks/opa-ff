@@ -29,11 +29,13 @@ By default, opapaquery uses the first active port on the local system. However, 
 .NL
 opapaquery [-v] [-h hfi|-b addr] [-p port] [-x gid] [-E]
 .br
-[-T ssl\(ulparams] -o type [-g groupName] [-l nodeLid] [-P portNumber]
+[-T ssl\(ulparams] [-o type] [-g groupName] [-l nodeLid] [-P portNumber]
 .br
-[-G nodeGuid] [-D nodeDesc] [-d delta] [-j date\(ultime][-q date\(ultime] [-U] [-s select] [-f focus] [-S start] [-r range] [-n imgNum]
+[--timeout] [-G nodeGuid] [-D nodeDesc] [-d delta] [-j date\(ultime]
 .br
-[-O imgOff] [-y imgTime] [-m moveImgNum] [-M moveImgOff] [-V vfName]
+[-q date\(ultime] [-U] [-s select] [-f focus] [-S start] [-r range]
+.br
+[-n imgNum] [-O imgOff] [-y imgTime] [-m moveImgNum] [-M moveImgOff] [-V vfName]
 .SH Options 
 .NL
 
@@ -45,12 +47,12 @@ Specifies the verbose output.
 .TP 10
 -h/--hfi \fIhfi\fR 
 .NL
-Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
 -b/--oob \fIaddress\fR 
 .NL
-Specifies Out-of-Band address of node running the FE. Can be either hostname, IPv4, or IPv6 address. (Default is "127.0.0.1")
+Specifies Out-of-Band address of node running the FE. Can be either hostname, IPv4, or IPv6 address. Default is "127.0.0.1".
 
 .TP 10
 -p/--port \fIport\fR 
@@ -59,9 +61,9 @@ Specifies the port.
 .RS
 
 .IP \(bu
-In-band: Numbered 1...n. Using 0 specifies the first active port. (Default is 0.)
+In-band: Numbered 1...n. Using 0 specifies the first active port. Default is 0.
 .IP \(bu
-Out-of-band: Port FE is listening on. (Default is 3245.)
+Out-of-band: Port FE is listening on. Default is 3245.
 
 .RE
 
@@ -79,12 +81,12 @@ Specifies the ESM FE.
 .TP 10
 -T/--ssl-params \fIfile\fR 
 .NL
-Specifies the SSL/TLS parameters XML file. (Default is /etc/opa/opamgt\(ultls.xml)
+Specifies the SSL/TLS parameters XML file. Default is /etc/opa/opamgt\(ultls.xml.
 
 .TP 10
 -o/--output \fItype\fR 
 .NL
-Specifies the output type, default is groupList. See
+Specifies the output type. Default is groupList. See
 \fIOutput Types\fR
 .
 
@@ -101,7 +103,12 @@ Specifies the LID of the node.
 .TP 10
 -P/--portNumber \fIportNumber\fR 
 .NL
-Specifies the port number.
+Specifies the port number within the node.
+
+.TP 10
+--timeout
+.NL
+Specifies the timeout (response wait time) in ms. Default is 1000 ms.
 
 .TP 10
 -G/--nodeGuid 
@@ -119,17 +126,17 @@ Specifies the description of the node.
 Specifies the delta flag for portCounters query - 0 or 1.
 
 .TP 10
--j / --begin \fIdate\(ultime\fR 
+-j/--begin  \fIdate\(ultime\fR
 .NL
 Obtains portCounters over an interval beginning at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--q / --end \fIdate\(ultime\fR 
+-q/--end  \fIdate\(ultime\fR
 .NL
 Obtains portCounters over an interval ending at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--U / --userCntrs 
+-U/--userCntrs
 .NL
 Queries by user-controlled counters flag for portCounters.
 
@@ -432,7 +439,7 @@ Specifies the 64-bit image number.
 Specifies the image offset.
 
 .TP 10
--y / --imgTime 
+-y/--imgTime
 .NL
 Specifies the image time. May be used with imageinfo, groupInfo, groupInfo, groupConfig, freezeImage, focusPorts, vfInfo, vfConfig, and vfFocusPorts. Will return closest image within image interval if possible. See --begin/--end above for format.
 
@@ -459,7 +466,7 @@ Specifies the VF name for vfInfo query.
 .TP 10
 -h 0 
 .NL
-First active port in system (default).
+First active port in system (Default).
 
 .TP 10
 -h 0 -p 0 
@@ -517,7 +524,7 @@ Specifies the node information of a PA group. Requires -g option for \fIgroupNam
 .TP 10
 groupLinkInfo 
 .NL
-Specifies the link Information of a PA group. Requires -g option for \fIgroupName\fR. Options -l \fIlid\fR and -P \fIport\fR are optional. Note that -P 255 specifies all ports.
+Specifies the link Information of a PA group. Requires -g option for \fIgroupName\fR. Options -l \fIlid\fR and -P \fIport\fR are optional. Note that -P 255 specifies all ports. Option -P \fIport\fR without -l \fIlid\fR is ignored.
 
 .TP 10
 portCounters 

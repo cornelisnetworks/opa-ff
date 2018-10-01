@@ -511,6 +511,68 @@ proc get_switch_getportconfig { ibnode } {
 		return "$out_msg"
 }
 
+proc get_portstate { ibnode } {
+##
+## get_portstate
+## -------------------
+## get state of local HFI port
+##
+## Usage:
+##	get_portstate ibnode
+## Arguments:
+##	ibnode - ib node of switch, includes hfi/port
+## Returns:
+##	port state as output in "opainfo" command
+## Additional Information:
+##	
+		global env
+		set out_msg ""
+
+		local_sh
+		set out ""
+		set portstate ""
+
+		set hfi_port [ resolve_ibnode $ibnode ]
+		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
+
+		send_unix_cmd "opainfo $hfi_port_args"
+		set out [expect_list_with_punchlist "$ibnode" "Unable to open hfi:port"  30 { "PortState:     [A-Za-z]+" } { "Error"}]
+		regexp {PortState:     ([A-Za-z]+)} $out xx portstate
+
+		local_sh_exit
+
+		return "$portstate"
+}
+
+proc verify_port_active { ibnode {wait_time 30} } {
+##
+## verify_port_active
+## -------------------
+## verify that the local HFI port is active
+##
+## Usage:
+##	verify_port_active ibnode <wait_time>
+## Arguments:
+##	ibnode - ib node of switch, includes hfi/port
+##	wait_time - seconds to wait for the hfi port
+##    to come active, default 30 
+## Returns:
+##	0 on success, -1 on failure
+## Additional Information:
+##	
+		global env
+
+		for {set i 0} {$i < $wait_time} {incr i} {
+			set portstate [get_portstate "$ibnode"]
+			set index [ string first "Active" $portstate ]
+			if { $index == -1 } {
+				sleep 1
+			} else {
+				return 0
+			}
+		}
+		return -1
+}
 
 
 proc get_switch_info { ibnode } {
@@ -1178,6 +1240,12 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 				    log_message "Retrying: $ibnode not yet back online ... waiting for return"
 				}
 				sleep $sleeptime
+				# first wait for local HFI port to come active - 30 seconds
+				set active [verify_port_active "$ibnode" 30]
+				if { $active == -1 } {
+					append_punchlist "$ibnode" "Can not verify reboot - local HFI port not active"
+					fail_test "$ibnode - can not verify reboot - local HFI port not active"
+				}
 				set presence [get_switch_ping "$ibnode" "$hfi_port" 0 "0"]
 				if { [ string equal "$presence" "is"] } {
 					break
@@ -1271,6 +1339,12 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 			    log_message "Retrying: $ibnode not yet back online ... waiting for return"
 			}
 			sleep $sleeptime
+			# first wait for local HFI port to come active - 30 seconds
+			set active [verify_port_active "$ibnode" 30]
+			if { $active == -1 } {
+				append_punchlist "$ibnode" "Can not verify reboot - local HFI port not active"
+				fail_test "$ibnode - can not verify reboot - local HFI port not active"
+			}
 			set presence [get_switch_ping "$ibnode" "$hfi_port" 0 "1"]
 			if { [ string equal "$presence" "is"] } {
 				break

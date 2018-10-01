@@ -18,11 +18,9 @@ opasmaquery
 Performs Intel(R) Omni-Path Architecture-defined SMA queries and displays the resulting response. Each query is issued directly to the SMA and does not involve SM interaction.
 .SH Syntax
 .NL
-opasmaquery [-v] [-d \fIdetail\fR][-g] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-K \fImkey\fR]
+opasmaquery [-v] [-d \fIdetail\fR][-g] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fIotype\fR]
 .br
-[-o \fIotype\fR] [-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR]
-.br
-[hop hop ...]
+[-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR] [hop hop ...]
 .SH Options
 .NL
 
@@ -39,7 +37,7 @@ Returns verbose output. Can be specified more than once for additional openib an
 .TP 10
 -d \fIdetail\fR 
 .NL
-Specifies the output detail level for cableinfo only. Range = 0 - n. Default = 2. An upper limit for detail level is not enforced. After a maximum amount of output is reached, a larger detail value has no effect.
+Specifies the output detail level for cableinfo only. Range is 0 - n. Default is 2. An upper limit for detail level is not enforced. After a maximum amount of output is reached, a larger detail value has no effect.
 
 .TP 10
 -g 
@@ -54,17 +52,12 @@ Specifies the destination LID. Default is local port.
 .TP 10
 -h/--hfi \fIhfi\fR 
 .NL
-Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
 -p/--port \fIport\fR 
 .NL
-Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
-
-.TP 10
--K \fImkey\fR 
-.NL
-Specifies the SM management key to access remote ports.
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
 -o \fIotype\fR 
@@ -298,6 +291,17 @@ Specifies SC to VLnt tables.
 .TP 10
 
 .sp
+scvlr
+Specifies SC to VLr tables
+
+.IP
+[-m dest\(ulport] [-m port1,port2]
+.RE
+
+.RS
+.TP 10
+
+.sp
 sminfo 
 Specifies SM information.
 
@@ -391,7 +395,7 @@ Specifies LED information.
 .TP 10
 -h 0 
 .NL
-First active port in system (default).
+First active port in system (Default).
 
 .TP 10
 -h 0 -p 0 
@@ -422,7 +426,7 @@ HFI \fIx\fR, port \fIy\fR.
 
 .SH otype Options Vary by Report
 .NL
-
+[-m port|port1,port2] [-f lid] [-b block[,count]]
 .TP 10
 -m \fIport\fR 
 .NL
@@ -434,7 +438,7 @@ Specifies the port in destination device to query.
 For some reports, specifies a range of ports between \fIport1\fR and \fIport2\fR. For others, this describes an inport/outport pair.
 
 .TP 10
--f \fIflid\fR 
+-f \fIlid\fR
 .NL
 Specifies the LID to look up in forwarding table to select which LFT or MFT block to display. Default is to show entire table.
 

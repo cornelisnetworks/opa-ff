@@ -41,7 +41,7 @@ Produces full help text.
 .NL
 Specifies the output file for captured packets.
 .br
-Default = packetDump.pcap 
+Default is packetDump.pcap
 
 .TP 10
 -d \fIdevfile\fR 
@@ -63,7 +63,7 @@ Specifies the file used for triggering a stop capture. If absent, normal trigger
 .TP 10
 -l \fItriggerlag\fR 
 .NL
-Specifies the number of packets to collect after trigger condition is met, before dumping data and exiting. Default = 10.
+Specifies the number of packets to collect after trigger condition is met, before dumping data and exiting. Default is 10.
 
 .TP 10
 -a \fIalarm\fR 
@@ -78,7 +78,7 @@ Specifies the number of packets for alarm trigger to dump capture and exit.
 .TP 10
 -s \fImaxblocks\fR 
 .NL
-Specifies the number of blocks to allocate for ring buffer. Value is in Millions. Default = 2 which corresponds to 128 MiB because 1 block = 64 Bytes.
+Specifies the number of blocks to allocate for ring buffer. Value is in Millions. Default is 2 which corresponds to 128 MiB because 1 block = 64 Bytes.
 
 .TP 10
 -v 

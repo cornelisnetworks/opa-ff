@@ -54,7 +54,7 @@ appl mpi_apps.tgz:
 		Makefile mpi_hosts.sample README prepare_run select_mpi run_bw \
 		get_selected_mpi.sh get_mpi_cc.sh *.params gen_group_hosts \
 		gen_mpi_hosts mpi_cleanup stop_daemons \
-		hpl_dat_gen config_hpl2 run_hpl2 run_lat run_pmb \
+		hpl_dat_gen config_hpl2 run_hpl2 run_lat \
 		run_imb run_lat2 run_bw2 run_bibw2 run_bcast2 run_app runmyapp \
 		mpicheck run_mpicheck deviation run_deviation \
 	    run_multibw run_mpi_stress run_osu \
@@ -62,7 +62,8 @@ appl mpi_apps.tgz:
 		run_alltoall3 run_bcast3 run_bibw3 run_bw3 run_lat3 run_mbw_mr3 \
 		run_multi_lat3 run_batch_script run_batch_cabletest \
 		hpl-count.diff \
-		hpl-config/HPL.dat* hpl-config/README;
+		hpl-config/HPL.dat* hpl-config/README \
+		mpicc mpif77;
 
 cleandepend clean:: clobber
 clobber:: CLOBBER

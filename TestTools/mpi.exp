@@ -106,9 +106,9 @@ proc build_mpd_hosts { file host host_list } {
 		if { $hn == "$host" } {
 			continue
 		}
-		unix_cmd 10 0 "echo $hn:$mpd($hn) >> $file"
+		unix_cmd 10 0 "echo $hn >> $file"
 	}
-	unix_cmd 10 0 "echo $host:$mpd($host) >> $file"
+	unix_cmd 10 0 "echo $host >> $file"
 	return [array size mpd]
 }
 
@@ -372,11 +372,11 @@ proc test_case_run_mvapich2_mpi_app { transport host host_list timelimit dir mpi
 		
 		set np [llength $host_list]
 		# start mpd
-		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpdboot -n \`cat /etc/mpd.hosts | wc -l\` -r ssh -f /etc/mpd.hosts; echo DONE"
+		send_unix_cmd "/usr/sbin/opacmdall -f /etc/mpd.hosts \"cat /etc/mpd.hosts | wc -l\"; echo DONE"
 		expect_list 60 { "echo DONE" "DONE" } { "failed" "error" "fault" }
 		check_exit_status 20 0
         
-		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun -n $np $add_mpi_env ./$mpi_cmd $mpi_args;echo DONE"
+		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun -n $np $add_mpi_env -hostfile /etc/mpd.hosts ./$mpi_cmd $mpi_args;echo DONE"
 		if { $show_perf } {
 			set perf_var perf
 		} else {
@@ -384,7 +384,6 @@ proc test_case_run_mvapich2_mpi_app { transport host host_list timelimit dir mpi
 		}
 		expect_progress $timelimit {[0-9]} { "echo DONE" {[0-9]} "DONE" } { "FAIL" "DISCONNECT" "timeout" "abort" "ERROR" "usage:" "Usage:" "THH" "No such" "rejected" "Assertion" "Fatal" "Abort:" "No route to host" "Killing" "Abort signal" "forked process failed" "open failed for" "egmentation fault" "died unexpectedly" "aborting" "unable to launch"} $perf_var
 		expect_unix_prompt 60
-		unix_cmd 20 0 "$env(MPICH_PREFIX)/bin/mpdallexit"
     }
 	test_execute {} {
 		if { "$tools_case_status" == "okay" } {

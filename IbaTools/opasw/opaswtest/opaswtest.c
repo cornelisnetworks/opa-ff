@@ -99,6 +99,8 @@ static void usage(char *app_name)
 	fprintf(stderr, "        18 - dump primary FW EEPROMs\n");
 	fprintf(stderr, "        19 - probe mgmt fpga on EDF\n");
 	fprintf(stderr, "        20 - asic rev\n");
+	fprintf(stderr, "        21 - VMA I2C read using arbitrary Location, length, and offset\n");
+	fprintf(stderr, "        22 - VMA I2C write using arbitrary Location, offset, and data bytes\n");
 	fprintf(stderr, "   -K - enforce password based security for all operations - prompts for password\n");
 	fprintf(stderr, "   -w - enforce password based security for all operations - password on command line\n");
 	fprintf(stderr, "\n");
@@ -966,6 +968,88 @@ printf("TEST 16!!!\n");
 			printf("Version is 0x%02x Chip name is %s step&rev %c%d \n", (asicVal2 & 0x00ff0000) >> 16, ((asicVal2 & 0x0000ff00) >> 8) == 2 ? "PRR" : "Unknown", ((asicVal2 & 0x000000f0) >> 4) + 'A', asicVal2 & 0x0000000f);
 			break;
 
+		case 21:
+		{
+			int rc;
+			uint32 offset;
+			char *in;
+			// prompt for location and, optionally, offset, & length
+			printf("Enter location in hex (speed:2,reserved:6,flags:4,bus:4,addr:8,slot:8), [offset & length]: ");
+			rc = scanf("%m[^\n]", &in);
+			if (rc > 0) {
+				rc = sscanf(in, "%x %x %x", &location, &offset, &dataSize);
+				if (rc >= 1) {
+					if (rc < 3) {
+						// defaults if user didn't specify
+						dataSize = 1;
+						offset = 0;
+					}
+					dataOffset = (uint16) offset;
+					printf("Querying location 0x%08x, offset 0x%08x for %d bytes\n", location, dataOffset, dataSize);
+					status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad,
+											  NOJUMBOMAD, MMTHD_GET, 2000, location, dataSize, dataOffset, dataBuffer);
+					if (status == FSUCCESS) {
+						opaswDisplayBuffer((char *)dataBuffer, dataSize);
+					} else {
+						fprintf(stderr, "%s: Error: Failed to send/rcv i2cAccess MAD for loc 0x%08x offset %d\n", cmdName, location, dataOffset);
+					}
+				}
+				free(in);
+			}
+			break;
+		}
+
+		case 22:
+		{
+			int rc;
+			int i = 0;
+			char *in;
+			char *tok;
+			char *ctxt;
+			char *delim = " \t\n";
+			uint32 tmp;
+			dataOffset = 0;	// keep compiler happy
+			printf("Enter location, offset, and data bytes (in hex): ");
+			rc = scanf("%m[^\n]", &in);
+			if (rc > 0) {
+				tok = strtok_r(in, delim, &ctxt);
+				while (NULL != tok) {
+					rc = sscanf(tok, "%x", &tmp);
+					if (rc > 0) {
+						if (0 == i)
+							location = tmp;
+						else if (1 == i)
+							dataOffset = (uint16)tmp;
+						else {
+							dataBuffer[i-2] = (uint8)tmp;
+						}
+						i++;
+					} else {
+						fprintf(stderr, "%s: Error: \"%s\" is not a hex number\n",cmdName, tok);
+						status = FERROR;
+						break;
+					}
+					tok = strtok_r(NULL, delim, &ctxt);
+				}
+				if (status == FSUCCESS) {
+					if (i > 2) {
+						// parsing was successful and we got location, offset, and at least 1 data byte
+						dataSize = i-2;
+						printf("Writing location 0x%08x, offset 0x%08x with %d bytes\n", location, dataOffset, dataSize);
+						status = sendI2CAccessMad(omgt_port_session, &path, sessionID, &mad,
+												  NOJUMBOMAD, MMTHD_SET, 2000, location, dataSize, dataOffset, dataBuffer);
+						if (status != FSUCCESS) {
+							fprintf(stderr, "%s: Error: Failed to send/rcv i2cAccess MAD for loc 0x%08x offset %d\n", cmdName, location, dataOffset);
+						}
+					} else {
+						fprintf(stderr, "%s: Error: Expected at least 3 tokens, only got %d\n", cmdName, i);
+						status = FERROR;
+					}
+				}
+				free(in);
+			}
+			break;
+		}
 		default:
 			fprintf(stderr, "Invalid test number\n");
 			usage(cmdName);

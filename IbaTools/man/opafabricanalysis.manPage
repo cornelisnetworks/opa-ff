@@ -25,17 +25,17 @@ opafabricanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\f
 .NL
 
 .TP 10
--- help 
+--help
 .NL
 Produces full help text.
 .TP 10
 -b 
 .NL
-Specifies the baseline mode, default is compare/check mode.
+Specifies the baseline mode. Default is compare/check mode.
 .TP 10
 -e 
 .NL
-Evaluates health only, default is compare/check mode.
+Evaluates health only. Default is compare/check mode.
 .TP 10
 -s 
 .NL
@@ -43,15 +43,15 @@ Saves history of failures (errors/differences).
 .TP 10
 -d dir 
 .NL
-Specifies the top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa/analysis 
+Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
 .TP 10
 -c file 
 .NL
-Specifies the error thresholds config file.Default = /etc/opa/opamon.conf 
+Specifies the error thresholds config file.Default is /etc/opa/opamon.conf
 .TP 10
 -t portsfile 
 .NL
-Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default = /etc/opa/ports 
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports
 .TP 10
 -p ports 
 .NL
@@ -100,7 +100,7 @@ HFI \fIx\fR, port \fIy\fR.
 .TP 10
 -T \fItopology\(ulinput\fR 
 .NL
-Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on (such as 0:0 or 1:2). Default = /etc/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
+Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on (such as 0:0 or 1:2). Default is /etc/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
 \fIDetails\fR
 and 
 \fIopareport\fR

@@ -1,0 +1,25 @@
+#! /bin/bash
+# A simple wrapper of mpif77 to force it uses RPATH
+#set -x
+echo "REAL_MPIF77=$REAL_MPIF77"
+# generate compile string and replace 'enable-new-dtags' with 'disable-new-dtags'
+# to force use RPATH. Given we can have space in quoted string that will cause
+# wrong word splitting, we split string into arguments by ourselves with ' -'.
+# To do it, we replace ' -' with '\n-' and then split the string with customized
+# IFS that is set to new line
+cmd_str=$($REAL_MPIF77 -show "$@" | sed -e 's/enable-new-dtags/disable-new-dtags/g' -e 's/[[:space:]]\+-/\n-/g')
+OLDIFS=$IFS
+IFS=$'\n'
+args=()
+# for each argument that constains '"', we escape special characters in the argument.
+# Please note that an argument only can contains one quoted string, so it's fine
+# to do escape in the whole string
+for arg in ${cmd_str[@]}; do
+  if [[ "$arg" == *\"* ]]; then
+    args+=" $'$arg'"
+  else
+    args+=" $arg"
+  fi
+done
+IFS=$OLDIFS
+eval "${args[*]}"

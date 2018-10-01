@@ -69,6 +69,7 @@ MISC_FILES		= opatop_group_bw.hlp opatop_group_config.hlp \
 				opatop_pm_config.hlp opatop_port_stats.hlp \
 				opatop_summary.hlp opatop_vf_bw.hlp \
 				opatop_vf_config.hlp opatop_vf_info_sel.hlp \
+				opatop_vf_port_stats.hlp \
 				# Add more MISC_FILES here
 # all source files
 SOURCES			= $(CFILES) $(CCFILES) $(LFILES) $(RSCFILES) $(IDLFILE)

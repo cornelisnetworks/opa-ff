@@ -47,45 +47,65 @@ then
 	cp $from $to
 fi
 
+sed -i "s/__RPM_FS/OPA_FEATURE_SET=$OPA_FEATURE_SET/g" $to
 
 source ./OpenIb_Host/ff_filegroups.sh
 
 if [ "$id" = "rhel"  -o "$id" = "centos" ]
 then
 	GE_7_4=$(echo "$versionid >= 7.4" | bc)
+	GE_7_5=$(echo "$versionid >= 7.5" | bc)
+
+	# __RPM_REQ_BASIC -
+	sed -i "s/__RPM_REQ_BASIC/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" $to
+	
+	# __RPM_REQ_OPAMGT_DEV - different for RHEL7.4 and greater
+	if [ $GE_7_4 = 1 ]
+	then
+		sed -i "s/__RPM_REQ_OPAMGT_DEV/rdma-core-devel, openssl-devel, opa-libopamgt/g" $to
+	else
+		sed -i "s/__RPM_REQ_OPAMGT_DEV/libibumad-devel, libibverbs-devel, openssl-devel, opa-libopamgt/g" $to
+	fi
+
+	# __RPM_BLDREQ - different for RHEL 7.5, RHEL7.4, or earlier
 	if [ $GE_7_4 = 1 ]
 	then
 		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, ibacm-devel/g" $to
-		sed -i "s/__RPM_RQ3/rdma-core-devel, openssl-devel, opa-libopamgt/g" $to
 	else
 		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
-		sed -i "s/__RPM_RQ3/libibumad-devel, libibverbs-devel, openssl-devel, opa-libopamgt/g" $to
 	fi
-	sed -i "s/__RPM_REQ/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}, libibmad%{?_isa}/g" $to
-	sed -i "s/__RPM_RQ2/libibumad%{?_isa}, libibverbs%{?_isa}, openssl%{?_isa}/g" $to
-	sed -i "/__RPM_DEBUG/,+1d" $to
+	# __RPM_REQ_ADDR_RES,__RPM_REQ_OPAMGT and __RPM_DEBUG same for all RHEL versions
+	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools ibacm/g" $to
+	sed -i "s/__RPM_REQ_OPAMGT/libibumad%{?_isa}, libibverbs%{?_isa}, openssl%{?_isa}/g" $to
+	sed -i "/__RPM_DEBUG_PKG/,+1d" $to
 elif [ "$id" = "sles" ]
 then
 	GE_11_1=$(echo "$versionid >= 11.1" | bc)
 	GE_12_2=$(echo "$versionid >= 12.2" | bc)
 	GE_12_3=$(echo "$versionid >= 12.3" | bc)
+
+	# __RPM_DEBUG_PKG - needed for SLES 11.1 and greater
 	if [ $GE_11_1 = 1 ]
 	then
-		sed -i "s/__RPM_DEBUG/%debug_package/g" $to
+		sed -i "s/__RPM_DEBUG_PKG/%debug_package/g" $to
 	else
-		sed -i "/__RPM_DEBUG/,+1d" $to
+		sed -i "/__RPM_DEBUG_PKG/,+1d" $to
 	fi
+
+	# __RPM_REQ_BASIC, __RPM_BLDREQ, and __RPM_REQ_OPAMGT_DEV different for SLES 12.3 and greater
 	if [ $GE_12_3 = 1 ]
 	then
-		sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
+		sed -i "s/__RPM_REQ_BASIC/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
 		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, ibacm-devel/g" $to
-		sed -i "s/__RPM_RQ3/rdma-core-devel, libopenssl-devel, opa-libopamgt/g" $to
+		sed -i "s/__RPM_REQ_OPAMGT_DEV/rdma-core-devel, libopenssl-devel, opa-libopamgt/g" $to
 	else
-		sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
+		sed -i "s/__RPM_REQ_BASIC/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
 		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
-		sed -i "s/__RPM_RQ3/libibumad-devel, libibverbs-devel, libopenssl-devel, opa-libopamgt/g" $to
+		sed -i "s/__RPM_REQ_OPAMGT_DEV/libibumad-devel, libibverbs-devel, libopenssl-devel, opa-libopamgt/g" $to
 	fi
-	sed -i "s/__RPM_RQ2/libibumad3, libibverbs1, openssl/g" $to
+
+	# __RPM_REQ_OPAMGT same for all SLES versions
+	sed -i "s/__RPM_REQ_OPAMGT/libibumad3, libibverbs1, openssl/g" $to
 else
 	echo ERROR: Unsupported distribution: $id $versionid
 	exit 1
@@ -103,10 +123,6 @@ do
 		for i in $basic_tools_opt
 		do
 			echo "/usr/lib/opa/tools/$i" >> .tmpspec
-		done
-		for i in $basic_lib_opa_opt
-		do
-			echo "/usr/lib/opa/$i" >> .tmpspec
 		done
 		for i in $basic_mans
 		do
@@ -158,6 +174,21 @@ do
 		for i in $shmem_apps_files
 		do
 			echo "/usr/src/opa/shmem_apps/$i" >> .tmpspec
+		done
+	else
+		echo "$line" >> .tmpspec
+	fi
+done < $to
+mv .tmpspec $to
+
+> .tmpspec
+while read line
+do
+	if [ "$line" = "__RPM_SNAP_FILES" ]
+	then
+		for i in $opasnapconfig_bin
+		do
+			echo "/usr/lib/opa/tools/$i" >> .tmpspec
 		done
 	else
 		echo "$line" >> .tmpspec

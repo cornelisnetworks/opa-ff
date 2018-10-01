@@ -31,6 +31,8 @@
 # Include Make Control Settings
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
 
+include $(TL_DIR)/Makerules/Rules.baseFiles
+
 #=============================================================================#
 # Definitions:
 #-----------------------------------------------------------------------------#
@@ -102,14 +104,17 @@ endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES74"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL74.pl
 endif
-ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES121"
-        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES121.pl
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES75"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL75.pl
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES122"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES122.pl
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES123"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES123.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES15"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES15.pl
 endif
 
 COMP_SOURCES= \
@@ -135,7 +140,7 @@ CMD_TARGETS_MISC	= opacapture INSTALL.pl comp.pl
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
 # other files to remove during clobber phase
-CLOBBER_TARGETS_MISC= 
+CLOBBER_TARGETS_MISC= opacapture.sh
 # sub-directory to install to within bin
 BIN_SUBDIR		= 
 # sub-directory to install to within include
@@ -196,8 +201,6 @@ INSTALL.pl: $(INSTALL_SOURCES)
 comp.pl:
 	cat $(PREREQ_SOURCE) $(COMP_SOURCES) > comp.pl
 	chmod +x comp.pl
-	cp comp.pl $(TL_DIR)/OpenIb_Host/.comp_fastfabric.pl
-	cp comp.pl $(TL_DIR)/OpenIb_Host/.comp_oftools.pl
 
 # install for stage phase
 #include $(TL_DIR)/Makerules/Maketargets.stage
@@ -216,22 +219,7 @@ STAGE:
 # be a subset of things found in stage
 # TBD - make some of these "make variables" so this can be a simple sequence
 # of commands and make will test exit codes for us
-package:
-	mkdir -p $(RELEASE_DIR)
-	rm -f packaged_files dist_files
-	cd $(STAGE_DIR) ; \
-	dir=`echo IntelOPA-Tools-FF.*`; \
-	ver=`expr IntelOPA-Tools-FF.* : 'IntelOPA-Tools-FF.\(.*\)$$'`; \
-	rm -rf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
-	mkdir -p $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
-	cp -r $$dir/arch $$dir/distro $$dir/distro_version $$dir/os_id $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
-	cp -r $$dir/INSTALL $$dir/comp.pl $$dir/README $$dir/version $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
-	cp -r $$dir/Lsf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
-	cp -r $$dir/Moab $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/dist_files; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/dist_files; \
+
 
 # TBD - make some of these "make variables" so this can be a simple sequence
 # of commands and make will test exit codes for us
@@ -250,6 +238,9 @@ ifeq "$(BUILD_TARGET_OS_VENDOR)" "ubuntu"
 	SRPM_EXT := {.tar.xz,.dsc,_$(RPM_ARCH).changes}
 	RPM_EXT := _$(RPM_ARCH).deb
 	DEBUG_EXT := _$(RPM_ARCH).ddeb
+	EXT := deb
+	pkg_arch = _$(DEB_TARGET_ARCH)
+	pkg_ver = _$${MKRPM_VER}
 else
 	RPM_ARCH := $(DIR_ARCH)
 	RPMDIR := $(TL_DIR)/rpmbuild
@@ -262,9 +253,34 @@ else
 	SRPM_EXT := .src.rpm
 	RPM_EXT := .$(RPM_ARCH).rpm
 	DEBUG_EXT := $(RPM_EXT)
+	EXT := rpm
+	pkg_arch = .`echo $(BUILD_TARGET) | tr '[A-Z]' '[a-z]'`
+	pkg_ver = -$${MKRPM_VER}
 endif
 
+package:
+	mkdir -p $(RELEASE_DIR)
+	rm -f packaged_files dist_files
+	cd $(STAGE_DIR) ; \
+	dir=`echo IntelOPA-Tools-FF.*`; \
+	ver=`expr IntelOPA-Tools-FF.* : 'IntelOPA-Tools-FF.\(.*\)$$'`; \
+	arch=$(pkg_arch); \
+	vers=$(pkg_ver); \
+	rm -rf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
+	mkdir -p $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
+	cp -r $$dir/arch $$dir/distro $$dir/distro_version $$dir/os_id $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
+	cp -r $$dir/INSTALL $$dir/comp.pl $$dir/README $$dir/version $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
+	cp -r $$dir/Lsf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
+	cp -r $$dir/Moab $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
+	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
+	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/dist_files; \
+	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
+	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/dist_files; \
+	echo "$(RELEASE_DIR)/opa-snapconfig$${vers}-$${MKRPM_REL}$${arch}.$(EXT)" >> $(TL_DIR)/packaged_files; \
+	echo "$(RELEASE_DIR)/opa-snapconfig$${vers}-$${MKRPM_REL}$${arch}.$(EXT)" >> $(TL_DIR)/dist_files; \
+
 final_package:
+	mkdir -p $(RELEASE_DIR)
 	cd $(RPMDIR); \
 	dir=`grep 'IntelOPA-Tools-FF\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs dirname`; \
 	filename=`grep 'IntelOPA-Tools-FF\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs basename`; \
@@ -292,6 +308,8 @@ final_package:
 	cp $(RPMSDIR)/opa-libopamgt$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$basicrpmdir/ || echo "ERR""OR: cp $$basicrpmdir."; \
 	cp $(RPMSDIR)/opa-libopamgt-$(DEVEL)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$basicrpmdir/ || echo "ERR""OR: cp $$basicrpmdir."; \
 	cp $(RPMSDIR)/opa-mpi-apps$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/ || echo "ERR""OR: cp $$rpmdir."; \
+	cp $(RPMSDIR)/opa-snapconfig$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$dir/ || echo "ERR""OR: cp $$dir."; \
+	cp $(RPMSDIR)/opa-snapconfig$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $(RELEASE_DIR)/ || echo "ERR""OR: cp $$dir."; \
 	if [ "$(BUILD_TARGET_OS_VENDOR)" = "redhat" ]; then \
 		cp $(RPMSDIR)/opa-$(DEBUGINFO)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(DEBUG_EXT) $$rpmdir/;  \
 	fi; \

@@ -70,6 +70,8 @@ static int scan_ring_take = 0;
 
 static op_ppath_writer_t shared_memory_writer;
 
+struct sigaction new_action, old_action;
+
 static char *port_event[] = {
 	"Source Port Up",
 	"Source Port Down",
@@ -889,8 +891,12 @@ void dsap_port_event(uint64 src_guid, uint64 src_subnet, uint64 dest_guid,
 }
 
 static void kill_proc_handler(int signo){
-  if (signo == SIGTERM)
-	dsap_scanner_cleanup();
+	if (signo == SIGTERM) {
+		dsap_scanner_cleanup();
+		if(sigaction(SIGTERM, &old_action, NULL) < 0)
+                	acm_log(2, "Signal handler Restore failed \n");
+		raise(SIGTERM);
+	}
 }
 
 #define SCAN_DELAY 5
@@ -908,7 +914,12 @@ static void * dsap_scanner(void* dummy)
 	uint64                 since_scan;
 
 	acm_log(2, "\n");
-	if(signal(SIGTERM, kill_proc_handler) == SIG_ERR)
+
+	/* Setting up signal handler to cleanup database*/
+	new_action.sa_handler = kill_proc_handler;
+	sigemptyset (&new_action.sa_mask);
+	new_action.sa_flags = 0;
+	if(sigaction(SIGTERM, &new_action, &old_action) < 0)
 		acm_log(2, "Signal handler Init failed \n");
 
 	timeout_sec = 0;

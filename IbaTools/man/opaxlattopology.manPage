@@ -35,7 +35,7 @@ Produces full help text.
 .TP 10
 -d \fIlevel\fR 
 .NL
-Specifies the output detail level. Default = 0. Levels are additive.
+Specifies the output detail level. Default is 0. Levels are additive.
 
 .IP
 By default, the top level is always produced. Switch, rack, and rack group topology files can be added to the output by choosing the appropriate level. If the output at the group or rack level is specified, then group or rack names must be provided in the spreadsheet. Detailed output can be specified in any combination. A directory for each topology XML file is created hierarchically, with group directories (if specified) at the highest level, followed by rack and switch directories (if specified).
@@ -69,7 +69,7 @@ Rack group topology files.
 .TP 10
 -v \fIlevel\fR 
 .NL
-Specifies the verbose level. Range = 0 - 8. Default = 2.
+Specifies the verbose level. Range is 0 - 8. Default is 2.
 
 .RS
 .TP 10
@@ -119,7 +119,7 @@ Reserved.
 .TP 10
 -i \fIlevel\fR 
 .NL
-Specifies the output indent level. Default = 4.
+Specifies the output indent level. Default is 4.
 
 .TP 10
 -K 
@@ -162,6 +162,18 @@ Creates the <LinkSummary> section xml for the csv input.
 
 .RE
 
+.TP 10
+source
+.NL
+Specifies the source csv file. Default is topology.csv.
+
+.TP 10
+dest
+.NL
+Specifies the output xml file. Default is topology.0:0.xml
+
+.IP
+The default output file name may vary if used with -s option. It can also be used to specify destination folder.
 .SH Description
 .NL
 
@@ -192,12 +204,12 @@ The following environment variables allow user-specified MTU.
 .TP 10
 \fBMTU\(ulSW\(ulSW\fR 
 .NL
-If set, it overrides default MTU on switch-to-switch links. Default = 10240
+If set, it overrides default MTU on switch-to-switch links. Default is 10240
 
 .TP 10
 \fBMTU\(ulSW\(ulHFI\fR 
 .NL
-If set, it overrides default MTU on switch-to-HFI links. Default = 10240
+If set, it overrides default MTU on switch-to-HFI links. Default is 10240
 
 .SH Creating linksum Files
 .NL

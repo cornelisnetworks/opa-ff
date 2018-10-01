@@ -37,7 +37,7 @@ Produces full help text.
 .TP 10
 -C 
 .NL
-Performs operation against chassis. Default = host.
+Performs operation against chassis. Default is host.
 .TP 10
 -f \fIhostfile\fR 
 .NL

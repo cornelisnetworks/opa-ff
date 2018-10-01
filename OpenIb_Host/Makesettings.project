@@ -72,7 +72,6 @@
 
 IB_STACK=OPENIB
 #PROJ_SM_DIR=$(TL_DIR)/Esm/ib
-DEFS_VERSION=stl1
 
 #-----------------------------------------------------------------------------#
 # Platform specific definitions:

@@ -489,7 +489,10 @@ main(int argc, char *argv[])
 
 	int min_rank, max_rank, num_pairs;
 	struct partner round_fastest, round_slowest;
-	double min_lat, max_lat, avg_lat;
+	int found_fastest = 0;
+	int found_slowest = 0;
+	double min_lat, max_lat;
+	double avg_lat = 0;
 	double final_min = 99999999.0, final_max = 0.0;
 	double round_min, round_max;
 
@@ -643,11 +646,13 @@ main(int argc, char *argv[])
 			if (my_id == 0 && min_lat < round_min) {
 				round_min = min_lat;
 				round_fastest = pair_list[min_rank];
+				found_fastest=1;
 				if (round_min < final_min) final_min = round_min;
 			}
 			if (my_id == 0 && max_lat > round_max) {
 				round_max = max_lat;
 				round_slowest = pair_list[max_rank]; 
+				found_slowest = 1;
 				if (round_max > final_max) final_max = round_max;
 			}	
 		}
@@ -656,15 +661,19 @@ main(int argc, char *argv[])
 
 		if (my_id == 0) {
 			if (!csv) {
-			printf("Avg Latency:\t%0.2f\n",avg_lat);
-			printf("Fastest Pair:\n%"add_quotes(MAX_HOST_LEN)"s -> %"add_quotes(MAX_HOST_LEN)"s\t%0.2f\n",
-					host_list[round_fastest.sender].name,
-					host_list[round_fastest.receiver].name,
-					round_min);
-			printf("Slowest Pair:\n%"add_quotes(MAX_HOST_LEN)"s -> %"add_quotes(MAX_HOST_LEN)"s\t%0.2f\n",
-					host_list[round_slowest.sender].name,
-					host_list[round_slowest.receiver].name,
-					round_max);
+				printf("Avg Latency:\t%0.2f\n",avg_lat);
+				if(found_fastest) {
+					printf("Fastest Pair:\n%"add_quotes(MAX_HOST_LEN)"s -> %"add_quotes(MAX_HOST_LEN)"s\t%0.2f\n",
+						host_list[round_fastest.sender].name,
+						host_list[round_fastest.receiver].name,
+						round_min);
+				}
+				if(found_slowest) {
+					printf("Slowest Pair:\n%"add_quotes(MAX_HOST_LEN)"s -> %"add_quotes(MAX_HOST_LEN)"s\t%0.2f\n",
+						host_list[round_slowest.sender].name,
+						host_list[round_slowest.receiver].name,
+						round_max);
+				}
 			} 
 			done = (minutes > 0) && (done_time < time(NULL));
 		}

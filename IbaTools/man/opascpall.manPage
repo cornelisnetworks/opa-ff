@@ -97,12 +97,6 @@ Specifies the name of the destination file or directory to copy to. If more than
 
 .SH Example 
 .NL
-# copy a single file
-.br
-opascpall MPI-PMB /root/MPI-PMB
-.br
-
-.br
 # efficiently copy an entire directory tree
 .br
 opascpall -t -p /usr/src/opa/mpi\(ulapps /usr/src/opa/mpi\(ulapps

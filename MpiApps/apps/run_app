@@ -103,7 +103,7 @@ MONITOR_FILE=
 CODE_FILES=
 
 loop=n
-if [ x"$1" == "x-l" ]
+if [ x"$1" = "x-l" ]
 then
 	loop=y
 	shift
@@ -126,7 +126,7 @@ else
 	chassis_arg=
 fi
 
-if [ "x$APP" == "x" ]
+if [ "x$APP" = "x" ]
 then
 	# get command name part of APP_CMD (eg. remove arguments)
 	app=`(set $APP_CMD; echo $1)`

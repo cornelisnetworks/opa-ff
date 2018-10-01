@@ -58,7 +58,7 @@ For directories specified, all .pkg, .dpkg, and .spkg files in directory tree ar
 .IP \(bu
 For fmconfig, filename of FM config file is used.
 .IP \(bu
-For fmgetconfig, filename to upload to (default opafm.xml) is used.
+For fmgetconfig, filename to upload to is used. Default opafm.xml.
 
 .RE
 
@@ -260,7 +260,7 @@ Enables FM start on all MM at chassis boot.
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Specifies the directory to upload FM configuration files to; default is uploads.
+Specifies the directory to upload FM configuration files to. Default is uploads.
 
 .TP 10
 -S 
@@ -547,4 +547,4 @@ Results from opachassisadmin are grouped into test suites, test cases, and test 
 .PP
 Each opachassisadmin run appends to test.res and test.log, and creates temporary files in test\(ultmp$PID in the current directory. The test.res file provides an overall summary of operations performed and their results. The same information is also displayed while opachassisadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files that reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opachassisadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opachassisadmin.
 .PP
-opachassisadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. Twenty (20) parallel operations is the default.
+opachassisadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. 1000 parallel operations is the default.

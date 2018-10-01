@@ -4,9 +4,7 @@ basic_tools_sbin="opacapture opafabricinfo opagetvf opagetvf_env opahfirev
 
 basic_tools_sbin_sym="opapmaquery opaportconfig"
 
-basic_tools_opt="setup_self_ssh usemem opaipcalc"
-
-basic_lib_opa_opt=".comp_fastfabric.pl .comp_oftools.pl"
+basic_tools_opt="setup_self_ssh usemem opaipcalc stream"
 
 basic_mans="opacapture.1 opaconfig.1 opafabricinfo.1 opagetvf.1
 	opagetvf_env.1 opahfirev.1 opainfo.1 opapacketcapture.1 opapmaquery.1
@@ -98,13 +96,15 @@ opamgt_examples="paquery.c saquery.c simple_sa_query.c simple_sa_notice.c simple
 
 mpi_apps_files="Makefile mpi_hosts.sample README prepare_run select_mpi run_bw
 	get_selected_mpi.sh get_mpi_cc.sh *.params gen_group_hosts gen_mpi_hosts
-	mpi_cleanup stop_daemons hpl_dat_gen config_hpl2 run_hpl2 run_lat run_pmb run_imb run_lat2
+	mpi_cleanup stop_daemons hpl_dat_gen config_hpl2 run_hpl2 run_lat run_imb run_lat2
 	run_bw2 run_bibw2 run_bcast2 run_app runmyapp mpicheck run_mpicheck run_deviation
 	run_multibw run_mpi_stress run_osu run_cabletest run_allhfilatency run_nxnlatbw
 	run_alltoall3 run_bcast3 run_bibw3 run_bw3 run_lat3 run_mbw_mr3 run_multi_lat3
 	run_batch_script run_batch_cabletest hpl-count.diff groupstress deviation
-	hpl-config/HPL.dat-* hpl-config/README"
+	hpl-config/HPL.dat-* hpl-config/README mpicc mpif77"
 
 shmem_apps_files="Makefile mpi_hosts.sample prepare_run README select_mpi run_barrier
 	run_get_bibw run_get_bw run_get_latency run_put_bibw run_put_bw run_put_latency
 	run_reduce run_hello run_alltoall shmem-hello.c"
+
+opasnapconfig_bin="opasnapconfig"

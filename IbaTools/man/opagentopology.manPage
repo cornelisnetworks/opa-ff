@@ -15,7 +15,7 @@ opagentopology
 .PP
 Generates sample topology verification XML. Provides an example of using opaxmlgenerate and is a prototype for customization.
 .PP
-Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
+Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information, respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
 .PP
 LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:
 .PP
@@ -41,6 +41,31 @@ opaxmlgenerate -X /usr/share/opa/samples/opatopology\(ul2.txt -d \;
 -h Node -g NodeGUID -g NodeDesc -g NodeDetails -g HostName -g NodeType
 .br
 -g NodeType\(ulInt -g NumPorts -e Node
+.NL
+
+.SH Syntax
+.NL
+/usr/share/opa/samples/opagentopology --help
+.PP
+
+.B NOTE:
+You must use the full path to access this command.
+
+.NL
+
+.SH Options
+.NL
+
+.TP 10
+No option
+.NL
+Produces sample output. See
+\fIExample\fR
+.
+.TP 10
+--help
+.NL
+Produces full help text.
 .NL
 
 .SH opatopology\(ullinks.txt
@@ -118,7 +143,9 @@ about SM
 
 .br
 
-.SH Example 
+.NL
+
+.SH Example
 .NL
 
 .PP

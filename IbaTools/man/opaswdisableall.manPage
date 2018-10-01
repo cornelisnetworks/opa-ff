@@ -18,7 +18,7 @@ opaswdisableall
 Disables all unused switch ports.
 .SH Syntax
 .NL
-opaswdisableall [-t \fIportsfile\fR] [-p \fIports\fR] [-F \fIfocus\fR] [-K \fImkey\fR]
+opaswdisableall [-t \fIportsfile\fR] [-p \fIports\fR] [-F \fIfocus\fR]
 .SH Options
 .NL
 
@@ -83,11 +83,6 @@ HFI \fIx\fR, port \fIy\fR.
 -F \fIfocus\fR 
 .NL
 Specifies the an opareport -style focus argument to limit the scope of operation.
-
-.TP 10
--K \fImkey\fR 
-.NL
-Specifies the SM management key to access remote ports.
 
 .SH Examples 
 .NL

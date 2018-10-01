@@ -16,7 +16,7 @@ opatop
 Starts the Fabric Performance Monitor (opatop) Text-based User Interface (TUI) menu to display performance, congestion, and error information about a fabric.
 .SH Syntax
 .NL
-opatop [-v] [-q] [-h \fIhfi\fR] [-p \fIport\fR] [-i \fIseconds\fR]
+opatop [-v] [-q] [-h \fIhfi\fR] [-p \fIport\fR] [--timeout] [-i \fIseconds\fR]
 .SH Options
 .NL
 
@@ -60,17 +60,22 @@ Disables progress reports.
 .TP 10
 -h/--hfi \fIhfi\fR 
 .NL
-Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
 -p/--port \fIport\fR 
 .NL
-Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
+
+.TP 10
+--timeout
+.NL
+Specifies the timeout (response wait time) in ms. Default is 1000 ms.
 
 .TP 10
 -i/--interval \fIseconds\fR 
 .NL
-Interval in \fIseconds\fR at which PA queries are performed to refresh to the latest PA image. Default = 10 seconds.
+Interval in \fIseconds\fR at which PA queries are performed to refresh to the latest PA image. Default is 10 seconds.
 
 .NL
 
@@ -80,7 +85,7 @@ Interval in \fIseconds\fR at which PA queries are performed to refresh to the la
 .TP 10
 -h 0 
 .NL
-First active port in system (default).
+First active port in system (Default).
 
 .TP 10
 -h 0 -p 0 

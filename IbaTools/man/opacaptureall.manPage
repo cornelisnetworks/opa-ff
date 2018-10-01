@@ -74,12 +74,12 @@ Specifies the list of chassis on which to perform a capture.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-Specifies the file with list of local HFI ports used to access fabric(s) for switch access, default is /etc/opa/ports file.
+Specifies the file with list of local HFI ports used to access fabric(s) for switch access. Default is /etc/opa/ports file.
 
 .TP 10
 -d \fIupload\(uldir\fR 
 .NL
-Specifies the directory to upload to; default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default (./uploads) is used.
+Specifies the directory to upload to. Default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default ./uploads is used.
 
 .TP 10
 -S 

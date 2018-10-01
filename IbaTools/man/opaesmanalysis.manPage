@@ -49,11 +49,11 @@ Saves history of failures (errors/differences).
 .TP 10
 -d \fIdir\fR 
 .NL
-Specifies the top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa/analysis 
+Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
 .TP 10
 -G \fIesmchassisfile\fR 
 .NL
-Specifies the file with SM chassis in the cluster. Default = /etc/opa/esm\(ulchassis 
+Specifies the file with SM chassis in the cluster. Default is /etc/opa/esm\(ulchassis
 .TP 10
 -E \[aq]\fIesmchassis\fR\[aq] 
 .NL

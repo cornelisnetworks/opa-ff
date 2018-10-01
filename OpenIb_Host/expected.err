@@ -19,3 +19,4 @@ U HostTestCases/iv/tools/data/stl1_mpi/wfr_driver/BadLIDPktB.pkt
 U HostTestCases/iv/tools/data/stl1_mpi/wfr_driver/BadLIDPktC.pkt
 U HostTestCases/iv/tools/data/stl1_mpi/wfr_driver/BadOpcodeA.pkt
 U HostTestCases/iv/tools/data/stl1_mpi/wfr_driver/BadOpcodeB.pkt
+HostTests/EoSTL/CV/Tools/data/Host/EM/BadGW_spoofing.pkt

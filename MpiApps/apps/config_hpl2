@@ -81,7 +81,7 @@ then
 	exit 1
 fi
 
-if [ ! -d hpl-2.0/bin/$arch ]
+if [ ! -d hpl-2.2/bin/$arch ]
 then
 	echo " Could not find hpl2 compiled for $arch."
 	echo " Please compile hpl2 using:"
@@ -104,17 +104,17 @@ then
 	sed -e "6s/^[0-9]*/$2/" < $file > $TEMP_FILE
 	if [ $lopt = n ]
 	then
-		opascpall -p -h "`sort -u $MPI_HOSTS`" $TEMP_FILE $PWD/hpl-2.0/bin/$arch/HPL.dat
+		opascpall -p -h "`sort -u $MPI_HOSTS`" $TEMP_FILE $PWD/hpl-2.2/bin/$arch/HPL.dat
 	else
 		# avoid any cp alias
-		/bin/cp -f $TEMP_FILE $PWD/hpl-2.0/bin/$arch/HPL.dat
+		/bin/cp -f $TEMP_FILE $PWD/hpl-2.2/bin/$arch/HPL.dat
 	fi
 else
 	if [ $lopt = n ]
 	then
-		opascpall -p -h "`sort -u $MPI_HOSTS`" $file $PWD/hpl-2.0/bin/$arch/HPL.dat
+		opascpall -p -h "`sort -u $MPI_HOSTS`" $file $PWD/hpl-2.2/bin/$arch/HPL.dat
 	else
 		# avoid any cp alias
-		/bin/cp -f $file $PWD/hpl-2.0/bin/$arch/HPL.dat
+		/bin/cp -f $file $PWD/hpl-2.2/bin/$arch/HPL.dat
 	fi
 fi

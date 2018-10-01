@@ -79,7 +79,7 @@ Specifies the product type to install. Default is IntelOPA-Basic. \fI<distro>\fR
 .TP 10
 -P \fIpackages\fR 
 .NL
-Specifies the packages to install. Default = oftools ipoib psm\(ulmpi 
+Specifies the packages to install. Default is oftools ipoib psm\(ulmpi
 
 .TP 10
 -m \fInetmask\fR 
@@ -197,7 +197,7 @@ Results from opahostadmin are grouped into test suites, test cases, and test ite
 .PP
 Each opahostadmin run appends to test.res and test.log, and creates temporary files in test\(ultmp$PID in the current directory. test.res provides an overall summary of operations performed and their results. The same information is also displayed while opahostadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files which reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opahostadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opahostadmin.
 .PP
-opahostadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. Twenty (20) parallel operations is the default.
+opahostadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. 1000 parallel operations is the default.
 .SH Environment Variables 
 .NL
 
@@ -240,12 +240,12 @@ Intel recommends that you set up password SSH or SCP for use during this operati
 .TP 10
 load 
 .NL
-Performs an initial installation of Intel(R) Omni-Path Software on a group of hosts. Any existing installation is uninstalled and existing configuration files are removed. Subsequently, the hosts are installed with a default Intel(R) Omni-Path Software configuration. The -I option can be used to select different install packages. Default = oftools ipoib mpi The -r option can be used to specify a release to install other than the one that this host is presently running. The  \fIFF\(ulPRODUCT\fR. \fIFF\(ulPRODUCT\(ulVERSION\fR.tgz file (for example, IntelOPA-Basic. \fIversion\fR.tgz) is expected to exist in the directory specified by -d. Default is the current working directory. The specified software is copied to all the selected hosts and installed.
+Performs an initial installation of Intel(R) Omni-Path Software on a group of hosts. Any existing installation is uninstalled and existing configuration files are removed. Subsequently, the hosts are installed with a default Intel(R) Omni-Path Software configuration. The -I option can be used to select different install packages. Default is oftools ipoib mpi The -r option can be used to specify a release to install other than the one that this host is presently running. The  \fIFF\(ulPRODUCT\fR. \fIFF\(ulPRODUCT\(ulVERSION\fR.tgz file (for example, IntelOPA-Basic. \fIversion\fR.tgz) is expected to exist in the directory specified by -d. Default is the current working directory. The specified software is copied to all the selected hosts and installed.
 
 .TP 10
 upgrade 
 .NL
-Upgrades all selected hosts without modifying existing configurations. This operation is comparable to the -U option when running ./INSTALL manually. The -r option can be used to upgrade to a release different from this host. The default is to upgrade to the same release as this host. The  \fIFF\(ulPRODUCT\fR. \fIFF\(ulPRODUCT\(ulVERSION\fR.tgz file (for example, IntelOPA-Basic. \fIversion\fR.tgz) is expected to exist in the directory specified by -d. (The default is the current working directory.) The specified software is copied to all the end nodes and installed.
+Upgrades all selected hosts without modifying existing configurations. This operation is comparable to the -U option when running ./INSTALL manually. The -r option can be used to upgrade to a release different from this host. The default is to upgrade to the same release as this host. The  \fIFF\(ulPRODUCT\fR. \fIFF\(ulPRODUCT\(ulVERSION\fR.tgz file (for example, IntelOPA-Basic. \fIversion\fR.tgz) is expected to exist in the directory specified by -d. The default is the current working directory. The specified software is copied to all the end nodes and installed.
 .TP 10
 .BR
 
@@ -385,7 +385,7 @@ Performs a bidirectional bandwidth test.
 
 .sp
 -bwunidir 
-Performs a unidirectional bandwidth test (default).
+Performs a unidirectional bandwidth test (Default).
 
 .RE
 

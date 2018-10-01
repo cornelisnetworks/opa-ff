@@ -462,13 +462,86 @@ FSTATUS checkAllNodesVerified(FabricData_t* fabric, uint8_t parsableOutput) {
 	}
 	return status;
 }
-	
-FSTATUS distributeSMPs(struct omgt_port* oibPort, FabricData_t* fabric, uint32_t attributesToProgram, uint8_t directedOnly, uint8_t bail, uint8_t parsableOutput) {
+
+static FSTATUS DistributePortInfo(struct omgt_port* oibPort, NodeData *node, uint8_t directedOnly, uint8_t bail, uint8_t parsableOutput)
+{
+	if(!node || !node->valid)
+		return FSUCCESS;
+
+	cl_map_item_t *clPort;
+	for(clPort = cl_qmap_head(&node->Ports); clPort != cl_qmap_end(&node->Ports); clPort = cl_qmap_next(clPort)) {
+		PortData *port = PARENT_STRUCT(clPort, PortData, NodePortsEntry);
+
+		if(!port)
+			continue;
+
+		port->PortInfo.PortStates.s.PortState = IB_PORT_NOP;
+		port->PortInfo.PortStates.s.PortPhysicalState = IB_PORT_PHYS_NOP;
+		if (node->pSwitchInfo) {
+			// If we're programming a switch, make sure Flit Preemption values are set.
+			if (port->PortInfo.FlitControl.Preemption.MinInitial == 0)
+				port->PortInfo.FlitControl.Preemption.MinInitial = 8;
+			if (port->PortInfo.FlitControl.Preemption.MinTail == 0)
+				port->PortInfo.FlitControl.Preemption.MinTail = 8;
+		}
+
+		if(SmaSetPortInfo(oibPort, 0, 0, node->path, port->PortNum, &port->PortInfo) != FSUCCESS) {
+			logFailedSMP(node, "Set(PortInfo)", parsableOutput);
+
+			if(bail)
+				return FERROR;
+		}
+	}
+
+	return FSUCCESS;
+}
+
+static FSTATUS updateFabricPortInfo(struct omgt_port* oibPort, FabricData_t* fabric, uint8_t directedOnly, uint8_t bail, uint8_t parsableOutput)
+{
+	cl_map_item_t *clNode, *clPort;
+	NodeData* node;
+	PortData* port;
+	STL_PORT_INFO portInfo;
+	FSTATUS fstatus;
+
+	for (clNode = cl_qmap_head(&fabric->AllNodes); clNode != cl_qmap_end(&fabric->AllNodes); clNode = cl_qmap_next(clNode)) {
+		node = PARENT_STRUCT(clNode, NodeData, AllNodesEntry);
+
+		if (!node || !node->valid)
+			continue;
+
+		for (clPort = cl_qmap_head(&node->Ports); clPort != cl_qmap_end(&node->Ports); clPort = cl_qmap_next(clPort)) {
+			port = PARENT_STRUCT(clPort, PortData, NodePortsEntry);
+
+			if (!port)
+				continue;
+
+			memset(&portInfo, 0, sizeof(portInfo));
+
+			fstatus = SmaGetPortInfo(oibPort, directedOnly ? 0 : port->EndPortLID, 0, directedOnly ? node->path : NULL, port->PortNum, 1, &portInfo);
+
+			if (fstatus == FSUCCESS) {
+				memcpy(&port->PortInfo, &portInfo, sizeof(portInfo));
+			} else {
+				logFailedSMP(node, "Get(PortInfo)", parsableOutput);
+
+				if (bail)
+					return FERROR;
+			}
+		}
+	}
+
+	return FSUCCESS;
+}
+
+FSTATUS distributeSMPs(struct omgt_port* oibPort, FabricData_t* fabric, uint32_t attributesToProgram, uint8_t directedOnly, uint8_t bail, uint8_t parsableOutput)
+{
 	FSTATUS status = FSUCCESS;
 	LIST_ITEM* listNode;
 	cl_map_item_t *clNode, *clPort;
 	NodeData* node;
 	PortData* port;
+	SC2VLUpdateType sc2vlUpdateType;
 	int block;
 
 	if(!oibPort || !fabric)
@@ -523,34 +596,23 @@ FSTATUS distributeSMPs(struct omgt_port* oibPort, FabricData_t* fabric, uint32_t
 		if(!parsableOutput)
 			fprintf(stdout, "Sending PortInfo(s)...\n");
 
-		for(clNode = cl_qmap_head(&fabric->AllNodes); clNode != cl_qmap_end(&fabric->AllNodes); clNode = cl_qmap_next(clNode)) {
-			node = PARENT_STRUCT(clNode, NodeData, AllNodesEntry);
+		// First Set(PortInfo), program switches first followed by FIs
+		// This is to avoid transient SLID security errors when IPoIB tries to reregister
+		// with new LID before LID has been changed on switch port side.
+		LIST_ITEM *n;
+		for (n = QListHead(&fabric->AllSWs); n != NULL; n = QListNext(&fabric->AllSWs, n)) {
+			node = (NodeData*)QListObj(n);
+			if (FSUCCESS != DistributePortInfo(oibPort, node, directedOnly, bail, parsableOutput)) {
+				if (bail)
+					return FERROR;
+			}
+		}
 
-			if(!node || !node->valid)
-				continue;
-
-			for(clPort = cl_qmap_head(&node->Ports); clPort != cl_qmap_end(&node->Ports); clPort = cl_qmap_next(clPort)) {
-				port = PARENT_STRUCT(clPort, PortData, NodePortsEntry);
-
-				if(!port)
-					continue;
-
-				port->PortInfo.PortStates.s.PortState = IB_PORT_NOP;
-				port->PortInfo.PortStates.s.PortPhysicalState = IB_PORT_PHYS_NOP;
-				if (node->pSwitchInfo) {
-					// If we're programming a switch, make sure Flit Preemption values are set.
-					if (port->PortInfo.FlitControl.Preemption.MinInitial == 0)
-						port->PortInfo.FlitControl.Preemption.MinInitial = 8; 
-					if (port->PortInfo.FlitControl.Preemption.MinTail == 0)
-						port->PortInfo.FlitControl.Preemption.MinTail = 8;
-				}
-
-				if(SmaSetPortInfo(oibPort, 0, 0, node->path, port->PortNum, &port->PortInfo) != FSUCCESS) {
-					logFailedSMP(node, "Set(PortInfo)", parsableOutput);
-
-					if(bail)
-						return FERROR;
-				}
+		for (n = QListHead(&fabric->AllFIs); n != NULL; n = QListNext(&fabric->AllFIs, n)) {
+			node = (NodeData*)QListObj(n);
+			if (FSUCCESS != DistributePortInfo(oibPort, node, directedOnly, bail, parsableOutput)) {
+				if (bail)
+					return FERROR;
 			}
 		}
 	}
@@ -795,6 +857,18 @@ FSTATUS distributeSMPs(struct omgt_port* oibPort, FabricData_t* fabric, uint32_t
 		}
 	}
 
+
+	// We need to know the current state of each port to check whether it is allowed to update SC2VL tables or not.
+	// In case PortInfo is one of attributes to program we can skip this step, as all information is already collected.
+	if ((attributesToProgram & (PROGRAM_ATTR_SCVLR | PROGRAM_ATTR_SCVLT | PROGRAM_ATTR_SCVLNT))
+		&& !(attributesToProgram & PROGRAM_ATTR_PORTINFO)) {
+
+		if (updateFabricPortInfo(oibPort, fabric, directedOnly, bail, parsableOutput) != FSUCCESS) {
+			if (bail)
+				return FERROR;
+		}
+	}
+
 	// Distribute SCVLr Tables
 	if(attributesToProgram & (PROGRAM_ATTR_SCVLR | PROGRAM_ATTR_ALL)) {
 		if(!parsableOutput)
@@ -841,10 +915,46 @@ FSTATUS distributeSMPs(struct omgt_port* oibPort, FabricData_t* fabric, uint32_t
 				}
 
 				if (allSame && firstMap) {
-					if (SmaSetSCVLMappingTable(oibPort, directedOnly ? 0 : port->EndPortLID, 0, directedOnly ? node->path : NULL, 1, 0, firstMap, STL_MCLASS_ATTRIB_ID_SC_VLR_MAPPING_TABLE) != FSUCCESS) {
+					port = FindNodePort(node, 0);
+					if (!port) {
+						if (!parsableOutput) {
+							fprintf(stderr, "Error: Unable to find port 0 on switch %s 0x%016"PRIx64"\n",
+								node->NodeDesc.NodeString, node->NodeInfo.NodeGUID);
+						} else {
+							fprintf(stderr, "error;application;%s0x%016"PRIx64
+								";unable to find port 0\n",
+								node->NodeDesc.NodeString, node->NodeInfo.NodeGUID);
+						}
+						return FERROR;
+					}
+					sc2vlUpdateType = getSC2VLUpdateType(node, port, Enum_SCVLr);
+					if (sc2vlUpdateType == SC2VL_UPDATE_TYPE_NONE) {
+						if (!parsableOutput) {
+							fprintf(stderr, "Error: Cannot set SCVLr on switch %s 0x%016"PRIx64
+								", switch ports must be in state Init or support asynchronous update\n",
+								node->NodeDesc.NodeString, node->NodeInfo.NodeGUID);
+						} else {
+							fprintf(stderr, "error;application;%s0x%016"PRIx64
+								";switch ports must be in state Init or support asynchronous update\n",
+								node->NodeDesc.NodeString, node->NodeInfo.NodeGUID);
+						}
+						if (bail)
+							return FERROR;
+						continue;
+					}
+
+					if (SmaSetSCVLMappingTable(oibPort,
+												directedOnly ? 0 : port->EndPortLID,
+												0,
+												directedOnly ? node->path : NULL,
+												sc2vlUpdateType == SC2VL_UPDATE_TYPE_ASYNC,
+												1,
+												0,
+												firstMap,
+												STL_MCLASS_ATTRIB_ID_SC_VLR_MAPPING_TABLE) != FSUCCESS) {
 						logFailedSMP(node, "Set(SCVLrMappingTable)", parsableOutput);
 
-						if(bail)
+						if (bail)
 							return FERROR;
 					}
 				}
@@ -855,10 +965,34 @@ FSTATUS distributeSMPs(struct omgt_port* oibPort, FabricData_t* fabric, uint32_t
 					if (!port || !port->pQOS || !getIsVLrSupported(node, port))
 						continue;
 
-					if (SmaSetSCVLMappingTable(oibPort, directedOnly ? 0 : port->EndPortLID, 0, directedOnly ? node->path : NULL, 0, port->PortNum, &port->pQOS->SC2VLMaps[Enum_SCVLr], STL_MCLASS_ATTRIB_ID_SC_VLR_MAPPING_TABLE) != FSUCCESS) {
+					sc2vlUpdateType = getSC2VLUpdateType(node, port, Enum_SCVLr);
+					if (sc2vlUpdateType == SC2VL_UPDATE_TYPE_NONE) {
+						if (!parsableOutput) {
+							fprintf(stderr, "Error: Cannot set SCVLr on port %d in state %s"
+								", port must be in state Init or support asynchronous update\n",
+								port->PortNum, StlPortStateToText(port->PortInfo.PortStates.s.PortState));
+						} else {
+							fprintf(stderr, "error;application;cannot set SCVLr on port %d in state %s"
+								";port must be in state Init or support asynchronous update\n",
+								port->PortNum, StlPortStateToText(port->PortInfo.PortStates.s.PortState));
+						}
+						if (bail)
+							return FERROR;
+						continue;
+					}
+
+					if (SmaSetSCVLMappingTable(oibPort,
+												directedOnly ? 0 : port->EndPortLID,
+												0,
+												directedOnly ? node->path : NULL,
+												sc2vlUpdateType == SC2VL_UPDATE_TYPE_ASYNC,
+												0,
+												port->PortNum,
+												&port->pQOS->SC2VLMaps[Enum_SCVLr],
+												STL_MCLASS_ATTRIB_ID_SC_VLR_MAPPING_TABLE) != FSUCCESS) {
 						logFailedSMP(node, "Set(SCVLrMappingTable)", parsableOutput);
 
-						if(bail)
+						if (bail)
 							return FERROR;
 					}
 				}
@@ -883,10 +1017,34 @@ FSTATUS distributeSMPs(struct omgt_port* oibPort, FabricData_t* fabric, uint32_t
 				if(!port || !port->pQOS)
 					continue;
 
-				if(SmaSetSCVLMappingTable(oibPort, directedOnly ? 0 : port->EndPortLID, 0, directedOnly ? node->path : NULL, 0, port->PortNum, &port->pQOS->SC2VLMaps[Enum_SCVLt], STL_MCLASS_ATTRIB_ID_SC_VLT_MAPPING_TABLE) != FSUCCESS) {
+				sc2vlUpdateType = getSC2VLUpdateType(node, port, Enum_SCVLt);
+				if (sc2vlUpdateType == SC2VL_UPDATE_TYPE_NONE) {
+					if (!parsableOutput) {
+						fprintf(stderr, "Error: Cannot set SCVLt on port %d in state %s"
+							", port must be in state Init or support asynchronous update\n",
+							port->PortNum, StlPortStateToText(port->PortInfo.PortStates.s.PortState));
+					} else {
+						fprintf(stderr, "error;application;cannot set SCVLt on port %d in state %s"
+							";port must be in state Init or support asynchronous update\n",
+							port->PortNum, StlPortStateToText(port->PortInfo.PortStates.s.PortState));
+					}
+					if (bail)
+						return FERROR;
+					continue;
+				}
+
+				if (SmaSetSCVLMappingTable(oibPort,
+											directedOnly ? 0 : port->EndPortLID,
+											0,
+											directedOnly ? node->path : NULL,
+											sc2vlUpdateType == SC2VL_UPDATE_TYPE_ASYNC,
+											0,
+											port->PortNum,
+											&port->pQOS->SC2VLMaps[Enum_SCVLt],
+											STL_MCLASS_ATTRIB_ID_SC_VLT_MAPPING_TABLE) != FSUCCESS) {
 					logFailedSMP(node, "Set(SCVLtMappingTable)", parsableOutput);
 
-					if(bail)
+					if (bail)
 						return FERROR;
 				}
 			}
@@ -910,10 +1068,36 @@ FSTATUS distributeSMPs(struct omgt_port* oibPort, FabricData_t* fabric, uint32_t
 				if(!port || !port->pQOS || (node->NodeInfo.NodeType == STL_NODE_SW && port->PortNum == 0))
 					continue;
 
-				if(SmaSetSCVLMappingTable(oibPort, directedOnly ? 0 : port->EndPortLID, 0, directedOnly ? node->path : NULL, 0, port->PortNum, &port->pQOS->SC2VLMaps[Enum_SCVLnt], STL_MCLASS_ATTRIB_ID_SC_VLNT_MAPPING_TABLE) != FSUCCESS) {
+				sc2vlUpdateType = getSC2VLUpdateType(node, port, Enum_SCVLnt);
+				if (sc2vlUpdateType == SC2VL_UPDATE_TYPE_NONE) {
+					if (!parsableOutput) {
+						fprintf(stderr, "Error: Cannot set SCVLnt on port %d in state %s"
+							", port must be in state Init or support asynchronous update\n",
+							port->PortNum, StlPortStateToText(port->PortInfo.PortStates.s.PortState));
+					} else {
+						fprintf(stderr, "error;application;cannot set SCVLnt on port %d in state %s"
+							";port must be in state Init or support asynchronous update\n",
+							port->PortNum, StlPortStateToText(port->PortInfo.PortStates.s.PortState));
+					}
+					continue;
+				}
+
+				// asynchronous update is taken by the SMA
+				if (sc2vlUpdateType == SC2VL_UPDATE_TYPE_ASYNC)
+					continue;
+
+				if (SmaSetSCVLMappingTable(oibPort,
+											directedOnly ? 0 : port->EndPortLID,
+											0,
+											directedOnly ? node->path : NULL,
+											sc2vlUpdateType == SC2VL_UPDATE_TYPE_ASYNC,
+											0,
+											port->PortNum,
+											&port->pQOS->SC2VLMaps[Enum_SCVLnt],
+											STL_MCLASS_ATTRIB_ID_SC_VLNT_MAPPING_TABLE) != FSUCCESS) {
 					logFailedSMP(node, "Set(SCVLntMappingTable)", parsableOutput);
 
-					if(bail)
+					if (bail)
 						return FERROR;
 				}
 			}
@@ -1164,6 +1348,7 @@ int main(int argc, char ** argv)
 		fprintf(stdout, "\n");
 		fprintf(stdout, "Parsing snapshot file... ");
 	}
+
 	if (FSUCCESS != Xml2ParseSnapshot(argv[filenameOptind], 1, &fabric, FF_NONE, 0)) {
 		if(parsableOutput)
 			fprintf(stderr, "error;application;Xml2ParseSnapshot;Failed to parse snapshot\n");

@@ -42,7 +42,7 @@ Captures level of detail:
 
 .sp
 1 (Local)
-Obtains local information from host. Default if no options are entered.
+Obtains local information from host. This is the default if no options are entered.
 
 .RE
 

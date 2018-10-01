@@ -1,19 +1,24 @@
 Name: opa
-Version: 10.7.0.0
-Release: 133%{?dist}
+Version: 10.8.0.0
+Release: 201%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
 License: GPLv2/BSD 
-Url: http://www.intel.com/
+Url: https://github.com/intel/opa-ff
+# tarball created by:
+# git clone https://github.com/intel/opa-ff.git
+# cd opa-ff
+# tar czf opa.tgz --exclude-vcs .
 Source: opa.tgz
 ExclusiveArch: x86_64
 # The Intel(R) OPA product line is only available on x86_64 platforms at this time.
 
-__RPM_DEBUG
+__RPM_DEBUG_PKG
 
 %description
 This package contains the tools necessary to manage an Intel(R) Omni-Path Architecture fabric.
+IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 
 %package basic-tools
 Summary: Managment level tools and scripts.
@@ -21,45 +26,73 @@ Group: System Environment/Libraries
 
 Requires: rdma bc
 
-Requires: __RPM_REQ
+Requires: __RPM_REQ_BASIC
 BuildRequires: __RPM_BLDREQ
+
+%if 0%{?rhel}
+Epoch: 1
+%endif
 
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.
+IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 
 %package fastfabric
 Summary: Management level tools and scripts.
 Group: System Environment/Libraries
 Requires: opa-basic-tools
 
+%if 0%{?rhel}
+Epoch: 1
+%endif
+
 %description fastfabric
 Contains tools for managing fabric on a managment node.
+IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 
 %package address-resolution
 Summary: Contains Address Resolution manager
 Group: System Environment/Libraries
-Requires: opa-basic-tools ibacm
+Requires:  __RPM_REQ_ADDR_RES
+
+%if 0%{?rhel}
+Epoch: 1
+%endif
 
 %description address-resolution
 This package contains the ibacm distributed SA provider (dsap) for name and address resolution on OPA platform.
 It also contains the library and tools to access the shared memory database exported by dsap.
+IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
+
+#opasnapconfig
+%package snapconfig
+Summary: Configure fabric with snapshot file
+Group: System Environment/Libraries
+AutoReq: no
+Requires: opa-fastfabric
+
+%description snapconfig
+Parse information from provided snapshot file and issue packets to program
+IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 
 %package libopamgt
 Summary: Omni-Path management API library
 Group: System Environment/Libraries
-Requires: __RPM_RQ2
+Requires: __RPM_REQ_OPAMGT
 
 %description libopamgt
 This package contains the library necessary to build applications that interface with an Omni-Path FM.
+IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 
 
 %package libopamgt-devel
 Summary: Omni-Path library development headers
 Group: System Environment/Libraries
-Requires: __RPM_RQ3
+Requires: __RPM_REQ_OPAMGT_DEV
 
 %description libopamgt-devel
 This package contains the necessary headers for opamgt development.
+IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 
 %prep
 #rm -rf %{_builddir}/*
@@ -68,7 +101,7 @@ This package contains the necessary headers for opamgt development.
 
 %build
 cd OpenIb_Host
-./ff_build.sh %{_builddir} $BUILD_ARGS
+ __RPM_FS ./ff_build.sh %{_builddir} $BUILD_ARGS
 
 
 %install
@@ -121,6 +154,9 @@ __RPM_FF_FILES
 %{_mandir}/man1/opa_osd_query.1*
 %config(noreplace) %{_sysconfdir}/rdma/dsap.conf
 
+%files snapconfig
+__RPM_SNAP_FILES
+
 %files libopamgt
 /usr/lib/libopamgt.*
 
@@ -130,6 +166,9 @@ __RPM_FF_FILES
 /usr/src/opamgt
 
 %changelog
+* Mon Feb 26 2018 Jijun Wang <jijun.wang@intel.com> - 10.8.0.0
+- Added epoch for RHEL address-resolution, basic-tools and fastfabric
+- Added component information in description for all rpms
 * Thu Apr 13 2017 Scott Breyer <scott.j.breyer@intel.com> - 10.5.0.0
 - Updates for spec file cleanup
 * Fri Oct 10 2014 Erik E. Kahn <erik.kahn@intel.com> - 1.0.0-ifs

@@ -286,7 +286,7 @@ void SetNameToGuid(NameData_t *namep, EUI64 guid)
 {
 	sprintf(namep->name, "0x%016"PRIx64, guid);
 	namep->prefix = NULL;
-	strncpy(namep->body, namep->name, NODE_DESCRIPTION_ARRAY_SIZE);
+	StringCopy(namep->body, namep->name, NODE_DESCRIPTION_ARRAY_SIZE);
 	namep->start = 0;
 	namep->end = 0;
 	namep->leadzero = FALSE;
@@ -334,9 +334,7 @@ void CopyName(NameData_t *namep, const char *name, EUI64 guid, name_mode_t mode,
 		// change spaces to underscore
 		int l;
 		char *d;
-		// use optimized libc routines, two passes through but
-		// strncpy might optimize cache fill better
-		strncpy(namep->name, name, sizeof(namep->name));
+		StringCopy(namep->name, name, sizeof(namep->name));
 		len = strnlen(namep->name, sizeof(namep->name));
 		for (l=len, d=namep->name; l; d++, l--)
 			if (isspace(*d))
@@ -345,9 +343,7 @@ void CopyName(NameData_t *namep, const char *name, EUI64 guid, name_mode_t mode,
 		// truncate at 1st space
 		int l;
 		char *d;
-		// use optimized libc routines, two passes through but
-		// strncpy might optimize cache fill better
-		strncpy(namep->name, name, sizeof(namep->name));
+		StringCopy(namep->name, name, sizeof(namep->name));
 		len = strnlen(namep->name, sizeof(namep->name));
 		for (l=len, d=namep->name; l; d++, l--) {
 			if (isspace(*d)) {
@@ -383,7 +379,7 @@ void CopyName(NameData_t *namep, const char *name, EUI64 guid, name_mode_t mode,
 	}
 
 	namep->prefix = prefix;
-	strncpy(namep->body, namep->name, sizeof(namep->body));
+	StringCopy(namep->body, namep->name, sizeof(namep->body));
 	// assume no number
 	namep->numlen = 0;
 	namep->start = 0;

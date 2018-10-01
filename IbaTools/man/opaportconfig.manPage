@@ -25,9 +25,9 @@ This tool is designed for expert users only. Non-expert users should use other t
 .NL
 opaportconfig [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-r \fIsecs\fR] [-z]
 .br
-[-S \fIstate\fR] [-P \fIphysstate\fR] [-s \fIspeed\fR] [-w \fIwidth\fR] [-c \fILTPCRC\fR] [-K \fImkey\fR]
+[-S \fIstate\fR] [-P \fIphysstate\fR] [-s \fIspeed\fR] [-w \fIwidth\fR] [-c \fILTPCRC\fR] [-v] [-x]
 .br
-[-v] [-x] [-L \fIlid\fR] [< \fIsub command\fR>]
+[-L \fIlid\fR] [< \fIsub command\fR>]
 .SH Options
 .NL
 
@@ -55,11 +55,6 @@ Specifies the HFI to send through/to. Default is first HFI.
 -p \fIport\fR 
 .NL
 Specifies the port to send through/to. Default is first port.
-
-.TP 10
--K \fImkey\fR 
-.NL
-Specifies the SM management key to access remote ports.
 
 .TP 10
 \fIsub command\fR 
@@ -360,7 +355,7 @@ No-op.
 .TP 10
 -h 0 
 .NL
-First active port in system (default).
+First active port in system (Default).
 
 .TP 10
 -h 0 -p 0 
@@ -418,7 +413,7 @@ opaportconfig -p 1 -h 2 -w 3
 .PP
 Port configuration is transient in nature. If the given host is rebooted or its Intel(R) Omni-Path Fabric Stack is restarted, the port reverts to its default configuration and state. Typically, the default state is to have the port enabled with all speeds and widths supported by the given HFI port.
 .PP
-To access switch ports using this command, the -l and -m options must be given. The -l option specifies the lid of switch port 0 (the logical management port for the switch) and -m specifies the actual switch port to access. If SMA mkeys are used, the -K option is also needed. However, the Intel(R) Omni-Path Fabric Suite Fabric Manager does not use SMA mkeys by default, therefore this option may not be required.
+To access switch ports using this command, the -l and -m options must be given. The -l option specifies the lid of switch port 0 (the logical management port for the switch) and -m specifies the actual switch port to access.
 .PP
 
 .B NOTE:

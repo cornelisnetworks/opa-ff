@@ -45,15 +45,15 @@ Saves history of failures (errors/differences).
 .TP 10
 -d \fIdir\fR 
 .NL
-Identifies the top-level directory for saving baseline and history of failed checks. Default = /var/usr/lib/opa/analysis 
+Identifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
 .TP 10
 -c \fIfile\fR 
 .NL
-Specifies the error thresholds configuration file. Default = /etc/opa/opamon.conf 
+Specifies the error thresholds configuration file. Default is /etc/opa/opamon.conf
 .TP 10
 -t \fIportsfile\fR 
 .NL
-Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default = /etc/opa/ports 
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports
 .TP 10
 -p \fIports\fR 
 .NL
@@ -93,7 +93,7 @@ HFI \fIx\fR, port \fIy\fR.
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-Specifies the file with a chassis in a cluster. Default = /etc/opa/chassis 
+Specifies the file with a chassis in a cluster. Default is /etc/opa/chassis
 .TP 10
 -H \[aq]\fIchassis\fR\[aq] 
 .NL
@@ -101,7 +101,7 @@ Specifies the list of chassis on which to execute the command.
 .TP 10
 -G \fIesmchassisfile\fR 
 .NL
-Specifies the file with embedded SM chassis in the cluster. Default = /etc/opa/esm\(ulchassis 
+Specifies the file with embedded SM chassis in the cluster. Default is /etc/opa/esm\(ulchassis
 .TP 10
 -E \fIesmchassis\fR 
 .NL
@@ -109,7 +109,7 @@ Specifies the list of embedded SM chassis to analyze.
 .TP 10
 -T \fItopology\(ulinput\fR 
 .NL
-Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on, such as 0:0 or 1:2. Default = /etc/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
+Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on, such as 0:0 or 1:2. Default is /etc/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
 \fIopareport\fR
 for more information.
 .SH Example 

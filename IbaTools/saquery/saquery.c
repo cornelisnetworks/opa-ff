@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <infiniband/umad.h>
 #include "ixml.h"
 
-#define MAX_NUM_INPUT_ARGS 17
+#define MAX_NUM_INPUT_ARGS 20
 
 uint8           g_IB            = 0;	// perform query in legacy InfiniBand format
 uint8           g_verbose       = 0;
@@ -141,8 +141,10 @@ struct option options[] = {
 		{ "desc", required_argument, NULL, 'd' },
 		{ "guidpair", required_argument, NULL, 'P' },
 		{ "gidpair", required_argument, NULL, 'G' },
+		{ "dgname", required_argument, NULL, 'D' },
 		// output type
 		{ "output", required_argument, NULL, 'o' },
+		{ "timeout", required_argument, NULL, '!'},
 		{ "help", no_argument, NULL, '$' },	// use an invalid option character
 		{ 0 }
 };
@@ -169,6 +171,7 @@ void Usage_full(void)
 					"                                     is 1st active)\n"
 					"                                 Out-of-band: Port FE is listening on (default\n"
 					"                                     is %u)\n", g_oob_port);
+	fprintf(stderr, "    --timeout                 - timeout(response wait time) in ms, default is 1000ms\n");
 	fprintf(stderr, "    -x/--source-gid src_gid   - Source GID of the local GID [required for most\n");
 	fprintf(stderr, "                                Path and Trace Record Queries when Out-of-Band]\n");
 	fprintf(stderr, "    -E/--feEsm                - ESM FE\n");
@@ -188,6 +191,7 @@ void Usage_full(void)
 	fprintf(stderr, "    -u/--portgid gid          - query by port gid\n");
 	fprintf(stderr, "    -m/--mcgid gid            - query by multicast gid\n");
 	fprintf(stderr, "    -d/--desc name            - query by node name/description\n");
+	fprintf(stderr, "    -D/--dgname name          - query by device group name/description\n");
 	fprintf(stderr, "    -P/--guidpair 'guid guid' - query by a pair of port Guids\n");
 	fprintf(stderr, "    -G/--gidpair 'gid gid'    - query by a pair of Gids\n");
 	fprintf(stderr, "\n");
@@ -226,6 +230,7 @@ void Usage_full(void)
 	fprintf(stderr, "    slsc          - list of SL to SC mapping table records\n");
 	fprintf(stderr, "    scsl          - list of SC to SL mapping table records\n");
 	fprintf(stderr, "    scvlt         - list of SC to VLt table records\n");
+	fprintf(stderr, "    scvlr         - list of SC to VLr table records\n");
 	fprintf(stderr, "    scvlnt        - list of SC to VLnt table records\n");
 	fprintf(stderr, "    vlarb         - list of VL arbitration table records\n");
 	fprintf(stderr, "    pkey          - list of P-Key table records\n");
@@ -249,6 +254,9 @@ void Usage_full(void)
 	fprintf(stderr, "    cableinfo     - list of Cable Info records\n");
 	fprintf(stderr, "    portgroup     - list of AR Port Group records\n");
 	fprintf(stderr, "    portgroupfdb  - list of AR Port Group FWD records\n");
+	fprintf(stderr, "    dglist        - list of Device Group Names\n");
+	fprintf(stderr, "    dgmember      - list of Device Group records\n");	
+	fprintf(stderr, "    dtree         - list of Device Tree records\n");
 	fprintf(stderr ,"    swcost        - list of switch cost records\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage examples:\n");
@@ -420,6 +428,9 @@ void multiInputCheck(int inputType) {
         case InputTypeGidPair:
 			typestr = "GidPair";
 			break;
+	case InputTypeDeviceGroup:
+			typestr = "DeviceGroup";
+			break;
         default:
 			typestr = "parameter";
 		}
@@ -433,16 +444,19 @@ typedef struct InputFlags {
 	QUERY_INPUT_TYPE flags[MAX_NUM_INPUT_ARGS];
 } InputFlags_t;
 
-InputFlags_t NodeInput = {{InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
-		InputTypeNodeDesc,0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t PathInput = {{InputTypeLid,InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,
-		InputTypeGidPair,InputTypeServiceId,InputTypeSL,0,0,0,0,0,0,0,}};
-InputFlags_t ServiceInput = {{InputTypePortGuid,InputTypePortGid,InputTypeServiceId,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t McmemberInput = {{InputTypeLid, InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeMcGid,InputTypeSL,0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t InformInput = {{InputTypePortGuid,InputTypePortGid,InputTypeLid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,}};
-InputFlags_t TraceInput =  {{InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,InputTypeGidPair,0,0,0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t VfinfoInput = {{InputTypePKey,InputTypeIndex,InputTypeMcGid,InputTypeServiceId,InputTypeSL,InputTypeNodeDesc,0,0,0,0,0,0,0,0,0,0,0}};
-InputFlags_t MiscInput = {{InputTypeLid,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+#define END_INPUT_TYPE 0xFFFF
+//Note: The last initialized element of every InputFlags_t array must be END_INPUT_TYPE
+InputFlags_t NodeInput = {{InputTypeNoInput, InputTypeNodeType,InputTypeLid,InputTypeSystemImageGuid,InputTypeNodeGuid,InputTypePortGuid,
+		InputTypeNodeDesc, END_INPUT_TYPE}};
+InputFlags_t PathInput = {{InputTypeNoInput, InputTypeLid,InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,
+		InputTypeGidPair,InputTypeServiceId,InputTypeSL,END_INPUT_TYPE}};
+InputFlags_t ServiceInput = {{InputTypeNoInput,InputTypePortGuid,InputTypePortGid,InputTypeServiceId,END_INPUT_TYPE}};
+InputFlags_t McmemberInput = {{InputTypeNoInput, InputTypeLid, InputTypePKey,InputTypePortGuid,InputTypePortGid,InputTypeMcGid,InputTypeSL,END_INPUT_TYPE}};
+InputFlags_t InformInput = {{InputTypeNoInput,InputTypePortGuid,InputTypePortGid,InputTypeLid,END_INPUT_TYPE}};
+InputFlags_t TraceInput =  {{InputTypePortGuid,InputTypePortGid,InputTypePortGuidPair,InputTypeGidPair,END_INPUT_TYPE}};
+InputFlags_t VfinfoInput = {{InputTypeNoInput,InputTypePKey,InputTypeIndex,InputTypeMcGid,InputTypeServiceId,InputTypeSL,InputTypeNodeDesc,END_INPUT_TYPE}};
+InputFlags_t MiscInput = {{InputTypeNoInput,InputTypeLid,END_INPUT_TYPE}};
+InputFlags_t DgMemberInput = {{InputTypeNoInput,InputTypeLid, InputTypePortGuid, InputTypeNodeDesc,InputTypeDeviceGroup,END_INPUT_TYPE}};
 
 typedef struct OutputStringMap {
 	char *string;
@@ -465,11 +479,7 @@ OutputStringMap_t OutputTypeTable[] = {
     {"node",            OutputTypeStlNodeRecord,              OutputTypeNodeRecord,       &NodeInput, 0},
     {"portinfo",        OutputTypeStlPortInfoRecord,          OutputTypePortInfoRecord,   &MiscInput, 0},
     {"sminfo",          OutputTypeStlSMInfoRecord,            NO_OUTPUT_TYPE,             NULL, 0},
-#ifdef GEN2_EM_ENABLE
-    {"link",            OutputTypeStlLinkRecord,              NO_OUTPUT_TYPE,             &LinkConditionInput, 0},
-#else
     {"link",            OutputTypeStlLinkRecord,              NO_OUTPUT_TYPE,             NULL, 0},
-#endif /* GEN2_FM_ENABLE */
     {"service",         NO_OUTPUT_TYPE,                       OutputTypeServiceRecord,    &ServiceInput, 0},
     {"mcmember",        NO_OUTPUT_TYPE,                       OutputTypeMcMemberRecord,   &McmemberInput, 0},
     {"inform",          OutputTypeStlInformInfoRecord,        OutputTypeInformInfoRecord, &InformInput, 0},
@@ -479,6 +489,7 @@ OutputStringMap_t OutputTypeTable[] = {
     {"scsl",            OutputTypeStlSCSLTableRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"scvlt",           OutputTypeStlSCVLtTableRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"scvlnt",          OutputTypeStlSCVLntTableRecord,       NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"scvlr",           OutputTypeStlSCVLrTableRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"swinfo",          OutputTypeStlSwitchInfoRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"linfdb",          OutputTypeStlLinearFDBRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"mcfdb",           OutputTypeStlMCastFDBRecord,          NO_OUTPUT_TYPE,             &MiscInput, 0},
@@ -498,6 +509,9 @@ OutputStringMap_t OutputTypeTable[] = {
     {"cableinfo",       OutputTypeStlCableInfoRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"portgroup",       OutputTypeStlPortGroupRecord,         NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"portgroupfdb",    OutputTypeStlPortGroupFwdRecord,      NO_OUTPUT_TYPE,             &MiscInput, 0},
+    {"dgmember",        OutputTypeStlDeviceGroupMemberRecord, NO_OUTPUT_TYPE,             &DgMemberInput, 0},
+    {"dglist",          OutputTypeStlDeviceGroupNameRecord,   NO_OUTPUT_TYPE,             NULL, 0},
+    {"dtree",           OutputTypeStlDeviceTreeMemberRecord,  NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"swcost",          OutputTypeStlSwitchCostRecord,        NO_OUTPUT_TYPE,             &MiscInput, 0},
     //Last entry must be null, insert new attributes above here!
     {NULL, NO_OUTPUT_TYPE, NO_OUTPUT_TYPE, NULL, 0}
@@ -549,70 +563,79 @@ typedef struct InputStringMap {
 } InputStringMap_t;
 
 InputStringMap_t InputStrTable[] = {
-		{ "No Input", InputTypeNoInput },
-		{ "pkey", InputTypePKey },
-        { "index", InputTypeIndex},
-        { "serviceId", InputTypeServiceId },
-        { "lid", InputTypeLid },
-        { "SL", InputTypeSL },
-        { "NodeType", InputTypeNodeType },
-        { "SystemImageGuid", InputTypeSystemImageGuid },
-        { "NodeGuid", InputTypeNodeGuid },
-        { "PortGuid", InputTypePortGuid },
-        { "PortGid", InputTypePortGid },
-        { "McGid", InputTypeMcGid },
-        { "NodeDesc", InputTypeNodeDesc },
-        { "PortGuidPair", InputTypePortGuidPair },
-        { "GidPair", InputTypeGidPair },
-		//Last entry must be null, insert new attributes above here!
-		{NULL, 0}
+	{ "No Input", InputTypeNoInput },
+	{ "pkey", InputTypePKey },
+	{ "index", InputTypeIndex},
+	{ "serviceId", InputTypeServiceId },
+	{ "lid", InputTypeLid },
+	{ "SL", InputTypeSL },
+	{ "NodeType", InputTypeNodeType },
+	{ "SystemImageGuid", InputTypeSystemImageGuid },
+	{ "NodeGuid", InputTypeNodeGuid },
+	{ "PortGuid", InputTypePortGuid },
+	{ "PortGid", InputTypePortGid },
+	{ "McGid", InputTypeMcGid },
+	{ "NodeDesc", InputTypeNodeDesc },
+	{ "PortGuidPair", InputTypePortGuidPair },
+	{ "GidPair", InputTypeGidPair },
+	{ "DeviceGroup", InputTypeDeviceGroup},
+	//Last entry must be null, insert new inputs above here!
+	{NULL, 0}
 };
 
-FSTATUS CheckInputOutput(OMGT_QUERY *pQuery, OutputStringMap_t *in) {
+static void PrintValidInputTypes(OutputStringMap_t *in) {
+	
+	int i = 0;
+	int j = 0;
+
+	fprintf(stderr, "opasaquery: for the selected output option (%s), the following \n",in->string);
+	fprintf(stderr, "input types are valid: ");
+
+	while (in->valid_input_types->flags[i] != END_INPUT_TYPE){
+		// look for the string corresponding to the flag
+		j=0;
+		while (InputStrTable[j].string !=NULL){
+			if (in->valid_input_types->flags[i] == InputStrTable[j].in_type) {
+				fprintf(stderr,"%s ",InputStrTable[j].string);
+				break;
+			}	
+			j++;
+
+		}
+		i++;
+	}
+
+	fprintf(stderr, "\n");
+	return;
+}
+
+static FSTATUS CheckInputOutput(OMGT_QUERY *pQuery, OutputStringMap_t *in) {
 
 	int i=0;
-	int j=0;
-	boolean found;
 
-	if ( pQuery->InputType == InputTypeNoInput && (strcmp(in->string, "trace") != 0 ) )
-		return FSUCCESS;
-
-	if (in->valid_input_types != NULL) {
-		while ( (j < MAX_NUM_INPUT_ARGS) && (in->valid_input_types->flags[j] != 0) ){
-			if (pQuery->InputType == in->valid_input_types->flags[j])
-					return FSUCCESS;
-			else j++;
-			} //end while
-		}
-		else {
-			fprintf(stderr, "opasaquery: This option (%s) does not require input. ",in->string);
+	if(in->valid_input_types == NULL) {
+		if (pQuery->InputType != InputTypeNoInput) {	
+			fprintf(stderr, "opasaquery: This option (%s) does not accept input. ",in->string);
 			fprintf(stderr, "Ignoring input argument\n");
 			pQuery->InputType = InputTypeNoInput;
 			return FSUCCESS;
 		}
-// output not found for a given input... then...
-	fprintf(stderr, "opasaquery: Invalid input-output pair\n");
-	j=0;
-	fprintf(stderr, "opasaquery: for the selected output option (%s), the following \n",in->string);
-	fprintf(stderr, "input types are valid: ");
-	while ( (j < MAX_NUM_INPUT_ARGS) && (in->valid_input_types->flags[j] != 0) ){
-			// look for the string corresponding to the flag
-		i=0;
-		found=FALSE;
-		while ((InputStrTable[i].string !=NULL) && !found){
-			if (in->valid_input_types->flags[j] == InputStrTable[i].in_type) {
-				fprintf(stderr,"%s ",InputStrTable[i].string);
-				found = TRUE;
-			}
-			else
-				i++;
-			}
-		j++;
+		else {
+			return FSUCCESS;
+		}
 	}
 
-	fprintf(stderr, "\n");
-	return FERROR;
+	while (in->valid_input_types->flags[i] != END_INPUT_TYPE){
+		if (pQuery->InputType == in->valid_input_types->flags[i]){
+			return FSUCCESS;
+		}
+		i++;
+	} 
 
+	// Invalid Input Type detected
+	fprintf(stderr, "opasaquery: Invalid input-output pair\n");
+	PrintValidInputTypes(in);
+	return FERROR;
 }
  
 
@@ -625,6 +648,7 @@ int main(int argc, char ** argv)
 	OMGT_QUERY			query;
 	QUERY_INPUT_VALUE old_input_values;
 	OutputStringMap_t	*outputTypeMap = NULL;
+	int ms_timeout = OMGT_DEF_TIMEOUT_MS;
 
 	memset(&query, 0, sizeof(query));	// initialize reserved fields
 
@@ -658,6 +682,12 @@ int main(int argc, char ** argv)
 			case 'p':   // port to issue query from
 				if (FSUCCESS != StringToUint16(&port, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "opasaquery: Invalid Port Number: %s\n", optarg);
+					Usage();
+				}
+				break;
+			case '!':
+				if (FSUCCESS != StringToInt32(&ms_timeout, optarg, NULL, 0, TRUE)) {
+					fprintf(stderr, "opasaquery: Invalid timeout value: %s\n", optarg);
 					Usage();
 				}
 				break;
@@ -773,6 +803,13 @@ int main(int argc, char ** argv)
 				old_input_values.NodeDesc.NameLength = MIN(strlen(optarg), NODE_DESCRIPTION_ARRAY_SIZE);
 				strncpy((char*)old_input_values.NodeDesc.Name, optarg, NODE_DESCRIPTION_ARRAY_SIZE);
                 break;
+			case 'D':	// query by device group name
+				multiInputCheck(query.InputType);
+				query.InputType = InputTypeDeviceGroup;
+				old_input_values.DeviceGroup.NameLength = MIN(strlen(optarg), MAX_DG_NAME);
+				memset((char *)old_input_values.DeviceGroup.Name, 0, MAX_DG_NAME);
+				strncpy((char*)old_input_values.DeviceGroup.Name, optarg, MAX_DG_NAME-1);
+				break;
 			case 'P':	// query by source:dest port guids
 				{
 					char *p;
@@ -905,6 +942,8 @@ int main(int argc, char ** argv)
 		}
 	}
 
+	//set timeout for SA operations
+	omgt_set_timeout(sa_omgt_session, ms_timeout);
 
 	// perform the query and display output
 	do_query(sa_omgt_session, &query, &old_input_values);

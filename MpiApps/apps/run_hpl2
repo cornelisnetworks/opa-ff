@@ -54,7 +54,7 @@ LOGFILE=
 
 CC=`./get_mpi_cc.sh`
 ARCH=`uname -s`
-HPL_DIR="${PWD}/hpl-2.0/bin/ICS.${ARCH}.${CC}"
+HPL_DIR="${PWD}/hpl-2.2/bin/ICS.${ARCH}.${CC}"
 HPL_CMD="./xhpl"
 
 if [ $USING_MPD = y ]

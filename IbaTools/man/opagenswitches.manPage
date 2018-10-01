@@ -110,7 +110,7 @@ May contain \[aq]%P\[aq] . Must also use -s.
 .TP 10
 -v \fIlevel\fR 
 .NL
-Specifies the verbose level. Default = 0. Values include:
+Specifies the verbose level. Default is 0. Values include:
 .RS
 .TP 10
 

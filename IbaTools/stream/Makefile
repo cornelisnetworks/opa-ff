@@ -1,4 +1,32 @@
-# Makefile for Md5
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2018, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+# Makefile for stream
 
 # Include Make Control Settings
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
@@ -10,14 +38,12 @@ include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
 # Name of SubProjects
 DS_SUBPROJECTS	= 
 # name of executable or downloadable image
-EXECUTABLE		= # Md5$(EXE_SUFFIX)
+EXECUTABLE		= $(BUILDDIR)/stream$(EXE_SUFFIX)
 # list of sub directories to build
 DIRS			= 
 # C files (.c)
 CFILES			= \
-				Md5.c \
-				Md5_Deutsch.c \
-				Md5_Rivest.c \
+				stream.c \
 				# Add more c files here
 # C++ files (.cpp)
 CCFILES			= \
@@ -26,7 +52,7 @@ CCFILES			= \
 LFILES			= \
 				# Add more lex files here
 # archive library files (basename, $ARFILES will add MOD_LIB_DIR/prefix and suffix)
-LIBFILES = 
+LIBFILES=
 # Windows Resource Files (.rc)
 RSCFILES		=
 # Windows IDL File (.idl)
@@ -35,9 +61,6 @@ IDLFILE			=
 DEFFILE			=
 # targets to build during INCLUDES phase (add public includes here)
 INCLUDE_TARGETS	= \
-				Md5_Deutsch.h \
-				Md5.h \
-				Md5_Rivest.h \
 				# Add more h hpp files here
 # Non-compiled files
 MISC_FILES		= 
@@ -52,7 +75,7 @@ OBJECTS			= $(CFILES:.c=$(OBJ_SUFFIX)) $(CCFILES:.cpp=$(OBJ_SUFFIX)) \
 RSCOBJECTS		= $(RSCFILES:.rc=$(RES_SUFFIX))
 # targets to build during LIBS phase
 LIB_TARGETS_IMPLIB	=
-LIB_TARGETS_ARLIB	= $(LIB_PREFIX)Md5$(ARLIB_SUFFIX)
+LIB_TARGETS_ARLIB	= # $(LIB_PREFIX)ResourceTest$(ARLIB_SUFFIX)
 LIB_TARGETS_EXP		= $(LIB_TARGETS_IMPLIB:$(ARLIB_SUFFIX)=$(EXP_SUFFIX))
 LIB_TARGETS_MISC	= 
 # targets to build during CMDS phase
@@ -87,11 +110,11 @@ INCLUDE_SUBDIR		=
 #				(in addition to LOCALDEPLIBS)
 #LOCAL_LIB_DIRS	= User library directories for libpaths [Empty]
 
-CLOCAL = $(CPIE)
-LOCALDEPLIBS = 
+CLOCAL = $(CPIE) -march=native -mcmodel=medium -DSTREAM_ARRAY_SIZE=353783808 -fopenmp
+LDLOCAL = -fopenmp
 
 # Include Make Rules definitions and rules
-include $(TL_DIR)/$(PROJ_FILE_DIR)/Makerules.project
+include $(TL_DIR)/IbaTools/Makerules.module
 
 #=============================================================================#
 # Overrides:
@@ -102,6 +125,7 @@ include $(TL_DIR)/$(PROJ_FILE_DIR)/Makerules.project
 #					 (Windows Only)
 #USEMFC	= How Windows MFC should be used (none, static, shared, no_mfc) [none]
 #				(Windows Only)
+COPT = -O3
 #=============================================================================#
 
 #=============================================================================#
@@ -117,8 +141,7 @@ include $(TL_DIR)/Makerules/Maketargets.build
 include $(TL_DIR)/Makerules/Maketargets.install
 
 # install for stage phase
-#include $(TL_DIR)/Makerules/Maketargets.stage
-STAGE::
+include $(TL_DIR)/Makerules/Maketargets.stage
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

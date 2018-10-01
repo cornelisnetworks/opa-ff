@@ -39,7 +39,7 @@ Omits unexpected devices and links in punchlist file from verify reports.
 .TP 10
 -t \fIportsfile\fR 
 .NL
-Specifies the file with list of local HFI ports used to access fabric(s) for analysis, default is /etc/opa/ports.
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports.
 
 .TP 10
 -p \fIports\fR 

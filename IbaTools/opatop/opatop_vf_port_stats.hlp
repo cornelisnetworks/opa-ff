@@ -1,0 +1,20 @@
+HELP: VF PORT STATS SCREEN
+The VF Port Statistics screen displays a VF port's performance counters
+Performance counters are grouped according to the category to which they
+belong.  A trailing asterisk ('*') on the counter name indicates the counter
+will be tabulated against the neighbor ports category statistics.
+
+When the VF Port Stats screen is entered from VF Focus screen, port neighbor
+and link information is available. When the VF Port Stats screen is entered
+from the VF Config screen, this information is not available.  The second
+line of the VF Port Stats screen displays the group name, and LID and port
+number of the port, as well as link rate and MTU (if available).  The third
+line of the screen displays the NodeDesc and node GUID of the port.  The fourth
+line of the screen displays the NodeDesc, LID and port number of the neighbor
+port(if available).
+
+The remaining lines on the pages are used to display the groups of VF port
+counters.
+
+  N: Switch between statistics for port and port's neighbor (if available)
+  V: Switch between Port Stats and VF Port Stats screens for the selected port

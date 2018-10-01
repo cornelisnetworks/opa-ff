@@ -736,7 +736,6 @@ int buildNewIniBin(U8_t *binBuffer)
 
 	U8_t *p = binBuffer;
 	U8_t *q;
-	U32_t n, *np;
 	int i;
 	int j;
 	U32_t ports;
@@ -832,9 +831,7 @@ int buildNewIniBin(U8_t *binBuffer)
 		segSize += sizeof(header2);
 		memcpy(q, newMetaTableRef->ptr, newMetaTableRef->dataWords * 4);
 		for (i = 0; i < newMetaTableRef->dataWords; i++) {
-			np = (U32_t *)&q[i * 4];
-			n = ntoh32(*np);
-			memcpy(np, &n, sizeof(U32_t));
+			((U32_t*)q)[i] = ntoh32(((U32_t*)q)[i]);
 		}
 		q += newMetaTableRef->dataWords * 4;
 		segSize += newMetaTableRef->dataWords * 4;
@@ -871,9 +868,7 @@ int buildNewIniBin(U8_t *binBuffer)
 		segSize += sizeof(header2);
 		memcpy(q, newDataTableRef->ptr, newDataTableRef->dataWords * 4);
 		for (i = 0; i < newDataTableRef->dataWords; i++) {
-			np = (U32_t *)&q[i * 4];
-			n = ntoh32(*np);
-			memcpy(np, &n, sizeof(U32_t));
+			((U32_t*)q)[i] = ntoh32(((U32_t*)q)[i]);
 		}
 		q += newDataTableRef->dataWords * 4;
 		segSize += newDataTableRef->dataWords * 4;

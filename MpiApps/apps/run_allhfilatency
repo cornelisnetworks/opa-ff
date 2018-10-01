@@ -47,7 +47,7 @@ MINUTES=1
 VERBOSE=
 CSV=
 
-function usage {
+usage() {
 	echo
 	echo "$0 is a specialized stress test for large fabrics. It iterates through"
 	echo "every possible pairing of HCAs and performs a latency test on each"
@@ -124,7 +124,7 @@ if [ $# -ge 1 ]; then
 fi
 shift
 if [ $# -ge 1 ]; then
-	if [ $1 == "infinite" ]; then
+	if [ $1 = "infinite" ]; then
 		MINUTES=0
 	elif [ $1 -eq $1 ]; then
 		MINUTES=$1

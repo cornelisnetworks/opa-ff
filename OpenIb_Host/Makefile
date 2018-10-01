@@ -35,6 +35,7 @@ include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
 stage::
 #prepfiles:: prepfiles_global
 clobber:: clobber_global clobber_tools
+include $(TL_DIR)/Makerules/Rules.buildFeatureDefs
 ALL:: tools
 
 BSP_SPECIFIC_DIRS=
@@ -121,7 +122,7 @@ CMD_TARGETS_MISC	=
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
 # other files to remove during clobber phase
-CLOBBER_TARGETS_MISC= 
+CLOBBER_TARGETS_MISC= update_opa_spec.sh ff_build.sh
 # sub-directory to install to within bin
 BIN_SUBDIR		= 
 # sub-directory to install to within include
@@ -149,6 +150,7 @@ LOCALDEPLIBS =
 
 # Include Make Rules definitions and rules
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makerules.project
+include $(TL_DIR)/Makerules/Rules.baseFiles
 
 #=============================================================================#
 # Overrides:

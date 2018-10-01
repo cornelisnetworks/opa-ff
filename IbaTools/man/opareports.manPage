@@ -89,15 +89,15 @@ Specifies any of the other opareport arguments listed below (see
 \fIopareport Options\fR
 ):
 .br
-opareport [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fIreport\fR]
+opareport [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR] [--timeout]
 .br
-[-d \fIdetail\fR] [-P|-H] [-N] [-x] [-X \fIsnapshot\(ulinput\fR]
+[-o \fIreport\fR][-d \fIdetail\fR] [-P|-H] [-N] [-x]
 .br
-[-T \fItopology\(ulinput\fR] [-s] [-r] [-V] [-i \fIseconds\fR]
+[-X \fIsnapshot\(ulinput\fR][-T \fItopology\(ulinput\fR] [-s] [-r] [-V]
 .br
-[-b \fIdate\(ultime\fR] [-e \fIdate\(ultime\fR] [-C] [-a] [-m] [-M] [-A]
+[-i \fIseconds\fR][-b \fIdate\(ultime\fR] [-e \fIdate\(ultime\fR] [-C] [-a]
 .br
-[-c \fIfile\fR] [-L] [-F \fIpoint\fR] [-S \fIpoint\fR]
+[-m] [-M] [-A][-c \fIfile\fR] [-L] [-F \fIpoint\fR] [-S \fIpoint\fR]
 .br
 [-D \fIpoint\fR] [-Q] 
 
@@ -171,12 +171,17 @@ Disables progress reports.
 .TP 10
 -h/--hfi \fIhfi\fR 
 .NL
-Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
 -p/--port \fIport\fR 
 .NL
-Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
+
+.TP 10
+--timeout
+.NL
+Specifies the timeout (wait time for response) in ms. Default is 1000 ms.
 
 .TP 10
 -o/--output \fIreport\fR 
@@ -231,12 +236,12 @@ Gets performance statistics for all ports.
 Obtains performance statistics over interval \fIseconds\fR. Clears all statistics, waits interval \fIseconds\fR, then generates report. Implies -s option.
 
 .TP 10
--b / --begin \fIdate\(ultime\fR 
+-b/--begin \fIdate\(ultime\fR
 .NL
 Obtains past performance stats over an interval beginning at \fIdate\(ultime\fR. Implies -s option. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--e / --end \fIdate\(ultime\fR 
+-e/--end \fIdate\(ultime\fR
 .NL
 Obtains past performance stats over an interval ending at \fIdate\(ultime\fR. Implies -s option.
 
@@ -507,6 +512,11 @@ Summary of virtual fabric (vFabric) information.
 vfmember 
 .NL
 Summary of vFabric membership information.
+
+.TP 10
+dgmember
+.NL
+Summary of DeviceGroup membership information.
 
 .TP 10
 verifyfis 

@@ -104,7 +104,7 @@ fi
 
 MIN_PROCESSES=${MIN_PROCESSES:-2}
 MULT_PROCESSES=${MULT_PROCESSES:-1}
-if [ z"$NUM_PROCESSES" == zall ]
+if [ z"$NUM_PROCESSES" = zall ]
 then
 	# skip comment and blank lines
 	NUM_PROCESSES=$(cat $MPI_HOSTS|egrep -v '^[[:space:]]*#'|egrep -v '^[[:space:]]*$'|wc -l)

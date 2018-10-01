@@ -45,7 +45,7 @@ Produces full help text.
 .TP 10
 -r \fIroot\fR 
 .NL
-Specifies alternate root directory; default is / .
+Specifies alternate root directory. Default is / .
 
 .TP 10
 -G 
@@ -93,11 +93,20 @@ Disables autostart of given component. This option can appear with -E or more th
 Outputs list of supported components.
 
 .IP
-Supported components include: opa\(ulstack ibacm mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev rdma\(ulndd delta\(ulipoib delta\(ulsrp delta\(ulsrpt opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulintel\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi sandiashmem mvapich2\(ulgcc openmpi\(ulgcc mpisrc delta\(uldebug 
+
+\fBNOTE:\fR
+Supported components may vary according to OS. Refer to
+\fIIntel(R) Omni-Path Fabric Software Installation Guide\fR
+
+, OS RPMs Installation Prerequisites for the list of components by supported OS.
+.IP
+Supported components include: opa\(ulstack mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev delta\(ulipoib opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulintel\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi sandiashmem mvapich2\(ulgcc openmpi\(ulgcc mpisrc delta\(uldebug 
 .IP
 Supported components when using command on a Management Node with Intel(R) Omni-Path Fabric Suite installed, include: fastfabric opafm 
 .IP
 Supported component name aliases include: opa ipoib mpi psm\(ulmpi verbs\(ulmpi pgas opadev 
+.IP
+Additional component names allowed for -E and -D options: ibacm rdma\(ulndd delta\(ulsrp delta\(ulsrpt
 .TP 10
 -V 
 .NL
@@ -106,7 +115,7 @@ Outputs version.
 .TP 10
 --user\(ulqueries 
 .NL
-Permits non-root users to query the fabric (default).
+Permits non-root users to query the fabric (Default).
 
 .TP 10
 --no\(uluser\(ulqueries 

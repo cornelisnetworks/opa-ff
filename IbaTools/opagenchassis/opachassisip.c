@@ -433,7 +433,7 @@ int main (int argc, char *argv[])
 	InitSweepVerbose(g_verbose?stderr:NULL);
 
 	// sweep fabric for all nodes
-	if (FSUCCESS != Sweep(g_portGuid, &fabric, FF_NONE, SWEEP_ALL, !g_verbose))
+	if (FSUCCESS != Sweep(g_portGuid, &fabric, FF_NONE, SWEEP_ALL, !g_verbose, RESP_WAIT_TIME))
 		fprintf(stderr, "Error, sweep failed!\n"); 
 	else {
 		// initialize global structures

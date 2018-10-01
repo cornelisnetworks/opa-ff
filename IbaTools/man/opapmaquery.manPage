@@ -49,12 +49,12 @@ Specifies the destination LID. Default is local port.
 .TP 10
 -h/--hfi \fIhfi\fR 
 .NL
-Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. (Default is 0.)
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
 -p/--port \fIport\fR 
 .NL
-Specifies the port, numbered 1..n. Using 0 specifies the first active port. (Default is 0.)
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
 -o \fIotype\fR 
@@ -178,7 +178,7 @@ Clears the error info. Supported options:
 .TP 10
 -h 0 
 .NL
-First active port in system (default).
+First active port in system (Default).
 
 .TP 10
 -h 0 -p 0 
@@ -223,7 +223,7 @@ Specifies the port mask, in hexadecimal. Bits represent ports 63-0. For example:
 .TP 10
 -e \fImask\fR 
 .NL
-Specifies the counter/error select mask, in hexadecimal. The following lists "Mask - Bit - Location for Counters". Where applicable, location "for Error Info" is presented. The default is all bits set (0xffffffe0).
+Specifies the counter/error select mask, in hexadecimal. The following lists "Mask - Bit - Location for Counters". Where applicable, location "for Error Info" is presented. Default is all bits set (0xffffffe0).
 
 .RS
 

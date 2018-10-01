@@ -21,6 +21,7 @@ counters. The last category, SmaCongestion, shows counters gathered using VF
 Port Counters query (if available). The Port Stats screen accepts the following
 input commands.
 
+  V: Switch to VF port statistics for the port in the selected VF (if available)
   N: Switch between statistics for port and port's neighbor (if available)
   S: Scroll forward (s*) or backward (S*) through counter pages
 

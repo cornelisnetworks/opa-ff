@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015-2017, Intel Corporation
+# Copyright (c) 2015-2018, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -49,6 +49,7 @@
 #   FILE_NODELEAVES      - Leaf switches
 #   FILE_TOPOLOGY_OUT    - Topology: FILE_LINKSUM + FILE_LINKSUM_NOCABLE +
 #                           FILE_NODEFIS + FILE_NODESWITCHES
+#   OUT_FOLDER           - Folder to redirect the topology files
 #   FILE_HOSTS           - 'hosts' file
 #   FILE_CHASSIS         - 'chassis' file
 
@@ -111,6 +112,7 @@ FILE_NODESM="nodesm.csv"
 FILE_CHASSIS="chassis"
 FILE_HOSTS="hosts"
 FILE_TOPOLOGY_OUT="topology.0:0.xml"
+OUT_FOLDER=""
 FILE_RESERVE="file_reserve"
 FILE_TEMP=$(mktemp "opaxlattopo-1.XXXX")
 FILE_TEMP2=$(mktemp "opaxlattopo-2.XXXX")
@@ -334,6 +336,10 @@ usage_full()
   echo "                        Report Types:" >&2
   echo "                        brnodes  - Creates <Node> section xml for the csv input" >&2
   echo "                        links    - Creates <LinkSummary> section xml for the csv input" >&2
+  echo "       source        -  source csv file; default is topology.csv" >&2
+  echo "       dest          -  output xml file; default is topology.0:0.xml" >&2
+  echo "                        default output file name may vary if used with -s option." >&2
+  echo "                        It can also be used to specify destinstion folder" >&2
   echo "" >&2
   echo "   The following environment variables allow user-specified MTU" >&2
   echo "      MTU_SW_SW  -  If set will override default MTU on switch<->switch links" >&2
@@ -1317,11 +1323,29 @@ done
 shift $((OPTIND -1))
 
 if [ $# -ge 1 ]; then
-	FILE_TOPOLOGY_LINKS=$1
-	shift;
+    FILE_TOPOLOGY_LINKS=$1
+    shift;
 fi
-if [ $# -ge 1 ]; then 
-	FILE_TOPOLOGY_OUT=$1
+if [ $# -ge 1 ]; then
+    if [ -d $1 ]; then
+        OUT_FOLDER="$1"
+    else
+        FILE_TOPOLOGY_OUT=$1
+    fi
+fi
+
+# if output folder is specified, cd to that folder after
+# moving the temp files to this out folder and make sure
+# that the input FILE_TOPOLOGY_LINK file is absolute
+if [ $OUT_FOLDER ]; then
+    working_dir=$(pwd)
+    mv $FILE_TEMP $OUT_FOLDER
+    mv $FILE_TEMP2 $OUT_FOLDER
+    # if path is relative; convert it to absolute
+    if [[ "${FILE_TOPOLOGY_LINKS:0:1}" != "/" ]]; then
+        FILE_TOPOLOGY_LINKS="${working_dir}/${FILE_TOPOLOGY_LINKS}"
+    fi
+    cd $OUT_FOLDER
 fi
 
 # Parse FILE_TOPOLOGY_LINKS2
@@ -2049,6 +2073,10 @@ if [ "$n_detail" != "0" ]; then
   done # next group
 
 fi # detail output
+
+if [ $OUT_FOLDER ]; then
+    cd $working_dir
+fi
 
 display_progress "Done"
 exit 0

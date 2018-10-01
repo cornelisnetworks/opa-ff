@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2018, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -50,7 +50,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "stl_print.h"
 
 PrintDest_t g_dest;
-uint64		g_mkey=0;                           // SMA M-Key
 uint8       g_verbose = 0;                      // Debug aid: data turn on global verbose => debugging
 uint32      debug_level = 0;                    // Debug aid: User passed-in clo; 0 = portdown; 1 = open-ib_utils; 2=debug for mad calls
 struct      omgt_port *g_omgt_port;
@@ -66,7 +65,7 @@ uint16_t    mgmt_pkey = OMGT_DEFAULT_PKEY;
 #define VRBSE_PRINT(format, args...) \
 	do { if (g_verbose > 0) { printf(format, ##args); fflush(stdout); } } while (0)
 
-#if defined(DBGPRINT) 
+#if defined(DBGPRINT)
 #undef DBGPRINT
 #endif
 
@@ -88,7 +87,7 @@ char *cmdname;
 
 /**
  * set the routing portion of the SMP packet
- * 
+ *
  * @param dlid
  * @param slid
  * @param port
@@ -116,12 +115,12 @@ void set_route(STL_LID dlid, STL_LID slid, uint8_t port, STL_SMP* smp)
 
 /**
  * perform a Get(PortInfo) SMA request and wait for response
- * 
+ *
  * @param dlid
  * @param slid
  * @param port
  * @param smp
- * 
+ *
  * @return int
  */
 int get_port_info(STL_LID dlid, STL_LID slid, uint8_t port, STL_SMP* smp)
@@ -135,7 +134,7 @@ int get_port_info(STL_LID dlid, STL_LID slid, uint8_t port, STL_SMP* smp)
 	smp->common.mr.AsReg8 = 0;
 	smp->common.mr.s.Method = MMTHD_GET;
 	smp->common.AttributeID = MCLASS_ATTRIB_ID_PORT_INFO;
-	smp->M_Key = g_mkey;
+
 	// rest of fields should be ignored for a Get, zero'ed above
 
 	if (cmd == portdown || cmd == portconfig || g_verbose)
@@ -179,7 +178,7 @@ int get_port_info(STL_LID dlid, STL_LID slid, uint8_t port, STL_SMP* smp)
 
 /**
  * output the contents of a PortInfo SMP packet
- * 
+ *
  * @param title
  * @param portGuid
  * @param smp
@@ -200,7 +199,7 @@ void show_port_info(const char* title, EUI64 portGuid, STL_SMP* smp)
 
 /**
  * build a Set(PortInfo) SMP packet
- * 
+ *
  * @param dlid
  * @param slid
  * @param port
@@ -213,7 +212,7 @@ void show_port_info(const char* title, EUI64 portGuid, STL_SMP* smp)
  * @param getInfo
  */
 void initialize_set_port_info(STL_LID dlid, STL_LID slid, int have_nlid, STL_LID nlid, uint8_t port,
-							  STL_SMP *smp, uint8_t state, uint8_t physstate, uint16_t width, uint16_t speed, uint8_t crc, 
+							  STL_SMP *smp, uint8_t state, uint8_t physstate, uint16_t width, uint16_t speed, uint8_t crc,
 							  EUI64 portGuid, uint16_t pkey8b, const STL_SMP *getInfo)
 {
 	STL_PORT_INFO* pPortInfo;
@@ -232,7 +231,6 @@ void initialize_set_port_info(STL_LID dlid, STL_LID slid, int have_nlid, STL_LID
 	smp->common.mr.s.Method = MMTHD_SET;
 	set_route(dlid, slid, port, smp);	// MgmtClass and AttributeModifier
 	smp->common.AttributeID = MCLASS_ATTRIB_ID_PORT_INFO;
-	smp->M_Key = g_mkey;
 
 	pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
 	if (! getInfo) {
@@ -264,20 +262,20 @@ void initialize_set_port_info(STL_LID dlid, STL_LID slid, int have_nlid, STL_LID
 
 /**
  * send a pre-built MAD and output what we are doing
- * 
+ *
  * @param hfi
  * @param portGuid
  * @param dlid
  * @param slid
  * @param port
  * @param smp
- * 
+ *
  * @return int
  */
 FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID dlid, uint8_t dport, STL_LID slid, uint8_t lport)
 {
 	FSTATUS  fstatus = FSUCCESS;
-	
+
 	const char *str;
 	char hfistr[40];
 	STL_SMP returnedSmp;
@@ -293,7 +291,7 @@ FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID dlid, 
 	smp.common.mr.s.Method = MMTHD_SET;
 	set_route(dlid, slid, dport, &smp);	// MgmtClass and AttributeModifier
 	smp.common.AttributeID = MCLASS_ATTRIB_ID_LED_INFO;
-	smp.M_Key = g_mkey;
+
 
 	pLedInfo = (STL_LED_INFO *)stl_get_smp_data(&smp);
 	pLedInfo->u.s.LedMask = enabled? 1: 0;
@@ -315,7 +313,7 @@ FSTATUS send_led_info(bool enabled, unsigned hfi, EUI64 portGuid, STL_LID dlid, 
 	} else {
 		printf("%s %u (0x%016"PRIx64")%s\n", str, lport, portGuid, hfistr);
 	}
-	
+
 	MemoryClear(&returnedSmp, sizeof(returnedSmp));
 	{
 		struct omgt_mad_addr addr = {
@@ -483,7 +481,7 @@ static void run_stl_mode(void)
 							param.port_in_hfi);
 		return;
 	}
-	
+
 
 	memset( &setPortInfo, 0, sizeof(setPortInfo));
 	memset( &getPortInfo, 0, sizeof(getPortInfo));
@@ -532,7 +530,7 @@ static void run_stl_mode(void)
 				uint16_t unsupported = (param.speed & ~supported);
 				if (unsupported) {
 					fprintf(stderr, "%s: ignoring unsupported speed bits: 0x%x [%s] (port supports 0x%x [%s])\n",
-						cmdname, unsupported, 
+						cmdname, unsupported,
 						StlLinkSpeedToText(unsupported, buf1, sizeof(buf1)),
 						supported,
 						StlLinkSpeedToText(supported, buf2, sizeof(buf2)));
@@ -622,7 +620,7 @@ static void run_stl_mode(void)
 	} else {
 		fprintf(stderr, "%s: Unable to send port information; status=%d\n", cmdname, status);
 	}
-	
+
 }
 
 /**
@@ -648,7 +646,7 @@ static enum cmd_t determine_invocation(const char *argv0, char **command, const 
 		};
 		*longopts = long_options;
 		rc = portconfig;
-		*options = "l:m:h:p:r:zS:P:s:w:c:K:vL:";
+		*options = "l:m:h:p:r:zS:P:s:w:c:vL:";
 	} else if ( (strcmp(*command, "opaportinfo") == 0)) {
 		static struct option long_options[] = {
 			{"help", 0, 0, 2}, // display help text.
@@ -656,7 +654,7 @@ static enum cmd_t determine_invocation(const char *argv0, char **command, const 
 		};
 		*longopts = long_options;
 		rc = portinfo;
-		*options = "l:m:h:p:K:v";
+		*options = "l:m:h:p:v";
 	} else {
 		fprintf(stderr, "Invalid command name '%s' (must be opaportinfo or opaportconfig\n",
 			*command);
@@ -710,11 +708,11 @@ void Usage(void)
 		fprintf(stderr, "%s manually programs a local port; Designed for use by expert users only.\n\b Non-expert users should use other tools such as opaenableports, opadisableports and\n\b opaportinfo for basic functionality\n\n", cmdname); 
 		fprintf(stderr, "Usage: %s [-l lid [-m dest_port]] [-h hfi] [-p port] [-r secs] [-z]\n", cmdname);
 		fprintf(stderr, "                      [-z] [-S state] [-P physstate] [-s speed] [-w width]\n");
-		fprintf(stderr, "                      [-c LTPCRC]  [-K mkey] [-v] [-L lid] [<sub command>]\n");
+		fprintf(stderr, "                      [-c LTPCRC] [-v] [-L lid] [<sub command>]\n");
 		fprintf(stderr, "     : %s [--help]\n", cmdname);
 	} else {
-		fprintf(stderr, "%s displays local port info.\n\n", cmdname); 
-		fprintf(stderr, "Usage: %s [-l lid [-m dest_port]] [-h hfi] [-p port] [-K mkey] [-v]\n", cmdname);
+		fprintf(stderr, "%s displays local port info.\n\n", cmdname);
+		fprintf(stderr, "Usage: %s [-l lid [-m dest_port]] [-h hfi] [-p port] [-v]\n", cmdname);
 		fprintf(stderr, "     : %s [--help]\n", cmdname);
 	}
 
@@ -724,7 +722,6 @@ void Usage(void)
 	fprintf(stderr, "                   useful to access switch ports\n");
 	fprintf(stderr, "    -h hfi - HFI to send through/to. Default is first HFI\n");
 	fprintf(stderr, "    -p port - Port to send through/to. Default is first port\n");
-	fprintf(stderr, "    -K mkey - SM management key to access remote ports\n");
 
 	if (cmd == portconfig)
 	{
@@ -753,22 +750,22 @@ void Usage(void)
 		fprintf(stderr, "          3 - disabled\n");
 		fprintf(stderr, "         11 - Phy-Test - current physstate must be 'disabled'\n");
         fprintf(stderr, "    -s speed - new link speeds enabled (default is 0)\n");
-        fprintf(stderr, "        To enable multiple speeds, use sum of desired speeds\n"); 
+        fprintf(stderr, "        To enable multiple speeds, use sum of desired speeds\n");
         fprintf(stderr, "          0 - no-op\n");
         fprintf(stderr, "          2 - 0x0002 - 25 Gb/s\n");
         fprintf(stderr, "    -w width - new link widths enabled (default is 0)\n");
         fprintf(stderr, "        To enable multiple widths, use sum of desired widths\n");
         fprintf(stderr, "          0 - no-op\n");
-        fprintf(stderr, "          1 - 0x01 - 1x\n"); 
-        fprintf(stderr, "          2 - 0x02 - 2x\n"); 
-        fprintf(stderr, "          4 - 0x04 - 3x\n"); 
-        fprintf(stderr, "          8 - 0x08 - 4x\n"); 
+        fprintf(stderr, "          1 - 0x01 - 1x\n");
+        fprintf(stderr, "          2 - 0x02 - 2x\n");
+        fprintf(stderr, "          4 - 0x04 - 3x\n");
+        fprintf(stderr, "          8 - 0x08 - 4x\n");
         fprintf(stderr, "    -c CRC - new CRCs enabled (default is 0)\n");
         fprintf(stderr, "        to enable multiple CRCs, use sum of desired CRCs\n");
-        fprintf(stderr, "          0 - no-op\n"); 
-        fprintf(stderr, "          1 - 0x1 - 14-bit LTP CRC mode\n"); 
-        fprintf(stderr, "          2 - 0x2 - 16-bit LTP CRC mode\n"); 
-        fprintf(stderr, "          4 - 0x4 - 48-bit LTP CRC mode\n"); 
+        fprintf(stderr, "          0 - no-op\n");
+        fprintf(stderr, "          1 - 0x1 - 14-bit LTP CRC mode\n");
+        fprintf(stderr, "          2 - 0x2 - 16-bit LTP CRC mode\n");
+        fprintf(stderr, "          4 - 0x4 - 48-bit LTP CRC mode\n");
 		fprintf(stderr, "          8 - 0x8 - 12/16 bits per lane LTP CRC mode\n");
 	}
 
@@ -797,10 +794,10 @@ void Usage(void)
 
 /**
  * main
- * 
+ *
  * @param argc
  * @param argv
- * 
+ *
  * @return int
  */
 int main(int argc, char** argv)
@@ -835,7 +832,7 @@ int main(int argc, char** argv)
 				if (FSUCCESS != StringToUint32(&param.nlid, optarg, NULL, 0, TRUE)) {
 					fprintf(stderr, "%s: Invalid LID: %s\n", cmdname, optarg);
 					Usage();
-				} else	
+				} else
 					param.have_nlid = 1;
 				break;
 			case 'l':
@@ -913,12 +910,6 @@ int main(int argc, char** argv)
 					Usage();
 				}
 				cycleOverride = 1;
-				break;
-			case 'K':
-				if (FSUCCESS != StringToUint64(&g_mkey, optarg, NULL, 0, TRUE)) {
-					fprintf(stderr, "%s: Invalid mkey: %s\n", cmdname, optarg);
-					Usage();
-				}
 				break;
 			default:
 				Usage();
