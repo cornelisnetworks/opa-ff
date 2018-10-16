@@ -104,6 +104,8 @@ then
 		sed -i "s/__RPM_REQ_OPAMGT_DEV/libibumad-devel, libibverbs-devel, libopenssl-devel, opa-libopamgt/g" $to
 	fi
 
+	# __RPM_REQ_ADDR_RES same for all SLES versions
+	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools, ibacm/g" $to
 	# __RPM_REQ_OPAMGT same for all SLES versions
 	sed -i "s/__RPM_REQ_OPAMGT/libibumad3, libibverbs1, openssl/g" $to
 else
