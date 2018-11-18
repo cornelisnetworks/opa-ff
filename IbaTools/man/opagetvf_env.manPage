@@ -82,7 +82,7 @@ If the selected virtual fabric does not have a limitation specified for rate, th
 
 .SH Function Example
 .NL
-. /usr/sbin/opagetvf\(ulenv
+\[char46] /usr/sbin/opagetvf_env
 .br
 
 .br
