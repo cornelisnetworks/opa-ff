@@ -81,6 +81,7 @@ then
 	exit 1
 fi
 
+[[ $SOURCE_DATE_EPOCH ]] && DATE=`date -u -d "@$SOURCE_DATE_EPOCH" -Iseconds`
 DATE=${DATE:-"`date +'%m/%d/%y %H:%M'`"}
 
 if [ "$#" = 1 ]
