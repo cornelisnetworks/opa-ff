@@ -152,7 +152,7 @@ OSU2_MPI2: SHOWMPI
 
 IMB: SHOWMPI
 	@echo "Building Intel Micro Benchmarks 4.0.2..."
-	cd imb/src; gmake MPI_HOME=$(MPICH_PREFIX) CC=$(MPICC) -f make_mpich
+	cd imb/src; make MPI_HOME=$(MPICH_PREFIX) CC=$(MPICC) -f make_mpich
 	@echo
 .PHONY: IMB
 

@@ -121,6 +121,9 @@ char					g_vfName[MAX_VFABRIC_NAME];
 void					*g_SDHandle			= NULL;
 PrintDest_t				g_dest;
 struct omgt_port 		*g_portHandle		= NULL;
+STL_PA_PM_CFG_DATA g_pmConfigData;
+boolean g_valid_pm_config_exists = FALSE;
+
 
 char *g_oob_address = "127.0.0.1";
 uint16 g_oob_port = 3245;
@@ -318,21 +321,16 @@ static FSTATUS ClrAllPortCounters(struct omgt_port *port, uint32_t selectFlag)
     return status;
 }
 
-static FSTATUS GetPMConfig(struct omgt_port *port)
+static FSTATUS GetPMConfig(struct omgt_port *port, STL_PA_PM_CFG_DATA *pmConfigData)
 {
 	FSTATUS					status= FERROR;
-    STL_PA_PM_CFG_DATA			*response;
 
-    fprintf(stderr, "Getting PM Configuration...\n");
-    if ((response = iba_pa_single_mad_get_pm_config_response_query(port)) != NULL) {
-        status = FSUCCESS;
-		PrintStlPMConfig(&g_dest, 0, response);
-    } else {
-        fprintf(stderr, "Failed to receive GetPMConfig response: %s\n", iba_pa_mad_status_msg(port));
-    }
-	if (response)
-		MemoryDeallocate(response);
-    return status;
+	fprintf(stderr, "Getting PM Configuration...\n");
+	memset(pmConfigData,0, sizeof(STL_PA_PM_CFG_DATA));
+	if ((status = omgt_pa_get_pm_config(port, pmConfigData)) != FSUCCESS) {
+		fprintf(stderr, "Failed to receive GetPMConfig response: %s\n", iba_pa_mad_status_msg(port));
+	}
+	return status;
 }
 
 static FSTATUS FreezeImage(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
@@ -474,7 +472,67 @@ fail:
 	status = FERROR;
 	goto done;
 }
+static FSTATUS GetGroupList2(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
+{
+	OMGT_QUERY query;
+	FSTATUS status;
+	PQUERY_RESULT_VALUES pQueryResults = NULL;
+	STL_PA_IMAGE_ID_DATA imageId = {0};
 
+	memset(&query, 0, sizeof(query));   // initialize reserved fields
+	query.InputType 	= InputTypeNoInput;
+	query.OutputType 	= OutputTypePaTableRecord;
+
+	fprintf(stderr, "Getting Group List...\n");
+
+	imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
+	imageId.imageOffset = imageOffset;
+	imageId.imageTime.absoluteTime = imageTime;
+
+	if (g_verbose)
+		printf("Query: Input=%s, Output=%s\n",
+			iba_sd_query_input_type_msg(query.InputType),
+			iba_sd_query_result_type_msg(query.OutputType));
+
+	// this call is synchronous
+	status = iba_pa_multi_mad_group_list2_response_query(port, &query, &imageId, &pQueryResults);
+
+	if (!pQueryResults) {
+		fprintf(stderr, "%*sPA GroupList query Failed: %s (%s) \n", 0, "", iba_fstatus_msg(status), iba_pa_mad_status_msg(port));
+		goto fail;
+	} else if (pQueryResults->Status != FSUCCESS) {
+		fprintf(stderr, "%*sPA GroupList query Failed: %s MadStatus 0x%x: %s\n", 0, "",
+			iba_fstatus_msg(pQueryResults->Status),
+			pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+		goto fail;
+	} else if (pQueryResults->ResultDataSize == 0) {
+		fprintf(stderr, "%*sNo Group List Records Returned\n", 0, "");
+	} else {
+		STL_PA_GROUP_LIST2_RESULTS *p = (STL_PA_GROUP_LIST2_RESULTS *)pQueryResults->QueryResult;
+
+		if (g_verbose) {
+			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
+				iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
+			fprintf(stderr, "PA Multiple MAD Response for Group Data:\n");
+		}
+
+		PrintStlPAGroupList2(&g_dest, 1, p->NumGroupList2Records, p->GroupList2Records);
+	}
+
+	status = FSUCCESS;
+
+done:
+	// iba_sd_query_port_fabric_info will have allocated a result buffer
+	// we must free the buffer when we are done with it
+	if (pQueryResults)
+		omgt_free_query_result_buffer(pQueryResults);
+	return status;
+
+fail:
+	status = FERROR;
+	goto done;
+}
 static FSTATUS GetGroupInfo(struct omgt_port *port, char *groupName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
 	OMGT_QUERY				query;
@@ -867,6 +925,65 @@ fail:
 	status = FERROR;
 	goto done;
 }
+static FSTATUS GetVFList2(struct omgt_port *port, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
+{
+	OMGT_QUERY query;
+	FSTATUS status;
+	PQUERY_RESULT_VALUES pQueryResults = NULL;
+	STL_PA_IMAGE_ID_DATA imageId = { 0 };
+
+	memset(&query, 0, sizeof(query));   // initialize reserved fields
+	query.InputType 	= InputTypeNoInput;
+	query.OutputType 	= OutputTypePaTableRecord;
+
+	fprintf(stderr, "Getting VF List...\n");
+	imageId.imageNumber = imageTime ? PACLIENT_IMAGE_TIMED : imageNumber;
+	imageId.imageOffset = imageOffset;
+	imageId.imageTime.absoluteTime = imageTime;
+	if (g_verbose)
+		printf("Query: Input=%s, Output=%s\n",
+			iba_sd_query_input_type_msg(query.InputType),
+			iba_sd_query_result_type_msg(query.OutputType));
+
+	// this call is synchronous
+	status = iba_pa_multi_mad_vf_list2_response_query(port, &query, &imageId, &pQueryResults);
+
+	if (!pQueryResults) {
+		fprintf(stderr, "%*sPA vfList query Failed: %s (%s) \n", 0, "", iba_fstatus_msg(status), iba_pa_mad_status_msg(port));
+		goto fail;
+	} else if (pQueryResults->Status != FSUCCESS) {
+		fprintf(stderr, "%*sPA vfList query Failed: %s MadStatus 0x%x: %s\n", 0, "",
+			iba_fstatus_msg(pQueryResults->Status),
+			pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+		goto fail;
+	} else if (pQueryResults->ResultDataSize == 0) {
+		fprintf(stderr, "%*sNo VF List Records Returned\n", 0, "");
+	} else {
+		STL_PA_VF_LIST2_RESULTS *p = (STL_PA_VF_LIST2_RESULTS *)pQueryResults->QueryResult;
+
+		if (g_verbose) {
+			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
+				iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
+			fprintf(stderr, "PA Multiple MAD Response for VF list data:\n");
+		}
+
+		PrintStlPAVFList2(&g_dest, 1, p->NumVFList2Records, p->VFList2Records);
+	}
+
+	status = FSUCCESS;
+
+done:
+	// iba_sd_query_port_fabric_info will have allocated a result buffer
+	// we must free the buffer when we are done with it
+	if (pQueryResults)
+		omgt_free_query_result_buffer(pQueryResults);
+	return status;
+
+fail:
+	status = FERROR;
+	goto done;
+}
 
 static FSTATUS GetVFInfo(struct omgt_port *port, char *vfName, uint64 imageNumber, int32 imageOffset, uint32 imageTime)
 {
@@ -1228,6 +1345,11 @@ void usage(void)
 	fprintf(stderr, "           bubbles       - sorted by bubble category - highest first\n");                // STL_PA_SELECT_CATEGORY_BUBBLE        0x00030004
 	fprintf(stderr, "           security      - sorted by security category - highest first\n");              // STL_PA_SELECT_CATEGORY_SEC           0x00030005
 	fprintf(stderr, "           routing       - sorted by routing category - highest first\n");               // STL_PA_SELECT_CATEGORY_ROUT          0x00030006
+	fprintf(stderr, "           vfutilhigh    - sorted by utilization - highest first\n");                  // STL_PA_SELECT_VF_UTIL_HIGH         0x00020083
+	fprintf(stderr, "           vfpktrate     - sorted by packet rate - highest first\n");                  // STL_PA_SELECT_VF_UTIL_PKTS_HIGH    0x00020084
+	fprintf(stderr, "           vfutillow     - sorted by utilization - lowest first\n");                   // STL_PA_SELECT_VF_UTIL_LOW          0x00020102
+	fprintf(stderr, "           vfcongestion  - sorted by congestion category - highest first\n");          // STL_PA_SELECT_CATEGORY_VF_CONG          0x00030007
+	fprintf(stderr, "           vfbubbles     - sorted by bubble category - highest first\n");              // STL_PA_SELECT_CATEGORY_VF_BUBBLE        0x00030008    
 	fprintf(stderr, "    -S/--start           - start of window for focus ports - should always be 0\n");
 	fprintf(stderr, "                           for now\n");
 	fprintf(stderr, "    -r/--range           - size of window for focus ports list\n");
@@ -1413,6 +1535,11 @@ OutputFocusMap_t OutputFocusTable[]= {
 	{"bubbles",	        STL_PA_SELECT_CATEGORY_BUBBLE },       // 0x00030004
 	{"security" ,       STL_PA_SELECT_CATEGORY_SEC },          // 0x00030005
 	{"routing",	        STL_PA_SELECT_CATEGORY_ROUT },         // 0x00030006
+	{"vfutilhigh",      STL_PA_SELECT_VF_UTIL_HIGH },        // 0x00020083
+	{"vfpktrate",       STL_PA_SELECT_VF_UTIL_PKTS_HIGH },   // 0x00020084
+	{"vfutillow",       STL_PA_SELECT_VF_UTIL_LOW },         // 0x00020102
+	{"vfcongestion",    STL_PA_SELECT_CATEGORY_VF_CONG },    // 0x00030007
+	{"vfbubbles",       STL_PA_SELECT_CATEGORY_VF_BUBBLE },  // 0x00030008
 	{ NULL, 0},
 };
 
@@ -1520,8 +1647,7 @@ int main(int argc, char ** argv)
 				}
 				g_gotOutput = 1;
 				break;
-    
-	    	case 'g':
+			case 'g':
 				snprintf(g_groupName, STL_PM_GROUPNAMELEN, "%s", optarg);
 				g_gotGroup = 1;
 				break;
@@ -1840,8 +1966,16 @@ int main(int argc, char ** argv)
 		usage();
 	}
 
-	if (queryType == Q_GETGROUPLIST || queryType == Q_GETPMCONFIG || 
-		queryType == Q_CLASSPORTINFO || queryType == Q_GETVFLIST) {
+	if (queryType == Q_GETGROUPLIST || queryType == Q_GETVFLIST) {
+		// only certain options are valid. Rest are ignored.
+		if (g_deltaFlag || g_gotGroup || g_gotLid || g_gotPort || g_gotSelect || g_gotGUID ||
+			g_gotMoveImgNum || g_gotMoveImgOff || g_gotNodeDesc ||
+			g_gotFocus || g_gotStart || g_gotRange || g_userCntrsFlag || g_gotvfName
+			|| g_gotBegTime || g_gotEndTime) {
+			fprintf(stderr, "opapaquery: for the selected output type only -[hpvnOy] options are valid. Ignoring rest..\n");
+		}
+	}
+	if (queryType == Q_GETPMCONFIG || queryType == Q_CLASSPORTINFO) {
 		// only -h, -p and -v options are valid. Rest are ignored.
 		if (g_deltaFlag || g_gotGroup || g_gotLid || g_gotPort || g_gotSelect || g_gotGUID ||
 			g_gotImgNum || g_gotImgOff || g_gotMoveImgNum || g_gotMoveImgOff || g_gotNodeDesc ||
@@ -1856,7 +1990,7 @@ int main(int argc, char ** argv)
 			g_gotMoveImgNum || g_gotMoveImgOff || g_gotFocus || g_gotStart || g_gotNodeDesc ||
 			g_gotRange || g_userCntrsFlag || g_gotvfName ||
 			g_gotBegTime || g_gotEndTime) {
-			fprintf(stderr, "opapaquery: for the selected output type only -[hpvgnOt] options are valid. Ignoring rest..\n");
+			fprintf(stderr, "opapaquery: for the selected output type only -[hpvgnOy] options are valid. Ignoring rest..\n");
 		}
 	}
 	else if (queryType == Q_GETVFINFO || queryType == Q_GETVFCONFIG) {
@@ -1865,7 +1999,7 @@ int main(int argc, char ** argv)
 			g_gotMoveImgNum || g_gotMoveImgOff || g_gotFocus || g_gotStart || g_gotGUID ||
 			g_gotRange || g_userCntrsFlag || g_gotBegTime ||
 			g_gotEndTime) {
-			fprintf(stderr, "opapaquery: for the selected output type only -[hpvnOVt] options are valid. Ignoring rest..\n");
+			fprintf(stderr, "opapaquery: for the selected output type only -[hpvnOVy] options are valid. Ignoring rest..\n");
 		}
 	}
 	else if (queryType == Q_GETGROUPNODEINFO) {
@@ -1873,7 +2007,7 @@ int main(int argc, char ** argv)
 		if (g_deltaFlag || g_gotSelect || g_gotMoveImgNum || g_gotMoveImgOff || g_gotPort ||
 			g_gotvfName || g_gotFocus || g_gotStart || g_gotRange || g_userCntrsFlag ||
 			g_gotBegTime || g_gotEndTime) {
-			fprintf(stderr, "opapaquery: for the selected output type only -[hpvlngDGOt] options are valid. Ignoring rest..\n");
+			fprintf(stderr, "opapaquery: for the selected output type only -[hpvlngDGOy] options are valid. Ignoring rest..\n");
 		}
 	}
 	else if (queryType == Q_GETGROUPLINKINFO) {
@@ -1881,7 +2015,7 @@ int main(int argc, char ** argv)
 		if (g_deltaFlag || g_gotSelect || g_gotMoveImgNum || g_gotMoveImgOff || g_gotGUID ||
 			g_gotvfName || g_gotFocus || g_gotStart || g_gotRange || g_userCntrsFlag || g_gotNodeDesc ||
 			g_gotBegTime || g_gotEndTime) {
-			fprintf(stderr, "opapaquery: for the selected output type only -[hpvlngPOt] options are valid. Ignoring rest..\n");
+			fprintf(stderr, "opapaquery: for the selected output type only -[hpvlngPOy] options are valid. Ignoring rest..\n");
 		}
 		if (g_gotPort && !g_gotLid) {
 			fprintf(stderr, "opapaquery: -l (lid) also needed with -P (port). Ignoring -P\n");
@@ -1974,10 +2108,38 @@ int main(int argc, char ** argv)
 			opapaquery_exit(FERROR);
 		}
 	}
+	if (queryType == Q_GETGROUPLIST || queryType == Q_GETVFLIST) {
+		if (!paCap.s.IsPerImageListsSupported && (g_gotImgNum || g_gotImgOff || g_gotImgTime)) {
+			fprintf(stderr, "PA does not support Getting historical (Per Image) Group/VF List\n");
+			MemoryDeallocate(portInfo);
+			opapaquery_exit(FERROR);
+		}
+	}
+
+	if (IS_VF_FOCUS_SELECT(g_focus)) {
+		// verify PM config for VL counters
+		if ((fstatus = GetPMConfig(g_portHandle, &g_pmConfigData)) == FERROR){
+			fprintf(stderr, "opapaquery: failed to get GetPMConfig \n");
+			MemoryDeallocate(portInfo);
+			opapaquery_exit(FERROR);
+		}
+		g_valid_pm_config_exists = TRUE;
+		//Check if VF level Focus selects are supported
+		if (!(paCap.s.IsVFFocusTypesSupported) ||
+			!(g_pmConfigData.pmFlags & STL_PM_PROCESS_VL_COUNTERS)){
+			fprintf(stderr, "PA does not support VF Focus selects \n");
+			MemoryDeallocate(portInfo);
+			opapaquery_exit(FERROR);
+		}
+	}
 
 	switch (queryType) {
 	case Q_GETGROUPLIST:
-		fstatus = GetGroupList(g_portHandle);
+		if (paCap.s.IsPerImageListsSupported) {
+			fstatus = GetGroupList2(g_portHandle, g_imageNumber, g_imageOffset, g_imageTime);
+		} else {
+			fstatus = GetGroupList(g_portHandle);
+		}
 		if (fstatus != FSUCCESS) {
 			fprintf(stderr, "opapaquery: failed to get group list\n");
 		}
@@ -2034,10 +2196,15 @@ int main(int argc, char ** argv)
 		break;
 
 	case Q_GETPMCONFIG:
-		fstatus = GetPMConfig(g_portHandle);
-		if (fstatus != FSUCCESS) {
-			fprintf(stderr, "opapaquery: failed to get PM configuration\n");
+		if (!g_valid_pm_config_exists) {
+			fstatus = GetPMConfig(g_portHandle, &g_pmConfigData);
+			if (fstatus != FSUCCESS) {
+				fprintf(stderr, "opapaquery: failed to get PM configuration\n");
+				break;
+			}
 		}
+		PrintStlPMConfig(&g_dest, 0, &g_pmConfigData);
+		fstatus = FSUCCESS;
 		break;
 
 	case Q_FREEZEIMAGE:
@@ -2089,7 +2256,11 @@ int main(int argc, char ** argv)
 		break;
 
 	case Q_GETVFLIST:
-		fstatus = GetVFList(g_portHandle);
+		if (paCap.s.IsPerImageListsSupported) {
+			fstatus = GetVFList2(g_portHandle, g_imageNumber, g_imageOffset, g_imageTime);
+		} else {
+			fstatus = GetVFList(g_portHandle);
+		}
 		if (fstatus != FSUCCESS) {
 			fprintf(stderr, "opapaquery: failed to get vf list\n");
 		}

@@ -31,8 +31,6 @@
 # Include Make Control Settings
 include $(TL_DIR)/$(PROJ_FILE_DIR)/Makesettings.project
 
-include $(TL_DIR)/Makerules/Rules.baseFiles
-
 #=============================================================================#
 # Definitions:
 #-----------------------------------------------------------------------------#
@@ -107,11 +105,17 @@ endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES75"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL75.pl
 endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES76"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL76.pl
+endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES122"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES122.pl
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES123"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES123.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES124"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES124.pl
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES15"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES15.pl

@@ -311,6 +311,11 @@ int main(int argc, char *argv[])
 			case 'f':
 				g_fileParam = 1;
 				memcpy(fwFileName, optarg, FNAME_SIZE);
+				// Validate Filename
+				if (!fwFileName[0]) {
+					fprintf(stderr, "%s: Error: null input filename\n", cmdName);
+					exit(2);
+				}
 				break;
 
 			case 'd':

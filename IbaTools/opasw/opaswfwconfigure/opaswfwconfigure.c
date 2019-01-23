@@ -1135,6 +1135,10 @@ int main(int argc, char *argv[])
 				g_fileParam = 1;
 				strncpy(inibinFileName, optarg, FNAME_SIZE-1);
 				inibinFileName[FNAME_SIZE-1] = 0;
+				if (!inibinFileName[0]) {
+					fprintf(stderr, "%s: Error: null input filename\n", cmdName);
+					exit(1);
+				}
 				break;
 
 			case 'd':

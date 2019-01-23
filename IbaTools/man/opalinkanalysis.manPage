@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opalinkanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opalinkanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opalinkanalysis
 
@@ -225,7 +225,7 @@ Verifies switches against topology input.
 
 .sp
 verifynodes 
-Verifies FIs, switches, and routers against topology input.
+Verifies FIs and switches against topology input.
 
 .RE
 
@@ -243,7 +243,7 @@ Verifies SMs against topology input.
 
 .sp
 verifyall 
-Verifies links, FIs, switches, routers, and SMs against topology input.
+Verifies links, FIs, switches, and SMs against topology input.
 
 .RE
 

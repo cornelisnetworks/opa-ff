@@ -28,10 +28,7 @@ Requires: rdma bc
 
 Requires: __RPM_REQ_BASIC
 BuildRequires: __RPM_BLDREQ
-
-%if 0%{?rhel}
-Epoch: 1
-%endif
+__RPM_EPOCH_BASIC
 
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.
@@ -42,9 +39,7 @@ Summary: Management level tools and scripts.
 Group: System Environment/Libraries
 Requires: opa-basic-tools
 
-%if 0%{?rhel}
-Epoch: 1
-%endif
+__RPM_EPOCH_FF
 
 %description fastfabric
 Contains tools for managing fabric on a managment node.
@@ -54,11 +49,7 @@ IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 Summary: Contains Address Resolution manager
 Group: System Environment/Libraries
 Requires: __RPM_REQ_ADDR_RES
-
-
-%if 0%{?rhel}
-Epoch: 1
-%endif
+__RPM_EPOCH_ADDR_RES
 
 %description address-resolution
 This package contains the ibacm distributed SA provider (dsap) for name and address resolution on OPA platform.
@@ -80,6 +71,7 @@ IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 Summary: Omni-Path management API library
 Group: System Environment/Libraries
 Requires: __RPM_REQ_OPAMGT
+__RPM_EPOCH_LIBOPAMGT
 
 %description libopamgt
 This package contains the library necessary to build applications that interface with an Omni-Path FM.
@@ -89,6 +81,7 @@ IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 Summary: Omni-Path library development headers
 Group: System Environment/Libraries
 Requires: __RPM_REQ_OPAMGT_DEV
+__RPM_EPOCH_LIBOPAMGT
 
 %description libopamgt-devel
 This package contains the necessary headers for opamgt development.
@@ -145,14 +138,18 @@ __RPM_FF_FILES
 %{_bindir}/opa_osd_exercise
 %{_bindir}/opa_osd_perf
 %{_bindir}/opa_osd_query
+%{_bindir}/opa_osd_query_many
+%{_bindir}/opa_osd_load
 %{_libdir}/ibacm
-%{_libdir}/libopasadb.so.*
+%{_libdir}/libopasadb.so*
 %{_includedir}/infiniband
 %{_mandir}/man1/opa_osd_dump.1*
 %{_mandir}/man1/opa_osd_exercise.1*
 %{_mandir}/man1/opa_osd_perf.1*
 %{_mandir}/man1/opa_osd_query.1*
 %config(noreplace) %{_sysconfdir}/rdma/dsap.conf
+%config(noreplace) %{_sysconfdir}/rdma/op_path_rec.conf
+%{_sysconfdir}/rdma/opasadb.xml
 
 %files snapconfig
 __RPM_SNAP_FILES

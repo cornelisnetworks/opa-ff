@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 	}
 
 	if ( (strcmp(g_cmdname, "opasmaquery") == 0)) {
-		options = "vd:nl:m:h:p:o:b:f:gt:i?";
+		options = "vd:nl:m:h:p:o:b:f:gt:c:i?";
 		g_optypes = sma_query;
 		otype = string_to_otype("nodeinfo");
 	} else if ( (strcmp(g_cmdname, "opapmaquery") == 0)) {
@@ -189,6 +189,9 @@ int main(int argc, char** argv)
 				Usage(FALSE);
 			}
 			args.tflag = TRUE;
+			break;
+		case 'c':
+			args.cflag = TRUE;
 			break;
 		case 'b':
 			{
@@ -307,13 +310,14 @@ int main(int argc, char** argv)
 	if (args.flid && ! g_optypes[otype].fflag) {
 		fprintf(stderr, "%s: -f ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
 	}
-
 	if (args.bflag && ! g_optypes[otype].bflag) {
 		fprintf(stderr, "%s: -b ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
 	}
-
 	if (args.eflag && ! g_optypes[otype].eflag) {
 		fprintf(stderr, "%s: -e ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
+	}
+	if (args.cflag && ! g_optypes[otype].cflag) {
+		fprintf(stderr, "%s: -c ignored for -o %s\n", g_cmdname, g_optypes[otype].name);
 	}
 
 	if (args.mflag) {

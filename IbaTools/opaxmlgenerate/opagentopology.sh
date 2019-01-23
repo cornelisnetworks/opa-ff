@@ -33,17 +33,19 @@
 
 Usage()
 {
-	echo "Usage: opagentopology [--help]" >&2
+	echo "Usage: /usr/share/opa/samples/opagentopology [--help]" >&2
 	echo "    --help - produce full help text" >&2
+	echo "    opagentopology should be invoked using the full path - /usr/share/opa/samples/opagentopology " >&2
 
 	exit 2
 }
 
 Usage_full()
 {
-	echo "Usage: opagentopology [--help]" >&2
+	echo "Usage: /usr/share/opa/samples/opagentopology [--help]" >&2
 	echo "    --help - produce full help text" >&2
 	echo >&2
+	echo "    should be invoked using the full path - /usr/share/opa/samples/opagentopology." >&2
 	echo "    generates (to stdout) sample topology XML with subsections:" >&2
 	echo "      <LinkSummary>" >&2
 	echo "      <FIs>" >&2

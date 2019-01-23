@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaextractlids 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaextractlids 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaextractlids
 
@@ -226,12 +226,12 @@ nodedetpat:\fIvalue1\fR:port:\fIvalue2\fR
 .TP 10
 nodetype:\fIvalue\fR 
 .NL
-\fIvalue\fR is node type (SW, FI, or RT).
+\fIvalue\fR is node type (SW or FI).
 
 .TP 10
 nodetype:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
-\fIvalue1\fR is node type (SW, FI, or RT), \fIvalue2\fR is port number.
+\fIvalue1\fR is node type (SW or FI), \fIvalue2\fR is port number.
 
 .TP 10
 rate:\fIvalue\fR 

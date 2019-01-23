@@ -116,28 +116,248 @@ static void my_handler(int signal)
 	printf("\nopapacketcapture: Triggered\n");
 }
 
+boolean isWfrPacketBypass(packet *p) {
+	WFR_SnC_HDR *wfr_hdr = NULL;
+	boolean res = 0;
+
+	wfr_hdr = (WFR_SnC_HDR *)(&blocks[p->blockNum * BLOCKSIZE]);
+
+	if (wfr_hdr->Direction == STL_WFR_OUTBOUND) {
+		res = (boolean) wfr_hdr->u.PBC.s.pbcpacketbypass;
+	} else if (wfr_hdr->Direction == STL_WFR_INBOUND) {
+		res = (wfr_hdr->u.RHF.s.rcvtype == STL_WFR_RCV_BYPASS);
+	}
+	return res;
+}
+
+boolean is9BWfrPacket(packet *p) {
+	WFR_SnC_HDR *wfr_hdr = NULL;
+	boolean res = 0;
+
+	wfr_hdr = (WFR_SnC_HDR *)(&blocks[p->blockNum * BLOCKSIZE]);
+
+	if (wfr_hdr->Direction == STL_WFR_OUTBOUND) {
+		res = !((boolean)wfr_hdr->u.PBC.s.pbcpacketbypass);
+	} else if (wfr_hdr->Direction == STL_WFR_INBOUND) {
+		res = (wfr_hdr->u.RHF.s.rcvtype == STL_WFR_RCV_IB);
+	}
+	return res;
+}
+
+boolean is16BWfrPacket(packet *p) {
+	boolean ret = 0;
+	STL_16B_HDR *lrh = NULL;
+	if (isWfrPacketBypass(p)) {
+		lrh = (STL_16B_HDR *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR));
+		if (lrh->u1.s.L2 == STL_L2_16B) {
+			ret = 1;
+		}
+	}
+	return ret;
+}
+
+boolean hasBTH(packet *p) {
+	boolean ret = 0;
+	STL_16B_HDR *lrh_16 = NULL;
+	IB_LRH *lrh_9 = NULL;
+	if (is9BWfrPacket(p)) {
+		lrh_9 = (IB_LRH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) );
+		if (lrh_9->l.LNH == STL_9B_LNH_BTH) {
+			ret = 1;
+		}
+	} else if (is16BWfrPacket(p)) {
+		lrh_16 = (STL_16B_HDR *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR));
+		if (lrh_16->L4 == STL_16B_L4_IB) {
+			ret = 1;
+		}
+	}
+	return ret;
+}
+
+IB_BTH *get9BTH(packet *p) {
+	IB_BTH *bth_9 = NULL;
+
+	bth_9 = (IB_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) + sizeof(IB_LRH) );
+
+	return bth_9;
+}
+
+STL_16B_BTH *get16BTH(packet *p) {
+	STL_16B_BTH *bth_16 = NULL;
+
+	bth_16 = (STL_16B_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR) + sizeof(STL_16B_HDR) );
+
+	return bth_16;
+}
+
+uint16 getPkey(packet *p) {
+	STL_16B_HDR *lrh_16_raw = NULL;
+	STL_16B_HDR lrh_16;
+	IB_LRH *lrh_9 = NULL;
+	IB_BTH *bth_9 = NULL;
+	uint16 ret = 0;
+
+	if (is9BWfrPacket(p)) {
+		lrh_9 = (IB_LRH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) );
+		if (lrh_9->l.LNH == STL_9B_LNH_BTH) {
+			bth_9 = (IB_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) + sizeof(IB_LRH) );
+			ret = ntoh16(bth_9->Pkey);
+		}
+	} else if (is16BWfrPacket(p)) {
+		lrh_16_raw = (STL_16B_HDR *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR));
+		memcpy((void *)&lrh_16, (void *)lrh_16_raw, sizeof(STL_16B_HDR));
+		BSWAP_STL_16B_HDR(&lrh_16);
+		ret = lrh_16.Pkey;
+	}
+	return ret;
+}
+
+uint8 getOpCode(packet *p) {
+	uint8 ret = 0;
+	STL_16B_BTH *bth_16 = NULL;
+	IB_BTH *bth_9 = NULL;
+
+	if (hasBTH(p)) {
+		if (is9BWfrPacket(p)) {
+			bth_9 = (IB_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) + sizeof(IB_LRH) );
+			ret = bth_9->OpCode;
+		} else if (is16BWfrPacket(p)) {
+			bth_16 = (STL_16B_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR) + sizeof(STL_16B_HDR) );
+			ret = bth_16->OpCode;
+		}
+	}
+	return ret;
+}
+
+uint32 getDestQp(packet *p) {
+	uint32 ret = 0;
+	STL_16B_BTH *bth_16 = NULL;
+	IB_BTH *bth_9 = NULL;
+
+	if (hasBTH(p)) {
+		if (is9BWfrPacket(p)) {
+			bth_9 = (IB_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) + sizeof(IB_LRH) );
+			ret = ntoh32(bth_9->Qp.AsUINT32);
+		} else if (is16BWfrPacket(p)) {
+			bth_16 = (STL_16B_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR) + sizeof(STL_16B_HDR) );
+			ret = ntoh32(bth_16->Qp.AsReg32);
+		}
+	}
+	return ret;
+}
+
+boolean isMAD(packet *p) {
+	boolean ret = 0;
+	STL_16B_HDR *lrh_16 = NULL;
+	STL_16B_BTH *bth_16 = NULL;
+	IB_BTH *bth_9 = NULL;
+
+	if (hasBTH(p)) {
+		if (is9BWfrPacket(p)) {
+			bth_9 = (IB_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) + sizeof(IB_LRH) );
+			if (bth_9->Qp.s.DestQPNumber == 0 || bth_9->Qp.s.DestQPNumber == 1) {
+				ret = 1;
+			}
+		} else if (is16BWfrPacket(p)) {
+			bth_16 = (STL_16B_BTH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR) + sizeof(STL_16B_HDR) );
+			if (bth_16->Qp.s.DestQPNumber == 0 || bth_16->Qp.s.DestQPNumber == 1) {
+				ret = 1;
+			}
+		}
+	} else { /* Could still be a MAD packet even w/o a BTH */
+		if (is16BWfrPacket(p)) { /* Check for 16B MAD packet w/o BTH */
+			lrh_16 = (STL_16B_HDR *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR));
+			if (lrh_16->u1.s.L2 == STL_16B_L4_FM) {
+				ret = 1;
+			}
+		}
+	}
+	return ret;
+}
+
+MAD_COMMON *getMAD(packet *p) {
+	STL_16B_HDR *lrh_16 = NULL;
+	MAD_COMMON *m = NULL;
+
+	if (hasBTH(p)) {
+		if (is9BWfrPacket(p)) {
+			m = (MAD_COMMON *)((uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR) + sizeof(IB_LRH) + sizeof(IB_BTH) + sizeof(IB_DETH));
+		} else if (is16BWfrPacket(p)) {
+			m = (MAD_COMMON *)((uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR) + sizeof(STL_16B_HDR) + sizeof(STL_16B_BTH) + sizeof(IB_DETH));
+		}
+	} else { /* Could still be a MAD packet even w/o a BTH */
+		if (is16BWfrPacket(p)) { /* Check for 16B MAD packet w/o BTH */
+			lrh_16 = (STL_16B_HDR *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR));
+			if (lrh_16->u1.s.L2 == STL_16B_L4_FM) {
+				m = (MAD_COMMON *)((uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR) + sizeof(STL_16B_HDR) + STL_16B_L4_FM_SIZE);
+			}
+		}
+	}
+	return m;
+}
+
+STL_LID getSLID(packet *p) {
+	STL_16B_HDR *lrh_16_raw = NULL;
+	STL_16B_HDR lrh_16;
+	IB_LRH *lrh_9 = NULL;
+
+	STL_LID ret = 0;
+
+	if (is9BWfrPacket(p)) {
+		lrh_9 = (IB_LRH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) );
+		if (lrh_9->l.LNH == STL_9B_LNH_BTH) {
+			ret = (STL_LID)ntoh16(lrh_9->SrcLID);
+		}
+	} else if (is16BWfrPacket(p)) {
+		lrh_16_raw = (STL_16B_HDR *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR));
+		memcpy((void *)&lrh_16, (void *)lrh_16_raw, sizeof(STL_16B_HDR));
+		BSWAP_STL_16B_HDR(&lrh_16);
+		ret = ((lrh_16.u3.s.SLID_23_20 << 20) | lrh_16.u2.s.SLID_19_0);
+	}
+	return ret;
+}
+
+STL_LID getDLID(packet *p) {
+	STL_16B_HDR *lrh_16_raw = NULL;
+	STL_16B_HDR lrh_16;
+	IB_LRH *lrh_9 = NULL;
+
+	STL_LID ret = 0;
+
+	if (is9BWfrPacket(p)) {
+		lrh_9 = (IB_LRH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) );
+		if (lrh_9->l.LNH == STL_9B_LNH_BTH) {
+			ret = (STL_LID)ntoh16(lrh_9->DestLID);
+		}
+	} else if (is16BWfrPacket(p)) {
+		lrh_16_raw = (STL_16B_HDR *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR));
+		memcpy((void *)&lrh_16, (void *)lrh_16_raw, sizeof(STL_16B_HDR));
+		BSWAP_STL_16B_HDR(&lrh_16);
+		ret = ((lrh_16.u3.s.DLID_23_20 << 20) | lrh_16.u1.s.DLID_19_0);
+	}
+	return ret;
+}
+
 int filterSLID(packet *p, uint32 val)
 {
-	IB_LID lid = STL2IB_LID(val);
-	IB_LRH *lrh;
+	STL_LID slid = 0;
 	int res = 0;
 
-	lrh = (IB_LRH *)(&blocks[p->blockNum * BLOCKSIZE]);
+	slid = getSLID(p);
 
-	res = (ntoh16(lrh->SrcLID) == lid);
+	res = (slid == (STL_LID)val);
 
 	return(res);
 }
 
 int filterDLID(packet *p, uint32 val)
 {
-	IB_LID lid = STL2IB_LID(val);
-	IB_LRH *lrh;
+	STL_LID dlid = 0;
 	int res = 0;
 
-	lrh = (IB_LRH *)(&blocks[p->blockNum * BLOCKSIZE]);
+	dlid = getDLID(p);
 
-	res = (ntoh16(lrh->DestLID) == lid);
+	res = (dlid == (STL_LID)val);
 
 	return(res);
 }
@@ -148,7 +368,11 @@ int filterServiceLevel(packet *p, uint32 val)
 	IB_LRH *lrh;
 	int res = 0;
 
-	lrh = (IB_LRH *)(&blocks[p->blockNum * BLOCKSIZE]);
+	if (!is9BWfrPacket(p)) {
+		return res;
+	}
+
+	lrh = (IB_LRH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE])  + sizeof(WFR_SnC_HDR) );
 
 	res = (lrh->l.ServiceLevel == sl);
 
@@ -158,16 +382,15 @@ int filterServiceLevel(packet *p, uint32 val)
 int filterMgmtClass(packet *p, uint32 val)
 {
 	uint8 mc = (uint8)val;
-	IB_BTH *b;
 	MAD_COMMON *m;
-	uint32 destQP;
 	int res = 0;
 
-	b = (IB_BTH *)(&blocks[p->blockNum * BLOCKSIZE] + sizeof(IB_LRH));
-	destQP = b->Qp.s.DestQPNumber;
+	if (!isMAD(p)) {
+		return res;
+	}
 
-	if ((destQP == 0) || (destQP == 1)) {
-		m = (MAD_COMMON *)(&blocks[p->blockNum * BLOCKSIZE] + sizeof(IB_LRH) + sizeof(IB_BTH) + sizeof(IB_DETH));
+	m = getMAD(p);
+	if (m) {
 		res = (m->MgmtClass == mc);
 	}
 
@@ -177,12 +400,12 @@ int filterMgmtClass(packet *p, uint32 val)
 int filterPKey(packet *p, uint32 val)
 {
 	uint16 pkey = (uint16)val;
-	IB_BTH *b;
+	uint16 Pkey = 0;
 	int res = 0;
 
-	b = (IB_BTH *)(&blocks[p->blockNum * BLOCKSIZE] + sizeof(IB_LRH));
+	Pkey = getPkey(p);
 
-	res = ((ntoh16(b->Pkey) & PKEY_MASK) == (pkey & PKEY_MASK));
+	res = ((Pkey & PKEY_MASK) == (pkey & PKEY_MASK));
 
 	return(res);
 }
@@ -190,12 +413,12 @@ int filterPKey(packet *p, uint32 val)
 int filterPacketType(packet *p, uint32 val)
 {
 	uint8 pktType = (uint8)val;
-	IB_BTH *b;
+	uint8 opCode = 0;
 	int res = 0;
 
-	b = (IB_BTH *)(&blocks[p->blockNum * BLOCKSIZE] + sizeof(IB_LRH));
+	opCode = getOpCode(p);
 
-	res = ((b->OpCode>>5) == pktType);
+	res = ((opCode>>5) == pktType);
 
 	return(res);
 }
@@ -203,17 +426,50 @@ int filterPacketType(packet *p, uint32 val)
 int filterAttrID(packet *p, uint32 val)
 {
 	uint16 aid = (uint16)val;
-	IB_BTH *b;
 	MAD_COMMON *m;
-	uint32 destQP;
 	int res = 0;
 
-	b = (IB_BTH *)(&blocks[p->blockNum * BLOCKSIZE] + sizeof(IB_LRH));
-	destQP = b->Qp.s.DestQPNumber;
+	if (!isMAD(p)) {
+		return res;
+	}
 
-	if ((destQP == 0) || (destQP == 1)) {
-		m = (MAD_COMMON *)(&blocks[p->blockNum * BLOCKSIZE] + sizeof(IB_LRH) + sizeof(IB_BTH) + sizeof(IB_DETH));
+	m = getMAD(p);
+	if (m) {
 		res = (ntoh16(m->AttributeID) == aid);
+	}
+
+	return(res);
+}
+
+int filterTransactionIDLow(packet *p, uint32 val)
+{
+	MAD_COMMON *m;
+	int res = 0;
+
+	if (!isMAD(p)) {
+		return res;
+	}
+
+	m = getMAD(p);
+	if (m) {
+		res = ((uint32)(ntoh64(m->TransactionID) & 0xffffffff) == val);
+	}
+
+	return(res);
+}
+
+int filterTransactionIDHigh(packet *p, uint32 val)
+{
+	MAD_COMMON *m;
+	int res = 0;
+
+	if (!isMAD(p)) {
+		return res;
+	}
+
+	m = getMAD(p);
+	if (m) {
+		res = ((uint32)((ntoh64(m->TransactionID) >> 32) & 0xffffffff) == val);
 	}
 
 	return(res);
@@ -221,13 +477,16 @@ int filterAttrID(packet *p, uint32 val)
 
 int filterQueuePair(packet *p, uint32 val)
 {
-	IB_BTH *b;
 	uint32 qp = val;
-	uint32 pkt_qp;
+	uint32 pkt_qp = 0;
 	int res = 0;
 
-	b = (IB_BTH *)(&blocks[p->blockNum * BLOCKSIZE] + sizeof(IB_LRH));
-	pkt_qp = ntoh32(b->Qp.AsUINT32) & DESTQP_MASK;
+	if (!hasBTH(p)) {
+		return res;
+	}
+
+	pkt_qp = getDestQp(p);
+	pkt_qp = pkt_qp & DESTQP_MASK;
 	res = (pkt_qp == qp);
 
 	return(res);
@@ -285,6 +544,10 @@ int getFilterType(char *filter)
 		res = FILTER_ATTRID;
 	else if (!strcmp(filter, "QP"))
 		res = FILTER_QP;
+	else if (!strcmp(filter, "TRANSIDH"))
+		res = FILTER_TRANS_ID_HIGH;
+	else if (!strcmp(filter, "TRANSIDL"))
+		res = FILTER_TRANS_ID_LOW;
 	else
 		res = -1;
 
@@ -352,6 +615,16 @@ void setupIoctl(int filter, uint32 *valPtr)
 		case FILTER_ATTRID:
 			/* not supported in driver */
 			fprintf(stderr, "Error: filter on attribute ID not supported in qib driver\n");
+			exit(1);
+			break;
+		case FILTER_TRANS_ID_HIGH:
+			/* not supported in driver */
+			fprintf(stderr, "Error: filter on transaction ID high not supported in qib driver\n");
+			exit(1);
+			break;
+		case FILTER_TRANS_ID_LOW:
+			/* not supported in driver */
+			fprintf(stderr, "Error: filter on transaction ID low not supported in qib driver\n");
 			exit(1);
 			break;
 		case FILTER_QP:
@@ -509,6 +782,32 @@ void setupFilters(char *filterFile)
 #endif
 				numFilterFunctions++;
 				break;
+			case FILTER_TRANS_ID_HIGH:
+				sscanf(p, "%9s %9s", filterType, strVal);
+				if (strstr(strVal, "0x") != NULL) {
+					sscanf(p, "%9s 0x%x", strVal, &val);
+				} else {
+					sscanf(p, "%9s %u", strVal, &val);
+				}
+				filters[numFilterFunctions].filterFunc = &filterTransactionIDHigh;
+				filters[numFilterFunctions].filterVal = val;
+				filters[numFilterFunctions].ioctl = 0;
+				filters[numFilterFunctions].notFlag = not;
+				numFilterFunctions++;
+				break;
+			case FILTER_TRANS_ID_LOW:
+				sscanf(p, "%9s %9s", filterType, strVal);
+				if (strstr(strVal, "0x") != NULL) {
+					sscanf(p, "%9s 0x%x", strVal, &val);
+				} else {
+					sscanf(p, "%9s %u", strVal, &val);
+				}
+				filters[numFilterFunctions].filterFunc = &filterTransactionIDLow;
+				filters[numFilterFunctions].filterVal = val;
+				filters[numFilterFunctions].ioctl = 0;
+				filters[numFilterFunctions].notFlag = not;
+				numFilterFunctions++;
+				break;
 			case FILTER_QP:
 				sscanf(p, "%9s %u", filterType, &val);
 				filters[numFilterFunctions].filterFunc = &filterQueuePair;
@@ -657,6 +956,32 @@ void setupTriggers(char *triggerFile)
 				triggers[numTriggerFunctions].notFlag = not;
 				numTriggerFunctions++;
 				break;
+			case FILTER_TRANS_ID_HIGH:
+				sscanf(p, "%9s %9s", triggerType, strVal);
+				if (strstr(strVal, "0x") != NULL) {
+					sscanf(p, "%9s 0x%x", strVal, &val);
+				} else {
+					sscanf(p, "%9s %u", strVal, &val);
+				}
+				triggers[numTriggerFunctions].filterFunc = &filterTransactionIDHigh;
+				triggers[numTriggerFunctions].filterVal = val;
+				triggers[numTriggerFunctions].ioctl = 0;
+				triggers[numTriggerFunctions].notFlag = not;
+				numTriggerFunctions++;
+				break;
+			case FILTER_TRANS_ID_LOW:
+				sscanf(p, "%9s %9s", triggerType, strVal);
+				if (strstr(strVal, "0x") != NULL) {
+					sscanf(p, "%9s 0x%x", strVal, &val);
+				} else {
+					sscanf(p, "%9s %u", strVal, &val);
+				}
+				triggers[numTriggerFunctions].filterFunc = &filterTransactionIDLow;
+				triggers[numTriggerFunctions].filterVal = val;
+				triggers[numTriggerFunctions].ioctl = 0;
+				triggers[numTriggerFunctions].notFlag = not;
+				numTriggerFunctions++;
+				break;
 			case FILTER_QP:
 				sscanf(p, "%9s %u", triggerType, &val);
 				triggers[numTriggerFunctions].filterFunc = &filterQueuePair;
@@ -726,7 +1051,7 @@ void growPacketTable()
 	index = (uint32)(newestPacket - packets);
 	newestPacket = newPackets + index;
 
-	// free old table and reset pointer 
+	// free old table and reset pointer
 	free(packets);
 	packets = newPackets;
 	numpackets = newNumPackets;
@@ -944,37 +1269,63 @@ void writePCAP(int fd, uint64 pktLen, time_t sec, long nsec, uint8 *pkt)
 void showPackets(packet *in) {
 	packet *p;
 	IB_LRH *pkt;
-	IB_BTH *b;
 	MAD_COMMON *m;
 	char packetType[5];
+	STL_LID dlid = 0;
+	STL_LID slid = 0;
+	uint8 opcode = 0;
+	uint16 pkey = 0;
 
 	if (in) {
 		p = in;
 	} else {
 		p = oldestPacket;
 	}
+
 	while (p != NULL) {
-		pkt = (IB_LRH *)(&blocks[p->blockNum * BLOCKSIZE]);
-		b = (IB_BTH *)((uint8 *)pkt + sizeof(IB_LRH));
-		m = (MAD_COMMON *)((uint8 *)pkt + sizeof(IB_LRH) + sizeof(IB_BTH) + sizeof(IB_DETH));
-		switch (b->OpCode>>5) {
-			case 0:
-				strcpy(packetType, "RC");
-				break;
-			case 1:
-				strcpy(packetType, "UC");
-				break;
-			case 2:
-				strcpy(packetType, "RD");
-				break;
-			case 3:
-				strcpy(packetType, "UD");
-				break;
-			default:
-				strcpy(packetType, "??");
-				break;
+		// Don't print anything but 9B and 16B
+		if (is9BWfrPacket(p)) {
+			pkt = (IB_LRH *)( (uint8 *)(&blocks[p->blockNum * BLOCKSIZE]) + sizeof(WFR_SnC_HDR));
+			dlid = getDLID(p);
+			slid = getSLID(p);
+			opcode = getOpCode(p);
+			pkey = getPkey(p);
+			switch ( opcode >>5 ) {
+				case 0:
+					strcpy(packetType, "RC");
+					break;
+				case 1:
+					strcpy(packetType, "UC");
+					break;
+				case 2:
+					strcpy(packetType, "RD");
+					break;
+				case 3:
+					strcpy(packetType, "UD");
+					break;
+				default:
+					strcpy(packetType, "??");
+					break;
+			}
+			printf("showpacket(9b):dest lid 0x%08x\tsrc lid 0x%08x\tsvc lev %d\tpkey is 0x%04x\ttype is %s\n", dlid, slid, pkt->l.ServiceLevel, pkey, packetType);
+			if (isMAD(p)) {
+				m = getMAD(p);
+				if (m != NULL) {
+					printf("showpacket(9b):mgmt class 0x%02x\tAttributeID 0x%04x\n", m->MgmtClass, ntoh16(m->AttributeID));
+				}
+			}
+		} else if (is16BWfrPacket(p)) {
+			dlid = getDLID(p);
+			slid = getSLID(p);
+			printf("showpacket(16b):dest lid 0x%08x\tsrc lid 0x%08x\t", dlid, slid);
+			if (isMAD(p)) {
+				m = getMAD(p);
+				if (m != NULL) {
+					printf("mgmt class 0x%02x\tAttributeID 0x%04x\t", m->MgmtClass, ntoh16(m->AttributeID));
+				}
+			}
+			printf("\n");
 		}
-		printf("showpacket:dest lid %d\tsrc lid %d\tsvc lev %d\tmgmt class %d\tpkey is 0x%04x\ttype is %s\n", ntoh16(pkt->DestLID), ntoh16(pkt->SrcLID), pkt->l.ServiceLevel, m->MgmtClass, ntoh16(b->Pkey), packetType);
 		if (in) {
 			break;
 		} else {
@@ -1291,7 +1642,7 @@ int main (int argc, char *argv[])
 
 	/* open file */
 	fdIn = open(devfile, O_RDONLY);
-	
+
 	if (fdIn < 0) {
 		if (errno == ENOENT)
 			fprintf(stderr, "opapacketcapture: Packet capture not supported by installed hfi driver\n");
@@ -1385,6 +1736,11 @@ int main (int argc, char *argv[])
 
 		addNewPacket(newPacket);
 
+		// Print some parsed content of the new packet
+		if (verbose >= 2) {
+			showPackets(newPacket);
+		}
+
 		if (triggerSeen) {
 			if (afterTriggerPackets++ == triggerLag)
 				stopcapture = 1;
@@ -1398,7 +1754,7 @@ int main (int argc, char *argv[])
 			fflush(stdout);
 		}
 
-		if (numPacketsRead >= numPacketsMax) {
+		if (numPacketsStored >= numPacketsMax) {
 			stopcapture = 1;
 		}
 	}

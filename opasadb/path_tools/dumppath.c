@@ -112,3 +112,4 @@ void fprint_path_record(FILE *f, char *str, op_path_rec_t *p_path)
 	PrintFunc(&printdest, "%s:\n",str);
 	PrintExtendedPathRecord(&printdest,8, &path);
 }
+

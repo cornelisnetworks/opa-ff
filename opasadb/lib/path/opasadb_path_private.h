@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <linux/types.h>
 #include <iba/ibt.h>
 
+
 #include <opasadb_path.h>
 
 /*
@@ -133,7 +134,7 @@ typedef struct {
 	char	path_table_name[SHM_NAME_LENGTH];
 } op_ppath_shared_table_t;
 
-/*
+/* 
  * All the data tables begin with 4 32-bit fields.  This lets us get some 
  * info about the table without knowing which type it is.
  * 
@@ -221,6 +222,7 @@ typedef struct {
 	uint32				next_lid;  	
 } __attribute__((packed)) op_ppath_record_t;
 
+
 typedef struct {
 	uint32				size; 
 	uint32				reserved;
@@ -230,6 +232,7 @@ typedef struct {
 } __attribute__((packed)) op_ppath_table_t;
 
 #define PATH_TABLE_SIZE(ps) (sizeof(op_ppath_table_t)+sizeof(op_ppath_record_t)*(ps+1))
+
 
 /*
  *******************
@@ -299,6 +302,7 @@ int op_ppath_find_path(op_ppath_reader_t *r,
  */
 
 void op_ppath_close_tables(op_ppath_reader_t *reader);
+
 
 /*
  *******************
@@ -370,7 +374,6 @@ int op_ppath_add_vfab(op_ppath_writer_t *w,
 					  uint64 prefix,
 					  uint16 pkey,
 					  uint16 sl);
-					  
 
 /*
  * Adds a port to the port table.

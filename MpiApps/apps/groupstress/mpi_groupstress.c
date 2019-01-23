@@ -221,7 +221,7 @@ find_bibw(int myid, int target, int size, char *s_buf, char *r_buf)
   double t_start = 0.0, t_end = 0.0, t = 0.0, max_time = 0.0, min_time = 0.0;
   double seconds_per_message_size, sum_loops, dloops;
   int i, j, window_size;
-  long skip, loops, min_loops, max_loops;
+  long skip, loops = 0, min_loops, max_loops;
 
   if (size < large_message_size)
   {

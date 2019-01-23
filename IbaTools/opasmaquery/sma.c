@@ -268,7 +268,7 @@ static FSTATUS perform_stl_aggregate_query(argrec *args, STL_SMP *smp)
 
 
 static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args,
-                            STL_SMP *smp, size_t attr_len, STL_PORTMASK *portMask)
+	STL_SMP *smp, size_t attr_len, uint8_t *req_data, size_t req_len)
 {
 	FSTATUS status;
 	int i;
@@ -285,9 +285,9 @@ static FSTATUS perform_stl_sma_query(uint16 attrid, uint32 attrmod, argrec *args
 	smp->common.AttributeModifier = attrmod;
 	smp->common.TransactionID = (++g_transactID);
 
-	if (portMask) {
-		STL_PORTMASK *pMask = (STL_PORTMASK *)stl_get_smp_data((STL_SMP *)smp);
-		memcpy(pMask, portMask, STL_PORT_SELECTMASK_SIZE);
+	if (req_data && req_len > 0) {
+		uint8_t *reqData = (uint8_t *)stl_get_smp_data((STL_SMP *)smp);
+		memcpy(reqData, req_data, req_len);
 	}
 
 	if (smp->common.MgmtClass == MCLASS_SM_DIRECTED_ROUTE) {
@@ -615,8 +615,8 @@ static boolean get_node_desc(argrec *args, uint8_t *mad, size_t mad_len, boolean
 
 
 	DBGPRINT("-->get_node_desc");
-	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_NODE_DESCRIPTION, 0, args,
-                            smp, sizeof(STL_NODE_DESCRIPTION), NULL);
+	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_NODE_DESCRIPTION,
+		0, args, smp, sizeof(STL_NODE_DESCRIPTION), NULL, 0);
 
 
 	if (status != FSUCCESS) {
@@ -667,8 +667,8 @@ static boolean get_node_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 		return FALSE;
 
 	DBGPRINT("-->get_node_info\n");
-	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_NODE_INFO, 0,
-                    args, smp, sizeof(STL_NODE_INFO), NULL);
+	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_NODE_INFO,
+		0, args, smp, sizeof(STL_NODE_INFO), NULL, 0);
 
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
@@ -722,8 +722,8 @@ static boolean get_port_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 				args->dlid,args->slid,args->dport,args->mcount,args->drpaths);
 
 	// Get PortInfo using attrmod
-	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_PORT_INFO, amod, args,
-                                    smp, sizeof(*pPortInfo), NULL);
+	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_PORT_INFO,
+		amod, args, smp, sizeof(*pPortInfo), NULL, 0);
 
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
@@ -768,8 +768,8 @@ static boolean get_led_info(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 	DBGPRINT("->dlid=0x%08x slid=0x%08x dport=%d drpaths=%d\n",
 			args->dlid,args->slid,args->dport,args->drpaths);
 
-	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_LED_INFO, amod, args,
-                                    smp, sizeof(*pLedInfo), NULL);
+	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_LED_INFO,
+		amod, args, smp, sizeof(*pLedInfo), NULL, 0);
 
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
@@ -844,8 +844,8 @@ static boolean get_pstate_info(argrec *args, uint8_t *mad, size_t mad_len, boole
 	count = endPort - startPort + 1;
 	amod = (count<<24) | startPort;
 	STL_PORT_STATE_INFO *psip;
-	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_PORT_STATE_INFO, amod, args,
-                            smp, sizeof(STL_PORT_STATE_INFO)*count, NULL);
+	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_PORT_STATE_INFO,
+		amod, args, smp, sizeof(STL_PORT_STATE_INFO)*count, NULL, 0);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
@@ -871,8 +871,8 @@ static boolean get_sm_info(argrec *args, uint8_t *mad, size_t mad_len, boolean p
 
 	DBGPRINT("-->get_sm_info\n");
 
-	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SM_INFO, 0, args,
-                            smp, sizeof(*pSmInfo), NULL);
+	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SM_INFO,
+		0, args, smp, sizeof(*pSmInfo), NULL, 0);
 
 	pSmInfo = (STL_SM_INFO *)stl_get_smp_data(smp);
 	BSWAP_STL_SM_INFO(pSmInfo);
@@ -910,8 +910,8 @@ static boolean get_sw_info(argrec *args, uint8_t *mad, size_t mad_len, boolean p
 		}
 	}
 
-	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SWITCH_INFO, 0, args,
-                                smp, sizeof(STL_SWITCH_INFO), NULL);
+	status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SWITCH_INFO,
+		0, args, smp, sizeof(STL_SWITCH_INFO), NULL, 0);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 		return FALSE;
@@ -936,8 +936,8 @@ static boolean get_slsc_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 	DBGPRINT("---->get_slsc_map\n");
 
 	STL_SLSCMAP *pSLSCMap;
-	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SL_SC_MAPPING_TABLE, 0, args,
-                                smp, sizeof(*pSLSCMap), NULL);
+	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SL_SC_MAPPING_TABLE,
+		0, args, smp, sizeof(*pSLSCMap), NULL, 0);
 	pSLSCMap = (STL_SLSCMAP *)stl_get_smp_data(smp);
 	BSWAP_STL_SLSCMAP(pSLSCMap);
 	if (status != FSUCCESS)
@@ -1030,8 +1030,8 @@ static boolean get_scsc_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 				numBlocks = MIN(STL_NUM_SCSC_BLOCKS_PER_DRSMP, (endOutPort - outport)+1);
 				attrmod = (numBlocks << 24) | (i << 20) | (inport << 8) | outport;
 
-				status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SC_SC_MAPPING_TABLE, attrmod, args,
-								smp, sizeof(*pSCSCMap)*numBlocks, NULL);
+				status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_SC_SC_MAPPING_TABLE,
+					attrmod, args, smp, sizeof(*pSCSCMap)*numBlocks, NULL, 0);
 				pSCSCMap = (STL_SCSCMAP *)stl_get_smp_data(smp);
 				BSWAP_STL_SCSCMAP(pSCSCMap);
 				if (status != FSUCCESS)
@@ -1062,8 +1062,8 @@ static boolean get_scsl_map(argrec *args, uint8_t *mad, size_t mad_len, boolean 
 	DBGPRINT("---->get_scsl_map\n");
 
 	STL_SCSLMAP *pSCSLMap;
-	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SC_SL_MAPPING_TABLE, 0, args,
-                                smp, sizeof(*pSCSLMap), NULL);
+	status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SC_SL_MAPPING_TABLE,
+		0, args, smp, sizeof(*pSCSLMap), NULL, 0);
 	pSCSLMap = (STL_SCSLMAP *)stl_get_smp_data(smp);
 	BSWAP_STL_SCSLMAP(pSCSLMap);
 	if (status != FSUCCESS)
@@ -1152,8 +1152,8 @@ static boolean get_scvlx_map(argrec *args, uint8_t *mad, size_t mad_len,
 		uint16_t numBlocks = MIN(STL_NUM_SCVL_BLOCKS_PER_DRSMP, (endPort - port)+1);
 		uint32_t attrmod = (numBlocks << 24) | port;
 
-		status = perform_stl_sma_query (attribute, attrmod, args,
-                                    smp, sizeof(*pSCVLMap)*numBlocks, NULL);
+		status = perform_stl_sma_query(attribute, attrmod, args,
+			smp, sizeof(*pSCVLMap)*numBlocks, NULL, 0);
 		pSCVLMap = (STL_SCVLMAP *)stl_get_smp_data(smp);
 		BSWAP_STL_SCVLMAP(pSCVLMap);
 		if (status != FSUCCESS)
@@ -1209,8 +1209,8 @@ static boolean print_vlarb_element(argrec *args, STL_SMP *smp, uint8_t startPort
 	for (port=startPort; port <= endPort; port += STL_NUM_VLARB_PORTS_PER_DRSMP) {
 		uint8_t numPorts = MIN(STL_NUM_VLARB_PORTS_PER_DRSMP, endPort - port + 1);
 		uint32_t attrmod = (numPorts << 24) | (section << 16) | port;
-		status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_VL_ARBITRATION,
-						attrmod, args, smp, sizeof(STL_VLARB_TABLE)*numPorts, NULL);
+		status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_VL_ARBITRATION,
+			attrmod, args, smp, sizeof(STL_VLARB_TABLE)*numPorts, NULL, 0);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: %s: %s\n", "get_vlarb", MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 			return status;
@@ -1388,9 +1388,8 @@ static boolean get_pkey(argrec *args, uint8_t *mad, size_t mad_len, boolean prin
 		attrmod = port << 16;
 		attrmod |= PKEY_BLOCK_NUM_MASK & block;
 		attrmod |= (0xff & numBlocks) << 24;
-		status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_PART_TABLE, attrmod, args,
-                                        smp,
-                                        sizeof(STL_PARTITION_TABLE)*numBlocks, NULL);
+		status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_PART_TABLE,
+			attrmod, args, smp, sizeof(STL_PARTITION_TABLE)*numBlocks, NULL, 0);
 		if (status != FSUCCESS)
 			break;
 
@@ -1481,7 +1480,7 @@ static boolean get_linfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pr
 		attrmod |= (0xff & numBlocks) << 24;
 
 		status = perform_stl_sma_query (attribute, attrmod, args,
-                                        smp, sizeof(*pForwardBlock)*numBlocks, NULL);
+			smp, sizeof(*pForwardBlock)*numBlocks, NULL, 0);
 		if (status != FSUCCESS)
 			break;
 
@@ -1585,8 +1584,7 @@ static boolean get_mcfdb(argrec *args, uint8_t *mad, size_t mad_len, boolean pri
         	uint32_t attrmod = ((0xff & numBlocks) << 24) | (position << 22) |
 								(0x0fffff & block);
 			status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_MCAST_FWD_TABLE,
-											attrmod, args, smp,
-                                            sizeof(STL_MULTICAST_FORWARDING_TABLE)*numBlocks, NULL);
+				attrmod, args, smp, sizeof(STL_MULTICAST_FORWARDING_TABLE)*numBlocks, NULL, 0);
 			if (status != FSUCCESS)
 				break;
 
@@ -1678,7 +1676,7 @@ static boolean get_portgroup(argrec *args, uint8_t *mad, size_t mad_len, boolean
 		attrmod |= (0xff & numBlocks) << 24;
 
 		status = perform_stl_sma_query (attribute, attrmod, args, smp,
-                                        sizeof(*pPortGroupBlock) * numBlocks, NULL);
+			sizeof(*pPortGroupBlock) * numBlocks, NULL, 0);
 		if (status != FSUCCESS)
 			break;
 
@@ -1769,7 +1767,7 @@ static boolean get_portgroupfdb(argrec *args, uint8_t *mad, size_t mad_len, bool
 		attrmod |= (0xff & numBlocks) << 24;
 
 		status = perform_stl_sma_query (attribute, attrmod, args, smp,
-                                    sizeof(*pPortGroupBlock) * numBlocks, NULL);
+			sizeof(*pPortGroupBlock) * numBlocks, NULL, 0);
 		if (status != FSUCCESS)
 			break;
 
@@ -1799,7 +1797,7 @@ static boolean get_cong_info(argrec *args, uint8_t *mad, size_t mad_len, boolean
 	DBGPRINT("--->get_cong_info\n");
 
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_CONGESTION_INFO, 0, args,
-                                smp, sizeof(*pCongestionInfo), NULL) != FSUCCESS) {
+		smp, sizeof(*pCongestionInfo), NULL, 0) != FSUCCESS) {
 		fprintf(stderr, "get_cong_info failed: unable to obtain congestion info\n");
 		return FALSE;
 	}
@@ -1837,7 +1835,7 @@ static boolean get_sw_cong_log(argrec *args, uint8_t *mad, size_t mad_len, boole
 
 
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_CONGESTION_LOG, 0, args,
-                                smp, sizeof(*pSwitchCongestionLog), NULL) != FSUCCESS) {
+		smp, sizeof(*pSwitchCongestionLog), NULL, 0) != FSUCCESS) {
 		fprintf(stderr, "get_sw_cong_log failed: unable to obtain switch congestion log\n");
 		return FALSE;
 	}
@@ -1872,7 +1870,8 @@ static boolean get_hfi_cong_log(argrec *args, uint8_t *mad, size_t mad_len, bool
 			STL_SWITCH_INFO *pSwitchInfo = NULL;
 
 			if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_INFO, 0, args,
-                                    smp, sizeof(*pSwitchInfo), NULL) != FSUCCESS) {
+				smp, sizeof(*pSwitchInfo), NULL, 0) != FSUCCESS)
+			{
 				fprintf(stderr, "get_hfi_cong_log failed: Couldn't get SwitchInfo for switch\n");
 				return FALSE;
 			}
@@ -1888,7 +1887,8 @@ static boolean get_hfi_cong_log(argrec *args, uint8_t *mad, size_t mad_len, bool
 	}
 
 	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_HFI_CONGESTION_LOG, 0, args,
-                                smp, sizeof(*pHfiCongestionLog), NULL) != FSUCCESS) {
+		smp, sizeof(*pHfiCongestionLog), NULL, 0) != FSUCCESS)
+	{
 		fprintf(stderr, "get_hfi_cong_sett failed: unable to get HFI congestion log\n");
 		return FALSE;
 	}
@@ -1912,8 +1912,9 @@ static boolean get_hfi_cong_sett(argrec *args, uint8_t *mad, size_t mad_len, boo
 
 	DBGPRINT("--->get_hfi_cong_sett\n");
 
-	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_HFI_CONGESTION_SETTING, 0, args,
-                                smp, sizeof(*pHfiCongestionSetting), NULL) != FSUCCESS) {
+	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_HFI_CONGESTION_SETTING, 0,
+		args, smp, sizeof(*pHfiCongestionSetting), NULL, 0) != FSUCCESS)
+	{
 		fprintf(stderr, "get_hfi_cong_sett failed: unable to obtain hfi congestion setting\n");
 		return FALSE;
 	}
@@ -1936,8 +1937,9 @@ static boolean get_sw_cong_sett(argrec *args, uint8_t *mad, size_t mad_len, bool
 
 	DBGPRINT("--->get_sw_cong_sett\n");
 
-	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_CONGESTION_SETTING, 0, args,
-                                smp, sizeof(*pSwitchCongestionSetting), NULL) != FSUCCESS) {
+	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_CONGESTION_SETTING,
+		0, args, smp, sizeof(*pSwitchCongestionSetting), NULL, 0) != FSUCCESS)
+	{
 		fprintf(stderr, "get_sw_cong_sett failed: unable to obtain switch congestion setting\n");
 		return FALSE;
 	}
@@ -1964,8 +1966,9 @@ static boolean get_swport_cong_sett(argrec *args, uint8_t *mad, size_t mad_len, 
 
 	DBGPRINT("--->get_swport_cong_sett\n");
 
-	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_PORT_CONGESTION_SETTING, amod, args,
-                                smp, sizeof(*pSwitchPortCongestionSetting), NULL) != FSUCCESS) {
+	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_SWITCH_PORT_CONGESTION_SETTING,
+		amod, args, smp, sizeof(*pSwitchPortCongestionSetting), NULL, 0) != FSUCCESS)
+	{
 		fprintf(stderr, "get_swport_cong_sett failed: unable to obtain switch congestion setting\n");
 		return FALSE;
 	}
@@ -1998,8 +2001,9 @@ static boolean get_hfi_congcont_table(argrec *args, uint8_t *mad, size_t mad_len
 
 	DBGPRINT("--->get_hfi_congcont_table\n");
 
-	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_HFI_CONGESTION_CONTROL_TABLE, amod, args,
-                            smp, sizeof(*pHfiCongestionControl), NULL) != FSUCCESS) {
+	if (perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_HFI_CONGESTION_CONTROL_TABLE,
+		amod, args, smp, sizeof(*pHfiCongestionControl), NULL, 0) != FSUCCESS)
+	{
 		fprintf(stderr, "get_hfi_congcont_table failed: unable to obtain HFI congestion control table\n");
 		return FALSE;
 	}
@@ -2065,8 +2069,8 @@ static boolean get_bfr_ctrl_table(argrec *args, uint8_t *mad, size_t mad_len, bo
 	for (block = startPort; block <= endPort; block += maxcount) {
 		uint8_t n = MIN(maxcount, (endPort - block)+1);
 		uint32_t amod = (n << 24) | block;
-		status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_BUFFER_CONTROL_TABLE, amod, args,
-                        smp, sizeof(STL_BUFFER_CONTROL_TABLE)*n, NULL);
+		status = perform_stl_sma_query (STL_MCLASS_ATTRIB_ID_BUFFER_CONTROL_TABLE,
+			amod, args, smp, sizeof(STL_BUFFER_CONTROL_TABLE)*n, NULL, 0);
 
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
@@ -2172,8 +2176,8 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 
 		uint32_t amod = (startAddr & 0x0fff)<<19 | ((get_len-1) & 0x3f)<<13 | (args->dport & 0xff);
 
-		status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_CABLE_INFO, amod, args,
-                                smp, sizeof(STL_CABLE_INFO), NULL);
+		status = perform_stl_sma_query(STL_MCLASS_ATTRIB_ID_CABLE_INFO,
+			amod, args, smp, sizeof(STL_CABLE_INFO), NULL, 0);
 		if (status != FSUCCESS) {
 			fprintf(stderr, "%s: %s: %s\n", __func__, MSG_SMP_SEND_RECV_FAILURE, iba_fstatus_msg(status));
 			return FALSE;
@@ -2203,7 +2207,7 @@ static boolean get_cable_info(argrec *args, uint8_t *mad, size_t mad_len, boolea
 } //get_cable_info
 
 optypes_t sma_query [] = {
-//name			func			        displayAbridged, description,    mflag mflag2 fflag bflag iflag tflag
+//name			func			        displayAbridged, description,    mflag mflag2 fflag bflag iflag tflag cflag
 { "bfrctrl",	 get_bfr_ctrl_table,	TRUE,  "Buffer control tables", TRUE, TRUE, },
 { "cableinfo",	 get_cable_info,		TRUE,  "Cable info", TRUE, FALSE, FALSE, TRUE},
 { "conginfo",	 get_cong_info, 	    TRUE,  "Congestion info", FALSE },
@@ -2281,7 +2285,7 @@ void sma_Usage(boolean displayAbridged)
 	fprintf(stderr, "    -b b,c   display \"c\" blocks or bytes of data starting with block/byte \"b\"\n");
 	fprintf(stderr, "    -b ,c    display \"c\" blocks or bytes of data starting with block/byte 0\n");
 
-	fprintf(stderr, "Possible output types (default is nodeinfo):\n");
+	fprintf(stderr, "\nPossible output types (default is nodeinfo):\n");
 	i=0;
 	fprintf(stderr, "         %-12s: %-55s\n","Output Type","Description");
 	fprintf(stderr, "                     : %-55s\n","Supported Options");
@@ -2290,15 +2294,14 @@ void sma_Usage(boolean displayAbridged)
 		if ( (displayAbridged && sma_query[i].displayWithAbridged) || (!displayAbridged) ) {
 			fprintf(stderr, "         %-12s: %-55s\n",sma_query[i].name,sma_query[i].description);
 
-			if ((sma_query[i].gflag)||(sma_query[i].mflag)||(sma_query[i].mflag2)||(sma_query[i].bflag)||(sma_query[i].fflag)||
-				(sma_query[i].tflag)||(sma_query[i].iflag)) {
+			if ((sma_query[i].mflag)||(sma_query[i].mflag2)||(sma_query[i].bflag)||(sma_query[i].fflag)||
+				(sma_query[i].tflag)||(sma_query[i].cflag)) {
 				fprintf(stderr, "         %-12s:", " ");
 				if (sma_query[i].mflag) fprintf(stderr, " [-m dest_port]");
 				if (sma_query[i].mflag2) fprintf(stderr, " [-m port1,port2]");
 				if (sma_query[i].bflag) fprintf(stderr, " [-b %s]",
 					strcmp(sma_query[i].name, "cableinfo") == 0 ? "address[,length]" : "block[,count]");
 				if (sma_query[i].fflag) fprintf(stderr, " [-f flid]");
-//				if (sma_query[i].iflag) fprintf(stderr, " [-i]");
 				fprintf(stderr,"\n");
 			}
 			fprintf(stderr,"\n");

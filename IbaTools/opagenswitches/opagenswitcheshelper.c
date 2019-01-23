@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
+#include <stl_helper.h>
 
 unsigned int g_debug_level = 0;
 unsigned int g_verbose = 0;
@@ -299,12 +300,24 @@ int main(int argc, char** argv)
 		if (argc >= 2)
 		{
 			p_arg1 = argv[2];
+			if (!p_arg1) {
+				fprintf(stderr, "opagenswitches: Error: null input filename\n");
+				exit(status);
+			}
 			if (argc >= 3)
 			{
 				p_arg2 = argv[3];
+				if (!p_arg2) {
+					fprintf(stderr, "opagenswitches: Error: null input filename\n");
+					exit(status);
+				}
 				if (argc >= 4)
 				{
 					p_arg3 = argv[4];
+					if (!p_arg3) {
+						fprintf(stderr, "opagenswitches: Error: null input filename\n");
+						exit(status);
+					}
 				}
 			}
 		}

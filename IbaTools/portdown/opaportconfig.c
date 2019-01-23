@@ -231,7 +231,7 @@ void initialize_set_port_info(STL_LID dlid, STL_LID slid, int have_nlid, STL_LID
 	smp->common.mr.s.Method = MMTHD_SET;
 	set_route(dlid, slid, port, smp);	// MgmtClass and AttributeModifier
 	smp->common.AttributeID = MCLASS_ATTRIB_ID_PORT_INFO;
-
+	smp->M_Key = 0;
 	pPortInfo = (STL_PORT_INFO *)stl_get_smp_data(smp);
 	if (! getInfo) {
 		// no Get data available

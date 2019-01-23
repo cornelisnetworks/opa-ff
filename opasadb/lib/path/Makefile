@@ -45,6 +45,8 @@ DIRS			=
 CFILES			= \
 				opasadb_path.c \
 				opasadb_path_private.c \
+				opasadb_query_many.c \
+				opasadb_static_db.c \
 				# Add more c files here
 # C++ files (.cpp)
 CCFILES			= \
@@ -62,12 +64,14 @@ IDLFILE			=
 DEFFILE			=
 # targets to build during INCLUDES phase (add public includes here)
 INCLUDE_TARGETS		= \
+				opasadb.h \
 				opasadb_path.h \
 				opasadb_path_private.h \
+				opasadb_static_db.h \
 				# Add more h hpp files here
 # Non-compiled files
-MISC_FILES		= \
-				# Add more misc files here
+MISC_FILES		=
+MISC_CONFIG_FILES	= op_path_rec.conf
 # all source files
 SOURCES			= $(CFILES) $(CCFILES) $(LFILES) $(RSCFILES) $(IDLFILE)
 # Source files to include in DSP File
@@ -92,7 +96,7 @@ CMD_TARGETS_MISC	=
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
 # other files to remove during clobber phase
-CLOBBER_TARGETS_MISC=
+CLOBBER_TARGETS_MISC= op_path_rec.conf
 # sub-directory to install to within bin
 BIN_SUBDIR		= 
 # sub-directory to install to within include
@@ -150,9 +154,10 @@ include $(TL_DIR)/Makerules/Maketargets.build
 include $(TL_DIR)/Makerules/Maketargets.install
 
 # install for stage phase
-#include $(TL_DIR)/Makerules/Maketargets.stage
+include $(TL_DIR)/Makerules/Maketargets.stage
 STAGE::
 	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_OPA_SA_DB_DIR) $(INCLUDE_TARGETS)
+	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_DIR)/config $(MISC_CONFIG_FILES) $(MISC_FILES)
 
 # Unit test execution
 #include $(TL_DIR)/Makerules/Maketargets.runtest

@@ -195,6 +195,7 @@ static boolean dsap_compare_path(LIST_ITEM *item, void *context)
 	return 1;
 }
 
+
 static boolean dsap_compare_dst_port(LIST_ITEM *item, void *context)
 {
 	dsap_dst_port_t *dst_port = QListObj(item);
@@ -297,6 +298,7 @@ dsap_path_record_t * dsap_find_path_record(dsap_src_port_t *src_port,
 		return QListObj(path_item);
 	return NULL;
 }
+
 
 dsap_dst_port_t* dsap_find_dst_port(union ibv_gid *gid)
 {
@@ -526,6 +528,7 @@ FSTATUS dsap_add_path_record(dsap_src_port_t *src_port,
 	return FSUCCESS;
 }
 
+
 FSTATUS dsap_empty_path_record_list(dsap_src_port_t *src_port)
 {
 	LIST_ITEM *item;
@@ -620,7 +623,7 @@ FSTATUS dsap_remove_src_port(union ibv_gid *src_gid)
 	dsap_empty_pkey_list(src_port);
 	dsap_empty_path_record_list(src_port);
 
-	subnet = dsap_find_subnet(&src_port->gid.global.subnet_prefix);
+	subnet = dsap_find_subnet((uint64_t *)&src_port->gid.global.subnet_prefix);
 	if (subnet) 
 		QListRemoveItem(&subnet->src_port_list, &src_port->item);
 
@@ -640,13 +643,14 @@ FSTATUS dsap_add_src_port(struct dsap_port *port)
 	if (acm_get_gid((struct acm_port *) port->port, 0, &src_port_gid))
 		return FNOT_FOUND;
 
-	subnet = dsap_find_subnet(&src_port_gid.global.subnet_prefix);
+
+	subnet = dsap_find_subnet((uint64_t *)&src_port_gid.global.subnet_prefix);
 	if (!subnet) {
 		if (dsap_add_subnet(src_port_gid.global.subnet_prefix) != 
 		    FSUCCESS)
 			return FINSUFFICIENT_MEMORY;
 
-		subnet = dsap_find_subnet(&src_port_gid.global.subnet_prefix);
+		subnet = dsap_find_subnet((uint64_t *)&src_port_gid.global.subnet_prefix);
 		if (!subnet) 
 			return FNOT_FOUND; /* This better not happen */
 	}
@@ -707,7 +711,7 @@ FSTATUS dsap_add_dst_port(union ibv_gid *dst_port_gid, NODE_TYPE node_type,
 			  char * node_desc)
 {
 	dsap_subnet_t *subnet = dsap_find_subnet(
-				&dst_port_gid->global.subnet_prefix);
+				(uint64_t *)&dst_port_gid->global.subnet_prefix);
 	dsap_dst_port_t *dst_port;
 
 	if (!subnet) 
@@ -765,7 +769,7 @@ FSTATUS dsap_remove_dst_port(union ibv_gid *dst_port_gid)
 		return FNOT_FOUND;
 	}
 
-	subnet = dsap_find_subnet(&dst_port_gid->global.subnet_prefix);
+	subnet = dsap_find_subnet((uint64_t *)&dst_port_gid->global.subnet_prefix);
 	if (!subnet) {
 		free(dst_port);
 		return FNOT_FOUND;

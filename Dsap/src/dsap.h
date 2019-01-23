@@ -71,6 +71,7 @@ typedef enum default_fabric_action {
 	DSAP_DEF_FAB_ACT_ALL
 } default_fabric_action_t;
 
+
 /* Device/port/endpoint/adddress structures for local provider ports */
 struct dsap_device; 
 
@@ -91,6 +92,7 @@ struct dsap_port {
 	struct omgt_port         *omgt_handle;
 	void                    *lib_handle;
 };
+
 
 struct dsap_device {
 	const struct acm_device *device;
@@ -141,6 +143,7 @@ void dsap_scanner_cleanup(void);
 FSTATUS dsap_query_path_records(dsap_src_port_t *src_port,
 				dsap_dst_port_t *dst_port, uint64_t sid, 
 				uint16_t pkey);
+
 FSTATUS dsap_query_dst_ports(dsap_subnet_t *subnet);
 FSTATUS dsap_query_default_vfinfo_record(dsap_subnet_t *subnet);
 FSTATUS dsap_query_vfinfo_records(dsap_subnet_t *subnet,

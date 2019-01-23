@@ -6,7 +6,7 @@ basic_tools_sbin_sym="opapmaquery opaportconfig"
 
 basic_tools_opt="setup_self_ssh usemem opaipcalc stream"
 
-basic_mans="opacapture.1 opaconfig.1 opafabricinfo.1 opagetvf.1
+basic_mans="opacapture.1 opafabricinfo.1 opagetvf.1
 	opagetvf_env.1 opahfirev.1 opainfo.1 opapacketcapture.1 opapmaquery.1
 	opaportconfig.1 opaportinfo.1 oparesolvehfiport.1 opasaquery.1
 	opasmaquery.1"
@@ -75,9 +75,9 @@ help_doc="opatop_group_bw.hlp opatop_group_config.hlp opatop_group_ctg.hlp
 	opatop_pm_config.hlp opatop_port_stats.hlp opatop_summary.hlp opatop_vf_bw.hlp
 	opatop_vf_info_sel.hlp opatop_vf_config.hlp"
 
-opasadb_bin="opa_osd_dump opa_osd_exercise opa_osd_perf opa_osd_query"
+opasadb_bin="opa_osd_dump opa_osd_exercise opa_osd_perf opa_osd_query opa_osd_query_many opa_osd_load"
 
-opasadb_header="opasadb_path.h opasadb_route.h opasadb_route2.h"
+opasadb_header="opasadb.h opasadb_path.h opasadb_route.h opasadb_route2.h"
 
 opasadb_mans="opa_osd_dump.1 opa_osd_exercise.1 opa_osd_perf.1 opa_osd_query.1"
 

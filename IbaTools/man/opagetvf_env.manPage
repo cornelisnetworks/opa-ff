@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagetvf\(ulenv 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagetvf\(ulenv 1 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagetvf\(ulenv
 
@@ -30,10 +30,15 @@ opagetvf\(ulfunc "arguments to opagetvf" \fIpkey\(ulenv\(ulvar\(ulname\fR \fIsl\
 [ \fImtu\(ulenv\(ulvar\(ulname\fR[ \fIrate\(ulenv\(ulvar\(ulname\fR]]
 .PP
 or
+.PP
+
 .br
 opagetvf2\(ulfunc "arguments to opagetvf" \fIpkey\(ulenv\(ulvar\(ulname\fR
 .br
 \fIsl\(ulenv\(ulvar\(ulname\fR[ \fImtu\(ulenv\(ulvar\(ulname\fR[ \fIrate\(ulenv\(ulvar\(ulname\fR]]
+
+.br
+
 .NL
 
 .SH Function Options
@@ -82,11 +87,17 @@ If the selected virtual fabric does not have a limitation specified for rate, th
 
 .SH Function Example
 .NL
+
+.PP
+
+.br
 . /usr/sbin/opagetvf\(ulenv
 .br
 
 .br
-# ensure values are empty in case they are not specified for the virtual fabric
+# ensure values are empty in case they are not specified for the
+.br
+virtual fabric
 .br
 MTU=
 .br
@@ -97,6 +108,9 @@ opagetvf\(ulfunc "-d \[aq]Compute\[aq]" PKEY SERVICE\(ulLEVEL MTU RATE
 echo "The Compute Virtual Fabric has pkey: $PKEY SL:$SERVICE\(ulLEVEL MTU:
 .br
 $MTU rate:$RATE"
+
+.br
+
 .PP
 
 .B NOTE:

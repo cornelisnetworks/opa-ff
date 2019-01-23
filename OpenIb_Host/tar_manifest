@@ -27,8 +27,9 @@ Esm/ib/src/linux/log/common
 Esm/ib/src/linux/log/include
 Esm/ib/src/linux/log/usr
 Esm/ib/src/linux/startup/fm_config
-Esm/ib/src/pm/pm
+Esm/ib/src/pm/include
 Esm/ib/src/smi/include
-buildFeatureDefs
+Fd/buildFeatureDefs
+Fd/buildFeatureDefs.base
 OpenIb_Host/debian
 Fd/buildFeatureDefs.base

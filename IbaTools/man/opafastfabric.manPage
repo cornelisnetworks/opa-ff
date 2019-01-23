@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafastfabric 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafastfabric 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafastfabric
 
@@ -16,6 +16,11 @@ opafastfabric
 
 \fB(Switch and Host)\fR
 Starts the top-level Intel(R) Omni-Path Fabric Suite FastFabric Text-based User Interface (TUI) menu to enable setup and configuration.
+.PP
+Refer to the 
+\fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
+
+for details on this tool.
 .SH Syntax
 .NL
 opafastfabric
@@ -46,4 +51,4 @@ None.
 .br
 
 .br
-     X) Exit
+     X) Exit (or Q)

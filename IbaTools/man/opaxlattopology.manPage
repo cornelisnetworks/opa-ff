@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxlattopology
 
@@ -163,12 +163,12 @@ Creates the <LinkSummary> section xml for the csv input.
 .RE
 
 .TP 10
-source
+source 
 .NL
 Specifies the source csv file. Default is topology.csv.
 
 .TP 10
-dest
+dest 
 .NL
 Specifies the output xml file. Default is topology.0:0.xml
 

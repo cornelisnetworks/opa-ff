@@ -479,7 +479,7 @@ OutputStringMap_t OutputTypeTable[] = {
     {"node",            OutputTypeStlNodeRecord,              OutputTypeNodeRecord,       &NodeInput, 0},
     {"portinfo",        OutputTypeStlPortInfoRecord,          OutputTypePortInfoRecord,   &MiscInput, 0},
     {"sminfo",          OutputTypeStlSMInfoRecord,            NO_OUTPUT_TYPE,             NULL, 0},
-    {"link",            OutputTypeStlLinkRecord,              NO_OUTPUT_TYPE,             NULL, 0},
+    {"link",            OutputTypeStlLinkRecord,              NO_OUTPUT_TYPE,             &MiscInput, 0},
     {"service",         NO_OUTPUT_TYPE,                       OutputTypeServiceRecord,    &ServiceInput, 0},
     {"mcmember",        NO_OUTPUT_TYPE,                       OutputTypeMcMemberRecord,   &McmemberInput, 0},
     {"inform",          OutputTypeStlInformInfoRecord,        OutputTypeInformInfoRecord, &InformInput, 0},

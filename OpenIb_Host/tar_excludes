@@ -25,3 +25,6 @@ OpenIb_Host/packaged_files
 OpenIb_Host/tests_build
 OpenIb_Host/TESTSresults
 OpenIb_Host/opa_feature_settings*
+opasadb/lib/libopasadb.map.base
+opasadb/path_tools/load/opasadb.xml.base
+opasadb/lib/path/op_path_rec.conf.base

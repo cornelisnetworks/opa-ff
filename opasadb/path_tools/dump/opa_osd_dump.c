@@ -123,7 +123,6 @@ dump(FILE *f)
 	for (i = 1; i <= r.vfab_table->count ; i++) {
 		int j;
 		op_ppath_vfab_record_t *vf = &r.vfab_table->vfab[i];
-
 		fprintf(f,"\tVFab[%u]: %s\n", i, 
 				vf->vfab_name);
 		fprintf(f,"\t\tPrefix: 0x%16lx\n",
@@ -138,7 +137,6 @@ dump(FILE *f)
 			fprintf(f,"\t\t\tRecord[%u] = %u\n",
 					j,vf->first_dlid[j]);
 		}
-
 		fprintf(f,"\n\t\tDGUID Hash Table:\n");
 		for (j=0;j<HASH_TABLE_SIZE; j++) {
 			fprintf(f,"\t\t\tRecord[%u] = %u\n",

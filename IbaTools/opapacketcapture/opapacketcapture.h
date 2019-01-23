@@ -61,6 +61,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FILTER_SVCLEV		6
 #define FILTER_ATTRID		7
 #define FILTER_QP			8
+#define FILTER_TRANS_ID_HIGH 9
+#define FILTER_TRANS_ID_LOW 10
 
 #define PACKETTYPE_RC		0
 #define PACKETTYPE_UC		1
@@ -89,6 +91,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define WFR_MODE        2
 
 #define IS_FI_MODE(m) (m == WFR_MODE)
+
+#define STL_WFR_INBOUND 1
+#define STL_WFR_OUTBOUND 0
+#define STL_WFR_RCV_BYPASS 0x4
+#define STL_WFR_RCV_IB 0x2
+#define STL_L2_16B 0x2
+#define STL_L2_9B 0x3
+#define STL_9B_LNH_BTH 0x2
+#define STL_9B_LNH_GRH 0x3
+#define STL_16B_L4_FM 0x8
+#define STL_16B_L4_IB 0x9
+#define STL_16B_L4_IB_GLOBAL 0xa
+
+#define STL_16B_L4_FM_SIZE 8
 
 typedef struct _packet {
 	uint64				blockNum;

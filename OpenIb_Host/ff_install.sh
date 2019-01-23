@@ -99,12 +99,16 @@ cd ../../
 #Config files
 cd ../config
 cp -t ${DESTDIR}/etc/rdma dsap.conf
+cp -t ${DESTDIR}/etc/rdma op_path_rec.conf
+cp -t ${DESTDIR}/etc/rdma opasadb.xml
 cp -t ${DESTDIR}/etc/opa opamon.conf opamon.si.conf
 
 #Libraries installing
 #cd ../builtlibs.OPENIB_FF.release
 cd $(cat $BUILDDIR/LIB_PATH)
 cp -t ${DESTDIR}/${DSAP_LIBDIR} libopasadb.so.*
+ln -s libopasadb.so.* ${DESTDIR}/${DSAP_LIBDIR}/libopasadb.so.1
+ln -s libopasadb.so.1 ${DESTDIR}/${DSAP_LIBDIR}/libopasadb.so
 cp -t ${DESTDIR}/${DSAP_LIBDIR}/ibacm libdsap.so.*
 cp -t ${DESTDIR}/usr/lib libopamgt.so.*
 ln -s libopamgt.so.${OPAMGT_VERNO_MAJOR} ${DESTDIR}/usr/lib/libopamgt.so

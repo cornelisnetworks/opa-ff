@@ -54,6 +54,8 @@ CFILES			= \
 				opasadb_route.c \
 				opasadb_path.c \
 				opasadb_path_private.c \
+				opasadb_query_many.c \
+				opasadb_static_db.c \
 				# Add more c files here
 # C++ files (.cpp)
 CCFILES			= \
@@ -100,7 +102,7 @@ CMD_TARGETS_MISC	=
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
 # other files to remove during clobber phase
-CLOBBER_TARGETS_MISC=
+CLOBBER_TARGETS_MISC= libopasadb.map
 # sub-directory to install to within bin
 BIN_SUBDIR		= 
 # sub-directory to install to within include
@@ -126,12 +128,19 @@ LDLOCAL	= -Wl,--version-script=libopasadb.map
 LOCALDEPLIBS	= opamgt-priv $(IBACCESS_USER_LIBS)
 # User libraries to use when linking (in addition to LOCALDEPLIBS)
 #LOCALLIBS	= $(OPENIB_USER_LIBS) $(IBACCESS_USER_LIBS)
-LOCALLIBS	= $(OPENIB_USER_LIBS) rt
+ifeq ($(shell cat path/opasadb_static_db.c),)
+LOCALLIBS       = $(OPENIB_USER_LIBS) rt
+else
+LOCALLIBS       = $(OPENIB_USER_LIBS) rt json-c
+endif
 # User library directories for libpaths
 LOCAL_LIB_DIRS	= $(OPENIB_USER_LIB_DIRS) $(IBACCESS_USER_LIB_DIRS)
 
 # Include Make Rules definitions and rules
 include $(TL_DIR)/IbaTools/Makerules.module
+
+CLOCAL += $(shell pkg-config --cflags json-c)
+LDLOCAL+= $(shell pkg-config --libs json-c)
 
 #=============================================================================#
 # Overrides:

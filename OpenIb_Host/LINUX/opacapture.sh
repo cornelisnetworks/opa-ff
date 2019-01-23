@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015-2017, Intel Corporation
+# Copyright (c) 2015-2018, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -245,6 +245,14 @@ do
 		cp -p -r /proc/$proc_file /$dir/proc
 	fi
 done
+for proc_file in `ps -eo pid`
+do
+	if [ -e /proc/$proc_file/stack ]
+	then
+		mkdir -p /$dir/proc/$proc_file
+		cp -p -r /proc/$proc_file/stack /$dir/proc/$proc_file
+	fi
+done
 
 echo "Obtaining additional CPU info..."
 cpupower frequency-info > /$dir/cpupower-freq-info
@@ -271,6 +279,35 @@ then
 	echo "Copying IPOIB debug information from ${IPOIB_DEBUGDIR}..."
 	cp -r ${IPOIB_DEBUGDIR}/* /${dir}/${IPOIB_DEBUGDIR} 2>/dev/null
 fi
+
+# Check if side channel security issue mitigation information files are
+# present; log if present
+SIDE_CHANNEL_MITIGATION_INFO="/sys/devices/system/cpu/vulnerabilities"
+if [ -d ${SIDE_CHANNEL_MITIGATION_INFO} ]
+then
+	echo "Obtaining side channel security issue mitigation information from ${SIDE_CHANNEL_MITIGATION_INFO}"
+	mkdir -p /${dir}${SIDE_CHANNEL_MITIGATION_INFO}
+	echo "Copying side channel security issue mitigation information from ${SIDE_CHANNEL_MITIGATION_INFO}..."
+	cp -r ${SIDE_CHANNEL_MITIGATION_INFO}/* /${dir}${SIDE_CHANNEL_MITIGATION_INFO} 2>/dev/null
+fi
+
+# Check if side channel security issue mitigation kernel configuration files are
+# present; log if present
+KERNEL_CONFIG_LOC=/sys/kernel/debug/x86
+SIDE_CHANNEL_MITIGATION_KERNEL_CONFIG_FILES="ibpb_enabled ibrs_enabled pti_enabled retp_enabled"
+for fname in ${SIDE_CHANNEL_MITIGATION_KERNEL_CONFIG_FILES}
+do
+	if [ -e ${KERNEL_CONFIG_LOC}/${fname} ]
+	then
+		echo "Obtaining kernel configuration file ${KERNEL_CONFIG_LOC}/${fname}"
+		if [ ! -d /${dir}${KERNEL_CONFIG_LOC} ]
+		then
+			mkdir -p /${dir}${KERNEL_CONFIG_LOC}
+		fi
+		echo "Copying kernel configuration file ${KERNEL_CONFIG_LOC}/${fname}..."
+		cp ${KERNEL_CONFIG_LOC}/${fname} /${dir}${KERNEL_CONFIG_LOC} 2>/dev/null
+	fi
+done
 
 mkdir -p /$dir/sys/class
 if [ -e /sys/class/infiniband ]
@@ -353,7 +390,6 @@ fi
 if [ $detail -ge 2 ]
 then
     mkdir -p /$dir/fabric
-    echo "Gathering Fabric-Level Information ..."
     cd /$dir/fabric/
     if [ "$ff_available" = y ]
     then
@@ -361,9 +397,16 @@ then
     else
         PORTS='0:0'
         if [ $detail -ge 3 ]
-       then
+        then
             echo "Warning: opacapture detail=$detail but FastFabric not available"
         fi
+    fi
+
+    if [ $detail -ge 3 -a "$ff_available" = y ]
+    then
+        echo "Gathering Fabric-Level Information with FDBs ..."
+    else
+        echo "Gathering Fabric-Level Information ..."
     fi
 
     for hfi_port in $PORTS
@@ -409,6 +452,7 @@ then
             if [ $mgmt_disabled -eq 0 ]
             then
                 /usr/sbin/opareport $port_opt -o snapshot -s -V $router_opt > $hfi_port_dir/snapshot.xml 2>&1
+                /usr/sbin/opareport $port_opt -o snapshot -m -M -s -V $router_opt > $hfi_port_dir/snapshot_direct.xml 2>&1
             	/usr/sbin/opareport -o links -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_links 2>&1
             	/usr/sbin/opareport -o comps -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_comps 2>&1
             	/usr/sbin/opareport -o errors -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_errors 2>&1
@@ -419,10 +463,24 @@ then
 
             if [ $detail -gt 2 ]
             then
+                echo "Gathering Multicast Membership ..."
                 /usr/sbin/opashowmc -p $hfi:$port > $hfi_port_dir/fabric_showmc 2>&1
+                # create cable health report directory and generate report
+                if [ $ff_available = "y" ] && [ ${FF_CABLE_HEALTH_REPORT_DIR} ]
+                then
+                    echo "Gathering Cable Health Report ..."
+                    mkdir -p ${FF_CABLE_HEALTH_REPORT_DIR}
+                    /usr/sbin/opareport -o cablehealth >${FF_CABLE_HEALTH_REPORT_DIR}/cablehealth$(date "+%Y%m%d%H%M%S").csv
+                fi
             fi
         fi
     done
+fi
+
+if [ $ff_available = "y" ] && [ -e "${FF_CABLE_HEALTH_REPORT_DIR}" ]
+then
+        echo "Copying Cable Health Reports"
+        cp -p -r ${FF_CABLE_HEALTH_REPORT_DIR} /$dir/ 2>/dev/null
 fi
 
 cd /
@@ -469,14 +527,24 @@ then
 	done
 fi
 
-if [ $detail -ge 4 -a "$ff_available" = y -a -d $FF_ANALYSIS_DIR/baseline ]
+if [ $detail -ge 4 -a "$ff_available" = y ]
 then
 	if [ ! -d $FF_ANALYSIS_DIR/latest ]
 	then
-		echo "Performing Fabric Analysis ..."
 		rm -f $FF_ANALYSIS_DIR/opaallanalysis
-		/usr/sbin/opaallanalysis > $FF_ANALYSIS_DIR/opaallanalysis 2>&1
-    fi
+		mkdir -p $FF_ANALYSIS_DIR
+		baseline_opt=""
+		if [ ! -d $FF_ANALYSIS_DIR/baseline ]
+		then
+			echo "Performing Fabric Analysis Baseline ..."
+			baseline_opt="-b"
+		else
+			echo "Performing Fabric Analysis ..."
+		fi
+		/usr/sbin/opaallanalysis $baseline_opt > $FF_ANALYSIS_DIR/opaallanalysis 2>&1
+	else
+		echo "Copying Fabric Analysis ..."
+	fi
 	files="$files $(echo $FF_ANALYSIS_DIR|sed -e 's|^/||')"
 fi
 

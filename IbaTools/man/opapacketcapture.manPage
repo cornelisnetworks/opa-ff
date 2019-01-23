@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapacketcapture 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapacketcapture 1 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapacketcapture
 
@@ -41,7 +41,7 @@ Produces full help text.
 .NL
 Specifies the output file for captured packets.
 .br
-Default is packetDump.pcap
+Default is packetDump.pcap 
 
 .TP 10
 -d \fIdevfile\fR 

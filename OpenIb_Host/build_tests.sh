@@ -68,7 +68,7 @@ cp *.project setenv $testdir
 cd $TL_DIR
 # -p will preserve timestamps (and ownership, etc) so that we will
 # not rebuild unless we need to
-cp -r -p Makerules MakeTools opamgt Xml Topology SrpTools InicTools Tests IbaTests IbaTools IbAccess MpiApps ShmemApps buildFeatureDefs $testdir
+cp -r -p Makerules MakeTools opamgt Xml Topology SrpTools InicTools Tests IbaTests IbaTools IbAccess MpiApps ShmemApps Fd $testdir
 if [ "$Cflag" = y ]
 then
 	# if in-place FF build left builtbin, builtinclude and builtlibs, pick
@@ -99,7 +99,7 @@ if [ "x$RELEASE_TAG" = "x" ]
 then
 	STAGE_SUB_DIR=IntelOPA-Tests.$(MakeTools/patch_engineer_version.sh|cut -d"." -f1)
 else
-	STAGE_SUB_DIR=IntelOPA-Tests.$(patch_version $RELEASE_TAG)
+	STAGE_SUB_DIR=IntelOPA-Tests.$(format_releasetag $RELEASE_TAG)
 fi
 tarstage=$PWD/tarStage/$STAGE_SUB_DIR
 mkdir -p $tarstage

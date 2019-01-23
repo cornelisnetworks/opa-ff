@@ -34,6 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+
 #include <unistd.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
@@ -470,7 +472,6 @@ connect_shared_table_rw(op_ppath_reader_t *r)
 	int err;
 
 	_DBG_FUNC_ENTRY;
-
 	//err = open_shared_table(r, SHM_TABLE_NAME, O_RDWR);
 	err = open_shared_table(r, SHM_TABLE_NAME, O_RDWR | O_CREAT);
 	if (err) {
@@ -479,7 +480,6 @@ connect_shared_table_rw(op_ppath_reader_t *r)
 		memset(r->shared_table,0,sizeof(op_ppath_shared_table_t));
 		r->shared_table->abi_version = OPA_SA_DB_PATH_TABLE_VERSION;
 	}
-
 	_DBG_FUNC_EXIT;
 	return err;
 }
@@ -996,7 +996,6 @@ error:
 	err = errno;
 	return err;
 }
-
 void
 op_ppath_publish(op_ppath_writer_t *w)
 {
@@ -1124,6 +1123,7 @@ int op_ppath_find_path(op_ppath_reader_t *r,
 	op_ppath_record_t *path_record = NULL;
 	uint64 ho_sid;
 
+
 	_DBG_FUNC_ENTRY;
 
 	if (!query || !result) {
@@ -1143,6 +1143,7 @@ int op_ppath_find_path(op_ppath_reader_t *r,
 		err = EINVAL;
 		goto error;
 	}
+
 
 	if (mask & IB_PATH_RECORD_COMP_SERVICEID) {
 		// We need host byte order for doing ranged compares.
@@ -1380,7 +1381,8 @@ error:
 	return err;
 }
 
+
 unsigned op_ppath_version(void)
 {
-	return OPA_SA_DB_PATH_TABLE_VERSION;
+        return OPA_SA_DB_PATH_TABLE_VERSION;
 }

@@ -329,7 +329,6 @@ int server(char *fname, int n)
 		}
 
 		for (i=0;i<numrecs;i++) {
-
 			if (op_ppath_add_path(&w, &record[i])) {
 				_DBG_ERROR( "Failed to add records.\n");
 				err = -1;

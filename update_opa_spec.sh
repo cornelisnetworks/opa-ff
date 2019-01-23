@@ -49,20 +49,21 @@ fi
 
 sed -i "s/__RPM_FS/OPA_FEATURE_SET=$OPA_FEATURE_SET/g" $to
 
+
 source ./OpenIb_Host/ff_filegroups.sh
 
-if [ "$id" = "rhel"  -o "$id" = "centos" ]
+if [ "$id" = "rhel" -o "$id" = "centos" ]
 then
 	GE_7_4=$(echo "$versionid >= 7.4" | bc)
 	GE_7_5=$(echo "$versionid >= 7.5" | bc)
 
 	# __RPM_REQ_BASIC -
 	sed -i "s/__RPM_REQ_BASIC/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" $to
-	
+
 	# __RPM_REQ_OPAMGT_DEV - different for RHEL7.4 and greater
 	if [ $GE_7_4 = 1 ]
 	then
-		sed -i "s/__RPM_REQ_OPAMGT_DEV/rdma-core-devel, openssl-devel, opa-libopamgt/g" $to
+		sed -i "s/__RPM_REQ_OPAMGT_DEV/rdma-core-devel, openssl-devel, opa-libopamgt,/g" $to
 	else
 		sed -i "s/__RPM_REQ_OPAMGT_DEV/libibumad-devel, libibverbs-devel, openssl-devel, opa-libopamgt/g" $to
 	fi
@@ -74,10 +75,19 @@ then
 	else
 		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
 	fi
+
 	# __RPM_REQ_ADDR_RES,__RPM_REQ_OPAMGT and __RPM_DEBUG same for all RHEL versions
 	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools ibacm/g" $to
 	sed -i "s/__RPM_REQ_OPAMGT/libibumad%{?_isa}, libibverbs%{?_isa}, openssl%{?_isa}/g" $to
 	sed -i "/__RPM_DEBUG_PKG/,+1d" $to
+
+	#Setup Epoch tags for RHEL rpms
+	sed -i "s/__RPM_EPOCH_BASIC/Epoch: 1/g" $to
+	sed -i "s/__RPM_EPOCH_FF/Epoch: 1/g" $to
+	sed -i "s/__RPM_EPOCH_ADDR_RES/Epoch: 1/g" $to
+	sed -i "s/__RPM_EPOCH_LIBOPAMGT/Epoch: 1/g" $to
+
+
 elif [ "$id" = "sles" ]
 then
 	GE_11_1=$(echo "$versionid >= 11.1" | bc)
@@ -108,6 +118,10 @@ then
 	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools, ibacm/g" $to
 	# __RPM_REQ_OPAMGT same for all SLES versions
 	sed -i "s/__RPM_REQ_OPAMGT/libibumad3, libibverbs1, openssl/g" $to
+
+	#Cleanup EPOCH macros from sles spec.
+	#Note that SUSE discourages and does not use epochs
+	sed -i "/__RPM_EPOCH_*/d" $to
 else
 	echo ERROR: Unsupported distribution: $id $versionid
 	exit 1
@@ -186,15 +200,15 @@ mv .tmpspec $to
 > .tmpspec
 while read line
 do
-	if [ "$line" = "__RPM_SNAP_FILES" ]
-	then
-		for i in $opasnapconfig_bin
-		do
-			echo "/usr/lib/opa/tools/$i" >> .tmpspec
-		done
-	else
-		echo "$line" >> .tmpspec
-	fi
+        if [ "$line" = "__RPM_SNAP_FILES" ]
+        then
+                for i in $opasnapconfig_bin
+                do
+                        echo "/usr/lib/opa/tools/$i" >> .tmpspec
+                done
+        else
+                echo "$line" >> .tmpspec
+        fi
 done < $to
 mv .tmpspec $to
 

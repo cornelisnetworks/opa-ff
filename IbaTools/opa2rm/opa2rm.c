@@ -1299,9 +1299,9 @@ void Usage_full(void)
 	fprintf(stderr, "                                name)\n");
 	fprintf(stderr, "   nodepat:value1:port:value2 - value1 is glob pattern for node description\n");
 	fprintf(stderr, "                                (node name), value2 is port #\n");
-	fprintf(stderr, "   nodetype:value             - value is node type (SW, FI or RT)\n");
+	fprintf(stderr, "   nodetype:value             - value is node type (SW or FI)\n");
 	fprintf(stderr, "   nodetype:value1:port:value2\n");
-	fprintf(stderr, "                              - value1 is node type (SW, FI or RT)\n");
+	fprintf(stderr, "                              - value1 is node type (SW or FI)\n");
 	fprintf(stderr, "                                value2 is port #\n");
 	fprintf(stderr, "   rate:value                 - value is string for rate (25g, 50g, 75g, 100g)\n");
 	fprintf(stderr, "                                omits switch mgmt port 0\n");
@@ -1452,6 +1452,11 @@ int main(int argc, char ** argv)
 
 	if (optind < argc) {
 		topology_in_file = argv[optind++];
+		if (!topology_in_file){
+			fprintf(stderr, "opa2rm: Error: null input filename\n");
+			exitstatus = 1;
+			goto done;
+		}
 	} else {
 		fprintf(stderr, "opa2rm: Missing topology_input argument\n");
 		Usage();

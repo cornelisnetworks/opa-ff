@@ -378,7 +378,7 @@ find_latency(int ranks, int size, char *s_buf, char *r_buf,
 			}
 		}
 
-		summary_f[2] = summary_f[2] / j;
+		summary_f[2] = (j)?(summary_f[2] / j):0.0;
 
 		MPI_Isend(summary_f,
 				  3,

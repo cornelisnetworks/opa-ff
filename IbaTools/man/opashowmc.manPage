@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opashowmc 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opashowmc 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opashowmc
 
@@ -18,7 +18,7 @@ opashowmc
 Displays the Intel(R) Omni-Path Multicast groups created for the fabric along with the Intel(R) Omni-Path Host Fabric Interface (HFI) ports which are a member of each multicast group. This command can be helpful when attempting to analyze or debug Intel(R) Omni-Path multicast usage by applications or ULPs such as IPoIB.
 .SH Syntax
 .NL
-opashowmc [-v] [-t \fIportsfile\fR] [-p \fIports\fR]
+opashowmc [-v] [-m \fImgid\fR] [-t \fIportsfile\fR] [-p \fIports\fR]
 .SH Options
 .NL
 
@@ -31,6 +31,11 @@ Produces full help text.
 -v 
 .NL
 Returns verbose output and shows name of each member.
+
+.TP 10
+-m \fImgid\fR 
+.NL
+Shows the membership of the group <mgid> only.
 
 .TP 10
 -t \fIportsfile\fR 
@@ -86,7 +91,7 @@ HFI \fIx\fR, port \fIy\fR.
 .NL
 opashowmc
 .br
-opashowmc -p \[aq]1:1 1:2 2:1 2:2\[aq]
+opashowmc -p \[aq]1:1 1:2 2:1 2:2\[aq] opashowmc -m 0xff12401b80010000:0x00000000ffffffff
 .SH Environment Variables
 .NL
 

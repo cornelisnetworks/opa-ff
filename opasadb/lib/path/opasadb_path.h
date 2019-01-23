@@ -371,6 +371,7 @@ unsigned op_path_qp_attr(struct ibv_qp_attr *qp_attr,
  */
 unsigned op_path_check_version(void);
 
+
 #ifdef __cplusplus
 };
 #endif

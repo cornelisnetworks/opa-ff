@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opachassisanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opachassisanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opachassisanalysis
 
@@ -49,11 +49,11 @@ Saves history of failures (errors/differences).
 .TP 10
 -d \fIdir\fR 
 .NL
-Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
+Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis 
 .TP 10
 -F \fIchassisfile\fR 
 .NL
-Specifies the file with the chassis in the cluster. Default is /etc/opa/chassis
+Specifies the file with the chassis in the cluster. Default is /etc/opa/chassis 
 .TP 10
 -H \[aq]\fIchassis\fR\[aq] 
 .NL
@@ -96,9 +96,16 @@ Intel recommends that you set up SSH keys for chassis (see
 \fIopasetupssh\fR
 ). If SSH keys are not set up, all chassis must be configured with the same admin password and the password must be kept in the /etc/opa/opafastfabric.conf configuration file.
 .PP
-The default set of \fBFF\(ulCHASSIS\(ulCMDS\fR is:showInventory fwVersion showNodeDesc timeZoneConf timeDSTConf
+The default set of \fBFF\(ulCHASSIS\(ulCMDS\fR is:
+.PP
+
+.br
+showInventory fwVersion showNodeDesc timeZoneConf timeDSTConf
 .br
 snmpCommunityConf snmpTargetAddr showChassisIpAddr showDefaultRoute
+
+.br
+
 .PP
 The commands specified in \fBFF\(ulCHASSIS\(ulCMDS\fR must be simple commands with no arguments. The output of these commands are compared to the baseline using \fBFF\(ulDIFF\(ulCMD\fR. Therefore, commands that include dynamically changing values, such as port packet counters, should not be included in this list.
 .PP

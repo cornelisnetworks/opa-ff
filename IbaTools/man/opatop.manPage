@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opatop 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opatop 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opatop
 
@@ -68,7 +68,7 @@ Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port 
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
---timeout
+--timeout 
 .NL
 Specifies the timeout (response wait time) in ms. Default is 1000 ms.
 

@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapaquery
 
@@ -106,7 +106,7 @@ Specifies the LID of the node.
 Specifies the port number within the node.
 
 .TP 10
---timeout
+--timeout 
 .NL
 Specifies the timeout (response wait time) in ms. Default is 1000 ms.
 
@@ -136,7 +136,7 @@ Obtains portCounters over an interval beginning at \fIdate\(ultime\fR. \fIdate\(
 Obtains portCounters over an interval ending at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--U/--userCntrs
+-U/--userCntrs 
 .NL
 Queries by user-controlled counters flag for portCounters.
 
@@ -396,6 +396,46 @@ Sorted by routing category - highest first.
 
 .RE
 
+.RS
+.TP 10
+
+.sp
+vfutilhighv 
+Sorted by utilization - highest first.
+.RE
+
+.RS
+.TP 10
+
+.sp
+vfpktrate 
+Sorted by packet rate - highest first.
+.RE
+
+.RS
+.TP 10
+
+.sp
+vfutillow 
+Sorted by utilization - lowest first.
+.RE
+
+.RS
+.TP 10
+
+.sp
+vfcongestion 
+Sorted by congestion category - highest first.
+.RE
+
+.RS
+.TP 10
+
+.sp
+vfbubbles 
+Sorted by bubble category - highest first.
+.RE
+
 .TP 10
 -S/--start \fIstart\fR 
 .NL
@@ -439,7 +479,7 @@ Specifies the 64-bit image number.
 Specifies the image offset.
 
 .TP 10
--y/--imgTime
+-y/--imgTime 
 .NL
 Specifies the image time. May be used with imageinfo, groupInfo, groupInfo, groupConfig, freezeImage, focusPorts, vfInfo, vfConfig, and vfFocusPorts. Will return closest image within image interval if possible. See --begin/--end above for format.
 

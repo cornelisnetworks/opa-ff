@@ -44,9 +44,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include "dumppath.h"
 #include "opasadb_path.h"
 #include "opasadb_debug.h"
-#include "dumppath.h"
 
 #define DEFAULT_SID 0x1000117500000000
 
@@ -176,7 +176,6 @@ int main(int argc, char **argv)
 		query.service_id = hton64(DEFAULT_SID);
 	}
 	print_path_record("Query Parameters", &query);
-
 	if ((query.pkey != 0) && (query.service_id != 0)) {
                 fprintf(stderr, "Query using both Service ID and PKey not supported\n");
                 return -1;

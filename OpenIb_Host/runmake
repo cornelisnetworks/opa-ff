@@ -289,9 +289,10 @@ then
 	exit 1
 fi
 
-MODULEVERSION=`$TL_DIR/MakeTools/convert_releasetag.pl $RELEASE_TAG`
-RPM_VER=`echo $MODULEVERSION|cut -d"." -f1-4`
-RPM_REL=`echo $MODULEVERSION.999.999.999.999|cut -d"." -f5`
+MODULEVERSION=`$TL_DIR/MakeTools/format_releasetag.py $RELEASE_TAG`
+RPMVERSION=`$TL_DIR/MakeTools/format_releasetag.py $RELEASE_TAG --format rpm`
+RPM_VER=`echo $RPMVERSION|cut -d"-" -f1`
+RPM_REL=`echo $RPMVERSION-999|cut -d"-" -f2`
 export MKRPM_VER=$RPM_VER
 export MKRPM_REL=$RPM_REL`rpm --eval %{?dist}`
 
@@ -311,14 +312,15 @@ then
 	#then
 		export REMOVE_DEPENDS=yes
 		make clobber clobber_stage clobber_release
+		(cd $TL_DIR/CommonInstall; make clobber_pl_files)
 		rm -f $TL_DIR/builtinplace.$PRODUCT.$BUILD_CONFIG
 	#fi
 fi
 
-rm -rf $TL_DIR/$PROJ_FILE_DIR/packaged_files $TL_DIR/$PROJ_FILE_DIR/dist_files $TL_DIR/buildFeatureDefs
+rm -rf $TL_DIR/$PROJ_FILE_DIR/packaged_files $TL_DIR/$PROJ_FILE_DIR/dist_files $TL_DIR/Fd/buildFeatureDefs
 
 # make sure buildFeatureDefs is in place for the build
-make $TL_DIR/buildFeatureDefs || exit 1
+make $TL_DIR/Fd/buildFeatureDefs || exit 1
 
 # make sure detailed_topology.xlsx is in place for the build
 (cd $TL_DIR/IbaTools/opaxlattopology; make detailed_topology.xlsx) || exit 1
@@ -326,7 +328,7 @@ make $TL_DIR/buildFeatureDefs || exit 1
 # make sure files from BaseFiles are in place
 while read comp fn
 do
-	if [ "$comp" != "FF" ]
+	if ! echo $comp | grep FF > /dev/null
 	then
 		continue
 	fi
@@ -334,6 +336,9 @@ do
 	bn=$(basename $fn)
 	(cd $TL_DIR/$dir;make $bn) || exit 1
 done < $TL_DIR/Fd/BaseFiles
+
+# make sure CommonInstall files are in place
+#(cd $TL_DIR/CommonInstall; make clobber_pl_files ff_files)
 
 args=
 if [ "$inplace" = y ]
@@ -415,7 +420,6 @@ then
 			"$USE_UNIFDEF" \
 			"$RPMDIR/SOURCES/opa-mpi-apps.tgz" \
 			"$MPIAPPS_FILES_TO_TAR" \
-			" --transform=s,MpiApps/debian,debian," \
 		|| exit 1
 		(
 			export BUILD_ARGS="$args"
@@ -461,7 +465,6 @@ then
 			"$USE_UNIFDEF" \
 			"$OPA_MPI_APPS_SOURCE_TARBALL" \
 			"$MPIAPPS_FILES_TO_TAR" \
-			" --transform=s,MpiApps/debian,debian," \
 		|| exit 1
 		(
 			OPA_MPI_APPS_DIR="$RPMDIR/build/opa-mpi-apps-$RPM_VER"

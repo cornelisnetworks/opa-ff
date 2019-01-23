@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2018, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -62,6 +62,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MODULUS_LEN 256
 #define MODULUS_OFFSET 128
+#define MAX_PATH_RECS 1
 
 extern int g_verbose;
 
@@ -70,18 +71,31 @@ FSTATUS getDestPath(struct omgt_port *port, EUI64 destPortGuid, char *cmd, IB_PA
 {
 	FSTATUS					fstatus;
 	EUI64					portGuid		= -1;
-	EUI64					portPrefix		= -1;
+	uint64_t				portPrefix		= -1;
 	OMGT_QUERY				query;
 	PQUERY_RESULT_VALUES	pq				= NULL;
+	uint8_t					sm_sl			= -1;
 
 	(void)omgt_port_get_port_guid(port, &portGuid);
 	(void)omgt_port_get_port_prefix(port, &portPrefix);
+	(void)omgt_port_get_port_sm_sl(port, &sm_sl);
 
 	memset(&query, 0, sizeof(query));		// initialize reserved fields
-	query.InputType = InputTypePortGuidPair;
-	query.InputValue.IbPathRecord.PortGuidPair.SourcePortGuid = portGuid;
-	query.InputValue.IbPathRecord.PortGuidPair.DestPortGuid = destPortGuid;
-	query.InputValue.IbPathRecord.PortGuidPair.SharedSubnetPrefix = portPrefix;
+	query.InputType = InputTypePathRecord;
+	query.InputValue.IbPathRecord.PathRecord.ComponentMask =  IB_PATH_RECORD_COMP_SGID |
+		IB_PATH_RECORD_COMP_DGID |
+		IB_PATH_RECORD_COMP_PKEY |
+		IB_PATH_RECORD_COMP_NUMBPATH |
+		IB_PATH_RECORD_COMP_REVERSIBLE |
+		IB_PATH_RECORD_COMP_SL;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.SGID.Type.Global.SubnetPrefix = portPrefix;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.SGID.Type.Global.InterfaceID = portGuid;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.DGID.Type.Global.SubnetPrefix = portPrefix;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.DGID.Type.Global.InterfaceID = destPortGuid;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.P_Key = 0x7fff;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.NumbPath = MAX_PATH_RECS;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.Reversible = 1;
+	query.InputValue.IbPathRecord.PathRecord.PathRecord.u2.s.SL = sm_sl;
 	query.OutputType = OutputTypePathRecord;
 
 	DBGPRINT("Query: Input=%s, Output=%s\n",

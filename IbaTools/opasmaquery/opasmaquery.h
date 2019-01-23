@@ -87,6 +87,7 @@ typedef struct _argrec {
 	struct omgt_port    *omgt_port;
 	boolean             printLineByLine; // modify output to be line by line
     uint8               sl;
+	boolean				cflag;
 } argrec;
 
 typedef	boolean (*query_func_t)(argrec *args, uint8_t *mad, size_t mad_len, boolean print);
@@ -101,7 +102,7 @@ typedef struct optypes_s {
 	boolean bflag;	// is -b block option applicable
 	boolean iflag;	// is -i option applicable
 	boolean tflag;	// is -t option applicable
-	boolean gflag;	// is -g option applicable
+	boolean cflag;	// is -c option applicable
 	boolean nflag;  // is -n option applicable
 	boolean lflag;  // is -l option applicable
 	boolean eflag;  // is -e option applicable

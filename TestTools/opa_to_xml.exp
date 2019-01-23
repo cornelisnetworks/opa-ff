@@ -993,7 +993,8 @@ proc ibaSAQueryPortInfoToXml { port_content } {
 	    $portModeNode setAttribute MaxNestLevelTxEnabled $val1 MaxNestLevelRxSupported $val2
 	}
 
-	set rc [ regexp {FlitCtrlPreemption +MinInitial: +(0x[0-9a-fA-F]+) +MinTail: +(0x[0-9a-fA-F]+) +LargePktLim: +(0x[0-9a-fA-F]+)} $line matched val1 val2 val3 ]
+	# PR144729 Change MinInitial and Mintail output format from 0x00 to 0, otherwise can't set variable FlitCtrlPreemption properly.
+	set rc [ regexp {FlitCtrlPreemption +MinInitial: +([0-9]+) +MinTail: +([0-9]+) +LargePktLim: +(0x[0-9a-fA-F]+)} $line matched val1 val2 val3 ]
 	if { $rc == 1 } {	
 	    $portNode appendChild [ createAttributesElement $doc FlitCtrlPreemption MinInitial $val1 MinTail $val2 LargePktLim $val3 ]
 	}

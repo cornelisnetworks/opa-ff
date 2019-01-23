@@ -45,9 +45,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <infiniband/umad.h>
+#include "dumppath.h"
 #include "opasadb_path.h"
 #include "opasadb_debug.h"
-#include "dumppath.h"
 
 #define MAX_SOURCE_PORTS (UMAD_CA_MAX_PORTS * UMAD_MAX_DEVICES)
 #define MAX_SIDS 8

@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opachassisadmin
 
@@ -422,7 +422,7 @@ All chassis operations log into the chassis as chassis user admin. Intel recomme
 All versions of Intel(R) Omni-Path Switch 100 Series firmware permit SSH keys to be configured within the chassis for secure password-less login. In this case, there is no need to configure a \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR ; and, \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR can be SSH. Refer to the 
 \fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
 
- for more information.
+ for more information. 
 .TP 10
 upgrade 
 .NL

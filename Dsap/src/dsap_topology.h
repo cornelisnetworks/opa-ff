@@ -58,6 +58,7 @@ typedef struct dsap_path_record {
 	IB_PATH_RECORD_NO path; /* Stored in network order */
 } dsap_path_record_t;
 
+
 typedef struct dsap_src_port {
 	LIST_ITEM     item;
 	union ibv_gid gid;    /* Stored in network order */
@@ -185,5 +186,6 @@ FSTATUS dsap_topology_init(void);
 int dsap_service_id_range_parser(char *str, void *ptr);
 char *dsap_service_id_range_printer(void *ptr);
 extern QUICK_LIST sid_range_args;
+
 
 #endif

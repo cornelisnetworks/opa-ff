@@ -52,7 +52,7 @@ PCI_MINREADREQ=512          # expected value for PCI min read req size
 PCI_MAXREADREQ=4096         # expected value for PCI max read req size
 PCI_SPEED="8GT/s"           # expected value for PCI speed on Intel WFR HFI
 PCI_WIDTH="x16"             # expected value for PCI width on Intel WFR HFI
-MPI_APPS=/usr/src/opa/mpi_apps/ # where to find mpi_apps for HPL test
+MPI_APPS=$HOME/mpi_apps/    # where to find mpi_apps for HPL test
 MIN_FLOPS="115"             # minimum flops expected from HPL test
 IPOIB_IF="ib0"              # IPoIB interface to check
 IPOIB_MTU=65520             # IPoIB required MTU
@@ -118,7 +118,6 @@ Usage()
 	echo "  pcicfg - verify PCI max payload and max read request size settings" >&2
 	echo "  pcispeed - verify PCI bus negotiated to PCIe Gen3 x16 speed" >&2
 	echo "  initscripts - verify  powerd and cpuspeed init.d scripts are disabled," >&2
-	echo "                along with acpi_pad kernel module" >&2
 	echo "  hfi_pkt - check PCI-HFI bus performance.  Requires HFI port is Active" >&2
 	echo "  memsize - check total size of memory in system" >&2
 	echo "  vtd - verify that Intel VT-d is disabled" >&2
@@ -401,8 +400,6 @@ test_initscripts()
 		fi
 		set +x
 	done
-
-	[ -n "$(lsmod | grep acpi_pad)" ] && fail "acpi_pad kernel module loaded is loaded - unload or blacklist."
 
 	pass
 }

@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opasmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opasmaquery
 
@@ -291,11 +291,11 @@ Specifies SC to VLnt tables.
 .TP 10
 
 .sp
-scvlr
+scvlr 
 Specifies SC to VLr tables
 
 .IP
-[-m dest\(ulport] [-m port1,port2]
+[-m dest\(ulport] [-m port1,port2] 
 .RE
 
 .RS
@@ -438,7 +438,7 @@ Specifies the port in destination device to query.
 For some reports, specifies a range of ports between \fIport1\fR and \fIport2\fR. For others, this describes an inport/outport pair.
 
 .TP 10
--f \fIlid\fR
+-f \fIlid\fR 
 .NL
 Specifies the LID to look up in forwarding table to select which LFT or MFT block to display. Default is to show entire table.
 

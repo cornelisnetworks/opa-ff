@@ -84,9 +84,7 @@ int op_ppath_find_path(void *reader,
 					   op_path_rec_t *result);
 
 void op_ppath_close_reader(void *r);
-
 void *op_ppath_allocate_reader(void);
-
 int op_ppath_create_reader(void *reader);
 
 struct op_path_context {
@@ -238,6 +236,7 @@ op_path_open(struct ibv_device *device, int p)
 	int         i, err;
 	struct op_path_context *context;
 
+
 	if (!device) {
 		errno=ENXIO;
 		return NULL;
@@ -322,6 +321,7 @@ void
 op_path_close(void *uc)
 {
 	struct op_path_context *context = (struct op_path_context *)uc;
+
 	
 	op_ppath_close_reader(context->reader);
 	

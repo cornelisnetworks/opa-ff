@@ -245,7 +245,7 @@ static int dsap_open_dev(const struct acm_device *device, void **dev_context)
 	struct ibv_device_attr attr;
 	int i, ret;
 
-	acm_log(1, "dev_guid 0x%"PRIx64" %s\n", device->dev_guid, 
+	acm_log(1, "dev_guid 0x%"PRIx64" %s\n", ntoh64(device->dev_guid),
 		device->verbs->device->name);
 
 	ret = ibv_query_device(device->verbs, &attr);
@@ -284,12 +284,13 @@ static void dsap_close_dev(void *dev_context)
 {
 	struct dsap_device *dev = dev_context;
 
-	acm_log(1, "dev_guid 0x%"PRIx64"\n", dev->device->dev_guid);
+	acm_log(1, "dev_guid 0x%"PRIx64"\n", ntoh64(dev->device->dev_guid));
 	SpinLockAcquire(&dsap_dev_lock);
 	QListRemoveItem(&dsap_dev_list, &dev->item);
 	SpinLockRelease(&dsap_dev_lock);
 	free(dev);
 }
+
 
 static void dsap_port_up(struct dsap_port *port)
 {

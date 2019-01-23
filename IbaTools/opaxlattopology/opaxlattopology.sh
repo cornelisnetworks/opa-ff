@@ -1194,6 +1194,7 @@ generate_switch_section()
         if [ "$port_field" == "required" ]; then
           # Sort Port number list to make output more readable
           IFS=','
+          port_array=""
           for portnum in $port_list; do
             port_array+=($portnum)
           done

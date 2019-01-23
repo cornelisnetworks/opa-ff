@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opareport 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opareport 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opareport
 
@@ -20,11 +20,11 @@ Provides powerful fabric analysis and reporting capabilities. Must be run on a h
 .NL
 opareport [-v][-q] [-h \fIhfi\fR] [-p \fIport\fR] [--timeout] [-o \fIreport\fR]
 .br
-[-d \fIdetail\fR] [-P|-H] [-N] [-x] [-X \fIsnapshot\(ulinput\fR] [-T \fItopology\(ulinput\fR] [-s]
+[-d \fIdetail\fR] [-P|-H] [-N] [-x] [-X \fIsnapshot\(ulinput\fR] [-T \fItopology\(ulinput\fR]
 .br
-[-r] [-V] [-i \fIseconds\fR] [-b \fIdate\(ultime\fR] [-e \fIdate\(ultime\fR] [-C] [-a] [-m]
+[-s] [-r] [-V] [-i \fIseconds\fR] [-b \fIdate\(ultime\fR] [-e \fIdate\(ultime\fR] [-C] [-a] [-m]
 .br
-[-M] [-A] [-c \fIfile\fR] [-L] [-F \fIpoint\fR] [-S \fIpoint\fR] [-D \fIpoint\fR] [-Q]
+[-M] [-A] [-c \fIfile\fR] [-L] [-F \fIpoint\fR] [-S \fIpoint\fR] [-D \fIpoint\fR] [-Q] 
 .SH Options
 .NL
 
@@ -54,7 +54,7 @@ Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port 
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
---timeout
+--timeout 
 .NL
 Specifies the timeout (wait time for response) in ms. Default is 1000 ms.
 
@@ -111,12 +111,12 @@ Gets performance statistics for all ports.
 Obtains performance statistics over interval \fIseconds\fR. Clears all statistics, waits interval \fIseconds\fR, then generates report. Implies -s option.
 
 .TP 10
--b/--begin \fIdate\(ultime\fR
+-b/--begin \fIdate\(ultime\fR 
 .NL
 Obtains past performance stats over an interval beginning at \fIdate\(ultime\fR. Implies -s option. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--e/--end \fIdate\(ultime\fR
+-e/--end \fIdate\(ultime\fR 
 .NL
 Obtains past performance stats over an interval ending at \fIdate\(ultime\fR. Implies -s option.
 
@@ -420,7 +420,7 @@ vfmember
 Summary of vFabric membership information.
 
 .TP 10
-dgmember
+dgmember 
 .NL
 Summary of DeviceGroup membership information.
 
@@ -627,12 +627,12 @@ nodedetpat:\fIvalue1\fR:port:\fIvalue2\fR
 .TP 10
 nodetype:\fIvalue\fR 
 .NL
-\fIvalue\fR is node type (SW, FI, or RT).
+\fIvalue\fR is node type (SW or FI).
 
 .TP 10
 nodetype:\fIvalue1\fR:port:\fIvalue2\fR 
 .NL
-\fIvalue1\fR is node type (SW, FI, or RT), \fIvalue2\fR is port number.
+\fIvalue1\fR is node type (SW or FI), \fIvalue2\fR is port number.
 
 .TP 10
 rate:\fIvalue\fR 

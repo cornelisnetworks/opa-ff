@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaconfig
 
@@ -95,18 +95,18 @@ Outputs list of supported components.
 .IP
 
 \fBNOTE:\fR
-Supported components may vary according to OS. Refer to
+Supported components may vary according to OS. Refer to 
 \fIIntel(R) Omni-Path Fabric Software Installation Guide\fR
 
 , OS RPMs Installation Prerequisites for the list of components by supported OS.
 .IP
-Supported components include: opa\(ulstack mpi\(ulselector intel\(ulhfi oftools opa\(ulstack\(uldev delta\(ulipoib opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi mvapich2\(ulintel\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulintel\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi sandiashmem mvapich2\(ulgcc openmpi\(ulgcc mpisrc delta\(uldebug 
+Supported components include: opa\(ulstack oftools intel\(ulhfi opa\(ulstack\(uldev delta\(ulipoib opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi sandiashmem mpisrc delta\(uldebug 
 .IP
 Supported components when using command on a Management Node with Intel(R) Omni-Path Fabric Suite installed, include: fastfabric opafm 
 .IP
 Supported component name aliases include: opa ipoib mpi psm\(ulmpi verbs\(ulmpi pgas opadev 
 .IP
-Additional component names allowed for -E and -D options: ibacm rdma\(ulndd delta\(ulsrp delta\(ulsrpt
+Additional component names allowed for -E and -D options: ibacm rdma\(ulndd delta\(ulsrp delta\(ulsrpt 
 .TP 10
 -V 
 .NL

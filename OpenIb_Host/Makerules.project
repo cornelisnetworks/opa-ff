@@ -118,7 +118,7 @@ BSCPROJ			=
 # strict-prototypes - treat extern int foo() as function with no args
 CPROJ			= -DPRODUCT=$(PRODUCT) -DPRODUCT_$(PRODUCT) -DMODULEVERSION=$(MODULEVERSION) -DIB_STACK_OPENIB
 # include buildFeatureDefs to let inplace build work for stream consistency
-CPROJ			+= -include $(TL_DIR)/buildFeatureDefs
+CPROJ			+= -include $(TL_DIR)/Fd/buildFeatureDefs
 ifeq ($(__GNUC__),2)
 CPROJ   += -fstrict-prototypes
 endif

@@ -196,6 +196,14 @@ typedef struct _opatop_vf_list {
 	uint32		numVFs;
 	STL_PA_VF_LIST *vfList;
 } OPATOP_VF_LIST;
+typedef struct _opatop_group_list2 {
+	uint32		numGroups;
+	STL_PA_GROUP_LIST2 *groupList;
+} OPATOP_GROUP_LIST2;
+typedef struct _opatop_vf_list2 {
+	uint32		numVFs;
+	STL_PA_VF_LIST2 *vfList;
+} OPATOP_VF_LIST2;
 
 STL_PA_IMAGE_ID_DATA g_imageIdQuery = {PACLIENT_IMAGE_CURRENT, 0};
 STL_PA_IMAGE_ID_DATA g_imageIdResp = {PACLIENT_IMAGE_CURRENT, 0};
@@ -206,10 +214,12 @@ STL_CLASS_PORT_INFO *g_PaClassPortInfo = NULL;
 STL_PA_PM_CFG_DATA g_PmConfig;
 STL_PA_IMAGE_INFO_DATA g_PmImageInfo;
 OPATOP_GROUP_LIST g_PmGroupList = {0};
+OPATOP_GROUP_LIST2 g_PmGroupList2 = {0};
 STL_PA_PM_GROUP_INFO_DATA g_PmGroupInfo;
 OPATOP_GROUP_CFG pg_PmGroupConfig = {{0}};
 OPATOP_GROUP_FOCUS pg_PmGroupFocus = {{0}};
-OPATOP_VF_LIST g_PmVFList;
+OPATOP_VF_LIST g_PmVFList = {0};
+OPATOP_VF_LIST2 g_PmVFList2 = {0};
 STL_PA_VF_INFO_DATA g_PmVFInfo;
 OPATOP_VF_CFG g_pPmVFConfig = {{0}};
 
@@ -238,7 +248,13 @@ int g_scroll_cntrs = 0;
 boolean fb_help = FALSE;
 boolean fb_valid_pa_client = FALSE;
 boolean fb_valid_pa_cpi = FALSE;
+boolean fb_valid_pa_cpi_vf_focus_types = FALSE;
+boolean fb_valid_pa_cpi_list2 = FALSE;
 
+#define GROUPNAME(IDX) (fb_valid_pa_cpi_list2 ? \
+	g_PmGroupList2.groupList[IDX].groupName : g_PmGroupList.groupList[IDX].groupName)
+#define VFNAME(IDX) (fb_valid_pa_cpi_list2 ? \
+	g_PmVFList2.vfList[IDX].vfName : g_PmVFList.vfList[IDX].vfName)
 
 boolean fb_valid_group_list = FALSE;
 boolean fb_valid_pm_config = FALSE;
@@ -258,6 +274,52 @@ boolean fb_valid_VF_focus = FALSE;
 boolean fb_valid_VF_port_counters = FALSE;
 
 char bf_error[81];
+
+/* Array containing util criterias */
+uint32 conditionUtilArray[] = {
+	STL_PA_SELECT_UTIL_HIGH,
+	STL_PA_SELECT_UTIL_PKTS_HIGH,
+	STL_PA_SELECT_UTIL_LOW,
+	STL_PA_SELECT_VF_UTIL_HIGH,
+	STL_PA_SELECT_VF_UTIL_PKTS_HIGH,
+	STL_PA_SELECT_VF_UTIL_LOW
+};
+uint32 g_utilGroupArrayEndIdx = 2;
+uint32 g_utilVFArrayEndIdx = 5;
+
+/* Array containing category criterias */
+uint32 conditionCtgArray[] = {
+	STL_PA_SELECT_CATEGORY_INTEG,
+	STL_PA_SELECT_CATEGORY_CONG,
+	STL_PA_SELECT_CATEGORY_SMA_CONG,
+	STL_PA_SELECT_CATEGORY_BUBBLE,
+	STL_PA_SELECT_CATEGORY_SEC,
+	STL_PA_SELECT_CATEGORY_ROUT,
+	STL_PA_SELECT_CATEGORY_VF_CONG,
+	STL_PA_SELECT_CATEGORY_VF_BUBBLE
+};
+uint32 g_ctgGroupArrayEndIdx = 5;
+uint32 g_ctgVFArrayEndIdx = 7;
+
+/* Array containing all criterias */
+uint32 conditionFocusArray[] = {
+	STL_PA_SELECT_UTIL_HIGH,
+	STL_PA_SELECT_UTIL_PKTS_HIGH,
+	STL_PA_SELECT_UTIL_LOW,
+	STL_PA_SELECT_CATEGORY_INTEG,
+	STL_PA_SELECT_CATEGORY_CONG,
+	STL_PA_SELECT_CATEGORY_SMA_CONG,
+	STL_PA_SELECT_CATEGORY_BUBBLE,
+	STL_PA_SELECT_CATEGORY_SEC,
+	STL_PA_SELECT_CATEGORY_ROUT,
+	STL_PA_SELECT_VF_UTIL_HIGH,
+	STL_PA_SELECT_VF_UTIL_PKTS_HIGH,
+	STL_PA_SELECT_VF_UTIL_LOW,
+	STL_PA_SELECT_CATEGORY_VF_CONG,
+	STL_PA_SELECT_CATEGORY_VF_BUBBLE
+};
+uint32 g_focusGroupArrayEndIdx = 8;
+uint32 g_focusVFArrayEndIdx = 13;
 
 /*******************************************************************************
 *
@@ -824,7 +886,13 @@ void DisplayScreen(void)
 
 	if (!fb_valid_pa_cpi) {
 		if (omgt_pa_get_classportinfo(g_portHandle, &g_PaClassPortInfo) == FSUCCESS) {
+
 			fb_valid_pa_cpi = TRUE;
+
+
+			fb_valid_pa_cpi_vf_focus_types = (g_PaClassPortInfo->CapMask & STL_PA_CPI_CAPMASK_VF_FOCUSTYPES ? TRUE : FALSE);
+
+			fb_valid_pa_cpi_list2 = (g_PaClassPortInfo->CapMask & STL_PA_CPI_CAPMASK_IMAGE_LISTS ? TRUE : FALSE);
 			MemoryDeallocate(g_PaClassPortInfo);
 		}
 	}
@@ -840,33 +908,51 @@ void DisplayScreen(void)
 	if ( (tb_menu[n_level_menu] == SCREEN_PM_CONFIG) ||
 			!fb_valid_pm_config )
 	{
-		if (omgt_pa_get_pm_config(g_portHandle, &g_PmConfig) == FSUCCESS)
+		if (omgt_pa_get_pm_config(g_portHandle, &g_PmConfig) == FSUCCESS){
 			fb_valid_pm_config = TRUE;
+			//Check if VF level Focus selects are supported
+			if (!fb_valid_pa_cpi_vf_focus_types || !(g_PmConfig.pmFlags & STL_PM_PROCESS_VL_COUNTERS)){
+				g_utilVFArrayEndIdx = g_utilGroupArrayEndIdx;
+				g_ctgVFArrayEndIdx = g_ctgGroupArrayEndIdx;
+				g_focusVFArrayEndIdx = g_focusGroupArrayEndIdx;
+			}
+		}
 		else
 			fb_valid_pm_config = FALSE;
 	}
 
-	if ( (tb_menu[n_level_menu] == SCREEN_SUMMARY) ||
-			(tb_menu[n_level_menu] == SCREEN_PM_CONFIG) ||
-			!fb_valid_group_list )
+	if ((tb_menu[n_level_menu] == SCREEN_SUMMARY) ||
+			(tb_menu[n_level_menu] == SCREEN_PM_CONFIG))
 	{
-		omgt_pa_release_group_list(&g_PmGroupList.groupList);
-		if (omgt_pa_get_group_list(g_portHandle, &g_PmGroupList.numGroups,
-									     &g_PmGroupList.groupList) == FSUCCESS)
-			fb_valid_group_list = TRUE;
-		else
-			fb_valid_group_list = FALSE;
+		FSTATUS status = FERROR;
+		if (fb_valid_pa_cpi_list2) {
+			omgt_pa_release_group_list2(&g_PmGroupList2.groupList);
+			status = omgt_pa_get_group_list2(g_portHandle, g_imageIdQuery,
+				&g_PmGroupList2.numGroups, &g_PmGroupList2.groupList);
+			g_PmGroupList.numGroups = g_PmGroupList2.numGroups;
+		} else {
+			omgt_pa_release_group_list(&g_PmGroupList.groupList);
+			status = omgt_pa_get_group_list(g_portHandle, &g_PmGroupList.numGroups,
+				&g_PmGroupList.groupList);
+		}
+		fb_valid_group_list = (status == FSUCCESS ? TRUE : FALSE);
 	}
 
-	if (tb_menu[n_level_menu] == SCREEN_VF_SUMMARY ||
-		!fb_valid_group_list ) {
-
-		omgt_pa_release_vf_list(&g_PmVFList.vfList);
-		if (omgt_pa_get_vf_list(g_portHandle, &g_PmVFList.numVFs,
-									     &g_PmVFList.vfList) == FSUCCESS)
-			fb_valid_VF_list = TRUE;
-		else
-			fb_valid_VF_list = FALSE;	}
+	if (tb_menu[n_level_menu] == SCREEN_VF_SUMMARY)
+	{
+		FSTATUS status = FERROR;
+		if (fb_valid_pa_cpi_list2) {
+			omgt_pa_release_vf_list2(&g_PmVFList2.vfList);
+			status = omgt_pa_get_vf_list2(g_portHandle, g_imageIdQuery,
+				&g_PmVFList2.numVFs, &g_PmVFList2.vfList);
+			g_PmVFList.numVFs = g_PmVFList2.numVFs;
+		} else {
+			omgt_pa_release_vf_list(&g_PmVFList.vfList);
+			status = omgt_pa_get_vf_list(g_portHandle, &g_PmVFList.numVFs,
+				&g_PmVFList.vfList);
+		}
+		fb_valid_VF_list = (status == FSUCCESS ? TRUE : FALSE);
+	}
 
 	if ( (tb_menu[n_level_menu] == SCREEN_GROUP_INFO_SELECT) ||
 			(tb_menu[n_level_menu] == SCREEN_GROUP_BW_STATS) ||
@@ -874,8 +960,7 @@ void DisplayScreen(void)
 			(tb_menu[n_level_menu] == SCREEN_GROUP_FOCUS) )
 	{
 		if ( fb_valid_group_list && ( omgt_pa_get_group_info( g_portHandle, g_imageIdQuery,
-				g_PmGroupList.groupList[g_group].groupName, &g_imageIdResp,
-				&g_PmGroupInfo) == FSUCCESS ) )
+				GROUPNAME(g_group), &g_imageIdResp, &g_PmGroupInfo) == FSUCCESS ) )
 			fb_valid_group_info = TRUE;
 		else
 			fb_valid_group_info = FALSE;
@@ -892,7 +977,7 @@ void DisplayScreen(void)
 			query.InputType = InputTypeNoInput;
 			query.OutputType = OutputTypePaTableRecord;
 
-			if (iba_pa_multi_mad_vf_info_response_query(g_portHandle, &query, g_PmVFList.vfList[g_vf].vfName,
+			if (iba_pa_multi_mad_vf_info_response_query(g_portHandle, &query, VFNAME(g_vf),
 				&pQueryResults, &g_imageIdResp) == FSUCCESS) {
 
 				g_PmVFInfo = ((STL_PA_VF_INFO_RESULTS*)pQueryResults->QueryResult)->VFInfoRecords[0];
@@ -903,18 +988,18 @@ void DisplayScreen(void)
 
 	// Do default query to get g_imageIdResp
 	if ((g_group < 0) && fb_valid_group_list)
-		omgt_pa_get_group_info(g_portHandle, g_imageIdQuery, g_PmGroupList.groupList[0].groupName,
+		omgt_pa_get_group_info(g_portHandle, g_imageIdQuery, GROUPNAME(0),
 			&g_imageIdResp, &g_PmGroupInfo);
 
 	if (tb_menu[n_level_menu] == SCREEN_GROUP_CONFIG)
 	{
 		omgt_pa_release_group_config(&pg_PmGroupConfig.portList);
-		if ( fb_valid_group_list && ( omgt_pa_get_group_config(g_portHandle, g_imageIdQuery,
-				g_PmGroupList.groupList[g_group].groupName, &g_imageIdResp, &pg_PmGroupConfig.numPorts,
-				&pg_PmGroupConfig.portList ) == FSUCCESS ) )
+		if (fb_valid_group_list && (omgt_pa_get_group_config(g_portHandle, g_imageIdQuery,
+					GROUPNAME(g_group), &g_imageIdResp, &pg_PmGroupConfig.numPorts,
+					&pg_PmGroupConfig.portList) == FSUCCESS))
 		{
 			fb_valid_group_config = TRUE;
-			strcpy(pg_PmGroupConfig.groupName, g_PmGroupList.groupList[g_group].groupName);
+			strcpy(pg_PmGroupConfig.groupName, GROUPNAME(g_group));
 		}
 		else
 			fb_valid_group_config = FALSE;
@@ -923,10 +1008,10 @@ void DisplayScreen(void)
 	if (tb_menu[n_level_menu] == SCREEN_VF_CONFIG) {
 		omgt_pa_release_vf_config(&g_pPmVFConfig.portList);
 		if (fb_valid_VF_list && (omgt_pa_get_vf_config(g_portHandle, g_imageIdQuery,
-				g_PmVFList.vfList[g_vf].vfName, &g_imageIdResp, &g_pPmVFConfig.numPorts, &g_pPmVFConfig.portList) == FSUCCESS))
+					VFNAME(g_vf), &g_imageIdResp, &g_pPmVFConfig.numPorts, &g_pPmVFConfig.portList) == FSUCCESS))
 		{
 			fb_valid_VF_config = TRUE;
-			strcpy(g_pPmVFConfig.vfName, g_PmVFList.vfList[g_vf].vfName);
+			strcpy(g_pPmVFConfig.vfName, VFNAME(g_vf));
 		}
 		else fb_valid_VF_config = FALSE;
 	}
@@ -934,12 +1019,12 @@ void DisplayScreen(void)
 	if (tb_menu[n_level_menu] == SCREEN_GROUP_FOCUS)
 	{
 		omgt_pa_release_group_focus(&pg_PmGroupFocus.portList);
-		if ( fb_valid_group_list && ( omgt_pa_get_group_focus( g_portHandle, g_imageIdQuery,
-                        g_PmGroupList.groupList[g_group].groupName, g_select, g_start, g_range,
-                        &g_imageIdResp, &pg_PmGroupFocus.numPorts, &pg_PmGroupFocus.portList ) == FSUCCESS ) )
+		if (fb_valid_group_list && (omgt_pa_get_group_focus(g_portHandle, g_imageIdQuery,
+					GROUPNAME(g_group), g_select, g_start, g_range, &g_imageIdResp,
+					&pg_PmGroupFocus.numPorts, &pg_PmGroupFocus.portList) == FSUCCESS))
 		{
 			fb_valid_group_focus = TRUE;
-			strcpy(pg_PmGroupFocus.groupName, g_PmGroupList.groupList[g_group].groupName);
+			strcpy(pg_PmGroupFocus.groupName, GROUPNAME(g_group));
 		}
 		else
 			fb_valid_group_focus = FALSE;
@@ -953,11 +1038,11 @@ void DisplayScreen(void)
 
 		omgt_pa_release_vf_focus(&g_pPmVFFocus.portList);
 		if (fb_valid_VF_list && (omgt_pa_get_vf_focus(g_portHandle, g_imageIdQuery,
-                        g_PmVFList.vfList[g_vf].vfName, g_select, g_start, g_range,
-                        &g_imageIdResp, &g_pPmVFFocus.numPorts, &g_pPmVFFocus.portList) == FSUCCESS) )
+					VFNAME(g_vf), g_select, g_start, g_range, &g_imageIdResp,
+					&g_pPmVFFocus.numPorts, &g_pPmVFFocus.portList) == FSUCCESS))
 		{
 			fb_valid_VF_focus = TRUE;
-			strcpy(g_pPmVFFocus.vfName, g_PmVFList.vfList[g_vf].vfName);
+			strcpy(g_pPmVFFocus.vfName, VFNAME(g_vf));
 		}
 		else
 			fb_valid_VF_focus = FALSE;
@@ -989,7 +1074,7 @@ void DisplayScreen(void)
 	if (tb_menu[n_level_menu] == SCREEN_VF_PORT_STATS)
 	{
 		fb_valid_VF_port_counters = FALSE;
-		if ( omgt_pa_get_vf_port_stats2(g_portHandle, g_imageIdQuery, g_PmVFList.vfList[g_vf].vfName,
+		if ( omgt_pa_get_vf_port_stats2(g_portHandle, g_imageIdQuery, VFNAME(g_vf),
 			g_portlid, g_portnum, &g_imageIdResp, &g_vfPortCounters,
 			&g_vfPortCounterFlags, 1, 0 ) == FSUCCESS ) {
 			fb_valid_VF_port_counters = TRUE;
@@ -1114,7 +1199,7 @@ void DisplayScreen(void)
 				for (ix = g_scroll_summary-1; ix >= 0; ix--)
 				{
 					if ( omgt_pa_get_group_info(g_portHandle, g_imageIdQuery,
-							g_PmGroupList.groupList[ix].groupName, &g_imageIdResp,
+							GROUPNAME(ix), &g_imageIdResp,
 							&g_PmGroupInfo) == FSUCCESS )
 						ct_group_lines -= ScreenLines_Group(&g_PmGroupInfo, ix);
 						if (ct_group_lines >= 0)
@@ -1128,7 +1213,7 @@ void DisplayScreen(void)
 				for (ix = g_scroll_summary; ix < g_PmGroupList.numGroups; ix++)
 				{
 					if ( omgt_pa_get_group_info(g_portHandle, g_imageIdQuery,
-							g_PmGroupList.groupList[ix].groupName, &g_imageIdResp,
+							GROUPNAME(ix), &g_imageIdResp,
 							&g_PmGroupInfo) == FSUCCESS )
 					{
 						// only output if it will fit
@@ -1197,7 +1282,7 @@ void DisplayScreen(void)
 					query.InputType = InputTypeNoInput;
 					query.OutputType = OutputTypePaTableRecord;
 
-					if (iba_pa_multi_mad_vf_info_response_query(g_portHandle, &query, g_PmVFList.vfList[ix].vfName,
+					if (iba_pa_multi_mad_vf_info_response_query(g_portHandle, &query, VFNAME(ix),
 							&pQueryResults, &g_imageIdResp) == FSUCCESS) {
 						STL_PA_VF_INFO_DATA *p = &((STL_PA_VF_INFO_RESULTS*)pQueryResults->QueryResult)->VFInfoRecords[0];
 						ct_lines -= DisplayScreen_VFGroup(p, ix);
@@ -1491,6 +1576,12 @@ void DisplayScreen(void)
 				p_select = "UtlPkt-Hi";
 			else if (g_select == STL_PA_SELECT_UTIL_LOW)
 				p_select = "Util-Low";
+			else if (g_select == STL_PA_SELECT_VF_UTIL_PKTS_HIGH)
+				p_select = "VF-Pkt-Hi";
+			else if (g_select == STL_PA_SELECT_VF_UTIL_LOW)
+				p_select = "VF-Ut-Low";
+			else if (g_select == STL_PA_SELECT_VF_UTIL_HIGH)
+				p_select = "VF-Ut-Hi";
 // Future enhancement
 #if 0
 			else if (g_select == PACLIENT_SEL_ALL)
@@ -1523,7 +1614,7 @@ void DisplayScreen(void)
 			    printf("                      Max       0+%%      25+%%      50+%%      75+%%     100+%%\n");
 			    ct_lines -=2;
 			    printf( "Int Congestion %10u %9u %9u %9u %9u %9u\n",
-			    		  g_PmVFInfo.internalCategoryStats.categoryMaximums.congestion,
+					  g_PmVFInfo.internalCategoryStats.categoryMaximums.congestion,
 					  g_PmVFInfo.internalCategoryStats.ports[0].congestion,
 					  g_PmVFInfo.internalCategoryStats.ports[1].congestion,
 					  g_PmVFInfo.internalCategoryStats.ports[2].congestion,
@@ -1610,6 +1701,10 @@ void DisplayScreen(void)
 				p_select = "Secure";
 			else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
 				p_select = "Routing";
+			else if (g_select == STL_PA_SELECT_CATEGORY_VF_CONG)
+				p_select = "VF Congst";
+			else if (g_select == STL_PA_SELECT_CATEGORY_VF_BUBBLE)
+				p_select = "VF Bubble";
 // Future enhancement
 #if 0
 			else if (g_select == PACLIENT_SEL_ALL)
@@ -1653,7 +1748,7 @@ void DisplayScreen(void)
 				pg_PmGroupConfig.groupName,
 				strgetlaststr(pg_PmGroupConfig.groupName, 45),
  				pg_PmGroupConfig.numPorts );
-			printf("  Ix    LIDx   Port   Node GUID 0x   NodeDesc\n");
+			printf("  Idx LID 0x Port   Node GUID 0x   NodeDesc\n");
 			ct_lines -= 2;
 	
 			// if ports we were showing are removed, go to last port
@@ -1696,7 +1791,7 @@ void DisplayScreen(void)
 				g_pPmVFConfig.vfName,
 				strgetlaststr(g_pPmVFConfig.vfName, 45),
 				g_pPmVFConfig.numPorts);
-			printf("  Ix    LIDx   Port   Node GUID 0x   NodeDesc\n");
+			printf("  Idx LID 0x Port   Node GUID 0x   NodeDesc\n");
 			ct_lines -= 2;
 
 			// if ports we were showing are removed, go to last port
@@ -1769,7 +1864,7 @@ void DisplayScreen(void)
 			if (g_expr_funct)
 				printf("  StartIx: %u", pg_PmGroupFocus.start);
 			printf("  Number: %u\n", pg_PmGroupFocus.range);
-			printf("  Ix  %9s   LIDx   Port   Node GUID 0x   NodeDesc\n", p_select);
+			printf("  Idx %9s LID 0x Port   Node GUID 0x   NodeDesc\n", p_select);
 			ct_lines -= 2;
 	
 			// if ports we were showing are removed, go to last port
@@ -1891,6 +1986,12 @@ void DisplayScreen(void)
 				p_select = "UtlPkt-Hi";
 			else if (g_pPmVFFocus.select == STL_PA_SELECT_UTIL_LOW)
 				p_select = " Util-Low";
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_VF_UTIL_PKTS_HIGH)
+				p_select = "VF-Pkt-Hi";
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_VF_UTIL_LOW)
+				p_select = "VF-Ut-Low";
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_VF_UTIL_HIGH)
+				p_select = "VF-Ut-Hi";
 			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_INTEG)
 				p_select = "Integrity";
 			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_CONG)
@@ -1903,6 +2004,10 @@ void DisplayScreen(void)
 				p_select = " Security";
 			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_ROUT)
 				p_select = "  Routing";
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_VF_CONG)
+				p_select = "VF Congst";
+			else if (g_pPmVFFocus.select == STL_PA_SELECT_CATEGORY_VF_BUBBLE)
+				p_select = "VF Bubble";
 // Future enhancement
 #if 0
 			else if (g_pPmVFFocus.select == PACLIENT_SEL_ALL)
@@ -1922,7 +2027,7 @@ void DisplayScreen(void)
 			if (g_expr_funct)
 				printf("  StartIx: %u", g_pPmVFFocus.start);
 			printf("  Number: %u\n", g_pPmVFFocus.range);
-			printf("  Ix  %9s   LIDx   Port   Node GUID 0x   NodeDesc\n", p_select);
+			printf("  Idx %9s LID 0x Port   Node GUID 0x   NodeDesc\n", p_select);
 			ct_lines -= 2;
 	
 			// if ports we were showing are removed, go to last port
@@ -1969,15 +2074,13 @@ void DisplayScreen(void)
 				}
 				printf("%s%s%4u ", status_color_local, status_symbol_local, ix);
 
-				if ( ( (g_pPmVFFocus.select >= STL_PA_SELECT_CATEGORY_INTEG) &&
-						(g_pPmVFFocus.select <= STL_PA_SELECT_CATEGORY_ROUT) ) ||
-						(g_pPmVFFocus.select == STL_PA_SELECT_UTIL_PKTS_HIGH) )
-					printf("%9" PRIu64 "%s",
-						 g_pPmVFFocus.portList[ix].value, bf_color_off);
-				else
+				if (IS_FOCUS_SELECT_UTIL(g_pPmVFFocus.select))
 					printf( "%9.1f%s",
 						(float)g_pPmVFFocus.portList[ix].value / 10.0,
 						bf_color_off);
+				else
+					printf("%9" PRIu64 "%s",
+						 g_pPmVFFocus.portList[ix].value, bf_color_off);
 
 				// Truncate nodeDesc to keep line at 80 columns
 				printf( " %.*X %3u  %016" PRIX64 " %-.32s%s\n",
@@ -1993,15 +2096,13 @@ void DisplayScreen(void)
 					printf("%s%s <-> ", status_color_neighbor,
 						status_symbol_neighbor);
 	
-					if ( ( (g_pPmVFFocus.select >= STL_PA_SELECT_CATEGORY_INTEG) &&
-							(g_pPmVFFocus.select <= STL_PA_SELECT_CATEGORY_ROUT) ) ||
-							(g_pPmVFFocus.select == STL_PA_SELECT_UTIL_PKTS_HIGH) )
-						printf( "%9" PRIu64 "%s",
-							g_pPmVFFocus.portList[ix].neighborValue,
-							bf_color_off);
-					else
+					if (IS_FOCUS_SELECT_UTIL(g_pPmVFFocus.select))
 						printf( "%9.1f%s",
 							(float)g_pPmVFFocus.portList[ix].neighborValue / 10.0,
+							bf_color_off);
+					else
+						printf( "%9" PRIu64 "%s",
+							g_pPmVFFocus.portList[ix].neighborValue,
 							bf_color_off);
 	
 					// Truncate neighborNodeDesc to keep line at 80 columns
@@ -2583,6 +2684,7 @@ int main(int argc, char ** argv)
 	time_t time_start;
 	int pa_service_state = OMGT_SERVICE_STATE_UNKNOWN;
 	int ms_timeout = OMGT_DEF_TIMEOUT_MS;
+	int select_idx = 0;
 
 	Top_setcmdname(NAME_PROG);
 	g_quiet = ! isatty(2);	// disable progress if stderr is not tty
@@ -2955,15 +3057,16 @@ int main(int argc, char ** argv)
 					if (toupper(n_cmd) == 'P')
 					{
 						tb_menu[++n_level_menu] = SCREEN_GROUP_BW_STATS;
-						g_select = STL_PA_SELECT_UTIL_HIGH;
+						select_idx = 0;
+						g_select = conditionUtilArray[select_idx];
 					}
 
 					else if (toupper(n_cmd) == 'S')
 					{
 						tb_menu[++n_level_menu] = SCREEN_GROUP_CTG_STATS;
-						g_select = STL_PA_SELECT_CATEGORY_INTEG;	
+						select_idx = 0;
+						g_select = conditionCtgArray[select_idx];
 					}
-	
 					else if (toupper(n_cmd) == 'C')
 					{
 						g_scroll = 0;
@@ -2974,10 +3077,12 @@ int main(int argc, char ** argv)
 				if (tb_menu[n_level_menu] == SCREEN_VF_INFO_SELECT) {
 					if (toupper(n_cmd) == 'P') {
 						tb_menu[++n_level_menu] = SCREEN_VF_BW_STATS;
-						g_select = STL_PA_SELECT_UTIL_HIGH;
+						select_idx = 0;
+						g_select = conditionUtilArray[select_idx];
 					} else if (toupper(n_cmd) == 'S') {
 						tb_menu[++n_level_menu] = SCREEN_VF_CTG_STATS;
-						g_select = STL_PA_SELECT_UTIL_HIGH;
+						select_idx = 0;
+						g_select = conditionCtgArray[select_idx];
 					} else if (toupper(n_cmd) == 'C') {
 						g_scroll = 0;
 						tb_menu[++n_level_menu] = SCREEN_VF_CONFIG;
@@ -3013,87 +3118,38 @@ int main(int argc, char ** argv)
 						if (sscanf(tb_cmd + 1, "%lu", &temp) == 1)
 							g_range = temp;
 				}
-	
-				if (tb_menu[n_level_menu] == SCREEN_GROUP_BW_STATS ||
-					tb_menu[n_level_menu] == SCREEN_VF_BW_STATS) {
-					if (n_cmd == 'c')
-					{
-						if (g_select == STL_PA_SELECT_UTIL_HIGH)
-							g_select = STL_PA_SELECT_UTIL_PKTS_HIGH;
-						else if (g_select == STL_PA_SELECT_UTIL_PKTS_HIGH)
-							g_select = STL_PA_SELECT_UTIL_LOW;
-// Future enhancement
-#if 0
-						else if (g_select == STL_PA_SELECT_UTIL_LOW)
-							g_select = PACLIENT_SEL_ALL;
-#endif
-						else
-							g_select = STL_PA_SELECT_UTIL_HIGH;
-					}
 
-					else if (n_cmd == 'C')
-					{
-						if (g_select == STL_PA_SELECT_UTIL_HIGH)
-							g_select = STL_PA_SELECT_UTIL_LOW;
-// Future enhancement
-#if 0
-						if (g_select == STL_PA_SELECT_UTIL_HIGH)
-							g_select = PACLIENT_SEL_ALL;
-						else if (g_select == PACLIENT_SEL_ALL)
-							g_select = STL_PA_SELECT_UTIL_LOW;
-#endif
-						else if (g_select == STL_PA_SELECT_UTIL_LOW)
-							g_select = STL_PA_SELECT_UTIL_PKTS_HIGH;
-						else
-							g_select = STL_PA_SELECT_UTIL_HIGH;
+				/* if 'c' increment select_idx and handle overflow */
+				/* else (if 'C') decrement select_idx and handle underflow */
+				if (tb_menu[n_level_menu] == SCREEN_GROUP_BW_STATS ) {
+					if (toupper(n_cmd) == 'C') {
+						select_idx = ((n_cmd == 'c') ? ((select_idx + 1) % (g_utilGroupArrayEndIdx + 1)) :
+							(select_idx ? (select_idx - 1): g_utilGroupArrayEndIdx));
+							g_select = conditionUtilArray[select_idx];
 					}
 				}
-	
-				if (tb_menu[n_level_menu] == SCREEN_GROUP_CTG_STATS ||
-					tb_menu[n_level_menu] == SCREEN_VF_CTG_STATS )
-				{
-					if (n_cmd == 'c')
-					{
-						if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
-							g_select = STL_PA_SELECT_CATEGORY_CONG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_CONG)
-							g_select = STL_PA_SELECT_CATEGORY_SMA_CONG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
-							g_select = STL_PA_SELECT_CATEGORY_BUBBLE;
-						else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
-							g_select = STL_PA_SELECT_CATEGORY_SEC;
-						else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
-							g_select = STL_PA_SELECT_CATEGORY_ROUT;
-// Future enhancement
-#if 0
-						else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
-							g_select = PACLIENT_SEL_ALL;
-#endif
-						else
-							g_select = STL_PA_SELECT_CATEGORY_INTEG;
-					}
 
-					else if (n_cmd == 'C')
-					{
-						if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
-							g_select = STL_PA_SELECT_CATEGORY_SEC;
-						else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
-							g_select = STL_PA_SELECT_CATEGORY_BUBBLE;
-						else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
-							g_select = STL_PA_SELECT_CATEGORY_SMA_CONG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
-							g_select = STL_PA_SELECT_CATEGORY_CONG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
-							g_select = STL_PA_SELECT_CATEGORY_ROUT;
-// Future enhancement
-#if 0
-						else if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
-							g_select = PACLIENT_SEL_ALL;
-						else if (g_select == PACLIENT_SEL_ALL)
-							g_select = STL_PA_SELECT_CATEGORY_ROUT;
-#endif
-						else
-							g_select = STL_PA_SELECT_CATEGORY_INTEG;
+				if (tb_menu[n_level_menu] == SCREEN_VF_BW_STATS) {
+					if (toupper(n_cmd) == 'C') {
+						select_idx = ((n_cmd == 'c') ? ((select_idx + 1) % (g_utilVFArrayEndIdx + 1)) :
+							(select_idx ? (select_idx - 1) : g_utilVFArrayEndIdx));
+							g_select = conditionUtilArray[select_idx];
+					}
+				}
+
+				if (tb_menu[n_level_menu] == SCREEN_GROUP_CTG_STATS ){
+					if (toupper(n_cmd) == 'C') {
+						select_idx = ((n_cmd == 'c') ? ((select_idx + 1) % (g_ctgGroupArrayEndIdx + 1)) :
+							(select_idx ? (select_idx - 1) : g_ctgGroupArrayEndIdx));
+							g_select = conditionCtgArray[select_idx];
+					}
+				}
+
+				if (tb_menu[n_level_menu] == SCREEN_VF_CTG_STATS ){
+					if (toupper(n_cmd) == 'C') {
+						select_idx = ((n_cmd == 'c') ? ((select_idx + 1) % (g_ctgVFArrayEndIdx + 1)) :
+							(select_idx ? (select_idx - 1) : g_ctgVFArrayEndIdx));
+							g_select = conditionCtgArray[select_idx];
 					}
 				}
 
@@ -3132,61 +3188,17 @@ int main(int argc, char ** argv)
 							}
 						}
 					}
-
-					else if (n_cmd == 'c')
-					{
-						if (g_select == STL_PA_SELECT_UTIL_HIGH)
-							g_select = STL_PA_SELECT_UTIL_PKTS_HIGH;
-						else if (g_select == STL_PA_SELECT_UTIL_PKTS_HIGH)
-							g_select = STL_PA_SELECT_UTIL_LOW;
-						else if (g_select == STL_PA_SELECT_UTIL_LOW)
-							g_select = STL_PA_SELECT_CATEGORY_INTEG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
-							g_select = STL_PA_SELECT_CATEGORY_CONG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_CONG)
-							g_select = STL_PA_SELECT_CATEGORY_SMA_CONG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
-							g_select = STL_PA_SELECT_CATEGORY_BUBBLE;
-						else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
-							g_select = STL_PA_SELECT_CATEGORY_SEC;
-						else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
-							g_select = STL_PA_SELECT_CATEGORY_ROUT;
-// Future enhancement
-#if 0
-						else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
-							g_select = PACLIENT_SEL_ALL;
-#endif
-						else
-							g_select = STL_PA_SELECT_UTIL_HIGH;
-					}
-
-					else if (n_cmd == 'C')
-					{
-						if (g_select == STL_PA_SELECT_UTIL_HIGH)
-							g_select = STL_PA_SELECT_CATEGORY_ROUT;
-						else if (g_select == STL_PA_SELECT_CATEGORY_ROUT)
-							g_select = STL_PA_SELECT_CATEGORY_SEC;
-						else if (g_select == STL_PA_SELECT_CATEGORY_SEC)
-							g_select = STL_PA_SELECT_CATEGORY_BUBBLE;
-						else if (g_select == STL_PA_SELECT_CATEGORY_BUBBLE)
-							g_select = STL_PA_SELECT_CATEGORY_SMA_CONG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_SMA_CONG)
-							g_select = STL_PA_SELECT_CATEGORY_CONG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_CONG)
-							g_select = STL_PA_SELECT_CATEGORY_INTEG;
-						else if (g_select == STL_PA_SELECT_CATEGORY_INTEG)
-							g_select = STL_PA_SELECT_UTIL_LOW;
-						else if (g_select == STL_PA_SELECT_UTIL_LOW)
-							g_select = STL_PA_SELECT_UTIL_PKTS_HIGH;
-// Future enhancement
-#if 0
-						else if (g_select == STL_PA_SELECT_UTIL_HIGH)
-							g_select = PACLIENT_SEL_ALL;
-						else if (g_select == PACLIENT_SEL_ALL)
-							g_select = STL_PA_SELECT_CATEGORY_ROUT;
-#endif
-						else
-							g_select = STL_PA_SELECT_UTIL_HIGH;
+					else if (toupper(n_cmd) == 'C') {
+						if (tb_menu[n_level_menu] == SCREEN_GROUP_FOCUS){
+							select_idx = ((n_cmd == 'c') ? ((select_idx + 1) % (g_focusGroupArrayEndIdx + 1)) :
+								(select_idx ? (select_idx - 1) : g_focusGroupArrayEndIdx));
+								g_select = conditionFocusArray[select_idx];
+						}
+						else if (tb_menu[n_level_menu] == SCREEN_VF_FOCUS ){
+							select_idx = ((n_cmd == 'c') ? ((select_idx + 1) % (g_focusVFArrayEndIdx + 1)) :
+								(select_idx ? (select_idx - 1) : g_focusVFArrayEndIdx));
+								g_select = conditionFocusArray[select_idx];
+						}
 					}
 				}
 

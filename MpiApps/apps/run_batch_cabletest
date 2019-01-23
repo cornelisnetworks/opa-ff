@@ -37,7 +37,7 @@ tmpdir=$PWD/tmp
 trap "rm -f $temp1 $temp2; exit 1" SIGHUP SIGTERM SIGINT 
 trap "rm -f $temp1 $temp2" EXIT
 
-BATCH_SIZE=${BATCH_SIZE:-18}	# now many hosts per mpi job
+BATCH_SIZE=${BATCH_SIZE:-24}	# now many hosts per mpi job
 
 # build the mpi_group_hosts file and start HCA-SW cable tests as a series
 # of small BATCH_SIZE node jobs.  This approach limits the impact should a few hosts

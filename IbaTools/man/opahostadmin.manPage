@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opahostadmin
 
@@ -79,7 +79,7 @@ Specifies the product type to install. Default is IntelOPA-Basic. \fI<distro>\fR
 .TP 10
 -P \fIpackages\fR 
 .NL
-Specifies the packages to install. Default is oftools ipoib psm\(ulmpi
+Specifies the packages to install. Default is oftools ipoib psm\(ulmpi 
 
 .TP 10
 -m \fInetmask\fR 

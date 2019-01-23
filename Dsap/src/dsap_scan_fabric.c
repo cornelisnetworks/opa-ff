@@ -383,6 +383,7 @@ static void dsap_full_rescan(void)
 	EventTrigger(&dsap_scanner_event);
 }
 
+
 static void dsap_rescan(union ibv_gid *src_gid)
 {
 	acm_log(2, "\n");
@@ -451,7 +452,6 @@ static FSTATUS dsap_for_each_service_id_record(dsap_src_port_t *src_port,
 
 		if (dsap_scanner_end)
 			break;
-
 		rval = dsap_query_path_records(
 		   src_port, dst_port, 
 		   sid_rec->service_id_range.lower_service_id,
@@ -661,7 +661,7 @@ static boolean dsap_dst_port_up(union ibv_gid *dst_gid, union ibv_gid *src_gid)
 
 	rval = dsap_add_dst_port(dst_gid, node_type, node_desc);
 	if ((rval == FSUCCESS) || (rval == FDUPLICATE)) {
-		subnet = dsap_find_subnet(&dst_gid->global.subnet_prefix);
+		subnet = dsap_find_subnet((uint64_t *)&dst_gid->global.subnet_prefix);
 		src_port = dsap_find_src_port(src_gid);
 		dst_port = dsap_find_dst_port(dst_gid);
 
@@ -755,7 +755,7 @@ static boolean dsap_src_port_up(union ibv_gid *src_gid, char *src_desc)
 static boolean dsap_src_port_rescan(union ibv_gid *src_gid)
 {
 	dsap_subnet_t *subnet = dsap_find_subnet(
-				&src_gid->global.subnet_prefix);
+				(uint64_t *)&src_gid->global.subnet_prefix);
 	dsap_src_port_t *src_port = dsap_find_src_port(src_gid);
 	FSTATUS rval;
 
@@ -1101,6 +1101,7 @@ void dsap_scanner_cleanup(void)
 
 	acm_log(1, "Closing shared memory.\n");
 	op_ppath_close_writer(&shared_memory_writer);
+
 
 	return;
 }

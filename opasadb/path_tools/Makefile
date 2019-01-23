@@ -46,6 +46,8 @@ DIRS			= \
 				$(shell ls -d cache 2>/dev/null) \
 				$(shell ls -d dump 2>/dev/null) \
 				$(shell ls -d perf 2>/dev/null) \
+				$(shell ls -d query_many 2>/dev/null) \
+				$(shell ls -d load 2>/dev/null) \
 				# Add more directories here
 # C files (.c)
 CFILES			= \

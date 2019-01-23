@@ -213,8 +213,7 @@ int main(int argc, char *argv[])
 
 			case 's':
 				g_gotStrParam = 1;
-				strncpy(strParameter, optarg, sizeof(strParameter));
-				strParameter[sizeof(strParameter)-1]=0; // Ensure null termination.
+				StringCopy(strParameter, optarg, sizeof(strParameter));
 				break;
 
 			case 'i':

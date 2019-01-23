@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacaptureall 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacaptureall 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacaptureall
 
@@ -151,40 +151,42 @@ Specifies the name for capture file. The suffix .tgz is appended if it is not sp
 .NL
 opacaptureall
 .br
-# Creates a hostcapture directory in upload\(uldir/hostname/ for each host in
+# Creates a hostcapture directory in upload\(uldir/hostname/ for each host
 .br
-/etc/opa/hosts file, then creates hostcapture.all.tgz.
+in /etc/opa/hosts file, then creates hostcapture.all.tgz.
 .br
 
 .br
 opacaptureall mycapture
 .br
-# Creates a mycapture directory in upload\(uldir/hostname/ for each host in
+# Creates a mycapture directory in upload\(uldir/hostname/ for each host
 .br
-/etc/opa/hosts file, then creates mycapture.all.tgz.
+in /etc/opa/hosts file, then creates mycapture.all.tgz.
 .br
 
 .br
 opacaptureall -h \[aq]arwen elrond\[aq] 030127capture
 .br
-# Gets the list of hosts from arwen elrond file and creates 030127capture.tgz file.
+# Gets the list of hosts from arwen elrond file and creates
+.br
+030127capture.tgz file.
 .NL
 
 .SH Chassis Capture Examples
 .NL
 opacaptureall -C
 .br
-# Creates a chassiscapture file in upload\(uldir/chassisname/ for each chassis
+# Creates a chassiscapture file in upload\(uldir/chassisname/ for each
 .br
-in /etc/opa/chassis file, then creates chassiscapture.all.tgz.
+chassis in /etc/opa/chassis file, then creates chassiscapture.all.tgz.
 .br
 
 .br
 opacaptureall -C mycapture
 .br
-# Creates a mycapture.tgz file in upload\(uldir/chassisname/ for each chassis
+# Creates a mycapture.tgz file in upload\(uldir/chassisname/ for each
 .br
-in /etc/opa/chassis file, then creates mycapture.all.tgz.
+chassis in /etc/opa/chassis file, then creates mycapture.all.tgz.
 .br
 
 .br

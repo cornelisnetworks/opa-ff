@@ -111,6 +111,7 @@ static inline void dump_path_record(IB_PATH_RECORD_NO *path, int byte_order)
 #endif
 }
 
+
 static FSTATUS dsap_process_path_records_query_results(
 	dsap_src_port_t *src_port, PPATH_RESULTS res)
 {
@@ -136,6 +137,7 @@ static FSTATUS dsap_process_path_records_query_results(
 exit:
 	return rval;
 }
+
 
 FSTATUS dsap_query_path_records(dsap_src_port_t *src_port,
 				dsap_dst_port_t *dst_port,
@@ -218,9 +220,9 @@ query_exit:
 	return rval;
 }
 
-static FSTATUS 
-dsap_process_dst_ports_query_results(dsap_subnet_t *subnet, 
-				     PNODE_RECORD_RESULTS res)
+static FSTATUS
+dsap_process_dst_ports_query_results(dsap_subnet_t *subnet,
+				    PNODE_RECORD_RESULTS res)
 {
 	FSTATUS rval = FSUCCESS;
 	unsigned i;
@@ -235,7 +237,7 @@ dsap_process_dst_ports_query_results(dsap_subnet_t *subnet,
 
 	for (i = 0; i < res->NumNodeRecords; i++) {
 		dst_port_gid.global.subnet_prefix = subnet->subnet_prefix;
-		dst_port_gid.global.interface_id = 
+		dst_port_gid.global.interface_id =
 			hton64(res->NodeRecords[i].NodeInfoData.PortGUID);
 
 		rval = dsap_add_dst_port(
@@ -251,6 +253,7 @@ dsap_process_dst_ports_query_results(dsap_subnet_t *subnet,
 exit:
 	return rval;
 }
+
 
 FSTATUS dsap_query_dst_ports(dsap_subnet_t *subnet)
 {
@@ -622,8 +625,7 @@ FSTATUS dsap_query_dst_port(union ibv_gid *dst_gid, NODE_TYPE *node_type,
 	query.InputType = InputTypePortGuid;
 	query.InputValue.IbNodeRecord.PortGUID = ntoh64(dst_gid->global.interface_id);
 	query.OutputType = OutputTypeNodeRecord;
-
-	subnet = dsap_find_subnet(&dst_gid->global.subnet_prefix);
+	subnet = dsap_find_subnet((uint64_t *)&dst_gid->global.subnet_prefix);
 
 	if (subnet == NULL) 
 		return rval;
@@ -673,7 +675,6 @@ FSTATUS dsap_query_dst_port(union ibv_gid *dst_gid, NODE_TYPE *node_type,
 		rval = FERROR;
 		goto exit;
 	}
-
 	*node_type = rec->NodeRecords[0].NodeInfoData.NodeType;
 	memcpy(node_desc, 
 	       rec->NodeRecords[0].NodeDescData.NodeString,
@@ -685,3 +686,4 @@ exit:
 
 	return rval;
 }
+

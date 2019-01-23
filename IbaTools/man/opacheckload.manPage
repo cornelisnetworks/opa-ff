@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opacheckload
 
@@ -30,7 +30,7 @@ Produces full help text.
 .TP 10
 -f \fIhostfile\fR 
 .NL
-Specifies the file with hosts to check. Default is /etc/opa/hosts
+Specifies the file with hosts to check. Default is /etc/opa/hosts 
 
 .TP 10
 -h \fIhosts\fR 
@@ -57,7 +57,11 @@ Specifies the target directory to upload loadavg. Default is uploads.
 
 .SH Examples 
 .NL
-opacheckload opacheckload -h \[aq]arwen elrond\[aq] HOSTS=\[aq]arwen elrond\[aq] opacheckload
+opacheckload
+.br
+opacheckload -h \[aq]arwen elrond\[aq]
+.br
+HOSTS=\[aq]arwen elrond\[aq] opacheckload
 .SH Environment Variables
 .NL
 

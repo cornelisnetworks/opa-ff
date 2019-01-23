@@ -655,10 +655,15 @@ int main(int argc, char *argv[])
 
 	initializeState();
 
-	/* stat file to get size and allocate buffers */
 
 	firmwareFileName = argv[2];
 
+	if (!firmwareFileName) {
+		fprintf(stderr, "Error: null input filename\n");
+		exit(1);
+	}
+
+	/* stat file to get size and allocate buffers */
 	if (stat(firmwareFileName, &statBuf) < 0) {
 		fprintf(stderr, "Error taking stat of file {%s}: %s\n",
 			firmwareFileName, strerror(errno));

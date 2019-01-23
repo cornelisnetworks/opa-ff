@@ -49,6 +49,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXIT_STATUS_FAILED_IDENTITY_VERIFICATION 5
 #define EXIT_STATUS_FAILED_SMP_DISTRIBUTION 6
 #define EXIT_STATUS_FAILED_ACTIVATION 7
+#define EXIT_STATUS_BAD_FILENAME 8
 
 #define PROGRAM_ATTR_PORTINFO    (0x00000001)
 #define PROGRAM_ATTR_VLARB       (0x00000002)
@@ -1232,7 +1233,7 @@ int main(int argc, char ** argv)
 	FSTATUS status = 0;
 	int exitStatus = 0;
 	struct omgt_port* oibPort;
-	FabricData_t fabric;
+	FabricData_t fabric = { 0 };
 	char attributeString[100];
 	memset(attributeString, 0, 100);
 	NodeData* localNode = NULL;
@@ -1333,6 +1334,12 @@ int main(int argc, char ** argv)
 		Usage();
 	} else {
 		fprintf(stderr, "opasnapconfig: multiple input snapshot files unsupported\n");
+		Usage();
+	}
+
+	if (!(*argv[filenameOptind])) {
+		fprintf(stderr, "opasnapconfig: Error: null input filename\n");
+		exitStatus = EXIT_STATUS_BAD_FILENAME;
 		Usage();
 	}
 

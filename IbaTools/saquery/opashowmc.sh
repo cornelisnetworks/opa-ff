@@ -56,10 +56,22 @@ show_mc()
 	else
 		port_opts="-h $hfi -p $port"
 	fi
-	echo "Fabric $hfi:$port Multicast Information:"
-	/usr/sbin/opasaquery $port_opts -o mcmember 2>/dev/null | grep GID: | sed -e 's/GID: //' | while read mgid 
+	groups=$MGID
+	if [ "$groups" == "" ]; then
+		echo "Fabric $hfi:$port Multicast Information:"
+		groups=`/usr/sbin/opasaquery $port_opts -o mcmember 2>/dev/null | grep GID: | sed -e 's/GID: //'`
+	else
+		echo "Fabric $hfi:$port Multicast Information for group(s) : '$groups'"
+	fi
+	for mgid in $groups
 	do
-		/usr/sbin/opasaquery $port_opts -o mcmember -m $mgid|head -4|grep -v 'PortGid:'
+		/usr/sbin/opasaquery $port_opts -o mcmember -m $mgid 2> /dev/null |head -4|grep -v 'PortGid:'
+		if [ "$?" != "0" ]
+		then
+			(>&2 echo "opasaquery error MGID '$mgid'; Port '$hfi:$port'")
+			(>&2 echo "     Likely cause is non-existent, invalid, or not visible MGID: $mgid")
+			continue
+		fi
 		if [ "$showname" = "y" ]
 		then
 			/usr/sbin/opasaquery $port_opts -o mcmember -m $mgid|grep 'PortGid:'|while read heading portgid rest
@@ -86,6 +98,7 @@ Usage_full()
 	echo "       opashowmc --help" >&2
 	echo "   --help - produce full help text" >&2
 	echo "   -v - verbose output, show name for each member" >&2
+	echo "   -m mgid - show membership of group <mgid> only" >&2
 	echo "   -t portsfile - file with list of local HFI ports used to access" >&2
 	echo "                  fabric(s) for analysis, default is $CONFIG_DIR/opa/ports" >&2
 	echo "   -p ports - list of local HFI ports used to access fabric(s) for analysis" >&2
@@ -102,6 +115,7 @@ Usage_full()
 	echo "for example:" >&2
 	echo "   opashowmc" >&2
 	echo "   opashowmc -p '1:1 1:2 2:1 2:2'" >&2
+	echo "   opashowmc -m 0xff12401b80010000:0x00000000ffffffff" >&2
 	exit 0
 }
 
@@ -124,12 +138,13 @@ fi
 
 status=ok
 showname=n
-while getopts p:t:v param
+while getopts p:t:vm: param
 do
 	case $param in
 	p)	export PORTS="$OPTARG";;
 	t)	export PORTS_FILE="$OPTARG";;
 	v)	showname=y;;
+	m)	export MGID="$OPTARG";;
 	?)	Usage;;
 	esac
 done

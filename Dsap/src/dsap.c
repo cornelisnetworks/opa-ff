@@ -38,6 +38,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <ctype.h>
 
+
 /*
   ICS IBT stuff
 */
@@ -331,6 +332,8 @@ dsap_init(void)
 	FSTATUS fstatus = FERROR;
 
 	acm_log(2, "\n");
+
+
 	fstatus = dsap_topology_init();
 	if (fstatus != FSUCCESS)
 		goto exit;

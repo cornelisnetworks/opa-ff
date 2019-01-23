@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafabricanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opafabricanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opafabricanalysis
 
@@ -25,7 +25,7 @@ opafabricanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\f
 .NL
 
 .TP 10
---help
+--help 
 .NL
 Produces full help text.
 .TP 10
@@ -43,15 +43,15 @@ Saves history of failures (errors/differences).
 .TP 10
 -d dir 
 .NL
-Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
+Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis 
 .TP 10
 -c file 
 .NL
-Specifies the error thresholds config file.Default is /etc/opa/opamon.conf
+Specifies the error thresholds config file.Default is /etc/opa/opamon.conf 
 .TP 10
 -t portsfile 
 .NL
-Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports 
 .TP 10
 -p ports 
 .NL

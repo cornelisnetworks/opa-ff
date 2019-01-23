@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2018, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -67,6 +67,7 @@ FSTATUS sendClassPortInfoMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -139,6 +140,7 @@ FSTATUS sendSessionMgmtGetMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -213,6 +215,7 @@ FSTATUS sendSessionMgmtReleaseMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -294,6 +297,7 @@ FSTATUS sendMemAccessGetMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -381,6 +385,7 @@ FSTATUS sendSysTableAccessGetMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -474,6 +479,7 @@ FSTATUS sendSysTableAccessSetMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -551,6 +557,7 @@ FSTATUS sendPortTableAccessSetMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -638,6 +645,7 @@ FSTATUS sendIniDescriptorGetMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -731,6 +739,7 @@ FSTATUS sendGetFwVersionMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -806,6 +815,7 @@ FSTATUS sendRegisterAccessMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -887,6 +897,7 @@ FSTATUS sendRebootMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -988,6 +999,7 @@ FSTATUS sendI2CAccessMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,
@@ -1094,6 +1106,7 @@ FSTATUS sendSaveConfigMad(struct omgt_port *port,
     }
 
 	struct omgt_mad_addr addr = {
+		sl : path->u2.s.SL,
 		lid : path->DLID,
 		qpn : GSI_QUEUE_PAIR,
 		qkey : QP1_WELL_KNOWN_Q_KEY,

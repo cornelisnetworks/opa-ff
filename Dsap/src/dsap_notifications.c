@@ -225,8 +225,8 @@ report_notice_callback(uint16_t trap_num, IB_GID *gid, struct dsap_port *port)
 				DSAP_PT_EVT_DST_PORT_DOWN);
 		break;
 	default:
-		acm_log(0, "Received Unknown Notice = %u. Gid = %016"PRIx64"/%s\n", 
-			trap_num, src_gid.global.interface_id, 
+		acm_log(0, "Received Unknown Notice = %u. Gid = 0x%016"PRIx64"/%s\n",
+			trap_num, ntoh64(src_gid.global.interface_id),
 			inet_ntop(AF_INET6, gid->Raw, gid_str, sizeof gid_str));
 		break;
 	}
@@ -256,6 +256,7 @@ FSTATUS dsap_notification_register_port(struct dsap_port *port)
 
 	//set logging
 	dsap_omgt_log_init(port->omgt_handle);
+
 
 	if (dsap_no_subscribe)
 		return FSUCCESS;

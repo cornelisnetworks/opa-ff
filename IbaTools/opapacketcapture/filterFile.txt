@@ -13,6 +13,8 @@
 #SVCLEV		<service level - decimal>
 #ATTRID		<MAD attribute ID - decimal or hex-with-leading-0x>
 #QP			<Destination queue pair number - decimal>
+#TRANSIDH   <MAD transaction ID (upper 32 bits) decimal or hex-with-leading-0x>
+#TRANSIDL   <MAD transaction ID (lower 32 bits) decimal or hex-with-leading-0x>
 
 # Additionally, condition may be given to handle relationship between multiple
 # filters - AND or OR. Default is AND

@@ -183,8 +183,8 @@ else
 	$(CONVERT_RELEASETAG) $(RELEASE_TAG) > $(PROJ_STAGE_DIR)/version
 endif
 	cd $(PROJ_STAGE_DIR) && find . -print| $(PREP)
-	cd $(PROJ_STAGE_DIR) && $(PATCH_VERSION) -m % $(RELEASE_TAG) INSTALL
-	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opafastfabric ] || $(PATCH_VERSION) -m % $(RELEASE_TAG) fastfabric/opahostadmin fastfabric/opachassisadmin  fastfabric/opaswitchadmin fastfabric/opafastfabric
+	cd $(PROJ_STAGE_DIR) && $(PATCH_VERSION) -m % -n `$(CONVERT_RELEASETAG) $(RELEASE_TAG)` $(RELEASE_TAG) INSTALL
+	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opafastfabric ] || $(PATCH_VERSION) -m % -n `$(CONVERT_RELEASETAG) $(RELEASE_TAG)` $(RELEASE_TAG) fastfabric/opahostadmin fastfabric/opachassisadmin  fastfabric/opaswitchadmin fastfabric/opafastfabric
 	cd $(PROJ_STAGE_DIR) && $(PATCH_BRAND) -m % "$(BUILD_BRAND)" INSTALL
 	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opafastfabric ] || $(PATCH_BRAND) -m % "$(BUILD_BRAND)" fastfabric/opafastfabric
 

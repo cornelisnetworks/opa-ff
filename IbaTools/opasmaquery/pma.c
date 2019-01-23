@@ -383,7 +383,7 @@ static boolean stl_pma_clear_ErrorInfo(argrec *args, uint8_t *pm, size_t pm_len,
 
 
 optypes_t stl_pma_query [] = {
-//name					func							displayAbridged, description, Flags				m,     m2,    f,     b,     i,     t,     g,     n,     l,     e,    w
+//name					func							displayAbridged, description, Flags				m,     m2,    f,     b,     i,     t,     c,     n,     l,     e,    w
 { "classportinfo",		stl_pma_get_class_port_info,	TRUE,	"class of port info", 					FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE},
 { "getportstatus",		stl_pma_get_PortStatus,			TRUE,   "list of port counters",			 	TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE},
 { "clearportstatus",	stl_pma_clear_PortStatus,		FALSE,	"clears the port counters",				FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE,  TRUE, TRUE},

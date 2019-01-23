@@ -6,7 +6,7 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlgenerate 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opaxmlgenerate 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaxmlgenerate
 
@@ -102,7 +102,7 @@ The script must directly output the boilerplate for XML version, etc.
 .IP \(bu
 opaxmlgenerate can be used to output the Link section of the topology\(ulinput, using the link record temporary file.
 .IP \(bu
-opaxmlgenerate can be used to output the Node sections of the topology\(ulinput using the node record temporary file. If desired, there could be separate node record temporary files for HFIs, Switches, and Routers.
+opaxmlgenerate can be used to output the Node sections of the topology\(ulinput using the node record temporary file. If desired, there could be separate node record temporary files for HFIs and Switches.
 .IP \(bu
 opaxmlgenerate can be used to output the SM section of the topology\(ulinput, if desired.
 .IP \(bu

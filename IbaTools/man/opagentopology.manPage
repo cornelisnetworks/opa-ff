@@ -6,16 +6,16 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagentopology 8 "Intel Corporation" "Copyright(C) 2015\-2018" "Master map: IFSFFCLIRG (Man Page)" 
+.TH opagentopology 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opagentopology
 
 .NL
 
 .PP
-Generates sample topology verification XML. Provides an example of using opaxmlgenerate and is a prototype for customization.
+Provides a simple sample of how to generate the topology XML file used for topology verification. Customers who wish to integrate topology XML file generation into their cluster design process can create their own script to take information available in other formats and tools and produce the topology XML file directly. The alternative is to use opaxlattopology and have tools generate the input files it expects.
 .PP
-Uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information, respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
+This tool uses CSV input files opatopology\(ullinks.txt, opatopology\(ulFIs.txt, and opatopology\(ulSWs.txt to generate LinkSummary, Node FIs, and Node SWs information, respectively. These files are samples of what might be produced as part of translating a user custom file format into temporary intermediate CSV files.
 .PP
 LinkSummary information includes Link, Cable, and Port information. Note that opagentopology (not opaxmlgenerate) generates the XML version string as well as the <Topology> and <LinkSummary> lines. Also note that the indent level is at the default value of zero (0). The portions of the script that call opaxmlgenerate follow:
 .PP
@@ -27,11 +27,13 @@ opaxmlgenerate -X /usr/share/opa/samples/opatopology\(ul1.txt -d \;
 .br
 -g CableLength -g CableLabel -g CableDetails -e Cable -h Port
 .br
--g NodeGUID -g PortNum -g NodeDesc -g PortGUID -g NodeType -g NodeType\(ulInt
+-g NodeGUID -g PortNum -g NodeDesc -g PortGUID
 .br
--g PortDetails -e Port -h Port -g NodeGUID -g PortNum -g NodeDesc -g PortGUID
+-g NodeType -g NodeType\(ulInt -g PortDetails -e Port -h Port -g NodeGUID -g PortNum
 .br
--g NodeType -g NodeType\(ulInt -g PortDetails -e Port -e Link
+-g NodeDesc -g PortGUID -g NodeType -g NodeType\(ulInt -g PortDetails -e Port
+.br
+-e Link
 
 .br
 
@@ -45,7 +47,7 @@ opaxmlgenerate -X /usr/share/opa/samples/opatopology\(ul2.txt -d \;
 
 .SH Syntax
 .NL
-/usr/share/opa/samples/opagentopology --help
+/usr/share/opa/samples/opagentopology [--help]
 .PP
 
 .B NOTE:
@@ -149,7 +151,7 @@ about SM
 .NL
 
 .PP
-When run against the supplied topology input files, opagentopology 
+When run against the supplied topology input files, /usr/share/opa/samples/opagentopology 
 .br
 produces:
 .PP
