@@ -1,6 +1,6 @@
 Name: opa
-Version: 10.9.0.0
-Release: 204%{?dist}
+Version: 10.9.0.2
+Release: 1%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
@@ -18,7 +18,7 @@ __RPM_DEBUG_PKG
 
 %description
 This package contains the tools necessary to manage an Intel(R) Omni-Path Architecture fabric.
-IFSComponent: Tools_FF 10.9.0.0.204%{?dist}
+IFSComponent: Tools_FF 10.9.0.2.1%{?dist}
 
 %package basic-tools
 Summary: Managment level tools and scripts.
@@ -35,7 +35,7 @@ Epoch: 1
 
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.
-IFSComponent: Tools_FF 10.9.0.0.204%{?dist}
+IFSComponent: Tools_FF 10.9.0.2.1%{?dist}
 
 %package fastfabric
 Summary: Management level tools and scripts.
@@ -48,7 +48,7 @@ Epoch: 1
 
 %description fastfabric
 Contains tools for managing fabric on a managment node.
-IFSComponent: Tools_FF 10.9.0.0.204%{?dist}
+IFSComponent: Tools_FF 10.9.0.2.1%{?dist}
 
 %package address-resolution
 Summary: Contains Address Resolution manager
@@ -62,7 +62,7 @@ Epoch: 1
 %description address-resolution
 This package contains the ibacm distributed SA provider (dsap) for name and address resolution on OPA platform.
 It also contains the library and tools to access the shared memory database exported by dsap.
-IFSComponent: Tools_FF 10.9.0.0.204%{?dist}
+IFSComponent: Tools_FF 10.9.0.2.1%{?dist}
 
 #opasnapconfig
 %package snapconfig
@@ -73,7 +73,7 @@ Requires: opa-fastfabric
 
 %description snapconfig
 Parse information from provided snapshot file and issue packets to program
-IFSComponent: Tools_FF 10.9.0.0.204%{?dist}
+IFSComponent: Tools_FF 10.9.0.2.1%{?dist}
 
 %package libopamgt
 Summary: Omni-Path management API library
@@ -82,7 +82,7 @@ Requires: __RPM_REQ_OPAMGT
 
 %description libopamgt
 This package contains the library necessary to build applications that interface with an Omni-Path FM.
-IFSComponent: Tools_FF 10.9.0.0.204%{?dist}
+IFSComponent: Tools_FF 10.9.0.2.1%{?dist}
 
 
 %package libopamgt-devel
@@ -92,7 +92,7 @@ Requires: __RPM_REQ_OPAMGT_DEV
 
 %description libopamgt-devel
 This package contains the necessary headers for opamgt development.
-IFSComponent: Tools_FF 10.9.0.0.204%{?dist}
+IFSComponent: Tools_FF 10.9.0.2.1%{?dist}
 
 %prep
 #rm -rf %{_builddir}/*
