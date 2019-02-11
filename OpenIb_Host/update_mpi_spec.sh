@@ -36,9 +36,15 @@ versionid=$(./get_id_and_versionid.sh | cut -f2 -d' ')
 if [ "$id" = "rhel" -o "$id" = "centos" ]
 then
 	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec
+	sed -i "/__RPM_DBG/,+1d" mpi-apps.spec
+elif [ "$id" = "fedora" ]
+then
+	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec
+	sed -i "s/__RPM_DBG/%global debug_package %{nil}/" mpi-apps.spec
 elif [ "$id" = "sles" ]
 then
 	sed -i "/__RPM_REQ/,+1d" mpi-apps.spec
+	sed -i "/__RPM_DBG/,+1d" mpi-apps.spec
 else
 	echo ERROR: Unsupported distribution: $id $versionid
 	exit 1

@@ -11828,9 +11828,9 @@ void ShowCableHealthReport(Point *focus, Format_t format, int indent, int detail
 
 			PrintFunc(&destFile, "%s%s\n",
 				(FSUCCESS == status1)?tempBuf1:
-					strncat(tempBuf1,CABLEHEALTH_EMPTY_FIELD,strlen(CABLEHEALTH_EMPTY_FIELD)),
+					strncat(tempBuf1,CABLEHEALTH_EMPTY_FIELD,strlen(CABLEHEALTH_EMPTY_FIELD) + 1),
 				(FSUCCESS == status2)?tempBuf2:
-					strncat(tempBuf2,CABLEHEALTH_EMPTY_FIELD,strlen(CABLEHEALTH_EMPTY_FIELD)));
+					strncat(tempBuf2,CABLEHEALTH_EMPTY_FIELD,strlen(CABLEHEALTH_EMPTY_FIELD) + 1));
 		}
 	}
 }

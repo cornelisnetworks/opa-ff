@@ -122,6 +122,29 @@ then
 	#Cleanup EPOCH macros from sles spec.
 	#Note that SUSE discourages and does not use epochs
 	sed -i "/__RPM_EPOCH_*/d" $to
+
+elif [ "$id" = "fedora" ]
+then
+	# __RPM_REQ_BASIC -
+	sed -i "s/__RPM_REQ_BASIC/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" $to
+
+	# __RPM_REQ_OPAMGT_DEV - different for RHEL7.4 and greater
+	sed -i "s/__RPM_REQ_OPAMGT_DEV/rdma-core-devel, openssl-devel, opa-libopamgt,/g" $to
+
+	# __RPM_BLDREQ - different for RHEL 7.5, RHEL7.4, or earlier
+	sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, ibacm-devel/g" $to
+
+	# __RPM_REQ_ADDR_RES,__RPM_REQ_OPAMGT and __RPM_DEBUG same for all RHEL versions
+	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools ibacm/g" $to
+	sed -i "s/__RPM_REQ_OPAMGT/libibumad%{?_isa}, libibverbs%{?_isa}, openssl%{?_isa}/g" $to
+	sed -i "/__RPM_DEBUG_PKG/,+1d" $to
+
+	#Setup Epoch tags for RHEL rpms
+	sed -i "s/__RPM_EPOCH_BASIC/Epoch: 1/g" $to
+	sed -i "s/__RPM_EPOCH_FF/Epoch: 1/g" $to
+	sed -i "s/__RPM_EPOCH_ADDR_RES/Epoch: 1/g" $to
+	sed -i "s/__RPM_EPOCH_LIBOPAMGT/Epoch: 1/g" $to
+
 else
 	echo ERROR: Unsupported distribution: $id $versionid
 	exit 1
