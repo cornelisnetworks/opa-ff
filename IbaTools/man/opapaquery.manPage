@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2018, Intel Corporation                *
+.\" .\" *             Copyright 2015-2019, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
+.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opapaquery
 
@@ -126,12 +126,12 @@ Specifies the description of the node.
 Specifies the delta flag for portCounters query - 0 or 1.
 
 .TP 10
--j/--begin  \fIdate\(ultime\fR
+-j/--begin \fIdate\(ultime\fR 
 .NL
 Obtains portCounters over an interval beginning at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--q/--end  \fIdate\(ultime\fR
+-q/--end \fIdate\(ultime\fR 
 .NL
 Obtains portCounters over an interval ending at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
@@ -400,7 +400,7 @@ Sorted by routing category - highest first.
 .TP 10
 
 .sp
-vfutilhighv 
+vfutilhigh 
 Sorted by utilization - highest first.
 .RE
 

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2018, Intel Corporation                *
+.\" .\" *             Copyright 2015-2019, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opareports 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
+.TH opareports 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opareports
 
@@ -840,6 +840,16 @@ linkqualGE:value
 .NL
 Specifies the ports with a link quality greater than or equal to \fIvalue\fR.
 
+.TP 10
+nodepatfile:\fIFILENAME\fR 
+.NL
+Specifies the name of file with the list of nodes.
+
+.TP 10
+nodepairpatfile:\fIFILENAME\fR 
+.NL
+Specifies the name of file with the list of node pairs, separated by a colon.
+
 .NL
 
 .SH opareport Examples
@@ -924,7 +934,11 @@ opareport -o nodes -F \[aq]smdetpat:primary*\[aq]
 .br
 opareport -o nodes -F \[aq]route:node:duster hfi1\(ul0:node:cuda hfi1\(ul0\[aq]
 .br
-opareport -o nodes -F \[aq]route:node:duster hfi1\(ul0:port:1:node:cuda hfi1\(ul0:port:2\[aq]
+opareport -o nodes -F \[aq]route:node:duster hfi1\(ul0:port:1:node:cuda hfi1\(ul0:port:2\[aq] 
+.br
+opareport -o treepathusage -F nodepairpatfile:FILENAME 
+.br
+opareport -o pathusage -F nodepatfile:FILENAME 
 .br
 opareport -s -o snapshot > file
 .br

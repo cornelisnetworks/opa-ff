@@ -417,7 +417,7 @@ then
         then
             echo "opacapture: Error: Invalid port specification: $hfi_port" >&2
             continue
-	fi
+		fi
 		## fixup name so winzip won't complain
 		hfi_port_dir=${hfi}_${port}
 
@@ -466,11 +466,12 @@ then
                 echo "Gathering Multicast Membership ..."
                 /usr/sbin/opashowmc -p $hfi:$port > $hfi_port_dir/fabric_showmc 2>&1
                 # create cable health report directory and generate report
-                if [ $ff_available = "y" ] && [ ${FF_CABLE_HEALTH_REPORT_DIR} ]
+                if [ $ff_available = "y" ] && [ -e "${FF_CABLE_HEALTH_REPORT_DIR}" ]
                 then
                     echo "Gathering Cable Health Report ..."
-                    mkdir -p ${FF_CABLE_HEALTH_REPORT_DIR}
-                    /usr/sbin/opareport -o cablehealth >${FF_CABLE_HEALTH_REPORT_DIR}/cablehealth$(date "+%Y%m%d%H%M%S").csv
+                    FF_CABLE_HEALTH_REPORT_DIR_WITH_HFI_PORT="${FF_CABLE_HEALTH_REPORT_DIR}/${hfi_port_dir}/"
+                    mkdir -p ${FF_CABLE_HEALTH_REPORT_DIR_WITH_HFI_PORT}
+                    /usr/sbin/opareport -h $hfi -p $port -o cablehealth 2>/dev/null>${FF_CABLE_HEALTH_REPORT_DIR_WITH_HFI_PORT}/cablehealth$(date "+%Y%m%d%H%M%S").csv
                 fi
             fi
         fi
@@ -479,7 +480,7 @@ fi
 
 if [ $ff_available = "y" ] && [ -e "${FF_CABLE_HEALTH_REPORT_DIR}" ]
 then
-        echo "Copying Cable Health Reports"
+        echo "Copying all Cable Health Reports"
         cp -p -r ${FF_CABLE_HEALTH_REPORT_DIR} /$dir/ 2>/dev/null
 fi
 

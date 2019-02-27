@@ -37,7 +37,7 @@ IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 %package fastfabric
 Summary: Management level tools and scripts.
 Group: System Environment/Libraries
-Requires: opa-basic-tools
+Requires: opa-basic-tools cronie
 
 __RPM_EPOCH_FF
 
@@ -90,12 +90,12 @@ IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 %prep
 #rm -rf %{_builddir}/*
 #tar xzf %_sourcedir/%name.tgz
+
 %setup -q -c
 
 %build
 cd OpenIb_Host
 __RPM_FS ./ff_build.sh %{_builddir} $BUILD_ARGS
-
 
 %install
 BUILDDIR=%{_builddir} DESTDIR=%{buildroot} LIBDIR=/usr/lib DSAP_LIBDIR=%{_libdir} ./ff_install.sh
@@ -130,6 +130,7 @@ __RPM_FF_FILES
 %config(noreplace) %{_sysconfdir}/opa/hosts
 %config(noreplace) %{_sysconfdir}/opa/ports
 %config(noreplace) %{_sysconfdir}/opa/switches
+%config(noreplace) %{_sysconfdir}/cron.d/opa-cablehealth
 %config(noreplace) /usr/lib/opa/tools/osid_wrapper
 
 

@@ -42,7 +42,7 @@ ff_tools_sbin="opacabletest opacheckload opaextracterror opaextractlink
 	opauploadall opapaquery opashowmc opa2rm"
 
 ff_tools_misc="ff_funcs opachassisip opagenswitcheshelper chassis_setup
-	switch_setup opagetipaddrtype opafastfabric.conf.def show_counts"
+	switch_setup opagetipaddrtype opafastfabric.conf.def show_counts opacablehealthcron"
 
 ff_tools_fm="config_generate config_diff config_check config_convert"
 

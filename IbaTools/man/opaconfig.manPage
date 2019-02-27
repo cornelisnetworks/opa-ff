@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2018, Intel Corporation                *
+.\" .\" *             Copyright 2015-2019, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
+.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaconfig
 
@@ -96,7 +96,7 @@ Outputs list of supported components.
 
 \fBNOTE:\fR
 Supported components may vary according to OS. Refer to 
-\fIIntel(R) Omni-Path Fabric Software Installation Guide\fR
+\fIIntel(R) Omni-Path Fabric Software Release Notes\fR
 
 , OS RPMs Installation Prerequisites for the list of components by supported OS.
 .IP
@@ -145,15 +145,6 @@ Allow non-root users to access the UMAD interface?
 
 .B NOTE:
 Allowing access to UMAD device files may present a security risk. However, this allows tools such as opasaquery and opaportinfo to be used by non-root users.
-
-.RE
-
-.RS
-.TP 10
-
-.sp
-IrqBalance 
-Set IrqBalance to Exact?
 
 .RE
 

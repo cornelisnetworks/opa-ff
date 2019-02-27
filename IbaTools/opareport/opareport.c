@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2018, Intel Corporation
+Copyright (c) 2015-2019, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -1972,6 +1972,48 @@ void ShowPointBriefSummary(Point* point, uint8 find_flag, Format_t format, int i
 			}
 			if (format == FORMAT_XML) {
 				printf("%*s</System>\n", indent, "");
+			}
+			break;
+			}
+		case POINT_TYPE_NODE_PAIR_LIST:
+			{
+			LIST_ITERATOR i, j;
+			int noOfLeftNodes, noOfRightNodes;
+			DLIST *pList1 = &point->u.nodePairList.nodePairList1;
+			DLIST *pList2 = &point->u.nodePairList.nodePairList2;
+
+			noOfLeftNodes = ListCount(pList1);
+			noOfRightNodes = ListCount(pList2);
+
+			if (noOfLeftNodes != noOfRightNodes) {
+				fprintf(stderr, "Pairs are not complete \n");
+				break;
+			}
+
+			switch (format) {
+			case FORMAT_TEXT:
+				printf("%*s%u Node Pairs:\n",
+						indent, "",
+						ListCount(pList1));
+				break;
+			case FORMAT_XML:
+				printf("%*s<Node Pairs>\n", indent, "");
+				XmlPrintDec("Count", ListCount(pList1), indent+4);
+				break;
+			default:
+				break;
+			}
+			for (i = ListHead(pList1), j = ListHead(pList2); (i != NULL && j != NULL);
+				i = ListNext(pList1, i), j = ListNext(pList2, j) ) {
+				NodeData *nodep1 = (NodeData*)ListObj(i);
+				NodeData *nodep2 = (NodeData*)ListObj(j);
+				if((nodep1->NodeInfo.NodeType == STL_NODE_SW) || (nodep2->NodeInfo.NodeType == STL_NODE_SW) )
+					continue;
+				ShowPointNodeBriefSummary("NodePair: ", nodep1, format, indent+4, detail);
+				ShowPointNodeBriefSummary("          ", nodep2, format, indent+4, detail);
+			}
+			if (format == FORMAT_XML) {
+				printf("%*s</Node Pairs>\n", indent, "");
 			}
 			break;
 			}
@@ -9069,7 +9111,8 @@ void ShowPathUsageReport(Point *focus, Format_t format, int indent, int detail)
 		}
 		return;
 	}
-	status = TabulateCARoutes(&g_Fabric, &totalPaths, &badPaths, FALSE);
+	/* If there is a node pair list or node list then only tabulate routes in the focus */
+	status = TabulateCARoutes(&g_Fabric, focus, &totalPaths, &badPaths, FALSE);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "opareport: -o pathusage: Unable to tabulate routes (status=0x%x): %s\n", status, iba_fstatus_msg(status));
 		g_exitstatus = 1;
@@ -9116,11 +9159,15 @@ void ShowPathUsageReport(Point *focus, Format_t format, int indent, int detail)
 		nodep = QListObj(pList);
 		switchp = nodep->switchp;
 
-		if (! CompareNodePoint(nodep, focus))
-			continue;
-
 		if (!switchp || !switchp->LinearFDB)
 			continue;
+
+		//If haveSW flag is set, then Switches are present in the focus
+		if(PointHaveSw(focus)) {
+			// filter on switches that are listed in the focus
+			if( ! CompareNodePoint(nodep, focus))
+				continue;
+		}
 
 		if (detail) {
 			switch (format) {
@@ -9165,9 +9212,6 @@ void ShowPathUsageReport(Point *focus, Format_t format, int indent, int detail)
 			// only report on ISLs,  FI-SW links are boring
 			if (! portp->neighbor
 				|| portp->neighbor->nodep->NodeInfo.NodeType != STL_NODE_SW)
-				continue;
-
-			if (! ComparePortPoint(portp, focus))
 				continue;
 
 			totalPorts++;
@@ -9373,7 +9417,8 @@ void ShowTreePathUsageReport(Point *focus, Format_t format, int indent,
 		}
 		return;
 	}
-	status = TabulateCARoutes(&g_Fabric, &totalPaths, &badPaths, TRUE);
+	/* If there is a focus then only tabulate routes in the focus */
+	status = TabulateCARoutes(&g_Fabric, focus, &totalPaths, &badPaths, TRUE);
 	if (status != FSUCCESS) {
 		fprintf(stderr, "opareport: -o treepathusage: Unable to tabulate routes (status=0x%x): %s\n", status, iba_fstatus_msg(status));
 		g_exitstatus = 1;
@@ -9421,11 +9466,15 @@ void ShowTreePathUsageReport(Point *focus, Format_t format, int indent,
 		nodep = QListObj(pList);
 		switchp = nodep->switchp;
 
-		if (! CompareNodePoint(nodep, focus))
-			continue;
-
 		if (!switchp || !switchp->LinearFDB)
 			continue;
+
+		//If haveSW flag is set, then Switches are present in the focus
+		if(PointHaveSw(focus)) {
+			// filter on switches that are listed in the focus
+			if( ! CompareNodePoint(nodep, focus))
+				continue;
+		}
 
 		if (detail) {
 			switch (format) {
@@ -9472,9 +9521,6 @@ void ShowTreePathUsageReport(Point *focus, Format_t format, int indent,
 			// only report on ISLs,  FI-SW links are boring
 			if (! portp->neighbor
 				|| portp->neighbor->nodep->NodeInfo.NodeType != STL_NODE_SW)
-				continue;
-
-			if (! ComparePortPoint(portp, focus))
 				continue;
 
 			totalPorts++;
@@ -10996,7 +11042,7 @@ void CheckVFAllocation(PortData *port, int indent, int format, int detail)
 		}
 	}
 
-	if (port->neighbor) {
+	if (port->neighbor && port->neighbor->pQOS) {
 		// check that SCVLt matches SCVLnt of the neighbor
 		for (sc=0; sc<STL_MAX_VLS; sc++) {
 			int vl1 = port->pQOS->SC2VLMaps[Enum_SCVLt].SCVLMap[sc].VL;
@@ -11655,8 +11701,10 @@ FSTATUS ShowPortCableHealth(PortData *portp, int indent, char *buf, uint16 lengt
 	}
 
 	//check if cabledata exists
-	if (!portp->pCableInfoData)
-		return FUNAVAILABLE;
+	if (!portp->pCableInfoData){
+		PrintFunc(&destBuf,"NA;NA;NA;NA;NA;NA;NA;NA;NA;NA;NA;NA;NA;NA;NA;");
+		return FSUCCESS;
+	}
 
 	//Check for port type
 	if (STL_PORT_TYPE_STANDARD != portp->PortInfo.PortPhysConfig.s.PortType){
@@ -11798,6 +11846,10 @@ void ShowCableHealthReport(Point *focus, Format_t format, int indent, int detail
 		PortData *portp1, *portp2;
 		portp1 = (PortData *)QListObj(p);
 
+		// skip backplane (ISL) ports
+		if(isInternalLink(portp1))
+			continue;
+
 		// to avoid duplicated processing, only process "from" ports in link
 		if (!portp1->from)
 			continue;
@@ -11833,6 +11885,9 @@ void ShowCableHealthReport(Point *focus, Format_t format, int indent, int detail
 					strncat(tempBuf2,CABLEHEALTH_EMPTY_FIELD,strlen(CABLEHEALTH_EMPTY_FIELD) + 1));
 		}
 	}
+
+	if(first_entry)
+		fprintf(stderr, "No Cable Health Records Returned\n");
 }
 
 // command line options, each has a short and long flag name
@@ -12126,6 +12181,8 @@ void Usage_full(void)
 	fprintf(stderr, "                                value\n");
 	fprintf(stderr, "   linkqualGE:value           - ports with a link quality greater than or equal\n");
 	fprintf(stderr, "                                to value\n");
+	fprintf(stderr, "   nodepatfile:FILENAME       - name of file with list of nodes\n");
+	fprintf(stderr, "   nodepairpatfile:FILENAME   - name of file with list of node pairs separated by colon\n");
 	fprintf(stderr, "Examples:\n");
 	fprintf(stderr, "   opareport -o comps -d 3\n");
 	fprintf(stderr, "   opareport -o errors -o slowlinks\n");
@@ -12170,6 +12227,8 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -o nodes -F 'route:node:duster hfi1_0:node:cuda hfi1_0'\n");
 	fprintf(stderr, "   opareport -o nodes -F \\\n");
 	fprintf(stderr, "       'route:node:duster hfi1_0:port:1:node:cuda hfi1_0:port:2'\n");
+	fprintf(stderr, "   opareport -o treepathusage -F nodepairpatfile:FILENAME\n");
+	fprintf(stderr, "   opareport -o pathusage -F nodepatfile:FILENAME\n");
 	fprintf(stderr, "   opareport -s -o snapshot > file\n");
 	fprintf(stderr, "   opareport -o topology > topology.xml\n");
 	fprintf(stderr, "   opareport -o errors -X file\n");
@@ -13059,7 +13118,9 @@ int main(int argc, char ** argv)
 	}
 
 	if ((!g_snapshot_in_file && routes && ! g_hard && ! g_persist) || (g_snapshot_in_file && (report & REPORT_PORTUSAGE))) {
-		if (!g_snapshot_in_file && (FSUCCESS != GetAllFDBs(g_portGuid, &g_Fabric, &focus, g_quiet))) {
+		// Scanning through all switches is required to get LinearFDB to tabulate routes for path usage reports. It is not limited to switches in focus.
+		if (!g_snapshot_in_file && (FSUCCESS != GetAllFDBs(g_portGuid, &g_Fabric,
+			((report & REPORT_PATHUSAGE) || ((report & REPORT_TREEPATHUSAGE)))?NULL:&focus, g_quiet))) {
 			g_exitstatus = 1;
 			goto done_fabric;
 		}

@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2018, Intel Corporation                *
+.\" .\" *             Copyright 2015-2019, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaextractstat2 8 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
+.TH opaextractstat2 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opaextractstat2
 
@@ -430,6 +430,16 @@ Specifies the ports with a link quality less than or equal to \fIvalue\fR.
 linkqualGE:\fIvalue\fR 
 .NL
 Specifies the ports with a link quality greater than or equal to \fIvalue\fR.
+
+.TP 10
+nodepatfile:\fIFILENAME\fR 
+.NL
+Specifies the name of file with the list of nodes.
+
+.TP 10
+nodepairpatfile:\fIFILENAME\fR 
+.NL
+Specifies the name of file with the list of node pairs, separated by a colon.
 
 .NL
 

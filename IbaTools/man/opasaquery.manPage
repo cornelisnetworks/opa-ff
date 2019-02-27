@@ -1,12 +1,12 @@
 .\" .\" *********************************************************************
 .\" .\" *                                                                   *
-.\" .\" *             Copyright 2015-2018, Intel Corporation                *
+.\" .\" *             Copyright 2015-2019, Intel Corporation                *
 .\" .\" *                                                                   *
 .\" .\" *                       All Rights Reserved.                        *
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasaquery 1 "Intel Corporation" "Copyright(C) 2015\-2018" "IFSFFCLIRG (Man Page)" 
+.TH opasaquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
 .SH NAME
 opasaquery
 
@@ -671,7 +671,7 @@ portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, 
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, service, mcmember, inform, trace, dgmember 
+systemguid, nodeguid, portguid, lid, desc, path, node, trace, dgmember 
 
 .RE
 
@@ -680,7 +680,7 @@ systemguid, nodeguid, portguid, lid, desc, path, node, service, mcmember, inform
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, link, vlarb, pkey, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, dglist, dtree 
+portinfo, sminfo, swinfo, link, vlarb, pkey, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, dglist, dtree, service, mcmember, inform 
 
 .RE
 

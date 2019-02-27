@@ -26,6 +26,7 @@ mkdir -p ${DESTDIR}/usr/share/opa/{samples,help}
 mkdir -p ${DESTDIR}/${DSAP_LIBDIR}/ibacm
 mkdir -p ${DESTDIR}/etc/rdma
 mkdir -p ${DESTDIR}/etc/opa
+mkdir -p ${DESTDIR}/etc/cron.d
 mkdir -p ${DESTDIR}/usr/include/infiniband
 mkdir -p ${DESTDIR}/usr/include/opamgt/iba/public
 mkdir -p ${DESTDIR}/usr/src/opamgt
@@ -69,6 +70,9 @@ cd ../etc
 cp -t ${DESTDIR}/usr/lib/opa/fm_tools/ $ff_tools_fm
 ln -s /usr/lib/opa/fm_tools/config_check ${DESTDIR}/usr/sbin/opafmconfigcheck
 ln -s /usr/lib/opa/fm_tools/config_diff ${DESTDIR}/usr/sbin/opafmconfigdiff
+cd cron.d
+cp -t ${DESTDIR}/etc/cron.d opa-cablehealth
+cd ..
 
 cd ../fastfabric/samples
 cp -t ${DESTDIR}/usr/share/opa/samples $ff_iba_samples $basic_samples

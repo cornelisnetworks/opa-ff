@@ -38,7 +38,7 @@
 
 # pattern to match for unix prompts (both local and on target)
 global target_unix_prompt
-set target_unix_prompt {[$#][\033 ]}
+set target_unix_prompt {[$#>][\033 ]}
 
 # pattern to match for chassis prompts
 # since it starts with a -, -gl must be passed to expect
@@ -1151,10 +1151,18 @@ proc target_get_os_type { } {
 proc target_get_registered_mpi_version {mpi_type} {
     global spawn_id expect_out spawn_out timeout
     global expecting
-    
-    send_unix_cmd "echo SSS`mpi-selector --list`EEE"
+
+    # Below cmd to flushing out the out buffet that might contains
+    # too many lines of screen output, causing the output of a cmd
+    # not being capture in the output. May be there is other better
+    # way to clean the out buffet
     set out ""
-    expect_list 60 { "mpi-selector" "EEE" "EEE" } "" out
+    send_unix_cmd "echo SSS`mpi-selector --list`EEE"
+    expect_list 60 { "mpi-selector" "EEE" "EEE" } {} out
+
+    set out ""
+    send_unix_cmd "echo SSS`mpi-selector --list`EEE"
+    expect_list 60 { "mpi-selector" "EEE" "EEE" } {} out
     
     regexp "EEE.*SSS+(.*)EEE$" $out full_out mpi_list
 
