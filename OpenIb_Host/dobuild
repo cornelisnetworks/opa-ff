@@ -35,6 +35,7 @@ export PRODUCT=${PRODUCT:-OPENIB_FF}
 export BUILD_TARGET=${BUILD_TARGET:-`uname -m`}
 
 export BUILD_CONFIG=${BUILD_CONFIG:-"debug"}
+export PRODUCT_DIRNAME=${PRODUCT_DIRNAME:-`basename ${PWD}`}
 
 set -x
 {
@@ -42,7 +43,30 @@ set -x
 	env
 	echo "----------------------------------------------------------------------------"
 	echo
-	./runmake -B $BUILD_CONFIG $* || exit 1
+	# Klocwork scan
+	if [ "$KW_ENABLE" = "yes" ]; then
+		settl
+
+		# Set Klocwork variables. set_klocwork defines all the Klocwork parameters
+		# like server url, port number, Klocwork installationpath etc.,
+		source $ICSBIN/set_klocwork -d
+
+		# Check the retrun code of set_klocwork
+		if [ $? -ne 0 ]; then
+			echo "Something went wrong"
+			echo "exiting.."
+			exit 1
+		fi
+
+		# Capture the runmake compilation to kwinject.out using Klocwork's kwinject command
+		$KW_INJECT ./runmake -B $BUILD_CONFIG $* || exit 1
+
+		# Execute klocwork_analyze script to run integration analysis and upload
+		# Klocwork tables to the server
+		$ICSBIN/klocwork_analyze -p $PRODUCT >> $TL_DIR/$PRODUCT_DIRNAME/build.kw 2>&1
+	else
+		./runmake -B $BUILD_CONFIG $* || exit 1
+	fi
 } 2>&1|tee build.res
 
 # Check Exit Status

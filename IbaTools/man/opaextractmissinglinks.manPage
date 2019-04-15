@@ -30,7 +30,7 @@ Produces full help text.
 .TP 10
 -T/--topology \fItopology\(ulinput\fR 
 .NL
-Uses topology\(ulinput file to augment and verify fabric information. When used, various reports can be augmented with information not available electronically (such as cable labels). \[aq]-\[aq] may be used to specify stdin.
+Specifies the topology file to verify against. Default is /etc/opa/topology.0:0.xml 
 
 .TP 10
 -o/--output \fIreport\fR 

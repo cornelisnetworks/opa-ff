@@ -18,7 +18,7 @@ opaconfig
 Configures the Intel(R) Omni-Path Software through command line interface or TUI menus.
 .SH Syntax
 .NL
-opaconfig [-r \fIroot\fR] [-G] [-v|-vv] [-u|-s|-e \fIcomp\fR] [-E \fIcomp\fR] [-D \fIcomp\fR]
+opaconfig [-G] [-v|-vv] [-u|-s|-e \fIcomp\fR] [-E \fIcomp\fR] [-D \fIcomp\fR]
 .br
 [--user\(ulqueries|--no\(uluser\(ulqueries] [--answer \fIkeyword=value\fR]
 .PP
@@ -41,11 +41,6 @@ Starts the Intel(R) Omni-Path Software TUI.
 --help 
 .NL
 Produces full help text.
-
-.TP 10
--r \fIroot\fR 
-.NL
-Specifies alternate root directory. Default is / .
 
 .TP 10
 -G 

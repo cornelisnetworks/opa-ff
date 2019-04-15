@@ -5,6 +5,7 @@ MakeTools/makeself-header.sh
 MakeTools/makeself.sh
 MakeTools/regdll.bat
 MakeTools/regexe.bat
+MakeTools/ltsign
 IbAccess/Common/Ibt/ibt.vssscc
 MpiApps/apps/osu2
 MpiApps/apps/osu-micro-benchmarks-3.8-July12
@@ -19,8 +20,11 @@ MpiApps/apps/NPB*
 OpenIb_Host/build.err
 OpenIb_Host/build.res
 OpenIb_Host/build.warn
+OpenIb_Host/build.kw
 OpenIb_Host/dist_files
 OpenIb_Host/FFresults
+OpenIb_Host/klocwork.env
+OpenIb_Host/kwtables/*
 OpenIb_Host/packaged_files
 OpenIb_Host/tests_build
 OpenIb_Host/TESTSresults

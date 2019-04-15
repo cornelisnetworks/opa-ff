@@ -1997,7 +1997,7 @@ void ShowPointBriefSummary(Point* point, uint8 find_flag, Format_t format, int i
 						ListCount(pList1));
 				break;
 			case FORMAT_XML:
-				printf("%*s<Node Pairs>\n", indent, "");
+				printf("%*s<NodePairs>\n", indent, "");
 				XmlPrintDec("Count", ListCount(pList1), indent+4);
 				break;
 			default:
@@ -2007,13 +2007,11 @@ void ShowPointBriefSummary(Point* point, uint8 find_flag, Format_t format, int i
 				i = ListNext(pList1, i), j = ListNext(pList2, j) ) {
 				NodeData *nodep1 = (NodeData*)ListObj(i);
 				NodeData *nodep2 = (NodeData*)ListObj(j);
-				if((nodep1->NodeInfo.NodeType == STL_NODE_SW) || (nodep2->NodeInfo.NodeType == STL_NODE_SW) )
-					continue;
 				ShowPointNodeBriefSummary("NodePair: ", nodep1, format, indent+4, detail);
 				ShowPointNodeBriefSummary("          ", nodep2, format, indent+4, detail);
 			}
 			if (format == FORMAT_XML) {
-				printf("%*s</Node Pairs>\n", indent, "");
+				printf("%*s</NodePairs>\n", indent, "");
 			}
 			break;
 			}
@@ -3536,11 +3534,11 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				if ( portp->pQOS->SC2SLMap ) {
 					ShowSCSLTable(portp->nodep, portp, format, indent+8, detail-2);
 				}
-				if ( !(QListIsEmpty(&portp->pQOS->SC2SCMapList[0])) )  {
-					ShowSCSCTable(portp->nodep, portp, 0, format, indent+8, detail-2);
-				}
-				if ( !(QListIsEmpty(&portp->pQOS->SC2SCMapList[1])) )  {
-					ShowSCSCTable(portp->nodep, portp, 1, format, indent+8, detail-2);
+				int i = 0;
+				for(i=0; i<SC2SCMAPLIST_MAX; i++) {
+					if ( !(QListIsEmpty(&portp->pQOS->SC2SCMapList[i])) )  {
+						ShowSCSCTable(portp->nodep, portp, i, format, indent+8, detail-2);
+					}
 				}
 			}
 			if (portp->pQOS && (detail > 1) && !g_persist && !g_hard) {
@@ -6172,6 +6170,88 @@ show:
 	default:
 		break;
 	}
+}
+
+void ShowLinkInfoReport(Point *focus, Format_t format, int indent, int detail)
+{
+	cl_map_item_t *p;
+	PortData *portp1, *portp2;
+	NodeData *nodep;
+	LIST_ITEM *q;
+
+	printf("%*sLinkInfo Summary\n", indent, "");
+	ShowPointFocus(focus, FIND_FLAG_FABRIC, format, indent, detail);
+	printf( "%*s%u Links in Fabric%s\n", indent, "",g_Fabric.LinkCount, detail?":":"" );
+	if (detail) {
+		printf("%*s   NodeGUID       Type   LID  LMC     Name          \n", indent, "");
+		printf("%*sEgress LinkSpeed  Type      NodeGUID       Port    LID       Name       \n", indent, "");
+	}
+
+	// First the switches
+	for (q=QListHead(&g_Fabric.AllSWs); q != NULL; q = QListNext(&g_Fabric.AllSWs, q)) {
+		nodep = (NodeData *)QListObj(q);
+		portp1 = FindNodePort(nodep, 0);
+
+		if (!portp1)
+			continue;
+		if (!ComparePortPoint(portp1, focus))
+			continue;
+
+		printf("%*s0x%016"PRIx64" %s  %5u   %u  %.*s \n", indent, "",
+			portp1->nodep->NodeInfo.NodeGUID,
+			StlNodeTypeToText(portp1->nodep->NodeInfo.NodeType),
+			portp1->EndPortLID, portp1->PortInfo.s1.LMC, NODE_DESCRIPTION_ARRAY_SIZE,
+			g_noname?g_name_marker:(char*)portp1->nodep->NodeDesc.NodeString);
+
+		for ( p=cl_qmap_head(&nodep->Ports);
+				p != cl_qmap_end(&nodep->Ports);
+				p = cl_qmap_next(p) ){
+			portp2 = PARENT_STRUCT(p, PortData, NodePortsEntry);
+			if (!portp2)
+				continue;
+			if (portp2->neighbor) {
+				printf("%3u      %s      %s  0x%016"PRIx64" %3u    %5u  %.*s \n", portp2->PortNum,
+					StlStaticRateToText(portp2->rate), StlNodeTypeToText(portp2->neighbor->nodep->NodeInfo.NodeType),
+					portp2->neighbor->nodep->NodeInfo.NodeGUID, portp2->neighbor->PortNum,
+					portp2->neighbor->EndPortLID, NODE_DESCRIPTION_ARRAY_SIZE,
+					g_noname?g_name_marker:(char*)portp2->neighbor->nodep->NodeDesc.NodeString);
+			}
+
+		} // End of ( p=cl_qmap_head(&nodep->Ports)
+
+	} // End of for (q=QListHead(&g_Fabric.AllSWs);
+
+	// now the FIs
+	for (q=QListHead(&g_Fabric.AllFIs); q != NULL; q = QListNext(&g_Fabric.AllFIs, q)) {
+		nodep = (NodeData *)QListObj(q);
+
+		for ( p=cl_qmap_head(&nodep->Ports);
+			p != cl_qmap_end(&nodep->Ports);
+				p = cl_qmap_next(p) ){
+			portp1 = PARENT_STRUCT(p, PortData, NodePortsEntry);
+			if (!portp1)
+				continue;
+			if (! ComparePortPoint(portp1, focus))
+				continue;
+
+			printf("%*s0x%016"PRIx64" %s  %5u   %u  %.*s\n", indent, "",
+				portp1->nodep->NodeInfo.NodeGUID,
+				StlNodeTypeToText(portp1->nodep->NodeInfo.NodeType),
+				portp1->EndPortLID, portp1->PortInfo.s1.LMC,NODE_DESCRIPTION_ARRAY_SIZE,
+				g_noname?g_name_marker:(char*)portp1->nodep->NodeDesc.NodeString);
+
+			if (portp1->neighbor){
+				printf("%3u      %s      %s  0x%016"PRIx64" %3u    %5u  %.*s\n", portp1->PortNum,
+					StlStaticRateToText(portp1->rate), StlNodeTypeToText(portp1->neighbor->nodep->NodeInfo.NodeType),
+					portp1->neighbor->nodep->NodeInfo.NodeGUID, portp1->neighbor->PortNum,
+					portp1->neighbor->EndPortLID, NODE_DESCRIPTION_ARRAY_SIZE,
+					g_noname?g_name_marker:(char*)portp1->neighbor->nodep->NodeDesc.NodeString);
+			}
+
+		} // End of ( p=cl_qmap_head(&nodep->Ports)
+
+	} // End of for (q=QListHead(&g_Fabric.AllFIs);
+
 }
 
 void ShowRoutesReport(EUI64 portGuid, Point *point1, Point *point2, Format_t format, int indent, int detail)
@@ -12025,6 +12105,7 @@ void Usage_full(void)
 	fprintf(stderr, "                                fabric\n");
 	fprintf(stderr, "    ious                      - summary of all IO Units in fabric\n");
 	fprintf(stderr, "    lids                      - summary of all LIDs in fabric\n");
+	fprintf(stderr, "    linkinfo                  - summary of all links with LIDs in fabric\n");
 	fprintf(stderr, "    links                     - summary of all links\n");
 	fprintf(stderr, "    extlinks                  - summary of links external to systems\n");
 	fprintf(stderr, "    filinks                   - summary of links to FIs\n");
@@ -12234,6 +12315,7 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -o errors -X file\n");
 	fprintf(stderr, "   opareport -s --begin \"2 days ago\"\n");
 	fprintf(stderr, "   opareport -s --begin \"12:30\" --end \"14:00\"\n");
+	fprintf(stderr, "   opareport -o linkinfo -x > file\n");
 	exit(0);
 }
 
@@ -12448,6 +12530,8 @@ report_t checkOutputType(const char* name)
 		return REPORT_BRNODES;
 	} else if (0 == strcmp(optarg, "ious")) {
 		return REPORT_IOUS;
+	} else if (0 == strcmp(optarg, "linkinfo")) {
+		return REPORT_LINKINFO;
 	} else if (0 == strcmp(optarg, "links")) {
 		return REPORT_LINKS;
 	} else if (0 == strcmp(optarg, "extlinks")) {
@@ -12829,6 +12913,13 @@ int main(int argc, char ** argv)
 	// check for incompatible arguments
 	if ((report & REPORT_CABLEHEALTH) && (format == FORMAT_XML)) {
 		fprintf(stderr, "opareport: -o cablehealth option only supports CSV output\n");
+		Usage();
+		// NOTREACHED
+	}
+
+	// check for incompatible arguments
+	if ((report & REPORT_LINKINFO) && (format == FORMAT_XML)) {
+		fprintf(stderr, "opareport: -o linkinfo option does not support XML output\n");
 		Usage();
 		// NOTREACHED
 	}
@@ -13404,6 +13495,9 @@ int main(int argc, char ** argv)
 
 	if (report & REPORT_CABLEHEALTH)
 		ShowCableHealthReport(&focus, format, 0, detail);
+
+	if (report & REPORT_LINKINFO)
+		ShowLinkInfoReport(&focus, format, 0, detail);
 
 	if (g_clearstats || g_clearallstats)
 		(void)ClearAllPortCountersAndShow(g_portGuid, &focus, g_clearallstats, format, report == REPORT_SNAPSHOT);
