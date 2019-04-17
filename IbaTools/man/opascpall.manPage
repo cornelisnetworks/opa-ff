@@ -109,7 +109,7 @@ opascpall a b c /root/tools/
 .br
 
 .br
-# copy to an explitly specified set of hosts
+# copy to an explicitly specified set of hosts
 .br
 opascpall -h \[aq]arwen elrond\[aq] a b c /root/tools
 .br

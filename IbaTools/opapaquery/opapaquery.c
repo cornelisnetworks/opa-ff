@@ -1314,7 +1314,7 @@ void usage(void)
 	fprintf(stderr, "           0x00000040   6     Link Error Downed\n");
 	fprintf(stderr, "           0x00000020   5     Uncorrectable Errors\n");
 	fprintf(stderr, " \n");
- 	fprintf(stderr, "         select bits for clrVfPortCounters (0 is least signficant (rightmost))\n");
+ 	fprintf(stderr, "         select bits for clrVfPortCounters (0 is least significant (rightmost))\n");
 	fprintf(stderr, "           mask        bit location \n");
 	fprintf(stderr, "           0x80000000  31     VLXmitData \n");
 	fprintf(stderr, "           0x40000000  30     VLRcvData \n");
@@ -1330,7 +1330,7 @@ void usage(void)
 	fprintf(stderr,	"           0x00100000  20     VLXmitWaitData\n");
 	fprintf(stderr, "           0x00080000  19     VLRcvBubble \n");
 	fprintf(stderr, "           0x00040000  18     VLMarkFECN\n");
-	fprintf(stderr, "           Bits 17-0 reseved\n");
+	fprintf(stderr, "           Bits 17-0 reserved\n");
  	fprintf(stderr, "     -f/--focus         - focus select value for getting focus ports\n");
  	fprintf(stderr, "         focus select values:\n");
 	fprintf(stderr, "           unexpclrport  - lists unexpectedly cleared ports - LID ordered\n");          // STL_PA_SELECT_UNEXP_CLR_PORT         0x00010101
