@@ -4,7 +4,7 @@ Release: __RPM_RELEASE
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
-License: GPLv2/BSD 
+License: BSD 
 Url: https://github.com/intel/opa-ff
 # tarball created by:
 # git clone https://github.com/intel/opa-ff.git

@@ -475,9 +475,9 @@ proc sftp_chassis_firmware { chassis fw_file {select 0} {slot "all"} } {
 	set base [ exec basename $fw_file ]
 
 	if { [ string equal "$slot" "all" ] } {
-		chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "put $fw_file A$nopt:/firmware/$base"
+		chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]:" "put $fw_file A$nopt:/firmware/$base"
 	} else {
-		chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "put $fw_file $nopt$slot:/firmware/$base"
+		chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]:" "put $fw_file $nopt$slot:/firmware/$base"
 	}
 }
 
@@ -926,7 +926,7 @@ proc sftp_chassis_security_file { chassis sec_file } {
 	global spawn_id expect_out spawn_out timeout
 	global expecting
 
-	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "put $sec_file /firmware"
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]:" "put $sec_file /firmware"
 }
 
 proc push_chassis_security_file { chassis sec_file {action "push"} { slots "all" } } {
@@ -1451,7 +1451,7 @@ proc sftp_esm_config { chassis config_file } {
 	global spawn_id expect_out spawn_out timeout
 	global expecting
 
-	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "put $config_file /firmware/opafm.xml"
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]:" "put $config_file /firmware/opafm.xml"
 
 	return 0
 }
@@ -1476,7 +1476,7 @@ proc get_esm_config { chassis config_file } {
 	global spawn_id expect_out spawn_out timeout
 	global expecting
 
-	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "get /firmware/opafm.xml $config_file" 0
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]:" "get /firmware/opafm.xml $config_file" 0
 
 	return 0
 }
@@ -2181,7 +2181,7 @@ proc get_esm_security_files { chassis security_files dest_dir } {
 	global spawn_id expect_out spawn_out timeout
 	global expecting
 
-	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]" "get /firmware/$security_files $dest_dir" 0
+	chassis_sftp_cmd "sftp admin@\\\[$chassis\\\]:" "get /firmware/$security_files $dest_dir" 0
 
 	return 0
 }

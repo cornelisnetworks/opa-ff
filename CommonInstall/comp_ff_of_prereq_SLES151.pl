@@ -1,11 +1,11 @@
-#!/bin/bash
-# BEGIN_ICS_COPYRIGHT8 ****************************************
-# 
-# Copyright (c) 2015-2017, Intel Corporation
-# 
+#!/usr/bin/perl
+## BEGIN_ICS_COPYRIGHT8 ****************************************
+#
+# Copyright (c) 2015-2019, Intel Corporation
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,35 +25,66 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
-# END_ICS_COPYRIGHT8   ****************************************
+#
+## END_ICS_COPYRIGHT8   ****************************************
+#
+## [ICS VERSION STRING: unknown]
+#use strict;
+##use Term::ANSIColor;
+##use Term::ANSIColor qw(:constants);
+##use File::Basename;
+##use Math::BigInt;
+#
+## ==========================================================================
+#
+#Installation Prequisites array for fast fabric
+#and of tools component
 
-#[ICS VERSION STRING: unknown]
+my @oftools_prereq = (
+			"glibc",
+			"libgcc_s1",
+			"libibmad5",
+			"libibumad3",
+			"libibverbs1",
+			"libstdc++6",
+			"ibacm",
+);
+$comp_prereq_hash{'oftools_prereq'} = \@oftools_prereq;
 
-id=$(./get_id_and_versionid.sh | cut -f1 -d' ')
-versionid=$(./get_id_and_versionid.sh | cut -f2 -d' ')
+my @fastfabric_prereq = (
+			"glibc",
+			"bash",
+			"expect",
+			"perl-base",
+			"tcl",
+			"libexpat1",
+			"libgcc_s1",
+			"libibmad5",
+			"libibumad3",
+			"libibverbs1",
+			"libncurses6",
+			"libopenssl1_1",
+			"libstdc++6",
+			"libz1",
+			"bc",
+			"rdma-core",
+			"rdma-ndd",
+			"qperf",
+			"perftest",
+);
+$comp_prereq_hash{'fastfabric_prereq'} = \@fastfabric_prereq;
 
-if [ "$id" = "rhel" -o "$id" = "centos" ]
-then
-	GE_8_0=$(echo "$versionid >= 8.0" | bc)
-	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec
-	if [ $GE_8_0 = 1 ]
-	then
-		sed -i "s/__RPM_DBG/%global debug_package %{nil}/" mpi-apps.spec
-	else
-		sed -i "/__RPM_DBG/,+1d" mpi-apps.spec
-	fi
-elif [ "$id" = "fedora" ]
-then
-	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec
-	sed -i "s/__RPM_DBG/%global debug_package %{nil}/" mpi-apps.spec
-elif [ "$id" = "sles" ]
-then
-	sed -i "/__RPM_REQ/,+1d" mpi-apps.spec
-	sed -i "/__RPM_DBG/,+1d" mpi-apps.spec
-else
-	echo ERROR: Unsupported distribution: $id $versionid
-	exit 1
-fi
-
-exit 0
+my @opamgt_sdk_prereq = (
+			"bash",
+			"glibc",
+			"libgcc_s1",
+			"libibumad3",
+			"libibverbs1",
+			"libopenssl-devel",
+			"libopenssl1_1",
+			"libstdc++6",
+			"openssl",
+			"rdma-core-devel",
+			"rdma-ndd",
+);
+$comp_prereq_hash{'opamgt_sdk_prereq'} = \@opamgt_sdk_prereq;

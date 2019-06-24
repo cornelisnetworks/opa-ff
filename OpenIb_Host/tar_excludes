@@ -5,7 +5,6 @@ MakeTools/makeself-header.sh
 MakeTools/makeself.sh
 MakeTools/regdll.bat
 MakeTools/regexe.bat
-MakeTools/format_releasetag.py
 MakeTools/ltsign
 IbAccess/Common/Ibt/ibt.vssscc
 MpiApps/apps/osu2

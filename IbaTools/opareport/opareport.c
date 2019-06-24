@@ -76,7 +76,7 @@ int				g_interval		= 0;	// interval for port stats in seconds
 int				g_clearstats	= 0;	// clear port stats
 int				g_clearallstats	= 0;	// clear all port stats
 int				g_limitstats	= 0;	// limit stats to specific focus ports
-STL_PORT_STATUS_RSP	  g_Thresholds;
+STL_PORT_COUNTERS_DATA g_Thresholds;
 STL_CLEAR_PORT_STATUS g_CounterSelectMask;
 EUI64			g_portGuid		= -1;	// local port to use to access fabric
 IB_PORT_ATTRIBUTES	*g_portAttrib = NULL;// attributes for our local port
@@ -883,7 +883,8 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 		}
 		if (detail > 1 && portp->pCableInfoData)
 			ShowCableSummary(portp->pCableInfoData, FORMAT_TEXT, indent+4, detail-1, portp->PortInfo.PortPhysConfig.s.PortType);
-
+		if (portp->pPortCounters && detail > 3 && ! g_persist && ! g_hard)
+			ShowPortCounters(portp->pPortCounters, format, indent+4, detail-3);
 		break;
 	case FORMAT_XML:
 		// MTU is output as part of LinkFrom directly in <Link> tag
@@ -907,6 +908,8 @@ void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			}
 			
 		}
+		if (portp->pPortCounters && detail > 3 && ! g_persist && ! g_hard)
+			ShowPortCounters(portp->pPortCounters, format, indent+4, detail-3);
 
 		break;
 	default:
@@ -2625,154 +2628,214 @@ void ShowPKeyTable(NodeData *nodep, PortData *portp, Format_t format, int indent
 }	// End of ShowPKeyTable
 
 // output verbose summary of PortCounters
-void ShowPortCounters(STL_PortStatusData_t *pPortStatus, Format_t format, int indent, int detail)
+void ShowPortCounters(STL_PORT_COUNTERS_DATA *pPortCounters, Format_t format, int indent, int detail)
 {
+	if (detail < 1) return;
+
 	switch (format) {
 	case FORMAT_TEXT:
-		printf("%*sPerformance: Transmit\n",
-			indent, "");
-		printf("%*s    Xmit Data   %20"PRIu64" MB (%"PRIu64" Flits)\n",
-			indent, "",
-			pPortStatus->PortXmitData/FLITS_PER_MB,
-			pPortStatus->PortXmitData);
-		printf("%*s    Xmit Pkts   %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitPkts);
-		printf("%*s    MC Xmt Pkts %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortMulticastXmitPkts);
-		printf("%*sPerformance: Receive\n",
-			indent, "");
-		printf("%*s    Rcv Data    %20"PRIu64" MB (%"PRIu64" Flits)\n",
-			indent, "",
-			pPortStatus->PortRcvData/FLITS_PER_MB,
-			pPortStatus->PortRcvData);
-		printf("%*s    Rcv Pkts    %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvPkts);
-		printf("%*s    MC Rcv Pkts %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortMulticastRcvPkts);
-		printf("%*sPerformance: Congestion\n",
-			indent, "");
-		printf("%*s    Congestion Discards   %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->SwPortCongestion);
-		printf("%*s    Rcv FECN              %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvFECN);
-		printf("%*s    Rcv BECN              %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvBECN);
-		printf("%*s    Mark FECN             %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortMarkFECN);
-		printf("%*s    Xmit Time Congestion  %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitTimeCong);
-		printf("%*s    Xmit Wait             %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitWait);
-		printf("%*sPerformance: Bubbles\n",
-			indent, "");
-		printf("%*s    Xmit Wasted BW        %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitWastedBW);
-		printf("%*s    Xmit Wait Data        %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitWaitData);
-		printf("%*s    Rcv Bubble            %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvBubble);
+		if (detail >= 3) {
+			printf("%*sPerformance: Transmit\n", 
+				indent, "");
+			printf("%*s    Xmit Data   %20"PRIu64" MB (%"PRIu64" Flits)\n",
+				indent, "",
+				pPortCounters->portXmitData/FLITS_PER_MB,
+				pPortCounters->portXmitData);
+			printf("%*s    Xmit Pkts   %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portXmitPkts);
+			printf("%*s    MC Xmt Pkts %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portMulticastXmitPkts);
+			printf("%*sPerformance: Receive\n",
+				indent, "");
+			printf("%*s    Rcv Data    %20"PRIu64" MB (%"PRIu64" Flits)\n",
+				indent, "",
+				pPortCounters->portRcvData/FLITS_PER_MB,
+				pPortCounters->portRcvData);
+			printf("%*s    Rcv Pkts    %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portRcvPkts);
+			printf("%*s    MC Rcv Pkts %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portMulticastRcvPkts);
+			printf("%*sPerformance: Congestion\n",
+				indent, "");
+			printf("%*s    Congestion Discards   %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->swPortCongestion);
+			printf("%*s    Rcv FECN              %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portRcvFECN);
+			printf("%*s    Rcv BECN              %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portRcvBECN);
+			printf("%*s    Mark FECN             %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portMarkFECN);
+			printf("%*s    Xmit Time Congestion  %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portXmitTimeCong);
+			printf("%*s    Xmit Wait             %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portXmitWait);
+			printf("%*sPerformance: Bubbles\n",
+				indent, "");
+			printf("%*s    Xmit Wasted BW        %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portXmitWastedBW);
+			printf("%*s    Xmit Wait Data        %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portXmitWaitData);
+			printf("%*s    Rcv Bubble            %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portRcvBubble);
 
-		printf("%*sErrors: Signal Integrity\n",
-			indent, "");
-		printf("%*s    Link Qual Indicator   %20u (%s)\n",
-			indent, "",
-			pPortStatus->lq.s.LinkQualityIndicator,
-			StlLinkQualToText(pPortStatus->lq.s.LinkQualityIndicator));
-		printf("%*s    Uncorrectable Errors  %20u\n",	//8 bit
-			indent, "",
-			pPortStatus->UncorrectableErrors);
-		printf("%*s    Link Downed           %20u\n",	// 32 bit
-			indent, "",
-			pPortStatus->LinkDowned);
-		printf("%*s    Rcv Errors            %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvErrors);
-		printf("%*s    Exc. Buffer Overrun   %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->ExcessiveBufferOverruns);
-		printf("%*s    FM Config Errors      %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->FMConfigErrors);
-		printf("%*s    Link Error Recovery   %20u\n",	// 32 bit
-			indent, "",
-			pPortStatus->LinkErrorRecovery);
-		printf("%*s    Local Link Integ Err  %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->LocalLinkIntegrityErrors);
-		printf("%*s    Rcv Rmt Phys Err      %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvRemotePhysicalErrors);
-		printf("%*sErrors: Security\n",
-			indent, "");
-		printf("%*s    Xmit Constraint       %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitConstraintErrors);
-		printf("%*s    Rcv Constraint        %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvConstraintErrors);
-		printf("%*sErrors: Routing and Other\n",
-			indent, "");
-		printf("%*s    Rcv Sw Relay Err      %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortRcvSwitchRelayErrors);
-		printf("%*s    Xmit Discards         %20"PRIu64"\n",
-			indent, "",
-			pPortStatus->PortXmitDiscards);
-
-		break;
+			printf("%*sErrors: Signal Integrity\n",
+				indent, "");
+			printf("%*s    Link Qual Indicator   %20u (%s)\n",
+				indent, "",
+				pPortCounters->lq.s.linkQualityIndicator,
+				StlLinkQualToText(pPortCounters->lq.s.linkQualityIndicator));
+			printf("%*s    Uncorrectable Errors  %20u\n",	//8 bit
+				indent, "",
+				pPortCounters->uncorrectableErrors);
+			printf("%*s    Link Downed           %20u\n",	// 32 bit
+				indent, "",
+				pPortCounters->linkDowned);
+			printf("%*s    Rcv Errors            %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portRcvErrors);
+			printf("%*s    Exc. Buffer Overrun   %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->excessiveBufferOverruns);
+			printf("%*s    FM Config Errors      %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->fmConfigErrors);
+			printf("%*s    Link Error Recovery   %20u\n",	// 32 bit
+				indent, "",
+				pPortCounters->linkErrorRecovery);
+			printf("%*s    Local Link Integ Err  %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->localLinkIntegrityErrors);
+			printf("%*s    Rcv Rmt Phys Err      %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portRcvRemotePhysicalErrors);
+			printf("%*sErrors: Security\n",
+				indent, "");
+			printf("%*s    Xmit Constraint       %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portXmitConstraintErrors);
+			printf("%*s    Rcv Constraint        %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portRcvConstraintErrors);
+			printf("%*sErrors: Routing and Other\n",
+				indent, "");
+			printf("%*s    Rcv Sw Relay Err      %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portRcvSwitchRelayErrors);
+			printf("%*s    Xmit Discards         %20"PRIu64"\n",
+				indent, "",
+				pPortCounters->portXmitDiscards);
+		} else if (detail == 2) {
+			printf("%*sPortStatus:\n", indent, "");
+			printf("%*sXmit Data          %20"PRIu64" MB | Xmit Pkts             %20"PRIu64"\n", indent+4, "",
+				 pPortCounters->portXmitData/FLITS_PER_MB, pPortCounters->portXmitPkts);
+			printf("%*sRcv Data           %20"PRIu64" MB | Rcv Pkts              %20"PRIu64"\n", indent+4, "",
+				pPortCounters->portRcvData/FLITS_PER_MB, pPortCounters->portRcvPkts);
+			if (pPortCounters->portMulticastXmitPkts || pPortCounters->portMulticastRcvPkts) {
+			printf("%*sMC Xmit Pkts          %20"PRIu64" | MC Rcv Pkts           %20"PRIu64"\n", indent+4, "",
+				pPortCounters->portMulticastXmitPkts, pPortCounters->portMulticastRcvPkts);
+			}
+			printf("%*sLink Qual Indicator   %20u (%s)\n", indent+4, "",
+				pPortCounters->lq.s.linkQualityIndicator,
+				StlLinkQualToText(pPortCounters->lq.s.linkQualityIndicator));
+			boolean isLeft = TRUE, isAny = FALSE;
+#define NON_ZERO_64(cntr, name) \
+			if (cntr) { \
+				printf("%*s%-22s%20"PRIu64"%s", isLeft ? indent+4 : 0, "", name, cntr, isLeft ? " | " : "\n"); \
+				isLeft = !isLeft; isAny = TRUE;\
+			}
+#define NON_ZERO(cntr, name) \
+			if (cntr) { \
+				printf("%*s%-22s%20u%s", isLeft ? indent+4 : 0, "", name, cntr, isLeft ? " | " : "\n"); \
+				isLeft = !isLeft; isAny = TRUE; \
+			}
+			NON_ZERO_64(pPortCounters->swPortCongestion,            "Congestion Discards");
+			NON_ZERO_64(pPortCounters->portRcvFECN,                 "Rcv FECN");
+			NON_ZERO_64(pPortCounters->portRcvBECN,                 "Rcv BECN");
+			NON_ZERO_64(pPortCounters->portMarkFECN,                "Mark FECN");
+			NON_ZERO_64(pPortCounters->portXmitTimeCong,            "Xmit Time Congestion");
+			NON_ZERO_64(pPortCounters->portXmitWait,                "Xmit Wait");
+			NON_ZERO_64(pPortCounters->portXmitWastedBW,            "Xmit Wasted BW");
+			NON_ZERO_64(pPortCounters->portXmitWaitData,            "Xmit Wait Data");
+			NON_ZERO_64(pPortCounters->portRcvBubble,               "Rcv Bubble");
+			NON_ZERO(pPortCounters->uncorrectableErrors,            "Uncorrectable Errors");
+			NON_ZERO(pPortCounters->linkDowned,                     "Link Downed");
+			NON_ZERO_64(pPortCounters->portRcvErrors,               "Rcv Errors");
+			NON_ZERO_64(pPortCounters->excessiveBufferOverruns,     "Exc Buffer Overrun");
+			NON_ZERO_64(pPortCounters->fmConfigErrors,              "FM Config Errors");
+			NON_ZERO(pPortCounters->linkErrorRecovery,              "Link Error Recovery");
+			NON_ZERO_64(pPortCounters->localLinkIntegrityErrors,    "Local Link Integ Err");
+			NON_ZERO_64(pPortCounters->portRcvRemotePhysicalErrors, "Rcv Rmt Phys Err");
+			NON_ZERO_64(pPortCounters->portXmitConstraintErrors,    "Xmit Constraint");
+			NON_ZERO_64(pPortCounters->portRcvConstraintErrors,     "Rcv Constraint");
+			NON_ZERO_64(pPortCounters->portRcvSwitchRelayErrors,    "Rcv Sw Relay Err");
+			NON_ZERO_64(pPortCounters->portXmitDiscards,            "Xmit Discards");
+			if (isAny && !isLeft) printf("\n");
+#undef NON_ZERO_64
+#undef NON_ZERO
+		} else if (detail == 1) {
+			printf("%*sPortStatus:\n", indent, "");
+			printf("%*sXmit Data          %20"PRIu64" MB | Xmit Pkts             %20"PRIu64"\n", indent+4, "",
+				 pPortCounters->portXmitData/FLITS_PER_MB, pPortCounters->portXmitPkts);
+			printf("%*sRcv Data           %20"PRIu64" MB | Rcv Pkts              %20"PRIu64"\n", indent+4, "",
+				pPortCounters->portRcvData/FLITS_PER_MB, pPortCounters->portRcvPkts);
+			printf("%*sLink Qual Indicator   %20u (%s)\n", indent+4, "",
+				pPortCounters->lq.s.linkQualityIndicator,
+				StlLinkQualToText(pPortCounters->lq.s.linkQualityIndicator));
+		}
+		break; 
 	case FORMAT_XML:
 		printf("%*s<Performance>\n", indent, "");
 		// Data movement
-		XmlPrintDec64("XmitDataMB", pPortStatus->PortXmitData/FLITS_PER_MB, indent+4);
+		XmlPrintDec64("XmitDataMB", pPortCounters->portXmitData/FLITS_PER_MB, indent+4);
 		printf("%*s<XmitData>%"PRIu64"</XmitData> <!-- in Flits -->\n",
-			indent+4, "", pPortStatus->PortXmitData);
-		XmlPrintDec64("RcvDataMB", pPortStatus->PortRcvData/FLITS_PER_MB, indent+4);
-		XmlPrintDec64("XmitPkts", pPortStatus->PortXmitPkts, indent+4);
+			indent+4, "", pPortCounters->portXmitData);
+		XmlPrintDec64("RcvDataMB", pPortCounters->portRcvData/FLITS_PER_MB, indent+4);
+		XmlPrintDec64("XmitPkts", pPortCounters->portXmitPkts, indent+4);
 		printf("%*s<RcvData>%"PRIu64"</RcvData> <!-- in Flits -->\n",
-			indent+4, "", pPortStatus->PortRcvData);
-		XmlPrintDec64("RcvPkts", pPortStatus->PortRcvPkts, indent+4);
-		XmlPrintDec64("MulticastXmitPkts", pPortStatus->PortMulticastXmitPkts, indent+4);
-		XmlPrintDec64("MulticastRcvPkts", pPortStatus->PortMulticastRcvPkts, indent+4);
+			indent+4, "", pPortCounters->portRcvData);
+		XmlPrintDec64("RcvPkts", pPortCounters->portRcvPkts, indent+4);
+		XmlPrintDec64("MulticastXmitPkts", pPortCounters->portMulticastXmitPkts, indent+4);
+		XmlPrintDec64("MulticastRcvPkts", pPortCounters->portMulticastRcvPkts, indent+4);
 		// Signal Integrity and Node/Link Stability
-		XmlPrintDec("LinkQualityIndicator", pPortStatus->lq.s.LinkQualityIndicator, indent+4);
-		XmlPrintDec("UncorrectableErrors", pPortStatus->UncorrectableErrors, indent+4);	// 8 bit
-		XmlPrintDec("LinkDowned", pPortStatus->LinkDowned, indent+4);	// 32 bit
-		XmlPrintDec64("RcvErrors", pPortStatus->PortRcvErrors, indent+4);
-		XmlPrintDec64("ExcessiveBufferOverruns", pPortStatus->ExcessiveBufferOverruns, indent+4);
-		XmlPrintDec64("FMConfigErrors", pPortStatus->FMConfigErrors, indent+4);
-		XmlPrintDec("LinkErrorRecovery", pPortStatus->LinkErrorRecovery, indent+4);	// 32 bit
-		XmlPrintDec64("LocalLinkIntegrityErrors", pPortStatus->LocalLinkIntegrityErrors, indent+4);
-		XmlPrintDec64("RcvRemotePhysicalErrors", pPortStatus->PortRcvRemotePhysicalErrors, indent+4);
+		XmlPrintDec("LinkQualityIndicator", pPortCounters->lq.s.linkQualityIndicator, indent+4);
+		XmlPrintDec("UncorrectableErrors", pPortCounters->uncorrectableErrors, indent+4);	// 8 bit
+		XmlPrintDec("LinkDowned", pPortCounters->linkDowned, indent+4);	// 32 bit
+		XmlPrintDec64("RcvErrors", pPortCounters->portRcvErrors, indent+4);
+		XmlPrintDec64("ExcessiveBufferOverruns", pPortCounters->excessiveBufferOverruns, indent+4);
+		XmlPrintDec64("FMConfigErrors", pPortCounters->fmConfigErrors, indent+4);
+		XmlPrintDec("LinkErrorRecovery", pPortCounters->linkErrorRecovery, indent+4);	// 32 bit
+		XmlPrintDec64("LocalLinkIntegrityErrors", pPortCounters->localLinkIntegrityErrors, indent+4);
+		XmlPrintDec64("RcvRemotePhysicalErrors", pPortCounters->portRcvRemotePhysicalErrors, indent+4);
 		// Security
-		XmlPrintDec64("XmitConstraintErrors", pPortStatus->PortXmitConstraintErrors, indent+4);
-		XmlPrintDec64("RcvConstraintErrors", pPortStatus->PortRcvConstraintErrors, indent+4);
+		XmlPrintDec64("XmitConstraintErrors", pPortCounters->portXmitConstraintErrors, indent+4);
+		XmlPrintDec64("RcvConstraintErrors", pPortCounters->portRcvConstraintErrors, indent+4);
 		// Routing or Down nodes still being sent to
-		XmlPrintDec64("RcvSwitchRelayErrors", pPortStatus->PortRcvSwitchRelayErrors, indent+4);
-		XmlPrintDec64("XmitDiscards", pPortStatus->PortXmitDiscards, indent+4);
+		XmlPrintDec64("RcvSwitchRelayErrors", pPortCounters->portRcvSwitchRelayErrors, indent+4);
+		XmlPrintDec64("XmitDiscards", pPortCounters->portXmitDiscards, indent+4);
 		// Congestion
-		XmlPrintDec64("CongDiscards", pPortStatus->SwPortCongestion, indent+4);
-		XmlPrintDec64("RcvFECN", pPortStatus->PortRcvFECN, indent+4);
-		XmlPrintDec64("RcvBECN", pPortStatus->PortRcvBECN, indent+4);
-		XmlPrintDec64("MarkFECN", pPortStatus->PortMarkFECN, indent+4);
-		XmlPrintDec64("XmitTimeCong", pPortStatus->PortXmitTimeCong, indent+4);
-		XmlPrintDec64("XmitWait", pPortStatus->PortXmitWait, indent+4);
+		XmlPrintDec64("CongDiscards", pPortCounters->swPortCongestion, indent+4);
+		XmlPrintDec64("RcvFECN", pPortCounters->portRcvFECN, indent+4);
+		XmlPrintDec64("RcvBECN", pPortCounters->portRcvBECN, indent+4);
+		XmlPrintDec64("MarkFECN", pPortCounters->portMarkFECN, indent+4);
+		XmlPrintDec64("XmitTimeCong", pPortCounters->portXmitTimeCong, indent+4);
+		XmlPrintDec64("XmitWait", pPortCounters->portXmitWait, indent+4);
 		// Bubbles
-		XmlPrintDec64("XmitWastedBW", pPortStatus->PortXmitWastedBW, indent+4);
-		XmlPrintDec64("XmitWaitData", pPortStatus->PortXmitWaitData, indent+4);
-		XmlPrintDec64("RcvBubble", pPortStatus->PortRcvBubble, indent+4);
+		XmlPrintDec64("XmitWastedBW", pPortCounters->portXmitWastedBW, indent+4);
+		XmlPrintDec64("XmitWaitData", pPortCounters->portXmitWaitData, indent+4);
+		XmlPrintDec64("RcvBubble", pPortCounters->portRcvBubble, indent+4);
 		printf("%*s</Performance>\n", indent, "");
 		break;
 	default:
@@ -3181,8 +3244,8 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 					!g_persist && !g_hard ) {
 				ShowPKeyTable(portp->nodep, portp, format, indent+4, detail-2);
 			}
-			if (portp->pPortStatus && detail > 1 && ! g_persist && ! g_hard) {
-				ShowPortCounters(portp->pPortStatus, format, indent+4, detail-2);
+			if (portp->pPortCounters && detail > 2 && ! g_persist && ! g_hard) {
+				ShowPortCounters(portp->pPortCounters, format, indent+4, detail-2);
 			}
 		} else {
 			if (g_hard)
@@ -3548,8 +3611,8 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 					!g_persist && !g_hard ) {
 				ShowPKeyTable(portp->nodep, portp, format, indent+8, detail-2);
 			}
-			if (portp->pPortStatus && detail > 1 && ! g_persist && ! g_hard) {
-				ShowPortCounters(portp->pPortStatus, format, indent+8, detail-2);
+			if (portp->pPortCounters && detail > 2 && ! g_persist && ! g_hard) {
+				ShowPortCounters(portp->pPortCounters, format, indent+8, detail-2);
 			}
 		} else {
 			if (! g_hard) {
@@ -4442,7 +4505,7 @@ void ShowSizesReport(void)
 	printf("sizeof(NodeData)=%u\n", (unsigned)sizeof(NodeData));
 	printf("sizeof(PortData)=%u\n", (unsigned)sizeof(PortData));
 	printf("sizeof(QOSData)=%u (up to 1 per port)\n", (unsigned)sizeof(QOSData));
-	printf("sizeof(STL_PortStatusData_t)=%u (up to 1 per port)\n", (unsigned)sizeof(STL_PortStatusData_t));
+	printf("sizeof(STL_PORT_COUNTERS_DATA)=%u (up to 1 per port)\n", (unsigned)sizeof(STL_PORT_COUNTERS_DATA));
 	printf("sizeof(STL_PKEY_ELEMENT)=%u (up to 1 per port per pkey)\n", (unsigned)sizeof(STL_PKEY_ELEMENT));
 	printf("sizeof(IouData)=%u\n", (unsigned)sizeof(IouData));
 	printf("sizeof(IocData)=%u\n", (unsigned)sizeof(IocData));
@@ -5143,55 +5206,55 @@ boolean PortCounterExceedsThreshold64(uint64 value, uint64 threshold)
 //			FALSE - all counters below threshold
 static boolean PortCountersExceedThreshold(PortData *portp)
 {
-	STL_PortStatusData_t *pPortStatus = portp->pPortStatus;
+	STL_PORT_COUNTERS_DATA *pPortCounters = portp->pPortCounters;
 
-	if (! pPortStatus)
+	if (! pPortCounters)
 		return FALSE;
 
 #define EXCEEDS_THRESHOLD(field) \
-			PortCounterExceedsThreshold(pPortStatus->field, g_Thresholds.field)
+			PortCounterExceedsThreshold(pPortCounters->field, g_Thresholds.field)
 #define EXCEEDS_THRESHOLD64(field) \
-			PortCounterExceedsThreshold64(pPortStatus->field, g_Thresholds.field)
+			PortCounterExceedsThreshold64(pPortCounters->field, g_Thresholds.field)
 #define BELOW_THRESHOLD_LQI(field) \
-			PortCounterBelowThreshold(pPortStatus->lq.s.field, g_Thresholds.lq.s.field)
+			PortCounterBelowThreshold(pPortCounters->lq.s.field, g_Thresholds.lq.s.field)
 #define EXCEEDS_THRESHOLD_NLD(field) \
-			PortCounterExceedsThreshold((pPortStatus->lq.field >> 4), (g_Thresholds.lq.field >> 4))
+			PortCounterExceedsThreshold(pPortCounters->lq.s.field, g_Thresholds.lq.s.field)
 
 			// Data movement
-	return EXCEEDS_THRESHOLD64(PortXmitData)
-			|| EXCEEDS_THRESHOLD64(PortRcvData)
-			|| EXCEEDS_THRESHOLD64(PortXmitPkts)
-			|| EXCEEDS_THRESHOLD64(PortRcvPkts)
-			|| EXCEEDS_THRESHOLD64(PortMulticastXmitPkts)
-			|| EXCEEDS_THRESHOLD64(PortMulticastRcvPkts)
+	return EXCEEDS_THRESHOLD64(portXmitData)
+			|| EXCEEDS_THRESHOLD64(portRcvData)
+			|| EXCEEDS_THRESHOLD64(portXmitPkts)
+			|| EXCEEDS_THRESHOLD64(portRcvPkts)
+			|| EXCEEDS_THRESHOLD64(portMulticastXmitPkts)
+			|| EXCEEDS_THRESHOLD64(portMulticastRcvPkts)
 			// Signal Integrity and Node/Link Stability
-			|| BELOW_THRESHOLD_LQI(LinkQualityIndicator)
-			|| EXCEEDS_THRESHOLD(UncorrectableErrors)
-			|| EXCEEDS_THRESHOLD(LinkDowned)
-			|| EXCEEDS_THRESHOLD64(PortRcvErrors)
-			|| EXCEEDS_THRESHOLD64(FMConfigErrors)
-			|| EXCEEDS_THRESHOLD64(ExcessiveBufferOverruns)
-			|| EXCEEDS_THRESHOLD(LinkErrorRecovery)
-			|| EXCEEDS_THRESHOLD64(LocalLinkIntegrityErrors)
-			|| EXCEEDS_THRESHOLD64(PortRcvRemotePhysicalErrors)
-			|| EXCEEDS_THRESHOLD_NLD(AsReg8)
+			|| BELOW_THRESHOLD_LQI(linkQualityIndicator)
+			|| EXCEEDS_THRESHOLD(uncorrectableErrors)
+			|| EXCEEDS_THRESHOLD(linkDowned)
+			|| EXCEEDS_THRESHOLD64(portRcvErrors)
+			|| EXCEEDS_THRESHOLD64(fmConfigErrors)
+			|| EXCEEDS_THRESHOLD64(excessiveBufferOverruns)
+			|| EXCEEDS_THRESHOLD(linkErrorRecovery)
+			|| EXCEEDS_THRESHOLD64(localLinkIntegrityErrors)
+			|| EXCEEDS_THRESHOLD64(portRcvRemotePhysicalErrors)
+			|| EXCEEDS_THRESHOLD_NLD(numLanesDown)
 			// Security
-			|| EXCEEDS_THRESHOLD64(PortXmitConstraintErrors)
-			|| EXCEEDS_THRESHOLD64(PortRcvConstraintErrors)
+			|| EXCEEDS_THRESHOLD64(portXmitConstraintErrors)
+			|| EXCEEDS_THRESHOLD64(portRcvConstraintErrors)
 			// Routing or Down nodes still being sent to
-			|| EXCEEDS_THRESHOLD64(PortRcvSwitchRelayErrors)
-			|| EXCEEDS_THRESHOLD64(PortXmitDiscards)
+			|| EXCEEDS_THRESHOLD64(portRcvSwitchRelayErrors)
+			|| EXCEEDS_THRESHOLD64(portXmitDiscards)
 			// Congestion
-			|| EXCEEDS_THRESHOLD64(SwPortCongestion)
-			|| EXCEEDS_THRESHOLD64(PortRcvFECN)
-			|| EXCEEDS_THRESHOLD64(PortRcvBECN)
-			|| EXCEEDS_THRESHOLD64(PortMarkFECN)
-			|| EXCEEDS_THRESHOLD64(PortXmitTimeCong)
-			|| EXCEEDS_THRESHOLD64(PortXmitWait)
+			|| EXCEEDS_THRESHOLD64(swPortCongestion)
+			|| EXCEEDS_THRESHOLD64(portRcvFECN)
+			|| EXCEEDS_THRESHOLD64(portRcvBECN)
+			|| EXCEEDS_THRESHOLD64(portMarkFECN)
+			|| EXCEEDS_THRESHOLD64(portXmitTimeCong)
+			|| EXCEEDS_THRESHOLD64(portXmitWait)
 			// Bubbles
-			|| EXCEEDS_THRESHOLD64(PortXmitWastedBW)
-			|| EXCEEDS_THRESHOLD64(PortXmitWaitData)
-			|| EXCEEDS_THRESHOLD64(PortRcvBubble);
+			|| EXCEEDS_THRESHOLD64(portXmitWastedBW)
+			|| EXCEEDS_THRESHOLD64(portXmitWaitData)
+			|| EXCEEDS_THRESHOLD64(portRcvBubble);
 #undef EXCEEDS_THRESHOLD
 #undef EXCEEDS_THRESHOLD64
 #undef BELOW_THRESHOLD_LQI
@@ -5300,56 +5363,56 @@ void ShowPortCounterExceedingMbThreshold64(const char* field, uint64 value, uint
 
 void ShowLinkPortErrorSummary(PortData *portp, Format_t format, int indent, int detail)
 {
-	STL_PortStatusData_t *pPortStatus = portp->pPortStatus;
+	STL_PORT_COUNTERS_DATA *pPortCounters = portp->pPortCounters;
 
-	if (! pPortStatus)
+	if (! pPortCounters)
 		return;
 
 #define SHOW_BELOW_LQI_THRESHOLD(field, name) \
-			ShowPortCounterBelowThreshold(#name, pPortStatus->lq.s.field, g_Thresholds.lq.s.field, format, indent, detail)
+			ShowPortCounterBelowThreshold(#name, pPortCounters->lq.s.field, g_Thresholds.lq.s.field, format, indent, detail)
 #define SHOW_EXCEEDING_THRESHOLD(field, name) \
-			ShowPortCounterExceedingThreshold(#name, pPortStatus->field, g_Thresholds.field, format, indent, detail)
+			ShowPortCounterExceedingThreshold(#name, pPortCounters->field, g_Thresholds.field, format, indent, detail)
 #define SHOW_EXCEEDING_THRESHOLD64(field, name) \
-			ShowPortCounterExceedingThreshold64(#name, pPortStatus->field, g_Thresholds.field, format, indent, detail)
+			ShowPortCounterExceedingThreshold64(#name, pPortCounters->field, g_Thresholds.field, format, indent, detail)
 #define SHOW_EXCEEDING_MB_THRESHOLD(field, name) \
-			ShowPortCounterExceedingMbThreshold64(#name, pPortStatus->field, g_Thresholds.field, format, indent, detail)
+			ShowPortCounterExceedingMbThreshold64(#name, pPortCounters->field, g_Thresholds.field, format, indent, detail)
 #define SHOW_EXCEEDING_NLD_THRESHOLD(field, name) \
-			ShowPortCounterExceedingThreshold(#name, (pPortStatus->lq.field >> 4), (g_Thresholds.lq.field >> 4), format, indent, detail)
+			ShowPortCounterExceedingThreshold(#name, pPortCounters->lq.s.field, g_Thresholds.lq.s.field, format, indent, detail)
 	// Data movement
-	SHOW_EXCEEDING_MB_THRESHOLD(PortXmitData, XmitData);
-	SHOW_EXCEEDING_MB_THRESHOLD(PortRcvData, RcvData);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitPkts, XmitPkts);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvPkts, RcvPkts);
-	SHOW_EXCEEDING_THRESHOLD64(PortMulticastXmitPkts, MulticastXmitPkts);
-	SHOW_EXCEEDING_THRESHOLD64(PortMulticastRcvPkts, MulticastRcvPkts);
+	SHOW_EXCEEDING_MB_THRESHOLD(portXmitData, XmitData);
+	SHOW_EXCEEDING_MB_THRESHOLD(portRcvData, RcvData);
+	SHOW_EXCEEDING_THRESHOLD64(portXmitPkts, XmitPkts);
+	SHOW_EXCEEDING_THRESHOLD64(portRcvPkts, RcvPkts);
+	SHOW_EXCEEDING_THRESHOLD64(portMulticastXmitPkts, MulticastXmitPkts);
+	SHOW_EXCEEDING_THRESHOLD64(portMulticastRcvPkts, MulticastRcvPkts);
 	// Signal Integrity and Node/Link Stability
-	SHOW_BELOW_LQI_THRESHOLD(LinkQualityIndicator, LinkQualityIndicator);
-	SHOW_EXCEEDING_THRESHOLD(LinkDowned, LinkDowned);
-	SHOW_EXCEEDING_THRESHOLD(UncorrectableErrors, UncorrectableErrors);
-	SHOW_EXCEEDING_THRESHOLD64(FMConfigErrors, FMConfigErrors);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvErrors, RcvErrors);
-	SHOW_EXCEEDING_THRESHOLD64(ExcessiveBufferOverruns, ExcessiveBufferOverruns);
-	SHOW_EXCEEDING_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery);
-	SHOW_EXCEEDING_THRESHOLD64(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
-	SHOW_EXCEEDING_NLD_THRESHOLD(AsReg8, NumLanesDown);
+	SHOW_BELOW_LQI_THRESHOLD(linkQualityIndicator, LinkQualityIndicator);
+	SHOW_EXCEEDING_THRESHOLD(linkDowned, LinkDowned);
+	SHOW_EXCEEDING_THRESHOLD(uncorrectableErrors, UncorrectableErrors);
+	SHOW_EXCEEDING_THRESHOLD64(fmConfigErrors, FMConfigErrors);
+	SHOW_EXCEEDING_THRESHOLD64(portRcvErrors, RcvErrors);
+	SHOW_EXCEEDING_THRESHOLD64(excessiveBufferOverruns, ExcessiveBufferOverruns);
+	SHOW_EXCEEDING_THRESHOLD(linkErrorRecovery, LinkErrorRecovery);
+	SHOW_EXCEEDING_THRESHOLD64(localLinkIntegrityErrors, LocalLinkIntegrityErrors);
+	SHOW_EXCEEDING_THRESHOLD64(portRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
+	SHOW_EXCEEDING_NLD_THRESHOLD(numLanesDown, NumLanesDown);
 	// Security
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitConstraintErrors, XmitConstraintErrors);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvConstraintErrors, RcvConstraintErrors);
+	SHOW_EXCEEDING_THRESHOLD64(portXmitConstraintErrors, XmitConstraintErrors);
+	SHOW_EXCEEDING_THRESHOLD64(portRcvConstraintErrors, RcvConstraintErrors);
 	// Routing or Down nodes still being sent to
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitDiscards, XmitDiscards);
+	SHOW_EXCEEDING_THRESHOLD64(portRcvSwitchRelayErrors, RcvSwitchRelayErrors);
+	SHOW_EXCEEDING_THRESHOLD64(portXmitDiscards, XmitDiscards);
 	// Congestion
-	SHOW_EXCEEDING_THRESHOLD64(SwPortCongestion, CongDiscards);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvFECN, RcvFECN);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvBECN, RcvBECN);
-	SHOW_EXCEEDING_THRESHOLD64(PortMarkFECN, MarkFECN);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitTimeCong, XmitTimeCong);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitWait, XmitWait);
+	SHOW_EXCEEDING_THRESHOLD64(swPortCongestion, CongDiscards);
+	SHOW_EXCEEDING_THRESHOLD64(portRcvFECN, RcvFECN);
+	SHOW_EXCEEDING_THRESHOLD64(portRcvBECN, RcvBECN);
+	SHOW_EXCEEDING_THRESHOLD64(portMarkFECN, MarkFECN);
+	SHOW_EXCEEDING_THRESHOLD64(portXmitTimeCong, XmitTimeCong);
+	SHOW_EXCEEDING_THRESHOLD64(portXmitWait, XmitWait);
 	// Bubbles
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitWastedBW, XmitWastedBW);
-	SHOW_EXCEEDING_THRESHOLD64(PortXmitWaitData, XmitWaitData);
-	SHOW_EXCEEDING_THRESHOLD64(PortRcvBubble, RcvBubble);
+	SHOW_EXCEEDING_THRESHOLD64(portXmitWastedBW, XmitWastedBW);
+	SHOW_EXCEEDING_THRESHOLD64(portXmitWaitData, XmitWaitData);
+	SHOW_EXCEEDING_THRESHOLD64(portRcvBubble, RcvBubble);
 #undef SHOW_BELOW_LQI_THRESHOLD
 #undef SHOW_EXCEEDING_THRESHOLD
 #undef SHOW_EXCEEDING_THRESHOLD64
@@ -5372,57 +5435,63 @@ boolean ShowThresholds(Format_t format, int indent, int detail)
 		break;
 	}
 #define SHOW_THRESHOLD(field, name) \
-	do { if (g_Thresholds.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu\n", indent+4, "", #name, (uint64)g_Thresholds.field); break; case FORMAT_XML: printf("%*s<%s>%lu</%s>\n", indent+4, "", #name, (uint64)g_Thresholds.field, #name); break; default: break; } didoutput = TRUE; } }  while (0)
+	do { if (g_Thresholds.field) { switch (format) { \
+		case FORMAT_TEXT: printf("%*s%-30s %lu\n", indent+4, "", #name, (uint64)g_Thresholds.field); break; \
+		case FORMAT_XML: printf("%*s<%s>%lu</%s>\n", indent+4, "", #name, (uint64)g_Thresholds.field, #name); break; \
+		default: break; } didoutput = TRUE; } }  while (0)
 
-#define SHOW_THRESHOLD_LQI(field, name) \
-	do { if (g_Thresholds.lq.s.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu\n", indent+4, "", #name, (uint64)g_Thresholds.lq.s.field); break; case FORMAT_XML: printf("%*s<%s>%lu</%s>\n", indent+4, "", #name, (uint64)g_Thresholds.lq.s.field, #name); break; default: break; } didoutput = TRUE; } }  while (0)
+#define SHOW_THRESHOLD_LQI_NLD(field, name) \
+	do { if (g_Thresholds.lq.s.field) { switch (format) { \
+		case FORMAT_TEXT: printf("%*s%-30s %lu\n", indent+4, "", #name, (uint64)g_Thresholds.lq.s.field); break; \
+		case FORMAT_XML: printf("%*s<%s>%lu</%s>\n", indent+4, "", #name, (uint64)g_Thresholds.lq.s.field, #name); break; \
+		default: break; } didoutput = TRUE; } }  while (0)
 
 #define SHOW_MB_THRESHOLD(field, name) \
-	do { if (g_Thresholds.field) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu MB\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB); break; case FORMAT_XML: printf("%*s<%sMB>%lu</%sMB>\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB, #name); break; default: break; } didoutput = TRUE; } }  while (0)
-
-#define SHOW_THRESHOLD_NLD(field, name) \
-	do { if (g_Thresholds.lq.field >> 4) { switch (format) { case FORMAT_TEXT: printf("%*s%-30s %lu\n", indent+4, "", #name, (uint64)(g_Thresholds.lq.field >> 4)); break; case FORMAT_XML: printf("%*s<%s>%lu</%s>\n", indent+4, "", #name, (uint64)(g_Thresholds.lq.field >> 4), #name); break; default: break; } didoutput = TRUE; } }  while (0)
+	do { if (g_Thresholds.field) { switch (format) { \
+		case FORMAT_TEXT: printf("%*s%-30s %lu MB\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB); break; \
+		case FORMAT_XML: printf("%*s<%sMB>%lu</%sMB>\n", indent+4, "", #name, (uint64)g_Thresholds.field/FLITS_PER_MB, #name); break; \
+		default: break; } didoutput = TRUE; } }  while (0)
 
 	// Data movement
-	SHOW_MB_THRESHOLD(PortXmitData, XmitData);
-	SHOW_MB_THRESHOLD(PortRcvData, RcvData);
-	SHOW_THRESHOLD(PortXmitPkts, XmitPkts);
-	SHOW_THRESHOLD(PortRcvPkts, RcvPkts);
-	SHOW_THRESHOLD(PortMulticastXmitPkts, MulticastXmitPkts);
-	SHOW_THRESHOLD(PortMulticastRcvPkts, MulticastRcvPkts);
+	SHOW_MB_THRESHOLD(portXmitData, XmitData);
+	SHOW_MB_THRESHOLD(portRcvData, RcvData);
+	SHOW_THRESHOLD(portXmitPkts, XmitPkts);
+	SHOW_THRESHOLD(portRcvPkts, RcvPkts);
+	SHOW_THRESHOLD(portMulticastXmitPkts, MulticastXmitPkts);
+	SHOW_THRESHOLD(portMulticastRcvPkts, MulticastRcvPkts);
 
 	// Signal Integrity and Node/Link Stability
-	SHOW_THRESHOLD_LQI(LinkQualityIndicator, LinkQualityIndicator);
-	SHOW_THRESHOLD(UncorrectableErrors, UncorrectableErrors);
-	SHOW_THRESHOLD(LinkDowned, LinkDowned);
-	SHOW_THRESHOLD(PortRcvErrors, RcvErrors);
-	SHOW_THRESHOLD(ExcessiveBufferOverruns, ExcessiveBufferOverruns);
-	SHOW_THRESHOLD(FMConfigErrors, FMConfigErrors);
-	SHOW_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery);
-	SHOW_THRESHOLD(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors);
-	SHOW_THRESHOLD(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
-	SHOW_THRESHOLD_NLD(AsReg8, NumLanesDown);
+	SHOW_THRESHOLD_LQI_NLD(linkQualityIndicator, LinkQualityIndicator);
+	SHOW_THRESHOLD(uncorrectableErrors, UncorrectableErrors);
+	SHOW_THRESHOLD(linkDowned, LinkDowned);
+	SHOW_THRESHOLD(portRcvErrors, RcvErrors);
+	SHOW_THRESHOLD(excessiveBufferOverruns, ExcessiveBufferOverruns);
+	SHOW_THRESHOLD(fmConfigErrors, FMConfigErrors);
+	SHOW_THRESHOLD(linkErrorRecovery, LinkErrorRecovery);
+	SHOW_THRESHOLD(localLinkIntegrityErrors, LocalLinkIntegrityErrors);
+	SHOW_THRESHOLD(portRcvRemotePhysicalErrors, RcvRemotePhysicalErrors);
+	SHOW_THRESHOLD_LQI_NLD(numLanesDown, NumLanesDown);
 
 	// Security
-	SHOW_THRESHOLD(PortXmitConstraintErrors, XmitConstraintErrors);
-	SHOW_THRESHOLD(PortRcvConstraintErrors, RcvConstraintErrors);
+	SHOW_THRESHOLD(portXmitConstraintErrors, XmitConstraintErrors);
+	SHOW_THRESHOLD(portRcvConstraintErrors, RcvConstraintErrors);
 
 	// Routing or Down nodes still being sent to
-	SHOW_THRESHOLD(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors);
-	SHOW_THRESHOLD(PortXmitDiscards, XmitDiscards);
+	SHOW_THRESHOLD(portRcvSwitchRelayErrors, RcvSwitchRelayErrors);
+	SHOW_THRESHOLD(portXmitDiscards, XmitDiscards);
 
 	// Congestion
-	SHOW_THRESHOLD(SwPortCongestion, CongDiscards);
-	SHOW_THRESHOLD(PortRcvFECN, RcvFECN);
-	SHOW_THRESHOLD(PortRcvBECN, RcvBECN);
-	SHOW_THRESHOLD(PortMarkFECN, MarkFECN);
-	SHOW_THRESHOLD(PortXmitTimeCong, XmitTimeCong);
-	SHOW_THRESHOLD(PortXmitWait, XmitWait);
+	SHOW_THRESHOLD(swPortCongestion, CongDiscards);
+	SHOW_THRESHOLD(portRcvFECN, RcvFECN);
+	SHOW_THRESHOLD(portRcvBECN, RcvBECN);
+	SHOW_THRESHOLD(portMarkFECN, MarkFECN);
+	SHOW_THRESHOLD(portXmitTimeCong, XmitTimeCong);
+	SHOW_THRESHOLD(portXmitWait, XmitWait);
 
 	// Bubbles
-	SHOW_THRESHOLD(PortXmitWastedBW, XmitWastedBW);
-	SHOW_THRESHOLD(PortXmitWaitData, XmitWaitData);
-	SHOW_THRESHOLD(PortRcvBubble, RcvBubble);
+	SHOW_THRESHOLD(portXmitWastedBW, XmitWastedBW);
+	SHOW_THRESHOLD(portXmitWaitData, XmitWaitData);
+	SHOW_THRESHOLD(portRcvBubble, RcvBubble);
 
 	switch (format) {
 	case FORMAT_TEXT:
@@ -5438,8 +5507,7 @@ boolean ShowThresholds(Format_t format, int indent, int detail)
 
 #undef SHOW_THRESHOLD
 #undef SHOW_MB_THRESHOLD
-#undef SHOW_THRESHOLD_LQI
-#undef SHOW_THRESHOLD_NLD
+#undef SHOW_THRESHOLD_LQI_NLD
 	return didoutput;
 }
 
@@ -11983,20 +12051,20 @@ struct option options[] = {
 		{ "hard", no_argument, NULL, 'H' },
 		{ "noname", no_argument, NULL, 'N' },
 		{ "stats", no_argument, NULL, 's' },
-		{ "interval", no_argument, NULL, 'i' },
+		{ "interval", required_argument, NULL, 'i' },
 		{ "clear", no_argument, NULL, 'C' },
 		{ "clearall", no_argument, NULL, 'a' },
 		{ "smadirect", no_argument, NULL, 'm' },
 		{ "pmadirect", no_argument, NULL, 'M' },
 		{ "routes", no_argument, NULL, 'r' },
 		{ "limit", no_argument, NULL, 'L' },
-		{ "config", no_argument, NULL, 'c' },
-		{ "focus", no_argument, NULL, 'F' },
-		{ "src", no_argument, NULL, 'S' },
-		{ "dest", no_argument, NULL, 'D' },
+		{ "config", required_argument, NULL, 'c' },
+		{ "focus", required_argument, NULL, 'F' },
+		{ "src", required_argument, NULL, 'S' },
+		{ "dest", required_argument, NULL, 'D' },
 		{ "xml", no_argument, NULL, 'x' },
-		{ "infile", no_argument, NULL, 'X' },
-		{ "topology", no_argument, NULL, 'T' },
+		{ "infile", required_argument, NULL, 'X' },
+		{ "topology", required_argument, NULL, 'T' },
 		{ "quietfocus", no_argument, NULL, 'Q' },
 		{ "vltables", no_argument, NULL, 'V' },
 		{ "allports", no_argument, NULL, 'A' },
@@ -12427,38 +12495,38 @@ int parse(const char* filename)
 				if (threshold > 5) {
 					fprintf(stderr, "opareport: LinkQualityIndicator max threshold setting is 5, ignoring: %llu\n", threshold);
 				} else {
-					g_Thresholds.lq.s.LinkQualityIndicator = threshold;
+					g_Thresholds.lq.s.linkQualityIndicator = threshold;
 					/* can't be cleared. */
 				}
 			} else if (strcmp(param,"NumLanesDown") == 0) {
 				if (threshold > 4) {
 					fprintf(stderr, "opareport: NumLanesDown max threshold setting is 4, ignoring: %llu\n", threshold);
 				} else {
-					g_Thresholds.lq.AsReg8 |= (threshold << 4);
+					g_Thresholds.lq.s.numLanesDown = threshold;
 				}
-#define PARSE_THRESHOLD(field, name, max) \
+#define PARSE_THRESHOLD(field, sel, name, max) \
 	if (strcmp(param, #name) == 0) { \
 		if (threshold > (max)) { \
 			fprintf(stderr, "opareport: " #name " max threshold is %u, ignoring: %llu\n", (max), threshold); \
 		} else { \
 			g_Thresholds.field = threshold; \
 			if (threshold) { \
-				g_CounterSelectMask.CounterSelectMask.s.field = 1; \
+				g_CounterSelectMask.CounterSelectMask.s.sel = 1; \
 			} \
 		} \
 	}
-#define PARSE_THRESHOLD64(field, name) \
+#define PARSE_THRESHOLD64(field, sel, name) \
 	if (strcmp(param, #name) == 0) { \
 		if (threshold >= UINT64_MAX) { \
 			fprintf(stderr, "opareport: " #name " max threshold is %llu, ignoring: %llu\n",(unsigned long long)UINT64_MAX-1, threshold); \
 		} else { \
 			g_Thresholds.field = threshold; \
 			if (threshold) { \
-				g_CounterSelectMask.CounterSelectMask.s.field = 1; \
+				g_CounterSelectMask.CounterSelectMask.s.sel = 1; \
 			} \
 		} \
 	}
-#define PARSE_MB_THRESHOLD(field, name) \
+#define PARSE_MB_THRESHOLD(field, sel, name) \
 	if (strcmp(param, #name) == 0) { \
 		if (threshold > ((1ULL << 63)-1)/(FLITS_PER_MB/2)) { \
 			fprintf(stderr, "opareport: " #name " max threshold is %llu, ignoring: %llu\n", ((1ULL << 63)-1)/(FLITS_PER_MB/2), threshold); \
@@ -12466,44 +12534,44 @@ int parse(const char* filename)
 			threshold = threshold * FLITS_PER_MB; \
 			g_Thresholds.field = threshold; \
 			if (threshold) { \
-				g_CounterSelectMask.CounterSelectMask.s.field = 1; \
+				g_CounterSelectMask.CounterSelectMask.s.sel = 1; \
 			} \
 		} \
 	}
 			// Data movement
-			} else PARSE_MB_THRESHOLD(PortXmitData, XmitData)
-			else PARSE_MB_THRESHOLD(PortRcvData, RcvData)
-			else PARSE_THRESHOLD64(PortXmitPkts, XmitPkts)
-			else PARSE_THRESHOLD64(PortRcvPkts, RcvPkts)
-			else PARSE_THRESHOLD64(PortMulticastXmitPkts, MulticastXmitPkts)
-			else PARSE_THRESHOLD64(PortMulticastRcvPkts, MulticastRcvPkts)
+			} else PARSE_MB_THRESHOLD(portXmitData, PortXmitData, XmitData)
+			else PARSE_MB_THRESHOLD(portRcvData, PortRcvData, RcvData)
+			else PARSE_THRESHOLD64(portXmitPkts, PortXmitPkts, XmitPkts)
+			else PARSE_THRESHOLD64(portRcvPkts, PortRcvPkts, RcvPkts)
+			else PARSE_THRESHOLD64(portMulticastXmitPkts, PortMulticastXmitPkts, MulticastXmitPkts)
+			else PARSE_THRESHOLD64(portMulticastRcvPkts, PortMulticastRcvPkts, MulticastRcvPkts)
 			// Signal Integrity and Node/Link Stability
 			// LinkQualityIndicator parsed above
-			else PARSE_THRESHOLD(UncorrectableErrors, UncorrectableErrors, 255)
-			else PARSE_THRESHOLD(LinkDowned, LinkDowned, UINT_MAX)
-			else PARSE_THRESHOLD64(PortRcvErrors, RcvErrors)
-			else PARSE_THRESHOLD64(ExcessiveBufferOverruns, ExcessiveBufferOverruns)
-			else PARSE_THRESHOLD64(FMConfigErrors, FMConfigErrors)
-			else PARSE_THRESHOLD(LinkErrorRecovery, LinkErrorRecovery, UINT_MAX)
-			else PARSE_THRESHOLD64(LocalLinkIntegrityErrors, LocalLinkIntegrityErrors)
-			else PARSE_THRESHOLD64(PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors)
+			else PARSE_THRESHOLD(uncorrectableErrors, UncorrectableErrors, UncorrectableErrors, 255)
+			else PARSE_THRESHOLD(linkDowned, LinkDowned, LinkDowned, UINT_MAX)
+			else PARSE_THRESHOLD64(portRcvErrors, PortRcvErrors, RcvErrors)
+			else PARSE_THRESHOLD64(excessiveBufferOverruns, ExcessiveBufferOverruns, ExcessiveBufferOverruns)
+			else PARSE_THRESHOLD64(fmConfigErrors, FMConfigErrors, FMConfigErrors)
+			else PARSE_THRESHOLD(linkErrorRecovery, LinkErrorRecovery, LinkErrorRecovery, UINT_MAX)
+			else PARSE_THRESHOLD64(localLinkIntegrityErrors, LocalLinkIntegrityErrors, LocalLinkIntegrityErrors)
+			else PARSE_THRESHOLD64(portRcvRemotePhysicalErrors, PortRcvRemotePhysicalErrors, RcvRemotePhysicalErrors)
 			// Security
-			else PARSE_THRESHOLD64(PortXmitConstraintErrors, XmitConstraintErrors)
-			else PARSE_THRESHOLD64(PortRcvConstraintErrors, RcvConstraintErrors)
+			else PARSE_THRESHOLD64(portXmitConstraintErrors, PortXmitConstraintErrors, XmitConstraintErrors)
+			else PARSE_THRESHOLD64(portRcvConstraintErrors, PortRcvConstraintErrors, RcvConstraintErrors)
 			// Routing or Down nodes still being sent to
-			else PARSE_THRESHOLD64(PortRcvSwitchRelayErrors, RcvSwitchRelayErrors)
-			else PARSE_THRESHOLD64(PortXmitDiscards, XmitDiscards)
+			else PARSE_THRESHOLD64(portRcvSwitchRelayErrors, PortRcvSwitchRelayErrors, RcvSwitchRelayErrors)
+			else PARSE_THRESHOLD64(portXmitDiscards, PortXmitDiscards, XmitDiscards)
 			// Congestion
-			else PARSE_THRESHOLD64(SwPortCongestion, CongDiscards)
-			else PARSE_THRESHOLD64(PortRcvFECN, RcvFECN)
-			else PARSE_THRESHOLD64(PortRcvBECN, RcvBECN)
-			else PARSE_THRESHOLD64(PortMarkFECN, MarkFECN)
-			else PARSE_THRESHOLD64(PortXmitTimeCong, XmitTimeCong)
-			else PARSE_THRESHOLD64(PortXmitWait, XmitWait)
+			else PARSE_THRESHOLD64(swPortCongestion, SwPortCongestion, CongDiscards)
+			else PARSE_THRESHOLD64(portRcvFECN, PortRcvFECN, RcvFECN)
+			else PARSE_THRESHOLD64(portRcvBECN, PortRcvBECN, RcvBECN)
+			else PARSE_THRESHOLD64(portMarkFECN, PortMarkFECN, MarkFECN)
+			else PARSE_THRESHOLD64(portXmitTimeCong, PortXmitTimeCong, XmitTimeCong)
+			else PARSE_THRESHOLD64(portXmitWait, PortXmitWait, XmitWait)
 			// Bubbles
-			else PARSE_THRESHOLD64(PortXmitWastedBW, XmitWastedBW)
-			else PARSE_THRESHOLD64(PortXmitWaitData, XmitWaitData)
-			else PARSE_THRESHOLD64(PortRcvBubble, RcvBubble)
+			else PARSE_THRESHOLD64(portXmitWastedBW, PortXmitWastedBW, XmitWastedBW)
+			else PARSE_THRESHOLD64(portXmitWaitData, PortXmitWaitData, XmitWaitData)
+			else PARSE_THRESHOLD64(portRcvBubble, PortRcvBubble, RcvBubble)
 #undef PARSE_THRESHOLD
 #undef PARSE_MB_THRESHOLD
 			else {

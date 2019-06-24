@@ -1,7 +1,7 @@
-#!/bin/bash
-# BEGIN_ICS_COPYRIGHT8 ****************************************
+#!/usr/bin/perl
+## BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015-2017, Intel Corporation
+# Copyright (c) 2015-2019, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -26,34 +26,62 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # 
-# END_ICS_COPYRIGHT8   ****************************************
+## END_ICS_COPYRIGHT8   ****************************************
+#
+## [ICS VERSION STRING: unknown]
+#use strict;
+##use Term::ANSIColor;
+##use Term::ANSIColor qw(:constants);
+##use File::Basename;
+##use Math::BigInt;
+#
+## ==========================================================================
+#
+#Installation Prequisites array for fast fabric
+#and of tools component
+my @oftools_prereq = (
+    "glibc",
+    "libgcc",
+    "libibumad",
+    "libibverbs",
+    "libstdc++",
+    "ibacm",
+    "rdma-core",
+);
+$comp_prereq_hash{'oftools_prereq'} = \@oftools_prereq;
 
-#[ICS VERSION STRING: unknown]
+my @fastfabric_prereq = (
+    "atlas",
+    "bash",
+    "bc",
+    "expat",
+    "expect",
+    "glibc",
+    "libgcc",
+    "libibumad",
+    "libibverbs",
+    "libstdc++",
+    "ncurses-libs",
+    "openssl-libs",
+    "perl",
+    "perl-Getopt-Long",
+    "perl-Socket",
+    "rdma-core",
+    "tcl",
+    "zlib",
+);
+$comp_prereq_hash{'fastfabric_prereq'} = \@fastfabric_prereq;
 
-id=$(./get_id_and_versionid.sh | cut -f1 -d' ')
-versionid=$(./get_id_and_versionid.sh | cut -f2 -d' ')
-
-if [ "$id" = "rhel" -o "$id" = "centos" ]
-then
-	GE_8_0=$(echo "$versionid >= 8.0" | bc)
-	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec
-	if [ $GE_8_0 = 1 ]
-	then
-		sed -i "s/__RPM_DBG/%global debug_package %{nil}/" mpi-apps.spec
-	else
-		sed -i "/__RPM_DBG/,+1d" mpi-apps.spec
-	fi
-elif [ "$id" = "fedora" ]
-then
-	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec
-	sed -i "s/__RPM_DBG/%global debug_package %{nil}/" mpi-apps.spec
-elif [ "$id" = "sles" ]
-then
-	sed -i "/__RPM_REQ/,+1d" mpi-apps.spec
-	sed -i "/__RPM_DBG/,+1d" mpi-apps.spec
-else
-	echo ERROR: Unsupported distribution: $id $versionid
-	exit 1
-fi
-
-exit 0
+my @opamgt_sdk_prereq = (
+    "bash",
+    "glibc",
+    "libgcc",
+    "libibumad",
+    "libibverbs",
+    "libstdc++",
+    "openssl",
+    "openssl-devel",
+    "openssl-libs",
+    "rdma-core-devel",
+);
+$comp_prereq_hash{'opamgt_sdk_prereq'} = \@opamgt_sdk_prereq;

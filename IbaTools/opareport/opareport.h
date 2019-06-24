@@ -150,6 +150,7 @@ typedef enum {
 	LINKPORT_MTU=2,
 	LINKPORT_BLANKMTU=3
 } LinkPortMtu_t;
+void ShowPortCounters(STL_PORT_COUNTERS_DATA *pPortCounters, Format_t format, int indent, int detail);
 typedef void LinkPortSummaryDetailCallback_t(uint64 context, PortData *portp, Format_t format, int indent, int detail);
 extern void ShowLinkPortBriefSummary(PortData *portp, const char *prefix,
 			uint64 context, LinkPortSummaryDetailCallback_t *callback,

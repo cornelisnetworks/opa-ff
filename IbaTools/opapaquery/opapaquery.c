@@ -166,6 +166,7 @@ struct option options[] = {
 		{ "range", required_argument, NULL, 'r' },
 		{ "operator", required_argument, NULL, 'Z'},
 		{ "tuple", required_argument, NULL, 'Q'},
+		{ "vfName", required_argument, NULL, 'V'},
 		{ "timeout", required_argument, NULL, '!'},
 		{ "help", no_argument, NULL, '$' },
 		{ 0 }

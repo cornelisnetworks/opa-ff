@@ -55,9 +55,9 @@
 . /usr/sbin/opagetvf_env	# defines bash function opagetvf_func
 export MPI_CMD_ARGS=
 
-# It is recommended to use the TMI interface over PSM2 within IntelMPI
-export I_MPI_FABRICS=shm:tmi
-export I_MPI_TMI_PROVIDER=psm2
+# It is recommended to use the OFI interface over PSM2 within IntelMPI
+export I_MPI_FABRICS=shm:ofi
+export I_MPI_OFI_PROVIDER=psm2
 
 # These 3 lines select a Virtual Fabric by name and configure PKEY, SL, MTU
 # opagetvf_func "-d 'Compute'" PSM2_PKEY HFI_SL PSM2_MTU
