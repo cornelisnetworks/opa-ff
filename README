@@ -3,6 +3,16 @@ OPA tools and Fast Fabric
 
 * To build the RPM and SRPM:
 
+# Install Dependencies:
+
+ * ibacm-devel
+ * ncurses-devel
+ * openssl-devel
+ * rdma-core-devel
+ * tcl-devel
+
+# Build:
+
   1. mkdir -p $HOME/rpmbuild/{SOURCES,RPMS,SRPMS}
   2. ./update_opa_spec.sh opa-ff.spec.in opa-ff.spec
   3. tar czf $HOME/rpmbuild/SOURCES/opa.tgz --exclude-vcs .
