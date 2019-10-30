@@ -251,6 +251,12 @@ void XmlPrintLinkSpeed(const char* tag_prefix, uint16 value, int indent)
 	XmlPrintStr(tag_prefix, StlLinkSpeedToText(value, buf, sizeof(buf)), indent);
 	printf("%*s<%s_Int>%u</%s_Int>\n", indent, "",tag_prefix, value, tag_prefix);
 }
+void XmlPrintPortLtpCrc(const char* tag_prefix, uint16 value, int indent)
+{
+	char buf[64];
+	XmlPrintStr(tag_prefix, StlPortLtpCrcModeToText(value, buf, sizeof(buf)), indent);
+	printf("%*s<%s_Int>%u</%s_Int>\n", indent, "", tag_prefix, value, tag_prefix);
+}
 
 // for predictable output order, should be called with the from port of the
 // link record, with the exception of trace routes
@@ -2842,6 +2848,40 @@ void ShowPortCounters(STL_PORT_COUNTERS_DATA *pPortCounters, Format_t format, in
 		break;
 	}
 }
+void ShowPortLinkDownReasonLog(PortData *portp, Format_t format, int indent, int detail)
+{
+	int i, idx = STL_LINKDOWN_REASON_LAST_INDEX(portp->LinkDownReasons);
+	if (idx == -1) return;
+
+	STL_LINKDOWN_REASON *ldr = &portp->LinkDownReasons[idx];
+
+	for (i = 0; i < STL_NUM_LINKDOWN_REASONS; ++i) {
+		if (ldr->Timestamp == 0) break;
+		switch (format) {
+		case FORMAT_TEXT:
+			printf("%*s", indent, "");
+			if (ldr->LinkDownReason)
+				printf("LinkDownReasonLog: %s ", StlLinkDownReasonToText(ldr->LinkDownReason));
+			if (ldr->NeighborLinkDownReason)
+				printf("NeighborLinkDownReasonLog: %s", StlLinkDownReasonToText(ldr->NeighborLinkDownReason));
+			printf("\n%*sTimestamp: %s", indent+4, "", ctime((time_t *)&ldr->Timestamp)); // ctime ends in '\n'
+			break;
+		case FORMAT_XML:
+			printf("%*s<LinkDownReasonLog idx=\"%u\">\n", indent, "", idx);
+			XmlPrintDec("LinkDownReason", ldr->LinkDownReason, indent+4);
+			XmlPrintDec("NeighborLinkDownReason", ldr->NeighborLinkDownReason, indent+4);
+			XmlPrintDec64("Timestamp", ldr->Timestamp, indent+4);
+			printf("%*s</LinkDownReasonLog>\n", indent, "");
+			break;
+		default:
+			return;
+		}
+
+		if (idx == 0) idx = STL_NUM_LINKDOWN_REASONS;
+		idx--;
+		ldr = &portp->LinkDownReasons[idx];
+	}
+}
 
 // output verbose summary of an STL Port
 void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
@@ -3052,6 +3092,16 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 					StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Supported, buf2, sizeof(buf2)),
 					StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Enabled, buf3, sizeof(buf3)));
 			if (g_hard)
+				printf("%*sPortLTPCRCMode: Act: xxxx Sup: %-21s En: xxxx\n",
+					indent+4, "",
+					StlPortLtpCrcModeToText(pPortInfo->PortLTPCRCMode.s.Supported, buf1, sizeof(buf1)));
+			else
+				printf("%*sPortLTPCRCMode: Act: %-6s Sup: %-21s En: %-21s\n",
+					indent+4, "",
+					StlPortLtpCrcModeToText(pPortInfo->PortLTPCRCMode.s.Active, buf1, sizeof(buf1)),
+					StlPortLtpCrcModeToText(pPortInfo->PortLTPCRCMode.s.Supported, buf2, sizeof(buf2)),
+					StlPortLtpCrcModeToText(pPortInfo->PortLTPCRCMode.s.Enabled, buf3, sizeof(buf3)));
+			if (g_hard)
 				printf( "%*sLinkSpeed: Active: xxxxxxx  Supported: %10s  Enabled: xxxxxxxxxx\n",
 					indent+4, "",
 					StlLinkSpeedToText(pPortInfo->LinkSpeed.Supported, buf1, sizeof(buf1)));
@@ -3222,6 +3272,11 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 					indent+4, "",
 					pPortInfo->s3.PartitionEnforcementInbound?"On":"Off",
 					pPortInfo->s3.PartitionEnforcementOutbound?"On":"Off");
+
+			if (detail > 1) {
+				ShowPortLinkDownReasonLog(portp, format, indent+4, detail-2);
+			}
+
 			if ( portp->nodep && portp->pQOS &&
 					(detail > 1) && !g_persist && !g_hard ) {
 				if ( portp->pQOS->SL2SCMap ) {
@@ -3417,20 +3472,32 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				XmlPrintLinkSpeed("LinkSpeedEnabled",
 					pPortInfo->LinkSpeed.Enabled, indent+4);
 			}
-			
-			XmlPrintStr("PortLinkModeSupported", 
-				StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Supported, buf1,
-				sizeof(buf1)), indent+4);	
-				
-			if (! g_hard) {	
-				XmlPrintStr("PortLinkModeActive", 
-					StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Active, buf1,
-					sizeof(buf1)), indent+4);	
-				XmlPrintStr("PortLinkModeEnabled",
-					StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Enabled, buf1, 
-					sizeof(buf1)), indent+4);	
+
+			if (! g_hard) {
+				XmlPrintStr("PortLinkModeActive",
+					StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Active,
+						buf1, sizeof(buf1)), indent+4);
 			}
-			
+			XmlPrintStr("PortLinkModeSupported",
+				StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Supported,
+					buf1, sizeof(buf1)), indent+4);
+			if (! g_hard) {
+				XmlPrintStr("PortLinkModeEnabled",
+					StlPortLinkModeToText(pPortInfo->PortLinkMode.s.Enabled,
+						buf1, sizeof(buf1)), indent+4);
+			}
+
+			if (! g_hard) {
+				XmlPrintPortLtpCrc("PortLTPCRCModeActive",
+					pPortInfo->PortLTPCRCMode.s.Active, indent+4);
+			}
+			XmlPrintPortLtpCrc("PortLTPCRCModeSupported",
+				pPortInfo->PortLTPCRCMode.s.Supported, indent+4);
+			if (! g_hard) {
+				XmlPrintPortLtpCrc("PortLTPCRCModeEnabled",
+					pPortInfo->PortLTPCRCMode.s.Enabled, indent+4);
+			}
+
 			XmlPrintDec("SM_TrapQP", pPortInfo->SM_TrapQP.s.QueuePair, indent+4);
 			XmlPrintDec("SA_QP", pPortInfo->SA_QP.s.QueuePair, indent+4);
 			XmlPrintStr("IPV6", inet_ntop(AF_INET6, pPortInfo->IPAddrIPV6.addr, buf1, sizeof(buf1)), indent+4);
@@ -3588,6 +3655,9 @@ void ShowPortSummary(PortData *portp, Format_t format, int indent, int detail)
 				XmlPrintDec("P_KeyEnforcementOutbound_Int",
 					pPortInfo->s3.PartitionEnforcementOutbound,
 					indent+4);
+			}
+			if (detail > 1) {
+				ShowPortLinkDownReasonLog(portp, format, indent+4, detail-2);
 			}
 			if ( portp->nodep && portp->pQOS && 
 					(detail > 1) && !g_persist && !g_hard ) {
@@ -12332,6 +12402,10 @@ void Usage_full(void)
 	fprintf(stderr, "                                to value\n");
 	fprintf(stderr, "   nodepatfile:FILENAME       - name of file with list of nodes\n");
 	fprintf(stderr, "   nodepairpatfile:FILENAME   - name of file with list of node pairs separated by colon\n");
+	fprintf(stderr, "   ldr                        - ports with a non-zero link down reason or neighbor\n");
+	fprintf(stderr, "                                link down reason\n");
+	fprintf(stderr, "   ldr:value                  - ports with a link down reason or neighbor link down\n");
+	fprintf(stderr, "                                reason equal to value\n");
 	fprintf(stderr, "Examples:\n");
 	fprintf(stderr, "   opareport -o comps -d 3\n");
 	fprintf(stderr, "   opareport -o errors -o slowlinks\n");

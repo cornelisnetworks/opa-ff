@@ -6,37 +6,34 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaswdisableall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaswdisableall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaswdisableall
 
-.NL
 
 .PP
 
 \fB(Linux)\fR
 Disables all unused switch ports.
 .SH Syntax
-.NL
-opaswdisableall [-t \fIportsfile\fR] [-p \fIports\fR] [-F \fIfocus\fR]
+opaswdisableall [-t  \fIportsfile\fR] [-p  \fIports\fR] [-F  \fIfocus\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabrics when clearing counters.
 .br
 Default is /etc/opa/ports file.
 
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabrics for counter clear.
 
 .IP
@@ -47,7 +44,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -56,7 +53,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -65,7 +62,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -74,32 +71,31 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
 .TP 10
--F \fIfocus\fR 
-.NL
+-F \fIfocus\fR
+
 Specifies the an opareport -style focus argument to limit the scope of operation.
 
-.SH Examples 
-.NL
+.SH Examples
 opaswdisableall
 .br
+
 opaswdisableall -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.

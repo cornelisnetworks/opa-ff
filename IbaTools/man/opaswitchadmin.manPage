@@ -6,57 +6,55 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaswitchadmin 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaswitchadmin 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaswitchadmin
 
-.NL
 
 .PP
 
 \fB(Switch)\fR
 Performs a number of multi-step initialization and verification operations against one or more externally managed Intel(R) Omni-Path switches. The operations include initial switch setup, firmware upgrades, chassis reboot, and others.
-.SH Syntax 
-.NL
-opaswitchadmin [-c] [-N \[aq]\fInodes\fR\[aq]] [-L \fInodefile\fR] [-O] [-P \fIpackages\fR]
+.SH Syntax
+opaswitchadmin [-c] [-N \[aq]\fInodes\fR\[aq]] [-L  \fInodefile\fR] [-O] [-P  \fIpackages\fR]
 .br
-[-a \fIaction\fR] [-t \fIportsfile\fR] [-p \fIports\fR] \fIoperation\fR...
-.SH Options 
-.NL
+[-a  \fIaction\fR]
+[-t  \fIportsfile\fR] [-p  \fIports\fR]  \fIoperation\fR ...
+.SH Options
 
 .TP 10
--help 
-.NL
+-help
+
 Produces full help text.
 
 .TP 10
--c 
-.NL
+-c
+
 Overwrites result files from any previous run before starting this run.
 
 .TP 10
--N \fInodes\fR 
-.NL
+-N \fInodes\fR
+
 Specifies the list of nodes to execute the operation against.
 
 .TP 10
--L \fInodefile\fR 
-.NL
+-L \fInodefile\fR
+
 Specifies the file with nodes in the cluster. Default is /etc/opa/switches file.
 
 .TP 10
--P \fIpackages\fR 
-.NL
+-P \fIpackages\fR
+
 For upgrades: Specifies the file name or directory where the firmware image is to install. For the directory specified, .emfw file in the directory tree is used. shell wild cards may also be used within quotes.
 
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabrics for switch access. Default is /etc/opa/ports file.
 
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabrics for switch access.
 
 .IP
@@ -67,7 +65,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -76,7 +74,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -85,7 +83,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -94,21 +92,21 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
 .TP 10
--a \fIaction\fR 
-.NL
+-a \fIaction\fR
+
 Specifies an action for firmware file for switch upgrade. The action argument can be one or more of the following:
 
 .RS
 .TP 10
 
 .sp
-select 
+select
 Ensures firmware is in primary (Default).
 
 .RE
@@ -117,26 +115,26 @@ Ensures firmware is in primary (Default).
 .TP 10
 
 .sp
-run 
+run
 Ensures firmware is in primary and running.
 
 .RE
 
 .TP 10
--O 
-.NL
+-O
+
 Specifies the override for firmware upgrades, bypasses the previous firmware version checks, and forces the update unconditionally.
 
 .TP 10
-\fIoperation\fR 
-.NL
+\fIoperation\fR
+
 Performs the specified \fIoperation\fR, which can be one or more of the following:
 
 .RS
 .TP 10
 
 .sp
-reboot 
+reboot
 Reboots switches, ensures they go down and come back.
 
 .RE
@@ -145,7 +143,7 @@ Reboots switches, ensures they go down and come back.
 .TP 10
 
 .sp
-configure 
+configure
 Runs wizard to set up switch configuration.
 
 .TP 10
@@ -162,7 +160,7 @@ You must reboot the switch for any new settings to be applied.
 .TP 10
 
 .sp
-upgrade 
+upgrade
 Upgrades installation of all switches.
 
 .RE
@@ -171,7 +169,7 @@ Upgrades installation of all switches.
 .TP 10
 
 .sp
-info 
+info
 Reports firmware and hardware version, part number, and data rate capability of all nodes.
 
 .RE
@@ -180,7 +178,7 @@ Reports firmware and hardware version, part number, and data rate capability of 
 .TP 10
 
 .sp
-hwvpd 
+hwvpd
 Completes hardware Vital Product Data (VPD) report of all nodes.
 
 .RE
@@ -189,7 +187,7 @@ Completes hardware Vital Product Data (VPD) report of all nodes.
 .TP 10
 
 .sp
-ping 
+ping
 Pings all nodes and tests for presence.
 
 .RE
@@ -198,7 +196,7 @@ Pings all nodes and tests for presence.
 .TP 10
 
 .sp
-fwverify 
+fwverify
 Reports integrity of failsafe firmware of all nodes.
 
 .RE
@@ -207,7 +205,7 @@ Reports integrity of failsafe firmware of all nodes.
 .TP 10
 
 .sp
-getconfig 
+getconfig
 Gets port configurations of an externally managed switch.
 
 .RE
@@ -216,45 +214,44 @@ Gets port configurations of an externally managed switch.
 For more information on operations, see
 \fIOperation Details\fR
 .
-.SH Example 
-.NL
+.SH Example
 opaswitchadmin -c reboot
 .br
+
 opaswitchadmin -P /root/ChassisFw \fIX.X.X.X.X\fR upgrade
 .br
+
 opaswitchadmin -a run -P \[aq]*.emfw\[aq] upgrade
-.SH Environment Variables 
-.NL
+.SH Environment Variables
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBOPASWITCHES\fR 
-.NL
+\fBOPASWITCHES\fR
+
 List of nodes, used in absence of -N and -L options.
 
 .TP 10
-\fBOPASWITCHES\(ulFILE\fR 
-.NL
+\fBOPASWITCHES\(ulFILE\fR
+
 File containing list of nodes, used in absence of -N and -L options.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 Maximum concurrent operations.
 
 .TP 10
-\fBFF\(ulSERIALIZE\(ulOUTPUT\fR 
-.NL
+\fBFF\(ulSERIALIZE\(ulOUTPUT\fR
+
 Serialize output of parallel operations (yes or no).
 
 .TP 10
-\fBFF\(ulTIMEOUT\(ulMULT\fR 
-.NL
+\fBFF\(ulTIMEOUT\(ulMULT\fR
+
 Multiplier for all timeouts associated with this command. Used if the systems are slow for some reason.
 
 .SH Details
-.NL
 
 .PP
 opaswitchadmin provides detailed logging of its results. During each run, the following files are produced:
@@ -274,25 +271,23 @@ Results from opaswitchadmin are grouped into test suites, test cases, and test i
 Each opaswitchadmin run appends to test.res and test.log and creates temporary files in test\(ultmp$PID in the current directory. the test.res file provides an overall summary of operations performed and their results. The same information is also displayed while opaswitchadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files that reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opaswitchadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opaswitchadmin. opaswitchadmin also appends to punchlist.csv for failing switches.
 .PP
 opaswitchadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. 1000 parallel operations is the default.
-.NL
 
 .SH Operation Details
-.NL
 
 .PP
 
 \fB(Switch)\fR
 All operations against Intel(R) Omni-Path Fabric externally-managed switches (except ping) securely access the selected switches. If a password has been set, the -S option must be used to securely prompt for a password. In this case, the same password is used for all switches.
 .TP 10
-reboot 
-.NL
+reboot
+
 Reboots the given switches.
 
 .IP
 Use the \fBFF\(ulMAX\(ulPARALLEL\fR value to select either a rolling reboot or a parallel reboot. In most cases, a parallel reboot is recommended for expediency.
 .TP 10
-upgrade 
-.NL
+upgrade
+
 Upgrades the firmware on each specified switch. The -P option selects a directory containing a .emfw file or provides an explicit .emfw file for the switches. If more than one .emfw file is specified, the operation is undefined. The -a option selects the desired minimal state for the new firmware. Only the select and run options are valid for this operation.
 
 .IP
@@ -302,16 +297,16 @@ The upgrade process also sets the switch name.
 .IP
 The upgrade process is used to set, clear, or change the password of the switches using the -s option. When this option is specified, you are prompted for a new password to be set on the switches. To reset (clear) the password, press Enter when prompted. This option can be used to configure the switches to not require a password for subsequent operations. A change to the password does not take effect until the next reboot of the switch.
 .IP
-For more information about switch firmware, refer to the 
+For more information about switch firmware, refer to the
 \fIIntel(R) Omni-Path Fabric Switches GUI User Guide\fR
 
-and 
+and
 \fIIntel(R) Omni-Path Fabric Switches Release Notes\fR
 
 .
 .TP 10
-configure 
-.NL
+configure
+
 Runs the switch setup wizard, which asks a series of questions. Once the wizard has finished prompting for configuration information, all the selected switches are configured according to the entered responses. The following items are configurable for all Intel(R) Omni-Path Switch 100 Series :
 
 .RS
@@ -344,8 +339,8 @@ Typically, the Node Description is updated automatically during a firmware upgra
 You must reboot the switch for any new settings to be applied.
 
 .TP 10
-info 
-.NL
+info
+
 Queries the switches and displays the following information:
 
 .RS
@@ -368,8 +363,8 @@ Power supply status
 .IP
 This operation also outputs a summary of various configuration settings for each switch within a fabric.
 .TP 10
-hwvpd 
-.NL
+hwvpd
+
 Queries the switches and displays the Vital Product Data (VPD) including:
 
 .RS
@@ -396,8 +391,8 @@ Manufacture time
 .RE
 
 .TP 10
-ping 
-.NL
+ping
+
 Issues an inband packet to the switches to test for presence and reports on presence/non-presence of each selected switch.
 
 .TP 10
@@ -409,13 +404,13 @@ Issues an inband packet to the switches to test for presence and reports on pres
 It is not necessary to supply a password (using -S) for this operation.
 
 .TP 10
-fwverify 
-.NL
+fwverify
+
 Verifies the integrity of the firmware images in the EEPROMs of the selected switches.
 
 .TP 10
-getconfig 
-.NL
+getconfig
+
 Gets port configurations of an externally managed switch. This operation also outputs a summary of various configuration settings for each switch within a fabric. For example, in a fabric with seven switches, a report similar to the following is displayed.
 
 .IP

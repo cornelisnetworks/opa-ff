@@ -6,40 +6,37 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opadisablehosts 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opadisablehosts 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opadisablehosts
 
-.NL
 
 .PP
 
 \fB(Linux)\fR
 Searches for a set of hosts in the fabric and disables their corresponding switch port.
-.SH Syntax 
-.NL
-opadisablehosts [-h \fIhfi\fR] [-p \fIport\fR] \fIreason\fR \fIhost ...\fR
-.SH Options 
-.NL
+.SH Syntax
+opadisablehosts [-h  \fIhfi\fR] [-p  \fIport\fR]  \fIreason\fR  \fIhost ...\fR
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--h \fIhfi\fR 
-.NL
+-h \fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
--p \fIport\fR 
-.NL
+-p \fIport\fR
+
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
-\fIreason\fR 
-.NL
+\fIreason\fR
+
 Specifies the text describing the reason hosts are being disabled. \fIreason\fR is saved in the reason field of the output file.
 
 .IP
@@ -47,47 +44,45 @@ Information about the links disabled is written to a CSV file. By default, this 
 .IP
 The list is of the form: NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID; PortNum;NodeType;NodeDesc;Reason For each listed link, the switch port closer to this is the one that has been disabled.
 .TP 10
-\fIhost ...\fR 
-.NL
+\fIhost ...\fR
+
 Defines one or more hosts that are affected by the \fIreason\fR.
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
-.SH Examples 
-.NL
+.SH Examples
 opadisablehosts \[aq]bad DRAM\[aq] compute001 compute045
 .br
+
 opadisablehosts -h 1 -p 2 \[aq]crashed\[aq] compute001 compute045

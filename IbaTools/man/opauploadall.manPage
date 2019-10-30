@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opauploadall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opauploadall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opauploadall
 
-.NL
 
 .PP
 
@@ -21,93 +20,97 @@ Copies one or more files from a group of hosts to this system. Since the file na
 .B NOTE:
 To copy files from this host to hosts in the cluster, use opascpall or opadownloadall. user@ style syntax cannot be used when specifying filenames.
 
-.SH Syntax 
-.NL
-opauploadall [-rp] [-f \fIhostfile\fR] [-d \fIupload\(uldir\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR] \fIsource\(ulfile\fR... \fIdest\(ulfile\fR
-.SH Options 
-.NL
+.SH Syntax
+opauploadall [-rp] [-f  \fIhostfile\fR] [-d  \fIupload\(uldir\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u  \fIuser\fR]
+\fIsource\(ulfile\fR ...  \fIdest\(ulfile\fR
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--p 
-.NL
+-p
+
 Performs copy in parallel on all hosts.
 .TP 10
--r 
-.NL
+-r
+
 Performs recursive upload of directories.
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster.
 .br
 Default is /etc/opa/hosts file.
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts to upload from.
 .TP 10
--u \fIuser\fR 
-.NL
+-u \fIuser\fR
+
 Specifies the user to perform copy to. Default is current user code.
 .TP 10
--d \fIupload\(uldir\fR 
-.NL
+-d \fIupload\(uldir\fR
+
 Specifies the directory to upload to. Default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default, /uploads, is used.
 .TP 10
-\fIsource\(ulfile\fR 
-.NL
+\fIsource\(ulfile\fR
+
 Specifies the name of files to copy to this system, relative to the current directory. Multiple files may be listed.
 .TP 10
-\fIdest\(ulfile\fR 
-.NL
+\fIdest\(ulfile\fR
+
 Specifies the name of the file or directory on this system to copy to. It is relative to  \fIupload\(uldir\fR/\fIHOSTNAME\fR .A local directory within  \fIupload\(uldir\fR/ is created for each hostname.
 
 .IP
 Each uploaded file is copied to upload\(uldir/\fIHOSTNAME\fR/\fIdest\(ulfile\fR within the local system.
 .IP
 If more than one source file is specified or dest\(ulfile has a trailing / , a dest\(ulfile directory will be created.
-.SH Example 
-.NL
+.SH Example
 # upload two files from 2 hosts
 .br
+
 opauploadall -h \[aq]arwen elrond\[aq] capture.tgz /etc/init.d/ipoib.cfg.
 .br
 
+
 .br
+
 # upload two files from all hosts
 .br
+
 opauploadall -p capture.tgz /etc/init.d/ipoib.cfg.
 .br
 
+
 .br
+
 # upload network config files from all hosts
 .br
+
 opauploadall capture.tgz /etc/init.d/ipoib.cfg pre-install
-.SH Environment Variables 
-.NL
+.SH Environment Variables
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts; used if -h option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts; used in absence of -f and -h.
 
 .TP 10
-\fBUPLOADS\(ulDIR\fR 
-.NL
+\fBUPLOADS\(ulDIR\fR
+
 Directory to upload to, used in absence of -d.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 When the -p option is used, maximum concurrent operations are performed.

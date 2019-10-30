@@ -55,6 +55,7 @@ PCI_WIDTH="x16"             # expected value for PCI width on Intel WFR HFI
 MPI_APPS=$HOME/mpi_apps/    # where to find mpi_apps for HPL test
 MIN_FLOPS="115"             # minimum flops expected from HPL test
 IPOIB_IF="ib0"              # IPoIB interface to check
+IPOIB_MODE="connected"      # IPoIB required mode "connected" or "datagram"
 IPOIB_MTU=65520             # IPoIB required MTU
 outputdir=/root             # default outputdir is root -d $DIR overrides
 CPU_DRIVER="intel_pstate"   # power scaling driver for CPU
@@ -891,8 +892,8 @@ test_ipoib()
 	mtu=$(cat /sys/class/net/$IPOIB_IF/mtu)
 	mode=$(cat /sys/class/net/$IPOIB_IF/mode)
 	
-	[ $mode != "connected" ] && fail "$IPOIB_IF is in '$mode' mode - should be in 'connected' mode"
-	[ $mtu -lt $IPOIB_MTU ] && fail "$IPOIB_IF MTU of $mtu is less than required $IPOIB_MTU"
+	[ $mode != "$IPOIB_MODE" ] && fail "$IPOIB_IF is in '$mode' mode - should be in '$IPOIB_MODE' mode"
+	[ $mtu -ne $IPOIB_MTU ] && fail "$IPOIB_IF MTU of $mtu - should be $IPOIB_MTU"
 	set +x
 	
 	pass ": IPoIB properly configured"

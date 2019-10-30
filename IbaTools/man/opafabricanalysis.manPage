@@ -6,55 +6,53 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafabricanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opafabricanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opafabricanalysis
 
-.NL
 
 .PP
 
 \fB(All)\fR
 Performs analysis of the fabric.
 .SH Syntax
-.NL
-opafabricanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR]
+opafabricanalysis [-b|-e] [-s] [-d  \fIdir\fR] [-c  \fIfile\fR] [-t  \fIportsfile\fR]
 .br
-[-p \fIports\fR] [-T \fItopology\(ulinput\fR]
+[-p  \fIports\fR]
+[-T  \fItopology\(ulinput\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--b 
-.NL
+-b
+
 Specifies the baseline mode. Default is compare/check mode.
 .TP 10
--e 
-.NL
+-e
+
 Evaluates health only. Default is compare/check mode.
 .TP 10
--s 
-.NL
+-s
+
 Saves history of failures (errors/differences).
 .TP 10
--d dir 
-.NL
-Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis 
+-d dir
+
+Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
 .TP 10
--c file 
-.NL
-Specifies the error thresholds config file.Default is /etc/opa/opamon.conf 
+-c file
+
+Specifies the error thresholds config file.Default is /etc/opa/opamon.conf
 .TP 10
--t portsfile 
-.NL
-Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports 
+-t portsfile
+
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports
 .TP 10
--p ports 
-.NL
+-p ports
+
 Specifies the list of local HFI ports used to access fabrics for analysis.
 
 .IP
@@ -65,7 +63,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -74,7 +72,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -83,7 +81,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -92,23 +90,23 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
 .TP 10
--T \fItopology\(ulinput\fR 
-.NL
+-T \fItopology\(ulinput\fR
+
 Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on (such as 0:0 or 1:2). Default is /etc/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
 \fIDetails\fR
-and 
+and
 \fIopareport\fR
 for more information.
-.SH Example 
-.NL
+.SH Example
 opafabricanalysis
 .br
+
 opafabricanalysis -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .PP
 The fabric analysis tool checks the following:
@@ -124,28 +122,26 @@ Fabric PMA error counters and link speed mismatches
 The comparison includes components on the fabric. Therefore, operations such as shutting down a server cause the server to no longer appear on the fabric and are flagged as a fabric change or failure by opafabricanalysis.
 
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.
 .TP 10
-\fBFF\(ulTOPOLOGY\(ulFILE\fR 
-.NL
+\fBFF\(ulTOPOLOGY\(ulFILE\fR
+
 File containing topology\(ulinput (may have %P marker in filename), used in absence of -T.
 .TP 10
-\fBFF\(ulANALYSIS\(ulDIR\fR 
-.NL
+\fBFF\(ulANALYSIS\(ulDIR\fR
+
 Top-level directory for baselines and failed health checks.
 .SH Details
-.NL
 
 .PP
 For simple fabrics, the Intel(R) Omni-Path Fabric Suite FastFabric Toolset host is connected to a single fabric. By default, the first active port on the FastFabric Toolset host is used to analyze the fabric. However, in more complex fabrics, the FastFabric Toolset host may be connected to more than one fabric or subnet. In this case, you can specify the ports or HFIs to use with one of the following methods:
@@ -170,7 +166,7 @@ Using the ff\(ultopology\(ulfile configuration option in opafastfabric.conf.
 .PP
 If the specified file does not exist, no topology\(ulinput file is used. Alternately the filename can be specified as NONE to prevent use of an input file.
 .PP
-For more information on topology\(ulinput, refer to 
+For more information on topology\(ulinput, refer to
 \fIopareport\fR
 .
 .PP
@@ -259,10 +255,9 @@ The .diff and .changes files are only created if differences are detected.
 .PP
 If the -s option is used and failures are detected, files related to the checks that failed are also copied to the time-stamped directory name under FF\(ulANALYSIS\(ulDIR.
 .SH Fabric Items Checked Against the Baseline
-.NL
 
 .PP
-Based on opareport -o links: 
+Based on opareport -o links:
 .IP \(bu
 Unconnected/down/missing cables
 .IP \(bu
@@ -276,7 +271,7 @@ Adding/Removing Nodes [FI, Virtual FIs, Virtual Switches, Physical Switches, Phy
 .IP \(bu
 Changes to server or switch names
 .PP
-Based on opareport -o comps: 
+Based on opareport -o comps:
 .IP \(bu
 Overlap with items from links report
 .IP \(bu
@@ -300,10 +295,9 @@ Primary and backups
 .IP \(bu
 Configured priority for SM
 .SH Fabric Items Also Checked During Health Check
-.NL
 
 .PP
-Based on opareport -s -C -o errors -o slowlinks: 
+Based on opareport -s -C -o errors -o slowlinks:
 .IP \(bu
 PMA error counters on all Intel(R) Omni-Path Fabric ports (HFI, switch external and switch internal) checked against configurable thresholds.
 .IP \(bu

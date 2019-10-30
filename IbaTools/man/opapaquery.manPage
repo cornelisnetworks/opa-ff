@@ -6,16 +6,15 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opapaquery 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opapaquery
 
-.NL
 
 .PP
 
 \fB(All)\fR
-Performs various queries of the performance management (PM)/performance administration (PA) agent and provides details about fabric performance. Refer to the 
+Performs various queries of the performance management (PM)/performance administration (PA) agent and provides details about fabric performance. Refer to the
 \fIIntel(R) Omni-Path Fabric Suite Fabric Manager User Guide\fR
 
 for a description of the operation and client services of the PM/PA.
@@ -25,38 +24,40 @@ By default, opapaquery queries the most recent data. However, if an image number
 opapaquery\[aq]s operation is dependent on an Intel(R) Omni-Path Fabric Suite Fabric Manager version 6.0 or greater running as master SM/PM in the fabric.
 .PP
 By default, opapaquery uses the first active port on the local system. However, if the Fabric Management Node is connected to more than one fabric (for example, a subnet), the HFI and port may be specified to select the fabric whose PA is to be queried.
-.SH Syntax 
-.NL
+.SH Syntax
 opapaquery [-v] [-h hfi|-b addr] [-p port] [-x gid] [-E]
 .br
-[-T ssl\(ulparams] [-o type] [-g groupName] [-l nodeLid] [-P portNumber]
+[-T ssl\(ulparams] [-o type]
+[-g groupName] [-l nodeLid] [-P portNumber]
 .br
-[--timeout] [-G nodeGuid] [-D nodeDesc] [-d delta] [-j date\(ultime]
+[--timeout] [-G nodeGuid]
+[-D nodeDesc] [-d delta] [-j date\(ultime]
 .br
-[-q date\(ultime] [-U] [-s select] [-f focus] [-S start] [-r range]
+[-q date\(ultime] [-U] [-s select] [-f focus]
+[-S start] [-r range]
 .br
-[-n imgNum] [-O imgOff] [-y imgTime] [-m moveImgNum] [-M moveImgOff] [-V vfName]
-.SH Options 
-.NL
+[-n imgNum] [-O imgOff] [-y imgTime] [-m moveImgNum]
+[-M moveImgOff] [-V vfName]
+.SH Options
 
 .TP 10
--v/--verbose 
-.NL
+-v/--verbose
+
 Specifies the verbose output.
 
 .TP 10
--h/--hfi \fIhfi\fR 
-.NL
+-h/--hfi \fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
--b/--oob \fIaddress\fR 
-.NL
+-b/--oob \fIaddress\fR
+
 Specifies Out-of-Band address of node running the FE. Can be either hostname, IPv4, or IPv6 address. Default is "127.0.0.1".
 
 .TP 10
--p/--port \fIport\fR 
-.NL
+-p/--port \fIport\fR
+
 Specifies the port.
 .RS
 
@@ -69,80 +70,80 @@ Out-of-band: Port FE is listening on. Default is 3245.
 
 
 .TP 10
--x/--source-gid \fIsrc\(ulgid\fR 
-.NL
+-x/--source-gid \fIsrc\(ulgid\fR
+
 Specifies the source GID of the local GID. (This is required for most Path and Trace Record Queries when Out-of-Band.)
 
 .TP 10
--E/--feEsm 
-.NL
+-E/--feEsm
+
 Specifies the ESM FE.
 
 .TP 10
--T/--ssl-params \fIfile\fR 
-.NL
+-T/--ssl-params \fIfile\fR
+
 Specifies the SSL/TLS parameters XML file. Default is /etc/opa/opamgt\(ultls.xml.
 
 .TP 10
--o/--output \fItype\fR 
-.NL
+-o/--output \fItype\fR
+
 Specifies the output type. Default is groupList. See
 \fIOutput Types\fR
 .
 
 .TP 10
--g/--groupName \fIgroupName\fR 
-.NL
+-g/--groupName \fIgroupName\fR
+
 Specifies the group name for groupInfo query.
 
 .TP 10
--l/--lid \fIlid\fR 
-.NL
+-l/--lid \fIlid\fR
+
 Specifies the LID of the node.
 
 .TP 10
--P/--portNumber \fIportNumber\fR 
-.NL
+-P/--portNumber \fIportNumber\fR
+
 Specifies the port number within the node.
 
 .TP 10
---timeout 
-.NL
+--timeout
+
 Specifies the timeout (response wait time) in ms. Default is 1000 ms.
 
 .TP 10
--G/--nodeGuid 
-.NL
+-G/--nodeGuid
+
 Specifies the GUID of the node.
 
 .TP 10
--D/--nodeDesc 
-.NL
+-D/--nodeDesc
+
 Specifies the description of the node.
 
 .TP 10
--d/--delta \fIdelta\fR 
-.NL
+-d/--delta \fIdelta\fR
+
 Specifies the delta flag for portCounters query - 0 or 1.
 
 .TP 10
--j/--begin \fIdate\(ultime\fR 
-.NL
+-j/--begin \fIdate\(ultime\fR
+
 Obtains portCounters over an interval beginning at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--q/--end \fIdate\(ultime\fR 
-.NL
+-q/--end \fIdate\(ultime\fR
+
 Obtains portCounters over an interval ending at \fIdate\(ultime\fR. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
 
 .TP 10
--U/--userCntrs 
-.NL
+-U/--userCntrs
+
 Queries by user-controlled counters flag for portCounters.
 
 .TP 10
--s/--select \fIselect\fR 
-.NL
+-s/--select \fIselect\fR
+
 Specifies the 32-bit select flag for clearing port counters.
 
 .IP
@@ -286,14 +287,14 @@ Bits 17-0 reserved
 .RE
 
 .TP 10
--f/--focus \fIfocus\fR 
-.NL
+-f/--focus \fIfocus\fR
+
 Specifies the focus select value for getting \fIfocus\fR ports. \fIfocus\fR select values are:
 .RS
 .TP 10
 
 .sp
-unexpclrport 
+unexpclrport
 Lists unexpectedly cleared ports - LID ordered.
 
 .RE
@@ -302,7 +303,7 @@ Lists unexpectedly cleared ports - LID ordered.
 .TP 10
 
 .sp
-norespport 
+norespport
 Lists no response ports - LID ordered.
 
 .RE
@@ -311,7 +312,7 @@ Lists no response ports - LID ordered.
 .TP 10
 
 .sp
-skippedport 
+skippedport
 Lists skipped ports - LID ordered.
 
 .RE
@@ -320,7 +321,7 @@ Lists skipped ports - LID ordered.
 .TP 10
 
 .sp
-utilhigh 
+utilhigh
 Sorted by utilization - highest first.
 
 .RE
@@ -329,7 +330,7 @@ Sorted by utilization - highest first.
 .TP 10
 
 .sp
-pktrate 
+pktrate
 Sorted by packet rate - highest first.
 
 .RE
@@ -338,7 +339,7 @@ Sorted by packet rate - highest first.
 .TP 10
 
 .sp
-utillow 
+utillow
 Sorted by utilization - lowest first.
 
 .RE
@@ -347,7 +348,7 @@ Sorted by utilization - lowest first.
 .TP 10
 
 .sp
-integrity 
+integrity
 Sorted by integrity category - highest first.
 
 .RE
@@ -356,7 +357,7 @@ Sorted by integrity category - highest first.
 .TP 10
 
 .sp
-congestion 
+congestion
 Sorted by congestion category - highest first.
 
 .RE
@@ -365,7 +366,7 @@ Sorted by congestion category - highest first.
 .TP 10
 
 .sp
-smacongestion 
+smacongestion
 Sorted by SMA congestion category - highest first.
 
 .RE
@@ -374,7 +375,7 @@ Sorted by SMA congestion category - highest first.
 .TP 10
 
 .sp
-bubbles 
+bubbles
 Sorted by bubble category - highest first.
 .RE
 
@@ -382,7 +383,7 @@ Sorted by bubble category - highest first.
 .TP 10
 
 .sp
-security 
+security
 Sorted by security category - highest first.
 
 .RE
@@ -391,7 +392,7 @@ Sorted by security category - highest first.
 .TP 10
 
 .sp
-routing 
+routing
 Sorted by routing category - highest first.
 
 .RE
@@ -400,7 +401,7 @@ Sorted by routing category - highest first.
 .TP 10
 
 .sp
-vfutilhigh 
+vfutilhigh
 Sorted by utilization - highest first.
 .RE
 
@@ -408,7 +409,7 @@ Sorted by utilization - highest first.
 .TP 10
 
 .sp
-vfpktrate 
+vfpktrate
 Sorted by packet rate - highest first.
 .RE
 
@@ -416,7 +417,7 @@ Sorted by packet rate - highest first.
 .TP 10
 
 .sp
-vfutillow 
+vfutillow
 Sorted by utilization - lowest first.
 .RE
 
@@ -424,7 +425,7 @@ Sorted by utilization - lowest first.
 .TP 10
 
 .sp
-vfcongestion 
+vfcongestion
 Sorted by congestion category - highest first.
 .RE
 
@@ -432,36 +433,36 @@ Sorted by congestion category - highest first.
 .TP 10
 
 .sp
-vfbubbles 
+vfbubbles
 Sorted by bubble category - highest first.
 .RE
 
 .TP 10
--S/--start \fIstart\fR 
-.NL
+-S/--start \fIstart\fR
+
 Specifies the start of window for focus ports, should always be 0.
 
 .TP 10
--r/--range \fIrange\fR 
-.NL
+-r/--range \fIrange\fR
+
 Specifies the size of window for focus ports list.
 
 .TP 10
--Q/--tuple 
-.NL
-Specifies a tuple that identifies a focus select value, comparator and argument in the form select: comparator:argument. Up to 8 tuples may be specified as: -Q s1:c1:a1 -Q s2:c2:a2 ... -Q s8:c8:a8 
+-Q/--tuple
+
+Specifies a tuple that identifies a focus select value, comparator and argument in the form select: comparator:argument. Up to 8 tuples may be specified as: -Q s1:c1:a1 -Q s2:c2:a2 ... -Q s8:c8:a8
 
 .IP
 Valid focus select values are: utilization, pktrate, integrity, congestion, smacongestion, bubbles, security and routing.
 .IP
-Valid comparator values are: GT, GE, LT, LE 
+Valid comparator values are: GT, GE, LT, LE
 .IP
 Valid arguments are: Any 64-bit value in hexadecimal or decimal.
 .IP
 When specifying more than one tuple, a logical operator -Z/--operator must also be specified.
 .TP 10
--Z/--operator 
-.NL
+-Z/--operator
+
 Specifies a logical operator used to join the results of the specified tuples.
 
 .IP
@@ -469,251 +470,281 @@ and - Specifies a port is returned if it meets all of the tuple filter criteria.
 .IP
 or - Specifies a port is returned if it meets one or more of the tuple filter criteria.
 .TP 10
--n/--imgNum \fIimgNum\fR 
-.NL
+-n/--imgNum \fIimgNum\fR
+
 Specifies the 64-bit image number.
 
 .TP 10
--O/--imgOff \fIimgOff\fR 
-.NL
+-O/--imgOff \fIimgOff\fR
+
 Specifies the image offset.
 
 .TP 10
--y/--imgTime 
-.NL
+-y/--imgTime
+
 Specifies the image time. May be used with imageinfo, groupInfo, groupInfo, groupConfig, freezeImage, focusPorts, vfInfo, vfConfig, and vfFocusPorts. Will return closest image within image interval if possible. See --begin/--end above for format.
 
 .TP 10
--m/--moveImgNum \fImoveImgNum\fR 
-.NL
+-m/--moveImgNum \fImoveImgNum\fR
+
 Specifies the 64-bit image number. Used with moveFreeze to move a freeze image.
 
 .TP 10
--M/--moveImgOff \fImoveImgOff\fR 
-.NL
+-M/--moveImgOff \fImoveImgOff\fR
+
 Specifies the image offset. Can be used with moveFreeze to move a freeze image.
 
 .TP 10
--V/--vfName \fIvfName\fR 
-.NL
+-V/--vfName \fIvfName\fR
+
 Specifies the VF name for vfInfo query.
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
 .SH Output Types
-.NL
 
 .TP 10
-classPortInfo 
-.NL
+classPortInfo
+
 Specifies the class port info.
 
 .TP 10
-groupList 
-.NL
+groupList
+
 Specifies the list of PA groups.
 
 .TP 10
-groupInfo 
-.NL
+groupInfo
+
 Specifies the summary statistics of a PA group. Requires -g option for \fIgroupName\fR.
 
 .TP 10
-groupConfig 
-.NL
+groupConfig
+
 Specifies the configuration of a PA group. Requires -g option for \fIgroupName\fR.
 
 .TP 10
-groupNodeInfo 
-.NL
+groupNodeInfo
+
 Specifies the node information of a PA group. Requires -g option for \fIgroupName\fR. Options -l \fIlid\fR, -G \fInodeGuid\fR and -D \fInodeDesc\fR are optional.
 
 .TP 10
-groupLinkInfo 
-.NL
+groupLinkInfo
+
 Specifies the link Information of a PA group. Requires -g option for \fIgroupName\fR. Options -l \fIlid\fR and -P \fIport\fR are optional. Note that -P 255 specifies all ports. Option -P \fIport\fR without -l \fIlid\fR is ignored.
 
 .TP 10
-portCounters 
-.NL
+portCounters
+
 Specifies the port counters of fabric port. Requires -l \fIlid\fR and -P \fIport\fR options. -d \fIdelta\fR is optional.
 
 .TP 10
-clrPortCounters 
-.NL
+clrPortCounters
+
 Clears port counters of fabric port. Requires -l \fIlid\fR and -P \fIport\fR, and -s \fIselect\fR options.
 
 .TP 10
-clrAllPortCounters 
-.NL
+clrAllPortCounters
+
 Clears all port counters in fabric.
 
 .TP 10
-pmConfig 
-.NL
+pmConfig
+
 Retrieves PM configuration information.
 
 .TP 10
-freezeImage 
-.NL
+freezeImage
+
 Creates freeze frame for image ID. Requires -n \fIimgNum\fR.
 
 .TP 10
-releaseImage 
-.NL
+releaseImage
+
 Releases freeze frame for image ID. Requires -n \fIimgNum\fR.
 
 .TP 10
-renewImage 
-.NL
+renewImage
+
 Renews lease for freeze frame for image ID. Requires -n \fIimgNum\fR.
 
 .TP 10
-moveFreeze 
-.NL
+moveFreeze
+
 Moves freeze frame from image ID to new image ID. Requires -n \fIimgNum\fR and -m \fImoveImgNum\fR.
 
 .TP 10
-focusPorts 
-.NL
+focusPorts
+
 Gets sorted list of ports using utilization or error values (from group buckets). Requires -g \fIgroupname\fR, -f \fIfocus\fR, -S \fIstart\fR, -r \fIrange\fR.
 
 .TP 10
-imageInfo 
-.NL
+imageInfo
+
 Gets configuration of a PA image (timestamps, etc.). Requires -n \fIimgNum\fR.
 
 .TP 10
-vfList 
-.NL
+vfList
+
 Specifies the list of virtual fabrics.
 
 .TP 10
-vfInfo 
-.NL
+vfInfo
+
 Specifies the summary statistics of a virtual fabric. Requires -V option for \fIvfName\fR.
 
 .TP 10
-vfConfig 
-.NL
+vfConfig
+
 Specifies the configuration of a virtual fabric. Requires -V option for \fIvfName\fR.
 
 .TP 10
-vfPortCounters 
-.NL
+vfPortCounters
+
 Specifies the port counters of fabric port. Requires -V \fIvfName\fR, -l \fIlid\fR and -P \fIport\fR options, -d \fIdelta\fR is optional.
 
 .TP 10
-vfFocusPorts 
-.NL
+vfFocusPorts
+
 Gets sorted list of virtual fabric ports using utilization or error values (from VF buckets). Requires -V \fIvfname\fR, -f \fIfocus\fR, -S \fIstart\fR, -r \fIrange\fR.
 
 .TP 10
-clrVfPortCounters 
-.NL
+clrVfPortCounters
+
 Clears VF port counters of fabric port. Requires -l \fIlid\fR, -P \fIport\fR, -s \fIselect\fR, and -V \fIvfname\fR options.
 
-.SH Examples 
-.NL
+.SH Examples
 opapaquery -o classPortInfo
 .br
+
 opapaquery -o groupList
 .br
+
 opapaquery -o groupInfo -g All
 .br
+
 opapaquery -o groupConfig -g All
 .br
+
 opapaquery -o groupNodeInfo -g All -G <nodeGuid>
 .br
+
 opapaquery -o groupNodeInfo -g All -D <nodeDesc>
 .br
+
 opapaquery -o groupNodeInfo -g All -l 1
 .br
+
 opapaquery -o groupNodeInfo -g All -l 1 -G <nodeGuid>
 .br
+
 opapaquery -o groupLinkInfo -g All
 .br
+
 opapaquery -o groupLinkInfo -g All -l 1 -P 1
 .br
+
 opapaquery -o groupLinkInfo -g All -l 1 -P 255
 .br
+
 opapaquery -o portCounters -l 1 -P 1 -d 1
 .br
+
 opapaquery -o portCounters -l 1 -P 1 -d 1 -n 0x20000000d02 -O 1
 .br
+
 opapaquery -o portCounters -l 1 -P 1 -d 1 -j 13:30 -q 14:20
 .br
+
 opapaquery -o clrPortCounters -l 1 -P 1 -s 0xC0000000
 .br
-(clears XmitData & RcvData)
+
+   (clears XmitData & RcvData)
 .br
+
 opapaquery -o clrAllPortCounters -s 0xC0000000
 .br
-(clears XmitData & RcvData on all ports)
+
+   (clears XmitData & RcvData on all ports)
 .br
+
 opapaquery -o pmConfig
 .br
+
 opapaquery -o freezeImage -n 0x20000000d02
 .br
+
 opapaquery -o releaseImage -n 0xd01
 .br
+
 opapaquery -o renewImage -n 0xd01
 .br
+
 opapaquery -o moveFreeze -n 0xd01 -m 0x20000000d02 -M -2
 .br
+
 opapaquery -o focusPorts -g All -f integrity -S 0 -r 20
 .br
+
 opapaquery -o focusPorts -g All -S 0 -r 20 -Z AND -Q integrity:ge:20 -Q bubbles:lt:10
 .br
+
 opapaquery -o focusPorts -g All -f skippedport -S 0 -r 20
 .br
+
 opapaquery -o imageInfo -n 0x20000000d02
 .br
+
 opapaquery -o imageInfo -y "1 hour ago"
 .br
+
 opapaquery -o vfList
 .br
+
 opapaquery -o vfInfo -V Default
 .br
+
 opapaquery -o vfConfig -V Default
 .br
+
 opapaquery -o vfPortCounters -l 1 -P 1 -d 1 -V Default
 .br
+
 opapaquery -o clrVfPortCounters -l 1 -P 1 -s 0xC0000000 -V Default
 .br
-(clears VLXmitData & VLRcvData)
+
+   (clears VLXmitData & VLRcvData)
 .br
+
 opapaquery -o vfFocusPorts -V Default -f integrity -S 0 -r 20

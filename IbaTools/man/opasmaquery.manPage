@@ -6,62 +6,60 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opasmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opasmaquery
 
-.NL
 
 .PP
 
 \fB(All)\fR
 Performs Intel(R) Omni-Path Architecture-defined SMA queries and displays the resulting response. Each query is issued directly to the SMA and does not involve SM interaction.
 .SH Syntax
-.NL
-opasmaquery [-v] [-d \fIdetail\fR][-g] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fIotype\fR]
+opasmaquery [-v] [-d  \fIdetail\fR][-g] [-l  \fIlid\fR] [-h  \fIhfi\fR] [-p  \fIport\fR]
+[-o  \fIotype\fR]
 .br
-[-m \fIport\fR| \fIport1,port2\fR] [-f \fIflid\fR] [-b \fIblock[,count]\fR] [hop hop ...]
+[-m  \fIport\fR| \fIport1,port2\fR] [-f  \fIflid\fR] [-b  \fIblock[,count]\fR] [hop hop ...]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--v 
-.NL
+-v
+
 Returns verbose output. Can be specified more than once for additional openib and libibumad debugging.
 
 .TP 10
--d \fIdetail\fR 
-.NL
+-d \fIdetail\fR
+
 Specifies the output detail level for cableinfo only. Range is 0 - n. Default is 2. An upper limit for detail level is not enforced. After a maximum amount of output is reached, a larger detail value has no effect.
 
 .TP 10
--g 
-.NL
+-g
+
 Displays line-by-line format. Default is summary format.
 
 .TP 10
--l \fIlid\fR 
-.NL
+-l \fIlid\fR
+
 Specifies the destination LID. Default is local port.
 
 .TP 10
--h/--hfi \fIhfi\fR 
-.NL
+-h/--hfi \fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
--p/--port \fIport\fR 
-.NL
+-p/--port \fIport\fR
+
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
--o \fIotype\fR 
-.NL
+-o \fIotype\fR
+
 Specifies the output type. Default is nodeinfo. Refer to
 \fIotype Options Vary by Report\fR
 for supported options.
@@ -72,29 +70,29 @@ Valid output types are:
 .TP 10
 
 .sp
-bfrctrl 
+bfrctrl
 Specifies buffer control tables.
 
 .IP
-[-m dest\(ulport] [-m port1,port2] 
+[-m dest\(ulport] [-m port1,port2]
 .RE
 
 .RS
 .TP 10
 
 .sp
-cableinfo 
+cableinfo
 Specifies cable information.
 
 .IP
-[-d detail] [-m dest\(ulport] [-b block[,count]] 
+[-d detail] [-m dest\(ulport] [-b block[,count]]
 .RE
 
 .RS
 .TP 10
 
 .sp
-conginfo 
+conginfo
 Specifies congestion information.
 
 .RE
@@ -103,7 +101,7 @@ Specifies congestion information.
 .TP 10
 
 .sp
-desc or nodedesc 
+desc or nodedesc
 Specifies node descriptions/names.
 
 .RE
@@ -112,29 +110,29 @@ Specifies node descriptions/names.
 .TP 10
 
 .sp
-hficongcon 
+hficongcon
 Specifies HFI congestion control settings.
 
 .IP
-[-b block[,count]] [-f flid] 
+[-b block[,count]] [-f flid]
 .RE
 
 .RS
 .TP 10
 
 .sp
-hficonglog 
+hficonglog
 Specifies HFI congestion logs.
 
 .IP
-[-b block[,count]] 
+[-b block[,count]]
 .RE
 
 .RS
 .TP 10
 
 .sp
-hficongset 
+hficongset
 Specifies HFI congestion settings.
 
 .RE
@@ -143,51 +141,51 @@ Specifies HFI congestion settings.
 .TP 10
 
 .sp
-linfdb 
+linfdb
 Specifies switch linear forwarding database (FDB) tables.
 
 .IP
-[-b block[,count]] [-f flid] 
+[-b block[,count]] [-f flid]
 .RE
 
 .RS
 .TP 10
 
 .sp
-mcfdb 
+mcfdb
 Specifies switch multicast FDB tables.
 
 .IP
-[-m dest\(ulport] [-b block[,count]] [-f flid] 
+[-m dest\(ulport] [-b block[,count]] [-f flid]
 .RE
 
 .RS
 .TP 10
 
 .sp
-portgroup 
+portgroup
 Specifies Adaptive Routing port groups.
 
 .IP
-[-b block[,count]] 
+[-b block[,count]]
 .RE
 
 .RS
 .TP 10
 
 .sp
-portgroupfdb 
+portgroupfdb
 Specifies Adaptive Routing port group FWD tables.
 
 .IP
-[-b block[,count]] [-f flid] 
+[-b block[,count]] [-f flid]
 .RE
 
 .RS
 .TP 10
 
 .sp
-nodeaggr 
+nodeaggr
 Specifies node information and node descriptions.
 
 .RE
@@ -196,51 +194,51 @@ Specifies node information and node descriptions.
 .TP 10
 
 .sp
-node or nodeinfo 
+node or nodeinfo
 Specifies node information.
 
 .IP
-[-m dest\(ulport] 
+[-m dest\(ulport]
 .RE
 
 .RS
 .TP 10
 
 .sp
-portinfo 
+portinfo
 Specifies port information.
 
 .IP
-[-m dest\(ulport] 
+[-m dest\(ulport]
 .RE
 
 .RS
 .TP 10
 
 .sp
-pstateinfo 
+pstateinfo
 Specifies switch port state information.
 
 .IP
-[-m dest\(ulport] [-m port1,port2] 
+[-m dest\(ulport] [-m port1,port2]
 .RE
 
 .RS
 .TP 10
 
 .sp
-pkey 
+pkey
 Specifies P-Key tables.
 
 .IP
-[-m dest\(ulport] [-b block[,count]] 
+[-m dest\(ulport] [-b block[,count]]
 .RE
 
 .RS
 .TP 10
 
 .sp
-slsc 
+slsc
 Specifies SL to SC mapping tables.
 
 .RE
@@ -249,7 +247,7 @@ Specifies SL to SC mapping tables.
 .TP 10
 
 .sp
-scsl 
+scsl
 Specifies SC to SL mapping tables.
 
 .RE
@@ -258,51 +256,51 @@ Specifies SC to SL mapping tables.
 .TP 10
 
 .sp
-scsc 
+scsc
 Specifies SC to SC mapping tables.
 
 .IP
-[-m dest\(ulport] [-m port1,port2] 
+[-m dest\(ulport] [-m port1,port2]
 .RE
 
 .RS
 .TP 10
 
 .sp
-scvlt 
+scvlt
 Specifies SC to VLt tables.
 
 .IP
-[-m dest\(ulport] [-m port1,port2] 
+[-m dest\(ulport] [-m port1,port2]
 .RE
 
 .RS
 .TP 10
 
 .sp
-scvlnt 
+scvlnt
 Specifies SC to VLnt tables.
 
 .IP
-[-m dest\(ulport] [-m port1,port2] 
+[-m dest\(ulport] [-m port1,port2]
 .RE
 
 .RS
 .TP 10
 
 .sp
-scvlr 
+scvlr
 Specifies SC to VLr tables
 
 .IP
-[-m dest\(ulport] [-m port1,port2] 
+[-m dest\(ulport] [-m port1,port2]
 .RE
 
 .RS
 .TP 10
 
 .sp
-sminfo 
+sminfo
 Specifies SM information.
 
 .RE
@@ -311,7 +309,7 @@ Specifies SM information.
 .TP 10
 
 .sp
-swaggr 
+swaggr
 Specifies node information and switch information.
 
 .RE
@@ -320,18 +318,18 @@ Specifies node information and switch information.
 .TP 10
 
 .sp
-swconglog 
+swconglog
 Specifies switch congestion logs.
 
 .IP
-[-b block[,count]] 
+[-b block[,count]]
 .RE
 
 .RS
 .TP 10
 
 .sp
-swcongset 
+swcongset
 Specifies switch congestion settings.
 
 .RE
@@ -340,7 +338,7 @@ Specifies switch congestion settings.
 .TP 10
 
 .sp
-swinfo 
+swinfo
 Specifies switch information.
 
 .RE
@@ -349,29 +347,29 @@ Specifies switch information.
 .TP 10
 
 .sp
-swportcong 
+swportcong
 Specifies switch congestion settings.
 
 .IP
-[-b block[,count]] 
+[-b block[,count]]
 .RE
 
 .RS
 .TP 10
 
 .sp
-vlarb 
+vlarb
 Specifies VL arbitration tables.
 
 .IP
-[-m dest\(ulport] 
+[-m dest\(ulport]
 .RE
 
 .RS
 .TP 10
 
 .sp
-ibnodeinfo 
+ibnodeinfo
 Specifies IB node information.
 
 .RE
@@ -380,71 +378,67 @@ Specifies IB node information.
 .TP 10
 
 .sp
-ledinfo 
+ledinfo
 Specifies LED information.
 
 .IP
-[-m dest\(ulport] 
+[-m dest\(ulport]
 .RE
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
-.NL
 
 .SH otype Options Vary by Report
-.NL
 [-m port|port1,port2] [-f lid] [-b block[,count]]
 .TP 10
--m \fIport\fR 
-.NL
+-m \fIport\fR
+
 Specifies the port in destination device to query.
 
 .TP 10
--m \fIport1,port2\fR 
-.NL
+-m \fIport1,port2\fR
+
 For some reports, specifies a range of ports between \fIport1\fR and \fIport2\fR. For others, this describes an inport/outport pair.
 
 .TP 10
--f \fIlid\fR 
-.NL
+-f \fIlid\fR
+
 Specifies the LID to look up in forwarding table to select which LFT or MFT block to display. Default is to show entire table.
 
 .TP 10
--b \fIblock[,count]\fR 
-.NL
+-b \fIblock[,count]\fR
+
 Specifies the block number of either GUIDs or pkey, and the number of blocks to display. Default is to show entire table.
 
 .IP
@@ -455,7 +449,7 @@ For example:
 .TP 10
 
 .sp
--b \fIblock\fR 
+-b \fIblock\fR
 Displays all of block \fIblock\fR of a larger table.
 
 .RE
@@ -464,7 +458,7 @@ Displays all of block \fIblock\fR of a larger table.
 .TP 10
 
 .sp
--b \fIblock,count\fR 
+-b \fIblock,count\fR
 Displays \fIcount\fR blocks of data starting with block \fIblock\fR.
 
 .RE
@@ -473,77 +467,109 @@ Displays \fIcount\fR blocks of data starting with block \fIblock\fR.
 .TP 10
 
 .sp
--b, \fIcount\fR 
+-b, \fIcount\fR
 Displays \fIcount\fR blocks of data starting with block 0.
 
 .RE
 
 .SH Examples
-.NL
 
 .PP
 opasmaquery -o desc -l 6
 .br
+
 # get nodedesc via lid routed
 .br
 
+
 .br
+
 opasmaquery -o nodedesc 1 3
 .br
+
 # get nodedesc via directed route (2 dr hops)
 .br
 
-.br
-opasmaquery -o nodeinfo -l 2 3
-.br
-# get nodeinfo via a combination of lid routed and # directed route (1 dr hop)
-.br
 
 .br
+
+opasmaquery -o nodeinfo -l 2 3
+.br
+
+# get nodeinfo via a combination of lid routed and
+# directed route (1 dr hop)
+.br
+
+
+.br
+
 opasmaquery -o portinfo
 .br
+
 # get local port info
 .br
 
+
 .br
+
 opasmaquery -o portinfo -l 6 -m 1
 .br
+
 # get port info of port 1 of lid 6
 .br
 
+
 .br
+
 opasmaquery -o pkey -l 2 3
 .br
+
 # get pkey table entries starting (lid routed to lid 2,
 .br
+
 # then 1 dr hop to port 3)
 .br
 
+
 .br
+
 opasmaquery -o vlarb -l 6
 .br
+
 # get vlarb table entries from lid 6
 .br
 
+
 .br
+
 opasmaquery -o swinfo -l 2
 .br
+
 # get switch info
 .br
 
+
 .br
+
 opasmaquery -o sminfo -l 1
 .br
+
 # get SM info
 .br
 
+
 .br
+
 opasmaquery -o slsc -l 3
 .br
+
 # get sl2sc table entries from lid 3
 .br
 
+
 .br
+
 opasmaquery -o scsl -l 3
 .br
+
 # get sc2sl table entries from lid 3

@@ -522,7 +522,7 @@ proc get_portstate { ibnode } {
 ## Arguments:
 ##	ibnode - ib node of switch, includes hfi/port
 ## Returns:
-##	port state as output in "opainfo" command
+##	port state as output in "opaportinfo" command
 ## Additional Information:
 ##	
 		global env
@@ -535,9 +535,9 @@ proc get_portstate { ibnode } {
 		set hfi_port [ resolve_ibnode $ibnode ]
 		set hfi_port_args [ get_hfi_port_args "$hfi_port" ]
 
-		send_unix_cmd "opainfo $hfi_port_args"
-		set out [expect_list_with_punchlist "$ibnode" "Unable to open hfi:port"  30 { "PortState:     [A-Za-z]+" } { "Error"}]
-		regexp {PortState:     ([A-Za-z]+)} $out xx portstate
+		send_unix_cmd "opaportinfo $hfi_port_args"
+		set out [expect_list_with_punchlist "$ibnode" "Unable to open hfi:port"  30 { "PortState: +[A-Za-z]+" } { "failed"}]
+		regexp {PortState: +([A-Za-z]+)} $out xx portstate
 
 		local_sh_exit
 

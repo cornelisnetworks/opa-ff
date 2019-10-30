@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafabricinfo 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opafabricinfo 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opafabricinfo
 
-.NL
 
 .PP
 Provides a brief summary of the components in the fabric, using the first active port on the given local host to perform its analysis. opafabricinfo is supplied in both:
@@ -25,27 +24,25 @@ In this situation, the command performs analysis against the first active port o
 .PP
 opafabricinfo can be very useful as a quick assessment of the fabric state. It can be run against a known good fabric to identify its components and then later run to see if anything has changed about the fabric configuration or state.
 .PP
-For more extensive fabric analysis, use opareport, opareports, and opatop. These tools can be found in the 
+For more extensive fabric analysis, use opareport, opareports, and opatop. These tools can be found in the
 \fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
 
 .
 .SH Syntax
-.NL
-opafabricinfo [-t \fIportsfile\fR] [-p \fIports\fR]
-.SH Options 
-.NL
+opafabricinfo [-t  \fIportsfile\fR] [-p  \fIports\fR]
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports file.
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabrics for analysis.
 
 .IP
@@ -56,7 +53,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -65,7 +62,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -74,7 +71,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -83,23 +80,22 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
-.SH Environment Variables 
-.NL
+.SH Environment Variables
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.
 
 .IP
@@ -119,10 +115,10 @@ Using the ports\(ulfile configuration option in opafastfabric.conf.
 
 .IP
 If the specified port does not exist or is empty, the first active port on the local system is used. In more complex configurations, you must specify the exact ports to use for all fabrics to be analyzed.
-.SH Example 
-.NL
+.SH Example
 opafabricinfo
 .br
+
 opafabricinfo -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .PP
 
@@ -131,33 +127,41 @@ opafabricinfo -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .br
 # opafabricinfo
 .br
+
 Fabric 0:0 Information:
 .br
+
 SM: hds1fnb6241 hfi1\(ul0 Guid: 0x0011750101575ffe State: Master
 .br
+
 Number of HFIs: 8
 .br
+
 Number of Switches: 1
 .br
+
 Number of Links: 8
 .br
-Number of HFI Links: 8 (Internal: 0 External: 8)
+
+Number of HFI Links: 8              (Internal: 0 External: 8)
 .br
-Number of ISLs: 0 (Internal: 0 External: 0)
+
+Number of ISLs: 0                   (Internal: 0 External: 0)
 .br
-Number of Degraded Links: 0 (HFI Links: 0 ISLs: 0)
+
+Number of Degraded Links: 0         (HFI Links: 0 ISLs: 0)
 .br
-Number of Omitted Links: 0 (HFI Links: 0 ISLs: 0)
+
+Number of Omitted Links: 0          (HFI Links: 0 ISLs: 0)
 .SH Output Definitions
-.NL
 
 .TP 10
-SM 
-.NL
+SM
+
 Each subnet manger (SM) running in the fabric is listed along with its node name, port GUID, and present SM state (Master, Standby, etc.).
 .TP 10
-Number of HFIs 
-.NL
+Number of HFIs
+
 Number of unique host fabric interfaces (HFIs) in the fabric. An FI with two connected ports is counted as a single FI.
 .TP 10
 .BR
@@ -169,26 +173,26 @@ Fabric Interfaces include HFIs in servers as well as HFIs within I/O Modules, Na
 
 
 .TP 10
-Number of Switches 
-.NL
+Number of Switches
+
 Number of connected switches in the fabric.
 .TP 10
-Number of Links 
-.NL
+Number of Links
+
 Number of links in the fabric. Note that a large switch may have internal links.
 .TP 10
-Number of HFI Links 
-.NL
+Number of HFI Links
+
 Number of HFI links (Internal and External) in the fabric.
 .TP 10
-Number of ISLs 
-.NL
+Number of ISLs
+
 Number of Interswitch Links (Internal and External) in the fabric.
 .TP 10
-Number of Degraded Links 
-.NL
+Number of Degraded Links
+
 Number of degraded links (HSI and ISL) in the fabric.
 .TP 10
-Number of Omitted Links 
-.NL
+Number of Omitted Links
+
 Number of omitted links (HSI and ISL) in the fabric.

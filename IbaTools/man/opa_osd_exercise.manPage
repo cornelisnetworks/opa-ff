@@ -6,86 +6,82 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa\(ulosd\(ulexercise 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opa\(ulosd\(ulexercise 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opa\(ulosd\(ulexercise
 
-.NL
 
 .PP
 Performs stress test on SM and distributed SA query system.
 .SH Syntax
-.NL
-opa\(ulosd\(ulexercise [-d | -s | -r | -x | -X | -D | -p | -S | -t | -e] \fIguidlist\fR
+opa\(ulosd\(ulexercise [-d | -s | -r | -x | -X | -D | -p | -S | -t | -e]  \fIguidlist\fR
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--d \fIdebug level\fR 
-.NL
+-d \fIdebug level\fR
+
 Sets debugging level.
 
 .TP 10
--s \fIseconds\fR 
-.NL
+-s \fIseconds\fR
+
 Specifies running for at least \fIseconds\fR seconds.
 .TP 10
--r \fIremote\fR 
-.NL
+-r \fIremote\fR
+
 Specifies the host running the fabric simulator.
 .TP 10
--x \fIcount\fR 
-.NL
+-x \fIcount\fR
+
 Number of destinations to toggle up or down after each pass.
 .br
 Maximum = MAX\(ulTOGGLES.
 .TP 10
--X \fIcount\fR 
-.NL
+-X \fIcount\fR
+
 Specifies how often to toggle a source port up or down
 .br
 (in seconds).
 .TP 10
--D \fIseconds\fR 
-.NL
+-D \fIseconds\fR
+
 Specifies how long to sleep after each pass. This value gives the Subnet Manager time to process port events.
 .TP 10
--p \fIpkey\fR 
-.NL
+-p \fIpkey\fR
+
 Specifies to include \fIpkey\fR in the searches. Can be specified up to 8 times.
 .TP 10
--S \fIsid\fR 
-.NL
+-S \fIsid\fR
+
 Specifies to include SID in the searches.
 .TP 10
--t \fIerror threshold\fR 
-.NL
+-t \fIerror threshold\fR
+
 Cancels the test if the number of path errors to a single destination exceeds \fIerror threshold\fR. The count is reset to zero when a correct result is retrieved. Can be specified up to 8 times. Note that providing both SIDs and pkeys may cause problems.
 .TP 10
--e 
-.NL
+-e
+
 Instructs simulator to enable all ports before starting.
 .TP 10
-\fIguidlist\fR 
-.NL
+\fIguidlist\fR
+
 Text file that lists the source and destination GUIDs and LIDs. \fIguidlist\fR format is:
 
 .RS
 
 .IP \(bu
-lid\(ul0;guid\(ul0;node\(uldesc\(ul0 
+lid\(ul0;guid\(ul0;node\(uldesc\(ul0
 .IP \(bu
-lid\(ul1;guid\(ul1;node\(uldesc\(ul1 
+lid\(ul1;guid\(ul1;node\(uldesc\(ul1
 .IP \(bu
 and so on.
 
 .RE
 
-.SH Example 
-.NL
+.SH Example
 opa\(ulosd\(ulexercise -p 0x9001 guidtable

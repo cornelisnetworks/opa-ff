@@ -52,7 +52,7 @@ APP=IMB-MPI1
 LOGFILE=
 . ./prepare_run
 
-IMB_CMD=$MPICH_PREFIX/tests/IMB-3.2/IMB-MPI1 
+IMB_CMD=$MPICH_PREFIX/tests/IMB-4.0/IMB-MPI1 
 if [ ! -x $IMB_CMD ]
 then
 	echo " $IMB_CMD: Not Found"

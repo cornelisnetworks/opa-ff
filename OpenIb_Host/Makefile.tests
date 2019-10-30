@@ -58,8 +58,7 @@ DIRS			= \
 				$(TL_DIR)/InicTools \
 				$(TL_DIR)/Tests \
 				$(TL_DIR)/IbaTests \
-				$(TL_DIR)/MpiApps \
-				$(TL_DIR)/ShmemApps
+				$(TL_DIR)/MpiApps
 				
 				# DISABLED - MWHEINZ
 				#$(TL_DIR)/L8sim

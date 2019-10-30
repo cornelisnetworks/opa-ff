@@ -95,6 +95,7 @@
 /usr/sbin/opaextractlink
 /usr/sbin/opaextractmissinglinks
 /usr/sbin/opaextractperf
+/usr/sbin/opaextractperf2
 /usr/sbin/opaextractsellinks
 /usr/sbin/opaextractstat
 /usr/sbin/opaextractstat2
@@ -109,6 +110,7 @@
 /usr/sbin/opahostsmanalysis
 /usr/sbin/opaledports
 /usr/sbin/opalinkanalysis
+/usr/sbin/opamergeperf2
 /usr/sbin/opapaquery
 /usr/sbin/opapingall
 /usr/sbin/opareport

@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacaptureall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opacaptureall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opacaptureall
 
-.NL
 
 .PP
 
@@ -27,68 +26,68 @@ When a chassis opacaptureall is performed, opacapture is run on each chassis and
 .PP
 For both host and chassis capture, the uploaded captures are combined into a .tgz file with the file name specified and the suffix .all.tgz added.
 .SH Syntax
-.NL
-opacaptureall [-C] [-p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
+opacaptureall [-C] [-p] [-f  \fIhostfile\fR] [-F  \fIchassisfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-H \[aq]\fIchassis\fR\[aq]] [-t \fIportsfile\fR] [-d \fIupload\(uldir\fR] [-S] [-D \fIdetail\(ullevel\fR]
+
+[-H \[aq]\fIchassis\fR\[aq]] [-t  \fIportsfile\fR] [-d  \fIupload\(uldir\fR] [-S] [-D  \fIdetail\(ullevel\fR]
 .br
+
 [ \fIfile\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--C 
-.NL
+-C
+
 Performs capture against chassis. Default is hosts.
 
 .TP 10
--p 
-.NL
+-p
+
 Performs capture upload in parallel on all host/chassis. For a host capture, this only affects the upload phase.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster. Default is /etc/opa/hosts file.
 
 .TP 10
--F \fIchassisfile\fR 
-.NL
+-F \fIchassisfile\fR
+
 Specifies the file containing a list of chassis in the cluster. Default is /etc/opa/chassis file.
 
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts on which to perform a capture.
 
 .TP 10
--H \fIchassis\fR 
-.NL
+-H \fIchassis\fR
+
 Specifies the list of chassis on which to perform a capture.
 
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabric(s) for switch access. Default is /etc/opa/ports file.
 
 .TP 10
--d \fIupload\(uldir\fR 
-.NL
+-d \fIupload\(uldir\fR
+
 Specifies the directory to upload to. Default is uploads. If not specified, the environment variable \fBUPLOADS\(ulDIR\fR is used. If that is not exported, the default ./uploads is used.
 
 .TP 10
--S 
-.NL
+-S
+
 Securely prompts for password for administrator on a chassis.
 
 .TP 10
--D \fIdetail\(ullevel\fR 
-.NL
+-D \fIdetail\(ullevel\fR
+
 Specifies the level of detail of the capture passed to host opacapture. (Only used for host captures; ignored for chassis captures.)
 .RS
 .TP 10
@@ -138,108 +137,120 @@ Detail levels 2-4 can be used when fabric operational problems occur. If the pro
 For detail levels 2-4, the additional information is only gathered on the node running the opacaptureall command. The information is gathered for every fabric specified in the /etc/opa/ports file.
 
 .TP 10
-\fIfile\fR 
-.NL
+\fIfile\fR
+
 Specifies the name for capture file. The suffix .tgz is appended if it is not specified in the name.
 
-.SH Examples 
-.NL
+.SH Examples
 
-.NL
 
 .SH Host Capture Examples
-.NL
 opacaptureall
 .br
+
 # Creates a hostcapture directory in upload\(uldir/hostname/ for each host
 .br
-in /etc/opa/hosts file, then creates hostcapture.all.tgz.
+in
+/etc/opa/hosts file, then creates hostcapture.all.tgz.
 .br
 
+
 .br
+
 opacaptureall mycapture
 .br
+
 # Creates a mycapture directory in upload\(uldir/hostname/ for each host
 .br
-in /etc/opa/hosts file, then creates mycapture.all.tgz.
+in
+/etc/opa/hosts file, then creates mycapture.all.tgz.
 .br
 
+
 .br
+
 opacaptureall -h \[aq]arwen elrond\[aq] 030127capture
 .br
+
 # Gets the list of hosts from arwen elrond file and creates
 .br
 030127capture.tgz file.
-.NL
+
 
 .SH Chassis Capture Examples
-.NL
 opacaptureall -C
 .br
+
 # Creates a chassiscapture file in upload\(uldir/chassisname/ for each
 .br
-chassis in /etc/opa/chassis file, then creates chassiscapture.all.tgz.
+chassis
+in /etc/opa/chassis file, then creates chassiscapture.all.tgz.
 .br
 
+
 .br
+
 opacaptureall -C mycapture
 .br
+
 # Creates a mycapture.tgz file in upload\(uldir/chassisname/ for each
 .br
-chassis in /etc/opa/chassis file, then creates mycapture.all.tgz.
+chassis
+in /etc/opa/chassis file, then creates mycapture.all.tgz.
 .br
 
+
 .br
+
 opacaptureall -C -H \[aq]chassis1 chassis2\[aq] 030127capture
 .br
+
 # Captures from chassis1 and chassis2, and creates 030127capture.tgz file.
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBCHASSIS\fR 
-.NL
+\fBCHASSIS\fR
+
 List of chassis, used if -C is used and -h option is not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing a list of hosts, used in the absence of -f and -h.
 
 .TP 10
-\fBCHASSIS\(ulFILE\fR 
-.NL
+\fBCHASSIS\(ulFILE\fR
+
 File containing a list of chassis, used in the absence of -F and -H.
 
 .TP 10
-\fBUPLOADS\(ulDIR\fR 
-.NL
+\fBUPLOADS\(ulDIR\fR
+
 Directory to upload to, used in the absence of -d.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 When -p option is used, maximum concurrent operations are performed.
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR
+
 How to log into chassis. Can be Telnet or SSH.
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR
+
 Password for administrator on all chassis. Used in absence of -S option.
 
 .SH More Information
-.NL
 
 .PP
 When performing opacaptureall against hosts, internally SSH is used. The command opacaptureall requires that password-less SSH be set up between the host running Intel(R) Omni-Path Fabric Suite FastFabric Toolset and the hosts opacaptureall is operating against. The opasetupssh command can aid in setting up password-less SSH.

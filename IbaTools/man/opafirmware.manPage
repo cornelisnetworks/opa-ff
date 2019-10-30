@@ -6,46 +6,45 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafirmware 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opafirmware 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opafirmware
 
-.NL
 
 .PP
 Returns firmware information.
 .SH Syntax
-.NL
 opafirmware [--showVersion | --showType] [ \fIfirmwareFile\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
---showVersion 
-.NL
+--showVersion
+
 Specifies the version of the firmware file.
 
 .TP 10
---showType 
-.NL
+--showType
+
 Specifies the type of the firmware file.
 
 .TP 10
 \fIfirmwareFile\fR
-.NL
+
 Specifies the firmware filename.
 
-.SH Examples 
-.NL
+.SH Examples
 # opafirmware --showVersion STL1.q7.10.0.0.0.spkg
 .br
+
 10.0.0.0
 .br
+
 # opafirmware --showType STL1.q7.10.0.0.0.spkg
 .br
+
 Omni\(ulPath\(ulSwitch\(ulProducts.q7

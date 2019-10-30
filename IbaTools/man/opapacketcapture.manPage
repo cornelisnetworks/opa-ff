@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapacketcapture 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opapacketcapture 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opapacketcapture
 
-.NL
 
 .PP
 Starts capturing packet data.
@@ -22,79 +21,81 @@ To stop capture and trigger dump, use SIGINT or SIGUSR1. Program dumps packets t
 Using opapacketcapture with large amounts of traffic can cause performance issues on the given host. Intel recommends you use opapacketcapture on hosts with lower packet rates and bandwidth.
 
 .SH Syntax
-.NL
-opapacketcapture [-o \fIoutfile\fR] [-d \fIdevfile\fR] [-f \fIfilterfile\fR]
+opapacketcapture [-o  \fIoutfile\fR] [-d  \fIdevfile\fR] [-f  \fIfilterfile\fR]
 .br
-[-t \fItriggerfile\fR] [-l \fItriggerlag\fR][-a \fIalarm\fR] [-p \fIpackets\fR] [-s \fImaxblocks\fR]
+[-t  \fItriggerfile\fR]
+[-l  \fItriggerlag\fR][-a  \fIalarm\fR] [-p  \fIpackets\fR] [-s  \fImaxblocks\fR]
 .br
 [-v [-v]]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--o \fIoutfile\fR 
-.NL
+-o \fIoutfile\fR
+
 Specifies the output file for captured packets.
 .br
-Default is packetDump.pcap 
+Default is packetDump.pcap
 
 .TP 10
--d \fIdevfile\fR 
-.NL
+-d \fIdevfile\fR
+
 Specifies the device file for capturing packets.
 .br
 
 
 .TP 10
--f \fIfilterfile\fR 
-.NL
+-f \fIfilterfile\fR
+
 Specifies the file used for filtering. If absent, no filtering is done.
 
 .TP 10
--t \fItriggerfile\fR 
-.NL
+-t \fItriggerfile\fR
+
 Specifies the file used for triggering a stop capture. If absent, normal triggering is performed.
 
 .TP 10
--l \fItriggerlag\fR 
-.NL
+-l \fItriggerlag\fR
+
 Specifies the number of packets to collect after trigger condition is met, before dumping data and exiting. Default is 10.
 
 .TP 10
--a \fIalarm\fR 
-.NL
+-a \fIalarm\fR
+
 Specifies the number of seconds for alarm trigger to dump capture and exit.
 
 .TP 10
--p \fIpackets\fR 
-.NL
+-p \fIpackets\fR
+
 Specifies the number of packets for alarm trigger to dump capture and exit.
 
 .TP 10
--s \fImaxblocks\fR 
-.NL
+-s \fImaxblocks\fR
+
 Specifies the number of blocks to allocate for ring buffer. Value is in Millions. Default is 2 which corresponds to 128 MiB because 1 block = 64 Bytes.
 
 .TP 10
--v 
-.NL
+-v
+
 Produces verbose output. (Use verbose Level 1+ to show levels.)
 
 .SH Example
-.NL
 # opapacketcapture
 .br
+
 opapacketcapture: Capturing packets using 128 MiB buffer
 .br
+
 ^C
 .br
+
 opapacketcapture: Triggered
 .br
+
 Number of packets stored is 100
 .PP
 In the example above, opapacketcapture operates until

@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opadownloadall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opadownloadall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opadownloadall
 
-.NL
 
 .PP
 
@@ -22,47 +21,46 @@ Copies one or more files to a group of hosts from a system. Since the file conte
 The tool opadownloadall can only copy from this system to a group of hosts in the cluster. To copy files from hosts in the cluster to this host, use opauploadall.
 
 
-.SH Syntax 
-.NL
-opadownloadall [-rp] [-f \fIhostfile\fR] [-d \fIdownload\(uldir\fR] [-h \[aq]\fIHOSTS\fR\[aq]]
+.SH Syntax
+opadownloadall [-rp] [-f  \fIhostfile\fR] [-d  \fIdownload\(uldir\fR] [-h \[aq]\fIHOSTS\fR\[aq]]
 .br
-[-u \fIuser\fR] source\(ulfile ... \fIdest\(ulfile\fR
-.SH Options 
-.NL
+[-u  \fIuser\fR]
+source\(ulfile ...  \fIdest\(ulfile\fR
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--r 
-.NL
+-r
+
 Performs recursive download of directories.
 
 .TP 10
--p 
-.NL
+-p
+
 Performs copy in parallel on all hosts.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster. Default is /etc/opa/hosts.
 
 .TP 10
--d \fIdownload\(uldir\fR 
-.NL
+-d \fIdownload\(uldir\fR
+
 Specifies the directory to download files from. Default is downloads. If not specified, the environment variable \fBDOWNLOADS\(ulDIR\fR is used. If that is not exported, the default is used.
 
 .TP 10
--h \fIHOSTS\fR 
-.NL
+-h \fIHOSTS\fR
+
 Specifies the list of hosts to download files to.
 
 .TP 10
--u \fIuser\fR 
-.NL
+-u \fIuser\fR
+
 Specifies the user to perform the copy. Default is the current user code.
 
 .TP 10
@@ -75,51 +73,53 @@ The user@ style syntax cannot be used in the arguments to opadownloadall.
 
 
 .TP 10
-\fIsource\(ulfile\fR 
-.NL
+\fIsource\(ulfile\fR
+
 Specifies the list of source files to copy from the system.
 
 .IP
 The option  \fIsource\(ulfile\fR is relative to  \fIdownload\(uldir\fR/\fIhostname\fR. A local directory within \fIdownload\(uldir\fR/ must exist for each host being downloaded to. Each downloaded file is copied from  \fIdownload\(uldir\fR/\fIhostname\fR/\fIsource\(ulfile\fR.
 .TP 10
-\fIdest\(ulfile\fR 
-.NL
+\fIdest\(ulfile\fR
+
 Specifies the name of the file or directory on the destination hosts to copy to.
 
 .IP
 If more than one source file is specified, \fIdest\(ulfile\fR is treated as a directory name. The given directory must already exist on the destination host. The copy fails for hosts where the directory does not exist.
-.SH Example 
-.NL
+.SH Example
 opadownloadall -h \[aq]arwen elrond\[aq] irqbalance vncservers /etc
 .br
+
 # Copies two files to 2 hosts
 .br
 
+
 .br
+
 opadownloadall -p irqbalance vncservers /etc
 .br
+
 # Copies two files to all hosts
-.SH Environment Variables 
-.NL
+.SH Environment Variables
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts; used if -h option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts; used in absence of -f and -h.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 When the -p option is used, the maximum concurrent operations are performed.
 
 .TP 10
-\fBDOWNLOADS\(ulDIR\fR 
-.NL
+\fBDOWNLOADS\(ulDIR\fR
+
 Directory to download from, used in absence of -d.

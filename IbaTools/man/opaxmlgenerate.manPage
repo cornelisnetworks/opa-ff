@@ -6,73 +6,69 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlgenerate 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaxmlgenerate 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaxmlgenerate
 
-.NL
 
 .PP
 
 \fB(Linux)\fR
 Takes comma-separated-values (CSV) data as input and generates sequences of XML containing user-specified element names and element values within start and end tag specifications. Use this tool to create an XML representation of fabric data from its CSV form.
 .SH Syntax
-.NL
-opaxmlgenerate [-v] [-d \fIdelimiter\fR] [-i \fInumber\fR] [-g \fIelement\fR]
+opaxmlgenerate [-v] [-d  \fIdelimiter\fR] [-i  \fInumber\fR] [-g  \fIelement\fR]
 .br
-[-h \fIelement\fR] [-e \fIelement\fR] [-X \fIinput\(ulfile\fR] [-P \fIparam\(ulfile\fR]
-.SH Options 
-.NL
+
+[-h  \fIelement\fR] [-e  \fIelement\fR] [-X  \fIinput\(ulfile\fR] [-P  \fIparam\(ulfile\fR]
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--g/--generate \fIelement\fR 
-.NL
+-g/--generate \fIelement\fR
+
 Generates value for \fIelement\fR using value in next field from the input file. Can be used multiple times on the command line. Values are assigned to elements in order.
 
 .TP 10
--h/--header \fIelement\fR 
-.NL
+-h/--header \fIelement\fR
+
 Name of the XML element that is the enclosing header start tag.
 
 .TP 10
--e/--end \fIelement\fR 
-.NL
+-e/--end \fIelement\fR
+
 Name of the XML element that is the enclosing header end tag.
 
 .TP 10
--d/--delimit \fIdelimiter\fR 
-.NL
+-d/--delimit \fIdelimiter\fR
+
 Specifies the delimiter character that separates values in the input file. Default is semicolon.
 
 .TP 10
--i/--indent \fInumber\fR 
-.NL
+-i/--indent \fInumber\fR
+
 Number of spaces to indent each level of XML output. Default is 0.
 
 .TP 10
--X/--infile \fIinput\(ulfile\fR 
-.NL
+-X/--infile \fIinput\(ulfile\fR
+
 Generates XML from CSV in input\(ulfile. One record per line with fields in each record separated by the specified delimiter.
 
 .TP 10
--P/--pfile \fIparam\(ulfile\fR 
-.NL
+-P/--pfile \fIparam\(ulfile\fR
+
 Uses input command line options (parameters) from param\(ulfile.
 
 .TP 10
--v/--verbose 
-.NL
+-v/--verbose
+
 Produces verbose output. Includes output progress reports during extraction.
 
-.NL
 
 .SH Details
-.NL
 
 .PP
 opaxmlgenerate takes the CSV data from an input file. It generates fragments of XML, and in combination with a script, can be used to generate complete XML sequences. opaxmlgenerate does not use nor require a connection to an Intel(R) Omni-Path Fabric.
@@ -86,10 +82,8 @@ Generate elements, along with a value from the CSV input file, cause XML in the 
 check for matching start and end tags or proper nesting of tags.
 .PP
 Options (parameters) to opaxmlgenerate can be specified on the command line, with a parameter file, or both. A parameter file is specified with -P \fIparam\(ulfile\fR. When a parameter file specification is encountered on the command line, option processing on the command line is suspended, the parameter file is read and processed entirely, and then command line processing is resumed. Option syntax within a parameter file is the same as on the command line. Multiple parameter file specifications can be made, on the command line or within other parameter files. At each point that a parameter file is specified, current option processing is suspended while the parameter file is processed, then resumed. Options are processed in the order they are encountered on the command line or in parameter files. A parameter file can be up to 8192 bytes in size and may contain up to 512 parameters.
-.NL
 
 .SH Using opaxmlgenerate to Create Topology Input Files
-.NL
 
 .PP
 opaxmlgenerate can be used to create scripts to translate from user-specific format into the opareport topology\(ulinput file format. opaxmlgenerate itself works against a CSV style file with one line per record. Given such a file it can produce hierarchical XML output of arbitrary complexity and depth.

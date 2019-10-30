@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opalinkanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opalinkanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opalinkanalysis
 
-.NL
 
 .PP
 
@@ -19,31 +18,30 @@ Encapsulates the capabilities for link analysis. Additionally, this tool include
 .PP
 In addition to being able to run assorted opareport link analysis reports, and generate human-readable output, this tool additionally analyzes the results and appends a concise summary of issues found to the FF\(ulRESULT\(ulDIR/punchlist.csv file.
 .SH Syntax
-.NL
-opalinkanalysis [-U] [-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItopology\(ulinput\fR]
+opalinkanalysis [-U] [-t  \fIportsfile\fR] [-p  \fIports\fR]  [-T  \fItopology\(ulinput\fR]
 .br
-[-X \fIsnapshot\(ulinput\fR] [-x \fIsnapshot\(ulsuffix\fR] [-c \fIfile\fR] reports ...
+
+[-X  \fIsnapshot\(ulinput\fR] [-x  \fIsnapshot\(ulsuffix\fR] [-c  \fIfile\fR] reports ...
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--U 
-.NL
+-U
+
 Omits unexpected devices and links in punchlist file from verify reports.
 
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports.
 
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabrics for analysis.
 
 .IP
@@ -54,7 +52,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -63,7 +61,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -72,7 +70,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -81,42 +79,42 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
 .TP 10
--T \fItopology\(ulinput\fR 
-.NL
+-T \fItopology\(ulinput\fR
+
 Specifies the name of a topology input file to use. Any  %P markers in this filename are replaced with the hfi:port being operated on (such as 0:0 or 1:2). Default is /etc/opa/topology.%P.xml. If NONE is specified, does not use any topology\(ulinput files. See
 \fIopareport\fR
 for more information on topology\(ulinput files.
 
 .TP 10
--X \fIsnapshot\(ulinput\fR 
-.NL
+-X \fIsnapshot\(ulinput\fR
+
 Performs analysis using data in  \fIsnapshot\(ulinput\fR.  \fIsnapshot\(ulinput\fR must have been generated via a previous opareport -o snapshot run. If an errors report is specified, snapshot must have been generated with the opareport -s option. When this option is used, only one port may be specified to select a topology\(ulinput file (unless -T specified). When this option is used, clearerrors and clearhwerrors reports are not permitted.
 
 .TP 10
--x \fIsnapshot\(ulsuffix\fR 
-.NL
+-x \fIsnapshot\(ulsuffix\fR
+
 Creates a snapshot file per selected port. The files are created in FF\(ulRESULT\(ulDIR with names of the form: snapshotSUFFIX. \fIHFI:PORT\fR.xml.
 
 .TP 10
--c \fIfile\fR 
-.NL
+-c \fIfile\fR
+
 Specifies the error thresholds configuration file. The default is /etc/opa/opamon.si.conf.
 
 .TP 10
-\fIreports\fR 
-.NL
+\fIreports\fR
+
 Supports the following reports:
 .RS
 .TP 10
 
 .sp
-errors 
+errors
 Specifies link error analysis.
 
 .RE
@@ -125,7 +123,7 @@ Specifies link error analysis.
 .TP 10
 
 .sp
-slowlinks 
+slowlinks
 Specifies links running slower than expected.
 
 .RE
@@ -134,7 +132,7 @@ Specifies links running slower than expected.
 .TP 10
 
 .sp
-misconfiglinks 
+misconfiglinks
 Specifies links configured to run slower than supported.
 
 .RE
@@ -143,7 +141,7 @@ Specifies links configured to run slower than supported.
 .TP 10
 
 .sp
-misconnlinks 
+misconnlinks
 Specifies links connected with mismatched speed potential.
 
 .RE
@@ -152,7 +150,7 @@ Specifies links connected with mismatched speed potential.
 .TP 10
 
 .sp
-all 
+all
 Includes all reports above. (errors, slowlinks, misconfiglinks, and misconnlinks)
 
 .RE
@@ -161,7 +159,7 @@ Includes all reports above. (errors, slowlinks, misconfiglinks, and misconnlinks
 .TP 10
 
 .sp
-verifylinks 
+verifylinks
 Verifies links against topology input.
 
 .RE
@@ -170,7 +168,7 @@ Verifies links against topology input.
 .TP 10
 
 .sp
-verifyextlinks 
+verifyextlinks
 Verifies links against topology input. Limits analysis to links external to systems.
 
 .RE
@@ -179,7 +177,7 @@ Verifies links against topology input. Limits analysis to links external to syst
 .TP 10
 
 .sp
-verifyfilinks 
+verifyfilinks
 Verifies links against topology input. Limits analysis to FI links.
 
 .RE
@@ -188,7 +186,7 @@ Verifies links against topology input. Limits analysis to FI links.
 .TP 10
 
 .sp
-verifyislinks 
+verifyislinks
 Verifies links against topology input. Limits analysis to inter-switch links.
 
 .RE
@@ -197,7 +195,7 @@ Verifies links against topology input. Limits analysis to inter-switch links.
 .TP 10
 
 .sp
-verifyextislinks 
+verifyextislinks
 Verifies links against topology input. Limits analysis to inter-switch links external to systems.
 
 .RE
@@ -206,7 +204,7 @@ Verifies links against topology input. Limits analysis to inter-switch links ext
 .TP 10
 
 .sp
-verifyfis 
+verifyfis
 Verifies FIs against topology input.
 
 .RE
@@ -215,7 +213,7 @@ Verifies FIs against topology input.
 .TP 10
 
 .sp
-verifysws 
+verifysws
 Verifies switches against topology input.
 
 .RE
@@ -224,7 +222,7 @@ Verifies switches against topology input.
 .TP 10
 
 .sp
-verifynodes 
+verifynodes
 Verifies FIs and switches against topology input.
 
 .RE
@@ -233,7 +231,7 @@ Verifies FIs and switches against topology input.
 .TP 10
 
 .sp
-verifysms 
+verifysms
 Verifies SMs against topology input.
 
 .RE
@@ -242,7 +240,7 @@ Verifies SMs against topology input.
 .TP 10
 
 .sp
-verifyall 
+verifyall
 Verifies links, FIs, switches, and SMs against topology input.
 
 .RE
@@ -251,7 +249,7 @@ Verifies links, FIs, switches, and SMs against topology input.
 .TP 10
 
 .sp
-clearerrors 
+clearerrors
 Clears error counters, uses PM if available.
 
 .RE
@@ -260,7 +258,7 @@ Clears error counters, uses PM if available.
 .TP 10
 
 .sp
-clearhwerrors 
+clearhwerrors
 Clears hardware error counters, bypasses PM.
 
 .RE
@@ -269,37 +267,37 @@ Clears hardware error counters, bypasses PM.
 .TP 10
 
 .sp
-clear 
+clear
 Includes clearerrors and clearhwerrors.
 
 .RE
 
 
 .PP
-A punchlist of bad links is also appended to the file: FF\(ulRESULT\(ulDIR/punchlist.csv 
-.SH Examples 
-.NL
+A punchlist of bad links is also appended to the file: FF\(ulRESULT\(ulDIR/punchlist.csv
+.SH Examples
 opalinkanalysis errors
 .br
+
 opalinkanalysis errors clearerrors
 .br
+
 opalinkanalysis -p \[aq]1:1 1:2 2:1 2:2\[aq]
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.
 
 .TP 10
-\fBFF\(ulTOPOLOGY\(ulFILE\fR 
-.NL
+\fBFF\(ulTOPOLOGY\(ulFILE\fR
+
 File containing \fItopology\(ulinput\fR, used in absence of -T.

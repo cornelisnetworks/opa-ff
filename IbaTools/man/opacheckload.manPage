@@ -6,83 +6,80 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opacheckload 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opacheckload
 
-.NL
 
 .PP
 Returns load information on hosts in the fabric.
 .SH Syntax
-.NL
-opacheckload [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r] [-a|-n numprocs]
+opacheckload [-f  \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-r] [-a|-n numprocs]
 .br
 [-d uploaddir]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
-Specifies the file with hosts to check. Default is /etc/opa/hosts 
+-f \fIhostfile\fR
+
+Specifies the file with hosts to check. Default is /etc/opa/hosts
 
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts to check.
 
 .TP 10
--r 
-.NL
+-r
+
 Reverses output to show the least busy hosts. Default is busiest hosts.
 .TP 10
--n \fInumprocs\fR 
-.NL
+-n \fInumprocs\fR
+
 Shows the specified number of top \fInumprocs\fR hosts. Default is 10.
 .TP 10
--a 
-.NL
+-a
+
 Shows all hosts. Default is 10.
 
 .TP 10
--d \fIupload\(uldir\fR 
-.NL
+-d \fIupload\(uldir\fR
+
 Specifies the target directory to upload loadavg. Default is uploads.
 
-.SH Examples 
-.NL
+.SH Examples
 opacheckload
 .br
+
 opacheckload -h \[aq]arwen elrond\[aq]
 .br
+
 HOSTS=\[aq]arwen elrond\[aq] opacheckload
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBUPLOADS\(ulDIR\fR 
-.NL
+\fBUPLOADS\(ulDIR\fR
+
 Directory to upload loadavg, used in absence of -d.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 Maximum concurrent operations.

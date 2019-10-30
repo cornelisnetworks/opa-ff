@@ -6,43 +6,40 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlindent 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaxmlindent 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaxmlindent
 
-.NL
 
 .PP
 
 \fB(Linux)\fR
 Takes well-formed XML as input, filters out comments, and generates a uniformly-indented equivalent XML file. Use opaxmlindent to reformat files for easier reading and review, also to reformat a file for easy comparison with diff.
 .SH Syntax
-.NL
-opaxmlindent [-t|-k] [-i \fIindent\fR] [ \fIinput\(ulfile\fR]
-.SH Options 
-.NL
+opaxmlindent [-t|-k] [-i  \fIindent\fR] [ \fIinput\(ulfile\fR]
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--t 
-.NL
+-t
+
 Trims leading and trailing whitespace in tag contents.
 
 .TP 10
--k 
-.NL
+-k
+
 In tags with purely whitespace that contain newlines, keeps newlines as-is. Default is to format as an empty list.
 
 .TP 10
--i \fIindent\fR 
-.NL
+-i \fIindent\fR
+
 Sets indentation to use per level. Default is 4.
 
 .TP 10
-\fIinput\(ulfile\fR 
-.NL
+\fIinput\(ulfile\fR
+
 Specifies the XML file to read. Default is stdin.

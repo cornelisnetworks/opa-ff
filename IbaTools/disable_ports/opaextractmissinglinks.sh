@@ -155,7 +155,7 @@ fi
 line1=
 line2=
 # we do this against a single fabric, options can select a local HFI and Port
-/usr/sbin/opareport ${otype_args} ${topology_args} -x "$@" > $tempfile
+/usr/sbin/opareport ${otype_args} ${topology_args} -x -Q "$@" > $tempfile
 if [ -s $tempfile ]
 then
 	IFS=';'

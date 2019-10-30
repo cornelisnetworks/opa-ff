@@ -6,71 +6,70 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapingall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opapingall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opapingall
 
-.NL
 
 .PP
 
 \fB(All)\fR
 Pings a group of hosts or chassis to verify that they are powered on and accessible through TCP/IP ping.
 .SH Syntax
-.NL
-opapingall [-C] [-p] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \[aq]hosts\[aq]]
+opapingall [-C] [-p] [-f  \fIhostfile\fR] [-F  \fIchassisfile\fR] [-h \[aq]hosts\[aq]]
 .br
 [-H \[aq]chassis\[aq]]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--C 
-.NL
+-C
+
 Performs a ping against a chassis. Default is hosts.
 
 .TP 10
--p 
-.NL
+-p
+
 Pings all hosts/chassis in parallel.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster.
 .br
 Default is /etc/opa/hosts.
 
 .TP 10
--F \fIchassisfile\fR 
-.NL
+-F \fIchassisfile\fR
+
 Specifies the file with chassis in cluster.
 .br
 Default is /etc/opa/chassis.
 
 .TP 10
--h hosts 
-.NL
+-h hosts
+
 Specifies the list of hosts to ping.
 
 .TP 10
--H chassis 
-.NL
+-H chassis
+
 Specifies the list of chassis to ping.
 
-.SH Example 
-.NL
+.SH Example
 opapingall
 .br
+
 opapingall -h \[aq]arwen elrond\[aq]
 .br
+
 HOSTS=\[aq]arwen elrond\[aq] opapingall
 .br
+
 opapingall -C
 .PP
 
@@ -80,31 +79,31 @@ This command pings all hosts/chassis found in the specified host/chassis file. T
 .br
 opapingall -C -H \[aq]chassis1 chassis2\[aq]
 .br
+
 CHASSIS=\[aq]chassis1 chassis2\[aq] opapingall -C
 .SH Environment Variables
-.NL
 
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBCHASSIS\fR 
-.NL
+\fBCHASSIS\fR
+
 List of chassis, used if -H option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBCHASSIS\(ulFILE\fR 
-.NL
+\fBCHASSIS\(ulFILE\fR
+
 File containing list of chassis, used in absence of -F and -H.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 When -p option is used, maximum concurrent operations are performed.

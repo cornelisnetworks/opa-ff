@@ -6,59 +6,56 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opapmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opapmaquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opapmaquery
 
-.NL
 
 .PP
 
 \fB(All)\fR
 Performs individual PMA queries against a specific LID. It is very useful in displaying port runtime information.
-.SH Syntax 
-.NL
-opapmaquery [-v] [-s \fIsl\fR] [-l \fIlid\fR] [-h \fIhfi\fR] [-p \fIport\fR] [-o \fIotype\fR]
+.SH Syntax
+opapmaquery [-v] [-s  \fIsl\fR] [-l  \fIlid\fR] [-h  \fIhfi\fR] [-p  \fIport\fR] [-o  \fIotype\fR]
 .br
-[-m \fIport\fR] [-n \fImask\fR] [-e \fImask\fR] [-w \fImask\fR]
-.NL
+[-m  \fIport\fR]
+[-n  \fImask\fR] [-e  \fImask\fR] [-w  \fImask\fR]
 
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--v 
-.NL
+-v
+
 Specifies the verbose output. Can be specified more than once for additional openib debugging and libibumad debugging.
 
 .TP 10
--s \fIsl\fR 
-.NL
+-s \fIsl\fR
+
 Specifies different service level. Default is SM SL.
 
 .TP 10
--l \fIlid\fR 
-.NL
+-l \fIlid\fR
+
 Specifies the destination LID. Default is local port.
 
 .TP 10
--h/--hfi \fIhfi\fR 
-.NL
+-h/--hfi \fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
--p/--port \fIport\fR 
-.NL
+-p/--port \fIport\fR
+
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
--o \fIotype\fR 
-.NL
+-o \fIotype\fR
+
 Specifies the output type. Default is getportstatus. Refer to
 \fIotype options vary by report\fR
 for supported options.
@@ -69,7 +66,7 @@ Valid output types are:
 .TP 10
 
 .sp
-classportinfo 
+classportinfo
 Specifies the class of port info.
 
 .RE
@@ -78,7 +75,7 @@ Specifies the class of port info.
 .TP 10
 
 .sp
-getportstatus 
+getportstatus
 Specifies the list of port counters. Supported options:
 
 .IP
@@ -94,7 +91,7 @@ Specifies the list of port counters. Supported options:
 .TP 10
 
 .sp
-clearportstatus 
+clearportstatus
 Clears the port counters. Supported options:
 
 .IP
@@ -110,7 +107,7 @@ Clears the port counters. Supported options:
 .TP 10
 
 .sp
-getdatacounters 
+getdatacounters
 Specifies the list of data counters. Supported options:
 
 .IP
@@ -126,7 +123,7 @@ Specifies the list of data counters. Supported options:
 .TP 10
 
 .sp
-geterrorcounters 
+geterrorcounters
 Specifies the list of error counters. Supported options:
 
 .IP
@@ -142,7 +139,7 @@ Specifies the list of error counters. Supported options:
 .TP 10
 
 .sp
-geterrorinfo 
+geterrorinfo
 Specifies the list of error info. Supported options:
 
 .IP
@@ -158,7 +155,7 @@ Specifies the list of error info. Supported options:
 .TP 10
 
 .sp
-clearerrorinfo 
+clearerrorinfo
 Clears the error info. Supported options:
 
 .IP
@@ -170,59 +167,55 @@ Clears the error info. Supported options:
 
 .RE
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
-.NL
 
 .SH  \fIotype\fR options vary by report
-.NL
 
 .TP 10
--m \fIport\fR 
-.NL
+-m \fIport\fR
+
 Specifies the port in destination device to query/clear. Required when using -l option for all but -o classportinfo.
 
 .TP 10
--n \fImask\fR 
-.NL
+-n \fImask\fR
+
 Specifies the port mask, in hexadecimal. Bits represent ports 63-0. For example: 0x2 for port 1, 0x6 for ports 1, 2.
 
 .TP 10
--e \fImask\fR 
-.NL
+-e \fImask\fR
+
 Specifies the counter/error select mask, in hexadecimal. The following lists "Mask - Bit - Location for Counters". Where applicable, location "for Error Info" is presented. Default is all bits set (0xffffffe0).
 
 .RS
@@ -319,62 +312,87 @@ For Error Info: FM Configuration Error Info
 .RE
 
 .TP 10
--w \fImask\fR 
-.NL
+-w \fImask\fR
+
 Specifies the Virtual Lane Select Mask, in hexadecimal. Bits represent VL number 31-0. For example, 0x1 for VL 0, 0x3 for VL 0,1. Default is none.
 
 .SH Examples
-.NL
 opapmaquery -o classportinfo
 .br
 
+
 .br
+
 opapmaquery -o getportstatus
 .br
+
 # get data and error counts, local port
 .br
 
+
 .br
+
 opapmaquery -o getdatacounters -n 0x2
 .br
+
 # get data counts, local port 1
 .br
 
+
 .br
+
 opapmaquery -o geterrorcounters -n 0x2
 .br
+
 # get error counts, local port 1
 .br
 
+
 .br
+
 opapmaquery -o clearportstatus -n 0x2
 .br
+
 # clear all counters local port 1
 .br
 
+
 .br
+
 opapmaquery -o geterrorinfo -n 0x2
 .br
+
 # get error info for local port 1
 .br
 
+
 .br
+
 opapmaquery -o clearerrorinfo -n 0x2
 .br
+
 # clear all error info, local port 1
+
 .br
 opapmaquery -o getdatacounters -l 6 -n 0x7e -w 0x1
 .br
+
 # for device at LID 6, get data counters on ports 1-6, inclusive of VL 0 data
 .br
 
+
 .br
+
 opapmaquery -o clearportstatus -l 6 -n 0x2 -e 0x1ffff
 .br
+
 # for device at LID 6, on port 1, clear only error counters
 .br
 
+
 .br
+
 opapmaquery -o clearerrorinfo -l 6 -n 0x2 -e 0x04000000
 .br
+
 # for device at LID 6, on ports 1, clear uncorrectable error info

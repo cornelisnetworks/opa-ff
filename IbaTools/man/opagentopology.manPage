@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagentopology 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opagentopology 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opagentopology
 
-.NL
 
 .PP
 Provides a simple sample of how to generate the topology XML file used for topology verification. Customers who wish to integrate topology XML file generation into their cluster design process can create their own script to take information available in other formats and tools and produce the topology XML file directly. The alternative is to use opaxlattopology and have tools generate the input files it expects.
@@ -23,55 +22,56 @@ LinkSummary information includes Link, Cable, and Port information. Note that op
 .br
 opaxmlgenerate -X /usr/share/opa/samples/opatopology\(ul1.txt -d \;
 .br
--h Link -g Rate -g Rate\(ulInt -g MTU -g LinkDetails -h Cable
+-h Link
+-g Rate -g Rate\(ulInt -g MTU -g LinkDetails -h Cable
 .br
--g CableLength -g CableLabel -g CableDetails -e Cable -h Port
+-g CableLength -g CableLabel
+-g CableDetails -e Cable -h Port
 .br
 -g NodeGUID -g PortNum -g NodeDesc -g PortGUID
+
 .br
 -g NodeType -g NodeType\(ulInt -g PortDetails -e Port -h Port -g NodeGUID -g PortNum
+
 .br
 -g NodeDesc -g PortGUID -g NodeType -g NodeType\(ulInt -g PortDetails -e Port
 .br
 -e Link
+
 
 .br
 
 .br
 opaxmlgenerate -X /usr/share/opa/samples/opatopology\(ul2.txt -d \;
 .br
+
 -h Node -g NodeGUID -g NodeDesc -g NodeDetails -g HostName -g NodeType
 .br
+
 -g NodeType\(ulInt -g NumPorts -e Node
-.NL
 
 .SH Syntax
-.NL
 /usr/share/opa/samples/opagentopology [--help]
 .PP
 
 .B NOTE:
 You must use the full path to access this command.
 
-.NL
 
 .SH Options
-.NL
 
 .TP 10
 No option
-.NL
+
 Produces sample output. See
 \fIExample\fR
 .
 .TP 10
 --help
-.NL
+
 Produces full help text.
-.NL
 
 .SH opatopology\(ullinks.txt
-.NL
 
 .PP
 This file can be found in /usr/share/opa/samples/. For brevity, this sample shows only two links. The second link shows an example of omitting some information. In the second line, the MTU, LinkDetails, and other fields are not present, which is indicated by an empty value for the field (no entry between the semicolon delimiters).
@@ -91,16 +91,15 @@ Some info about port;0x0011750007000df6;7;Switch 1234 Leaf 4;;SW;
 .br
 
 
+
 .br
 
 .br
 25g;;0;;;;;0x0002c9020025a678;1;mindy2 HFI-1;;FI;;
 .br
 0x0011750007000e6d;4;Switch 2345 Leaf 5;;SW;
-.NL
 
 .SH opatopology\(ulFIs.txt
-.NL
 
 .PP
 This file can be found in /usr/share/opa/samples/. For brevity, this sample shows only two nodes.
@@ -109,30 +108,28 @@ This file can be found in /usr/share/opa/samples/. For brevity, this sample show
 .br
 0x0002c9020020e004;bender HFI-1;More details about node
 .br
+
 0x0002c9020025a678;mindy2 HFI-1;Node details
 
 .br
 
-.NL
 
 .SH opatopology\(ulSWs.txt
-.NL
 
 .PP
 This file can be found in /usr/share/opa/samples/. For brevity, this sample shows only two nodes.
 .PP
 
 .br
-0x0011750007000df6;Switch 1234 Leaf 4; 0x0011750007000e6d;Switch
+0x0011750007000df6;Switch 1234 Leaf 4;
+0x0011750007000e6d;Switch
 .br
 2345 Leaf 5;
 
 .br
 
-.NL
 
 .SH opatopology\(ulSMs.txt
-.NL
 
 .PP
 This file can be found in /usr/share/opa/samples/. For brevity, this sample shows only one node.
@@ -145,13 +142,11 @@ about SM
 
 .br
 
-.NL
 
 .SH Example
-.NL
 
 .PP
-When run against the supplied topology input files, /usr/share/opa/samples/opagentopology 
+When run against the supplied topology input files, /usr/share/opa/samples/opagentopology
 .br
 produces:
 .PP
@@ -159,166 +154,247 @@ produces:
 .br
 <?xml version="1.0" encoding="utf-8" ?>
 .br
+
 <Topology>
 .br
+
 <LinkSummary>
 .br
+
 <Link>
 .br
+
 <Rate>25g</Rate>
 .br
+
 <MTU>2048</MTU>
 .br
+
 <Internal>0</Internal>
 .br
+
 <LinkDetails>IO Server Link</LinkDetails>
 .br
+
 <Cable>
 .br
+
 <CableLength>11m</CableLength>
 .br
+
 <CableLabel>S4567</CableLabel>
 .br
+
 <CableDetails>cable model 456</CableDetails>
 .br
+
 </Cable>
 .br
+
 <Port>
 .br
+
 <NodeGUID>0x0002c9020020e004</NodeGUID>
 .br
+
 <PortNum>1</PortNum>
 .br
+
 <NodeDesc>bender HFI-1</NodeDesc>
 .br
+
 <PortGUID>0x0002c9020020e004</PortGUID>
 .br
+
 <NodeType>FI</NodeType>
 .br
+
 <PortDetails>Some info about port</PortDetails>
 .br
+
 </Port>
 .br
+
 <Port>
 .br
+
 <NodeGUID>0x0011750007000df6</NodeGUID>
 .br
+
 <PortNum>7</PortNum>
 .br
+
 <NodeDesc>Switch 1234 Leaf 4</NodeDesc>
 .br
+
 <NodeType>SW</NodeType>
 .br
+
 </Port>
 .br
+
 </Link>
 .br
+
 <Link>
 .br
+
 <Rate>25g</Rate>
 .br
+
 <Internal>0</Internal>
 .br
+
 <Cable>
 .br
+
 </Cable>
 .br
+
 <Port>
 .br
+
 <NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
+
 <PortNum>1</PortNum>
 .br
+
 <NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
+
 <NodeType>FI</NodeType>
 .br
+
 </Port>
 .br
+
 <Port>
 .br
+
 <NodeGUID>0x0011750007000e6d</NodeGUID>
 .br
+
 <PortNum>4</PortNum>
 .br
+
 <NodeDesc>Switch 2345 Leaf 5</NodeDesc>
 .br
+
 <NodeType>SW</NodeType>
 .br
+
 </Port>
 .br
+
 </Link>
 .br
+
 </LinkSummary>
 .br
+
 <Nodes>
 .br
+
 <FIs>
 .br
+
 <Node>
 .br
+
 <NodeGUID>0x0002c9020020e004</NodeGUID>
 .br
+
 <NodeDesc>bender HFI-1</NodeDesc>
 .br
+
 <NodeDetails>More details about node</NodeDetails>
 .br
+
 </Node>
 .br
+
 <Node>
 .br
+
 <NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
+
 <NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
+
 <NodeDetails>Node details</NodeDetails>
 .br
+
 </Node>
 .br
+
 </FIs>
 .br
+
 <Switches>
 .br
+
 <Node>
 .br
+
 <NodeGUID>0x0011750007000df6</NodeGUID>
 .br
+
 <NodeDesc>Switch 1234 Leaf 4</NodeDesc>
 .br
+
 </Node>
 .br
+
 <Node>
 .br
+
 <NodeGUID>0x0011750007000e6d</NodeGUID>
 .br
+
 <NodeDesc>Switch 2345 Leaf 5</NodeDesc>
 .br
+
 </Node>
 .br
+
 </Switches>
 .br
+
 <SMs>
 .br
+
 <SM>
 .br
+
 <NodeGUID>0x0002c9020025a678</NodeGUID>
 .br
+
 <PortNum>1</PortNum>
 .br
+
 <NodeDesc>mindy2 HFI-1</NodeDesc>
 .br
+
 <PortGUID>0x0011750007000e6d</PortGUID>
 .br
+
 <NodeType>FI</NodeType>
 .br
+
 <SMDetails>details about SM</SMDetails>
 .br
+
 </SM>
 .br
+
 </SMs>
 .br
+
 </Nodes>
 .br
+
 </Topology>
 
 .br

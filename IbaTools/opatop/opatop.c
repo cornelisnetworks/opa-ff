@@ -340,7 +340,7 @@ uint32 g_focusVFArrayEndIdx = 13;
 *
 *******************************************************************************/
 static int get_input( uint32 n_optn, uint32 n_chars, char *bf_input,
-	char *bf_multi )
+	char *bf_multi, boolean *isdelchar )
 {
 	int32 ret_val = 0;
 	static uint32 ct_hold = 0;
@@ -364,8 +364,15 @@ static int get_input( uint32 n_optn, uint32 n_chars, char *bf_input,
 	time_select.tv_sec = 0;
 	time_select.tv_usec = 10000;		// 10 mSec
 
-	if (select(1, &fd_set_read, NULL, NULL, &time_select) > 0)
-		bf_hold[ct_hold++] = fgetc(stdin);
+	if (select(1, &fd_set_read, NULL, NULL, &time_select) > 0) {
+		char input = fgetc(stdin);
+		if (ct_hold > 0 && (input == 0x08 || input == 127)) { // BackSpace Or Del
+			bf_hold[ct_hold--] = 0;
+			*isdelchar = TRUE; // reprint line so we can handle delchar.
+		} else if (isprint(input) || input == 0x0A) {
+			bf_hold[ct_hold++] = input;
+		}
+	}
 
 	if (ct_hold >= n_chars)
 		bf_hold[(ct_hold = n_chars) - 1] = 0x0A;
@@ -379,6 +386,10 @@ static int get_input( uint32 n_optn, uint32 n_chars, char *bf_input,
 		memcpy(bf_input, bf_hold, ct_hold);
 		ret_val = ct_hold;
 		ct_hold = 0;
+	} else if (ct_hold > 0) {
+		// Return input string, so we can reprint on screen refresh
+		memcpy(bf_input, bf_hold, ct_hold);
+		bf_input[ct_hold] = 0;
 	}
 
 	return (ret_val);
@@ -818,7 +829,7 @@ void DisplayScreen_Help(const char* helpfile)
 	}	// End of while (TRUE)
 }
 
-void DisplayScreen(void)
+void DisplayScreen(char *text_input)
 {
 	int ix;
 	int ct_lines;
@@ -2531,10 +2542,10 @@ void DisplayScreen(void)
 	for ( ; ct_lines > 0; ct_lines--)
 		printf("\n");
 
-	printf("Quit up Live/rRev/fFwd/bookmrked Bookmrk Unbookmrk ?help |%c", 
+	printf("Quit up Live/rRev/fFwd/time/bookmrked Bookmrk Unbookmrk ?help |%c", 
 			(tb_menu[n_level_menu] == SCREEN_VF_SUMMARY || 
 			 tb_menu[n_level_menu] == SCREEN_SUMMARY) ? '\n' : ' ');
-	p_multi_input = "qQ";
+	p_multi_input = "qQt";
 
 	switch (tb_menu[n_level_menu])
 	{
@@ -2555,19 +2566,19 @@ void DisplayScreen(void)
 		if (g_expr_funct)
 		{
 			printf("cC I0-n N0-n Detail:\n");
-			p_multi_input = "iInNqQ";
+			p_multi_input = "iInNqQt";
 		}
 		else
 		{
 			printf("cC N0-n Detail:\n");
-			p_multi_input = "nNqQ";
+			p_multi_input = "nNqQt";
 		}
 		break;
 
 	case SCREEN_VF_CONFIG:
 	case SCREEN_GROUP_CONFIG:
 		printf("sS P0-n:\n");
-		p_multi_input = "pPqQ";
+		p_multi_input = "pPqQt";
 		break;
 
 	case SCREEN_VF_FOCUS:
@@ -2575,12 +2586,12 @@ void DisplayScreen(void)
 		if (g_expr_funct)
 		{
 			printf("sS cC I0-n N0-n P0-n:\n");
-			p_multi_input = "iInNpPqQ";
+			p_multi_input = "iInNpPqQt";
 		}
 		else
 		{
 			printf("sS cC N0-n P0-n:\n");
-			p_multi_input = "nNpPqQ";
+			p_multi_input = "nNpPqQt";
 		}
 		break;
 
@@ -2593,7 +2604,6 @@ void DisplayScreen(void)
 		}
 		printf("sS%s:\n", ((tb_menu[n_level_menu - 1] == SCREEN_VF_FOCUS )||
 			(tb_menu[n_level_menu - 1] == SCREEN_VF_CONFIG)) ? " vV" : "");
-		fflush(stdout);
 		break;
 
 	case SCREEN_VF_PORT_STATS:
@@ -2604,7 +2614,6 @@ void DisplayScreen(void)
 				printf("Neighbor ");
 		}
 		printf("vV:\n");
-		fflush(stdout);
 		break;
 
 	default:
@@ -2612,6 +2621,10 @@ void DisplayScreen(void)
 		break;
 
 	}	// End of switch (tb_menu[n_level_menu])
+
+	// Print stdin input buffer after screen refresh
+	if (text_input) printf("%s", text_input);
+	fflush(stdout);
 
 }	// End of DisplayScreen()
 
@@ -2680,7 +2693,7 @@ int main(int argc, char ** argv)
 	long int			temp2		= 0;
 	char *endptr;
 	int n_cmd;
-	char tb_cmd[64];
+	char tb_cmd[64] = "";
 	time_t time_start;
 	int pa_service_state = OMGT_SERVICE_STATE_UNKNOWN;
 	int ms_timeout = OMGT_DEF_TIMEOUT_MS;
@@ -2816,11 +2829,12 @@ int main(int argc, char ** argv)
 	{
 		time_start = time(NULL);
 		ct_interval += 1;
-		DisplayScreen();
+		DisplayScreen(tb_cmd);
 
 		while ((time(NULL) - time_start) < g_interval)
 		{
-			if (get_input(0, 7, tb_cmd, p_multi_input) > 0)
+			boolean isdelchar = FALSE;
+			if (get_input(0, sizeof(tb_cmd)-1, tb_cmd, p_multi_input, &isdelchar) > 0)
 			{
 				// Clear displayed error
 				if (fb_error_displayed)
@@ -2942,6 +2956,72 @@ int main(int argc, char ** argv)
 							"NO IMAGE FROM WHICH TO SELECT" );
 				}
 
+				else if ( n_cmd == 't' ) {
+					uint32 time_val = 0;
+
+					char *ret = strchr(tb_cmd+1, 0x0A);
+					if (ret) *ret = 0; // clear after enter
+
+					if (( fstatus = StringToDateTime(&time_val, tb_cmd+1)) == FSUCCESS && time_val > 0)
+					{
+						if ( g_imageIdQuery.imageNumber == PACLIENT_IMAGE_CURRENT )
+						{
+							g_imageIdTemp.imageNumber = PACLIENT_IMAGE_TIMED;
+							g_imageIdTemp.imageOffset = 0;
+							g_imageIdTemp.imageTime.absoluteTime = time_val;
+
+							if ( ( fstatus = omgt_pa_freeze_image(g_portHandle, g_imageIdTemp,
+								&g_imageIdResp) ) == FSUCCESS )
+							{
+								g_imageIdQuery = g_imageIdFreeze = g_imageIdResp;
+								g_offset = 0;
+							} else {
+								snprintf( &bf_error[strlen(bf_error)], sizeof(bf_error)-strlen(bf_error),
+									"TIME (%s) IMAGE NOT AVAILABLE fstatus:%u %s",
+									tb_cmd+1, fstatus, iba_fstatus_msg(fstatus) );
+							}
+						}
+						else if ( g_imageIdFreeze.imageNumber != PACLIENT_IMAGE_CURRENT )
+						{
+							g_imageIdTemp.imageNumber = PACLIENT_IMAGE_TIMED;
+							g_imageIdTemp.imageOffset = 0;
+							g_imageIdTemp.imageTime.absoluteTime = time_val;
+
+							if ( ( fstatus = omgt_pa_move_image_freeze(g_portHandle, g_imageIdFreeze,
+								&g_imageIdTemp) ) == FSUCCESS )
+							{
+								g_imageIdQuery = g_imageIdFreeze = g_imageIdTemp;
+								g_offset = 0;
+							} else {
+								snprintf( &bf_error[strlen(bf_error)], sizeof(bf_error)-strlen(bf_error),
+									"TIME (%s) IMAGE NOT AVAILABLE fstatus:%u %s",
+									tb_cmd+1, fstatus, iba_fstatus_msg(fstatus) );
+							}
+						}
+						else if ( g_imageIdBookmark.imageNumber != PACLIENT_IMAGE_CURRENT )
+						{
+							g_imageIdTemp.imageNumber = PACLIENT_IMAGE_TIMED;
+							g_imageIdTemp.imageOffset = 0;
+							g_imageIdTemp.imageTime.absoluteTime = time_val;
+
+							if ( ( fstatus = omgt_pa_freeze_image( g_portHandle, g_imageIdTemp,
+									&g_imageIdResp) ) == FSUCCESS )
+							{
+								g_imageIdQuery = g_imageIdFreeze = g_imageIdResp;
+								g_offset = 0;
+							} else {
+								snprintf( &bf_error[strlen(bf_error)], sizeof(bf_error)-strlen(bf_error),
+									"TIME (%s) IMAGE NOT AVAILABLE fstatus:%u %s",
+									tb_cmd+1, fstatus, iba_fstatus_msg(fstatus) );
+							}
+						}
+					} else {
+						snprintf(&bf_error[strlen(bf_error)], sizeof(bf_error)-strlen(bf_error),
+							"TIME (%s) FORMAT INVALID fstatus:%u %s",
+							tb_cmd+1, fstatus, iba_fstatus_msg(fstatus) );
+					}
+				}
+
 				else if ( (n_cmd == 'b') &&
 						( g_imageIdBookmark.imageNumber !=
 						PACLIENT_IMAGE_CURRENT ) )
@@ -2956,7 +3036,7 @@ int main(int argc, char ** argv)
 					g_imageIdQuery.imageNumber = g_imageIdBookmark.imageNumber;
 					g_offset = g_imageIdQuery.imageOffset = 0;
 				}
-	
+
 				else if ( (n_cmd == 'B') &&
                            ( g_imageIdBookmark.imageNumber ==
 						PACLIENT_IMAGE_CURRENT ) )
@@ -3403,11 +3483,14 @@ int main(int argc, char ** argv)
 						--n_level_menu;
 					}
 				}
-
-				DisplayScreen();
+				tb_cmd[0] = 0;
+				DisplayScreen(NULL);
 
 			}	// End of if ((temp2 = select(1, &fd_set_read, NULL, NULL
-	
+			else if (isdelchar) {
+				printf("\b \b");
+				fflush(stdout);
+			}
 		}	// End of while ((time(NULL) - time_start) < g_interval)
 
 		// Renew frozen image if present
@@ -3417,7 +3500,7 @@ int main(int argc, char ** argv)
 		// Renew bookmark image if present
 		if (g_imageIdBookmark.imageNumber != PACLIENT_IMAGE_CURRENT)
 			omgt_pa_renew_image(g_portHandle, g_imageIdBookmark);
-	
+
 	}	// End of while (TRUE)
 
 quit:

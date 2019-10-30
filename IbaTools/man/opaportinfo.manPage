@@ -6,94 +6,86 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaportinfo 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaportinfo 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaportinfo
 
-.NL
 
 .PP
 
 \fB(Host or Switch)\fR
 Displays configuration and state of a specified Intel(R) Omni-Path Host Fabric Interface (HFI) port on the local host or a remote switch.
 .SH Syntax
-.NL
-opaportinfo [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-v]
+opaportinfo [-l  \fIlid\fR  [-m  \fIdest\(ulport\fR]] [-h  \fIhfi\fR] [-p  \fIport\fR] [-v]
 .SH Options
-.NL
 
 .TP 10
--l \fIlid\fR 
-.NL
+-l \fIlid\fR
+
 Specifies the destination LID. Default is local port.
 
 .TP 10
--m \fIdest\(ulport\fR 
-.NL
+-m \fIdest\(ulport\fR
+
 Specifies the destination port. Default is port with given LID. Useful to access switch ports.
 
 .TP 10
--h \fIhfi\fR 
-.NL
+-h \fIhfi\fR
+
 Specifies the HFI to send through/to. Default is first HFI.
 
 .TP 10
--p \fIport\fR 
-.NL
+-p \fIport\fR
+
 Specifies the port to send through/to. Default is first port.
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
-.NL
 
 .SH Debug Options
-.NL
 
 .TP 10
--v 
-.NL
+-v
+
 Specifies the verbose output. Additional invocations (-v -v ...) turn on debugging, openib debugging, and libibumad debugging.
 
-.SH Examples 
-.NL
+.SH Examples
 opaportinfo -p 1
 .br
+
 opaportinfo -p 2 -h 2 -l 5 -m 18
 .SH Description
-.NL
 
 .PP
 To access switch ports using this command, the -l and -m options must be given. The -l option specifies the LID of switch port 0 (the logical management port for the switch) and -m specifies the actual switch port to access.

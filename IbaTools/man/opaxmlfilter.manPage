@@ -6,51 +6,48 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlfilter 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaxmlfilter 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaxmlfilter
 
-.NL
 
 .PP
 Processes an XML file and removes all specified XML tags. The remaining tags are output and indentation can also be reformatted. opaxmlfilter is the opposite of opaxmlextract.
 .SH Syntax
-.NL
-opaxmlfilter [-t|-k] [-l] [-i \fIindent\fR] [-s \fIelement\fR] \fI[input\(ulfile]\fR
-.SH Options 
-.NL
+opaxmlfilter [-t|-k] [-l] [-i  \fIindent\fR] [-s  \fIelement\fR]  \fI[input\(ulfile]\fR
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--t 
-.NL
+-t
+
 Trims leading and trailing whitespace in tag contents.
 
 .TP 10
--k 
-.NL
+-k
+
 In tags with purely whitespace that contain newlines, keeps newlines as-is. Default is to format as an empty list.
 
 .TP 10
--l 
-.NL
+-l
+
 Adds comments with line numbers after each end tag. This can make comparison of resulting files easier since original line numbers are available.
 
 .TP 10
--i \fIindent\fR 
-.NL
+-i \fIindent\fR
+
 Sets indentation to use per level. Default is 4.
 
 .TP 10
--s \fIelement\fR 
-.NL
+-s \fIelement\fR
+
 Specifies the name of the XML element to suppress. Can be used multiple times (maximum of 100) in any order.
 
 .TP 10
-\fIinput\(ulfile\fR 
-.NL
+\fIinput\(ulfile\fR
+
 Specifies the XML file to read. Default is stdin.

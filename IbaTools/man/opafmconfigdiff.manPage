@@ -6,51 +6,49 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafmconfigdiff 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opafmconfigdiff 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opafmconfigdiff
 
-.NL
 
 .PP
 Performs a file difference between two configuration files corresponding to two FM instances described by \fIfile1\fR and \fIfile2\fR.
 .SH Syntax
-.NL
-opafmconfigdiff [-f] [-l] [-d \[aq]\fIdiff\(ulargs\fR\[aq]] \fIfile1 file2\fR
+opafmconfigdiff [-f] [-l] [-d \[aq]\fIdiff\(ulargs\fR\[aq]]  \fIfile1 file2\fR
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--f 
-.NL
+-f
+
 Filters out FM parameters that are not part of the consistency check. Removes configuration tags that do not cause consistency checks on the FM to fail from diff.
 
 .TP 10
--l 
-.NL
+-l
+
 Includes comments in XML to indicate original line numbers.
 
 .TP 10
--d \[aq]\fIdiff\(ulargs\fR\[aq] 
-.NL
+-d \[aq]\fIdiff\(ulargs\fR\[aq]
+
 Specifies additional arguments to add to diff command. For example, enter uw for unified format ignoring whitespace.
 
 .TP 10
-\fIfile1 file2\fR 
-.NL
+\fIfile1 file2\fR
+
 Specifies the names of the configuration files to be compared.
 
-.SH Example 
-.NL
-opafmconfigdiff /etc/opa-fm/opafm.xml /usr/share/opa-fm/opafm.xml
+.SH Example
+opafmconfigdiff /etc/opa-fm/opafm.xml  /usr/share/opa-fm/opafm.xml
 .br
-opafmconfigdiff -f /etc/opa-fm/opafm.xml /usr/share/opa-fm/opafm.xml
+
+opafmconfigdiff -f /etc/opa-fm/opafm.xml  /usr/share/opa-fm/opafm.xml
 .br
-opafmconfigdiff -d -uw /etc/opa-fm/opafm.xml /usr/share/opa-fm/
+
+opafmconfigdiff -d -uw /etc/opa-fm/opafm.xml  /usr/share/opa-fm/
 .br
 opafm.xml

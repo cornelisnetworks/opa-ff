@@ -116,6 +116,7 @@ The following input commands are available in every screen:
   L: Select Live image
   R: Navigate reverse 1 (r*) or 5 (R*) sweeps
   F: Navigate forward 1 (f*) or 5 (F*) sweeps
+  t*: Navigate to a provided time
   b*: Select (previously) Bookmarked image
   B*: Bookmark currently selected image
   U*: Unbookmark Bookmarked image

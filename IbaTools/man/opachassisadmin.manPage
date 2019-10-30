@@ -6,49 +6,48 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opachassisadmin 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opachassisadmin
 
-.NL
 
 .PP
 
 \fB(Switch)\fR
 Performs a number of multi-step chassis initialization and verification operations, including initial chassis setup, firmware upgrades, chassis reboot, and others.
-.SH Syntax 
-.NL
-opachassisadmin [-c] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-P \fIpackages\fR]
+.SH Syntax
+opachassisadmin [-c] [-F  \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-P  \fIpackages\fR]
 .br
-[-a \fIaction\fR] [-I \fIfm\(ulbootstate\fR] [-S] [-d \fIupload\(uldir\fR] [-s \fIsecurityfiles\fR]
+
+[-a  \fIaction\fR] [-I  \fIfm\(ulbootstate\fR] [-S] [-d  \fIupload\(uldir\fR] [-s  \fIsecurityfiles\fR]
 .br
-\fIoperation\fR...
-.SH Options 
-.NL
+
+\fIoperation\fR ...
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--c 
-.NL
+-c
+
 Overwrites the result files from any previous run before starting this run.
 
 .TP 10
--F \fIchassisfile\fR 
-.NL
+-F \fIchassisfile\fR
+
 Specifies the file with chassis in cluster. The default is /etc/opa/chassis.
 
 .TP 10
--H \fIchassis\fR 
-.NL
+-H \fIchassis\fR
+
 Specifies the list of chassis to execute the operation against.
 
 .TP 10
--P \fIpackages\fR 
-.NL
+-P \fIpackages\fR
+
 Specifies the filenames and directories of firmware images to install.
 
 .RS
@@ -63,8 +62,8 @@ For fmgetconfig, filename to upload to is used. Default opafm.xml.
 .RE
 
 .TP 10
--a \fIaction\fR 
-.NL
+-a \fIaction\fR
+
 Specifies the action for the supplied file. The default is push.
 .RS
 .TP 10
@@ -76,7 +75,7 @@ For chassis upgrade:
 .TP 10
 
 .sp
-push 
+push
 Ensures firmware is in primary or alternate.
 
 .RE
@@ -85,7 +84,7 @@ Ensures firmware is in primary or alternate.
 .TP 10
 
 .sp
-select 
+select
 Ensures firmware is in primary.
 
 .RE
@@ -94,7 +93,7 @@ Ensures firmware is in primary.
 .TP 10
 
 .sp
-run 
+run
 Ensures firmware is in primary and running.
 
 .RE
@@ -112,7 +111,7 @@ For chassis fmconfig :
 .TP 10
 
 .sp
-push 
+push
 Ensures the configuration file is in chassis.
 
 .RE
@@ -121,7 +120,7 @@ Ensures the configuration file is in chassis.
 .TP 10
 
 .sp
-run 
+run
 After push, restarts FM on master, stops on secondary.
 
 .RE
@@ -130,7 +129,7 @@ After push, restarts FM on master, stops on secondary.
 .TP 10
 
 .sp
-runall 
+runall
 After push, restarts FM on all management modules.
 
 .RE
@@ -147,7 +146,7 @@ For chassis fmcontrol :
 .TP 10
 
 .sp
-stop 
+stop
 Stops FM on all management modules.
 
 .RE
@@ -156,7 +155,7 @@ Stops FM on all management modules.
 .TP 10
 
 .sp
-run 
+run
 Ensures FM running on master, stopped on secondary.
 
 .RE
@@ -165,7 +164,7 @@ Ensures FM running on master, stopped on secondary.
 .TP 10
 
 .sp
-runall 
+runall
 Ensures FM running on all management modules.
 
 .RE
@@ -174,7 +173,7 @@ Ensures FM running on all management modules.
 .TP 10
 
 .sp
-restart 
+restart
 Restarts FM on master, stops on secondary.
 
 .RE
@@ -183,7 +182,7 @@ Restarts FM on master, stops on secondary.
 .TP 10
 
 .sp
-restartall 
+restartall
 Restarts FM on all MM.
 
 .RE
@@ -200,7 +199,7 @@ For chassis fmsecurityfiles :
 .TP 10
 
 .sp
-push 
+push
 Ensures FM security files are in chassis.
 
 .RE
@@ -209,7 +208,7 @@ Ensures FM security files are in chassis.
 .TP 10
 
 .sp
-restart 
+restart
 After push, restarts FM on master, stop on slave.
 
 .RE
@@ -218,7 +217,7 @@ After push, restarts FM on master, stop on slave.
 .TP 10
 
 .sp
-restartall 
+restartall
 After push, restarts FM on all MM
 
 .RE
@@ -226,14 +225,14 @@ After push, restarts FM on all MM
 .RE
 
 .TP 10
--I \fIfm\(ulbootstate\fR 
-.NL
+-I \fIfm\(ulbootstate\fR
+
 Specifies the fmconfig and fmcontrol install options.
 .RS
 .TP 10
 
 .sp
-disable 
+disable
 Disables FM start at chassis boot.
 
 .RE
@@ -242,7 +241,7 @@ Disables FM start at chassis boot.
 .TP 10
 
 .sp
-enable 
+enable
 Enables FM start on master at chassis boot.
 
 .RE
@@ -251,38 +250,38 @@ Enables FM start on master at chassis boot.
 .TP 10
 
 .sp
-enableall 
+enableall
 Enables FM start on all MM at chassis boot.
 
 .RE
 
 
 .TP 10
--d \fIupload\(uldir\fR 
-.NL
+-d \fIupload\(uldir\fR
+
 Specifies the directory to upload FM configuration files to. Default is uploads.
 
 .TP 10
--S 
-.NL
+-S
+
 Securely prompts for password for user on chassis.
 
 .TP 10
--s \fIsecurityFiles\fR 
-.NL
+-s \fIsecurityFiles\fR
+
 Specifies the security files to install. Default is *.pem. For Chassis \fIfmsecurityfiles\fR, filenames/directories of security files to install. For directories specified, all security files in directory tree are used. Shell wildcards may also be used within quotes.
 
 .IP
-For Chassis \fIfmgetsecurityfiles\fR, filename to upload to. Default is *.pem 
+For Chassis \fIfmgetsecurityfiles\fR, filename to upload to. Default is *.pem
 .TP 10
-\fIoperation\fR 
-.NL
+\fIoperation\fR
+
 Specifies the operation to perform. Can be one or more of:
 .RS
 .TP 10
 
 .sp
-reboot 
+reboot
 Reboots chassis, ensures they go down and come back.
 
 .RE
@@ -291,7 +290,7 @@ Reboots chassis, ensures they go down and come back.
 .TP 10
 
 .sp
-configure 
+configure
 Runs wizard to perform chassis configuration.
 
 .RE
@@ -300,7 +299,7 @@ Runs wizard to perform chassis configuration.
 .TP 10
 
 .sp
-upgrade 
+upgrade
 Upgrades install of all chassis.
 
 .RE
@@ -309,7 +308,7 @@ Upgrades install of all chassis.
 .TP 10
 
 .sp
-getconfig 
+getconfig
 Gets basic configuration of chassis.
 
 .RE
@@ -318,7 +317,7 @@ Gets basic configuration of chassis.
 .TP 10
 
 .sp
-fmconfig 
+fmconfig
 FM configuration operation on all chassis.
 
 .RE
@@ -327,7 +326,7 @@ FM configuration operation on all chassis.
 .TP 10
 
 .sp
-fmgetconfig 
+fmgetconfig
 Fetches FM configuration from all chassis.
 
 .RE
@@ -336,7 +335,7 @@ Fetches FM configuration from all chassis.
 .TP 10
 
 .sp
-fmcontrol 
+fmcontrol
 Controls FM on all chassis.
 
 .RE
@@ -345,7 +344,7 @@ Controls FM on all chassis.
 .TP 10
 
 .sp
-fmsecurityfiles 
+fmsecurityfiles
 FM security files operation on all chassis.
 
 .RE
@@ -354,7 +353,7 @@ FM security files operation on all chassis.
 .TP 10
 
 .sp
-fmgetsecurityfiles 
+fmgetsecurityfiles
 Fetches FM security files from all chassis.
 
 .RE
@@ -363,69 +362,69 @@ For more information on the operations that can be performed, see
 \fIOperation Details\fR
 .
 
-.SH Example 
-.NL
+.SH Example
 opachassisadmin -c reboot
 .br
+
 opachassisadmin -P /root/ChassisFw4.2.0.0.1 upgrade
 .br
+
 opachassisadmin -H \[aq]chassis1 chassis2\[aq] reboot
 .br
+
 CHASSIS=\[aq]chassis1 chassis2\[aq] opachassis\(uladmin reboot
 .br
+
 opachassisadmin -a run -P \[aq]*.pkg\[aq] upgrade
-.SH Environment Variables 
-.NL
+.SH Environment Variables
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBCHASSIS\fR 
-.NL
+\fBCHASSIS\fR
+
 List of chassis, used if -H and -F option not supplied.
 
 .TP 10
-\fBCHASSIS\(ulFILE\fR 
-.NL
+\fBCHASSIS\(ulFILE\fR
+
 File containing list of chassis, used in absence of -F and -H.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 Maximum concurrent operations.
 
 .TP 10
-\fBFF\(ulSERIALIZE\(ulOUTPUT\fR 
-.NL
+\fBFF\(ulSERIALIZE\(ulOUTPUT\fR
+
 Serializes output of parallel operations (yes or no).
 
 .TP 10
-\fBFF\(ulTIMEOUT\(ulMULT\fR 
-.NL
+\fBFF\(ulTIMEOUT\(ulMULT\fR
+
 Multiplier for all timeouts associated with this command. Used if the systems are slow for some reason.
 
 .TP 10
-\fBUPLOADS\(ulDIR\fR 
-.NL
+\fBUPLOADS\(ulDIR\fR
+
 Directory to upload to, used in absence of -d.
 
-.NL
 
 .SH Operation Details
-.NL
 
 .PP
 
 \fB(Switch)\fR
 All chassis operations log into the chassis as chassis user admin. Intel recommends using the -S option to securely prompt for a password, in which case the same password is used for all chassis. Alternately, the password may be put in the environment or the opafastfabric.conf file using \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR.
 .PP
-All versions of Intel(R) Omni-Path Switch 100 Series firmware permit SSH keys to be configured within the chassis for secure password-less login. In this case, there is no need to configure a \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR ; and, \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR can be SSH. Refer to the 
+All versions of Intel(R) Omni-Path Switch 100 Series firmware permit SSH keys to be configured within the chassis for secure password-less login. In this case, there is no need to configure a \fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR ; and, \fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR can be SSH. Refer to the
 \fIIntel(R) Omni-Path Fabric Suite FastFabric User Guide\fR
 
- for more information. 
+ for more information.
 .TP 10
-upgrade 
-.NL
+upgrade
+
 Upgrades the firmware on each chassis or slot specified. The -P option selects a directory containing .pkg files or provides an explicit list of .pkg files for the chassis and/or slots. The -a option selects the desired minimal state for the new firmware. For each chassis and/or slot selected for upgrade, the .pkg file applicable to that slot is selected and used. If more than one .pkg file is specified of a given card type, the operation is undefined.
 
 .IP
@@ -433,16 +432,16 @@ The upgrade is intelligent and does not upgrade chassis that already have the de
 .IP
 When the -a option specifies run, chassis that are not already running the desired firmware are rebooted. By selecting the proper \fBFF\(ulMAX\(ulPARALLEL\fR value, a rolling upgrade or a parallel upgrade may be accomplished. In most cases, a parallel upgrade is recommended for expediency.
 .IP
-For more information about chassis firmware, refer to the 
+For more information about chassis firmware, refer to the
 \fIIntel(R) Omni-Path Fabric Switches GUI User Guide\fR
 
-and 
+and
 \fIIntel(R) Omni-Path Fabric Switches Release Notes\fR
 
 .
 .TP 10
-configure 
-.NL
+configure
+
 Runs the chassis setup wizard, which asks a series of questions. Once the wizard has finished prompting for configuration information, all the selected chassis are configured through the CLI interface according to the responses. The following options may be configured for all chassis:
 
 .RS
@@ -469,78 +468,75 @@ Node description
 .RE
 
 .TP 10
-reboot 
-.NL
+reboot
+
 Reboots the given chassis and ensures they go down and come back up by pinging them during the reboot process.
 
 .IP
 By selecting the proper \fBFF\(ulMAX\(ulPARALLEL\fR value, a rolling reboot or a parallel reboot may be accomplished. In most cases, a parallel upgrade is recommended for expediency.
 .TP 10
-getconfig 
-.NL
+getconfig
+
 Retrieves basic information from a chassis such as syslog, NTP configuration, timezone info, Link CRC Mode, Link Width, and node description.
 
 .TP 10
-fmconfig 
-.NL
+fmconfig
+
 Updates the Fabric Manager configuration file on each chassis specified. The -P option selects a file to transfer to the chassis. The -a option selects the desired minimal state for the new configuration and controls whether the FM is started/restarted after the file is updated. The -I option can be used to configure the FM start at boot for the selected chassis.
 
 .TP 10
-fmgetconfig 
-.NL
+fmgetconfig
+
 Uploads the FM configuration file from all selected chassis. The file is uploaded to the selected uploads directory. The -P option specifies the desired destination filename within the uploads directory.
 
 .TP 10
-fmcontrol 
-.NL
+fmcontrol
+
 Allows the FM to be controlled on each chassis specified. The -a option selects the desired state for the FM.
 
 .IP
 The -I option configures the FM start at boot for the selected chassis.
 .TP 10
-fmsecurityfiles 
-.NL
+fmsecurityfiles
+
 Updates the FM security files on each chassis specified. The -s option selects file(s) to transfer to the chassis. The -a option selects the desired minimal state for the new security files. In this release, push is the only supported action.
 
 .TP 10
-fmgetsecurityfiles 
-.NL
+fmgetsecurityfiles
+
 Uploads the FM security files from all selected chassis. The files are uploaded to the selected uploads directory. The -s option specifies the desired destination filename within the uploads directory.
 
 .SH Logging
-.NL
 
 .PP
 opachassisadmin provides detailed logging of its results. During each run, the following files are produced:
 .TP 10
-test.res 
-.NL
+test.res
+
 This file is appended with summary results of run.
 
 .TP 10
-test.log 
-.NL
+test.log
+
 This file is appended with detailed results of run.
 
 .TP 10
-save\(ultmp/ 
-.NL
+save\(ultmp/
+
 This file is contains a directory per failed test with detailed logs.
 
 .TP 10
-test\(ultmp*/ 
-.NL
+test\(ultmp*/
+
 This file contains the intermediate results while the test is running.
 
 .PP
 The -c option removes all log files.
 .SH ssh Keys
-.NL
 
 .PP
 When performing operations against chassis, Intel recommends setting up SSH keys. If SSH keys are not set up, all chassis must be configured with the same admin password. In this case, Intel recommends using the -S option. The -S option avoids the need to keep the password in configuration files.
 .SH Results
-.NL
 
 .PP
 Results from opachassisadmin are grouped into test suites, test cases, and test items. A given run of opachassisadmin represents a single test suite. Within a test suite, multiple test cases occur; typically one test case per chassis being operated on. Some of the more complex operations may have multiple test items per test case. Each test item represents a major step in the overall test case.

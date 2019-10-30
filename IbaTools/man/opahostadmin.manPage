@@ -6,101 +6,100 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opahostadmin 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opahostadmin
 
-.NL
 
 .PP
 
 \fB(Host)\fR
 Performs a number of multi-step host initialization and verification operations, including upgrading software or firmware, rebooting hosts, and other operations. In general, operations performed by opahostadmin involve a login to one or more host systems.
-.SH Syntax 
-.NL
-opahostadmin [-c] [-i \fIipoib\(ulsuffix\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
+.SH Syntax
+opahostadmin [-c] [-i  \fIipoib\(ulsuffix\fR] [-f  \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-r \fIrelease\fR] [-I \fIinstall\(uloptions\fR] [-U \fIupgrade\(uloptions\fR] [-d \fIdir\fR]
+[-r  \fIrelease\fR]
+[-I  \fIinstall\(uloptions\fR] [-U  \fIupgrade\(uloptions\fR] [-d  \fIdir\fR]
 .br
-[-T \fIproduct\fR] [-P \fIpackages\fR] [-m \fInetmask\fR] [-S] \fIoperation\fR...
-.SH Options 
-.NL
+[-T  \fIproduct\fR]
+[-P  \fIpackages\fR] [-m  \fInetmask\fR] [-S]  \fIoperation\fR ...
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--c 
-.NL
+-c
+
 Overwrites the result files from any previous run before starting this run.
 
 .TP 10
--i \fIipoib\(ulsuffix\fR 
-.NL
+-i \fIipoib\(ulsuffix\fR
+
 Specifies the suffix to apply to host names to create IPoIB host names. Default is -opa.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with the names of hosts in a cluster. Default is /etc/opa/hosts file.
 
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts to execute the operation against.
 
 .TP 10
--r \fIrelease\fR 
-.NL
+-r \fIrelease\fR
+
 Specifies the software version to load/upgrade to. Default is the version of Intel(R) Omni-Path Software presently being run on the server.
 
 .TP 10
--d \fIdir\fR 
-.NL
+-d \fIdir\fR
+
 Specifies the directory to retrieve  \fIproduct\fR. \fIrelease\fR.tgz for load or upgrade.
 
 .TP 10
--I \fIinstall\(uloptions\fR 
-.NL
+-I \fIinstall\(uloptions\fR
+
 Specifies the software install options.
 
 .TP 10
--U \fIupgrade\(uloptions\fR 
-.NL
+-U \fIupgrade\(uloptions\fR
+
 Specifies the software upgrade options.
 
 .TP 10
--T \fIproduct\fR 
-.NL
+-T \fIproduct\fR
+
 Specifies the product type to install. Default is IntelOPA-Basic. \fI<distro>\fR or IntelOPA-IFS. \fI<distro>\fR where \fI<distro>\fR is the distribution and CPU.
 
 .TP 10
--P \fIpackages\fR 
-.NL
-Specifies the packages to install. Default is oftools ipoib psm\(ulmpi 
+-P \fIpackages\fR
+
+Specifies the packages to install. Default is oftools ipoib psm\(ulmpi
 
 .TP 10
--m \fInetmask\fR 
-.NL
+-m \fInetmask\fR
+
 Specifies the IPoIB netmask to use for configipoib operation.
 
 .TP 10
--S 
-.NL
+-S
+
 Securely prompts for user password on remote system.
 
 .TP 10
-\fIoperation\fR 
-.NL
+\fIoperation\fR
+
 Performs the specified \fIoperation\fR, which can be one or more of the following:
 
 .RS
 .TP 10
 
 .sp
-load 
+load
 Starts initial installation of all hosts.
 
 .RE
@@ -109,7 +108,7 @@ Starts initial installation of all hosts.
 .TP 10
 
 .sp
-upgrade 
+upgrade
 Upgrades installation of all hosts.
 
 .RE
@@ -118,7 +117,7 @@ Upgrades installation of all hosts.
 .TP 10
 
 .sp
-configipoib 
+configipoib
 Creates ifcfg-ib1 using host IP address from /etc/hosts file.
 
 .RE
@@ -127,7 +126,7 @@ Creates ifcfg-ib1 using host IP address from /etc/hosts file.
 .TP 10
 
 .sp
-reboot 
+reboot
 Reboots hosts, ensures they go down and come back.
 
 .RE
@@ -136,7 +135,7 @@ Reboots hosts, ensures they go down and come back.
 .TP 10
 
 .sp
-sacache 
+sacache
 Confirms sacache has all hosts in it.
 
 .RE
@@ -145,7 +144,7 @@ Confirms sacache has all hosts in it.
 .TP 10
 
 .sp
-ipoibping 
+ipoibping
 Verifies this host can ping each host through IPoIB.
 
 .RE
@@ -154,7 +153,7 @@ Verifies this host can ping each host through IPoIB.
 .TP 10
 
 .sp
-mpiperf 
+mpiperf
 Verifies latency and bandwidth for each host.
 
 .RE
@@ -163,22 +162,23 @@ Verifies latency and bandwidth for each host.
 .TP 10
 
 .sp
-mpiperfdeviation 
+mpiperfdeviation
 Verifies latency and bandwidth for each host against a defined threshold (or relative to average host performance).
 
 .RE
 
-.SH Example 
-.NL
+.SH Example
 opahostadmin -c reboot
 .br
+
 opahostadmin upgrade
 .br
+
 opahostadmin -h \[aq]elrond arwen\[aq] reboot
 .br
+
 HOSTS=\[aq]elrond arwen\[aq] opahostadmin reboot
-.SH Details 
-.NL
+.SH Details
 
 .PP
 opahostadmin provides detailed logging of its results. During each run, the following files are produced:
@@ -198,53 +198,50 @@ Results from opahostadmin are grouped into test suites, test cases, and test ite
 Each opahostadmin run appends to test.res and test.log, and creates temporary files in test\(ultmp$PID in the current directory. test.res provides an overall summary of operations performed and their results. The same information is also displayed while opahostadmin is executing. test.log contains detailed information about what was performed, including the specific commands executed and the resulting output. The test\(ultmp directories contain temporary files which reflect tests in progress (or killed). The logs for any failures are logged in the save\(ultemp directory with a directory per failed test case. If the same test case fails more than once, save\(ultemp retains the information from the first failure. Subsequent runs of opahostadmin are appended to test.log. Intel recommends reviewing failures and using the -c option to remove old logs before subsequent runs of opahostadmin.
 .PP
 opahostadmin implicitly performs its operations in parallel. However, as for the other tools, \fBFF\(ulMAX\(ulPARALLEL\fR can be exported to change the degree of parallelism. 1000 parallel operations is the default.
-.SH Environment Variables 
-.NL
+.SH Environment Variables
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 Maximum concurrent operations are performed.
 
 .TP 10
-\fBFF\(ulSERIALIZE\(ulOUTPUT\fR 
-.NL
+\fBFF\(ulSERIALIZE\(ulOUTPUT\fR
+
 Serialize output of parallel operations (yes or no).
 
 .TP 10
-\fBFF\(ulTIMEOUT\(ulMULT\fR 
-.NL
+\fBFF\(ulTIMEOUT\(ulMULT\fR
+
 Multiplier for all timeouts associated with this command. Used if the systems are slow for some reason.
 
-.NL
 
 .SH opahostadmin Operation Details
-.NL
 
 .PP
 
 \fB(Host)\fR
 Intel recommends that you set up password SSH or SCP for use during this operation. Alternatively, the -S option can be used to securely prompt for a password, in which case the same password is used for all hosts. Alternately, the password may be put in the environment or the opafastfabric.conf file using \fBFF\(ulPASSWORD\fR and \fBFF\(ulROOTPASS\fR.
 .TP 10
-load 
-.NL
+load
+
 Performs an initial installation of Intel(R) Omni-Path Software on a group of hosts. Any existing installation is uninstalled and existing configuration files are removed. Subsequently, the hosts are installed with a default Intel(R) Omni-Path Software configuration. The -I option can be used to select different install packages. Default is oftools ipoib mpi The -r option can be used to specify a release to install other than the one that this host is presently running. The  \fIFF\(ulPRODUCT\fR. \fIFF\(ulPRODUCT\(ulVERSION\fR.tgz file (for example, IntelOPA-Basic. \fIversion\fR.tgz) is expected to exist in the directory specified by -d. Default is the current working directory. The specified software is copied to all the selected hosts and installed.
 
 .TP 10
-upgrade 
-.NL
+upgrade
+
 Upgrades all selected hosts without modifying existing configurations. This operation is comparable to the -U option when running ./INSTALL manually. The -r option can be used to upgrade to a release different from this host. The default is to upgrade to the same release as this host. The  \fIFF\(ulPRODUCT\fR. \fIFF\(ulPRODUCT\(ulVERSION\fR.tgz file (for example, IntelOPA-Basic. \fIversion\fR.tgz) is expected to exist in the directory specified by -d. The default is the current working directory. The specified software is copied to all the end nodes and installed.
 .TP 10
 .BR
@@ -256,8 +253,8 @@ Only components that are currently installed are upgraded. This operation fails 
 
 
 .TP 10
-configipoib 
-.NL
+configipoib
+
 Creates a ifcfg-ib1 configuration file for each node using the IP address found using the resolver on the node. The standard Linux* resolver is used through the host command. (If running OFA Delta, this option configures ifcfg-ib0 .)
 
 .IP
@@ -272,13 +269,13 @@ opahostadmin configipoib now supports DHCP (auto or static options) for configur
 
 
 .TP 10
-reboot 
-.NL
+reboot
+
 Reboots the given hosts and ensures they go down and come back up by pinging them during the reboot process. The ping rate is slow (5 seconds), so if the servers boot faster than this, false failures may be seen.
 
 .TP 10
-sacache 
-.NL
+sacache
+
 Verifies the given hosts can properly communicate with the SA and any cached SA data that is up to date. To run this command, Intel(R) Omni-Path Fabric software must be installed and running on the given hosts. The subnet manager and switches must be up. If this test fails: opacmdall \[aq]opasaquery -o desc\[aq] can be run against any problem hosts.
 
 .TP 10
@@ -291,13 +288,13 @@ This operation requires that the hosts being queried are specified by a resolvab
 
 
 .TP 10
-ipoibping 
-.NL
+ipoibping
+
 Verifies IPoIB basic operation by ensuring that the host can ping all other nodes through IPoIB. To run this command, Intel(R) Omni-Path Fabric software must be installed, IPoIB must be configured and running on the host, and the given hosts, the SM, and switches must be up. The -i option can specify an alternate IPoIB hostname suffix.
 
 .TP 10
-mpiperf 
-.NL
+mpiperf
+
 Verifies that MPI is operational and checks MPI end-to-end latency and bandwidth between pairs of nodes (for example, 1-2, 3-4, 5-6). Use this to verify switch latency/hops, PCI bandwidth, and overall MPI performance. The test.res file contains the results of each pair of nodes tested.
 
 .TP 10
@@ -316,8 +313,8 @@ Bandwidth issues typically indicate server configuration issues (for example, in
 .IP
 Note that BIOS settings and differences between server models can account for 10-20% differences in bandwidth. For more details about BIOS settings, consult the documentation from the server supplier and/or the server PCI chipset manufacturer.
 .TP 10
-mpiperfdeviation 
-.NL
+mpiperfdeviation
+
 Specifies the enhanced version of mpiperf that verifies MPI performance. Can be used to verify switch latency/hops, PCI bandwidth, and overall MPI performance. It performs assorted pair-wise bandwidth and latency tests, and reports pairs outside an acceptable tolerance range. The tool identifies specific nodes that have problems and provides a concise summary of results. The test.res file contains the results of each pair of nodes tested.
 
 .IP
@@ -344,7 +341,7 @@ Note that BIOS settings and differences between server models can account for 10
 .IP
 For more details about BIOS settings, consult the documentation from the server supplier and/or the server PCI chipset manufacturer.
 .IP
-The deviation application supports a number of parameters which allow for more precise control over the mode, benchmark and pass/fail criteria. The parameters to use can be selected using the \fBFF\(ulDEVIATION\(ulARGS\fR configuration parameter in opafastfabric.conf 
+The deviation application supports a number of parameters which allow for more precise control over the mode, benchmark and pass/fail criteria. The parameters to use can be selected using the \fBFF\(ulDEVIATION\(ulARGS\fR configuration parameter in opafastfabric.conf
 .IP
 Available parameters for deviation application:
 .IP
@@ -352,12 +349,16 @@ Available parameters for deviation application:
 .br
 [-bwtol bwtol] [-bwdelta MBs] [-bwthres MBs]
 .br
+
 [-bwloop count] [-bwsize size] [-lattol latol]
 .br
+
 [-latdelta usec] [-latthres usec] [-latloop count]
 .br
+
 [-latsize size][-c] [-b] [-v] [-vv]
 .br
+
 [-h reference\(ulhost]
 
 .br
@@ -366,7 +367,7 @@ Available parameters for deviation application:
 .TP 10
 
 .sp
--bwtol 
+-bwtol
 Specifies the percent of bandwidth degradation allowed below average value.
 
 .RE
@@ -375,7 +376,7 @@ Specifies the percent of bandwidth degradation allowed below average value.
 .TP 10
 
 .sp
--bwbidir 
+-bwbidir
 Performs a bidirectional bandwidth test.
 
 .RE
@@ -384,7 +385,7 @@ Performs a bidirectional bandwidth test.
 .TP 10
 
 .sp
--bwunidir 
+-bwunidir
 Performs a unidirectional bandwidth test (Default).
 
 .RE
@@ -393,7 +394,7 @@ Performs a unidirectional bandwidth test (Default).
 .TP 10
 
 .sp
--bwdelta 
+-bwdelta
 Specifies the limit in MB/s of bandwidth degradation allowed below average value.
 
 .RE
@@ -402,7 +403,7 @@ Specifies the limit in MB/s of bandwidth degradation allowed below average value
 .TP 10
 
 .sp
--bwthres 
+-bwthres
 Specifies the lower limit in MB/s of bandwidth allowed.
 
 .RE
@@ -411,7 +412,7 @@ Specifies the lower limit in MB/s of bandwidth allowed.
 .TP 10
 
 .sp
--bwloop 
+-bwloop
 Specifies the number of loops to execute each bandwidth test.
 
 .RE
@@ -420,7 +421,7 @@ Specifies the number of loops to execute each bandwidth test.
 .TP 10
 
 .sp
--bwsize 
+-bwsize
 Specifies the size of message to use for bandwidth test.
 
 .RE
@@ -429,7 +430,7 @@ Specifies the size of message to use for bandwidth test.
 .TP 10
 
 .sp
--lattol 
+-lattol
 Specifies the percent of latency degradation allowed above average value.
 
 .RE
@@ -438,7 +439,7 @@ Specifies the percent of latency degradation allowed above average value.
 .TP 10
 
 .sp
--latdelta 
+-latdelta
 Specifies the imit in &#181;sec of latency degradation allowed above average value.
 
 .RE
@@ -447,7 +448,7 @@ Specifies the imit in &#181;sec of latency degradation allowed above average val
 .TP 10
 
 .sp
--latthres 
+-latthres
 Specifies the lower limit in &#181;sec of latency allowed.
 
 .RE
@@ -456,7 +457,7 @@ Specifies the lower limit in &#181;sec of latency allowed.
 .TP 10
 
 .sp
--latloop 
+-latloop
 Specifies the number of loops to execute each latency test.
 
 .RE
@@ -465,7 +466,7 @@ Specifies the number of loops to execute each latency test.
 .TP 10
 
 .sp
--latsize 
+-latsize
 Specifies the size of message to use for latency test.
 
 .RE
@@ -474,7 +475,7 @@ Specifies the size of message to use for latency test.
 .TP 10
 
 .sp
--c 
+-c
 Runs test pairs concurrently instead of the default of sequential.
 
 .RE
@@ -483,7 +484,7 @@ Runs test pairs concurrently instead of the default of sequential.
 .TP 10
 
 .sp
--b 
+-b
 When comparing results against tolerance and delta, uses best instead of average.
 
 .RE
@@ -492,7 +493,7 @@ When comparing results against tolerance and delta, uses best instead of average
 .TP 10
 
 .sp
--v 
+-v
 Specifies the verbose output.
 
 .RE
@@ -501,7 +502,7 @@ Specifies the verbose output.
 .TP 10
 
 .sp
--vv 
+-vv
 Specifies the very verbose output.
 
 .RE
@@ -510,7 +511,7 @@ Specifies the very verbose output.
 .TP 10
 
 .sp
--h 
+-h
 Specifies the reference host to use for sequential pairing.
 
 .RE

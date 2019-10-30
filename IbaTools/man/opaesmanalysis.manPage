@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaesmanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaesmanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaesmanalysis
 
-.NL
 
 .PP
 
@@ -25,60 +24,56 @@ Intel recommends that you set up SSH keys for chassis (see
 \fIopasetupssh\fR
 ). If SSH keys are not set up, all chassis must be configured with the same admin password and the password must be kept in the opafastfabric.conf configuration file.
 .SH Syntax
-.NL
-opaesmanalysis [-b|-e] [-s] [-d \fIdir\fR] [-G \fIesmchassisfile\fR]
+opaesmanalysis [-b|-e] [-s] [-d  \fIdir\fR] [-G  \fIesmchassisfile\fR]
 .br
 [-E \[aq]\fIesmchassis\fR\[aq]]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--b 
-.NL
+-b
+
 Specifies the baseline mode. Default is the compare/check mode.
 .TP 10
--e 
-.NL
+-e
+
 Evaluates health only. Default is the compare/check mode.
 .TP 10
--s 
-.NL
+-s
+
 Saves history of failures (errors/differences).
 .TP 10
--d \fIdir\fR 
-.NL
-Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis 
+-d \fIdir\fR
+
+Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
 .TP 10
--G \fIesmchassisfile\fR 
-.NL
-Specifies the file with SM chassis in the cluster. Default is /etc/opa/esm\(ulchassis 
+-G \fIesmchassisfile\fR
+
+Specifies the file with SM chassis in the cluster. Default is /etc/opa/esm\(ulchassis
 .TP 10
--E \[aq]\fIesmchassis\fR\[aq] 
-.NL
+-E \[aq]\fIesmchassis\fR\[aq]
+
 Specifies the list of SM chassis on which to execute the command.
-.SH Example 
-.NL
+.SH Example
 opaesmanalysis
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBESM\(ulCHASSIS\fR 
-.NL
+\fBESM\(ulCHASSIS\fR
+
 List of SM chassis, used if -G and -E options are not supplied.
 
 .TP 10
-\fBESM\(ulCHASSIS\(ulFILE\fR 
-.NL
+\fBESM\(ulCHASSIS\(ulFILE\fR
+
 File containing list of SM chassis, used if -G and -E options are not supplied.
 
 .TP 10
-\fBFF\(ulANALYSIS\(ulDIR\fR 
-.NL
+\fBFF\(ulANALYSIS\(ulDIR\fR
+
 Top-level directory for baselines and failed health checks.

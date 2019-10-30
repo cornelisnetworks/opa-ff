@@ -85,7 +85,7 @@ fi
 
 line1=
 # we do this against a single fabric, options can select a local HFI and Port
-/usr/sbin/opareport -o errors -x "$@" > $tempfile
+/usr/sbin/opareport -o errors -x -Q "$@" > $tempfile
 if [ -s $tempfile ]
 then
 	cat $tempfile| /usr/sbin/opaxmlextract -H -d \; -e LinkErrors.Link.Port.NodeGUID -e LinkErrors.Link.Port.PortNum -e LinkErrors.Link.Port.NodeType -e LinkErrors.Link.Port.NodeDesc|while read line

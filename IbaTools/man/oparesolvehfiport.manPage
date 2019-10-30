@@ -6,37 +6,34 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH oparesolvehfiport 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH oparesolvehfiport 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 oparesolvehfiport
 
-.NL
 
 .PP
 
 \fB(Host)\fR
 Permits the Intel(R) Omni-Path Fabric Host Software style Intel(R) Omni-Path Host Fabric Interface (HFI) number and port number arguments to be converted to a Host Software style HFI name and physical port number.
 .SH Syntax
-.NL
-oparesolvehfiport [-o \fIoutput\fR] [ \fIhfi\fR] [ \fIport\fR]
+oparesolvehfiport [-o  \fIoutput\fR] [ \fIhfi\fR] [ \fIport\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--o \fIoutput\fR 
-.NL
+-o \fIoutput\fR
+
 Specifies the output type.
 
 .RS
 .TP 10
 
 .sp
-devname 
+devname
 Prints the device name, in the format hfiname:portnum (Default).
 
 .RE
@@ -45,19 +42,19 @@ Prints the device name, in the format hfiname:portnum (Default).
 .TP 10
 
 .sp
-hfinum 
+hfinum
 Prints the hfi number.
 
 .RE
 
 .TP 10
-\fIhfi\fR 
-.NL
+\fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p port port is a system-wide port number. Default is 0.
 
 .TP 10
-\fIport\fR 
-.NL
+\fIport\fR
+
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .IP
@@ -66,7 +63,7 @@ The HFI and port permit a variety of selections:
 .TP 10
 
 .sp
-0 0 
+0 0
 First active port in system.
 
 .RE
@@ -75,7 +72,7 @@ First active port in system.
 .TP 10
 
 .sp
-\fIx\fR 0 
+\fIx\fR 0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -84,7 +81,7 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-0 \fIy\fR 
+0 \fIy\fR
 Port \fIy\fR within system (no matter which ports are active).
 
 .RE
@@ -93,15 +90,16 @@ Port \fIy\fR within system (no matter which ports are active).
 .TP 10
 
 .sp
-\fIx y\fR 
+\fIx y\fR
 HFI \fIx\fR, port \fIy\fR
 
 .RE
 
-.SH Examples 
-.NL
-oparesolvehfiport 0 1 #Output: hfi1\(ul0:1
+.SH Examples
+oparesolvehfiport 0 1                #Output: hfi1\(ul0:1
 .br
-oparesolvehfiport -o devname 0 1 #Output: hfi1\(ul0:1
+
+oparesolvehfiport -o devname 0 1     #Output: hfi1\(ul0:1
 .br
-oparesolvehfiport -o hfinum 0 1 #Output: 1
+
+oparesolvehfiport -o hfinum 0 1      #Output: 1

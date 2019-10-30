@@ -206,6 +206,16 @@ echo "Obtaining PCI device list ..."
 lspci -vvv -xxxx > /$dir/lspci 2>&1
 ls -l /dev/ipath* /dev/hfi* /dev/infiniband > /$dir/lsdev
 
+echo "Obtaining processor information ..."
+cpucount=$(grep -c processor /proc/cpuinfo)
+cpupower -c 0-$((cpucount - 1)) frequency-info > /$dir/cpu-frequency-info 2>&1
+grep . /sys/devices/system/cpu/cpu*/cpufreq/scaling* > /$dir/cpu-scaling-info 2>&1
+grep . /sys/devices/system/cpu/intel_pstate/* > /$dir/cpu-intel_pstate 2>&1
+unset cpucount
+
+lscpu > /$dir/lscpu 2>&1
+lscpu --extended=CPU,CORE,SOCKET,NODE,BOOK,DRAWER,CACHE,POLARIZATION,ADDRESS,CONFIGURED > /$dir/lscpu-extended 2>&1
+
 echo "Obtaining environment variables ..."
 env > /$dir/env 2>&1
 
@@ -451,13 +461,13 @@ then
 
             if [ $mgmt_disabled -eq 0 ]
             then
-                /usr/sbin/opareport $port_opt -o snapshot -s -V $router_opt > $hfi_port_dir/snapshot.xml 2>&1
-                /usr/sbin/opareport $port_opt -o snapshot -m -M -s -V $router_opt > $hfi_port_dir/snapshot_direct.xml 2>&1
-            	/usr/sbin/opareport -o links -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_links 2>&1
-            	/usr/sbin/opareport -o comps -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_comps 2>&1
-            	/usr/sbin/opareport -o errors -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_errors 2>&1
-            	/usr/sbin/opareport -o extlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_extlinks 2>&1
-            	/usr/sbin/opareport -o slowlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_slowlinks 2>&1
+                /usr/sbin/opareport $port_opt -o snapshot -s -V $router_opt > $hfi_port_dir/snapshot.xml 2> $hfi_port_dir/snapshot.xml.err
+                /usr/sbin/opareport $port_opt -o snapshot -m -M -s -V $router_opt > $hfi_port_dir/snapshot_direct.xml 2> $hfi_port_dir/snapshot_direct.xml.err
+                /usr/sbin/opareport -o links -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_links 2>&1
+                /usr/sbin/opareport -o comps -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_comps 2>&1
+                /usr/sbin/opareport -o errors -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_errors 2>&1
+                /usr/sbin/opareport -o extlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_extlinks 2>&1
+                /usr/sbin/opareport -o slowlinks -X $hfi_port_dir/snapshot.xml > $hfi_port_dir/fabric_slowlinks 2>&1
                 /usr/sbin/opareport -o vfmember -V -d 4  > $hfi_port_dir/fabric_vfmember 2>&1
             fi
 

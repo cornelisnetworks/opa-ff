@@ -6,56 +6,54 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafmconfigcheck 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opafmconfigcheck 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opafmconfigcheck
 
-.NL
 
 .PP
 Parses and verifies the configuration file of a Fabric Manager (FM). Displays debugging and status information.
 .SH Syntax
-.NL
-opafmconfigcheck [-s] [-c \fIconfig\(ulfile\fR] [-v] [-d] [-r \fIreconfig\(ulfile\fR]
+opafmconfigcheck [-s] [-c  \fIconfig\(ulfile\fR] [-v] [-d] [-r  \fIreconfig\(ulfile\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--s 
-.NL
+-s
+
 Enables strict check mode; validates multicast and VF settings. This option points out inconsistencies or invalid settings in VF and multicast configurations.
 
 .TP 10
--c \fIconfig\(ulfile\fR 
-.NL
+-c \fIconfig\(ulfile\fR
+
 Specifies configuration file.
 .br
 Default is /etc/opa-fm/opafm.xml.
 
 .TP 10
--v 
-.NL
+-v
+
 Displays debugging and status information.
 
 .TP 10
--d 
-.NL
+-d
+
 Displays configuration checksum information.
 
 .TP 10
--r \fIreconfig\(ulfile\fR 
-.NL
+-r \fIreconfig\(ulfile\fR
+
 Verifies that the \fIreconfig\(ulfile\fR is valid for dynamical reconfiguration.
 
-.SH Example 
-.NL
+.SH Example
 opafmconfigcheck
 .br
+
 opafmconfigcheck -v
 .br
+
 opafmconfigcheck -sv

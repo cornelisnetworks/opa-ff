@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagetvf 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opagetvf 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opagetvf
 
-.NL
 
 .PP
 Used for scripting application use of vFabrics, such as for mpirun parameters. You can query by VF Name, VF Index, Service ID, MGID, PKey, or SL. Fetches the Virtual Fabric info in a delimited format. Returns exactly one matching VF. When multiple VFs match the query, it prefers non-default VFs in which the calling server is a full member. If multiple choices remain, it returns the one with the lowest VF Index. Uses the same algorithm as the Distributed SA Plug-in (DSAP).
@@ -18,61 +17,59 @@ Used for scripting application use of vFabrics, such as for mpirun parameters. Y
 The tool can be used with additional scripts to help set PKey, SL, MTU, and Rate when running MPI jobs. Internally, this tool is based on the opasaquery -o vfinfocsv command. For more information, see
 \fIopasaquery\fR
 .
-.SH Syntax 
-.NL
-opagetvf [-h \fIhfi\fR] [-p \fIport\fR] [-e] [-d \fIvfname\fR| -S \fIserviceId\fR| -m \fImcgid\fR|
+.SH Syntax
+opagetvf [-h  \fIhfi\fR] [-p  \fIport\fR] [-e] [-d  \fIvfname\fR | -S  \fIserviceId\fR | -m  \fImcgid\fR |
 .br
--i \fIvfIndex\fR| -k \fIpkey\fR| -L \fIsl\fR]
-.SH Options 
-.NL
+
+-i  \fIvfIndex\fR | -k  \fIpkey\fR | -L  \fIsl\fR]
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--h \fIhfi\fR 
-.NL
+-h \fIhfi\fR
+
 Specifies the HFI to send by. Default is first HFI.
 .TP 10
--p \fIport\fR 
-.NL
+-p \fIport\fR
+
 Specifies the port to send by. Default is first active port.
 .TP 10
--e 
-.NL
+-e
+
 Outputs MTU and rate as enum values.
 .TP 10
--d \fIvfname\fR 
-.NL
+-d \fIvfname\fR
+
 Queries by VirtualFabric Name.
 .TP 10
--S \fIserviceId\fR 
-.NL
+-S \fIserviceId\fR
+
 Queries by Application ServiceId.
 .TP 10
--m \fIgid\fR 
-.NL
+-m \fIgid\fR
+
 Queries by Application Multicast GID.
 .TP 10
--i \fIvfindex\fR 
-.NL
+-i \fIvfindex\fR
+
 Queries by VirtualFabric Index.
 .TP 10
--k \fIpkey\fR 
-.NL
+-k \fIpkey\fR
+
 Queries by VirtualFabric PKey.
 .TP 10
--L \fISL\fR 
-.NL
+-L \fISL\fR
+
 Queries by VirtualFabric SL.
-.SH Examples 
-.NL
+.SH Examples
 opagetvf -d \[aq]Compute\[aq]
 .br
+
 opagetvf -h 2 -p 2 -d \[aq]Compute\[aq]
-.SH Sample Outputs 
-.NL
+.SH Sample Outputs
 
 .PP
 The output is of the form: name:index:pkey:sl:mtu:rate:optionflag::mcastSl as shown in the following example.
@@ -91,6 +88,7 @@ Option flag (bitmask) values include:
 .br
 # opagetvf -d Default
 .br
+
 Default:0:0xffff:0:unlimited:unlimited:0x0::
 
 .br

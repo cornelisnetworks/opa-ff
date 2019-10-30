@@ -103,6 +103,7 @@ MAN_PAGE_8_FILES = \
 				opaextractlids.8 \
 				opaextractlink.8 \
 				opaextractperf.8 \
+				opaextractperf2.8 \
 				opaextractsellinks.8 \
 				opaextractstat.8 \
 				opaextractstat2.8 \
@@ -119,6 +120,7 @@ MAN_PAGE_8_FILES = \
 				opahostadmin.8 \
 				opahostsmanalysis.8 \
 				opalinkanalysis.8 \
+				opamergeperf2.8 \
 				opapaquery.8 \
 				opapingall.8 \
 				opareport.8 \

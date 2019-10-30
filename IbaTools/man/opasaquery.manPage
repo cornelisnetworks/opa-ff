@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasaquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opasaquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opasaquery
 
-.NL
 
 .PP
 
@@ -21,47 +20,49 @@ opareport and opareports from the Intel(R) Omni-Path Fabric Suite can provide a 
 .PP
 By default, opasaquery uses the first active port on the local system. However, if the node is connected to more than one fabric (for example, a subnet), the Intel(R) Omni-Path Host Fabric Interface (HFI) and port may be specified to select the fabric whose SA is to be queried.
 .SH Syntax
-.NL
-opasaquery [-v [-v] [-v]] [-I] [-h \fIhfi\fR|-b \fIaddr\fR] [-p \fIport\fR] [--timeout]
+opasaquery [-v [-v] [-v]] [-I] [-h  \fIhfi\fR|-b  \fIaddr\fR] [-p  \fIport\fR] [--timeout]
 .br
-[-x \fIgid\fR] [-E] [-T \fIssl\(ulparams\fR] [-o \fItype\fR] [-l \fIlid\fR] [-t \fItype\fR] [-s \fIguid\fR]
+[-x  \fIgid\fR] [-E]
+[-T  \fIssl\(ulparams\fR] [-o  \fItype\fR] [-l  \fIlid\fR] [-t  \fItype\fR] [-s  \fIguid\fR]
 .br
-[-n \fIguid\fR] [-g \fIguid\fR] [-k \fIpkey\fR] [-i \fIvfIndex\fR] [-S \fIserviceId\fR] [-L \fIsl\fR]
+[-n  \fIguid\fR]
+[-g  \fIguid\fR] [-k  \fIpkey\fR] [-i  \fIvfIndex\fR] [-S  \fIserviceId\fR] [-L  \fIsl\fR]
 .br
-[-u \fIgid\fR] [-m \fIgid\fR] [-d \fInodeDescription\fR] [-D \fIdg\(ulname\fR] [-P \[aq]\fIguid guid\fR\[aq]]
+[-u  \fIgid\fR]
+[-m  \fIgid\fR] [-d  \fInodeDescription\fR]  [-D  \fIdg\(ulname\fR]  [-P \[aq]\fIguid guid\fR\[aq]]
 .br
-[-G \[aq]\fIgid gid\fR\[aq]] [-H \fImask\fR]
+[-G \[aq]\fIgid gid\fR\[aq]]
+[-H  \fImask\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--v/--verbose 
-.NL
+-v/--verbose
+
 Returns verbose output. A second invocation activates openib debugging, a third invocation activates libibumad debugging.
 
 .TP 10
--I/--IB 
-.NL
+-I/--IB
+
 Issues query in legacy InfiniBand* format.
 
 .TP 10
--h/--hfi \fIhfi\fR 
-.NL
+-h/--hfi \fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
--b/--oob \fIaddress\fR 
-.NL
+-b/--oob \fIaddress\fR
+
 Specifies Out-of-Band address of node running the FE. Can be either hostname, IPv4, or IPv6 address. Default is "127.0.0.1".
 
 .TP 10
--p/--port \fIport\fR 
-.NL
+-p/--port \fIport\fR
+
 Specifies the port.
 .RS
 
@@ -74,170 +75,166 @@ Out-of-band: Port FE is listening on. Default is 3245.
 
 
 .TP 10
---timeout 
-.NL
+--timeout
+
 Specifies the timeout (wait time for response) in ms. Default is 1000 ms.
 
 .TP 10
--x/--source-gid \fIsrc\(ulgid\fR 
-.NL
+-x/--source-gid \fIsrc\(ulgid\fR
+
 Specifies the source GID of the local GID (This is required for most Path and Trace Record Queries when Out-of-Band.)
 
 .TP 10
--E/--feEsm 
-.NL
+-E/--feEsm
+
 Specifies the ESM FE.
 
 .TP 10
--T/--ssl-params \fIfile\fR 
-.NL
+-T/--ssl-params \fIfile\fR
+
 Specifies the SSL/TLS parameters XML file. Default is /etc/opa/opamgt\(ultls.xml.
 
 .TP 10
--o \fItype\fR 
-.NL
+-o \fItype\fR
+
 Output type for query. Default is node. See
 \fIOutput Types\fR
 for details.
 
 .TP 10
--l/--lid \fIlid\fR 
-.NL
+-l/--lid \fIlid\fR
+
 Query a specific LID.
 
 .TP 10
--t/--type \fInode\(ultype\fR 
-.NL
+-t/--type \fInode\(ultype\fR
+
 Queries by node type. See
 \fINode Types\fR
 for details.
 
 .TP 10
--s/--sysguid \fIsystem\(ulimage\(ulguid\fR 
-.NL
+-s/--sysguid \fIsystem\(ulimage\(ulguid\fR
+
 Queries by system image GUID.
 
 .TP 10
--n/--nodeguid \fInode\(ulguid\fR 
-.NL
+-n/--nodeguid \fInode\(ulguid\fR
+
 Queries by node GUID.
 
 .TP 10
--g/--portguid \fIport\(ulguid\fR 
-.NL
+-g/--portguid \fIport\(ulguid\fR
+
 Queries by port GUID.
 
 .TP 10
--k/--pkey \fIpkey\fR 
-.NL
+-k/--pkey \fIpkey\fR
+
 Queries a specific PKey.
 
 .TP 10
--i/--vfindex \fIvfIndex\fR 
-.NL
+-i/--vfindex \fIvfIndex\fR
+
 Queries a specific vfindex.
 
 .TP 10
--S/--serviceId \fIserviceId\fR 
-.NL
+-S/--serviceId \fIserviceId\fR
+
 Queries a specific service ID.
 
 .TP 10
--L/--SL \fISL\fR 
-.NL
+-L/--SL \fISL\fR
+
 Queries by service level.
 
 .TP 10
--u/--portgid \fIport\(ulgid\fR 
-.NL
+-u/--portgid \fIport\(ulgid\fR
+
 Queries by port GID. See
 \fIGIDs\fR
 for details.
 
 .TP 10
--m/--mcgid \fImulticast\(ulgid\fR 
-.NL
+-m/--mcgid \fImulticast\(ulgid\fR
+
 Queries by multicast GID. See
 \fIGIDs\fR
 for details.
 
 .TP 10
--d/--desc \fInode\(uldescription\fR 
-.NL
+-d/--desc \fInode\(uldescription\fR
+
 Queries by node name/description.
 
 .TP 10
--D/--dgname \fIdg\(ulname\fR 
-.NL
+-D/--dgname \fIdg\(ulname\fR
+
 Queries by device group name/description
 
 .TP 10
--P/--guidpair \fIguid guid\fR 
-.NL
+-P/--guidpair \fIguid guid\fR
+
 Queries by a pair of port GUIDs.
 
 .TP 10
--G/--gidpair \fIgid gid\fR 
-.NL
+-G/--gidpair \fIgid gid\fR
+
 Queries by a pair of GIDs. See
 \fIGIDs\fR
 for details.
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
 .SH Node Types
-.NL
 
 .TP 10
-fi 
-.NL
+fi
+
 Fabric Interface
 
 .TP 10
-sw 
-.NL
+sw
+
 Switch
 
 .SH GIDs
-.NL
 
 .PP
 Specifies a 64-bit subnet and 64-bit interface ID in the form:
 .PP
-subnet:interface 
+subnet:interface
 .PP
 
 .B NOTE:
@@ -251,228 +248,227 @@ In the following example, the GID corresponds to a PortGID. In this case, the in
 .br
 
 .SH Output Types
-.NL
 
 .PP
 Default is node.
 .TP 10
-classportinfo 
-.NL
+classportinfo
+
 Specifies the classportinfo of the SA.
 
 .TP 10
-systemguid 
-.NL
+systemguid
+
 Lists the system image GUIDs.
 
 .TP 10
-nodeguid 
-.NL
+nodeguid
+
 Lists the node GUIDs.
 
 .TP 10
-portguid 
-.NL
+portguid
+
 Lists the port GUIDs.
 
 .TP 10
-lid 
-.NL
+lid
+
 Lists the LIDs.
 
 .TP 10
-desc 
-.NL
+desc
+
 Lists the node descriptions/names.
 
 .TP 10
-path 
-.NL
+path
+
 Lists the path records.
 
 .TP 10
-node 
-.NL
+node
+
 Lists the node records.
 
 .TP 10
-portinfo 
-.NL
+portinfo
+
 Lists the port info records.
 
 .TP 10
-sminfo 
-.NL
+sminfo
+
 Lists the SM info records.
 
 .TP 10
-swinfo 
-.NL
+swinfo
+
 Lists the switch info records.
 
 .TP 10
-link 
-.NL
+link
+
 Lists the link records.
 
 .TP 10
-scsc 
-.NL
+scsc
+
 Lists the SC to SC mapping table records.
 
 .TP 10
-slsc 
-.NL
+slsc
+
 Lists the SL to SC mapping table records.
 
 .TP 10
-scsl 
-.NL
+scsl
+
 Lists the SC to SL mapping table records.
 
 .TP 10
-scvlt 
-.NL
+scvlt
+
 Lists the SC to VLt table records.
 
 .TP 10
-scvlr 
-.NL
+scvlr
+
 Lists the SC to VLr table records.
 
 .TP 10
-scvlnt 
-.NL
+scvlnt
+
 Lists the SC to VLnt table records.
 
 .TP 10
-vlarb 
-.NL
+vlarb
+
 Lists the VL arbitration table records.
 
 .TP 10
-pkey 
-.NL
+pkey
+
 Lists the PKey table records.
 
 .TP 10
-service 
-.NL
+service
+
 Lists the service records.
 
 .TP 10
-mcmember 
-.NL
+mcmember
+
 Lists the multicast member records.
 
 .TP 10
-inform 
-.NL
+inform
+
 Lists the inform info records.
 
 .TP 10
-linfdb 
-.NL
+linfdb
+
 Lists the switch linear forwarding database (FDB) records.
 
 .TP 10
-mcfdb 
-.NL
+mcfdb
+
 Lists the switch multicast FDB records.
 
 .TP 10
-trace 
-.NL
+trace
+
 Lists the trace records.
 
 .TP 10
-vfinfo 
-.NL
+vfinfo
+
 Lists the vFabrics.
 
 .TP 10
-vfinfocsv 
-.NL
+vfinfocsv
+
 Lists the vFabrics in CSV format.
 
 .TP 10
-vfinfocsv2 
-.NL
+vfinfocsv2
+
 Lists the vFabrics in CSV format with enums.
 
 .TP 10
-fabricinfo 
-.NL
+fabricinfo
+
 Specifies the summary of fabric devices.
 
 .TP 10
-quarantine 
-.NL
+quarantine
+
 Lists the quarantined nodes.
 
 .TP 10
-conginfo 
-.NL
+conginfo
+
 Lists the Congestion Info Records.
 
 .TP 10
-swcongset 
-.NL
+swcongset
+
 Lists the Switch Congestion Settings.
 
 .TP 10
-swportcong 
-.NL
+swportcong
+
 Lists the Switch Port Congestion Settings.
 
 .TP 10
-hficongset 
-.NL
+hficongset
+
 Lists the HFI Congestion Settings.
 
 .TP 10
-hficongcon 
-.NL
+hficongcon
+
 Lists the HFI Congestion Control Settings.
 
 .TP 10
-bfrctrl 
-.NL
+bfrctrl
+
 Lists the buffer control tables.
 
 .TP 10
-cableinfo 
-.NL
+cableinfo
+
 Lists the Cable Info records.
 
 .TP 10
-portgroup 
-.NL
+portgroup
+
 Lists the AR Port Group records.
 
 .TP 10
-portgroupfdb 
-.NL
+portgroupfdb
+
 Lists the AR Port Group FWD records.
 
 .TP 10
-dglist 
-.NL
+dglist
+
 Lists the Device Group Names.
 
 .TP 10
-dgmember 
-.NL
+dgmember
+
 Lists the Device Group records.
 
 .TP 10
-dtree 
-.NL
+dtree
+
 Lists the Device Tree records.
 
 .TP 10
-swcost 
-.NL
+swcost
+
 Lists the switch cost records.
 
 .PP
@@ -490,24 +486,23 @@ name:index:pkey:sl:mtu:rate:optionflag::mcastSl
 The only difference between these two formats is how the MTU and rate are output. vfinfocsv outputs MTU and rate in human/text readable format. vfinfocsv2 outputs MTU and rate as enumerations defined for the SMA protocol. The opagetvf command is based on this capability of opasaquery. For more information, see
 \fIopagetvf\fR
 .
-.SH Example 
-.NL
+.SH Example
 opasaquery -o desc -t fi
+
 .SH Input Options vs. Output Permitted
-.NL
 
 .PP
 The following list shows the input (assorted query by options) and outputs (-o) that are permitted.
 .TP 10
 None
-.NL
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, scsc, slsc, scvlt, scnlmt, linfdb, classportinfo, fabricinfo, quarantine, conginfo, swcongset, swportcong, hficongset, hficongcon, bfrctl, cableinfo, portgroup, portgroupfdb, dglist, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, scsc, slsc, scvlt, scnlmt, linfdb, classportinfo, fabricinfo, quarantine, conginfo, swcongset, swportcong, hficongset, hficongcon, bfrctl, cableinfo, portgroup, portgroupfdb, dglist, dgmember, dtree
 
 .RE
 
@@ -516,21 +511,21 @@ systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo,
 
 .sp
 -o output not permitted
-trace 
+trace
 
 .RE
 
 
 .TP 10
--t \fInode\(ultype\fR 
-.NL
+-t \fInode\(ultype\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, node, dglist, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, node, dglist, dgmember, dtree
 
 .RE
 
@@ -539,21 +534,21 @@ systemguid, nodeguid, portguid, lid, desc, node, dglist, dgmember, dtree
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2 
+portinfo, sminfo, swinfo, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2
 
 .RE
 
 
 .TP 10
--l \fIlid\fR 
-.NL
+-l \fIlid\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, swinfo, slvl, vlarb, pkey, mcmember, linfdb, mcfdb, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, swinfo, slvl, vlarb, pkey, mcmember, linfdb, mcfdb, dgmember, dtree
 
 .RE
 
@@ -562,21 +557,21 @@ systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, swinfo, slvl, v
 
 .sp
 -o output not permitted
-sminfo, link, inform, service, trace, vfinfo, vfinfocsv, vfinfocsv2, dglist 
+sminfo, link, inform, service, trace, vfinfo, vfinfocsv, vfinfocsv2, dglist
 
 .RE
 
 
 .TP 10
--k \fIpkey\fR 
-.NL
+-k \fIpkey\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-mcmember, path, vfinfo, vfinfocsv, vfinfocsv2 
+mcmember, path, vfinfo, vfinfocsv, vfinfocsv2
 
 .RE
 
@@ -585,7 +580,7 @@ mcmember, path, vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree 
+systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree
 
 .RE
 
@@ -595,14 +590,14 @@ systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, 
 \fIvfindex\fR
 
 
-.NL
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-vfinfo, vfinfocsv, vfinfocsv2 
+vfinfo, vfinfocsv, vfinfocsv2
 
 .RE
 
@@ -611,21 +606,21 @@ vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree 
+systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--s \fIsystem\(ulimage\(ulguid\fR 
-.NL
+-s \fIsystem\(ulimage\(ulguid\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, node 
+systemguid, nodeguid, portguid, lid, desc, node
 
 .RE
 
@@ -634,21 +629,21 @@ systemguid, nodeguid, portguid, lid, desc, node
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2, dglist, dgmember, dtree 
+portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--n \fInode\(ulguid\fR 
-.NL
+-n \fInode\(ulguid\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, node 
+systemguid, nodeguid, portguid, lid, desc, node
 
 .RE
 
@@ -657,21 +652,21 @@ systemguid, nodeguid, portguid, lid, desc, node
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2, dglist, dgmember, dtree 
+portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, vfinfo, vfinfocsv, vfinfocsv2, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--g \fIport\(ulguid\fR 
-.NL
+-g \fIport\(ulguid\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, trace, dgmember 
+systemguid, nodeguid, portguid, lid, desc, path, node, trace, dgmember
 
 .RE
 
@@ -680,21 +675,21 @@ systemguid, nodeguid, portguid, lid, desc, path, node, trace, dgmember
 
 .sp
 -o output not permitted
-portinfo, sminfo, swinfo, link, vlarb, pkey, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, dglist, dtree, service, mcmember, inform 
+portinfo, sminfo, swinfo, link, vlarb, pkey, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, dglist, dtree, service, mcmember, inform
 
 .RE
 
 
 .TP 10
--u \fIport\(ulgid\fR 
-.NL
+-u \fIport\(ulgid\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-path, service, mcmember, inform, trace 
+path, service, mcmember, inform, trace
 
 .RE
 
@@ -703,21 +698,21 @@ path, service, mcmember, inform, trace
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, dglist, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, linfdb, mcfdb, vfinfo, vfinfocsv, vfinfocsv2, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--m \fImulticast\(ulgid\fR 
-.NL
+-m \fImulticast\(ulgid\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-mcmember, vfinfo, vfinfocsv, vfinfocsv2 
+mcmember, vfinfo, vfinfocsv, vfinfocsv2
 
 .RE
 
@@ -726,21 +721,21 @@ mcmember, vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, inform, linfdb, mcfdb, trace, dglist, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, inform, linfdb, mcfdb, trace, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--d \fInode\(uldescription\fR 
-.NL
+-d \fInode\(uldescription\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-systemguid, nodeguid, portguid, lid, desc, node, dgmember 
+systemguid, nodeguid, portguid, lid, desc, node, dgmember
 
 .RE
 
@@ -749,21 +744,21 @@ systemguid, nodeguid, portguid, lid, desc, node, dgmember
 
 .sp
 -o output not permitted
-trace, dglist, dtree 
+trace, dglist, dtree
 
 .RE
 
 
 .TP 10
--D \fIdg\(ulname\fR 
-.NL
+-D \fIdg\(ulname\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-dgmember 
+dgmember
 
 .RE
 
@@ -772,21 +767,21 @@ dgmember
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, inform, linfdb, mcfdb, trace, dglist, dtree 
+systemguid, nodeguid, portguid, lid, desc, path, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, inform, linfdb, mcfdb, trace, dglist, dtree
 
 .RE
 
 
 .TP 10
--P \fIport\(ulguid\(ulpair\fR 
-.NL
+-P \fIport\(ulguid\(ulpair\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-path, trace 
+path, trace
 
 .RE
 
@@ -795,21 +790,21 @@ path, trace
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--S \fIserviceId\fR 
-.NL
+-S \fIserviceId\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-path, vfinfo, vfinfocsv, vfinfocsv2, service 
+path, vfinfo, vfinfocsv, vfinfocsv2, service
 
 .RE
 
@@ -818,21 +813,21 @@ path, vfinfo, vfinfocsv, vfinfocsv2, service
 
 .sp
 -o output not permitted
-systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree 
+systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--L \fISL\fR 
-.NL
+-L \fISL\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-path, vfinfo, vfinfocsv, vfinfocsv2 
+path, vfinfo, vfinfocsv, vfinfocsv2
 
 .RE
 
@@ -841,21 +836,21 @@ path, vfinfo, vfinfocsv, vfinfocsv2
 
 .sp
 -o output not permitted
-systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree 
+systemimageguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--G \fIgid\(ulpair\fR 
-.NL
+-G \fIgid\(ulpair\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-path, trace 
+path, trace
 
 .RE
 
@@ -864,21 +859,21 @@ path, trace
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--a \fIport\(ulguid\(ullist\fR 
-.NL
+-a \fIport\(ulguid\(ullist\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-path 
+path
 
 .RE
 
@@ -887,21 +882,21 @@ path
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, dglist, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, dglist, dgmember, dtree
 
 .RE
 
 
 .TP 10
--A \fIgid\(ullist\fR 
-.NL
+-A \fIgid\(ullist\fR
+
 
 .RS
 .TP 10
 
 .sp
 -o output permitted
-path 
+path
 
 .RE
 
@@ -910,7 +905,7 @@ path
 
 .sp
 -o output not permitted
-systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, dglist, dgmember, dtree 
+systemguid, nodeguid, portguid, lid, desc, node, portinfo, sminfo, swinfo, link, vlarb, pkey, service, mcmember, inform, linfdb, mcfdb, trace, dglist, dgmember, dtree
 
 .RE
 

@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaverifyhosts 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaverifyhosts 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaverifyhosts
 
-.NL
 
 .PP
 Verifies basic node configuration and performance by running FF\(ulHOSTVERIFY\(ulDIR/hostverify.sh on all specified hosts.
@@ -25,93 +24,92 @@ FF\(ulHOSTVERIFY\(ulDIR defines both the location of hostverify.sh and the desti
 A summary of results is appended to the FF\(ulRESULT\(ulDIR/verifyhosts.res file. A punchlist of failures is also appended to the FF\(ulRESULT\(ulDIR/punchlist.csv file. Only failures are shown on stdout.
 
 .SH Syntax
-.NL
-opaverifyhosts [-kc] [-f \fIhostfile\fR] [-u \fIupload\(ulfile\fR] [-d \fIupload\(uldir\fR]
+opaverifyhosts [-kc] [-f  \fIhostfile\fR] [-u  \fIupload\(ulfile\fR] [-d  \fIupload\(uldir\fR]
 .br
-[-h \fIhosts\fR] [-T \fItimelimit\fR] [-F \fIfilename\fR] [ \fItest\fR...]
+
+[-h  \fIhosts\fR] [-T  \fItimelimit\fR] [-F  \fIfilename\fR] [ \fItest\fR ...]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--k 
-.NL
+-k
+
 At start and end of verification, kills any existing hostverify or xhpl jobs on the hosts.
 
 .TP 10
--c 
-.NL
+-c
+
 Copies hostverify.sh to hosts first, useful if you have edited it.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster.
 .br
-Default is /etc/opa/hosts. 
+Default is /etc/opa/hosts.
 
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts to ping.
 
 .TP 10
--u \fIupload\(ulfile\fR 
-.NL
+-u \fIupload\(ulfile\fR
+
 Specifies the filename to upload hostverify.res to after verification to allow backup and review of the detailed results for each node. The default upload destination file is hostverify.res. If -u \[aq]\[aq] is specified, no upload occurs.
 
 .TP 10
--d \fIupload\(uldir\fR 
-.NL
+-d \fIupload\(uldir\fR
+
 Specifies the directory to upload result from each host to. Default is uploads.
 
 .TP 10
--T \fItimelimit\fR 
-.NL
+-T \fItimelimit\fR
+
 Specifies the time limit in seconds for host to complete tests. Default is 300 seconds (5 minutes).
 
 .TP 10
--F \fIfilename\fR 
-.NL
+-F \fIfilename\fR
+
 Specifies the filename of hostverify script to use. Default is /root/hostverify.sh.
 
 .TP 10
-\fItest\fR 
-.NL
+\fItest\fR
+
 Specifies one or more specific tests to run. See
 .br
 /usr/share/opa/samples/hostverify.sh for a list of available tests.
 
-.SH Examples 
-.NL
+.SH Examples
 opaverifyhosts -c
 .br
+
 opaverifyhosts -h \[aq]arwen elrond\[aq]
 .br
+
 HOSTS=\[aq]arwen elrond\[aq] opaverifyhosts
 .SH Environment Variables
-.NL
 
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBUPLOADS\(ulDIR\fR 
-.NL
+\fBUPLOADS\(ulDIR\fR
+
 Directory to upload to, used in absence of -d.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 Maximum concurrent operations.

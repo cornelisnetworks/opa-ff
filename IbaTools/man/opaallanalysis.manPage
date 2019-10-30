@@ -6,63 +6,62 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaallanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaallanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaallanalysis
 
-.NL
 
 .PP
 
 \fB(All)\fR
 opaallanalysis command performs the set of analysis specified in FF\(ulALL\(ulANALYSIS and can be specified for fabric, chassis, esm, or hostsm.
 .SH Syntax
-.NL
-opaallanalysis [-b|-e] [-s] [-d \fIdir\fR] [-c \fIfile\fR] [-t \fIportsfile\fR]
+opaallanalysis [-b|-e] [-s] [-d  \fIdir\fR] [-c  \fIfile\fR] [-t  \fIportsfile\fR]
 .br
-[-p \fIports\fR] [-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-G \fIesmchassisfile\fR]
+[-p  \fIports\fR]
+[-F \fIchassisfile\fR] [-H \[aq]\fIchassis\fR\[aq]] [-G  \fIesmchassisfile\fR]
 .br
-[-E \fIesmchassis\fR] [-T \fItopology\(ulinput\fR]
+[-E  \fIesmchassis\fR]
+[-T  \fItopology\(ulinput\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--b 
-.NL
+-b
+
 Sets the baseline mode. Default is compare/check mode.
 .TP 10
--e 
-.NL
+-e
+
 Evaluates health only. Default is compare/check mode.
 .TP 10
--s 
-.NL
+-s
+
 Saves history of failures (errors/differences).
 .TP 10
--d \fIdir\fR 
-.NL
-Identifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis 
+-d \fIdir\fR
+
+Identifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
 .TP 10
--c \fIfile\fR 
-.NL
-Specifies the error thresholds configuration file. Default is /etc/opa/opamon.conf 
+-c \fIfile\fR
+
+Specifies the error thresholds configuration file. Default is /etc/opa/opamon.conf
 .TP 10
--t \fIportsfile\fR 
-.NL
-Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports 
+-t \fIportsfile\fR
+
+Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabric(s) for analysis. Default is the first active port. Specified as HFI:port as follows:
 .RS
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 .RE
 
@@ -70,7 +69,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:\fIy\fR 
+0:\fIy\fR
 Port \fIy\fR within system.
 .RE
 
@@ -78,7 +77,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-\fIx\fR:0 
+\fIx\fR:0
 First active port on HFI \fIx\fR.
 .RE
 
@@ -86,84 +85,82 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-\fIx\fR:\fIy\fR 
+\fIx\fR:\fIy\fR
 HFI \fIx\fR, port \fIy\fR.
 .RE
 
 .TP 10
--F \fIchassisfile\fR 
-.NL
-Specifies the file with a chassis in a cluster. Default is /etc/opa/chassis 
+-F \fIchassisfile\fR
+
+Specifies the file with a chassis in a cluster. Default is /etc/opa/chassis
 .TP 10
--H \[aq]\fIchassis\fR\[aq] 
-.NL
+-H \[aq]\fIchassis\fR\[aq]
+
 Specifies the list of chassis on which to execute the command.
 .TP 10
--G \fIesmchassisfile\fR 
-.NL
-Specifies the file with embedded SM chassis in the cluster. Default is /etc/opa/esm\(ulchassis 
+-G \fIesmchassisfile\fR
+
+Specifies the file with embedded SM chassis in the cluster. Default is /etc/opa/esm\(ulchassis
 .TP 10
--E \fIesmchassis\fR 
-.NL
+-E \fIesmchassis\fR
+
 Specifies the list of embedded SM chassis to analyze.
 .TP 10
--T \fItopology\(ulinput\fR 
-.NL
+-T \fItopology\(ulinput\fR
+
 Specifies the name of topology input file to use. Any %P markers in this filename are replaced with the HFI:port being operated on, such as 0:0 or 1:2. Default is /etc/opa/topology.%P.xml. If -T NONE is specified, no topology input file is used. See
 \fIopareport\fR
 for more information.
-.SH Example 
-.NL
+.SH Example
 opaallanalysis
 .br
+
 opaallanalysis -p \[aq]1:1 2:1\[aq]
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.
 .TP 10
-\fBFF\(ulTOPOLOGY\(ulFILE\fR 
-.NL
+\fBFF\(ulTOPOLOGY\(ulFILE\fR
+
 File containing topology\(ulinput (may have %P marker in filename), used in absence of -T.
 .TP 10
-\fBCHASSIS\fR 
-.NL
+\fBCHASSIS\fR
+
 List of chassis, used if -F and -H options are not supplied.
 .TP 10
-\fBCHASSIS\(ulFILE\fR 
-.NL
+\fBCHASSIS\(ulFILE\fR
+
 File containing list of chassis, used if -F and -H options are not supplied.
 .TP 10
-\fBESM\(ulCHASSIS\fR 
-.NL
+\fBESM\(ulCHASSIS\fR
+
 List of SM chassis, used if -G and -E options are not supplied.
 .TP 10
-\fBESM\(ulCHASSIS\(ulFILE\fR 
-.NL
+\fBESM\(ulCHASSIS\(ulFILE\fR
+
 File containing list of SM chassis, used if -G and -E options are not supplied.
 .TP 10
-\fBFF\(ulANALYSIS\(ulDIR\fR 
-.NL
+\fBFF\(ulANALYSIS\(ulDIR\fR
+
 Top level directory for baselines and failed health checks.
 .TP 10
-\fBFF\(ulCHASSIS\(ulCMDS\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulCMDS\fR
+
 List of commands to issue during analysis, unused if -e option supplied.
 .TP 10
-\fBFF\(ulCHASSIS\(ulHEALTH\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulHEALTH\fR
+
 Single command to issue to check overall health during analysis, unused if -b option supplied
 .SH Details
-.NL
 
 .PP
 The opaallanalysis command performs the set of analysis specified in \fBFF\(ulALL\(ulANALYSIS\fR, which must be a space-separated list. This can be provided by the environment or using /etc/opa/opafastfabric.conf. The analysis set includes the options: fabric, chassis, esm, or hostsm. For a fabric with only externally managed switches, \fBFF\(ulALL\(ulANALYSIS\fR should be set to -fabric in opafastfabric.conf.

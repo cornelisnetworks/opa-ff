@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa2rm 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opa2rm 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opa2rm
 
-.NL
 
 .PP
 Permits the generation of configuration files for FastFabric or resource managers from a topology xml file.
@@ -21,36 +20,34 @@ When working with SLURM, the opa2rm -o slurm option should typically be used. Th
 .PP
 When the configuration is a pure fat tree or oversubscribed fat tree, the opa2rm -o slurmfull option may be used to generate the full description of the fabric, including all intermediate and core switches in the fat tree topology. This option may permit better job placement optimization than the output from the opa2rm -o slurm option. However for larger fabrics, it may also increase the overhead within SLURM.
 .SH Syntax
-.NL
-opa2rm [-v] [-q] -o \fIoutput\fR[-g|-u|-t] [-F \fIpoint\fR] [-p \fIprefix\fR] [-s \fIsuffix\fR] topology\(ulinput
+opa2rm [-v] [-q] -o  \fIoutput\fR [-g|-u|-t] [-F  \fIpoint\fR] [-p  \fIprefix\fR] [-s  \fIsuffix\fR] topology\(ulinput
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--v/--verbose 
-.NL
+-v/--verbose
+
 Specifies verbose output.
 
 .TP 10
--q/--quiet 
-.NL
+-q/--quiet
+
 Disables progress reports.
 
 .TP 10
--o/--output \fIoutput\fR 
-.NL
+-o/--output \fIoutput\fR
+
 Specifies the output type:
 
 .RS
 .TP 10
 
 .sp
-slurm 
+slurm
 SLURM tree nodes. Supports a variety of topologies.
 
 .RE
@@ -59,7 +56,7 @@ SLURM tree nodes. Supports a variety of topologies.
 .TP 10
 
 .sp
-slurmful 
+slurmful
 SLURM fat tree nodes and ISLs. Only supports pure trees.
 
 .RE
@@ -68,24 +65,24 @@ SLURM fat tree nodes and ISLs. Only supports pure trees.
 .TP 10
 
 .sp
-hosts 
+hosts
 FastFabric hosts file omitting this host
 
 .RE
 
 .TP 10
--g/--guid 
-.NL
+-g/--guid
+
 Specifies the output switch GUIDs instead of names.
 
 .TP 10
--u/--underscore 
-.NL
+-u/--underscore
+
 Changes spaces in switch names to underscores.
 
 .TP 10
--t/--trunc 
-.NL
+-t/--trunc
+
 Truncates switch names at first space.
 
 .IP
@@ -93,105 +90,108 @@ This will treat large Director switches as a single, big switch.
 .IP
 If -g, -u or -t are not specified, the switch name\[aq]s suffix, after the first space, will be placed at the start of the name. For example, \[aq]core5 Leaf 101\[aq] becomes \[aq]Leaf101\(ulcore5\[aq].
 .TP 10
--F/--focus \fIpoint\fR 
-.NL
+-F/--focus \fIpoint\fR
+
 Specifies the focus area for output. Limits the scope of output to links that match any of the given focus points.
 
 .TP 10
--p/--prefix \fIprefix\fR 
-.NL
+-p/--prefix \fIprefix\fR
+
 Specifies the prefix to prepend to all FI hostnames.
 
 .TP 10
--s/--suffix \fIsuffix\fR 
-.NL
+-s/--suffix \fIsuffix\fR
+
 Specifies the suffix to append to all FI hostnames.
 
 .TP 10
-topology\(ulinput 
-.NL
+topology\(ulinput
+
 Specifies the topology\(ulinput file to use. \[aq]-\[aq] may be used to specify stdin.
 
 .SH Point Syntax
-.NL
 
 .TP 10
-node:\fIvalue\fR 
-.NL
+node:\fIvalue\fR
+
 \fIvalue\fR is node description (node name).
 
 .TP 10
-node:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+node:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is node description (node name); \fIvalue2\fR is port number.
 
 .TP 10
-nodepat:\fIvalue\fR 
-.NL
+nodepat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for node description (node name).
 
 .TP 10
-nodepat:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+nodepat:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is glob pattern for node description (node name); \fIvalue2\fR is port number.
 
 .TP 10
-nodetype:\fIvalue\fR 
-.NL
+nodetype:\fIvalue\fR
+
 \fIvalue\fR is node type (SW or FI).
 
 .TP 10
-nodetype:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+nodetype:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is node type (SW or FI); \fIvalue2\fR is port number.
 
 .TP 10
-rate:\fIvalue\fR 
-.NL
+rate:\fIvalue\fR
+
 \fIvalue\fR is string for rate (25g, 50g, 75g, 100g).
 
 .TP 10
-mtucap:\fIvalue\fR 
-.NL
+mtucap:\fIvalue\fR
+
 \fIvalue\fR is MTU size (2048, 4096, 8192, 10240); omits switch mgmt port 0.
 
 .TP 10
-labelpat:\fIvalue\fR 
-.NL
+labelpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable label.
 
 .TP 10
-lengthpat:\fIvalue\fR 
-.NL
+lengthpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable length.
 
 .TP 10
-cabledetpat:\fIvalue\fR 
-.NL
+cabledetpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable details.
 
 .TP 10
-linkdetpat:\fIvalue\fR 
-.NL
+linkdetpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for link details.
 
 .TP 10
-portdetpat:\fIvalue\fR 
-.NL
+portdetpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for port details to value.
 
 .SH Examples
-.NL
 opa2rm -o slurm topology.xml
 .br
+
 opa2rm -o slurm -p \[aq]opa-\[aq] topology.xml
 .br
+
 opa2rm -o slurm -s \[aq]-opa\[aq] topology.xml
 .br
+
 opa2rm -o slurm -F \[aq]nodepat:compute*\[aq] -F \[aq]nodepat:opacore1 *\[aq]
 .br
 topology.xml
 .br
+
 opa2rm -o nodes -F \[aq]nodedetpat:compute*\[aq] topology.xml
 .br
+
 opa2rm -o hosts topology.xml

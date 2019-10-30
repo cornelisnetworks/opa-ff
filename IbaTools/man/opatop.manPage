@@ -6,34 +6,31 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opatop 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opatop 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opatop
 
-.NL
 
 .PP
 Starts the Fabric Performance Monitor (opatop) Text-based User Interface (TUI) menu to display performance, congestion, and error information about a fabric.
 .SH Syntax
-.NL
-opatop [-v] [-q] [-h \fIhfi\fR] [-p \fIport\fR] [--timeout] [-i \fIseconds\fR]
+opatop [-v] [-q] [-h  \fIhfi\fR] [-p  \fIport\fR] [--timeout] [-i  \fIseconds\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--v/--verbose level 
-.NL
+-v/--verbose level
+
 Specifies the verbose output level. Value is additive and includes:
 .RS
 .TP 10
 
 .sp
-1 
+1
 Screen
 .RE
 
@@ -41,7 +38,7 @@ Screen
 .TP 10
 
 .sp
-4 
+4
 STDERR opatop
 .RE
 
@@ -49,65 +46,63 @@ STDERR opatop
 .TP 10
 
 .sp
-16 
+16
 STDERR PaClient
 .RE
 
 .TP 10
--q/--quiet 
-.NL
+-q/--quiet
+
 Disables progress reports.
 .TP 10
--h/--hfi \fIhfi\fR 
-.NL
+-h/--hfi \fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
--p/--port \fIport\fR 
-.NL
+-p/--port \fIport\fR
+
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
---timeout 
-.NL
+--timeout
+
 Specifies the timeout (response wait time) in ms. Default is 1000 ms.
 
 .TP 10
--i/--interval \fIseconds\fR 
-.NL
+-i/--interval \fIseconds\fR
+
 Interval in \fIseconds\fR at which PA queries are performed to refresh to the latest PA image. Default is 10 seconds.
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.

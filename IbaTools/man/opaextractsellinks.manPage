@@ -6,35 +6,32 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaextractsellinks 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaextractsellinks 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaextractsellinks
 
-.NL
 
 .PP
 Produces a CSV file listing all or some of the links in the fabric. opaextractsellinks is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
-.SH Syntax 
-.NL
-opaextractsellinks [opareport \fIoptions\fR]
+.SH Syntax
+opaextractsellinks [opareport  \fIoptions\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
-opareport \fIoptions\fR 
-.NL
+opareport \fIoptions\fR
+
 The following options are passed to opareport. This subset is considered typical and useful for this command. By design, the tool ignores -o/--output report option.
 
 .RS
 .TP 10
 
 .sp
--h/--hfi \fIhfi\fR 
+-h/--hfi \fIhfi\fR
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .RE
@@ -43,7 +40,7 @@ Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port 
 .TP 10
 
 .sp
--p/--port \fIport\fR 
+-p/--port \fIport\fR
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .RE
@@ -52,7 +49,7 @@ Specifies the port, numbered 1..n. Using 0 specifies the first active port. Defa
 .TP 10
 
 .sp
--X/--infile \fIsnapshot\(ulinput\fR 
+-X/--infile \fIsnapshot\(ulinput\fR
 Generates a report using the data in the snapshot\(ulinput file. snapshot\(ulinput must have been generated during a previous -o \fIsnapshot\fR run. When used, the -s, -i, -C, and -a options are ignored. \[aq]-\[aq] may be used as the snapshot\(ulinput to specify stdin.
 
 .RE
@@ -61,7 +58,7 @@ Generates a report using the data in the snapshot\(ulinput file. snapshot\(ulinp
 .TP 10
 
 .sp
--T/--topology \fItopology\(ulinput\fR 
+-T/--topology \fItopology\(ulinput\fR
 Uses topology\(ulinput file to augment and verify fabric information. When used, various reports can be augmented with information not available electronically (such as cable labels). \[aq]-\[aq] may be used to specify stdin.
 
 .RE
@@ -70,318 +67,333 @@ Uses topology\(ulinput file to augment and verify fabric information. When used,
 .TP 10
 
 .sp
--F/--focus \fIpoint\fR 
-Specifies the focus area for report. Used for all reports except route to limit scope of report. Refer to 
+-F/--focus \fIpoint\fR
+Specifies the focus area for report. Used for all reports except route to limit scope of report. Refer to
 \fIPoint Syntax\fR
 for details.
 
 .RE
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
-.NL
 
 .SH Point Syntax
-.NL
 
 .TP 10
-gid:\fIvalue\fR 
-.NL
+gid:\fIvalue\fR
+
 \fIvalue\fR is numeric port GID of form: subnet:guid.
 
 .TP 10
-lid:\fIvalue\fR 
-.NL
+lid:\fIvalue\fR
+
 \fIvalue\fR is numeric LID.
 
 .TP 10
-lid:value:node 
-.NL
+lid:value:node
+
 \fIvalue\fR is numeric LID, selects entire node with given LID.
 
 .TP 10
-lid:\fIvalue\fR:port:\fIvalue2\fR 
-.NL
+lid:\fIvalue\fR:port:\fIvalue2\fR
+
 \fIvalue\fR is numeric LID of node, \fIvalue2\fR is port number.
 
 .TP 10
-portguid:\fIvalue\fR 
-.NL
+portguid:\fIvalue\fR
+
 \fIvalue\fR is numeric port GUID.
 
 .TP 10
-nodeguid:\fIvalue\fR 
-.NL
+nodeguid:\fIvalue\fR
+
 \fIvalue\fR is numeric node GUID.
 
 .TP 10
-nodeguid:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+nodeguid:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is numeric node GUID, \fIvalue2\fR is port number.
 
 .TP 10
-iocguid:\fIvalue\fR 
-.NL
+iocguid:\fIvalue\fR
+
 \fIvalue\fR is numeric IOC GUID.
 
 .TP 10
-iocguid:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+iocguid:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is numeric IOC GUID, \fIvalue2\fR is port number.
 
 .TP 10
-systemguid:\fIvalue\fR 
-.NL
+systemguid:\fIvalue\fR
+
 \fIvalue\fR is numeric system image GUID.
 
 .TP 10
-systemguid:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+systemguid:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is the numeric system image GUID, \fIvalue2\fR is port number.
 
 .TP 10
-ioc:\fIvalue\fR 
-.NL
+ioc:\fIvalue\fR
+
 \fIvalue\fR is IOC Profile ID String (IOC Name).
 
 .TP 10
-ioc:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+ioc:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is IOC Profile ID String (IOC Name), \fIvalue2\fR is port number.
 
 .TP 10
-iocpat:\fIvalue\fR 
-.NL
+iocpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for IOC Profile ID String (IOC Name).
 
 .TP 10
-iocpat:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+iocpat:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is glob pattern for IOC Profile ID String (IOC Name), \fIvalue2\fR is port number.
 
 .TP 10
-ioctype:\fIvalue\fR 
-.NL
+ioctype:\fIvalue\fR
+
 \fIvalue\fR is IOC type (SRP or OTHER).
 
 .TP 10
-ioctype:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+ioctype:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is IOC type (SRP or OTHER); \fIvalue2\fR is port number.
 
 .TP 10
-node:\fIvalue\fR 
-.NL
+node:\fIvalue\fR
+
 \fIvalue\fR is node description (node name).
 
 .TP 10
-node:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+node:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is node description (node name), \fIvalue2\fR is port number.
 
 .TP 10
-nodepat:\fIvalue\fR 
-.NL
+nodepat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for node description (node name).
 
 .TP 10
-nodepat:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+nodepat:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is the glob pattern for the node description (node name), \fIvalue2\fR is port number.
 
 .TP 10
-nodedetpat:\fIvalue\fR 
-.NL
+nodedetpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for node details.
 
 .TP 10
-nodedetpat:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+nodedetpat:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is the glob pattern for the node details, \fIvalue2\fR is port number.
 
 .TP 10
-nodetype:\fIvalue\fR 
-.NL
+nodetype:\fIvalue\fR
+
 \fIvalue\fR is node type (SW or FI).
 
 .TP 10
-nodetype:\fIvalue1\fR:port:\fIvalue2\fR 
-.NL
+nodetype:\fIvalue1\fR:port:\fIvalue2\fR
+
 \fIvalue1\fR is node type (SW or FI), \fIvalue2\fR is port number.
 
 .TP 10
-rate:\fIvalue\fR 
-.NL
+rate:\fIvalue\fR
+
 \fIvalue\fR is string for rate (25g, 50g, 75g, 100g), omits switch mgmt port 0.
 
 .TP 10
-portstate:\fIvalue\fR 
-.NL
+portstate:\fIvalue\fR
+
 \fIvalue\fR is a string for state (down, init, armed, active, notactive, initarmed).
 
 .TP 10
-portphysstate:\fIvalue\fR 
-.NL
+portphysstate:\fIvalue\fR
+
 \fIvalue\fR is a string for PHYs state (polling, disabled, training, linkup, recovery, offline, test)
 
 .TP 10
-mtucap:\fIvalue\fR 
-.NL
+mtucap:\fIvalue\fR
+
 \fIvalue\fR is MTU size (2048, 4096, 8192, 10240), omits switch mgmt port 0.
 
 .TP 10
-labelpat:\fIvalue\fR 
-.NL
+labelpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable label.
 
 .TP 10
-lengthpat:\fIvalue\fR 
-.NL
+lengthpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable length.
 
 .TP 10
-cabledetpat:\fIvalue\fR 
-.NL
+cabledetpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable details.
 
 .TP 10
-cabinflenpat:\fIvalue\fR 
-.NL
+cabinflenpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable info length.
 
 .TP 10
-cabinfvendnamepat:\fIvalue\fR 
-.NL
+cabinfvendnamepat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable info vendor name.
 
 .TP 10
-cabinfvendpnpat:\fIvalue\fR 
-.NL
+cabinfvendpnpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable info vendor part number.
 
 .TP 10
-cabinfvendrevpat:\fIvalue\fR 
-.NL
+cabinfvendrevpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable info vendor revision.
 
 .TP 10
-cabinfvendsnpat:\fIvalue\fR 
-.NL
+cabinfvendsnpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for cable info vendor serial number.
 
 .TP 10
-cabinftype:\fIvalue\fR 
-.NL
+cabinftype:\fIvalue\fR
+
 \fIvalue\fR is either optical, passive\(ulcopper, active\(ulcopper, or unknown.
 
 .TP 10
-linkdetpat:\fIvalue\fR 
-.NL
+linkdetpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for link details.
 
 .TP 10
-portdetpat:\fIvalue\fR 
-.NL
+portdetpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for port details.
 
 .TP 10
-sm 
-.NL
+sm
+
 Specifies the master subnet manager (SM).
 
 .TP 10
-smdetpat:\fIvalue\fR 
-.NL
+smdetpat:\fIvalue\fR
+
 \fIvalue\fR is glob pattern for SM details.
 
 .TP 10
-route:\fIpoint1\fR:\fIpoint2\fR 
-.NL
+route:\fIpoint1\fR:\fIpoint2\fR
+
 Specifies all ports along the routes between the two given points.
 
 .TP 10
-led:\fIvalue\fR 
-.NL
+led:\fIvalue\fR
+
 \fIvalue\fR is either on or off for LED port beacon.
 
 .TP 10
-linkqual:\fIvalue\fR 
-.NL
+linkqual:\fIvalue\fR
+
 Specifies the ports with a link quality equal to \fIvalue\fR.
 
 .TP 10
-linkqualLE:\fIvalue\fR 
-.NL
+linkqualLE:\fIvalue\fR
+
 Specifies the ports with a link quality less than or equal to \fIvalue\fR.
 
 .TP 10
-linkqualGE:\fIvalue\fR 
-.NL
+linkqualGE:\fIvalue\fR
+
 Specifies the ports with a link quality greater than or equal to \fIvalue\fR.
 
 .TP 10
-nodepatfile:\fIFILENAME\fR 
-.NL
-Specifies the name of file with the list of nodes.
+nodepatfile:\fIFILENAME\fR
+
+Specifies the name of file with the list of nodepats or node descriptions.
 
 .TP 10
-nodepairpatfile:\fIFILENAME\fR 
-.NL
+nodepairpatfile:\fIFILENAME\fR
+
 Specifies the name of file with the list of node pairs, separated by a colon.
 
-.SH Examples 
-.NL
+.TP 10
+ldr
+
+Specifies the ports with a non-zero link down reason or neighbor link down reason.
+
+.TP 10
+ldr:\fIvalue\fR
+
+Specifies the ports with a link down reason or neighbor link down reason equal to \fIvalue\fR.
+
+.SH Examples
 # List all the links in the fabric:
 .br
+
 opaextractsellinks
 .br
 
+
 .br
+
 # List all the links to a switch named "coresw1":
 .br
+
 opaextractsellinks -F "node:coresw1"
 .br
 
+
 .br
+
 # List all the connections to end-nodes:
 .br
+
 opaextractsellinks -F "nodetype:FI"
 .br
 
+
 .br
+
 # List all the links on the 2nd HFI\[aq]s fabric of a multi-plane fabric:
 .br
+
 opaextractsellinks -h 2

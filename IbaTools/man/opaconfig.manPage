@@ -6,21 +6,20 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaconfig 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaconfig
 
-.NL
 
 .PP
 
 \fB(Switch and Host)\fR
 Configures the Intel(R) Omni-Path Software through command line interface or TUI menus.
 .SH Syntax
-.NL
-opaconfig [-G] [-v|-vv] [-u|-s|-e \fIcomp\fR] [-E \fIcomp\fR] [-D \fIcomp\fR]
+opaconfig [-G] [-v|-vv] [-u|-s|-e  \fIcomp\fR] [-E \fIcomp\fR] [-D  \fIcomp\fR]
 .br
-[--user\(ulqueries|--no\(uluser\(ulqueries] [--answer \fIkeyword=value\fR]
+
+[--user\(ulqueries|--no\(uluser\(ulqueries] [--answer  \fIkeyword=value\fR]
 .PP
 or
 .br
@@ -30,96 +29,95 @@ or
 .br
 opaconfig -V
 .SH Options
-.NL
 
 .TP 10
 No option
-.NL
+
 Starts the Intel(R) Omni-Path Software TUI.
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--G 
-.NL
+-G
+
 Installs GPU Direct components (must have NVidia drivers installed).
 
 .TP 10
--v 
-.NL
+-v
+
 Specifies verbose logging.
 
 .TP 10
--vv 
-.NL
+-vv
+
 Specifies very verbose debug logging.
 
 .TP 10
--u 
-.NL
+-u
+
 Uninstalls all ULPs and drivers with default options.
 
 .TP 10
--s 
-.NL
+-s
+
 Enables autostart for all installed drivers.
 
 .TP 10
--e \fIcomp\fR 
-.NL
+-e \fIcomp\fR
+
 Uninstalls the given component with default options. This option can appear more than once on the command line.
 
 .TP 10
--E \fIcomp\fR 
-.NL
+-E \fIcomp\fR
+
 Enables autostart of a given component. This option can appear with -D or more than once on the command line.
 
 .TP 10
--D \fIcomp\fR 
-.NL
+-D \fIcomp\fR
+
 Disables autostart of given component. This option can appear with -E or more than once on the command line.
 
 .TP 10
--C 
-.NL
+-C
+
 Outputs list of supported components.
 
 .IP
 
 \fBNOTE:\fR
-Supported components may vary according to OS. Refer to 
+Supported components may vary according to OS. Refer to
 \fIIntel(R) Omni-Path Fabric Software Release Notes\fR
 
 , OS RPMs Installation Prerequisites for the list of components by supported OS.
 .IP
-Supported components include: opa\(ulstack oftools intel\(ulhfi opa\(ulstack\(uldev delta\(ulipoib opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi sandiashmem mpisrc delta\(uldebug 
+Supported components include: opa\(ulstack oftools intel\(ulhfi opa\(ulstack\(uldev delta\(ulipoib opamgt\(ulsdk mvapich2\(ulgcc\(ulhfi openmpi\(ulgcc\(ulhfi openmpi\(ulgcc\(ulcuda\(ulhfi sandiashmem mpisrc delta\(uldebug
 .IP
-Supported components when using command on a Management Node with Intel(R) Omni-Path Fabric Suite installed, include: fastfabric opafm 
+Supported components when using command on a Management Node with Intel(R) Omni-Path Fabric Suite installed, include: fastfabric opafm
 .IP
-Supported component name aliases include: opa ipoib mpi psm\(ulmpi verbs\(ulmpi pgas opadev 
+Supported component name aliases include: opa ipoib mpi psm\(ulmpi verbs\(ulmpi pgas opadev
 .IP
-Additional component names allowed for -E and -D options: ibacm rdma\(ulndd delta\(ulsrp delta\(ulsrpt 
+Additional component names allowed for -E and -D options: ibacm rdma\(ulndd delta\(ulsrp delta\(ulsrpt
 .TP 10
--V 
-.NL
+-V
+
 Outputs version.
 
 .TP 10
---user\(ulqueries 
-.NL
+--user\(ulqueries
+
 Permits non-root users to query the fabric (Default).
 
 .TP 10
---no\(uluser\(ulqueries 
-.NL
+--no\(uluser\(ulqueries
+
 Prohibits non-root users from querying the fabric.
 
 .TP 10
---answer \fIkeyword=value\fR 
-.NL
+--answer \fIkeyword=value\fR
+
 Provides an answer to a question that may occur during the operation. Answers to questions not asked are ignored. Invalid answers result in prompting for interactive installs, or using default options for non-interactive installs.
 
 .IP
@@ -130,7 +128,7 @@ Provides an answer to a question that may occur during the operation. Answers to
 .TP 10
 
 .sp
-UserQueries 
+UserQueries
 Allow non-root users to access the UMAD interface?
 
 .TP 10
@@ -143,26 +141,44 @@ Allowing access to UMAD device files may present a security risk. However, this 
 
 .RE
 
-.SH Example 
-.NL
+.RS
+.TP 10
+
+.sp
+ARPTABLE\(ulTUNING
+Adjust kernel ARP table size for large fabrics?
+
+.RE
+
+.SH Example
 # opaconfig
 .br
-Intel OPA \fIx.x.x.x.x\fR Software
+
+Intel OPA  \fIx.x.x.x.x\fR Software
 .br
 
+
 .br
+
    1) Show Installed Software
 .br
+
    2) Reconfigure OFED IP over IB
 .br
+
    3) Reconfigure Driver Autostart
 .br
+
    4) Generate Supporting Information for Problem Report
 .br
+
    5) FastFabric (Host/Chassis/Switch Setup/Admin)
 .br
+
    6) Uninstall Software
 .br
 
+
 .br
+
    X) Exit

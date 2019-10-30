@@ -6,32 +6,28 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaexpandfile 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaexpandfile 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaexpandfile
 
-.NL
 
 .PP
 
 \fB(Linux)\fR
 Expands a Intel(R) Omni-Path Fabric Suite FastFabric hosts, chassis, or switches file. This tool expands and filter outs blank and commented lines. This can be useful when building other scripts that may use these files as input.
 .SH Syntax
-.NL
-opaexpandfile \fIfile\fR
+opaexpandfile  \fIfile\fR
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
-\fIfile\fR 
-.NL
+\fIfile\fR
+
 Specifies the FastFabric file to be processed.
 
-.SH Example 
-.NL
+.SH Example
 opaexpandfile allhosts

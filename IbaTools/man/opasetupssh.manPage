@@ -6,165 +6,161 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opasetupssh 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opasetupssh 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opasetupssh
 
-.NL
 
 .PP
 
 \fB(Linux or Switch)\fR
 Creates SSH keys and configures them on all hosts or chassis so the system can use SSH and SCP into all other hosts or chassis without a password prompt. Typically, during cluster setup this tool enables the root user on the Management Node to log into the other hosts (as root) or chassis (as admin) using password-less SSH.
 .SH Syntax
-.NL
-opasetupssh [-C|p|U] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
+opasetupssh [-C|p|U] [-f  \fIhostfile\fR] [-F  \fIchassisfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-H \[aq]\fIchassis\fR\[aq]] [-i \fIipoib\(ulsuffix\fR] [-u \fIuser\fR] [-S] [-R|P]
+
+[-H \[aq]\fIchassis\fR\[aq]] [-i  \fIipoib\(ulsuffix\fR] [-u  \fIuser\fR] [-S] [-R|P]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--C 
-.NL
+-C
+
 Performs operation against chassis. Default is hosts.
 
 .TP 10
--p 
-.NL
+-p
+
 Performs operation against all chassis or hosts in parallel.
 
 .TP 10
--U 
-.NL
+-U
+
 Performs connect only (to enter in local hosts, known hosts). When run in this mode, the -S option is ignored.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster.
 .br
 Default is /etc/opa/hosts file.
 
 .TP 10
--F \fIchassisfile\fR 
-.NL
+-F \fIchassisfile\fR
+
 Specifies the file with chassis in cluster.
 .br
 Default is /etc/opa/chassis file.
 
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts to set up.
 
 .TP 10
--H \fIchassis\fR 
-.NL
+-H \fIchassis\fR
+
 Specifies the list of chassis to set up.
 
 .TP 10
--i \fIipoib\(ulsuffix\fR 
-.NL
+-i \fIipoib\(ulsuffix\fR
+
 Specifies the suffix to apply to host names to create IPoIB host names. Default is -opa.
 
 .TP 10
--u \fIuser\fR 
-.NL
+-u \fIuser\fR
+
 Specifies the user on remote system to allow this user to SSH to. Default is current user code for host(s) and admin for chassis.
 
 .TP 10
--S 
-.NL
+-S
+
 Securely prompts for password for user on remote system.
 
 .TP 10
--R 
-.NL
+-R
+
 Skips setup of SSH to local host.
 
 .TP 10
--P 
-.NL
+-P
+
 Skips ping of host (for SSH to devices on Internet with ping
 .br
 firewalled).
 
-.SH Examples 
-.NL
+.SH Examples
 
-.NL
 
 .SH Operations on Hosts
-.NL
 opasetupssh -S -i \[aq]\[aq]
 .br
+
 opasetupssh -U
 .br
+
 opasetupssh -h \[aq]arwen elrond\[aq] -U
 .br
+
 HOSTS=\[aq]arwen elrond\[aq] opasetupssh -U
-.NL
 
 .SH Operations on Chassis
-.NL
 opasetupssh -C
 .br
+
 opasetupssh -C -H \[aq]chassis1 chassis2\[aq]
 .br
+
 CHASSIS=\[aq]chassis1 chassis2\[aq] opasetupssh -C
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBCHASSIS\(ulFILE\fR 
-.NL
+\fBCHASSIS\(ulFILE\fR
+
 File containing list of chassis, used in absence of -F and -H.
 
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBCHASSIS\fR 
-.NL
+\fBCHASSIS\fR
+
 List of chassis, used if -C is used and -H and -F options not supplied.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 When -p option is used, maximum concurrent operations.
 
 .TP 10
-\fBFF\(ulIPOIB\(ulSUFFIX\fR 
-.NL
+\fBFF\(ulIPOIB\(ulSUFFIX\fR
+
 Suffix to append to hostname to create IPoIB hostname. Used in absence of -i.
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR
+
 How to log into chassis. Can be Telnet or SSH.
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR
+
 Password for admin on all chassis. Used in absence of -S option.
 
 .SH Description
-.NL
 
 .PP
 The Intel(R) Omni-Path Fabric Suite FastFabric Toolset provides additional flexibility in the translation between IPoIB and management network hostnames.
@@ -175,7 +171,6 @@ This tool also sets up SSH to the local host and the local host\[aq]s IPoIB name
 .PP
 opasetupssh has two modes of operation. The mode is selected by the presence or absence of the -U option. Typically, opasetupssh is first run without the -U option, then it may later be run with the -U option.
 .SH Host Initial Key Exchange
-.NL
 
 .PP
 When run without the -U option, opasetupssh performs the initial key exchange and enables password-less SSH and SCP. The preferred way to use opasetupssh for initial key exchange is with the -S option. This requires that all hosts are configured with the same password for the specified "user" (typically root). In this mode, the password is prompted for once and then SSH and SCP are used in conjunction with that password to complete the setup for the hosts. This mode also avoids the need to set up rsh/rcp/rlogin (which can be a security risk).
@@ -193,14 +188,12 @@ opasetupssh -i \[aq]\[aq]
 .PP
 This causes the last part of the setup of SSH for IPoIB to be skipped.
 .SH Refreshing Local Systems Known Hosts
-.NL
 
 .PP
 If aspects of the host have changed, such as IP addresses, MAC addresses, software installation, or server OS reinstallation, you can refresh the local host\[aq]s SSH known\(ulhosts file by running opasetupssh with the -U option. This option does not transfer the keys, but instead connects to each host (management network and IPoIB) to refresh the SSH keys. Existing entries for the specified hosts are replaced within the local known\(ulhosts file. When run in this mode, the -S option is ignored. This mode assumes SSH has previously been set up for the hosts, as such no files are transferred to the specified hosts and no passwords should be required.
 .PP
 Typically after completing the installation and booting of Intel(R) Omni-Path Fabric software, opasetupssh must be rerun with the -U option to update the known\(ulhosts file.
 .SH Chassis Initial Key Exchange
-.NL
 
 .PP
 When run without the -U option, opasetupssh performs the initial key exchange and enables password-less SSH and SCP. For chassis, the key exchange uses SCP and the chassis CLI. During this command you log into the chassis using the configured mechanism for chassis login.
@@ -209,7 +202,6 @@ The preferred way to use opasetupssh for initial key exchange is with the -S opt
 .PP
 For chassis, the -i option is ignored.
 .SH Chassis Refreshing Local Systems Known Hosts
-.NL
 
 .PP
 If aspects of the chassis have changed, such as IP addresses or MAC addresses, you can refresh the local host\[aq]s SSH known\(ulhosts file by running opasetupssh with the -U option. This option does not transfer the keys, but instead connects to each chassis to refresh the SSH keys. Existing entries for the specified chassis are replaced within the local known\(ulhosts file. When run in this mode, the -S option is ignored. This mode assumes SSH has previously been set up for the chassis, because no files are transferred to the specified hosts and no passwords are required.

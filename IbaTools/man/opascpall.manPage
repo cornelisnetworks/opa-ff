@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opascpall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opascpall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opascpall
 
-.NL
 
 .PP
 
@@ -27,13 +26,12 @@ This tool can only copy from this system to a group of systems in the cluster. T
 .IP \(bu
 user@ style syntax cannot be used when specifying filenames.
 
-.SH Syntax 
-.NL
+.SH Syntax
 
 .PP
 
 .br
-opascpall [-p] [-r] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR]
+opascpall [-p] [-r] [-f  \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u  \fIuser\fR]
 .br
 source\(ulfile ... dest\(ulfile
 
@@ -42,94 +40,99 @@ source\(ulfile ... dest\(ulfile
 .PP
 
 .br
-opascpall [-t] [-p] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u \fIuser\fR]
+opascpall [-t] [-p] [-f  \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]] [-u  \fIuser\fR]
 .br
-[ \fIsource\(uldir\fR[ \fIdest\(uldir\fR]]
+[ \fIsource\(uldir\fR [ \fIdest\(uldir\fR]]
 
 .br
 
-.SH Options 
-.NL
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--p 
-.NL
+-p
+
 Performs copy in parallel on all hosts.
 .TP 10
--r 
-.NL
+-r
+
 Performs recursive copy of directories.
 .TP 10
--t 
-.NL
+-t
+
 Performs optimized recursive copy of directories using tar. \fIdest\(uldir\fR is optional. If \fIdest\(uldir\fR is not specified, it defaults to the current directory name. If both \fIsource\(uldir\fR and \fIdest\(uldir\fR are omitted, they both default to the current directory name.
 
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts to copy to.
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster. Default is /etc/opa/hosts file.
 .TP 10
--u \fIuser\fR 
-.NL
+-u \fIuser\fR
+
 Specifies the user to perform copy to. Default is current user code.
 .TP 10
-\fIsource\(ulfile\fR 
-.NL
+\fIsource\(ulfile\fR
+
 Specifies the a file or list of source files to copy.
 
 .TP 10
-\fIsource\(uldir\fR 
-.NL
+\fIsource\(uldir\fR
+
 Specifies the name of the source directory to copy. If omitted. is used.
 
 .TP 10
-\fIdest\(ulfile\fR or \fIdest\(uldir\fR 
-.NL
+\fIdest\(ulfile\fR or \fIdest\(uldir\fR
+
 Specifies the name of the destination file or directory to copy to. If more than one source file, this must be a directory. If omitted current directory name is used.
 
-.SH Example 
-.NL
+.SH Example
 # efficiently copy an entire directory tree
 .br
+
 opascpall -t -p /usr/src/opa/mpi\(ulapps /usr/src/opa/mpi\(ulapps
 .br
 
+
 .br
+
 # copy a group of files
 .br
+
 opascpall a b c /root/tools/
 .br
 
+
 .br
+
 # copy to an explitly specified set of hosts
 .br
+
 opascpall -h \[aq]arwen elrond\[aq] a b c /root/tools
 .br
+
 HOSTS=\[aq]arwen elrond\[aq] opascpall a b c /root/tools
-.SH Environment Variables 
-.NL
+.SH Environment Variables
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts; used if -h option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts; used in absence of -f and -h.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 When the -p option is used, maximum concurrent operations are performed.

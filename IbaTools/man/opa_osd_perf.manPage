@@ -6,43 +6,39 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa\(ulosd\(ulperf 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opa\(ulosd\(ulperf 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opa\(ulosd\(ulperf
 
-.NL
 
 .PP
 Tests the performance of the distributed SA shared memory database.
 .SH Syntax
-.NL
-opa\(ulosd\(ulperf [-q | -p | -S] \fIguidtable\fR
+opa\(ulosd\(ulperf [-q | -p | -S]  \fIguidtable\fR
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--q \fIqueries\fR 
-.NL
+-q \fIqueries\fR
+
 Runs at least the specified number of queries.
 
 .TP 10
--p \fIpkey\fR 
-.NL
+-p \fIpkey\fR
+
 Specifies to include \fIpkey\fR in the searches. Can be specified up to 8 times.
 .TP 10
--S \fIsid\fR 
-.NL
+-S \fIsid\fR
+
 Specifies to include SID in the searches. Can be specified up to 8 times. Note that providing both SIDs and pkeys may cause problems.
 .TP 10
-\fIguidtable\fR 
-.NL
+\fIguidtable\fR
+
 Text file that lists the destination GUIDs and LIDs. For example, from a build\(ultable.pl file.
 
-.SH Example 
-.NL
+.SH Example
 opa\(ulosd\(ulperf -q 100000 -p 0x8001 guidtable

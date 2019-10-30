@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opashowallports 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opashowallports 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opashowallports
 
-.NL
 
 .PP
 
@@ -23,91 +22,92 @@ opareport and opareports are more powerful Intel(R) Omni-Path Fabric Suite FastF
 
 
 .SH Syntax
-.NL
-opashowallports [-C] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
+opashowallports [-C] [-f  \fIhostfile\fR] [-F  \fIchassisfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
+
 [-H \[aq]\fIchassis\fR\[aq]] [-S]
-.SH Options 
-.NL
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--C 
-.NL
+-C
+
 Performs operation against chassis. Default is host.
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file containing the list of hosts in cluster. Default is /etc/opa/hosts file.
 .TP 10
--F \fIchassisfile\fR 
-.NL
+-F \fIchassisfile\fR
+
 Specifies the file containing the list of chassis in cluster. Default is /etc/opa/chassis file.
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts for which to show ports.
 .TP 10
--H \fIchassis\fR 
-.NL
+-H \fIchassis\fR
+
 Specifies the list of chassis for which to show ports.
 .TP 10
--S 
-.NL
+-S
+
 Securely prompts for password for admin on chassis.
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBCHASSIS\fR 
-.NL
+\fBCHASSIS\fR
+
 List of chassis, used if -C is used and -H and -F options not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBCHASSIS\(ulFILE\fR 
-.NL
+\fBCHASSIS\(ulFILE\fR
+
 File containing list of chassis, used in absence of -F and -H.
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR
+
 How to log into chassis. Can be Telnet or SSH.
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR
+
 Password for admin on all chassis. Used in absence of -S option.
 
-.SH Example 
-.NL
+.SH Example
 opashowallports
 .br
+
 opashowallports -h \[aq]elrond arwen\[aq]
 .br
+
 HOSTS=\[aq]elrond arwen\[aq] opashowallports
 .br
+
 opashowallports -C
 .br
+
 opashowallports -H \[aq]chassis1 chassis2\[aq]
 .br
+
 CHASSIS=\[aq]chassis1 chassis2\[aq] opashowallports -C
 .SH Notes
-.NL
 
 .PP
 When performing opashowallports against hosts, internally SSH is used. The command opashowallports requires that password-less SSH be set up between the host running the Intel(R) Omni-Path Fabric Suite FastFabric Toolset and the hosts opashowallports is operating against. The opasetupssh FastFabric tool can aid in setting up password-less SSH.

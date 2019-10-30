@@ -6,30 +6,26 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa\(ulosd\(uldump 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opa\(ulosd\(uldump 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opa\(ulosd\(uldump
 
-.NL
 
 .PP
 Prints the current contents of the distributed SA shared memory database.
 .SH Syntax
-.NL
-opa\(ulosd\(uldump [--verbose \fIarg\fR| -v \fIarg\fR]
+opa\(ulosd\(uldump [--verbose  \fIarg\fR | -v  \fIarg\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
---verbose/-v \fIarg\fR 
-.NL
+--verbose/-v \fIarg\fR
+
 Specifies the Kernel logging level to perform. Range = 1 - 7.
 
-.SH Example 
-.NL
+.SH Example
 opa\(ulosd\(uldump >opasadb\(ulcontents

@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaxlattopology 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaxlattopology
 
-.NL
 
 .PP
 Generates a topology XML file of a cluster using your customized <topologyfile>.csv, linksum\(ulswd06.csv, and linksum\(ulswd24.csv as input. The output topology XML file can be used to bring up and verify the cluster.
@@ -20,21 +19,20 @@ Generates a topology XML file of a cluster using your customized <topologyfile>.
 The <topologyfile>.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/share/opa/samples directory.
 
 .SH Syntax
-.NL
-opaxlattopology [-d \fIlevel\fR] [-v \fIlevel\fR] [-i \fIlevel\fR] [-K] [-s \fIhfi\(ulsuffix\fR]
+opaxlattopology [-d  \fIlevel\fR] [-v  \fIlevel\fR] [-i  \fIlevel\fR] [-K] [-s  \fIhfi\(ulsuffix\fR]
 .br
+
 [source [dest]]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--d \fIlevel\fR 
-.NL
+-d \fIlevel\fR
+
 Specifies the output detail level. Default is 0. Levels are additive.
 
 .IP
@@ -43,7 +41,7 @@ By default, the top level is always produced. Switch, rack, and rack group topol
 .TP 10
 
 .sp
-1 
+1
 Intel(R) Omni-Path Edge Switch 100 Series topology files.
 
 .RE
@@ -52,7 +50,7 @@ Intel(R) Omni-Path Edge Switch 100 Series topology files.
 .TP 10
 
 .sp
-2 
+2
 Rack topology files.
 
 .RE
@@ -61,21 +59,21 @@ Rack topology files.
 .TP 10
 
 .sp
-4 
+4
 Rack group topology files.
 
 .RE
 
 .TP 10
--v \fIlevel\fR 
-.NL
+-v \fIlevel\fR
+
 Specifies the verbose level. Range is 0 - 8. Default is 2.
 
 .RS
 .TP 10
 
 .sp
-0 
+0
 No output.
 
 .RE
@@ -84,7 +82,7 @@ No output.
 .TP 10
 
 .sp
-1 
+1
 Progress output.
 
 .RE
@@ -93,7 +91,7 @@ Progress output.
 .TP 10
 
 .sp
-2 
+2
 Reserved.
 
 .RE
@@ -102,7 +100,7 @@ Reserved.
 .TP 10
 
 .sp
-4 
+4
 Time stamps.
 
 .RE
@@ -111,26 +109,26 @@ Time stamps.
 .TP 10
 
 .sp
-8 
+8
 Reserved.
 
 .RE
 
 .TP 10
--i \fIlevel\fR 
-.NL
+-i \fIlevel\fR
+
 Specifies the output indent level. Default is 4.
 
 .TP 10
--K 
-.NL
+-K
+
 Specifies DO NOT clean temporary files.
 
 .IP
 Prevents temporary files in each topology directory from being removed. Temporary files contain CSV formatted lists of links, HFIs, and switches used to create a topology XML file. Temporary files are not typically needed after a topology file is created, however they are used for creating linksum\(ulswd06.csv and linksum\(ulswd24.csv files, or can be retained for subsequent inspection or processing.
 .TP 10
--s \fIhfi\(ulsuffix\fR 
-.NL
+-s \fIhfi\(ulsuffix\fR
+
 Used on Multi-Rail or Multi-Plane fabrics. Can be used to override the default hfi1\(ul0.
 
 .IP
@@ -138,8 +136,8 @@ For Multi-Plane fabric, use the tool multiple times with a different hfi-suffix.
 .IP
 For Multi-Rail fabric, specify HostName as "HostName HfiName" in the spreadsheet.
 .TP 10
--o report 
-.NL
+-o report
+
 Specifies the report type for output. By default, all the sections are generated.
 
 .IP
@@ -148,7 +146,7 @@ Report Types:
 .TP 10
 
 .sp
-brnodes 
+brnodes
 Creates the <Node> section xml for the csv input.
 
 .RE
@@ -157,83 +155,83 @@ Creates the <Node> section xml for the csv input.
 .TP 10
 
 .sp
-links 
+links
 Creates the <LinkSummary> section xml for the csv input.
 
 .RE
 
 .TP 10
-source 
-.NL
+source
+
 Specifies the source csv file. Default is topology.csv.
 
 .TP 10
-dest 
-.NL
+dest
+
 Specifies the output xml file. Default is topology.0:0.xml
 
 .IP
 The default output file name may vary if used with -s option. It can also be used to specify destination folder.
 .SH Description
-.NL
 
 .PP
 The opaxlattopology script reads your customized <topologyfile>.csv file from the local directory, and reads the other files from /usr/share/opa/samples/linksum\(ulswd06.csv and /usr/share/opa/samples/linksum\(ulswd24.csv. Two sample topology XLSX files, detailed\(ultopology.xlsx and minimal\(ultopology.xlsx, are located in the /usr/share/opa/samples/ directory. You must create your <topologyfile>.csv file by editing one of the sample spreadsheets and saving the Fabric Links tab as a CSV file. Inspect your <topologyfile>.csv file to ensure that each row contains the correct and same number of comma separators. Any extraneous entries in the spreadsheet can cause the CSV output to have extra fields.
 .PP
 The script outputs one or more topology files starting with topology.0:0.xml. Your <topologyfile>.csv input file must be present in the same directory from which the script operates, but the linksum CSV files are read from the /usr/share/opa/samples directory.
-.SH Example 
-.NL
+.SH Example
 opaxlattopology
 .br
+
 # reads default input \[aq]topology.csv\[aq] and creates default
 .br
+
 # output \[aq]topology.0:0.xml\[aq]
 .br
 
+
 .br
+
 opaxlattopology fabric\(ul2.csv
 .br
+
 # reads input \[aq]fabric\(ul2.csv\[aq] and creates default output
 .PP
 Both sample files contain examples of links between HFI and Edge SW (rows 4-7), HFI and Core SW (rows 8-11), and Edge SW and Core SW (rows 12-15).
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables allow user-specified MTU.
 .TP 10
-\fBMTU\(ulSW\(ulSW\fR 
-.NL
+\fBMTU\(ulSW\(ulSW\fR
+
 If set, it overrides default MTU on switch-to-switch links. Default is 10240
 
 .TP 10
-\fBMTU\(ulSW\(ulHFI\fR 
-.NL
+\fBMTU\(ulSW\(ulHFI\fR
+
 If set, it overrides default MTU on switch-to-HFI links. Default is 10240
 
 .SH Creating linksum Files
-.NL
 
 .PP
 The linksum\(ulswd06.csv and linksum\(ulswd24.csv files are provided as stand-alone files in the /usr/share/opa/samples directory. However, they can be recreated (or modified) from the spreadsheet, if needed, by performing the following steps:
 
-.IP 1) 4n 
+.IP 1) 4n
 Save each of the following from your custom <topologyfile>.xlsx file as individual .csv files:
 .IP \(bu
-Internal SWD06 Links tab as linksum\(ulswd06.csv 
+Internal SWD06 Links tab as linksum\(ulswd06.csv
 .IP \(bu
-Internal SWD24 Links tab as linksum\(ulswd24.csv 
+Internal SWD24 Links tab as linksum\(ulswd24.csv
 .IP \(bu
-Fabric Links tab as <topologyfile>.csv 
+Fabric Links tab as <topologyfile>.csv
 
-.IP 2) 4n 
+.IP 2) 4n
 For each saved <topologyfile>.csv file, run the script with the -K option.
 
-.IP 3) 4n 
+.IP 3) 4n
 Upon completion of the script, save the top level linksum.csv file as linksum\(ulswd06.csv or linksum\(ulswd24.csv as appropriate.
 
 .SH Multi-Rail and Multi-Plane Fabrics
-.NL
 
 .PP
 By default, the opaxlattopology script considers all of the hosts to have a single HFI (hfi1\(ul0).

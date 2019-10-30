@@ -6,35 +6,32 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaextractlink 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaextractlink 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaextractlink
 
-.NL
 
 .PP
 Produces a CSV file listing all or some of the links in the fabric. opaextractlink is a front end to the opareport tool. The output from this tool can be imported into a spreadsheet or parsed by other scripts.
-.SH Syntax 
-.NL
-opaextractlink [opareport \fIoptions\fR]
+.SH Syntax
+opaextractlink [opareport  \fIoptions\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
-opareport \fIoptions\fR 
-.NL
+opareport \fIoptions\fR
+
 The following options are passed to opareport. This subset is considered typical and useful for this command. By design, the tool ignores -o/--output report option.
 
 .RS
 .TP 10
 
 .sp
--h/--hfi \fIhfi\fR 
+-h/--hfi \fIhfi\fR
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .RE
@@ -43,7 +40,7 @@ Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port 
 .TP 10
 
 .sp
--p/--port \fIport\fR 
+-p/--port \fIport\fR
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .RE
@@ -52,7 +49,7 @@ Specifies the port, numbered 1..n. Using 0 specifies the first active port. Defa
 .TP 10
 
 .sp
--X/--infile \fIsnapshot\(ulinput\fR 
+-X/--infile \fIsnapshot\(ulinput\fR
 Generates a report using the data in the snapshot\(ulinput file. snapshot\(ulinput must have been generated during a previous -o \fIsnapshot\fR run. When used, the -s, -i, -C, and -a options are ignored. \[aq]-\[aq] may be used as the snapshot\(ulinput to specify stdin.
 
 .RE
@@ -61,66 +58,73 @@ Generates a report using the data in the snapshot\(ulinput file. snapshot\(ulinp
 .TP 10
 
 .sp
--T/--topology \fItopology\(ulinput\fR 
+-T/--topology \fItopology\(ulinput\fR
 Uses topology\(ulinput file to augment and verify fabric information. When used, various reports can be augmented with information not available electronically (such as cable labels). \[aq]-\[aq] may be used to specify stdin.
 
 .RE
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
-.SH Examples 
-.NL
+.SH Examples
 # List all the links in the fabric:
 .br
+
 opaextractlink
 .br
 
+
 .br
+
 # List all the links to a switch named "coresw1":
 .br
+
 opaextractlink -F "node:coresw1"
 .br
 
+
 .br
+
 # List all the links to end-nodes:
 .br
+
 opaextractlink -F "nodetype:FI"
 .br
 
+
 .br
+
 # List all the links on the 2nd HFI\[aq]s fabric of a multi-plane fabric:
 .br
+
 opaextractlink -h 2

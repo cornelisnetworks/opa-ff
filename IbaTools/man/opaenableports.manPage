@@ -6,88 +6,83 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaenableports 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaenableports 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaenableports
 
-.NL
 
 .PP
 
 \fB(Linux)\fR
 Accepts a disabled ports input file and re-enables the specified ports. The input file can be /etc/opa/disabled*.csv or a user-created subset of such a file. After enabling the port, it is removed from /etc/opa/disabled*.csv.
-.SH Syntax 
-.NL
-opaenableports [-h \fIhfi\fR] [-p \fIport\fR] < disabled.csv
-.SH Options 
-.NL
+.SH Syntax
+opaenableports [-h  \fIhfi\fR] [-p  \fIport\fR] < disabled.csv
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--h \fIhfi\fR 
-.NL
+-h \fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
--p \fIport\fR 
-.NL
+-p \fIport\fR
+
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
-disabled.csv 
-.NL
+disabled.csv
+
 Specifies the input file listing the ports to enable. The list is of the form: NodeGUID;PortNum;NodeType;NodeDesc;Ignored.
 
 .IP
 An input file like this is generated in /etc/opa/disabled* by opadisableports.
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
-.SH Examples 
-.NL
+.SH Examples
 opaenableports < disabled.csv
 .br
+
 opaenableports < /etc/opa/disabled:1:1.csv
 .br
+
 opaenableports -h 1 -p 1 < disabled.csv
 .SH Other Information
-.NL
 
 .PP
 For messages containing skipping ports, either the device is offline or the other end of the link has been disabled and the device is no longer accessible in-band. The end of the link previously disabled by opedisableports or opadisablehosts can be found in /etc/opa/disabled:1:1.csv.

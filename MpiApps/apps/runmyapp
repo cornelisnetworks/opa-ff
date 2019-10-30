@@ -51,6 +51,6 @@ MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
 
 # This line can run your real application with appropriate arguments
 #PMB2.2.1/SRC_PMB/PMB-MPI1 "$@"
-#$MPICH_PREFIX/tests/IMB-3.2/IMB-MPI1 "$@"
+#$MPICH_PREFIX/tests/IMB-4.0/IMB-MPI1 "$@"
 cd hpl/bin/ICS.$(uname -s).$(./get_mpi_cc.sh)
 ./xhpl

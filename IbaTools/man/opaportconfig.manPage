@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaportconfig 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaportconfig 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaportconfig
 
-.NL
 
 .PP
 
@@ -22,50 +21,50 @@ Controls the configuration and state of a specified Intel(R) Omni-Path Host Fabr
 This tool is designed for expert users only. Non-expert users should use other tools such as opaenableports, opadisableports and opaportinfo for basic functionality.
 
 .SH Syntax
-.NL
-opaportconfig [-l \fIlid\fR[-m \fIdest\(ulport\fR]] [-h \fIhfi\fR] [-p \fIport\fR] [-r \fIsecs\fR] [-z]
+opaportconfig [-l  \fIlid\fR [-m  \fIdest\(ulport\fR]] [-h  \fIhfi\fR] [-p  \fIport\fR] [-r  \fIsecs\fR] [-z]
 .br
-[-S \fIstate\fR] [-P \fIphysstate\fR] [-s \fIspeed\fR] [-w \fIwidth\fR] [-c \fILTPCRC\fR] [-v] [-x]
+
+[-S  \fIstate\fR] [-P  \fIphysstate\fR] [-s  \fIspeed\fR] [-w  \fIwidth\fR] [-c  \fILTPCRC\fR]
+[-v] [-x]
 .br
-[-L \fIlid\fR] [< \fIsub command\fR>]
+[-L  \fIlid\fR] [< \fIsub command\fR>]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--l \fIlid\fR 
-.NL
+-l \fIlid\fR
+
 Specifies the destination LID. Default is local port.
 
 .TP 10
--m \fIdest\(ulport\fR 
-.NL
+-m \fIdest\(ulport\fR
+
 Specifies the destination port. Default is port with given LID. Used to access switch ports.
 
 .TP 10
--h \fIhfi\fR 
-.NL
+-h \fIhfi\fR
+
 Specifies the HFI to send through/to. Default is first HFI.
 
 .TP 10
--p \fIport\fR 
-.NL
+-p \fIport\fR
+
 Specifies the port to send through/to. Default is first port.
 
 .TP 10
-\fIsub command\fR 
-.NL
+\fIsub command\fR
+
 Specifies the one of the following choices:
 
 .RS
 .TP 10
 
 .sp
-enable 
+enable
 Enables port.
 
 .RE
@@ -74,7 +73,7 @@ Enables port.
 .TP 10
 
 .sp
-disable 
+disable
 Disables port.
 
 .RE
@@ -83,7 +82,7 @@ Disables port.
 .TP 10
 
 .sp
-bounce 
+bounce
 Bounces port.
 
 .TP 10
@@ -100,7 +99,7 @@ Bouncing remote ports may cause timeouts.
 .TP 10
 
 .sp
-ledon 
+ledon
 Turns port LED on.
 
 .RE
@@ -109,31 +108,29 @@ Turns port LED on.
 .TP 10
 
 .sp
-ledoff 
+ledoff
 Turns port LED off.
 
 .RE
 
-.NL
 
 .SH Configuration Options
-.NL
 
 .TP 10
--r \fIsecs\fR 
-.NL
+-r \fIsecs\fR
+
 Repeats to keep the port down for the specified amount of seconds.
 
 .TP 10
--S \fIstate\fR 
-.NL
+-S \fIstate\fR
+
 Specifies the new state. Default is 0.
 
 .RS
 .TP 10
 
 .sp
-0 
+0
 No-op.
 
 .RE
@@ -142,7 +139,7 @@ No-op.
 .TP 10
 
 .sp
-1 
+1
 Down.
 
 .RE
@@ -151,7 +148,7 @@ Down.
 .TP 10
 
 .sp
-2 
+2
 Initiate.
 
 .RE
@@ -160,7 +157,7 @@ Initiate.
 .TP 10
 
 .sp
-3 
+3
 Armed.
 
 .RE
@@ -169,14 +166,14 @@ Armed.
 .TP 10
 
 .sp
-4 
+4
 Active.
 
 .RE
 
 .TP 10
--P \fIphysstate\fR 
-.NL
+-P \fIphysstate\fR
+
 Specifies the new physical state. Default is 0.
 
 .TP 10
@@ -191,7 +188,7 @@ All transitions are valid.
 .TP 10
 
 .sp
-0 
+0
 No-op.
 
 .RE
@@ -200,7 +197,7 @@ No-op.
 .TP 10
 
 .sp
-2 
+2
 Polling.
 
 .RE
@@ -209,7 +206,7 @@ Polling.
 .TP 10
 
 .sp
-3 
+3
 Disabled.
 
 .RE
@@ -218,21 +215,21 @@ Disabled.
 .TP 10
 
 .sp
-11 
+11
 Phy-Test. Current physstate must be disabled.
 
 .RE
 
 .TP 10
--s \fIspeed\fR 
-.NL
+-s \fIspeed\fR
+
 Specifies the new link speeds enabled. Default is 0. To enable multiple speeds, use the sum of the desired speeds.
 
 .RS
 .TP 10
 
 .sp
-0 
+0
 No-op.
 
 .RE
@@ -241,21 +238,21 @@ No-op.
 .TP 10
 
 .sp
-2 
+2
 0x0002 - 25 Gb/s.
 
 .RE
 
 .TP 10
--w \fIwidth\fR 
-.NL
+-w \fIwidth\fR
+
 Specifies the new link widths enabled. Default is 0. To enable multiple widths, use sum of desired widths.
 
 .RS
 .TP 10
 
 .sp
-0 
+0
 No-op.
 
 .RE
@@ -264,7 +261,7 @@ No-op.
 .TP 10
 
 .sp
-1 
+1
 0x01 - 1x.
 
 .RE
@@ -273,7 +270,7 @@ No-op.
 .TP 10
 
 .sp
-2 
+2
 0x02 - 2x.
 
 .RE
@@ -282,7 +279,7 @@ No-op.
 .TP 10
 
 .sp
-4 
+4
 0x04 - 3x.
 
 .RE
@@ -291,14 +288,14 @@ No-op.
 .TP 10
 
 .sp
-8 
+8
 0x08 - 4x.
 
 .RE
 
 .TP 10
--c \fILTPCRC\fR 
-.NL
+-c \fILTPCRC\fR
+
 Specifies the new LTP CRCs enabled. Default is 0.
 .br
 To enable multiple LTP CRCs, use sum of desired LTP CRCs.
@@ -307,7 +304,7 @@ To enable multiple LTP CRCs, use sum of desired LTP CRCs.
 .TP 10
 
 .sp
-0 
+0
 No-op.
 
 .RE
@@ -316,7 +313,7 @@ No-op.
 .TP 10
 
 .sp
-1 
+1
 0x1 - 14-bit LTP CRC mode.
 
 .RE
@@ -325,7 +322,7 @@ No-op.
 .TP 10
 
 .sp
-2 
+2
 0x2 - 16-bit LTP CRC mode.
 
 .RE
@@ -334,7 +331,7 @@ No-op.
 .TP 10
 
 .sp
-4 
+4
 0x4 - 48-bit LTP CRC mode.
 .RE
 
@@ -342,73 +339,68 @@ No-op.
 .TP 10
 
 .sp
-8 
+8
 0x8 - 12/16 bits per lane LTP CRC mode.
 
 .RE
 
-.NL
 
 .SH -h and -p options permit a variety of selections:
-.NL
 
 .TP 10
--h 0 
-.NL
+-h 0
+
 First active port in system (Default).
 
 .TP 10
--h 0 -p 0 
-.NL
+-h 0 -p 0
+
 First active port in system.
 
 .TP 10
--h \fIx\fR 
-.NL
+-h \fIx\fR
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h \fIx\fR \fI\fR-p 0 
-.NL
+-h \fIx\fR \fI\fR-p 0
+
 First active port on HFI \fIx\fR.
 
 .TP 10
--h 0 -p \fIy\fR 
-.NL
+-h 0 -p \fIy\fR
+
 Port \fIy\fR within system (no matter which ports are active).
 
 .TP 10
--h \fIx\fR \fI\fR-p \fIy\fR 
-.NL
+-h \fIx\fR \fI\fR-p \fIy\fR
+
 HFI \fIx\fR, port \fIy\fR.
 
-.NL
 
 .SH Debug Options
-.NL
 
 .TP 10
--v 
-.NL
+-v
+
 Verbose output. Additional invocations turn on debugging, openib debugging, and libibumad debugging.
 
 .TP 10
--z 
-.NL
+-z
+
 Does not get port information first; clears most port attributes.
 
 .TP 10
--L \fIlid\fR 
-.NL
+-L \fIlid\fR
+
 Sets PortInfo.LID = lid.
 
-.SH Examples 
-.NL
+.SH Examples
 opaportconfig -w 1
 .br
+
 opaportconfig -p 1 -h 2 -w 3
 .SH Description
-.NL
 
 .PP
 Port configuration is transient in nature. If the given host is rebooted or its Intel(R) Omni-Path Fabric Stack is restarted, the port reverts to its default configuration and state. Typically, the default state is to have the port enabled with all speeds and widths supported by the given HFI port.

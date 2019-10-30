@@ -6,64 +6,62 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagetvf\(ulenv 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opagetvf\(ulenv 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opagetvf\(ulenv
 
-.NL
 
 .PP
 Provides opagetvf\(ulfunc and opagetvf2\(ulfunc shell functions that query the parameters of a vFabric. Also exports values that indicate the PKEY, SL, MTU, and RATE associated with the vFabric. The typical usage of this tool is to include it in a shell script as:. /usr/sbin/opagetvf\(ulenv
 .PP
 A usage example is provided in:
 .br
-/usr/src/opa/mpi\(ulapps/openmpi.params 
+/usr/src/opa/mpi\(ulapps/openmpi.params
 .PP
 
 .B NOTE:
 opagetvf\(ulfunc and opagetvf2\(ulfunc have a similar usage. The difference is whether the MTU and RATE are returned as absolute values or enum values, respectively.
 
 .SH Function Syntax
-.NL
-opagetvf\(ulfunc "arguments to opagetvf" \fIpkey\(ulenv\(ulvar\(ulname\fR \fIsl\(ulenv\(ulvar\(ulname\fR
+opagetvf\(ulfunc "arguments to opagetvf"  \fIpkey\(ulenv\(ulvar\(ulname\fR  \fIsl\(ulenv\(ulvar\(ulname\fR
 .br
-[ \fImtu\(ulenv\(ulvar\(ulname\fR[ \fIrate\(ulenv\(ulvar\(ulname\fR]]
+
+[ \fImtu\(ulenv\(ulvar\(ulname\fR [ \fIrate\(ulenv\(ulvar\(ulname\fR]]
 .PP
 or
 .PP
 
 .br
-opagetvf2\(ulfunc "arguments to opagetvf" \fIpkey\(ulenv\(ulvar\(ulname\fR
+opagetvf2\(ulfunc "arguments to opagetvf"  \fIpkey\(ulenv\(ulvar\(ulname\fR
 .br
-\fIsl\(ulenv\(ulvar\(ulname\fR[ \fImtu\(ulenv\(ulvar\(ulname\fR[ \fIrate\(ulenv\(ulvar\(ulname\fR]]
+\fIsl\(ulenv\(ulvar\(ulname\fR
+[ \fImtu\(ulenv\(ulvar\(ulname\fR [ \fIrate\(ulenv\(ulvar\(ulname\fR]]
 
 .br
 
-.NL
 
 .SH Function Options
-.NL
 
 .TP 10
-"arguments to opagetvf" 
-.NL
-Specifies a set of arguments to pass to opagetvf to select a virtual fabric.See 
+"arguments to opagetvf"
+
+Specifies a set of arguments to pass to opagetvf to select a virtual fabric.See
 \fIopagetvf\fR
 for more information.
 
 .TP 10
-pkey\(ulenv\(ulvar\(ulname 
-.NL
+pkey\(ulenv\(ulvar\(ulname
+
 Specifies the environment variable to fill in with pkey for the selected virtual fabric. The variable given will be exported with the hex numeric value for the pkey.If a variable name of "" is provided, pkey is not saved.
 
 .TP 10
-sl\(ulenv\(ulvar\(ulname 
-.NL
+sl\(ulenv\(ulvar\(ulname
+
 Specifies the environment variable to fill in with service level (sl) for the selected virtual fabric. The variable given will be exported with the numeric value for the sl.If a variable name of "" is provided, sl is not saved.
 
 .TP 10
-mtu\(ulenv\(ulvar\(ulname 
-.NL
+mtu\(ulenv\(ulvar\(ulname
+
 Specifies the environment variable to fill in with maximum MTU for the selected virtual fabric. The variable given will be exported with the value for the MTU.If a variable name of "" is provided, MTU is not saved.
 
 .IP
@@ -73,8 +71,8 @@ For opagetvf2\(ulfunc, MTU is returned as an enumerated value of 4, 5, 6, or 7 c
 .IP
 If the selected virtual fabric does not have a limitation specified for MTU, the variable will be unaltered.
 .TP 10
-rate\(ulenv\(ulvar\(ulname 
-.NL
+rate\(ulenv\(ulvar\(ulname
+
 Specifies the environment variable to fill in with maximum static rate for the selected virtual fabric. The variable given will be exported with the value for the rate.If a variable name of "" is provided, rate is not saved.
 
 .IP
@@ -83,10 +81,8 @@ For opagetvf\(ulfunc, rate is returned as an absolute value of 25g, 50g, 75g or 
 For opagetvf2\(ulfunc, rate is returned as an enumerated value of 15, 12, 9, or 16 corresponding to the absolute values above, respectively.
 .IP
 If the selected virtual fabric does not have a limitation specified for rate, the variable will be unaltered.
-.NL
 
 .SH Function Example
-.NL
 
 .PP
 
@@ -94,20 +90,28 @@ If the selected virtual fabric does not have a limitation specified for rate, th
 . /usr/sbin/opagetvf\(ulenv
 .br
 
+
 .br
+
 # ensure values are empty in case they are not specified for the
 .br
 virtual fabric
 .br
+
 MTU=
 .br
+
 RATE=
 .br
+
 opagetvf\(ulfunc "-d \[aq]Compute\[aq]" PKEY SERVICE\(ulLEVEL MTU RATE
 .br
+
 echo "The Compute Virtual Fabric has pkey: $PKEY SL:$SERVICE\(ulLEVEL MTU:
 .br
-$MTU rate:$RATE"
+$MTU
+rate:$RATE"
+
 
 .br
 

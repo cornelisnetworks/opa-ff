@@ -68,7 +68,7 @@ cp *.project setenv $testdir
 cd $TL_DIR
 # -p will preserve timestamps (and ownership, etc) so that we will
 # not rebuild unless we need to
-cp -r -p Makerules MakeTools opamgt Xml Topology SrpTools InicTools Tests IbaTests IbaTools IbAccess MpiApps ShmemApps Fd $testdir
+cp -r -p Makerules MakeTools opamgt Xml Topology SrpTools InicTools Tests IbaTests IbaTools IbAccess MpiApps Fd $testdir
 if [ "$Cflag" = y ]
 then
 	# if in-place FF build left builtbin, builtinclude and builtlibs, pick

@@ -58,7 +58,6 @@ DIRS			= \
 	$(TL_DIR)/Xml \
 	$(TL_DIR)/IbaTools \
 	$(TL_DIR)/MpiApps \
-	$(TL_DIR)/ShmemApps \
 	$(TL_DIR)/Iih \
 	$(TL_DIR)/TestTools \
 	$(TL_DIR)/IbPrint \

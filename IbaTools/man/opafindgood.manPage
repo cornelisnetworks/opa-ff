@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opafindgood 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opafindgood 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opafindgood
 
-.NL
 
 .PP
 Checks for hosts that are able to be pinged, accessed via SSH, and active on the Intel(R) Omni-Path Fabric. Produces a list of good hosts meeting all criteria. Typically used to identify good hosts to undergo further testing and benchmarking during initial cluster staging and startup.
@@ -29,30 +28,43 @@ A sample generated output is:
 .br
 # opafindgood
 .br
+
 3 hosts will be checked
 .br
+
 2 hosts are pingable (alive)
 .br
+
 2 hosts are ssh\[aq]able (running)
 .br
+
 2 total hosts have FIs active on one or more fabrics (active)
 .br
+
 No Quarantine Node Records Returned
 .br
+
 1 hosts are alive, running, active (good)
 .br
+
 2 hosts are bad (bad)
 .br
+
 Bad hosts have been added to /root/punchlist.csv
 .br
+
 # cat /root/punchlist.csv
 .br
+
 2015/10/04 11:33:22;phs1fnivd13u07n1 hfi1\(ul0 p1 phs1swivd13u06 p16;Link errors
 .br
+
 2015/10/07 10:21:05;phs1swivd13u06;Switch not found in SA DB
 .br
+
 2015/10/09 14:36:48;phs1fnivd13u07n4;Doesn\[aq]t ping
 .br
+
 2015/10/09 14:36:48;phs1fnivd13u07n3;No active port
 
 .br
@@ -63,49 +75,48 @@ For a given run, a line is generated for each failing host. Hosts are reported e
 Note that opafindgood queries the SA for NodeDescriptions to determine hosts with active ports. As such, ports may be active for hosts that cannot be accessed via SSH or pinged.
 .PP
 By default, opafindgood checks for and reports nodes that are quarantined for security reasons. To skip this, use the -Q option.
-.SH Syntax 
-.NL
-opafindgood [-R|-A|-Q] [-d \fIdir\fR] [-f \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
+.SH Syntax
+opafindgood [-R|-A|-Q] [-d  \fIdir\fR] [-f  \fIhostfile\fR] [-h \[aq]\fIhosts\fR\[aq]]
 .br
-[-t \fIportsfile\fR] [-p \fIports\fR] [-T \fItimelimit\fR]
-.SH Options 
-.NL
+[-t  \fIportsfile\fR]
+[-p  \fIports\fR] [-T  \fItimelimit\fR]
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--R 
-.NL
+-R
+
 Skips the running test (SSH). Recommended if password-less SSH is not set up.
 .TP 10
--A 
-.NL
+-A
+
 Skips the active test. Recommended if Intel(R) Omni-Path Fabric software or fabric is not up.
 .TP 10
--Q 
-.NL
+-Q
+
 Skips the quarantine test. Recommended if Intel(R) Omni-Path Fabric software or fabric is not up.
 .TP 10
--d \fIdir\fR 
-.NL
+-d \fIdir\fR
+
 Specifies the directory in which to create alive, active, running, good, and bad files. Default is /etc/opa directory.
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster. Default is /etc/opa/hosts directory.
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts to ping.
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports file.
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabric(s) for analysis.
 
 .IP
@@ -116,7 +127,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -125,7 +136,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -134,7 +145,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -143,56 +154,59 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
 .TP 10
--T \fItimelimit\fR 
-.NL
+-T \fItimelimit\fR
+
 Specifies the time limit in seconds for host to respond to SSH. Default is 20 seconds.
 
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 Maximum concurrent operations.
 
-.SH Examples 
-.NL
+.SH Examples
 opafindgood
 .br
+
 opafindgood -f allhosts
 .br
+
 opafindgood -h \[aq]arwen elrond\[aq]
 .br
+
 HOSTS=\[aq]arwen elrond\[aq] opafindgood
 .br
+
 HOSTS\(ulFILE=allhosts opafindgood
 .br
+
 opafindgood -p \[aq]1:1 1:2 2:1 2:2\[aq]

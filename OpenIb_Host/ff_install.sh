@@ -32,7 +32,7 @@ mkdir -p ${DESTDIR}/usr/include/opamgt/iba/public
 mkdir -p ${DESTDIR}/usr/src/opamgt
 mkdir -p ${DESTDIR}/usr/share/man/man1
 mkdir -p ${DESTDIR}/usr/share/man/man8
-mkdir -p ${DESTDIR}/usr/src/opa/{mpi_apps,shmem_apps}
+mkdir -p ${DESTDIR}/usr/src/opa/mpi_apps
 
 #Binaries and scripts installing (basic tools)
 #cd builtbin.OPENIB_FF.release
@@ -94,10 +94,6 @@ cd ..
 
 cd ../src/mpi/mpi_apps
 tar -xzf mpi_apps.tgz -C ${DESTDIR}/usr/src/opa/mpi_apps/
-cd ../../
-
-cd ../src/shmem/shmem_apps
-tar -xzf shmem_apps.tgz -C ${DESTDIR}/usr/src/opa/shmem_apps/
 cd ../../
 
 #Config files

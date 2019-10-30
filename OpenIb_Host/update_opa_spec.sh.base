@@ -38,6 +38,9 @@ sed -i "s/__RPM_FS/OPA_FEATURE_SET=$OPA_FEATURE_SET/g" opa.spec
 
 source ./ff_filegroups.sh
 
+sed -i "/__RPM_OPASNAPCONFIG1/d" opa.spec
+sed -i "/__RPM_OPASNAPCONFIG2/d" opa.spec
+
 if [ "$id" = "rhel" -o "$id" = "centos" ]
 then
 	GE_7_4=$(echo "$versionid >= 7.4" | bc)
@@ -197,10 +200,6 @@ do
 		for i in $mpi_apps_files
 		do
 			echo "/usr/src/opa/mpi_apps/$i" >> .tmpspec
-		done
-		for i in $shmem_apps_files
-		do
-			echo "/usr/src/opa/shmem_apps/$i" >> .tmpspec
 		done
 	else
 		echo "$line" >> .tmpspec

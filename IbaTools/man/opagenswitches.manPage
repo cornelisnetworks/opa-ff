@@ -6,35 +6,33 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opagenswitches 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opagenswitches 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opagenswitches
 
-.NL
 
 .PP
 Analyzes the present fabric and produces a list of Externally Managed switches in the required format for the /etc/opa/switches file.
-.SH Syntax 
-.NL
+.SH Syntax
 opagenswitches [-t portsfile] [-p ports] [-R] [-L switches\(ulfile]
 .br
-[-o output\(ulfile] [-T topology\(ulfile] [-X snapshot\(ulfile] [-s] [-v level] [-K]
-.SH Options 
-.NL
+[-o output\(ulfile]
+[-T topology\(ulfile] [-X snapshot\(ulfile] [-s] [-v level] [-K]
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabric(s) for analysis.
 .br
 Default is /etc/opa/ports file.
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabrics for counter clear.
 
 .IP
@@ -45,7 +43,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -54,7 +52,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -63,7 +61,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -72,50 +70,50 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
 .TP 10
--R 
-.NL
+-R
+
 Does not attempt to get routes for computation of distance.
 .TP 10
--s 
-.NL
+-s
+
 Updates/resolves switch names using topology XML data.
 .TP 10
--L \fIswitches\(ulfile\fR 
-.NL
+-L \fIswitches\(ulfile\fR
+
 Specifies the name of a pre-existing \fIswitches\(ulfile\fR to be used as input in conjunction with a topology file. When specified, the file is used instead of switches data obtained from the actual fabric. The updated switches data is output to stdout (common to all opagenswitches operations). Does not generate switches data. Must also use -s option.
 
 .TP 10
--o \fIoutput\(ulfile\fR 
-.NL
+-o \fIoutput\(ulfile\fR
+
 Writes switches data to \fIoutput\(ulfile\fR. Default is stdout.
 .TP 10
--T \fItopology\(ulfile\fR 
-.NL
+-T \fItopology\(ulfile\fR
+
 Specifies \fItopology\(ulfile\fR to use. May contain \[aq]%P\[aq] . Must also use -s.
 
 .IP
 Link data in the topology file is compared to actual fabric link data (obtained by opareport -o links or opareport -X snapshot -o links). The data is also matched to a list of switch node GUIDs and the switch NodeDesc values are generated. This list is then applied to the switches data to update NodeDesc values. The comparison of topology link data to actual fabric link data starts with the host names. The host names in the actual fabric must match those in the topology file for the comparison to succeed. However, the comparison logic allows for some mismatches, which could be due to swapped or missing cables. Switch NodeDesc values are matched to GUIDs based on which switch has the greater number of matching links.
 .TP 10
--X \fIsnapshot\(ulfile\fR 
-.NL
+-X \fIsnapshot\(ulfile\fR
+
 Uses \fIsnapshot\(ulfile\fR XML for fabric link information.
 .br
 May contain \[aq]%P\[aq] . Must also use -s.
 .TP 10
--v \fIlevel\fR 
-.NL
+-v \fIlevel\fR
+
 Specifies the verbose level. Default is 0. Values include:
 .RS
 .TP 10
 
 .sp
-0 
+0
 No output.
 .RE
 
@@ -123,7 +121,7 @@ No output.
 .TP 10
 
 .sp
-1 
+1
 Progress output.
 .RE
 
@@ -131,7 +129,7 @@ Progress output.
 .TP 10
 
 .sp
-2 
+2
 Reserved.
 .RE
 
@@ -139,7 +137,7 @@ Reserved.
 .TP 10
 
 .sp
-4 
+4
 Time stamps.
 .RE
 
@@ -147,44 +145,48 @@ Time stamps.
 .TP 10
 
 .sp
-8 
+8
 Reserved.
 .RE
 
 .TP 10
--K 
-.NL
+-K
+
 Does not clean temporary files. Temporary files are CSV format and contain lists of links used during script operation. The files are not normally needed after execution, but they can be retained for subsequent inspection or processing.
 
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.
 .TP 10
-\fBFF\(ulTOPOLOGY\(ulFILE\fR 
-.NL
+\fBFF\(ulTOPOLOGY\(ulFILE\fR
+
 File containing topology XML data, used in absence of -T.
-.SH Examples 
-.NL
+.SH Examples
 opagenswitches
 .br
+
 opagenswitches -p \[aq]1:1 2:1\[aq]
 .br
+
 opagenswitches -o switches
 .br
+
 opagenswitches -s -o switches
 .br
+
 opagenswitches -L switches -s -o switches
 .br
+
 opagenswitches -s -T topology.%P.xml
 .br
+
 opagenswitches -L switches -s -T topology.%P.xml -X snapshot.%P.xml

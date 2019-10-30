@@ -80,7 +80,7 @@ then
 fi
 
 IFS=';'
-/usr/sbin/opareport -o lids -x "$@" > $tempfile
+/usr/sbin/opareport -o lids -x -Q "$@" > $tempfile
 if [ -s $tempfile ]
 then
 	cat $tempfile | /usr/sbin/opaxmlextract -H -d \; -e LIDSummary.LIDs.Value.NodeGUID -e LIDSummary.LIDs.Value.PortNum -e LIDSummary.LIDs.Value.NodeType -e LIDSummary.LIDs.Value.NodeDesc -e LIDSummary.LIDs.Value:LID

@@ -6,23 +6,21 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opa\(ulosd\(ulquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opa\(ulosd\(ulquery 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opa\(ulosd\(ulquery
 
-.NL
 
 .PP
 Queries the opasadb for path records. This tool allows you to create an arbitrary path query and view the result.
 .SH Syntax
-.NL
 opa\(ulosd\(ulquery [-v | -verbose] | [-s | --slid] | [-d | --dlid] | [-S |
 .br
---sgid] | [-D | --dgid]| [-k | --pkey] | [-i | --sid] | [-h | --hfi] |
+--sgid] |
+[-D | --dgid]| [-k | --pkey] | [-i | --sid] | [-h | --hfi] |
 .br
 [-p | --port]
 .SH Options
-.NL
 
 .PP
 
@@ -40,46 +38,45 @@ If you have multiple HFIs, the same LID can appear on more than one HFI, therefo
 Numbers can be in decimal, hex, or octal.
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--v/--verbose \fIarg\fR 
-.NL
+-v/--verbose \fIarg\fR
+
 Sets debugging level. Range is 1 - 7.
 
 .TP 10
--s/--slid \fIarg\fR 
-.NL
+-s/--slid \fIarg\fR
+
 Specifies source LID.
 .TP 10
--d/--dlid \fIarg\fR 
-.NL
+-d/--dlid \fIarg\fR
+
 Specifies destination LID.
 .TP 10
--S/--sgid \fIarg\fR 
-.NL
+-S/--sgid \fIarg\fR
+
 Specifies source GID in GID format (0x00000000:0x00000000) or in Inet6 format (x:x:x:x:x:x:x:x).
 .TP 10
--D/--dgid \fIarg\fR 
-.NL
+-D/--dgid \fIarg\fR
+
 Specifies destination GID in GID format (0x00000000:0x00000000) or in Inet6 format (x:x:x:x:x:x:x:x).
 .TP 10
--k/--pkey \fIarg\fR 
-.NL
+-k/--pkey \fIarg\fR
+
 Specifies partition key.
 .TP 10
--i/--sid \fIarg\fR 
-.NL
+-i/--sid \fIarg\fR
+
 Specifies service ID.
 .TP 10
--h/--hfi \fIarg\fR 
-.NL
+-h/--hfi \fIarg\fR
+
 Specifies the HFI to use. Default is first HFI. The HFI can be identified by name, for example, hfi1\(ul0 or by number, for example, 1, 2, 3, ... .
 .TP 10
--p/--port \fIarg\fR 
-.NL
+-p/--port \fIarg\fR
+
 Specifies the port to use. Default is first port.
-.SH Example 
-.NL
+.SH Example
 opa\(ulosd\(ulquery -s2 -d4

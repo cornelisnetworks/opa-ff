@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opachassisanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opachassisanalysis 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opachassisanalysis
 
-.NL
 
 .PP
 
@@ -23,73 +22,68 @@ Chassis configuration (as reported by the chassis commands specified in \fBFF\(u
 .IP \(bu
 Chassis health (as reported by the chassis command specified in \fBFF\(ulCHASSIS\(ulHEALTH\fR in opafastfabric.conf).
 .SH Syntax
-.NL
-opachassisanalysis [-b|-e] [-s] [-d \fIdir\fR] [-F \fIchassisfile\fR]
+opachassisanalysis [-b|-e] [-s] [-d  \fIdir\fR] [-F  \fIchassisfile\fR]
 .br
 [-H \[aq]\fIchassis\fR\[aq]]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 .TP 10
--b 
-.NL
+-b
+
 Specifies the baseline mode. Default is the compare/check mode.
 .TP 10
--e 
-.NL
+-e
+
 Evaluates health only. Default is the compare/check mode.
 .TP 10
--s 
-.NL
+-s
+
 Saves history of failures (errors/differences).
 .TP 10
--d \fIdir\fR 
-.NL
-Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis 
+-d \fIdir\fR
+
+Specifies the top-level directory for saving baseline and history of failed checks. Default is /var/usr/lib/opa/analysis
 .TP 10
--F \fIchassisfile\fR 
-.NL
-Specifies the file with the chassis in the cluster. Default is /etc/opa/chassis 
+-F \fIchassisfile\fR
+
+Specifies the file with the chassis in the cluster. Default is /etc/opa/chassis
 .TP 10
--H \[aq]\fIchassis\fR\[aq] 
-.NL
+-H \[aq]\fIchassis\fR\[aq]
+
 Specifies the list of chassis on which to execute the command.
-.SH Example 
-.NL
+.SH Example
 opachassisanalysis
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBCHASSIS\fR 
-.NL
+\fBCHASSIS\fR
+
 List of chassis, used if -F and -H options are not supplied.
 .TP 10
-\fBCHASSIS\(ulFILE\fR 
-.NL
+\fBCHASSIS\(ulFILE\fR
+
 File containing list of chassis, used if -F and -H options are not supplied.
 .TP 10
-\fBFF\(ulANALYSIS\(ulDIR\fR 
-.NL
+\fBFF\(ulANALYSIS\(ulDIR\fR
+
 Top-level directory for baselines and failed health checks.
 .TP 10
-\fBFF\(ulCHASSIS\(ulCMDS\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulCMDS\fR
+
 List of commands to issue during analysis, unused if -e option supplied.
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulHEALTH\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulHEALTH\fR
+
 Single command to issue to check overall health during analysis, unused if -b option supplied.
 
 .SH Details
-.NL
 
 .PP
 Intel recommends that you set up SSH keys for chassis (see
@@ -102,6 +96,7 @@ The default set of \fBFF\(ulCHASSIS\(ulCMDS\fR is:
 .br
 showInventory fwVersion showNodeDesc timeZoneConf timeDSTConf
 .br
+
 snmpCommunityConf snmpTargetAddr showChassisIpAddr showDefaultRoute
 
 .br
@@ -218,7 +213,6 @@ latest/chassis.timeZoneConf.diff diff of the baseline and latest timeZonfConf.
 .PP
 If the -s option is used and failures are detected, files related to the checks that failed are also copied to a time-stamped directory name under FF\(ulANALYSIS\(ulDIR.
 .SH Chassis Items Checked Against the Baseline
-.NL
 
 .PP
 Based upon showInventory :
@@ -228,19 +222,19 @@ Addition/removal of Chassis FRUsReplacement is only checked for FRUs that showIn
 .IP \(bu
 Removal of redundant FRUs (spines, power supply, fan)
 .PP
-Based upon fwVersion: 
+Based upon fwVersion:
 .IP \(bu
 Changes to primary or alternate FW versions installed in cards in chassis.
 .PP
-Based upon showNodeDesc: 
+Based upon showNodeDesc:
 .IP \(bu
 Changes to configured node description for chassis. Note changes detected here would also be detected in fabric level analysis.
 .PP
-Based upon timeZoneConf and timeDSTConf: 
+Based upon timeZoneConf and timeDSTConf:
 .IP \(bu
 Changes to the chassis time zone and daylight savings time configuration.
 .PP
-Based upon snmpCommunityConf and snmpTargetAddr: 
+Based upon snmpCommunityConf and snmpTargetAddr:
 .IP \(bu
 Changes to SNMP persistent configuration within the chassis.
 .PP
@@ -248,10 +242,9 @@ The following Chassis items are not checked against baseline:
 .IP \(bu
 Changes to the chassis configuration on the management LAN (for example, showChassisIpAddr, showDefaultRoute). Such changes typically result in the chassis not responding on the LAN at the expected address that is detected by failures that perform other chassis checks.
 .SH Chassis Items Also Checked During Health Check
-.NL
 
 .PP
-Based upon hwCheck: 
+Based upon hwCheck:
 .IP \(bu
 Overall health of FRUs in chassis:
 .IP \(bu

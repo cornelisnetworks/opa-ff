@@ -6,45 +6,42 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opashowmc 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opashowmc 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opashowmc
 
-.NL
 
 .PP
 
 \fB(Linux)\fR
 Displays the Intel(R) Omni-Path Multicast groups created for the fabric along with the Intel(R) Omni-Path Host Fabric Interface (HFI) ports which are a member of each multicast group. This command can be helpful when attempting to analyze or debug Intel(R) Omni-Path multicast usage by applications or ULPs such as IPoIB.
 .SH Syntax
-.NL
-opashowmc [-v] [-m \fImgid\fR] [-t \fIportsfile\fR] [-p \fIports\fR]
+opashowmc [-v] [-m  \fImgid\fR] [-t  \fIportsfile\fR] [-p  \fIports\fR]
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--v 
-.NL
+-v
+
 Returns verbose output and shows name of each member.
 
 .TP 10
--m \fImgid\fR 
-.NL
+-m \fImgid\fR
+
 Shows the membership of the group <mgid> only.
 
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabric(s) for analysis. Default is /etc/opa/ports file.
 
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabric(s) for analysis.
 
 .IP
@@ -55,7 +52,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -64,7 +61,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -73,7 +70,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -82,27 +79,27 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
-.SH Examples 
-.NL
+.SH Examples
 opashowmc
 .br
-opashowmc -p \[aq]1:1 1:2 2:1 2:2\[aq] opashowmc -m 0xff12401b80010000:0x00000000ffffffff
+
+opashowmc -p \[aq]1:1 1:2 2:1 2:2\[aq]
+opashowmc -m 0xff12401b80010000:0x00000000ffffffff
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.

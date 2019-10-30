@@ -6,54 +6,61 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opahfirev 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opahfirev 1 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opahfirev
 
-.NL
 
 .PP
 
 \fB(Linux)\fR
 Scans the system and reports hardware and firmware information about all the HFIs in the system.
 .SH Syntax
-.NL
-opahfirev 
+opahfirev
 .SH Options
-.NL
 
 .TP 10
 no option
-.NL
+
 Returns information about all of the HFIs in the system.
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
-.SH Example 
-.NL
+.SH Example
 # opahfirev
 .br
+
 ######################
 .br
-phsmpriv07.ph.intel.com - HFI 0000:81:00.0
+
+phsmpriv07.ph.intel.com  - HFI 0000:81:00.0
 .br
-HFI: hfi1\(ul0
+
+HFI:   hfi1\(ul0
 .br
+
 Board: ChipABI 3.0, ChipRev 7.17, SW Compat 3
 .br
-SN: 0x0063be82
+
+SN:    0x0063be82
 .br
+
 Location:Discrete Socket:1 PCISlot:00 NUMANode:1 HFI0
 .br
-Bus: Speed 8GT/s, Width x16
+
+Bus:   Speed 8GT/s, Width x16
 .br
-GUID: 0011:7501:0163:be82
+
+GUID:  0011:7501:0163:be82
 .br
+
 SiRev: B1 (11)
 .br
-TMM: 10.4.0.0.146
+
+TMM:   10.4.0.0.146
 .br
+
 ######################

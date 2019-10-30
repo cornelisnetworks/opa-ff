@@ -286,8 +286,10 @@ package:
 	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/dist_files; \
 	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
 	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/dist_files; \
-	echo "$(RELEASE_DIR)/opa-snapconfig$${vers}-$${MKRPM_REL}$${arch}.$(EXT)" >> $(TL_DIR)/packaged_files; \
-	echo "$(RELEASE_DIR)/opa-snapconfig$${vers}-$${MKRPM_REL}$${arch}.$(EXT)" >> $(TL_DIR)/dist_files; \
+	if [ "$(OPA_FEATURE_SET)" != "opa10" ]; then \
+		echo "$(RELEASE_DIR)/opa-snapconfig$${vers}-$${MKRPM_REL}$${arch}.$(EXT)" >> $(TL_DIR)/packaged_files; \
+		echo "$(RELEASE_DIR)/opa-snapconfig$${vers}-$${MKRPM_REL}$${arch}.$(EXT)" >> $(TL_DIR)/dist_files; \
+	fi; \
 
 final_package:
 	mkdir -p $(RELEASE_DIR)
@@ -318,8 +320,10 @@ final_package:
 	cp $(RPMSDIR)/opa-libopamgt$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$basicrpmdir/ || echo "ERR""OR: cp $$basicrpmdir."; \
 	cp $(RPMSDIR)/opa-libopamgt-$(DEVEL)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$basicrpmdir/ || echo "ERR""OR: cp $$basicrpmdir."; \
 	cp $(RPMSDIR)/opa-mpi-apps$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$rpmdir/ || echo "ERR""OR: cp $$rpmdir."; \
-	cp $(RPMSDIR)/opa-snapconfig$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$dir/ || echo "ERR""OR: cp $$dir."; \
-	cp $(RPMSDIR)/opa-snapconfig$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $(RELEASE_DIR)/ || echo "ERR""OR: cp $$dir."; \
+	if [ "$(OPA_FEATURE_SET)" != "opa10" ]; then \
+		cp $(RPMSDIR)/opa-snapconfig$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $$dir/ || echo "ERR""OR: cp $$dir."; \
+		cp $(RPMSDIR)/opa-snapconfig$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(RPM_EXT) $(RELEASE_DIR)/ || echo "ERR""OR: cp $$dir."; \
+	fi; \
 	if [ "$(BUILD_TARGET_OS_VENDOR)" = "redhat" ]; then \
 		cp $(RPMSDIR)/opa-$(DEBUGINFO)$(SEPARATOR)$${MKRPM_VER}-$${MKRPM_REL}$(DEBUG_EXT) $$rpmdir/;  \
 	fi; \

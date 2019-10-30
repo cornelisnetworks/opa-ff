@@ -257,11 +257,11 @@ gen_switches()
 	suffix=":$hfi:$port"
 	export IFS=';'
 	rm -f $FILE_TEMP
-	eval $OPA_REPORT $port_opts -q -o comps -x -F nodetype:SW:port:0 -d 4| $XML_EXTRACT -H -d \; -e Node.NodeGUID -e Node.SystemImageGUID -e Node.Capability -e Node.PortInfo.Capability -e Node.NodeDesc -e Node.PortInfo.GUID -s Focus > $FILE_TEMP
+	eval $OPA_REPORT $port_opts -q -o comps -x -F nodetype:SW:port:0 -d 4| $XML_EXTRACT -H -d \; -e Node.LID -e Node.NodeGUID -e Node.SystemImageGUID -e Node.Capability -e Node.PortInfo.Capability -e Node.NodeDesc -e Node.PortInfo.GUID -s Focus > $FILE_TEMP
 	if [ $? -eq 0 ]
 	then
 		fl_write_switches=1
-		cat $FILE_TEMP | while read nodeguid systemguid capability portcapability nodedesc portguid
+		cat $FILE_TEMP | while read lid nodeguid systemguid capability portcapability nodedesc portguid
 		do
 			if [[ ! $portcapability =~ "VDR" ]]; then
 					continue
@@ -271,7 +271,8 @@ gen_switches()
 			comma=
 			if [ "$get_distance" = y ]
 			then
-				distance=$(eval opasaquery $port_opts -o trace -g $portguid | grep "NodeType: SW" | wc -l)
+				# Use lid to handle LMC != 0 case
+				distance=$(eval opasaquery $port_opts -o trace -l $lid | grep "NodeType: SW" | wc -l)
 				if [ ! -z "$distance" ]
 				then
 					comma=","

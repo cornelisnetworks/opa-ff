@@ -6,69 +6,67 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacabletest 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opacabletest 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opacabletest
 
-.NL
 
 .PP
 
 \fB(Switch)\fR
 Initiates or stops Cable Bit Error Rate stress tests for Intel(R) Omni-Path Host Fabric Interface (HFI)-to-switch links and/or ISLs.
 .SH Syntax
-.NL
-opacabletest [-C|-A] [-c \fIfile\fR] [-f \fIhostfile\fR] [-h \fI\[aq]hosts\[aq]\fR] [-n \fInumprocs\fR]
+opacabletest [-C|-A] [-c  \fIfile\fR] [-f  \fIhostfile\fR] [-h  \fI\[aq]hosts\[aq]\fR] [-n  \fInumprocs\fR]
 .br
-[-t \fIportsfile\fR] [-p \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi|
+
+[-t \fIportsfile\fR] [-p  \fIports\fR] [start|start\(ulfi|start\(ulisl|stop|stop\(ulfi|
 .br
 stop\(ulisl] ...
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--C 
-.NL
+-C
+
 Clears error counters.
 
 .TP 10
--A 
-.NL
+-A
+
 Forces the system to clear hardware error counters. Implies -C.
 
 .TP 10
--c \fIfile\fR 
-.NL
+-c \fIfile\fR
+
 Specifies the error thresholds configuration file. Default is /etc/opa/opamon.si.conf file. Only used if -C or -A specified.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts to include in HFI -to-SW test. Default is /etc/opa/hosts file.
 
 .TP 10
--h \fIhosts\fR 
-.NL
+-h \fIhosts\fR
+
 Specifies the list of hosts to include in HFI -SW test.
 
 .TP 10
--n \fInumprocs\fR 
-.NL
+-n \fInumprocs\fR
+
 Specifies the number of processes per host for HFI -SW test.
 
 .TP 10
--t \fIportsfile\fR 
-.NL
+-t \fIportsfile\fR
+
 Specifies the file with list of local HFI ports used to access fabrics when clearing counters. Default is /etc/opa/ports file.
 
 .TP 10
--p \fIports\fR 
-.NL
+-p \fIports\fR
+
 Specifies the list of local HFI ports used to access fabrics for counter clear.
 
 .IP
@@ -79,7 +77,7 @@ for example:
 .TP 10
 
 .sp
-0:0 
+0:0
 First active port in system.
 
 .RE
@@ -88,7 +86,7 @@ First active port in system.
 .TP 10
 
 .sp
-0:y 
+0:y
 Port \fIy\fR within system.
 
 .RE
@@ -97,7 +95,7 @@ Port \fIy\fR within system.
 .TP 10
 
 .sp
-x:0 
+x:0
 First active port on HFI \fIx\fR.
 
 .RE
@@ -106,82 +104,84 @@ First active port on HFI \fIx\fR.
 .TP 10
 
 .sp
-x:y 
+x:y
 HFI \fIx\fR, port \fIy\fR.
 
 .RE
 
 .TP 10
-start 
-.NL
+start
+
 Starts the HFI -SW and ISL tests.
 
 .TP 10
-start\(ulfi 
-.NL
+start\(ulfi
+
 Starts the HFI -SW test.
 
 .TP 10
-start\(ulisl 
-.NL
+start\(ulisl
+
 Starts the ISL test.
 
 .TP 10
-stop 
-.NL
+stop
+
 Stops the HFI -SW and ISL tests.
 
 .TP 10
-stop\(ulfi 
-.NL
+stop\(ulfi
+
 Stops the HFI -SW test.
 
 .TP 10
-stop\(ulisl 
-.NL
+stop\(ulisl
+
 Stops the ISL test.
 
 .PP
 The HFI -SW cable test requires that the \fBFF\(ulMPI\(ulAPPS\(ulDIR\fR is set, and it contains a pre-built copy of the mpi\(ulapps for an appropriate message passing interface (MPI).
 .PP
 The ISL cable test started by this tool assumes that the master Host Subnet Manager (HSM) is running on this host. If using the Embedded Subnet Manager (ESM), or if a different host is the master HSM, the ISL cable test must be controlled by the switch CLI, or by Intel(R) Omni-Path Fabric Suite FastFabric on the master HSM respectively.
-.SH Examples 
-.NL
+.SH Examples
 opacabletest -A start
 .br
+
 opacabletest -f good -A start
 .br
+
 opacabletest -h \[aq]arwen elrond\[aq] start\(ulfi
 .br
+
 HOSTS=\[aq]arwen elrond\[aq] opacabletest stop
 .br
+
 opacabletest -A
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBPORTS\fR 
-.NL
+\fBPORTS\fR
+
 List of ports, used in absence of -t and -p.
 
 .TP 10
-\fBPORTS\(ulFILE\fR 
-.NL
+\fBPORTS\(ulFILE\fR
+
 File containing list of ports, used in absence of -t and -p.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 Maximum concurrent operations.

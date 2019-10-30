@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaxmlextract 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaxmlextract 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaxmlextract
 
-.NL
 
 .PP
 
@@ -19,46 +18,45 @@ Extracts element values from XML input and outputs the data in CSV format. opaxm
 .PP
 Five sample scripts are available as prototypes for customized scripts. They combine various calls to opareport with a call to opaxmlextract with commonly used parameters.
 .SH Syntax
-.NL
-opaxmlextract [-v][-H][-d \fIdelimiter\fR][-e \fIextract\(ulelement\fR]
+opaxmlextract [-v][-H][-d  \fIdelimiter\fR][-e  \fIextract\(ulelement\fR]
 .br
-[-s \fIsuppress\(ulelement\fR][-X \fIinput\(ulfile\fR] [-P \fIparam\(ulfile\fR]
-.SH Options 
-.NL
+
+[-s  \fIsuppress\(ulelement\fR][-X  \fIinput\(ulfile\fR] [-P  \fIparam\(ulfile\fR]
+.SH Options
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--v/--verbose 
-.NL
+-v/--verbose
+
 Produces verbose output. Includes output progress reports during extraction and output prepended wildcard characters on element names in output header record.
 
 .TP 10
--H/--noheader 
-.NL
+-H/--noheader
+
 Does not output element name header record.
 
 .TP 10
--d/--delimit \fIdelimiter\fR 
-.NL
+-d/--delimit \fIdelimiter\fR
+
 Uses single character or string as the delimiter between element names and element values. Default is semicolon.
 
 .TP 10
--e/--extract \fIextract\(ulelement\fR 
-.NL
+-e/--extract \fIextract\(ulelement\fR
+
 Specifies the name of the XML element to extract. Elements can be nested in any order, but are output in the order specified. Elements can be specified multiple times, with a different attribute name or attribute value. An optional attribute (or attribute and value) can also be specified with elements:
 
 .RS
 
 .IP \(bu
--e \fIelement\fR 
+-e \fIelement\fR
 .IP \(bu
--e \fIelement:attrName\fR 
+-e \fIelement:attrName\fR
 .IP \(bu
--e \fIelement:attrName:attrValue\fR 
+-e \fIelement:attrName:attrValue\fR
 
 .RE
 
@@ -84,22 +82,21 @@ A given element can be specified multiple times each with a different AttrName o
 
 
 .TP 10
--s/--suppress \fIsuppress\(ulelement\fR 
-.NL
+-s/--suppress \fIsuppress\(ulelement\fR
+
 Specifies the name of the XML element to suppress extraction. Can be used multiple times (in any order). Supports the same syntax as -e.
 
 .TP 10
--X/--infile \fIinput\(ulfile\fR 
-.NL
+-X/--infile \fIinput\(ulfile\fR
+
 Parses XML from \fIinput\(ulfile\fR.
 
 .TP 10
--P/--pfile \fIparam\(ulfile\fR 
-.NL
+-P/--pfile \fIparam\(ulfile\fR
+
 Reads command parameters from param\(ulfile.
 
-.SH Example 
-.NL
+.SH Example
 
 .PP
 Here is an example of opareport output filtered by opaxmlextract :
@@ -108,42 +105,56 @@ Here is an example of opareport output filtered by opaxmlextract :
 .br
 # opareport -o comps -s -x | opaxmlextract -d \; -e NodeDesc
 .br
+
 -e SystemImageGUID -e NumPorts -s Neighbor
 .br
+
 Getting All Node Records...
 .br
+
 Done Getting All Node Records
 .br
+
 Done Getting All Link Records
 .br
+
 Done Getting All Cable Info Records
 .br
+
 Done Getting All SM Info Records
 .br
+
 Getting All Port Counters...
 .br
+
 Done Getting All Port Counters
 .br
+
 NodeDesc;SystemImageGUID;NumPorts
 .br
+
 phs1fnivd13u07n4 hfi1\(ul0;0x00117501016033c7;1
 .br
+
 phs1fnivd13u07n2 hfi1\(ul0;0x00117501016033ef;1
 .br
+
 phs1fnivd13u07n1 hfi1\(ul0;0x001175010160347a;1
 .br
+
 phs1fnivd13u07n3 hfi1\(ul0;0x0011750101603593;1
 .br
+
 phs1swivd13u21;0x00117501ff6a5619;48
 .br
+
 phs1fnivd13u07n1 hfi1\(ul0;;
 .br
 
 
 .br
 
-.SH Details 
-.NL
+.SH Details
 
 .PP
 opaxmlextract is a flexible and powerful tool to process an XML stream. The tool:

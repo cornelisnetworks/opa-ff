@@ -1,0 +1,445 @@
+.\" .\" *********************************************************************
+.\" .\" *                                                                   *
+.\" .\" *             Copyright 2015-2019, Intel Corporation                *
+.\" .\" *                                                                   *
+.\" .\" *                       All Rights Reserved.                        *
+.\" .\" *                                                                   *
+.\" .\" *********************************************************************
+
+.TH opaextractperf2 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
+.SH NAME
+opaextractperf2
+
+
+.PP
+Provides a report of all performance counters in a CSV format suitable for importing into a spreadsheet or parsed by other scripts for further analysis. It generates a detailed opareport component summary report and pipes the result to opaxmlextract, extracting element values for NodeDesc, NodeGUID, PortNum, neighbor NodeDesc, neighbor NodeGUID, neighbor PortNum and all the performance counters.
+.SH Syntax
+opaextractperf2 [opareport  \fIoptions\fR]
+.SH Options
+
+.TP 10
+--help
+
+Produces full help text.
+
+.TP 10
+opareport \fIoptions\fR
+
+The following options are passed to opareport. This subset is considered typical and useful for this command. Do not use the -o/--output report option.
+
+.RS
+.TP 10
+
+.sp
+-h/--hfi \fIhfi\fR
+Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-p/--port \fIport\fR
+Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-X/--infile \fIsnapshot\(ulinput\fR
+Generates a report using the data in the snapshot\(ulinput file. snapshot\(ulinput must have been generated during a previous -o \fIsnapshot\fR run. When used, the -s, -i, -C, and -a options are ignored. \[aq]-\[aq] may be used as the snapshot\(ulinput to specify stdin.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-T/--topology \fItopology\(ulinput\fR
+Uses topology\(ulinput file to augment and verify fabric information. When used, various reports can be augmented with information not available electronically (such as cable labels). \[aq]-\[aq] may be used to specify stdin.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-i/--interval \fIseconds\fR
+Obtains performance statistics over interval \fIseconds\fR. Clears all statistics, waits interval \fIseconds\fR, then generates report. Implies -s option.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-b / --begin \fIdate\(ultime\fR
+Obtains past performance stats over an interval beginning at \fIdate\(ultime\fR. Implies -s option. \fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-e / --end \fIdate\(ultime\fR
+Obtains past performance stats over an interval ending at \fIdate\(ultime\fR. Implies -s option.
+
+.IP
+\fIdate\(ultime\fR may be a time entered as HH:MM[:SS] or date as mm/dd/YYYY, dd.mm.YYYY, YYYY-mm-dd or date followed by time; for example, "2016-07-04 14:40". Relative times are taken as "x [second|minute|hour|day](s) ago.
+.RE
+
+.RS
+.TP 10
+
+.sp
+-C/--clear
+Clears performance statistics for all ports. Only statistics with error thresholds are cleared. A clear occurs after generating the report.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-a/--clearall
+Clears all performance statistics for all ports.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-M/--pmadirect
+Accesses performance statistics using direct PMA.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-A/--allports
+Gets PortInfo for down switch ports. Uses direct SMA to get this data. If used with -M, also gets PMA stats for down switch ports.
+
+.RE
+
+.RS
+.TP 10
+
+.sp
+-F/--focus \fIpoint\fR
+Specifies the focus area for report. Used for all reports except route to limit scope of report. Refer to
+\fIPoint Syntax\fR
+for details.
+
+.RE
+
+
+.SH -h and -p options permit a variety of selections:
+
+.TP 10
+-h 0
+
+First active port in system (Default).
+
+.TP 10
+-h 0 -p 0
+
+First active port in system.
+
+.TP 10
+-h \fIx\fR
+
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h \fIx\fR \fI\fR-p 0
+
+First active port on HFI \fIx\fR.
+
+.TP 10
+-h 0 -p \fIy\fR
+
+Port \fIy\fR within system (no matter which ports are active).
+
+.TP 10
+-h \fIx\fR \fI\fR-p \fIy\fR
+
+HFI \fIx\fR, port \fIy\fR.
+
+
+.SH Point Syntax
+
+.TP 10
+gid:\fIvalue\fR
+
+\fIvalue\fR is numeric port GID of form: subnet:guid.
+
+.TP 10
+lid:\fIvalue\fR
+
+\fIvalue\fR is numeric LID.
+
+.TP 10
+lid:value:node
+
+\fIvalue\fR is numeric LID, selects entire node with given LID.
+
+.TP 10
+lid:\fIvalue\fR:port:\fIvalue2\fR
+
+\fIvalue\fR is numeric LID of node, \fIvalue2\fR is port number.
+
+.TP 10
+portguid:\fIvalue\fR
+
+\fIvalue\fR is numeric port GUID.
+
+.TP 10
+nodeguid:\fIvalue\fR
+
+\fIvalue\fR is numeric node GUID.
+
+.TP 10
+nodeguid:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is numeric node GUID, \fIvalue2\fR is port number.
+
+.TP 10
+iocguid:\fIvalue\fR
+
+\fIvalue\fR is numeric IOC GUID.
+
+.TP 10
+iocguid:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is numeric IOC GUID, \fIvalue2\fR is port number.
+
+.TP 10
+systemguid:\fIvalue\fR
+
+\fIvalue\fR is numeric system image GUID.
+
+.TP 10
+systemguid:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is the numeric system image GUID, \fIvalue2\fR is port number.
+
+.TP 10
+ioc:\fIvalue\fR
+
+\fIvalue\fR is IOC Profile ID String (IOC Name).
+
+.TP 10
+ioc:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is IOC Profile ID String (IOC Name), \fIvalue2\fR is port number.
+
+.TP 10
+iocpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for IOC Profile ID String (IOC Name).
+
+.TP 10
+iocpat:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is glob pattern for IOC Profile ID String (IOC Name), \fIvalue2\fR is port number.
+
+.TP 10
+ioctype:\fIvalue\fR
+
+\fIvalue\fR is IOC type (SRP or OTHER).
+
+.TP 10
+ioctype:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is IOC type (SRP or OTHER); \fIvalue2\fR is port number.
+
+.TP 10
+node:\fIvalue\fR
+
+\fIvalue\fR is node description (node name).
+
+.TP 10
+node:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is node description (node name), \fIvalue2\fR is port number.
+
+.TP 10
+nodepat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for node description (node name).
+
+.TP 10
+nodepat:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is the glob pattern for the node description (node name), \fIvalue2\fR is port number.
+
+.TP 10
+nodedetpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for node details.
+
+.TP 10
+nodedetpat:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is the glob pattern for the node details, \fIvalue2\fR is port number.
+
+.TP 10
+nodetype:\fIvalue\fR
+
+\fIvalue\fR is node type (SW or FI).
+
+.TP 10
+nodetype:\fIvalue1\fR:port:\fIvalue2\fR
+
+\fIvalue1\fR is node type (SW or FI), \fIvalue2\fR is port number.
+
+.TP 10
+rate:\fIvalue\fR
+
+\fIvalue\fR is string for rate (25g, 50g, 75g, 100g), omits switch mgmt port 0.
+
+.TP 10
+portstate:\fIvalue\fR
+
+\fIvalue\fR is a string for state (down, init, armed, active, notactive, initarmed).
+
+.TP 10
+portphysstate:\fIvalue\fR
+
+\fIvalue\fR is a string for PHYs state (polling, disabled, training, linkup, recovery, offline, test)
+
+.TP 10
+mtucap:\fIvalue\fR
+
+\fIvalue\fR is MTU size (2048, 4096, 8192, 10240), omits switch mgmt port 0.
+
+.TP 10
+labelpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for cable label.
+
+.TP 10
+lengthpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for cable length.
+
+.TP 10
+cabledetpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for cable details.
+
+.TP 10
+cabinflenpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for cable info length.
+
+.TP 10
+cabinfvendnamepat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for cable info vendor name.
+
+.TP 10
+cabinfvendpnpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for cable info vendor part number.
+
+.TP 10
+cabinfvendrevpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for cable info vendor revision.
+
+.TP 10
+cabinfvendsnpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for cable info vendor serial number.
+
+.TP 10
+cabinftype:\fIvalue\fR
+
+\fIvalue\fR is either optical, passive\(ulcopper, active\(ulcopper, or unknown.
+
+.TP 10
+linkdetpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for link details.
+
+.TP 10
+portdetpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for port details.
+
+.TP 10
+sm
+
+Specifies the master subnet manager (SM).
+
+.TP 10
+smdetpat:\fIvalue\fR
+
+\fIvalue\fR is glob pattern for SM details.
+
+.TP 10
+route:\fIpoint1\fR:\fIpoint2\fR
+
+Specifies all ports along the routes between the two given points.
+
+.TP 10
+led:\fIvalue\fR
+
+\fIvalue\fR is either on or off for LED port beacon.
+
+.TP 10
+linkqual:\fIvalue\fR
+
+Specifies the ports with a link quality equal to \fIvalue\fR.
+
+.TP 10
+linkqualLE:\fIvalue\fR
+
+Specifies the ports with a link quality less than or equal to \fIvalue\fR.
+
+.TP 10
+linkqualGE:\fIvalue\fR
+
+Specifies the ports with a link quality greater than or equal to \fIvalue\fR.
+
+.TP 10
+nodepatfile:\fIFILENAME\fR
+
+Specifies the name of file with the list of nodepats or node descriptions.
+
+.TP 10
+nodepairpatfile:\fIFILENAME\fR
+
+Specifies the name of file with the list of node pairs, separated by a colon.
+
+.TP 10
+ldr
+
+Specifies the ports with a non-zero link down reason or neighbor link down reason.
+
+.TP 10
+ldr:\fIvalue\fR
+
+Specifies the ports with a link down reason or neighbor link down reason equal to \fIvalue\fR.
+
+.SH Example
+opaextractperf
+.br
+2
+opaextractperf2 -h 1 -p 2
+
+
+.SH See Also
+
+.PP
+
+\fIopamergeperf2\fR
+

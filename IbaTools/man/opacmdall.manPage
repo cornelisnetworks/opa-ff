@@ -6,11 +6,10 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opacmdall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opacmdall 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opacmdall
 
-.NL
 
 .PP
 
@@ -22,66 +21,65 @@ Executes a command on all hosts or Intel(R) Omni-Path Chassis. This powerful com
 opacmdall depends on the Linux* convention that utilities return 0 for success and >0 for failure. If opacmdall is used to execute a non-standard utility like diff or a program that uses custom exit codes, then opacmdall may erroneously report "Command execution FAILED" when it encounters a non-zero exit code. However, command output is still returned normally and the error may be safely ignored.
 
 .SH Syntax
-.NL
-opacmdall [-CpqPS] [-f \fIhostfile\fR] [-F \fIchassisfile\fR] [-h \fIhosts\fR]
+opacmdall [-CpqPS] [-f  \fIhostfile\fR] [-F  \fIchassisfile\fR] [-h  \fIhosts\fR]
 .br
-[-H \fIchassis\fR] [-u \fIuser\fR] [-m \fImarker\fR] [-T \fItimelimit\fR] \fIcmd\fR
+[-H  \fIchassis\fR]
+[-u  \fIuser\fR] [-m  \fImarker\fR] [-T  \fItimelimit\fR]  \fIcmd\fR
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--C 
-.NL
+-C
+
 Performs command against chassis. Default is hosts.
 
 .TP 10
--p 
-.NL
+-p
+
 Runs command in parallel on all hosts/chassis.
 
 .TP 10
--q 
-.NL
+-q
+
 Quiet mode, do not show command to execute.
 
 .TP 10
--P 
-.NL
+-P
+
 Outputs the hostname/chassis name as prefix to each output line. This can make script processing of output easier.
 
 .TP 10
--S 
-.NL
+-S
+
 Securely prompts for password for user on chassis.
 
 .TP 10
--f \fIhostfile\fR 
-.NL
+-f \fIhostfile\fR
+
 Specifies the file with hosts in cluster. Default is /etc/opa/hosts file.
 
 .TP 10
--F \fIchassisfile\fR 
-.NL
+-F \fIchassisfile\fR
+
 Specifies the file with chassis in cluster. Default is /etc/opa/chassis file.
 
 .TP 10
--h \fIhost\fR 
-.NL
+-h \fIhost\fR
+
 Specifies the list of hosts to execute command on.
 
 .TP 10
--H \fIchassis\fR 
-.NL
+-H \fIchassis\fR
+
 Specifies the list of chassis to execute command on.
 
 .TP 10
--u \fIuser\fR 
-.NL
+-u \fIuser\fR
+
 Specifies the user to perform the command as:
 .RS
 
@@ -94,88 +92,86 @@ For chassis, the default is admin.
 
 
 .TP 10
--m \fImarker\fR 
-.NL
+-m \fImarker\fR
+
 Specifies the marker for end of chassis command output. If omitted, defaults to chassis command prompt. This may be a regular expression.
 
 .TP 10
--T \fItimelimit\fR 
-.NL
+-T \fItimelimit\fR
+
 Specifies the time limit in seconds when running host commands. Default is -1 (infinite).
 
 .SH Examples
-.NL
 
-.NL
 
 .SH Operations on Host
-.NL
 opacmdall date
 .br
+
 opacmdall \[aq]uname -a\[aq]
 .br
+
 opacmdall -h \[aq]elrond arwen\[aq] date
 .br
+
 HOSTS=\[aq]elrond arwen\[aq] opacmdall date
-.NL
 
 .SH Operations on Chassis
-.NL
 opacmdall -C \[aq]ismPortStats -noprompt\[aq]
 .br
+
 opacmdall -C -H \[aq]chassis1 chassis2\[aq] ismPortStats -noprompt\[aq]
 .br
+
 CHASSIS=\[aq]chassis1 chassis2\[aq] opacmdall -C ismPortStats -noprompt\[aq]
 .SH Environment Variables
-.NL
 
 .PP
 The following environment variables are also used by this command:
 .TP 10
-\fBHOSTS\fR 
-.NL
+\fBHOSTS\fR
+
 List of hosts, used if -h option not supplied.
 
 .TP 10
-\fBCHASSIS\fR 
-.NL
+\fBCHASSIS\fR
+
 List of chassis, used if -C is used and -H and -F options not supplied.
 
 .TP 10
-\fBHOSTS\(ulFILE\fR 
-.NL
+\fBHOSTS\(ulFILE\fR
+
 File containing list of hosts, used in absence of -f and -h.
 
 .TP 10
-\fBCHASSIS\(ulFILE\fR 
-.NL
+\fBCHASSIS\(ulFILE\fR
+
 File containing list of chassis, used in absence of -F and -H.
 
 .TP 10
-\fBFF\(ulMAX\(ulPARALLEL\fR 
-.NL
+\fBFF\(ulMAX\(ulPARALLEL\fR
+
 When -p option is used, maximum concurrent operations are performed.
 
 .TP 10
-\fBFF\(ulSERIALIZE\(ulOUTPUT\fR 
-.NL
+\fBFF\(ulSERIALIZE\(ulOUTPUT\fR
+
 Serialize output of parallel operations (yes or no).
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulLOGIN\(ulMETHOD\fR
+
 How to log into chassis. Can be Telnet or SSH.
 
 .TP 10
-\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR 
-.NL
+\fBFF\(ulCHASSIS\(ulADMIN\(ulPASSWORD\fR
+
 Password for admin on all chassis. Used in absence of -S option.
 
 .SH Notes
-.NL
 
 .PP
-All commands performed with opacmdall must be non-interactive in nature. opacmdall waits for the command to complete before proceeding. For example, when running host commands such as rm, the -i option (interactively prompt before removal) should not be used. (Note that this option is sometimes part of a standard bash alias list.) Similarly, when running chassis commands such as fwUpdateChassis, the -reboot option should not be used because this option causes an immediate reboot and therefore the command never returns. Also, the chassis command reboot should not be executed using opacmdall. Instead, use the opachassisadmin reboot command to reboot one or more chassis. For further information about individual chassis CLI commands, consult the 
+All commands performed with opacmdall must be non-interactive in nature. opacmdall waits for the command to complete before proceeding. For example, when running host commands such as rm, the -i option (interactively prompt before removal) should not be used. (Note that this option is sometimes part of a standard bash alias list.) Similarly, when running chassis commands such as fwUpdateChassis, the -reboot option should not be used because this option causes an immediate reboot and therefore the command never returns. Also, the chassis command reboot should not be executed using opacmdall. Instead, use the opachassisadmin reboot command to reboot one or more chassis. For further information about individual chassis CLI commands, consult the
 \fIIntel(R) Omni-Path Fabric Switches Command Line Interface Reference Guide\fR
 
 . For further information about Linux* operating system commands, consult the man pages.

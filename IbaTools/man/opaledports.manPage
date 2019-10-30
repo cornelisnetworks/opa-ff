@@ -6,38 +6,35 @@
 .\" .\" *                                                                   *
 .\" .\" *********************************************************************
 
-.TH opaledports 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)" 
+.TH opaledports 8 "Intel Corporation" "Copyright(C) 2015\-2019" "IFSFFCLIRG (Man Page)"
 .SH NAME
 opaledports
 
-.NL
 
 .PP
 Toggles the beaconing LED state of HFIs, switches, and switch ports. opaledports is a useful aid for finding specific physical nodes in a crowded data center. It supports the CSV link format provided by opaextractsellinks.
-.SH Syntax 
-.NL
+.SH Syntax
 opaledports [-h hfi] [-p port] [-C] [-s|-d] [on|off] < portlist.csv
 .SH Options
-.NL
 
 .TP 10
---help 
-.NL
+--help
+
 Produces full help text.
 
 .TP 10
--h \fIhfi\fR 
-.NL
+-h \fIhfi\fR
+
 Specifies the HFI, numbered 1..n. Using 0 specifies that the -p \fIport\fR port is a system-wide port number. Default is 0.
 
 .TP 10
--p \fIport\fR 
-.NL
+-p \fIport\fR
+
 Specifies the port, numbered 1..n. Using 0 specifies the first active port. Default is 0.
 
 .TP 10
--C 
-.NL
+-C
+
 Clears beaconing LED on all ports.
 
 .IP
@@ -45,25 +42,25 @@ Clears beaconing LED on all ports.
 \fBNOTE:\fR
 If -C is entered, no other options are valid.
 .TP 10
--s 
-.NL
+-s
+
 Affects source side (first node) of link only.
 
 .TP 10
--d 
-.NL
+-d
+
 Affects destination side (second node) of link only.
 
 .TP 10
-on|off 
-.NL
+on|off
+
 Turns on or off the beaconing LED. Options include:
 
 .RS
 .TP 10
 
 .sp
-on 
+on
 Turns on beaconing LED.
 
 .RE
@@ -72,26 +69,28 @@ Turns on beaconing LED.
 .TP 10
 
 .sp
-off 
+off
 Turns off beaconing LED.
 
 .RE
 
 .TP 10
-portlist.csv 
-.NL
+portlist.csv
+
 Specifies the file listing the links to process. The list is of the form:
 
 .IP
 NodeGUID;PortNum;NodeType;NodeDesc;NodeGUID;PortNum;
 .br
-NodeType;NodeDesc;Dontcare 
-.SH Examples 
-.NL
+NodeType;NodeDesc;Dontcare
+.SH Examples
 echo "0x001175010165ac1d;1;FI;phkpstl035 hfi1\(ul0"|opaledports on
 .br
+
 opaledports on < portlist.csv
 .br
+
 opaextractsellinks -F led:on | opaledports off
 .br
+
 opaledports -C
