@@ -104,10 +104,7 @@ export I_MPI_OFI_PROVIDER=psm2
 # However, if desired, the fabric interface settings can be overridden for
 # the given job.
 #export PSM2_DISABLE_CCA=0
-#export PSM2_CCTI_INCREMENT=1
-#export PSM2_CCTI_TIMER=1
-#export PSM2_CCTI_TABLE_SIZE=128
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_DISABLE_CCA $PSM2_DISABLE_CCA -genv PSM2_CCTI_INCREMENT $PSM2_CCTI_INCREMENT -genv PSM2_CCTI_TIMER $PSM2_CCTI_TIMER -genv PSM2_CCTI_TABLE_SIZE $PSM2_CCTI_TABLE_SIZE"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_DISABLE_CCA $PSM2_DISABLE_CCA"
 
 # These values can enable and control PSM Multi-Rail
 # In most cases the default automatic selections will be sufficient

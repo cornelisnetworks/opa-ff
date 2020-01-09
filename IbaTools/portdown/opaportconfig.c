@@ -671,7 +671,7 @@ static void initialize_opamgt(uint8_t hfi, uint8_t port, int *port_in_hfi,
 
 	struct omgt_params params = {.debug_file = g_verbose > 2 ? stderr : NULL};
 	if ((status = omgt_open_port_by_num (&g_omgt_port, hfi, port, &params)) != 0) {
-		fprintf(stderr, "failed to open port hfi %d:%d: %s\n", hfi, port, strerror(status));
+		fprintf(stderr, "failed to open port hfi %d:%d: %s\n", hfi, port, omgt_status_totext(status));
 		exit(1);
 	}
 

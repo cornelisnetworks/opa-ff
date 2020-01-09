@@ -100,7 +100,7 @@ export MPI_CMD_ARGS=
 # Normally Congestion Control is completely configured in the SM config file.
 # However, if desired, the fabric interface settings can be overridden for
 # the given job.
-#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_DISABLE_CCA 0 -genv PSM2_CCTI_INCREMENT 1 -genv PSM2_CCTI_TIMER 1 -genv PSM2_CCTI_TABLE_SIZE 128"
+#export MPI_CMD_ARGS="$MPI_CMD_ARGS -genv PSM2_DISABLE_CCA 0"
 
 # These values can enable and control PSM Multi-Rail
 # In most cases the default automatic selections will be sufficient.
