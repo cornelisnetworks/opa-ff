@@ -12395,6 +12395,16 @@ void Usage_full(void)
 	fprintf(stderr, "   route:point1:point2        - all ports along the routes between the 2 given\n");
 	fprintf(stderr, "                                points\n");
 	fprintf(stderr, "   led:value                  - value is either 'on' or 'off' for LED port beacon\n");
+	fprintf(stderr, "   linkcrc:value              - ports with an active link CRC equal to value\n");
+	fprintf(stderr, "                                value can be: 14-bit, 16-bit, 48-bit or\n");
+	fprintf(stderr, "                                12-16/lane\n");
+	fprintf(stderr, "                                or their aliases: 14b, 16b, 48b or per_lane\n");
+	fprintf(stderr, "                                omits switch mgmt port 0\n");
+	fprintf(stderr, "   linkcrcNE:value            - ports with an active link CRC not equal to value\n");
+	fprintf(stderr, "                                value can be: 14-bit, 16-bit, 48-bit or\n");
+	fprintf(stderr, "                                12-16/lane\n");
+	fprintf(stderr, "                                or their aliases: 14b, 16b, 48b or per_lane\n");
+	fprintf(stderr, "                                omits switch mgmt port 0\n");
 	fprintf(stderr, "   linkqual:value             - ports with a link quality equal to value\n");
 	fprintf(stderr, "   linkqualLE:value           - ports with a link quality less than or equal to\n");
 	fprintf(stderr, "                                value\n");

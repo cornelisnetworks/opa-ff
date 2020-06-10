@@ -280,7 +280,7 @@ gen_switches()
 			fi
 
 			# valid names for switches start with a non-numeric and are alpha numeric
-			if [[ $nodedesc =~ ^[a-zA-Z_][a-zA-Z_0-9]*$ ]]
+			if [[ $nodedesc =~ ^[a-zA-Z_\-][a-zA-Z_0-9\-]*$ ]]
 			then
 				echo "$nodeguid$suffix,$nodedesc$comma$distance" >> $file_switches
 			else
