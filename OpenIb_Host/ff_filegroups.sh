@@ -101,6 +101,6 @@ mpi_apps_files="Makefile mpi_hosts.sample README prepare_run select_mpi run_bw
 	run_multibw run_mpi_stress run_osu run_cabletest run_allhfilatency run_nxnlatbw
 	run_alltoall3 run_bcast3 run_bibw3 run_bw3 run_lat3 run_mbw_mr3 run_multi_lat3
 	run_batch_script run_batch_cabletest hpl-count.diff groupstress deviation
-	hpl-config/HPL.dat-* hpl-config/README mpicc mpif77"
+	hpl-config/HPL.dat-* hpl-config/README mpicc mpicxx mpif77"
 
 opasnapconfig_bin=

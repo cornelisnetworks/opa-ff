@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2020, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -98,7 +98,7 @@ static void usage(char *app_name)
 	fprintf(stderr, "        is 1st active)\n");
 	fprintf(stderr, "   -Q - query number to run:\n");
 	fprintf(stderr, "        2 - boot from primary or secondary EEPROM\n");
-	fprintf(stderr, "        3 - display firwmare version\n");
+	fprintf(stderr, "        3 - display firmware version\n");
 	fprintf(stderr, "        4 - display VPD Info - comma-separated list\n");
 	fprintf(stderr, "        5 - get node description\n");
 	fprintf(stderr, "        6 - temperature readings\n");

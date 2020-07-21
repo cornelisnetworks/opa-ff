@@ -1,6 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015-2017, Intel Corporation
+# Copyright (c) 2015-2020, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -200,9 +200,13 @@ endif
 	cd $(PROJ_STAGE_DIR) && $(PATCH_BRAND) -m % "$(BUILD_BRAND)" INSTALL
 	cd $(PROJ_STAGE_DIR) && [ ! -e fastfabric/opafastfabric ] || $(PATCH_BRAND) -m % "$(BUILD_BRAND)" fastfabric/opafastfabric
 
+ff_build.sh: ff_build.sh.base
+	cp $< $@
+	sed -i "s/__FEATURE_SET__/$(OPA_FEATURE_SET)/" $@
+
 # OS specific packaging step
 # package builds standard package
-package:
+package: ff_build.sh
 	cd $(BUILD_TARGET_OS) && $(MAKE) $(MFLAGS) $@
 .PHONY:  package
 

@@ -1,4 +1,6 @@
-#!/bin/sh
+#! /bin/bash
+# A simple wrapper of mpicxx to force it uses RPATH
+#set -x
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 #
 # Copyright (c) 2015-2020, Intel Corporation
@@ -28,47 +30,26 @@
 #
 # END_ICS_COPYRIGHT8   ****************************************
 
-# [ICS VERSION STRING: unknown]
-
-# BASE PATH TO MPI EXECUTABLES: To use an alternate location,
-# either edit this line or set MPICH_PREFIX in your environment.
-# see select_mpi for the set of default MPI selections
-# default to MPI used for build
-MPICH_PREFIX=${MPICH_PREFIX:-`cat .prefix 2>/dev/null`}
-
-trap "exit 1" SIGHUP SIGTERM SIGINT
-
-if [ -z "$1" ]
-then 
-	echo " Usage: run_hpl number_processes"
-	echo " For example: ./run_hpl2 2"
-	echo "number_processes may be 'all' in which case one rank will be started for"
-	echo "every process in the mpi_hosts file"
-	exit 1
-fi
-
-NUM_PROCESSES=$1
-APP=xhpl2
-LOGFILE=
-. ./prepare_run
-
-CC=`./get_mpi_cc.sh`
-ARCH=`uname -s`
-HPL_DIR="${PWD}/hpl-2.3/bin/ICS.${ARCH}.${CC}"
-HPL_CMD="./xhpl"
-
-if [ $USING_MPD = y ]
-then
-    MPI_RUN_CMD_HPL="$MPI_RUN_CMD -wdir $HPL_DIR"
-else
-    MPI_RUN_CMD_HPL="$MPI_RUN_CMD"
-fi
-
-(
-	echo " Running High Performance Computing Linkpack Benchmark (HPL) ..."
-	show_mpi_hosts
-	set -x
-	cd $HPL_DIR; $MPI_RUN_CMD_HPL $HPL_CMD
-	set +x
-) 2>&1 | tee -i -a $LOGFILE
-echo "########################################### " >> $LOGFILE
+#[ICS VERSION STRING: unknown]
+echo "REAL_MPICXX=$REAL_MPICXX"
+# generate compile string and replace 'enable-new-dtags' with 'disable-new-dtags'
+# to force use RPATH. Given we can have space in quoted string that will cause
+# wrong word splitting, we split string into arguments by ourselves with ' -'.
+# To do it, we replace ' -' with '\n-' and then split the string with customized
+# IFS that is set to new line
+cmd_str=$($REAL_MPICXX -show "$@" | sed -e 's/enable-new-dtags/disable-new-dtags/g' -e 's/[[:space:]]\+-/\n-/g')
+OLDIFS=$IFS
+IFS=$'\n'
+args=()
+# for each argument that constains '"', we escape special characters in the argument.
+# Please note that an argument only can contain one quoted string, so it's fine
+# to do escape in the whole string
+for arg in ${cmd_str[@]}; do
+  if [[ "$arg" == *\"* ]]; then
+    args+=" $'$arg'"
+  else
+    args+=" $arg"
+  fi
+done
+IFS=$OLDIFS
+eval "${args[*]}"

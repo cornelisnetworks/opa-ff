@@ -28,7 +28,7 @@ __RPM_DBG
 
 %install
 
-%define mpi_apps_files bandwidth latency osu2 hpl-2.2 imb osu-micro-benchmarks-3.8-July12 mpi_multibw
+%define mpi_apps_files bandwidth latency osu2 hpl-2.3 imb osu-micro-benchmarks-3.8-July12 mpi_multibw
 
 
 mkdir -p $RPM_BUILD_ROOT/usr/src/opa/mpi_apps

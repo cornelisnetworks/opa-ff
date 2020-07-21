@@ -10,7 +10,7 @@ MakeTools/ltsign
 IbAccess/Common/Ibt/ibt.vssscc
 MpiApps/apps/osu2
 MpiApps/apps/osu-micro-benchmarks-3.8-July12
-MpiApps/apps/hpl-2.2
+MpiApps/apps/hpl-2.3
 MpiApps/apps/*.tgz
 MpiApps/apps/PMB2.2.1
 MpiApps/apps/bandwidth

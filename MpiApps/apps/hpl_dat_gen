@@ -1,11 +1,11 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
-# 
-# Copyright (c) 2015, Intel Corporation
-# 
+#
+# Copyright (c) 2015-2020, Intel Corporation
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # END_ICS_COPYRIGHT8   ****************************************
 
 # [ICS VERSION STRING: unknown]
@@ -57,7 +57,7 @@ USAGE() {
 	echo >&2 "	./hpl_dat_gen.sh [-2|-1][-n <nodes>][-c <cores>][-r <ram>][-p <pressure>][-d]"
 	echo >&2 
 	echo >&2 "  This tool generates an HPL.dat file and copies it to the appropriate hpl"
-	echo >&2 "  executable directory (hpl-2.2/bin/ICS.Linux.*)"
+	echo >&2 "  executable directory (hpl-2.3/bin/ICS.Linux.*)"
 	echo >&2 
 	echo >&2 "  The HPL.dat file can be tuned for different numbers of nodes, cores per node,"
 	echo >&2 "  and the approximate amount of RAM per node to use. The script chooses"
@@ -272,7 +272,7 @@ echo "Use \"./run_hpl2 $totnumcores\" to use this configuration."
 echo
 echo
 
-DATFILE=$PWD/hpl-2.2/bin/$arch/HPL.dat
+DATFILE=$PWD/hpl-2.3/bin/$arch/HPL.dat
 
 cat <<EOF | tee $TEMP_FILE $DATFILE
 HPLinpack benchmark input file - $totnumcores processes, $pressure memory size

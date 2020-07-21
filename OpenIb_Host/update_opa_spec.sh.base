@@ -1,11 +1,11 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
-# 
-# Copyright (c) 2015-2017, Intel Corporation
-# 
+#
+# Copyright (c) 2015-2020, Intel Corporation
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # END_ICS_COPYRIGHT8   ****************************************
 
 #[ICS VERSION STRING: unknown]
@@ -47,7 +47,8 @@ then
 	GE_7_5=$(echo "$versionid >= 7.5" | bc)
 
 	# __RPM_REQ_BASIC -
-	sed -i "s/__RPM_REQ_BASIC/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" opa.spec
+	sed -i "s/__RPM_REQ_BASIC1/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" opa.spec
+	sed -i "/__RPM_REQ_BASIC2/d" opa.spec
 
 	# __RPM_REQ_OPAMGT_DEV - different for RHEL7.4 and greater
 	if [ $GE_7_4 = 1 ]
@@ -60,14 +61,15 @@ then
 	# __RPM_BLDREQ - different for RHEL 7.5, RHEL7.4, or earlier
 	if [ $GE_7_4 = 1 ]
 	then
-		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" opa.spec
+		sed -i "s/__RPM_BLDREQ1/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" opa.spec
 	else
-		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" opa.spec
+		sed -i "s/__RPM_BLDREQ1/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" opa.spec
 	fi
+	sed -i "/__RPM_BLDREQ2/d" opa.spec
 
 	# __RPM_REQ_ADDR_RES,__RPM_REQ_OPAMGT and __RPM_DEBUG same for all RHEL versions
-	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools ibacm/g" opa.spec
 	sed -i "s/__RPM_REQ_OPAMGT/libibumad%{?_isa}, libibverbs%{?_isa}, openssl%{?_isa}/g" opa.spec
+	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools ibacm/g" opa.spec
 	sed -i "/__RPM_DEBUG_PKG/,+1d" opa.spec
 
 	#Setup Epoch tags for RHEL rpms
@@ -94,12 +96,12 @@ then
 	# __RPM_REQ_BASIC, __RPM_BLDREQ, and __RPM_REQ_OPAMGT_DEV different for SLES 12.3 and greater
 	if [ $GE_12_3 = 1 ]
 	then
-		sed -i "s/__RPM_REQ_BASIC/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" opa.spec
-		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" opa.spec
+		sed -i "s/__RPM_REQ_BASIC1/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" opa.spec
+		sed -i "s/__RPM_BLDREQ1/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" opa.spec
 		sed -i "s/__RPM_REQ_OPAMGT_DEV/rdma-core-devel, libopenssl-devel, opa-libopamgt/g" opa.spec
 	else
-		sed -i "s/__RPM_REQ_BASIC/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" opa.spec
-		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, zlib-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" opa.spec
+		sed -i "s/__RPM_REQ_BASIC1/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" opa.spec
+		sed -i "s/__RPM_BLDREQ1/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, zlib-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" opa.spec
 		sed -i "s/__RPM_REQ_OPAMGT_DEV/libibumad-devel, libibverbs-devel, libopenssl-devel, opa-libopamgt/g" opa.spec
 	fi
 
@@ -107,6 +109,8 @@ then
 	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools, ibacm/g" opa.spec
 	# __RPM_REQ_OPAMGT same for all SLES versions
 	sed -i "s/__RPM_REQ_OPAMGT/libibumad3, libibverbs1, openssl/g" opa.spec
+	sed -i "/__RPM_REQ_BASIC2/d" opa.spec
+	sed -i "/__RPM_BLDREQ2/d" opa.spec
 
 	#Cleanup EPOCH macros from sles spec.
 	#Note that SUSE discourages and does not use epochs

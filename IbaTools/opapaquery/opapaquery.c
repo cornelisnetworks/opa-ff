@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2020, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -443,7 +443,7 @@ static FSTATUS GetGroupList(struct omgt_port *port)
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA GroupList query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-			   	pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			   	pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo Group List Records Returned\n", 0, "");
@@ -452,7 +452,7 @@ static FSTATUS GetGroupList(struct omgt_port *port)
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-					   					iba_sd_mad_status_msg(pQueryResults->MadStatus));
+					   					iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
         	fprintf(stderr, "PA Multiple MAD Response for Group Data:\n");
 		}
@@ -504,7 +504,7 @@ static FSTATUS GetGroupList2(struct omgt_port *port, uint64 imageNumber, int32 i
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA GroupList query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 			iba_fstatus_msg(pQueryResults->Status),
-			pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo Group List Records Returned\n", 0, "");
@@ -513,7 +513,7 @@ static FSTATUS GetGroupList2(struct omgt_port *port, uint64 imageNumber, int32 i
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-				iba_sd_mad_status_msg(pQueryResults->MadStatus));
+				iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
 			fprintf(stderr, "PA Multiple MAD Response for Group Data:\n");
 		}
@@ -566,7 +566,7 @@ static FSTATUS GetGroupInfo(struct omgt_port *port, char *groupName, uint64 imag
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA Group Info query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-			   	pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			   	pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo Group Info Records Returned\n", 0, "");
@@ -575,7 +575,7 @@ static FSTATUS GetGroupInfo(struct omgt_port *port, char *groupName, uint64 imag
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-					   					iba_sd_mad_status_msg(pQueryResults->MadStatus));
+					   					iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
         	fprintf(stderr, "PA Multiple MAD Response for Group Info group name %s:\n", groupName);
 		}
@@ -628,7 +628,7 @@ static FSTATUS GetGroupConfig(struct omgt_port *port, char *groupName, uint64 im
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA Group Config query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-				pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+				pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo Group Config Records Returned\n", 0, "");
@@ -637,7 +637,7 @@ static FSTATUS GetGroupConfig(struct omgt_port *port, char *groupName, uint64 im
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-										iba_sd_mad_status_msg(pQueryResults->MadStatus));
+										iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
 			fprintf(stderr, "PA Multiple MAD Response for Group Config group name %s:\n", groupName);
 		}
@@ -689,7 +689,7 @@ static FSTATUS GetGroupNodeInfo(struct omgt_port *port, char *groupName, STL_LID
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA Group NodeInfo query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-				pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+				pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo Group NodeInfo Records Returned\n", 0, "");
@@ -698,7 +698,7 @@ static FSTATUS GetGroupNodeInfo(struct omgt_port *port, char *groupName, STL_LID
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-										iba_sd_mad_status_msg(pQueryResults->MadStatus));
+										iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
 			fprintf(stderr, "PA Multiple MAD Response for Group NodeInfo name %s:\n", groupName);
 		}
@@ -750,7 +750,7 @@ static FSTATUS GetGroupLinkInfo(struct omgt_port *port, char *groupName,  STL_LI
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA Group LinkInfo query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 			iba_fstatus_msg(pQueryResults->Status),
-			pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo Group LinkInfo Records Returned\n", 0, "");
@@ -759,7 +759,7 @@ static FSTATUS GetGroupLinkInfo(struct omgt_port *port, char *groupName,  STL_LI
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-				iba_sd_mad_status_msg(pQueryResults->MadStatus));
+				iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
 			fprintf(stderr, "PA Multiple MAD Response for Group LinkInfo name %s:\n", groupName);
 		}
@@ -814,14 +814,14 @@ static FSTATUS GetFocusPorts(struct omgt_port *port, char *groupName, uint32 sel
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA Focus Ports query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-				pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+				pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo Focus Ports Records Returned\n", 0, "");
 	} else {
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-										iba_sd_mad_status_msg(pQueryResults->MadStatus));
+										iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
 			fprintf(stderr, "PA Multiple MAD Response for Focus Ports group name %s:\n", groupName);
 		}
@@ -896,7 +896,7 @@ static FSTATUS GetVFList(struct omgt_port *port)
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA vfList query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-			   	pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			   	pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo VF List Records Returned\n", 0, "");
@@ -905,7 +905,7 @@ static FSTATUS GetVFList(struct omgt_port *port)
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-					   					iba_sd_mad_status_msg(pQueryResults->MadStatus));
+					   					iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
         	fprintf(stderr, "PA Multiple MAD Response for VF list data:\n");
 		}
@@ -955,7 +955,7 @@ static FSTATUS GetVFList2(struct omgt_port *port, uint64 imageNumber, int32 imag
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA vfList query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 			iba_fstatus_msg(pQueryResults->Status),
-			pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo VF List Records Returned\n", 0, "");
@@ -964,7 +964,7 @@ static FSTATUS GetVFList2(struct omgt_port *port, uint64 imageNumber, int32 imag
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-				iba_sd_mad_status_msg(pQueryResults->MadStatus));
+				iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
 			fprintf(stderr, "PA Multiple MAD Response for VF list data:\n");
 		}
@@ -1016,7 +1016,7 @@ static FSTATUS GetVFInfo(struct omgt_port *port, char *vfName, uint64 imageNumbe
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA VF Info query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-			   	pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+			   	pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo VF Info Records Returned\n", 0, "");
@@ -1025,7 +1025,7 @@ static FSTATUS GetVFInfo(struct omgt_port *port, char *vfName, uint64 imageNumbe
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-					   					iba_sd_mad_status_msg(pQueryResults->MadStatus));
+					   					iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
         	fprintf(stderr, "PA Multiple MAD Response for VF Info VF name %s:\n", vfName);
 		}
@@ -1077,7 +1077,7 @@ static FSTATUS GetVFConfig(struct omgt_port *port, char *vfName, uint64 imageNum
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA VF Config query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-				pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+				pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo VF Config Records Returned\n", 0, "");
@@ -1086,7 +1086,7 @@ static FSTATUS GetVFConfig(struct omgt_port *port, char *vfName, uint64 imageNum
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-										iba_sd_mad_status_msg(pQueryResults->MadStatus));
+										iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
 			fprintf(stderr, "PA Multiple MAD Response for VF Config vf name %s:\n", vfName);
 		}
@@ -1208,7 +1208,7 @@ static FSTATUS GetVFFocusPorts(struct omgt_port *port, char *vfName, uint32 sele
 	} else if (pQueryResults->Status != FSUCCESS) {
 		fprintf(stderr, "%*sPA VF Focus Ports query Failed: %s MadStatus 0x%x: %s\n", 0, "",
 				iba_fstatus_msg(pQueryResults->Status),
-				pQueryResults->MadStatus, iba_sd_mad_status_msg(pQueryResults->MadStatus));
+				pQueryResults->MadStatus, iba_pa_mad_status_msg(port));
 		goto fail;
 	} else if (pQueryResults->ResultDataSize == 0) {
 		fprintf(stderr, "%*sNo VF Focus Ports Records Returned\n", 0, "");
@@ -1217,7 +1217,7 @@ static FSTATUS GetVFFocusPorts(struct omgt_port *port, char *vfName, uint32 sele
 
 		if (g_verbose) {
 			fprintf(stderr, "MadStatus 0x%x: %s\n", pQueryResults->MadStatus,
-										iba_sd_mad_status_msg(pQueryResults->MadStatus));
+										iba_pa_mad_status_msg(port));
 			fprintf(stderr, "%d Bytes Returned\n", pQueryResults->ResultDataSize);
 			fprintf(stderr, "PA Multiple MAD Response for VF Focus Ports VF name %s:\n", vfName);
 		}
@@ -1331,7 +1331,7 @@ void usage(void)
 	fprintf(stderr,	"           0x00100000  20     VLXmitWaitData\n");
 	fprintf(stderr, "           0x00080000  19     VLRcvBubble \n");
 	fprintf(stderr, "           0x00040000  18     VLMarkFECN\n");
-	fprintf(stderr, "           Bits 17-0 reseved\n");
+	fprintf(stderr, "           Bits 17-0 reserved\n");
  	fprintf(stderr, "     -f/--focus         - focus select value for getting focus ports\n");
  	fprintf(stderr, "         focus select values:\n");
 	fprintf(stderr, "           unexpclrport  - lists unexpectedly cleared ports - LID ordered\n");          // STL_PA_SELECT_UNEXP_CLR_PORT         0x00010101

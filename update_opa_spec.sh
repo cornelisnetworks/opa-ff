@@ -1,7 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
-# Copyright (c) 2015-2017, Intel Corporation
+# Copyright (c) 2015-2020, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -47,7 +47,7 @@ then
 	cp $from $to
 fi
 
-sed -i "s/__RPM_FS/OPA_FEATURE_SET=$OPA_FEATURE_SET/g" $to
+sed -i "s/__RPM_FS/OPA_FEATURE_SET=opa10/g" $to
 
 
 source ./OpenIb_Host/ff_filegroups.sh
@@ -61,7 +61,8 @@ then
 	GE_7_5=$(echo "$versionid >= 7.5" | bc)
 
 	# __RPM_REQ_BASIC -
-	sed -i "s/__RPM_REQ_BASIC/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" $to
+	sed -i "s/__RPM_REQ_BASIC1/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" $to
+	sed -i "/__RPM_REQ_BASIC2/d" $to
 
 	# __RPM_REQ_OPAMGT_DEV - different for RHEL7.4 and greater
 	if [ $GE_7_4 = 1 ]
@@ -74,9 +75,11 @@ then
 	# __RPM_BLDREQ - different for RHEL 7.5, RHEL7.4, or earlier
 	if [ $GE_7_4 = 1 ]
 	then
-		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_BLDREQ1/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" $to
+		sed -i "/__RPM_BLDREQ2/d" $to
 	else
-		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_BLDREQ1/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
+		sed -i "/__RPM_BLDREQ2/d" $to
 	fi
 
 	# __RPM_REQ_ADDR_RES,__RPM_REQ_OPAMGT and __RPM_DEBUG same for all RHEL versions
@@ -108,12 +111,16 @@ then
 	# __RPM_REQ_BASIC, __RPM_BLDREQ, and __RPM_REQ_OPAMGT_DEV different for SLES 12.3 and greater
 	if [ $GE_12_3 = 1 ]
 	then
-		sed -i "s/__RPM_REQ_BASIC/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
-		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_REQ_BASIC1/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
+		sed -i "/__RPM_REQ_BASIC2/d" $to
+		sed -i "s/__RPM_BLDREQ1/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" $to
+		sed -i "/__RPM_BLDREQ2/d" $to
 		sed -i "s/__RPM_REQ_OPAMGT_DEV/rdma-core-devel, libopenssl-devel, opa-libopamgt/g" $to
 	else
-		sed -i "s/__RPM_REQ_BASIC/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
-		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, zlib-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
+		sed -i "s/__RPM_REQ_BASIC1/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" $to
+		sed -i "/__RPM_REQ_BASIC2/d" $to
+		sed -i "s/__RPM_BLDREQ1/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, zlib-devel, libibumad-devel, libibverbs-devel, ibacm-devel/g" $to
+		sed -i "/__RPM_BLDREQ2/d" $to
 		sed -i "s/__RPM_REQ_OPAMGT_DEV/libibumad-devel, libibverbs-devel, libopenssl-devel, opa-libopamgt/g" $to
 	fi
 
@@ -129,13 +136,15 @@ then
 elif [ "$id" = "fedora" ]
 then
 	# __RPM_REQ_BASIC -
-	sed -i "s/__RPM_REQ_BASIC/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" $to
+	sed -i "s/__RPM_REQ_BASIC1/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}/g" $to
+	sed -i "/__RPM_REQ_BASIC2/d" $to
 
 	# __RPM_REQ_OPAMGT_DEV - different for RHEL7.4 and greater
 	sed -i "s/__RPM_REQ_OPAMGT_DEV/rdma-core-devel, openssl-devel, opa-libopamgt,/g" $to
 
 	# __RPM_BLDREQ - different for RHEL 7.5, RHEL7.4, or earlier
-	sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" $to
+	sed -i "s/__RPM_BLDREQ1/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, zlib-devel, rdma-core-devel, ibacm-devel/g" $to
+	sed -i "/__RPM_BLDREQ2/d" $to
 
 	# __RPM_REQ_ADDR_RES,__RPM_REQ_OPAMGT and __RPM_DEBUG same for all RHEL versions
 	sed -i "s/__RPM_REQ_ADDR_RES/opa-basic-tools ibacm/g" $to

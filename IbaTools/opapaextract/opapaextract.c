@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2020, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -265,7 +265,7 @@ static FSTATUS ReleaseImage(struct omgt_port *port, uint64 imageNumber, int32 im
     STL_PA_IMAGE_ID_DATA			*response;
 
     if (g_verbose)
-		fprintf(stderr, "Releaseing image 0x%lx %d...\n", imageNumber, imageOffset);
+		fprintf(stderr, "Releasing image 0x%lx %d...\n", imageNumber, imageOffset);
 	request.imageNumber = imageNumber;
 	request.imageOffset = imageOffset;
     if ((response = iba_pa_single_mad_release_image_response_query(port, &request)) != NULL) {

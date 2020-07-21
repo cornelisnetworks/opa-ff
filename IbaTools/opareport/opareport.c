@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2019, Intel Corporation
+Copyright (c) 2015-2020, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -218,6 +218,12 @@ void XmlPrintNodeDesc(const char *value, int indent)
 {
 	if (! g_noname)
 		XmlPrintStrLen("NodeDesc", value, NODE_DESCRIPTION_ARRAY_SIZE, indent);
+}
+
+void XmlPrintExpectedNodeDesc(const char *value, int indent)
+{
+	if (! g_noname)
+		XmlPrintStrLen("ExpectedNodeDesc", value, NODE_DESCRIPTION_ARRAY_SIZE, indent);
 }
 
 void XmlPrintIocIDString(const char *value, int indent)
@@ -590,7 +596,7 @@ void ShowCableSummary(uint8_t *pCableData, Format_t format, int indent, int deta
 				memcpy(tempBuf, StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high),
 					strlen(StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high)));
 				tempStr[strlen(StlCableInfoPowerClassToText(pCableInfo->ext_ident.s.pwr_class_low, pCableInfo->ext_ident.s.pwr_class_high))] = '\0';
-				printf("%*sPoweClass: %s\n", indent+4, "", tempStr);
+				printf("%*sPowerClass: %s\n", indent+4, "", tempStr);
 				memcpy(tempStr, pCableInfo->vendor_sn, sizeof(pCableInfo->vendor_sn));
 				StlCableInfoTrimTrailingWS(tempStr, sizeof(pCableInfo->vendor_sn));
 				printf("%*sVendorSN: %s\n", indent+4, "", tempStr);
@@ -2407,7 +2413,7 @@ void ShowSCSLTable(NodeData *nodep, PortData *portp, Format_t format, int indent
 		break;
 	case FORMAT_XML:
 		for (i=0; i<STL_MAX_SCS; i++) 
-			printf("%*s<SL SC=\"%u\">%u</SC>\n", indent, "", i, pSCSL->SCSLMap[i].SL);
+			printf("%*s<SL SC=\"%u\">%u</SL>\n", indent, "", i, pSCSL->SCSLMap[i].SL);
 			break;
 	default:
 		break;
@@ -6898,7 +6904,7 @@ static void ShowCLTraceRecord(FabricData_t *fabricp, STL_TRACE_RECORD *pTraceRec
       printf("%*sEntryPort: 0x%02x ExitPort: 0x%02x\n", 
              indent, "", pTraceRecord->EntryPort, pTraceRecord->ExitPort); 
       if ((nodep = FindNodeGuid(fabricp, pTraceRecord->NodeID))) 
-         printf("%*sNodeDesc: %s\n", indent, "", nodep->NodeDesc.NodeString); 
+         printf("%*sNodeDesc: %s\n", indent, "", g_noname?g_name_marker:(char*)nodep->NodeDesc.NodeString); 
       break;
        
    case FORMAT_XML:
@@ -7295,7 +7301,7 @@ void ShowAllLIDReport(Point *focus, Format_t format, int indent, int detail)
 				printf( " 0x%016"PRIx64" %3u %s %s\n",
 					nodep->NodeInfo.NodeGUID, portp->PortNum,
 					StlNodeTypeToText(nodep->NodeInfo.NodeType),
-					(char*)nodep->NodeDesc.NodeString );
+					g_noname?g_name_marker:(char*)nodep->NodeDesc.NodeString );
 				if (nodep->enodep && nodep->enodep->details)
 					printf( "%*s              %s\n",
 						indent, "", nodep->enodep->details );
@@ -7320,8 +7326,7 @@ void ShowAllLIDReport(Point *focus, Format_t format, int indent, int detail)
 				XmlPrintStr( "NodeType",
 					StlNodeTypeToText(nodep->NodeInfo.NodeType),
 					indent+8 );
-				XmlPrintStr( "NodeDesc",
-					(char*)nodep->NodeDesc.NodeString, indent+8 );
+				XmlPrintNodeDesc((char*)nodep->NodeDesc.NodeString, indent+8);
 				if (nodep->enodep && nodep->enodep->details)
 					XmlPrintStr("NodeDetails", nodep->enodep->details, indent+8);
 				printf("%*s</Value>\n", indent+4, "");
@@ -9398,7 +9403,7 @@ void ShowPathUsageReport(Point *focus, Format_t format, int indent, int detail)
 				printf("%*s0x%016"PRIx64" %s %s\n", indent, "",
 					nodep->NodeInfo.NodeGUID,
 					StlNodeTypeToText(nodep->NodeInfo.NodeType),
-					(char*)nodep->NodeDesc.NodeString);
+					g_noname?g_name_marker:(char*)nodep->NodeDesc.NodeString);
 				break;
 			case FORMAT_XML:
 				printf( "%*s<Node id=\"0x%016"PRIx64"\">\n", indent, "",
@@ -9408,8 +9413,7 @@ void ShowPathUsageReport(Point *focus, Format_t format, int indent, int detail)
 				XmlPrintStr( "NodeType",
 					StlNodeTypeToText(nodep->NodeInfo.NodeType),
 					indent+4 );
-				XmlPrintStr( "NodeDesc",
-					(char*)nodep->NodeDesc.NodeString, indent+4 );
+				XmlPrintNodeDesc((char*)nodep->NodeDesc.NodeString, indent+4);
 				break;
 			default:
 				break;
@@ -9706,7 +9710,7 @@ void ShowTreePathUsageReport(Point *focus, Format_t format, int indent,
 					nodep->NodeInfo.NodeGUID,
 					StlNodeTypeToText(nodep->NodeInfo.NodeType),
 					nodep->analysis,
-					(char*)nodep->NodeDesc.NodeString);
+					g_noname ? g_name_marker : (char*)nodep->NodeDesc.NodeString);
 				break;
 			case FORMAT_XML:
 				printf( "%*s<Node id=\"0x%016"PRIx64"\">\n", indent, "",
@@ -9717,8 +9721,7 @@ void ShowTreePathUsageReport(Point *focus, Format_t format, int indent,
 					StlNodeTypeToText(nodep->NodeInfo.NodeType),
 					indent+4 );
 				XmlPrintDec( "Tier", nodep->analysis, indent+4 );
-				XmlPrintStr( "NodeDesc",
-					(char*)nodep->NodeDesc.NodeString, indent+4 );
+				XmlPrintNodeDesc( (char*)nodep->NodeDesc.NodeString, indent+4 );
 				break;
 			default:
 				break;
@@ -11270,9 +11273,10 @@ void CheckVFAllocation(PortData *port, int indent, int format, int detail)
 				case FORMAT_TEXT:
 					printf("%*sSCVLt/SCVLnt mapping mismatch:\n", indent, "");
 					printf("%*s%s Port %d: SC %d -> VL %d\n", indent+4, "",
-						port->nodep->NodeDesc.NodeString, port->PortNum, sc, vl1);
+						g_noname ? g_name_marker:(char*)port->nodep->NodeDesc.NodeString, port->PortNum, sc, vl1);
 					printf("%*sNeighbor %s Port %d: SC %d -> VL %d\n", indent+4, "",
-						port->neighbor->nodep->NodeDesc.NodeString, port->neighbor->PortNum, sc, vl2);
+						g_noname ? g_name_marker:(char*)port->neighbor->nodep->NodeDesc.NodeString,
+						port->neighbor->PortNum, sc, vl2);
 					break;
 				case FORMAT_XML:
 					printf("%*s<SCVLMismatch>\n", indent, "");
@@ -11593,7 +11597,7 @@ static void printQuarantinedNodeRecord(int indent, const STL_QUARANTINED_NODE_RE
 	printf("%*s    Violation(s): %s\n", indent, "", violationString);
 
 	if(pQuarantinedNodeRecord->quarantineReasons & STL_QUARANTINE_REASON_TOPO_NODE_DESC) {
-		printf("%*s    Expected Node Description: %.*s\n", indent, "", STL_NODE_DESCRIPTION_ARRAY_SIZE, pQuarantinedNodeRecord->expectedNodeInfo.nodeDesc.NodeString);
+		printf("%*s    Expected Node Description: %.*s\n", indent, "", STL_NODE_DESCRIPTION_ARRAY_SIZE, g_noname?g_name_marker:(char*)pQuarantinedNodeRecord->expectedNodeInfo.nodeDesc.NodeString);
 	}
 	if(pQuarantinedNodeRecord->quarantineReasons & STL_QUARANTINE_REASON_TOPO_NODE_GUID) {
 		printf("%*s    Expected NodeGUID: 0x%016" PRIx64 "\n", indent, "", pQuarantinedNodeRecord->expectedNodeInfo.nodeGUID);
@@ -11608,7 +11612,7 @@ static void printQuarantinedNodeRecord(int indent, const STL_QUARANTINED_NODE_RE
 		printf("%*s    Received node Information:\n", indent, "");
 	}
 
-	printf("%*s        Node Description: %.*s\n", indent, "", NODE_DESCRIPTION_ARRAY_SIZE, pQuarantinedNodeRecord->NodeDesc.NodeString);
+	printf("%*s        Node Description: %.*s\n", indent, "", NODE_DESCRIPTION_ARRAY_SIZE, g_noname?g_name_marker:(char*)pQuarantinedNodeRecord->NodeDesc.NodeString);
 	printf("%*s        Type: %s Ports: %d PortNum: %d PartitionCap: %d\n", indent, "", StlNodeTypeToText(pQuarantinedNodeRecord->NodeInfo.NodeType), pQuarantinedNodeRecord->NodeInfo.NumPorts, pQuarantinedNodeRecord->NodeInfo.u1.s.LocalPortNum, pQuarantinedNodeRecord->NodeInfo.PartitionCap);
 	printf("%*s        NodeGUID: 0x%016" PRIx64 " PortGUID: 0x%016" PRIx64 "\n", indent, "", pQuarantinedNodeRecord->NodeInfo.NodeGUID, pQuarantinedNodeRecord->NodeInfo.PortGUID);
 	printf("%*s        SystemImageGuid: 0x%016" PRIx64 " BaseVersion: %d SmaVersion: %d\n", indent, "", pQuarantinedNodeRecord->NodeInfo.SystemImageGUID, pQuarantinedNodeRecord->NodeInfo.BaseVersion, pQuarantinedNodeRecord->NodeInfo.ClassVersion);
@@ -11721,7 +11725,7 @@ void ShowQuarantineNodeReport(Point *focus, Format_t format, int indent, int det
 					indent += 4;
 					
 					if(pR->quarantineReasons & STL_QUARANTINE_REASON_TOPO_NODE_DESC) {
-						XmlPrintStrLen("ExpectedNodeDesc", (char*) pR->expectedNodeInfo.nodeDesc.NodeString, STL_NODE_DESCRIPTION_ARRAY_SIZE, indent);
+						XmlPrintExpectedNodeDesc((char*) pR->expectedNodeInfo.nodeDesc.NodeString, indent);
 					}
 					if(pR->quarantineReasons & STL_QUARANTINE_REASON_TOPO_NODE_GUID) {
 						XmlPrintHex64("ExpectedNodeGUID", pR->expectedNodeInfo.nodeGUID, indent);
@@ -11770,7 +11774,7 @@ static void printDGMemberRecord(int indent, const STL_DEVICE_GROUP_MEMBER_RECORD
 	printf("%*s    LID: 0x%.*x\n", indent, "", (pRecord->LID <= IB_MAX_UCAST_LID ? 4:8) , pRecord->LID);
 	printf("%*s    PortNum: %d\n", indent, "", pRecord->Port);
 	printf("%*s    PortGUID: 0x%016" PRIx64 "\n", indent, "", pRecord->GUID);
-	printf("%*s    NodeDesc: %s\n\n", indent, "", pRecord->NodeDescription.NodeString);
+	printf("%*s    NodeDesc: %s\n\n", indent, "", g_noname ? g_name_marker:(char*)pRecord->NodeDescription.NodeString);
 }
 
 void ShowDGMemberReport(Point *focus, Format_t format, int indent, int detail)
@@ -11906,7 +11910,7 @@ FSTATUS ShowPortCableHealth(PortData *portp, int indent, char *buf, uint16 lengt
 	PrintFunc(&destBuf,"%*s%s;%d;0x%016"PRIx64";",
 		indent,
 		"",
-		portp->nodep->NodeDesc.NodeString,
+		g_noname ? g_name_marker:(char*)portp->nodep->NodeDesc.NodeString,
 		portp->nodep->NodeInfo.NodeType,
 		portp->nodep->NodeInfo.NodeGUID);
 
@@ -12467,7 +12471,6 @@ void Usage_full(void)
 	fprintf(stderr, "   opareport -o errors -X file\n");
 	fprintf(stderr, "   opareport -s --begin \"2 days ago\"\n");
 	fprintf(stderr, "   opareport -s --begin \"12:30\" --end \"14:00\"\n");
-	fprintf(stderr, "   opareport -o linkinfo -x > file\n");
 	exit(0);
 }
 
@@ -13090,6 +13093,7 @@ int main(int argc, char ** argv)
 		if (report & REPORT_SNAPSHOT) { suppress = 1; name = "snapshot"; }
 		if (report & REPORT_MCGROUPS) { suppress = 1; name = "mcgroups"; }
 		if (report & REPORT_VALIDATEROUTES) { suppress = 1; name = "validateroutes"; }
+		if (report & REPORT_VALIDATEVLROUTES) { suppress = 1; name = "validatevlroutes"; }
 		if (report & REPORT_VALIDATECREDITLOOPS) { suppress = 1; name = "validatecreditloops"; }
 		if (report & REPORT_VALIDATEVLCREDITLOOPS) { suppress = 1; name = "validatevlcreditloops"; }
 		if (report & REPORT_VALIDATEMCROUTES) { suppress = 1; name = "validatemcroutes"; }

@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2020, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -467,6 +467,9 @@ typedef struct OutputStringMap {
 } OutputStringMap_t;
 
 #define NO_OUTPUT_TYPE 0xffff
+// Table of all output types and the inputs they accept
+// "node" is the default output type. When adding a new
+// output type above it, ensure that this remains the case
 OutputStringMap_t OutputTypeTable[] = {
 //--input string--------StlOutputType-------------------------IbOutputType----------------InputFlags----csv-//
     {"systemguid",      OutputTypeStlSystemImageGuid,         NO_OUTPUT_TYPE,             &NodeInput, 0},
@@ -647,14 +650,11 @@ int main(int argc, char ** argv)
 	int					index;
 	OMGT_QUERY			query;
 	QUERY_INPUT_VALUE old_input_values;
-	OutputStringMap_t	*outputTypeMap = NULL;
+	OutputStringMap_t	*outputTypeMap = &OutputTypeTable[7]; // default query is for node records
 	int ms_timeout = OMGT_DEF_TIMEOUT_MS;
 
 	memset(&query, 0, sizeof(query));	// initialize reserved fields
-
-	// default query for this application is for all node records
 	query.InputType 	= InputTypeNoInput;
-	query.OutputType 	= OutputTypeStlNodeRecord;
 
 	// process command line arguments
 	while (-1 != (c = getopt_long(argc,argv, "vIh:p:b:x:ET:l:k:i:t:s:n:g:u:m:d:P:G:o:S:L:D:H:", options, &index)))
@@ -857,13 +857,11 @@ int main(int argc, char ** argv)
 		Usage();
 	}
 
-	if (NULL != outputTypeMap){
-		if  (CheckInputOutput(&query, outputTypeMap )!= 0)
-			Usage();
-		else
-			query.OutputType = GetOutputType(outputTypeMap);
-		}
- 
+	if  (CheckInputOutput(&query, outputTypeMap )!= 0)
+		Usage();
+	else
+		query.OutputType = GetOutputType(outputTypeMap);
+
 	if (g_IB && query.InputType == InputTypeLid &&
 		old_input_values.Lid > IB_MAX_UCAST_LID &&
 		query.OutputType != OutputTypeMcMemberRecord) {

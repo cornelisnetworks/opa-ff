@@ -1,11 +1,11 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
-# 
-# Copyright (c) 2015-2018, Intel Corporation
-# 
+#
+# Copyright (c) 2015-2020, Intel Corporation
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # END_ICS_COPYRIGHT8   ****************************************
 
 # [ICS VERSION STRING: @(#) ./fastfabric/opaxlattopology 10_0_0_0_135 [09/08/14 23:46]
@@ -339,7 +339,7 @@ usage_full()
   echo "       source        -  source csv file; default is topology.csv" >&2
   echo "       dest          -  output xml file; default is topology.0:0.xml" >&2
   echo "                        default output file name may vary if used with -s option." >&2
-  echo "                        It can also be used to specify destinstion folder" >&2
+  echo "                        It can also be used to specify destination folder" >&2
   echo "" >&2
   echo "   The following environment variables allow user-specified MTU" >&2
   echo "      MTU_SW_SW  -  If set will override default MTU on switch<->switch links" >&2

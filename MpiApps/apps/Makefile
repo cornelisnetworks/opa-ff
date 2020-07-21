@@ -1,10 +1,10 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
-# 
-# Copyright (c) 2015, Intel Corporation
-# 
+#
+# Copyright (c) 2015-2020, Intel Corporation
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 #     * Redistributions of source code must retain the above copyright notice,
 #       this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above copyright
@@ -13,7 +13,7 @@
 #     * Neither the name of Intel Corporation nor the names of its contributors
 #       may be used to endorse or promote products derived from this software
 #       without specific prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,7 +24,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # END_ICS_COPYRIGHT8   ****************************************
 
 # Makefile for MPI application/benchmark source for end user system
@@ -47,7 +47,7 @@
 #	OSU2 (version 2 of osu_latency, osu_bw, osu_bcast, osu_bibw)
 #	OSU2_MPI2 (version 2 of osu MPI2 benchmarks)
 #	OSU38 (version 3.8 of the OSU benchmarks)
-#	IMB/PMB (Pallas)
+#	IMB
 #	XHPL2 (hpl v2)
 #
 
@@ -55,7 +55,7 @@ ifndef MPICH_PREFIX
 export MPICH_PREFIX=$(shell . ./select_mpi 2>/dev/null; echo $$MPICH_PREFIX)
 endif
 
-# set MPICC to our own mpicc warpper that will change the real mpicc to use RPATH
+# set MPICC to our own mpicc wrapper that will change the real mpicc to use RPATH
 # so that our MPI Apps will stick with the mpi we selected during build.
 # if you want the default RUNPATH, you can set MPICC before calling the Makefile
 ifndef MPICC
@@ -65,6 +65,10 @@ endif
 ifndef MPIF77
 export REAL_MPIF77=$(MPICH_PREFIX)/bin/mpif77
 export MPIF77=$(PWD)/mpif77
+endif
+ifndef MPICXX
+export REAL_MPICXX=$(MPICH_PREFIX)/bin/mpicxx
+export MPICXX=$(PWD)/mpicxx
 endif
 ifndef MPI_INCLUDE_DIR
 export MPI_INCLUDE_DIR=$(MPICH_PREFIX)/include
@@ -151,15 +155,16 @@ OSU2_MPI2: SHOWMPI
 .PHONY: OSU2_MPI2
 
 IMB: SHOWMPI
-	@echo "Building Intel Micro Benchmarks 4.0.2..."
-	cd imb/src; make MPI_HOME=$(MPICH_PREFIX) CC=$(MPICC) -f make_mpich
+	@echo "Building Intel Micro Benchmarks..."
+	cd imb; make CC=$(MPICC) CXX=$(MPICXX)
 	@echo
 .PHONY: IMB
 
+HPL_VER=hpl-2.3
 XHPL2: SHOWMPI
-	@echo "Building HPL 2.2 (Linpack)..."
-	export HPL_HOME_DIR=$(PWD)/hpl-2.2;\
-	make -C hpl-2.2 arch=ICS.`uname -s`.`./get_mpi_cc.sh`
+	@echo "Building HPL (Linpack)..."
+	export HPL_HOME_DIR=$(PWD)/$(HPL_VER);\
+	make -C $(HPL_VER) arch=ICS.`uname -s`.`./get_mpi_cc.sh`
 	@echo
 .PHONY: XHPL2
 
@@ -194,9 +199,9 @@ cleandepend clean:: clobber
 clobber::
 	rm -f latency/*.o latency/*.d latency/latency
 	rm -f bandwidth/*.o bandwidth/*.d bandwidth/bw
-	if [ -f "imb/src/make_mpich" ]; then cd imb/src; make MPI_HOME=$(MPICH_PREFIX) -f make_mpich clean; fi
-	if [ -d hpl-2.2 ]; then find hpl-2.2 -name ICS.`uname -s`.* | xargs rm -rf; rm -rf hpl-2.2/bin hpl-2.2/lib; fi
-	if [ -d hpl-2.2 ]; then find hpl-2.2 -name xerbla.o | xargs rm -rf; fi
+	if [ -d "imb" ]; then cd imb; make clean; fi
+	if [ -d $(HPL_VER) ]; then find $(HPL_VER) -name ICS.`uname -s`.* | xargs rm -rf; rm -rf $(HPL_VER)/bin $(HPL_VER)/lib; fi
+	if [ -d $(HPL_VER) ]; then find $(HPL_VER) -name xerbla.o | xargs rm -rf; fi
 	if [ -d pgfile_test ]; then make -C pgfile_test clean; fi
 	if [ -d tachyon ]; then rm -rf tachyon/compile/*; fi
 	if [ -d mandel ]; then make -C mandel clean; rm -f mandel/*.d; fi

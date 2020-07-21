@@ -1,6 +1,6 @@
 /* BEGIN_ICS_COPYRIGHT7 ****************************************
 
-Copyright (c) 2015-2017, Intel Corporation
+Copyright (c) 2015-2020, Intel Corporation
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -407,7 +407,7 @@ int main(int argc, char *argv[])
 			break;
 		case 8:
 			if (!g_gotIntParam) {
-				fprintf(stderr, "%s: Error: must enter an integer paramemter (-i) with configuration option 8\n", cmdName);
+				fprintf(stderr, "%s: Error: must enter an integer parameter (-i) with configuration option 8\n", cmdName);
 				status = FERROR;
 			} else if ((integerParameter < 0) || (integerParameter > 1)) {
 				fprintf(stderr, "%s: Error: bad integer value %d; must be 0 for disable or 1 for enable\n", cmdName, integerParameter);
@@ -437,7 +437,7 @@ int main(int argc, char *argv[])
 			break;
 		case 9:	
 			if (!g_gotIntParam) {
-				fprintf(stderr, "%s: Error: must enter an integer paramemter (-i) with configuration option 9\n", cmdName);
+				fprintf(stderr, "%s: Error: must enter an integer parameter (-i) with configuration option 9\n", cmdName);
 				status = FERROR;
 			} else if ((integerParameter < 0) || (integerParameter > 7)) {
 				fprintf(stderr, "%s: Error: bad integer value %d; must be 0-16b, 1-14b/16b, 2-48b/16b, 3-48b/14b/16b, 4-per lane/16b, 5-per lane/14b/16b, 6-per lane/48b/16b, 7-per lane/48b/14b/16b\n", cmdName, integerParameter);
@@ -467,7 +467,7 @@ int main(int argc, char *argv[])
 			break;
 		case 10:
 			if (!g_gotIntParam) {
-				fprintf(stderr, "%s: Error: must enter an integer paramemter (-i) with configuration option 10\n", cmdName);
+				fprintf(stderr, "%s: Error: must enter an integer parameter (-i) with configuration option 10\n", cmdName);
 				status = FERROR;
 			} else if (integerParameter < 0 || integerParameter > 7) { 
 				fprintf(stderr, "%s: Error: bad integer value %d; Must be 0-7", cmdName, integerParameter);
@@ -497,7 +497,7 @@ int main(int argc, char *argv[])
 			break;
 		case 11:
 			if (!g_gotIntParam) {
-				fprintf(stderr, "%s: Error: must enter an integer paramemter (-i) with configuration option 11\n", cmdName);
+				fprintf(stderr, "%s: Error: must enter an integer parameter (-i) with configuration option 11\n", cmdName);
 				status = FERROR;
 			} else if (integerParameter < 0 || integerParameter > 1) {
 				fprintf(stderr, "%s: Error: bad integer value %d; must be 0 for disable or 1 for enable\n", cmdName, integerParameter);
