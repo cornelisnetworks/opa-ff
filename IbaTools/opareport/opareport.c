@@ -6777,7 +6777,7 @@ static void ValidateCLLinkSummaryCallback(uint32 id, const char *name, uint32 cy
    switch (cp->format) {
    case FORMAT_TEXT:
       if (header)
-         printf("%*sLINK %d (%s) is in a CYCLE of %d:\n", indent, "", id, name, cycle);
+         printf("%*sLINK %d (%s) is in a CYCLE of %d%c\n", indent, "", id, name, cycle, (cp->detail > 1) ? ':' : ' ');
       break; 
       
    case FORMAT_XML:

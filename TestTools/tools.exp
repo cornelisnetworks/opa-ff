@@ -2600,7 +2600,7 @@ proc scp_get_file { host usercode target_filename local_filename } {
     #randomly wait up to a minute to alleviate many hosts attempting to scp files at once
     unix_cmd 150 0 "r=\$(( \$RANDOM % 60 + 1 )); sleep \$r"
     
-	unix_cmd 400 0 "scp $env(CFG_SCP_FLAGS) $usercode@$host:/nfs/site/proj/stlbuilds/$target_filename $local_filename"
+	unix_cmd 400 0 "scp $env(CFG_SCP_FLAGS) $usercode@$host:/nfs/shares/stlbuilds/$target_filename $local_filename"
 }
 
 proc ftp_connect { host usercode password { do_spawn 1 } } {
