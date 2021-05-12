@@ -306,7 +306,8 @@ void McMembershipXmlOutput(const char *tag, McMemberData *pMCGG, int indent)
 {
 	uint8 Memberstatus;
 
-	Memberstatus = (pMCGG->MemberInfo.JoinSendOnlyMember<<2 |
+	Memberstatus = (pMCGG->MemberInfo.JoinSendOnlyFullMember<<3 |
+					pMCGG->MemberInfo.JoinSendOnlyNonMember<<2 |
 					pMCGG->MemberInfo.JoinNonMember<<1|
 					pMCGG->MemberInfo.JoinFullMember);
 
@@ -8678,7 +8679,8 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 							pMCGG->MemberInfo.RID.PortGID.AsReg64s.L,
 							pMCGG->MemberInfo.JoinFullMember ? "Full " : "",
 							pMCGG->MemberInfo.JoinNonMember ? "Non " : "",
-							pMCGG->MemberInfo.JoinSendOnlyMember ? "Sendonly " : "");
+							pMCGG->MemberInfo.JoinSendOnlyNonMember ? "SendonlyNon " : "",
+							pMCGG->MemberInfo.JoinSendOnlyFullMember ? "SendonlyFull " : "");
 						break;
 					case FORMAT_XML:
 						printf("%*s<%s id=\"0x%016"PRIx64":0x%016"PRIx64"\">\n", indent+8, "", "McMembers",
@@ -8687,7 +8689,8 @@ FSTATUS ShowMcGroups(FabricData_t *fabricp, Format_t format, int detail, int ind
 						XmlPrintTagHeader("Membership", indent+12);
 						XmlPrintStr("Full", pMCGG->MemberInfo.JoinFullMember? "1":"0", indent+16);
 						XmlPrintStr("NonMember", pMCGG->MemberInfo.JoinNonMember? "1":"0", indent+16);
-						XmlPrintStr("SendOnly", pMCGG->MemberInfo.JoinSendOnlyMember? "1":"0", indent+16);
+						XmlPrintStr("SendOnlyNon", pMCGG->MemberInfo.JoinSendOnlyNonMember? "1":"0", indent+16);
+						XmlPrintStr("SendOnlyFull", pMCGG->MemberInfo.JoinSendOnlyFullMember? "1":"0", indent+16);
 						XmlPrintTagFooter("Membership", indent+12);
 						McMembershipXmlOutput("Membership_Int", pMCGG,indent+12);
 						break;
