@@ -1,6 +1,6 @@
 Name: opa
-Version: 10.11.0.0
-Release: 575%{?dist}
+Version: 10.11.0.3
+Release: 1%{?dist}
 Summary: Intel Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
