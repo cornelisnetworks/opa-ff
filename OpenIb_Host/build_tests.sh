@@ -92,14 +92,14 @@ showenv
 # TBD the code below should be moved back into the LINUX/Makefile as part of a
 # package_tests target, then this can run make stage prepfiles package_tests
 # and also avoid editing Makerules.project
-sed -i 's/IntelOPA-Tools-FF/IntelOPA-Tests/' Makerules.project
+sed -i 's/CornelisOPX-Tools-FF/CornelisOPX-Tests/' Makerules.project
 make stage 2>&1 | tee make.res
 #make prepfiles 2>&1 | tee make.res	# TBD should be enabled
 if [ "x$RELEASE_TAG" = "x" ]
 then
-	STAGE_SUB_DIR=IntelOPA-Tests.$(MakeTools/patch_engineer_version.sh|cut -d"." -f1)
+	STAGE_SUB_DIR=CornelisOPX-Tests.$(MakeTools/patch_engineer_version.sh|cut -d"." -f1)
 else
-	STAGE_SUB_DIR=IntelOPA-Tests.$(format_releasetag $RELEASE_TAG)
+	STAGE_SUB_DIR=CornelisOPX-Tests.$(format_releasetag $RELEASE_TAG)
 fi
 tarstage=$PWD/tarStage/$STAGE_SUB_DIR
 mkdir -p $tarstage
@@ -109,7 +109,7 @@ then
 else
 	stagedir=stage.$PRODUCT.$BUILD_CONFIG
 fi
-tarbase=$(find $stagedir -name "IntelOPA-Tests*")
+tarbase=$(find $stagedir -name "CornelisOPX-Tests*")
 cd $tarbase
 cd Tests
 cp -r * $tarstage

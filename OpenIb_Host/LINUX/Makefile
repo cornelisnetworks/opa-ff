@@ -94,21 +94,6 @@ INSTALL_SOURCES= \
 				 $(TL_DIR)/CommonInstall/overrides_ff.pl \
 				 $(TL_DIR)/CommonInstall/main_omnipathwrap_delta.pl
 
-ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES72"
-	PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL72.pl
-endif
-ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES73"
-        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL73.pl
-endif
-ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES74"
-        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL74.pl
-endif
-ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES75"
-        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL75.pl
-endif
-ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES76"
-        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL76.pl
-endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES77"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL77.pl
 endif
@@ -127,8 +112,11 @@ endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES83"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL83.pl
 endif
-ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES122"
-        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES122.pl
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES84"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL84.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES85"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_RHEL85.pl
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES123"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES123.pl
@@ -147,6 +135,9 @@ ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES151"
 endif
 ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES152"
         PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES152.pl
+endif
+ifeq "$(BUILD_TARGET_OS_VENDOR_VERSION)" "ES153"
+        PREREQ_SOURCE= $(TL_DIR)/CommonInstall/comp_ff_of_prereq_SLES153.pl
 endif
 
 COMP_SOURCES= \
@@ -246,7 +237,7 @@ STAGE:
 # TBD - should build an rpm here
 # can't use STAGE_SUB_DIR since RELEASE_TAG may not be set and it is used to
 # put version suffix on STAGE_SUB_DIR
-# TBD - make this a script, the wildcards for IntelOPA-Tools.* are a problem
+# TBD - make this a script, the wildcards for CornelisOPX-Tools.* are a problem
 # packaging should be filelist based, especially for release media which will
 # be a subset of things found in stage
 # TBD - make some of these "make variables" so this can be a simple sequence
@@ -294,20 +285,20 @@ package:
 	mkdir -p $(RELEASE_DIR)
 	rm -f packaged_files dist_files
 	cd $(STAGE_DIR) ; \
-	dir=`echo IntelOPA-Tools-FF.*`; \
-	ver=`expr IntelOPA-Tools-FF.* : 'IntelOPA-Tools-FF.\(.*\)$$'`; \
+	dir=`echo CornelisOPX-Tools-FF.*`; \
+	ver=`expr CornelisOPX-Tools-FF.* : 'CornelisOPX-Tools-FF.\(.*\)$$'`; \
 	arch=$(pkg_arch); \
 	vers=$(pkg_ver); \
-	rm -rf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
-	mkdir -p $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
-	cp -r $$dir/arch $$dir/distro $$dir/distro_version $$dir/os_id $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
-	cp -r $$dir/INSTALL $$dir/comp.pl $$dir/README $$dir/version $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver ; \
-	cp -r $$dir/Lsf $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
-	cp -r $$dir/Moab $(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver 2>/dev/null; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tools-FF.$$ver.tgz" >> $(TL_DIR)/dist_files; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
-	echo "$(RELEASE_DIR)/IntelOPA-Tools.$$ver.tgz" >> $(TL_DIR)/dist_files; \
+	rm -rf $(RELEASE_DIR)/CornelisOPX-Tools-FF.$$ver ; \
+	mkdir -p $(RELEASE_DIR)/CornelisOPX-Tools-FF.$$ver ; \
+	cp -r $$dir/arch $$dir/distro $$dir/distro_version $$dir/os_id $(RELEASE_DIR)/CornelisOPX-Tools-FF.$$ver 2>/dev/null; \
+	cp -r $$dir/INSTALL $$dir/comp.pl $$dir/README $$dir/version $(RELEASE_DIR)/CornelisOPX-Tools-FF.$$ver ; \
+	cp -r $$dir/Lsf $(RELEASE_DIR)/CornelisOPX-Tools-FF.$$ver 2>/dev/null; \
+	cp -r $$dir/Moab $(RELEASE_DIR)/CornelisOPX-Tools-FF.$$ver 2>/dev/null; \
+	echo "$(RELEASE_DIR)/CornelisOPX-Tools-FF.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
+	echo "$(RELEASE_DIR)/CornelisOPX-Tools-FF.$$ver.tgz" >> $(TL_DIR)/dist_files; \
+	echo "$(RELEASE_DIR)/CornelisOPX-Tools.$$ver.tgz" >> $(TL_DIR)/packaged_files; \
+	echo "$(RELEASE_DIR)/CornelisOPX-Tools.$$ver.tgz" >> $(TL_DIR)/dist_files; \
 	if [ "$(OPA_FEATURE_SET)" != "opa10" ]; then \
 		echo "$(RELEASE_DIR)/opa-snapconfig$${vers}-$${MKRPM_REL}$${arch}.$(EXT)" >> $(TL_DIR)/packaged_files; \
 		echo "$(RELEASE_DIR)/opa-snapconfig$${vers}-$${MKRPM_REL}$${arch}.$(EXT)" >> $(TL_DIR)/dist_files; \
@@ -316,12 +307,12 @@ package:
 final_package:
 	mkdir -p $(RELEASE_DIR)
 	cd $(RPMDIR); \
-	dir=`grep 'IntelOPA-Tools-FF\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs dirname`; \
-	filename=`grep 'IntelOPA-Tools-FF\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs basename`; \
+	dir=`grep 'CornelisOPX-Tools-FF\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs dirname`; \
+	filename=`grep 'CornelisOPX-Tools-FF\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs basename`; \
 	subdir=$${filename%.tgz}; \
 	srpmdir=$$dir/$$subdir/SRPMS; \
-	basicdir=`grep 'IntelOPA-Tools\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs dirname`; \
-	basic=`grep 'IntelOPA-Tools\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs basename`; \
+	basicdir=`grep 'CornelisOPX-Tools\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs dirname`; \
+	basic=`grep 'CornelisOPX-Tools\.' $(RPM_BUILD_DIR)/opa-$${MKRPM_VER}/packaged_files | xargs basename`; \
 	rpmdir=$$dir/$$subdir/RPMS/$(DIR_ARCH); \
 	basicrpmdir=$$basicdir/$${basic%.tgz}/RPMS/$(DIR_ARCH); \
 	basicsrpmdir=$$basicdir/$${basic%.tgz}/SRPMS; \

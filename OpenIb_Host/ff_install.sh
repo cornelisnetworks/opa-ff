@@ -17,7 +17,7 @@ fi
 
 source OpenIb_Host/ff_filegroups.sh
 
-release_string="IntelOPA-Tools-FF.$BUILD_TARGET_OS_ID.$MODULEVERSION"
+release_string="CornelisOPX-Tools-FF.$BUILD_TARGET_OS_ID.$MODULEVERSION"
 
 mkdir -p ${DESTDIR}/usr/bin
 mkdir -p ${DESTDIR}/usr/sbin

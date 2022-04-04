@@ -1,6 +1,7 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 #
 # Copyright (c) 2015-2020, Intel Corporation
+# Copyright (c) 2021, Cornelis Networks
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -82,9 +83,9 @@ PROJ_SBR_DIR		= $(GLOBAL_SBR_DIR)
 ifeq "$(RELEASE_TAG)" ""
 # only use engineer's name for directory name (omit timestamp part),
 # otherwise each partial build goes to a different place
-STAGE_SUB_DIR		= IntelOPA-Tools-FF.$(BUILD_TARGET_OS_ID).$(shell $(PATCH_ENG_VERSION)|cut -d"." -f1)
+STAGE_SUB_DIR		= CornelisOPX-Tools-FF.$(BUILD_TARGET_OS_ID).$(shell $(PATCH_ENG_VERSION)|cut -d"." -f1)
 else
-STAGE_SUB_DIR		= IntelOPA-Tools-FF.$(BUILD_TARGET_OS_ID).$(MODULEVERSION)
+STAGE_SUB_DIR		= CornelisOPX-Tools-FF.$(BUILD_TARGET_OS_ID).$(MODULEVERSION)
 endif
 PROJ_STAGE_DIR		= $(STAGE_DIR)/$(STAGE_SUB_DIR)
 PROJ_STAGE_ETC_DIR	= $(PROJ_STAGE_DIR)/etc

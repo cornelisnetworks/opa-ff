@@ -1,4 +1,4 @@
-IntelOPA Open Fabrics FastFabric Tools Host Software
+CornelisOPX Open Fabrics FastFabric Tools Host Software
 
 The majority of this source is best viewed with tabstops set at 4 spaces.
 
@@ -8,10 +8,10 @@ In order to build this source:
 
 The build will create installation packages into the release/ tree.
 These can be used to install on a destination system.
-Typically the IntelOPA-Tools-FF.*.tgz is the only file you will require.
+Typically the CornelisOPX-Tools-FF.*.tgz is the only file you will require.
 As it contains all the tools including fast fabric.
-IntelOPA-Tools.*.tgz will not contain the fast fabric specific items.
-IntelOPA-Tests.*.tgz will contain some test programs.
+CornelisOPX-Tools.*.tgz will not contain the fast fabric specific items.
+CornelisOPX-Tests.*.tgz will contain some test programs.
 
 To build a debug version:
 	export BUILD_CONFIG=debug

@@ -31,7 +31,7 @@
 # [ICS VERSION STRING: unknown]
 
 # Usage: opacapture output_file_name
-# captures system information for IntelOPA problem reporting
+# captures system information for CornelisOPX problem reporting
 
 Usage_full()
 {
@@ -45,7 +45,7 @@ Usage_full()
 	echo "The program will automatically append .tgz to the <output_tgz_file>" >&2
 	echo "if it does not already have a .tgz suffix" >&2
 	echo "The resulting tar file should be sent to Customer Support along with any" 2>&1
-	echo "IntelOPA problem report regarding this system" >&2
+	echo "CornelisOPX problem report regarding this system" >&2
 }
 
 Usage()
