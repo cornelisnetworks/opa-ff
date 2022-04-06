@@ -33,7 +33,7 @@
 id=$(./get_id_and_versionid.sh | cut -f1 -d' ')
 versionid=$(./get_id_and_versionid.sh | cut -f2 -d' ')
 
-if [ "$id" = "rhel" -o "$id" = "centos" ]
+if [ "$id" = "rhel" -o "$id" = "centos" -o "$id" = "rocky" ]
 then
 	GE_8_0=$(echo "$versionid >= 8.0" | bc)
 	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec

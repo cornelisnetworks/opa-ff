@@ -2,6 +2,7 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
 # Copyright (c) 2015, Intel Corporation
+# Copyright (c) 2021, Cornelis Networks
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -30,7 +31,7 @@
 
 # [ICS VERSION STRING: unknown]
 # setup password-less ssh on a single host so it can ssh to itself
-# This is part of IntelOPA-Basic for use by opasetupssh in FastFabric
+# This is part of CornelisOPX-Basic for use by opasetupssh in FastFabric
 
 trap "exit 1" SIGHUP SIGTERM SIGINT
 
