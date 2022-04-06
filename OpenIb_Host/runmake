@@ -50,7 +50,7 @@
 ##	-i		allow incremental builds by building in-place before package rpm
 ##	-R		skip building rpm, just leave in-place files
 ##	-C		don't clobber prior to the rerun
-##	-P		skip building and packaging IntelOPA-Tests
+##	-P		skip building and packaging CornelisOPX-Tests
 ##	-O		depricated, N/A
 ##	-n		No build.  Useful for checking build machine
 ##	-T PROJ_FILE_DIR - depricated, PROJ_FILE_DIR always set to OpenIb_Host
@@ -96,7 +96,7 @@
 ##			- builds in rpmbuild tree
 ##			- creates a resulting binary rpm
 ##			- IntelOpa-Tests built in a tests_build area
-##	if developer does not need an updated build of IntelOPA-Tests, the -P option
+##	if developer does not need an updated build of CornelisOPX-Tests, the -P option
 ##	may be used to further speed up the build
 ##
 ## Recommended developer sequence of builds when debugging new code
@@ -107,7 +107,7 @@
 ##			and syntax errors and warnings are all resolved
 ##			For unit tests only needing a few binaries, they can also be
 ##			directly tested.
-##			If IntelOPA-Tests is not needed also use -P option
+##			If CornelisOPX-Tests is not needed also use -P option
 ##			after initial attempt, if compile errors are limited to a subtree:
 ##				create a new bash shell, use . setenv and then
 ##				iterate on make in the subtree and code changes until compiles
@@ -198,7 +198,7 @@ fi
 # these are special cases
 if [ "$SUBPRODUCT" = "TESTS" ]
 then
-	# build the IntelOPA-IntTests (aka HostTests) for use by validation and
+	# build the CornelisOPX-IntTests (aka HostTests) for use by validation and
 	# DST testing
 	# This builds so quick there is no need for incremental builds nor packaging
 	# options like -r -i -C and -R
@@ -211,8 +211,8 @@ then
 	mkdir $dir
 	cp -R HostTestCases $dir/HostTests
 	cp -R Makerules MakeTemplates MakeTools TestTools TestOnly CodeTemplates $dir/HostTests
-	( cd $dir; tar cvfz IntelOPA-IntTests.$RELEASE_TAG.tgz --exclude CVS --exclude '*.bak' HostTests; [ $? = 0 ] || echo "ERROR: tar command failed" )
-	echo "$TL_DIR/$dir/IntelOPA-IntTests.$RELEASE_TAG.tgz" > $PRODUCT_DIR/packaged_files
+	( cd $dir; tar cvfz CornelisOPX-IntTests.$RELEASE_TAG.tgz --exclude CVS --exclude '*.bak' HostTests; [ $? = 0 ] || echo "ERROR: tar command failed" )
+	echo "$TL_DIR/$dir/CornelisOPX-IntTests.$RELEASE_TAG.tgz" > $PRODUCT_DIR/packaged_files
 	# this should not be distributed, so create an empty dist_files
 	> $PRODUCT_DIR/dist_files
 	exit $?
@@ -494,10 +494,10 @@ fi
 
 if [ "$buildtests" = y ]
 then
-	echo "Building IntelOPA-Tests $build_config for allkernels for $BUILD_TARGET_OS $BUILD_TARGET ..."
+	echo "Building CornelisOPX-Tests $build_config for allkernels for $BUILD_TARGET_OS $BUILD_TARGET ..."
 	echo "==============================================================================="
 	./build_tests.sh $args
-	echo "Done IntelOPA-Tests $BUILD_TARGET_OS $BUILD_TARGET allkernels $(date)"
+	echo "Done CornelisOPX-Tests $BUILD_TARGET_OS $BUILD_TARGET allkernels $(date)"
 	echo "==============================================================================="
 fi
 exit 0

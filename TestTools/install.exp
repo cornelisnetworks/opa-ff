@@ -52,10 +52,10 @@ proc install_cleanup { } {
 	unix_cmd 60 0 "rm -f /var/log/ics_ib.log"
 	unix_cmd 60 0 "rm -f /var/log/opa.log"
 	unix_cmd 60 0 "rm -f /var/log/opamon"
-	unix_cmd 200 0 "rm -rf IntelOPA-Basic.*"
-	unix_cmd 200 0 "rm -rf IntelOPA-IFS.*"
-	unix_cmd 200 0 "rm -rf IntelOPA-Tools*"
-	unix_cmd 200 0 "rm -rf IntelOPA-Tests.*"
+	unix_cmd 200 0 "rm -rf CornelisOPX-Basic.*"
+	unix_cmd 200 0 "rm -rf CornelisOPX-IFS.*"
+	unix_cmd 200 0 "rm -rf CornelisOPX-Tools*"
+	unix_cmd 200 0 "rm -rf CornelisOPX-Tests.*"
 	unix_cmd 60 0 "rm -rf /tmp/opa.log.len /tmp/ics_ib.log.len"
 
 	return 0
@@ -236,7 +236,7 @@ proc install_getready { target {uninstall 1} { remove_config 0 } { cleanup 1 } {
 	return 0
 }
 
-proc install_all { target drivers {uninstall 1} {remove_config 0 } {cleanup 1} {cd_device ""} {release ""} { install_opt "-a" } { from_dir "." } {product "IntelOPA-Basic"}} {
+proc install_all { target drivers {uninstall 1} {remove_config 0 } {cleanup 1} {cd_device ""} {release ""} { install_opt "-a" } { from_dir "." } {product "CornelisOPX-Basic"}} {
 ##
 ## install_all
 ## -----------------

@@ -1426,7 +1426,7 @@ proc check_esm_config { config_file } {
 			error "$tooldir/config_check -c $config_file: failed: $err_str"
 		}
 	} else {
-		skip_case "Unable to pre-check config file, Intel OPA FM not installed on this server"
+		skip_case "Unable to pre-check config file, Cornelis OPX FM not installed on this server"
 	}
 	return 0
 }

@@ -452,7 +452,7 @@ proc get_switch_brand { ibnode } {
 		if { [ string equal "$deviceid" "0xabc0"] } {
 			if { [ string equal "$vendorid" "0x8086"] } {
 				set brand "OPA"
-				log_message "$ibnode: detected Intel OPA device"
+				log_message "$ibnode: detected Cornelis OPX device"
 			} else {
 				set brand "unknown"
 				log_message "$ibnode: detected unknown device"
@@ -610,16 +610,16 @@ proc get_switch_info { ibnode } {
 			set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "FW Version is [0-9.]+" } { "Error"}]
 			regexp {([0-9.]+)} $out fwversion
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 
         # use verbose option so we have a predictable output to expect
 		if { [ string equal "$brand" "OPA"] } {
 			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 11"
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "Switch configuration values" "[[:space:]]+Link Width[[:space:]]+[:][[:space:]][[:print:]]*([0-9]+)" } { "Error"}]
 		regexp {[[:space:]]+Link Width[[:space:]]+[:][[:space:]]+([[:print:]],)*([0-9]+)} $out line p1 linkWidth
@@ -631,8 +631,8 @@ proc get_switch_info { ibnode } {
 		if { [ string equal "$brand" "OPA"] } {
 			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 4"
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\"" } { "Error"}]
 		regexp {([VPD]+) "([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)"} $out p1 p2 p3 partnumber p4 hwversion
@@ -738,8 +738,8 @@ proc get_switch_info { ibnode } {
 			}
 			set fanStatus "$fanaStatus/$fanbStatus/$fancStatus/$fandStatus/$faneStatus/$fanfStatus"
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 
 		if { [ string equal "$brand" "OPA"] } {
@@ -771,8 +771,8 @@ proc get_switch_info { ibnode } {
 			set tempStatus "$tempaStatus/$tempbStatus/$tempcStatus"
 
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 
         # use verbose option so we have a predictable output to expect
@@ -809,8 +809,8 @@ proc get_switch_info { ibnode } {
 				set ps2Status "$p3"
 			}
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 
 		# report the results
@@ -851,8 +851,8 @@ PS2 Status:$ps2Status
 Temperature status:$tempStatus"
 			}
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 		local_sh_exit
 
@@ -889,7 +889,7 @@ proc get_switch_hwvpd { ibnode } {
 			send_unix_cmd "$toolsdir/opaswquery -t $trimmed_ibnode $hfi_port_args -Q 4"
 		} else {
 			append_punchlist "$ibnode" "Not an OPA series device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 		set out [expect_list_with_punchlist "$ibnode" "Unable to query switch" 60 { "VPD \"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]+\",\"[[:print:]]+\",\"[[:print:]]*\",\"[[:print:]]*\",\"[[:print:]]*\"" } { "Error" }]
 		regexp {([VPD]+) "([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)","([[:print:]]*)"} $out p1 p2 serialnumber partnumber model hwversion mfgname proddesc mfgid date time
@@ -953,8 +953,8 @@ proc get_switch_ping { ibnode { hfi_port ""} { report "1" } { ignore_pass "0" } 
 				check_exit_status 60 0
 				send_unix_cmd "$toolsdir/opaswping -t $trimmed_ibnode $hfi_port_args"
 			} else {
-				append_punchlist "$ibnode" "Not an Intel OPA device"
-				fail_test "$ibnode: Not an Intel OPA device"
+				append_punchlist "$ibnode" "Not an Cornelis OPX device"
+				fail_test "$ibnode: Not an Cornelis OPX device"
 			}
 			if { [ catch { expect_progress 60 {[\r\n]} { "is present" } { "No Path Records Returned" "Error" } } res ] != 0 } {
 				set present not
@@ -1003,8 +1003,8 @@ proc get_switch_fwverify { ibnode } {
 			check_exit_status 60 0
 			send_unix_cmd "$toolsdir/opaswfwverify -t $trimmed_ibnode $hfi_port_args -q"
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 		set out [expect_list_with_punchlist "$ibnode" "Unable to verify FW" 120 { "[A-Za-z]+ primary image" } { "Error" }]
 		regexp {([A-Za-z]+)} $out pValidity
@@ -1074,8 +1074,8 @@ proc get_switch_capture { ibnode upload_file } {
 			send_unix_cmd "$toolsdir/xedge_capture -v -t $node_guid $hfi_port_args $upload_file"
 			check_exit_status 60 0
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 		local_sh_exit
 }
@@ -1219,8 +1219,8 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 				expect_list_with_punchlist "$ibnode" "Unable to update FW" 300 { "opaswfwupdate completed"} { "Error" } 
 			}
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 		local_sh_exit
 
@@ -1320,7 +1320,7 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 				expect_list_with_punchlist "$ibnode" "Unable to reboot switch" 300 { "opaswreset completed"} { "Error" } 
 			}
 		} else {
-			fail_test "$ibnode: Not an Intel OPA device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 
 
@@ -1455,10 +1455,10 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 		set brand [get_switch_brand "$ibnode"]
 		if { [ string equal "$brand" "OPA"] } {
 			# are we going to implement this?
-			puts "Function not yet implemented for Intel OPA"
+			puts "Function not yet implemented for Cornelis OPX"
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
     }
 }
@@ -1609,8 +1609,8 @@ File: TestTools/extmng.exp" case_setup case_cleanup {
 			}
 
 		} else {
-			append_punchlist "$ibnode" "Not an Intel OPA device"
-			fail_test "$ibnode: Not an Intel OPA device"
+			append_punchlist "$ibnode" "Not an Cornelis OPX device"
+			fail_test "$ibnode: Not an Cornelis OPX device"
 		}
 
 		local_sh_exit
