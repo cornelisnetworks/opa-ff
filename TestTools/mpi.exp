@@ -613,7 +613,7 @@ File: TestTools/mpi.exp" case_setup case_cleanup {
 			unix_cmd 20 0 "export MPI_CMD_ARGS="
 		}
 	
-		send_unix_cmd "$env(MPICH_PREFIX)/bin/mpirun $mpiapi_env -np $np -allow-run-as-root --map-by node -machinefile mpi_hosts \$MPI_CMD_ARGS $openmpi_env ./$mpi_cmd $mpi_args; echo DONE"
+		send_unix_cmd "LD_LIBRARY_PATH=$env(MPICH_PREFIX)/lib64:\$LD_LIBRARY_PATH $env(MPICH_PREFIX)/bin/mpirun $mpiapi_env -np $np -allow-run-as-root --map-by node -machinefile mpi_hosts \$MPI_CMD_ARGS $openmpi_env ./$mpi_cmd $mpi_args; echo DONE"
 	
 		if { $show_perf } {
 		    set perf_var perf

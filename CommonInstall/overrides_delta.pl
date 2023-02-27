@@ -107,6 +107,14 @@ my @delta_Components_rhel85 = ( "opa_stack", "mpi_selector", "intel_hfi",
 		"opa_stack_dev",
 		"delta_ipoib",
 		"delta_debug", );
+my @delta_Components_rhel86 = ( "opa_stack", "mpi_selector", "intel_hfi",
+		"opa_stack_dev",
+		"delta_ipoib",
+		"delta_debug", );
+my @delta_Components_rhel9 = ( "opa_stack", "mpi_selector", "intel_hfi",
+		"opa_stack_dev",
+		"delta_ipoib",
+		"delta_debug", );
 my @delta_Components_sles15 = ( "opa_stack", "intel_hfi",
 		"opa_stack_dev",
 		"delta_ipoib",
@@ -120,6 +128,10 @@ my @delta_Components_sles15_sp2 = ( "opa_stack", "intel_hfi",
 		"delta_ipoib",
 		"delta_debug", );
 my @delta_Components_sles15_sp3 = ( "opa_stack", "intel_hfi",
+		"opa_stack_dev",
+		"delta_ipoib",
+		"delta_debug", );
+my @delta_Components_sles15_sp4 = ( "opa_stack", "intel_hfi",
 		"opa_stack_dev",
 		"delta_ipoib",
 		"delta_debug", );
@@ -169,6 +181,10 @@ sub overrides()
 		@Components = ( @delta_Components_rhel84 );
 	} elsif ( "$CUR_VENDOR_VER" eq "ES85" ) {
 		@Components = ( @delta_Components_rhel85 );
+	} elsif ( "$CUR_VENDOR_VER" eq "ES86" ) {
+		@Components = ( @delta_Components_rhel86 );
+	} elsif ( "$CUR_VENDOR_VER" eq "ES9" ) {
+		@Components = ( @delta_Components_rhel9 );
 	} elsif ( "$CUR_VENDOR_VER" eq "ES15" ) {
 		@Components = ( @delta_Components_sles15 );
 	} elsif ( "$CUR_VENDOR_VER" eq "ES151" ) {
@@ -177,6 +193,8 @@ sub overrides()
 		@Components = ( @delta_Components_sles15_sp2 );
 	} elsif ( "$CUR_VENDOR_VER" eq "ES153" ) {
 		@Components = ( @delta_Components_sles15_sp3 );
+	} elsif ( "$CUR_VENDOR_VER" eq "ES154" ) {
+		@Components = ( @delta_Components_sles15_sp4 );
 	} else {
 		# unsupported OS
 		@Components = ( );

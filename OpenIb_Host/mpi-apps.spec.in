@@ -17,6 +17,7 @@ Contains applications and source for testing MPI performance in conjunction with
 IFSComponent: Tools_FF __RPM_VERSION.__RPM_RELEASE
 
 __RPM_DBG
+%define __strip /bin/true
 
 %prep
 %setup -q -c

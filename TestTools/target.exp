@@ -1098,7 +1098,7 @@ proc target_get_stack_type { { checkrun "y"} { host "" } } {
 	set iba_not_installed [ get_exit_status 60 ]
 
 	# see if Open IB installed, 0 -> yes
-	send_unix_cmd {test -e /etc/init.d/openibd -o -e /lib/modules/`uname -r`/kernel/drivers/infiniband/core/ib_umad.ko -o -e /lib/modules/`uname -r`/kernel/drivers/infiniband/core/ib_umad.ko.xz}
+	send_unix_cmd {test -e /etc/init.d/openibd -o -e /lib/modules/`uname -r`/kernel/drivers/infiniband/core/ib_umad.ko -o -e /lib/modules/`uname -r`/kernel/drivers/infiniband/core/ib_umad.ko.xz -o -e /lib/modules/`uname -r`/kernel/drivers/infiniband/core/ib_umad.ko.zst}
 	set openib_not_installed [ get_exit_status 60 ]
 
 	# newer distros include openib, so if both appear installed also assume iba
