@@ -82,6 +82,8 @@ my @Components_sles15_sp2 = ( "opa_stack",
 		@OmniPathAllComponents );
 my @Components_sles15_sp3 = ( "opa_stack",
 		@OmniPathAllComponents );
+my @Components_sles15_sp4 = ( "opa_stack",
+		@OmniPathAllComponents );
 my @Components_rhel74 = ( "opa_stack", "mpi_selector",
 		@OmniPathAllComponents );
 my @Components_rhel75 = ( "opa_stack", "mpi_selector",
@@ -103,6 +105,10 @@ my @Components_rhel83 = ( "opa_stack", "mpi_selector",
 my @Components_rhel84 = ( "opa_stack", "mpi_selector",
 		@OmniPathAllComponents );
 my @Components_rhel85 = ( "opa_stack", "mpi_selector",
+		@OmniPathAllComponents );
+my @Components_rhel86 = ( "opa_stack", "mpi_selector",
+		@OmniPathAllComponents );
+my @Components_rhel9 = ( "opa_stack", "mpi_selector",
 		@OmniPathAllComponents );
 
 @Components = ( );
@@ -220,7 +226,7 @@ $WrapperComponent = "opaconfig";
 					  Hidden => 0, Disabled => 0, IsOFA => 0,
 					  KernelRpms => [ ],
 					  FirmwareRpms => [ ],
-					  UserRpms => [ "opa-basic-tools", "opa-address-resolution" ],
+					  UserRpms => [ "opa-basic-tools", "opa-address-resolution", "opa-address-resolution-devel" ],
 					  DebugRpms => [ ],
 					  HasStart => 1, HasFirmware => 0, DefaultStart => 0,
 					  StartPreReq => " opa_stack ", # TBD
@@ -250,7 +256,7 @@ $WrapperComponent = "opaconfig";
 					  Hidden => 0, Disabled => 0, IsOFA => 0,
 					  KernelRpms => [ ],
 					  FirmwareRpms => [ ],
-					  UserRpms => [ "opa-fastfabric", "opa-mpi-apps" ],
+					  UserRpms => [ "opa-fastfabric", "opa-mpi-apps", "opa-snapconfig" ],
 					  DebugRpms => [ ],
 					  HasStart => 0, HasFirmware => 0, DefaultStart => 0,
 					  StartPreReq => " opa_stack ",
@@ -1041,6 +1047,66 @@ my %intel_hfi_rhel85_comp_info = (
 					},
 );
 
+my %intel_hfi_rhel86_comp_info = (
+	"intel_hfi" =>	{ Name => "Cornelis HFI Components",
+					  DefaultInstall => $State_Install,
+					  SrcDir => file_glob("./CornelisOPX-OFA_DELTA.*"),
+					  PreReq => " opa_stack ", CoReq => " oftools ",
+						# TBD - HasFirmware - FW update
+					  Hidden => 0, Disabled => 0, IsOFA => 1,
+					  KernelRpms => [ ],
+					  FirmwareRpms => [
+									"hfi1-firmware", "hfi1-firmware_debug"
+								],
+					  UserRpms => [ #"libhfi1", "libhfi1-static",
+									"libpsm2",
+									"libpsm2-devel", "libpsm2-compat",
+									"libfabric", "libfabric-devel",
+									"libfabric-psm2", "libfabric-verbs",
+									"hfi1-diagtools-sw", "hfidiags",
+								],
+					  DebugRpms =>  [ #"hfi1_debuginfo",
+									"hfi1-diagtools-sw-debuginfo",
+									"libpsm2-debuginfo", #"libhfi1-debuginfo"
+								],
+					  HasStart => 1, HasFirmware => 0, DefaultStart => 1,
+					  StartPreReq => " opa_stack ",
+					  StartComponents => [ "intel_hfi" ],
+					  StartupScript => "",
+					  StartupParams => [ ]
+					},
+);
+
+my %intel_hfi_rhel9_comp_info = (
+	"intel_hfi" =>	{ Name => "Cornelis HFI Components",
+					  DefaultInstall => $State_Install,
+					  SrcDir => file_glob("./CornelisOPX-OFA_DELTA.*"),
+					  PreReq => " opa_stack ", CoReq => " oftools ",
+						# TBD - HasFirmware - FW update
+					  Hidden => 0, Disabled => 0, IsOFA => 1,
+					  KernelRpms => [ ],
+					  FirmwareRpms => [
+									"hfi1-firmware", "hfi1-firmware_debug"
+								],
+					  UserRpms => [ #"libhfi1", "libhfi1-static",
+									"libpsm2",
+									"libpsm2-devel", "libpsm2-compat",
+									"libfabric", "libfabric-devel",
+									"libfabric-psm2", "libfabric-verbs",
+									"hfi1-diagtools-sw", "hfidiags",
+								],
+					  DebugRpms =>  [ #"hfi1_debuginfo",
+									"hfi1-diagtools-sw-debuginfo",
+									"libpsm2-debuginfo", #"libhfi1-debuginfo"
+								],
+					  HasStart => 1, HasFirmware => 0, DefaultStart => 1,
+					  StartPreReq => " opa_stack ",
+					  StartComponents => [ "intel_hfi" ],
+					  StartupScript => "",
+					  StartupParams => [ ]
+					},
+);
+
 # For SLES12sp3 that has different name for libpsm2
 my %intel_hfi_sles123_comp_info = (
 	"intel_hfi" =>	{ Name => "Cornelis HFI Components",
@@ -1435,6 +1501,22 @@ sub init_components
 						%opa_stack_dev_comp_info,
 						%opa_stack_rhel_comp_info,
 						);
+	} elsif ( "$CUR_VENDOR_VER" eq "ES86" ) {
+		@Components = ( @Components_rhel86 );
+		@SubComponents = ( @SubComponents_newer );
+		%ComponentInfo = ( %ComponentInfo, %ibacm_comp_info,
+						%intel_hfi_rhel86_comp_info,
+						%opa_stack_dev_comp_info,
+						%opa_stack_rhel_comp_info,
+						);
+	} elsif ( "$CUR_VENDOR_VER" eq "ES9" ) {
+		@Components = ( @Components_rhel9 );
+		@SubComponents = ( @SubComponents_newer );
+		%ComponentInfo = ( %ComponentInfo, %ibacm_comp_info,
+						%intel_hfi_rhel85_comp_info,
+						%opa_stack_dev_comp_info,
+						%opa_stack_rhel_comp_info,
+						);
 	} elsif ( "$CUR_VENDOR_VER" eq "ES15" ) {
 		@Components = ( @Components_sles15 );
 		@SubComponents = ( @SubComponents_newer );
@@ -1461,6 +1543,14 @@ sub init_components
 						);
 	} elsif ( "$CUR_VENDOR_VER" eq "ES153" ) {
 		@Components = ( @Components_sles15_sp3 );
+		@SubComponents = ( @SubComponents_newer );
+		%ComponentInfo = ( %ComponentInfo, %ibacm_comp_info,
+						%intel_hfi_sles15_comp_info,
+						%opa_stack_dev_comp_info,
+						%opa_stack_sles15_comp_info,
+						);
+	} elsif ( "$CUR_VENDOR_VER" eq "ES154" ) {
+		@Components = ( @Components_sles15_sp4 );
 		@SubComponents = ( @SubComponents_newer );
 		%ComponentInfo = ( %ComponentInfo, %ibacm_comp_info,
 						%intel_hfi_sles15_comp_info,
