@@ -1,5 +1,6 @@
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
+# Copyright (c) 2024, Tactical Computing Labs, LLC
 # Copyright (c) 2015, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -88,9 +89,10 @@ LIB_TARGETS_ARLIB	=
 LIB_TARGETS_EXP		= $(LIB_TARGETS_IMPLIB:$(ARLIB_SUFFIX)=$(EXP_SUFFIX))
 LIB_TARGETS_MISC	= 
 # targets to build during CMDS phase
-CMD_TARGETS_SHLIB	= $(LIB_PREFIX)qlgc_fork$(SHLIB_SUFFIX)
+#CMD_TARGETS_SHLIB	= $(LIB_PREFIX)qlgc_fork$(SHLIB_SUFFIX)
+CMD_TARGETS_SHLIB	= libqlgc_fork$(SHLIB_SUFFIX)
 CMD_TARGETS_EXE		= $(EXECUTABLE)
-CMD_TARGETS_MISC	= tclIndex front
+CMD_TARGETS_MISC	= tclindex front qlgc_fork
 # files to remove during clean phase
 CLEAN_TARGETS_MISC	=  
 CLEAN_TARGETS		= $(OBJECTS) $(RSCOBJECTS) $(IDL_TARGETS) $(CLEAN_TARGETS_MISC)
@@ -118,12 +120,16 @@ INCLUDE_SUBDIR		=
 #LOCALLIBS		= User libraries to use when linking [Empty]
 #				(in addition to LOCALDEPLIBS)
 #LOCAL_LIB_DIRS	= User library directories for libpaths [Empty]
+USR_LIB64=/usr/lib64
+USR_LIB=/usr/lib
+USR_LIB_RV64=/usr/lib/riscv64-linux-gnu
 CLOCAL=-DUSE_TCL_STUBS $(CPIC)
 # tcl.h is located in /usr/include for RedHat and in /usr/include/tcl for Ubuntu
 LOCAL_INCLUDE_DIRS = /usr/include/tcl
 LOCALLIBS=$(shell if [ -e /usr/lib64/libtclstub.a -o -e /usr/lib/libtclstub.a -o -e /usr/lib/x86_64-linux-gnu/libtclstub.a ]; then echo tclstub; \
 		elif [ -e /usr/lib64/libtclstub8.6.a -o -e /usr/lib/libtclstub8.6.a -o -e /usr/lib/x86_64-linux-gnu/libtclstub8.6.a ]; then echo tclstub8.6; \
 		elif [ -e /usr/lib64/libtclstub8.5.a -o -e /usr/lib/libtclstub8.5.a -o -e /usr/lib/x86_64-linux-gnu/libtclstub8.5.a ]; then echo tclstub8.5; \
+		elif [ -e /usr/lib/riscv64-linux-gnu/libtclstub8.6.a -o -e /usr/lib/libtclstub8.6.a ]; then echo tclstub8.6; \
 		else echo tclstub8.4; fi)
 
 # Include Make Rules definitions and rules
@@ -160,19 +166,28 @@ endif
 $(TL_DIR)/%: %
 	rm -f $@
 	cp $^ $@
-# index for autoloading Tcl procedures, remove first in case a symlink
-tclIndex: $(TCL_SOURCES)
-	rm -f tclIndex
-	echo auto_mkindex . $^|tclsh
-	echo '# [ICS VERSION STRING: unknown]' >> tclIndex
-	cat qlgc_fork.pkgIndex >> tclIndex
 
 # install for includes, libs and cmds phases
 include $(TL_DIR)/Makerules/Maketargets.install
 
+qlgc_fork:
+	$(CC) $(CFLAGS) -fpic -c qlgc_fork.c
+	$(CC) -shared -o $(CMD_TARGETS_SHLIB) qlgc_fork.o
+
+front:
+	cp front.sh front
+	chmod ugo+x front
+
+# index for autoloading Tcl procedures, remove first in case a symlink
+tclindex: $(TCL_SOURCES)
+	rm -f tclIndex
+	echo auto_mkindex . $^ | tclsh
+	echo '# [ICS VERSION STRING: unknown]' >> tclIndex
+	cat qlgc_fork.pkgIndex >> tclIndex
+
 # install for stage phase
 #include $(TL_DIR)/Makerules/Maketargets.stage
-STAGE::
+STAGE: tclindex front qlgc_fork
 	$(VS)$(STAGE_INSTALL) $(STAGE_INSTALL_DIR_OPT) $(PROJ_STAGE_IBTOOLS_DIR) tclIndex $(TCL_SOURCES) front ibtools.exp $(CMD_TARGETS_SHLIB)
 
 # Unit test execution

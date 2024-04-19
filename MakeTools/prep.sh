@@ -1,6 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 #
+# Copyright (c) 2024, Tactical Computing Labs, LLC
 # Copyright (c) 2015-2020, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
@@ -75,6 +76,7 @@ else
 	RM_VERSION=${RM_VERSION:-rm_version}
 fi
 
+export RELEASE_TAG=10_12_1_0_6
 if [ "${RELEASE_TAG:-}" = "" ]
 then
 	echo "$0: RELEASE_TAG must be exported"

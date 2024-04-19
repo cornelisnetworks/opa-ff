@@ -1,6 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 #
+# Copyright (c) 2024, Tactical Computing Labs, LLC
 # Copyright (c) 2015-2020, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,7 +34,7 @@
 id=$(./get_id_and_versionid.sh | cut -f1 -d' ')
 versionid=$(./get_id_and_versionid.sh | cut -f2 -d' ')
 
-if [ "$id" = "rhel" -o "$id" = "centos" -o "$id" = "rocky" ]
+if [ "$id" = "rhel" -o "$id" = "centos" -o "$id" = "rocky" -o "$id" = "ubuntu" ]
 then
 	GE_8_0=$(echo "$versionid >= 8.0" | bc)
 	sed -i "s/__RPM_REQ/Requires: atlas/" mpi-apps.spec

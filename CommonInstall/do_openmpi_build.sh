@@ -1,6 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 #
+# Copyright (c) 2024, Tactical Computing Labs, LLC
 # Copyright (c) 2015-2020, Intel Corporation
 # Copyright (c) 2022, Cornelis Networks
 #
@@ -440,7 +441,7 @@ logfile=make.openmpi.$interface.$compiler
 
 	case "$compiler" in
 	gcc)
-		if [[ ( "$ID" == "rocky" ) || ( "$ID" == "rhel"  &&  $(echo "$VERSION_ID >= 8.0" | bc -l) == 1 ) ]]; then
+		if [[ ( "$ID" == "rocky" ) || ( "$ID" == "rhel"  &&  $(echo "$VERSION_ID >= 8.0" | bc -l) == 1 ) || ("ID" == "ubuntu" )  ]]; then
 			openmpi_comp_env="$openmpi_comp_env CC=gcc CFLAGS=\"-O3 -fPIC\""
 		else
 			openmpi_comp_env="$openmpi_comp_env CC=gcc CFLAGS=-O3"

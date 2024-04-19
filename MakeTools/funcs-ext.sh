@@ -1,6 +1,7 @@
 #!/bin/bash -v
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 #
+# Copyright (c) 2024, Tactical Computing Labs, LLC
 # Copyright (c) 2015-2020, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
@@ -534,6 +535,17 @@ function settarget()
                 export BUILD_TARGET_OS_VENDOR=WindRiver
                 export BUILD_TARGET=MIPS
                 ;;
+	RISCV)
+	    targetos LINUX
+	    export BUILD_TARGET_TOOLCHAIN=GNU
+	    export BUILD_TARGET=RISCV
+	    ;;
+	RISCV64)
+	    targetos LINUX
+	    export BUILD_TARGET_TOOLCHAIN=GNU
+	    export BUILD_TARGET=RISCV64
+	    ;;
+
             X86|I386)
                 targetos VXWORKS
                 export I386_LIB=$WRS_HOST/lib/gcc-lib/i386-wrs-vxworks/cygnus-2.7.2-960126
@@ -647,6 +659,17 @@ function settarget()
 	    export BUILD_TARGET_TOOLCHAIN=GNU
 	    export BUILD_TARGET=PPC64
 	    ;;
+	RISCV)
+	    targetos LINUX
+	    export BUILD_TARGET_TOOLCHAIN=GNU
+	    export BUILD_TARGET=RISCV
+	    ;;
+	RISCV64)
+	    targetos LINUX
+	    export BUILD_TARGET_TOOLCHAIN=GNU
+	    export BUILD_TARGET=RISCV64
+	    ;;
+
 	EM64T)
 	    targetos LINUX
 	    export BUILD_TARGET_TOOLCHAIN=GNU
@@ -656,7 +679,7 @@ function settarget()
             if [ "$1" != "" ]; then
                printf "Unknown target $1\n"
             fi
-            printf "Usage: target ia32|ia64|x86_64|em64t|mips|atom|ppc64\n\n"
+            printf "Usage: target ia32|ia64|x86_64|em64t|mips|atom|ppc64|riscv|riscv64\n\n"
             return
             ;;    
         esac
@@ -728,6 +751,9 @@ function os_vendor()
             rocky)
                 rval=redhat
                 ;;
+            ubuntu)
+                rval=ubuntu
+                ;;
             fedora)
                 rval=redhat
                 ;;
@@ -762,6 +788,9 @@ function os_vendor()
 		elif [ $rval = 'rocky' ]
 		then
 			rval=redhat
+		elif [ $rval = 'ubuntu' ]
+		then
+			rval=ubuntu
 		elif [ $rval != 'os' ]
 		then
 			break
@@ -803,6 +832,9 @@ function os_vendor_version()
 		;;
 	rocks)
 		rval=`cat /etc/rocks-release | cut -d' ' -f3`
+		;;
+	ubuntu)
+		rval=`cat /etc/os-release | grep VERSION_ID | cut -d'=' -f2 | tr -d [\\"\\.]`
 		;;
 	scyld)
 		rval=`cat /etc/scyld-release | cut -d' ' -f4`
@@ -931,7 +963,7 @@ function target()
         fi
     else
     	if [[ "$1" == "-h" ]]; then
-	    printf "Usage: target ia32|ia64|x86_64|em64t|mips|atom|ppc64\n"
+	    printf "Usage: target ia32|ia64|x86_64|em64t|mips|atom|ppc64|riscv|riscv64\n"
 	    return
 	fi    
             
@@ -975,6 +1007,17 @@ function target()
         	    export BUILD_TARGET_OS_VERSION=5.4
         	    export BUILD_TARGET=MIPS
         	    ;;
+	RISCV)
+	    targetos LINUX
+	    export BUILD_TARGET_TOOLCHAIN=GNU
+	    export BUILD_TARGET=RISCV
+	    ;;
+	RISCV64)
+	    targetos LINUX
+	    export BUILD_TARGET_TOOLCHAIN=GNU
+	    export BUILD_TARGET=RISCV64
+	    ;;
+
         	X86|I386)
         	    #if checkwindbase; then 
         	    #	return
@@ -999,7 +1042,7 @@ function target()
         	    ;;
         	*)
         	    printf "Unknown target $1\n"
-        	    printf "Usage: target [cygwin | mips | atom | win32] [bsp]\n\n"
+        	    printf "Usage: target [cygwin | mips | riscv | riscv64 | atom | win32] [bsp]\n\n"
         	    return
         	    ;;	
                 esac           
@@ -1043,6 +1086,17 @@ function target()
                 export BUILD_TARGET_OS_VERSION=5.4
                 export BUILD_TARGET=MIPS
                 ;;
+	RISCV)
+	    targetos LINUX
+	    export BUILD_TARGET_TOOLCHAIN=GNU
+	    export BUILD_TARGET=RISCV
+	    ;;
+	RISCV64)
+	    targetos LINUX
+	    export BUILD_TARGET_TOOLCHAIN=GNU
+	    export BUILD_TARGET=RISCV64
+	    ;;
+
             LINUX)
                 targetos LINUX
                 export BUILD_TARGET_TOOLCHAIN=GNU
@@ -1082,7 +1136,7 @@ function target()
                 if [ "$1" != "" ]; then
                    printf "Unknown target $1\n"
                 fi
-                printf "Usage: target ia32|ia64|x86_64|em64t|mips|atom|ppc64\n\n"
+                printf "Usage: target ia32|ia64|x86_64|em64t|mips|atom|ppc64|riscv|riscv64\n\n"
                 return
                 ;;    
             esac

@@ -1,6 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 # 
+# Copyright (c) 2024, Tactical Computing Labs, LLC
 # Copyright (c) 2015-2020, Intel Corporation
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -55,7 +56,7 @@ source ./OpenIb_Host/ff_filegroups.sh
 sed -i "/__RPM_OPASNAPCONFIG1/d" $to
 sed -i "/__RPM_OPASNAPCONFIG2/d" $to
 
-if [ "$id" = "rhel" -o "$id" = "centos" -o "$id" = "rocky" ]
+if [ "$id" = "rhel" -o "$id" = "centos" -o "$id" = "rocky" -o "$id" = "ubuntu" ]
 then
 	GE_7_4=$(echo "$versionid >= 7.4" | bc)
 	GE_7_5=$(echo "$versionid >= 7.5" | bc)

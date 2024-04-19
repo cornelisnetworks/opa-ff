@@ -1,6 +1,7 @@
 #!/bin/bash
 # BEGIN_ICS_COPYRIGHT8 ****************************************
 #
+# Copyright (c) 2024, Tactical Computing Labs, LLC
 # Copyright (c) 2015-2020, Intel Corporation
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,8 +38,10 @@ export BUILD_PLATFORM="LINUX"
 
 source ../MakeTools/funcs-ext.sh
 
-settarget x86_64
+settarget RISCV64
 settl
+
+export BUILD_TARGET_OS_VERSION=`uname -r`
 
 # This is a user level file to build the basic project
 # One must run target and setver before invoking this script.
