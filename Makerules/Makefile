@@ -67,6 +67,8 @@ DSP_SOURCES= Defs.BuildPlatform.CYGWIN \
 			Target.LINUX.GNU.IA64 \
 			Target.LINUX.GNU.MIPS64 \
 			Target.LINUX.GNU.X86_64 \
+			Target.LINUX.GNU.RISCV \
+			Target.LINUX.GNU.RISCV64 \
 			Target.LINUX.INTEL.IA32 \
 			Target.LINUX.INTEL.IA64 \
 			Target.DARWIN.GNU.PPC \

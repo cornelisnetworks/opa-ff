@@ -66,6 +66,10 @@ case `uname -m` in
 ppc64)
 	export BUILD_TARGET=PPC64
 	;;
+riscv|riscv64)
+	export BUILD_TARGET=RISCV64
+	BUILD_TARGET_OS_VERSION=5.19.17
+	;;
 i686|ia32|IA32)
 	export BUILD_TARGET=IA32
 	;;
@@ -92,9 +96,9 @@ export BUILD_TARGET_OS_VENDOR_VERSION=$BUILD_PLATFORM_OS_VENDOR_VERSION
 set_os_identifier
 if [ -e Version ]
 then
-	export RELEASE_TAG=`cat Version`G
+	export RELEASE_TAG=10_12_1_0_6
 else
-	export RELEASE_TAG=${RELEASE_TAG:-`patch_engineer_version|cut -d"." -f1`}
+	export RELEASE_TAG=10_12_1_0_6
 fi
 export BUILD_ULPS=${BUILD_ULPS:-all}
 export BUILD_SKIP_ULPS=${BUILD_SKIP_ULPS:-none}

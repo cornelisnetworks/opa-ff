@@ -110,7 +110,8 @@ INCLUDE_SUBDIR		=
 #				(in addition to LOCALDEPLIBS)
 #LOCAL_LIB_DIRS	= User library directories for libpaths [Empty]
 
-CLOCAL = $(CPIE) -mcmodel=medium -DSTREAM_ARRAY_SIZE=353783808 -fopenmp
+#CLOCAL = $(CPIE) -mcmodel=medium -DSTREAM_ARRAY_SIZE=353783808 -fopenmp
+CLOCAL = $(CPIE) -DSTREAM_ARRAY_SIZE=353783808 -fopenmp
 LDLOCAL = -fopenmp
 
 # Include Make Rules definitions and rules

@@ -173,7 +173,8 @@ $(error BUILD_TARGET_OS of DARWIN not supported)
 endif # DARWIN
 ifeq "$(BUILD_TARGET_OS)" "LINUX"
 ifndef BUILD_TARGET_OS_VERSION
-$(error BUILD_TARGET_OS_VERSION not defined)
+BUILD_TARGET_OS_VERSION=5.19.17
+#$(error BUILD_TARGET_OS_VERSION not defined)
 endif
 ifndef BUILD_TARGET_OS_VENDOR_VERSION
 $(error BUILD_TARGET_OS_VENDOR_VERSION not defined)

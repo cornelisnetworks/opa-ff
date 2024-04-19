@@ -37,8 +37,10 @@ export BUILD_PLATFORM="LINUX"
 
 source ../MakeTools/funcs-ext.sh
 
-settarget x86_64
+settarget RISCV64
 settl
+
+export BUILD_TARGET_OS_VERSION=`uname -r`
 
 # This is a user level file to build the basic project
 # One must run target and setver before invoking this script.

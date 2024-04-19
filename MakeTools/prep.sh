@@ -75,6 +75,7 @@ else
 	RM_VERSION=${RM_VERSION:-rm_version}
 fi
 
+export RELEASE_TAG=10_12_1_0_6
 if [ "${RELEASE_TAG:-}" = "" ]
 then
 	echo "$0: RELEASE_TAG must be exported"

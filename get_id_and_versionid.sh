@@ -32,6 +32,9 @@ else
 			elif [ $rval = 'rocky' ]
 			then
 				rval=redhat
+			elif [ $rval = 'ubuntu' ]
+			then
+				rval=ubuntu
 			elif [ $rval != 'os' ]
 			then
 				break
@@ -45,6 +48,9 @@ else
 		;;
 	SuSE)
 		id=sles
+		;;
+	ubuntu)
+		id=ubuntu
 		;;
 	*)
 		id=""
@@ -86,6 +92,12 @@ else
 		v1=$(grep VERSION /etc/SuSE-release | cut -d' ' -f3)
 		v2=$(grep PATCHLEVEL /etc/SuSE-release | cut -d' ' -f3)
 		rval=${v1}.$v2
+		;;
+	ubuntu)
+		if grep -qi ubuntu /etc/os-release
+		then
+			rval=`cat /etc/os-release | grep VERSION_ID | cut -d'=' -f2 | tr -d [\\"\\.0]`
+		fi
 		;;
 	*)
 		rval=""
