@@ -1,6 +1,6 @@
 Name: opa
-Version: 10.12.1.0
-Release: 1%{?dist}
+Version: 10.14.4.0
+Release: 20%{?dist}
 Summary: Cornelis Omni-Path basic tools and libraries for fabric managment.
 
 Group: System Environment/Libraries
@@ -18,7 +18,7 @@ __RPM_DEBUG_PKG
 
 %description
 This package contains the tools necessary to manage an Cornelis(TM) Omni-Path Express fabric.
-IFSComponent: Tools_FF 10.12.1.0.6%{?dist}
+IFSComponent: Tools_FF 10.14.4.0.20%{?dist}
 
 %package basic-tools
 Summary: Managment level tools and scripts.
@@ -37,7 +37,7 @@ Epoch: 1
 
 %description basic-tools
 Contains basic tools for fabric managment necessary on all compute nodes.
-IFSComponent: Tools_FF 10.12.1.0.6%{?dist}
+IFSComponent: Tools_FF 10.14.4.0.20%{?dist}
 
 %package fastfabric
 Summary: Management level tools and scripts.
@@ -50,7 +50,7 @@ Epoch: 1
 
 %description fastfabric
 Contains tools for managing fabric on a managment node.
-IFSComponent: Tools_FF 10.12.1.0.6%{?dist}
+IFSComponent: Tools_FF 10.14.4.0.20%{?dist}
 
 %package address-resolution
 Summary: Contains Address Resolution manager
@@ -64,7 +64,7 @@ Epoch: 1
 %description address-resolution
 This package contains the ibacm distributed SA provider (dsap) for name and address resolution on OPA platform.
 It also contains the library and tools to access the shared memory database exported by dsap.
-IFSComponent: Tools_FF 10.12.1.0.6%{?dist}
+IFSComponent: Tools_FF 10.14.4.0.20%{?dist}
 
 %package libopamgt
 Summary: Omni-Path management API library
@@ -73,7 +73,7 @@ Requires: __RPM_REQ_OPAMGT
 
 %description libopamgt
 This package contains the library necessary to build applications that interface with an Omni-Path FM.
-IFSComponent: Tools_FF 10.12.1.0.6%{?dist}
+IFSComponent: Tools_FF 10.14.4.0.20%{?dist}
 
 
 %package libopamgt-devel
@@ -83,7 +83,7 @@ Requires: __RPM_REQ_OPAMGT_DEV
 
 %description libopamgt-devel
 This package contains the necessary headers for opamgt development.
-IFSComponent: Tools_FF 10.12.1.0.6%{?dist}
+IFSComponent: Tools_FF 10.14.4.0.20%{?dist}
 
 %prep
 #rm -rf %{_builddir}/*
