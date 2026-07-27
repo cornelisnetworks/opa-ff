@@ -24,15 +24,6 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-EXPORT LAWS: THIS LICENSE ADDS NO RESTRICTIONS TO THE EXPORT LAWS OF YOUR
-JURISDICTION. It is licensee's responsibility to comply with any export
-regulations applicable in licensee's jurisdiction. Under CURRENT (May 2000)
-U.S. export regulations this software is eligible for export from the U.S.
-and can be downloaded by or otherwise exported or reexported worldwide EXCEPT
-to U.S. embargoed destinations which include Cuba, Iraq, Libya, North Korea,
-Iran, Syria, Sudan, Afghanistan and any other country to which the U.S. has
-embargoed goods and services.
-
 [ICS VERSION STRING: unknown]
 
 README for Moab scripts directory
@@ -138,4 +129,3 @@ Additionally, the scripts use mpirun_rsh or mpirun to start MPI jobs. This metho
 parameters to be passed to the MPI jobs so that the appropriate lower level actions can be taken based on
 those settings (e.g. inserting Service Level information into data messages). Any MPI job command parameters
 should be used on the script command line, and will be passed to the MPI run job.
-
