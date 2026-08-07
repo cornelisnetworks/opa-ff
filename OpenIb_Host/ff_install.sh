@@ -4,11 +4,7 @@ set -x
 [ -z "${BUILDDIR}" ] && BUILDDIR="."
 [ -z "${DESTDIR}" ] && DESTDIR="/"
 [ -z "${LIBDIR}" ] && LIBDIR=/usr/lib
-[ -z "${DSAP_LIBDIR}" ] && DSAP_LIBDIR="$DSAP_LIBDIR"
-
-if [ -n ${DSAP_LIBDIR}]; then
-	DSAP_LIBDIR="/usr/lib"
-fi
+[ -z "${DSAP_LIBDIR}" ] && DSAP_LIBDIR="/usr/lib"
 
 if [ ! -f "${BUILDDIR}/RELEASE_PATH" ]; then
     echo "Wrong BUILDDIR? No such file ${BUILDDIR}/RELEASE_PATH"
